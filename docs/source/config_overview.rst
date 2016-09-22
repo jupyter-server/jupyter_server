@@ -10,7 +10,7 @@ when using Jupyter Notebook:
     - :ref:`Jupyter's common configuration system <configure_common>`
     - :ref:`Notebook server <configure_nbserver>`
     - :ref:`Notebook front-end client <configure_nbclient>`
-    - :ref:`Notebook extensions <configure_nbextensions>`
+    - :ref:`Notebook extensions <configure_extensions>`
 
 Let's look at highlights of each area.
 
@@ -18,6 +18,7 @@ Let's look at highlights of each area.
 
 Jupyter's Common Configuration system
 -------------------------------------
+
 Jupyter applications, from the Notebook to JupyterHub to nbgrader, share a
 common configuration system. The process for creating a configuration file
 and editing settings is similar for all the Jupyter applications.
@@ -32,6 +33,7 @@ and editing settings is similar for all the Jupyter applications.
 
 Notebook server
 ---------------
+
 The Notebook server runs the language kernel and communicates with the
 front-end Notebook client (i.e. the familiar notebook interface).
 
@@ -54,15 +56,17 @@ front-end Notebook client (i.e. the familiar notebook interface).
 
 Notebook front-end client
 -------------------------
+
 - :ref:`How front-end configuration works <frontend_config>`
     * :ref:`Example: Changing the notebook's default indentation setting <frontend_config>`
     * :ref:`Example: Restoring the notebook's default indentation setting <frontend_config>`
 - :ref:`Persisting configuration settings <frontend_config>`
 
-.. _configure_nbextensions:
+.. _configure_extensions:
 
 Notebook extensions
 -------------------
+
 - `Distributing Jupyter Extensions as Python Packages <https://jupyter-notebook.readthedocs.org/en/latest/examples/Notebook/Distributing%20Jupyter%20Extensions%20as%20Python%20Packages.html#Distributing-Jupyter-Extensions-as-Python-Packages>`_
 - `Extending the Notebook <https://jupyter-notebook.readthedocs.org/en/latest/extending/index.html>`_
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Setup script for Jupyter Notebook"""
+"""Setup script for Jupyter Server"""
 
 #-----------------------------------------------------------------------------
 #  Copyright (c) 2015-, Jupyter Development Team.
@@ -13,7 +13,7 @@
 
 from __future__ import print_function
 
-name = "notebook"
+name = "jupyter_server"
 
 #-----------------------------------------------------------------------------
 # Minimal Python version sanity check
@@ -53,11 +53,6 @@ from setupbase import (
     find_packages,
     find_package_data,
     check_package_data_first,
-    CompileCSS,
-    CompileJS,
-    JavascriptDependencies,
-    JavascriptVersion,
-    css_js_prerelease,
 )
 
 isfile = os.path.isfile
@@ -65,14 +60,14 @@ pjoin = os.path.join
 
 setup_args = dict(
     name            = name,
-    description     = "A web-based notebook environment for interactive computing",
+    description     = "The Jupyter Interactive Computing Server",
     long_description = """
 The Jupyter Notebook is a web application that allows you to create and
 share documents that contain live code, equations, visualizations, and
 explanatory text. The Notebook has support for multiple programming
 languages, sharing, and interactive widgets.
 
-Read `the documentation <https://jupyter-notebook.readthedocs.org>`_
+Read `the documentation <https://jupyter_server.readthedocs.org>`_
 for more information.
     """,
     version         = version,
@@ -104,26 +99,6 @@ for more information.
 
 packages = find_packages()
 package_data = find_package_data()
-
-#---------------------------------------------------------------------------
-# custom distutils commands
-#---------------------------------------------------------------------------
-# imports here, so they are after setuptools import if there was one
-from distutils.command.build_py import build_py
-from distutils.command.sdist import sdist
-
-
-setup_args['cmdclass'] = {
-    'build_py': css_js_prerelease(
-            check_package_data_first(build_py)),
-    'sdist' : css_js_prerelease(sdist, strict=True),
-    'css' : CompileCSS,
-    'js' : CompileJS,
-    'jsdeps' : JavascriptDependencies,
-    'jsversion' : JavascriptVersion,
-}
-
-
 
 #---------------------------------------------------------------------------
 # Handle scripts, dependencies, and setuptools specific things
@@ -161,16 +136,6 @@ extras_require = {
 }
 
 if 'setuptools' in sys.modules:
-    # setup.py develop should check for submodules
-    from setuptools.command.develop import develop
-    setup_args['cmdclass']['develop'] = css_js_prerelease(develop)
-
-    try:
-        from wheel.bdist_wheel import bdist_wheel
-    except ImportError:
-        pass
-    else:
-        setup_args['cmdclass']['bdist_wheel'] = css_js_prerelease(bdist_wheel)
 
     setuptools_extra_args['zip_safe'] = False
     setup_args['extras_require'] = extras_require
@@ -178,10 +143,9 @@ if 'setuptools' in sys.modules:
 
     setup_args['entry_points'] = {
         'console_scripts': [
-            'jupyter-notebook = notebook.notebookapp:main',
-            'jupyter-nbextension = notebook.nbextensions:main',
-            'jupyter-serverextension = notebook.serverextensions:main',
-            'jupyter-bundlerextension = notebook.bundler.bundlerextensions:main',
+            'jupyter-server = jupyter_server.serverapp:main',
+            'jupyter-extension = jupyter_server.extensions:main',
+            'jupyter-bundlerextension = jupyer_server.bundler.bundlerextensions:main',
         ]
     }
     setup_args.pop('scripts', None)
