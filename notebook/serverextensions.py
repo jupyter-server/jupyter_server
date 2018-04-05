@@ -104,7 +104,8 @@ def validate_serverextension(import_name, logger=None):
         mod = importlib.import_module(import_name)
         func = getattr(mod, 'load_jupyter_server_extension', None)
     except Exception:
-        logger.warning("Error loading server extension %s", import_name)
+        if logger:
+            logger.warning("Error loading server extension %s", import_name)
 
     import_msg = u"     {} is {} importable?"
     if func is not None:
@@ -161,14 +162,14 @@ class ToggleServerExtensionApp(BaseExtensionApp):
     """A base class for enabling/disabling extensions"""
     name = "jupyter serverextension enable/disable"
     description = "Enable/disable a server extension using frontend configuration files."
-    
+
     aliases = {}
     flags = flags
 
     user = Bool(True, config=True, help="Whether to do a user install")
     sys_prefix = Bool(False, config=True, help="Use the sys.prefix as the prefix")
     python = Bool(False, config=True, help="Install from a Python package")
-    
+
     def toggle_server_extension(self, import_name):
         """Change the status of a named server extension.
 
@@ -218,7 +219,7 @@ class EnableServerExtensionApp(ToggleServerExtensionApp):
     name = "jupyter serverextension enable"
     description = """
     Enable a serverextension in configuration.
-    
+
     Usage
         jupyter serverextension enable [--system|--sys-prefix]
     """
@@ -230,7 +231,7 @@ class DisableServerExtensionApp(ToggleServerExtensionApp):
     name = "jupyter serverextension disable"
     description = """
     Disable a serverextension in configuration.
-    
+
     Usage
         jupyter serverextension disable [--system|--sys-prefix]
     """
