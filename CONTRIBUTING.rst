@@ -65,11 +65,11 @@ Install dependencies::
 
 To run the Python tests, use::
 
-    nosetests
+    pytest
 
 If you want coverage statistics as well, you can run::
 
-    nosetests --with-coverage --cover-package=jupyter_server jupyter_server
+    py.test --cov notebook -v --pyargs jupyter_server
 
 Building the Documentation
 --------------------------
