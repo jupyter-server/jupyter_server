@@ -9,7 +9,7 @@ Customize keymaps
 
 The notebook shortcuts that are defined by jupyter both in edit mode and command
 mode are configurable in the frontend configuration file
-``~/.jupyter/nbconfig/notebook.json``. The modification of Keyboard shortcut
+``~/.jupyter/serverconfig/notebook.json``. The modification of Keyboard shortcut
 suffer of several limitations, mainly that your Browser and OS might prevent
 certain shortcut to work correctly. If this is the case, there are
 unfortunately not much than can be done. The second issue can arise with
@@ -22,7 +22,7 @@ describe below might not work to create new keyboard shortcuts, especially in
 the ``edit`` mode of the notebook.
 
 
-The 4 sections of interest in ``~/.jupyter/nbconfig/notebook.json`` are the
+The 4 sections of interest in ``~/.jupyter/serverconfig/notebook.json`` are the
 following:
 
   - ``keys.command.unbind``
@@ -42,7 +42,7 @@ cursor (``Ctrl-Shift-Minus``)use the  following:
 
 .. code:: javascript
 
-    // file ~/.jupyter/nbconfig/notebook.json
+    // file ~/.jupyter/serverconfig/notebook.json
 
     {
       "keys": {
@@ -71,7 +71,7 @@ following:
 
 .. code:: javascript
 
-    // file ~/.jupyter/nbconfig/notebook.json
+    // file ~/.jupyter/serverconfig/notebook.json
 
     {
       "keys": {

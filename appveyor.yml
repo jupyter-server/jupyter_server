@@ -19,8 +19,8 @@ install:
   - cmd: conda config --set show_channel_urls true
   - cmd: conda config --add channels conda-forge
   #- cmd: conda update --yes --quiet conda
-  - cmd: conda install -y pyzmq tornado jupyter_client nbformat nbconvert ipykernel pip nodejs nose
+  - cmd: conda install -y pyzmq tornado jupyter_client nbformat nbconvert ipykernel pip nose
   - cmd: pip install .[test]
 
 test_script:
-  - nosetests  -v notebook --exclude-dir notebook\tests\selenium
+  - nosetests  -v jupyter_server --exclude-dir notebook\tests\selenium

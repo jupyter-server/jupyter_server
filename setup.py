@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Setup script for Jupyter Notebook"""
+"""Setup script for Jupyter Server"""
 
 #-----------------------------------------------------------------------------
 #  Copyright (c) 2015-, Jupyter Development Team.
@@ -16,7 +16,7 @@ from __future__ import print_function
 import os
 import sys
 
-name = "notebook"
+name = "jupyter_server"
 
 # Minimal Python version sanity check
 v = sys.version_info
@@ -38,23 +38,18 @@ from setupbase import (
     find_packages,
     find_package_data,
     check_package_data_first,
-    CompileCSS,
-    CompileJS,
-    Bower,
-    JavascriptVersion,
-    css_js_prerelease,
 )
 
 setup_args = dict(
     name            = name,
-    description     = "A web-based notebook environment for interactive computing",
+    description     = "The Jupyter Server",
     long_description = """
-The Jupyter Notebook is a web application that allows you to create and
+The Jupyter Server is a web application that allows you to create and
 share documents that contain live code, equations, visualizations, and
 explanatory text. The Notebook has support for multiple programming
 languages, sharing, and interactive widgets.
 
-Read `the documentation <https://jupyter-notebook.readthedocs.io>`_
+Read `the documentation <https://jupyter-server.readthedocs.io>`_
 for more information.
     """,
     version         = version,
@@ -102,47 +97,17 @@ for more information.
     },
     entry_points = {
         'console_scripts': [
-            'jupyter-notebook = notebook.notebookapp:main',
-            'jupyter-nbextension = notebook.nbextensions:main',
-            'jupyter-serverextension = notebook.serverextensions:main',
-            'jupyter-bundlerextension = notebook.bundler.bundlerextensions:main',
+            'jupyter-server = jupyter_server.serverapp:main',
+            'jupyter-extension = jupyter_server.extensions:main',
+            'jupyter-bundlerextension = jupyter_server.bundler.bundlerextensions:main',
         ]
     },
 )
-
-# Custom distutils/setuptools commands ----------
-from distutils.command.build_py import build_py
-from distutils.command.sdist import sdist
-from setuptools.command.bdist_egg import bdist_egg
-from setuptools.command.develop import develop
-
-class bdist_egg_disabled(bdist_egg):
-    """Disabled version of bdist_egg
-
-    Prevents setup.py install from performing setuptools' default easy_install,
-    which it should never ever do.
-    """
-    def run(self):
-        sys.exit("Aborting implicit building of eggs. Use `pip install .` to install from source.")
-
-setup_args['cmdclass'] = {
-    'build_py': css_js_prerelease(
-            check_package_data_first(build_py)),
-    'sdist' : css_js_prerelease(sdist, strict=True),
-    'develop': css_js_prerelease(develop),
-    'css' : CompileCSS,
-    'js' : CompileJS,
-    'jsdeps' : Bower,
-    'jsversion' : JavascriptVersion,
-    'bdist_egg': bdist_egg if 'bdist_egg' in sys.argv else bdist_egg_disabled,
-}
 
 try:
     from wheel.bdist_wheel import bdist_wheel
 except ImportError:
     pass
-else:
-    setup_args['cmdclass']['bdist_wheel'] = css_js_prerelease(bdist_wheel)
 
 # Run setup --------------------
 def main():

@@ -152,21 +152,21 @@ Example: IPython Notebook bundle (.zip)
 
 The `hello_bundler` example in this documentation is simplisitic in the name
 of brevity. For more meaningful examples, see
-`notebook/bundler/zip_bundler.py` and `notebook/bundler/tarball_bundler.py`.
+`jupyter_server/bundler/zip_bundler.py` and `jupyter_server/bundler/tarball_bundler.py`.
 You can enable them to try them like so:
 
 .. code:: bash
 
-    jupyter bundlerextension enable --py notebook.bundler.zip_bundler --sys-prefix
-    jupyter bundlerextension enable --py notebook.bundler.tarball_bundler --sys-prefix
+    jupyter bundlerextension enable --py jupyter_server.bundler.zip_bundler --sys-prefix
+    jupyter bundlerextension enable --py jupyter_server.bundler.tarball_bundler --sys-prefix
 
 .. _bundler-details:
 
 Bundler invocation details
 --------------------------
 
-Support for bundler extensions comes from Python modules in `notebook/bundler`
-and JavaScript in `notebook/static/notebook/js/menubar.js`. The flow of data
+Support for bundler extensions comes from Python modules in `jupyter_server/bundler`
+and JavaScript in `jupyter_server/static/notebook/js/menubar.js`. The flow of data
 between the various components proceeds roughly as follows:
 
 1. User opens a notebook document

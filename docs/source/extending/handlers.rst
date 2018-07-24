@@ -31,7 +31,7 @@ when the extension is loaded.
 
 To get the notebook server to load your custom extension, you'll need to
 add it to the list of extensions to be loaded. You can do this using the
-config system. ``NotebookApp.nbserver_extensions`` is a config variable
+config system. ``NotebookApp.jpserver_extensions`` is a config variable
 which is a dictionary of strings, each a Python module to be imported, mapping
 to ``True`` to enable or ``False`` to disable each extension.
 Because this variable is notebook config, you can set it two different
@@ -41,7 +41,7 @@ For example, to get your extension to load via the command line add a
 double dash before the variable name, and put the Python dictionary in
 double quotes. If your package is "mypackage" and module is
 "mymodule", this would look like
-``jupyter notebook --NotebookApp.nbserver_extensions="{'mypackage.mymodule':True}"``
+``jupyter notebook --NotebookApp.jpserver_extensions="{'mypackage.mymodule':True}"``
 .
 Basically the string should be Python importable.
 
@@ -55,7 +55,7 @@ the following config does the same as the previous command line example.
 .. code:: python
 
     c = get_config()
-    c.NotebookApp.nbserver_extensions = {
+    c.NotebookApp.jpserver_extensions = {
         'mypackage.mymodule': True,
     }
 
