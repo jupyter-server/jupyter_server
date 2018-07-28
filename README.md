@@ -7,6 +7,11 @@
 The Jupyter Server provides the backend for Jupyter web applications such as
 the Jupyter notebook and JupyterLab.
 
+**jupyter_server is an early developer preview, and is not suitable for general
+usage yet. Features and implementation are subject to change. Please use the
+stable [notebook server](https://github.com/jupyter/notebook) for production
+usecases.**
+
 ## Installation
 
 You can find the installation documentation for the
