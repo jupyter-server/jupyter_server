@@ -19,7 +19,7 @@ They are both called with keyword arguments::
 Examples
 --------
 
-These can both be added to :file:`jupyter_notebook_config.py`.
+These can both be added to :file:`jupyter_server_config.py`.
 
 A pre-save hook for stripping output::
 
@@ -47,7 +47,7 @@ A post-save hook to make a script equivalent whenever the notebook is saved
 
     import io
     import os
-    from notebook.utils import to_api_path
+    from jupyter_server.utils import to_api_path
 
     _script_exporter = None
 

@@ -16,36 +16,14 @@ env:
   global:
     - PATH=$TRAVIS_BUILD_DIR/pandoc:$PATH
   matrix:
-    - GROUP=js/notebook
     - GROUP=python
-    - GROUP=js/base
-    - GROUP=js/services
 
 before_install:
     - pip install --upgrade pip
     - pip install --upgrade setuptools wheel nose coverage codecov
-    - nvm install 6.9.2
-    - nvm use 6.9.2
-    - node --version
-    - npm --version
-    - npm upgrade -g npm
-    - npm install
-    - |
-      if [[ $GROUP == js* ]]; then
-        npm install -g casperjs@1.1.3 phantomjs-prebuilt@2.1.7
-      fi
     - |
       if [[ $GROUP == docs ]]; then
         pip install -r docs/doc-requirements.txt
-      fi
-    - |
-      if [[ $GROUP == selenium ]]; then
-        pip install selenium
-        # Install Webdriver backend for Firefox:
-        wget https://github.com/mozilla/geckodriver/releases/download/v0.19.1/geckodriver-v0.19.1-linux64.tar.gz
-        mkdir geckodriver
-        tar -xzf geckodriver-v0.19.1-linux64.tar.gz -C geckodriver
-        export PATH=$PATH:$PWD/geckodriver
       fi
 
 install:
@@ -56,7 +34,7 @@ install:
 script:
     - jupyter kernelspec list
     - |
-      symlinks=$(find . -type l| grep -v './node_modules/' | grep -v './git-hooks')
+      symlinks=$(find . -type l| grep -v './git-hooks')
       if [[ $(echo $symlinks) ]]; then
           echo "Repository contains symlinks which won't work on windows:"
           echo $symlinks
@@ -65,9 +43,7 @@ script:
       else
           true
       fi
-    - 'if [[ $GROUP == js* ]]; then travis_retry python -m notebook.jstest ${GROUP:3}; fi'
-    - 'if [[ $GROUP == python ]]; then nosetests -v --exclude-dir notebook/tests/selenium --with-coverage --cover-package=notebook notebook; fi'
-    - 'if [[ $GROUP == selenium ]]; then py.test -sv notebook/tests/selenium; fi'
+    - 'if [[ $GROUP == python ]]; then nosetests -v --with-coverage --cover-package=jupyter_server jupyter_server; fi'
     - |
       if [[ $GROUP == docs ]]; then
         EXIT_STATUS=0
@@ -84,14 +60,6 @@ script:
 
 matrix:
     include:
-        - python: 3.6
-          env:
-          - GROUP=selenium
-          - JUPYTER_TEST_BROWSER=firefox
-          - MOZ_HEADLESS=1
-          addons:
-            firefox: 57.0
-
         - python: 3.4
           env: GROUP=python
         - python: 3.5

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Jupyter Notebook documentation build configuration file, created by
+# Jupyter Server documentation build configuration file, created by
 # sphinx-quickstart on Mon Apr 13 09:51:11 2015.
 #
 # This file is execfile()d with the current directory set to its
@@ -90,18 +90,18 @@ source_suffix = ['.rst', '.ipynb']
 master_doc = 'index'
 
 # General information about the project.
-project = 'Jupyter Notebook'
+project = 'Jupyter Server'
 copyright = '2015, Jupyter Team, https://jupyter.org'
 author = 'The Jupyter Team'
 
 # ghissue config
-github_project_url = "https://github.com/jupyter/notebook"
+github_project_url = "https://github.com/jupyter/jupyter_server"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-_version_py = '../../notebook/_version.py'
+_version_py = '../../jupyter_server/_version.py'
 version_ns = {}
 exec(compile(open(_version_py).read(), _version_py, 'exec'), version_ns)
 # The short X.Y version.
@@ -124,7 +124,7 @@ language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['examples/Notebook/.ipynb_checkpoints']
+# exclude_patterns = []
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -253,7 +253,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'JupyterNotebookdoc'
+htmlhelp_basename = 'JupyterServerdoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -275,7 +275,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'JupyterNotebook.tex', 'Jupyter Notebook Documentation',
+    (master_doc, 'JupyterServer.tex', 'Jupyter Server Documentation',
      'https://jupyter.org', 'manual'),
 ]
 
@@ -305,7 +305,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'jupyternotebook', 'Jupyter Notebook Documentation',
+    (master_doc, 'jupyterserver', 'Jupyter Server Documentation',
      [author], 1)
 ]
 
@@ -326,8 +326,8 @@ linkcheck_ignore = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'JupyterNotebook', 'Jupyter Notebook Documentation',
-     author, 'JupyterNotebook', 'One line description of project.',
+    (master_doc, 'JupyterServer', 'Jupyter Server Documentation',
+     author, 'JupyterServer', 'One line description of project.',
      'Miscellaneous'),
 ]
 
@@ -354,4 +354,4 @@ spelling_lang='en_US'
 spelling_word_list_filename='spelling_wordlist.txt'
 
 # import before any doc is built, so _ is guaranteed to be injected
-import notebook.transutils
+import jupyter_server.transutils

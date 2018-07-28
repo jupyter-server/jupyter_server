@@ -1,51 +1,35 @@
-# Jupyter Notebook
+# Jupyter Server
 
 [![Google Group](https://img.shields.io/badge/-Google%20Group-lightgrey.svg)](https://groups.google.com/forum/#!forum/jupyter)
-[![Build Status](https://travis-ci.org/jupyter/notebook.svg?branch=master)](https://travis-ci.org/jupyter/notebook)
-[![Documentation Status](https://readthedocs.org/projects/jupyter-notebook/badge/?version=latest)](http://jupyter-notebook.readthedocs.io/en/latest/?badge=latest)
-                
+[![Build Status](https://travis-ci.org/jupyter/jupyter-server.svg?branch=master)](https://travis-ci.org/jupyter/jupyter-server)
+[![Documentation Status](https://readthedocs.org/projects/jupyter-server/badge/?version=latest)](http://jupyter-server.readthedocs.io/en/latest/?badge=latest)
 
-
-The Jupyter notebook is a web-based notebook environment for interactive
-computing.
-
-![Jupyter notebook example](docs/resources/running_code_med.png "Jupyter notebook example")
-
-### Jupyter notebook, the language-agnostic evolution of IPython notebook
-Jupyter notebook is a language-agnostic HTML notebook application for
-Project Jupyter. In 2015, Jupyter notebook was released as a part of
-The Big Split™ of the IPython codebase. IPython 3 was the last major monolithic
-release containing both language-agnostic code, such as the *IPython notebook*,
-and language specific code, such as the *IPython kernel for Python*. As
-computing spans across many languages, Project Jupyter will continue to develop the
-language-agnostic **Jupyter notebook** in this repo and with the help of the
-community develop language specific kernels which are found in their own
-discrete repos.
-[[The Big Split™ announcement](https://blog.jupyter.org/the-big-split-9d7b88a031a7)]
-[[Jupyter Ascending blog post](https://blog.jupyter.org/jupyter-ascending-1bf5b362d97e)]
+The Jupyter Server provides the backend for Jupyter web applications such as
+the Jupyter notebook and JupyterLab.
 
 ## Installation
+
 You can find the installation documentation for the
 [Jupyter platform, on ReadTheDocs](https://jupyter.readthedocs.io/en/latest/install.html).
 The documentation for advanced usage of Jupyter notebook can be found
-[here](https://jupyter-notebook.readthedocs.io/en/latest/).
+[here](https://jupyter-server.readthedocs.io/en/latest/).
 
 For a local installation, make sure you have
 [pip installed](https://pip.readthedocs.io/en/stable/installing/) and run:
 
-    $ pip install notebook
+    $ pip install jupyter_server
 
-## Usage - Running Jupyter notebook
+## Usage - Running Jupyter Server
 
 ### Running in a local installation
 
 Launch with:
 
-    $ jupyter notebook
+    $ jupyter server
 
 ### Running in a remote installation
 
-You need some configuration before starting Jupyter notebook remotely. See [Running a notebook server](http://jupyter-notebook.readthedocs.io/en/stable/public_server.html).
+You need some configuration before starting Jupyter server remotely. See [Running a Jupyter server](http://jupyter-server.readthedocs.io/en/stable/public_server.html).
 
 ## Development Installation
 
@@ -58,8 +42,8 @@ If you are interested in contributing to the project, see [`CONTRIBUTING.rst`](C
 ## Resources
 - [Project Jupyter website](https://jupyter.org)
 - [Online Demo at try.jupyter.org](https://try.jupyter.org)
-- [Documentation for Jupyter notebook](https://jupyter-notebook.readthedocs.io/en/latest/) [[PDF](https://media.readthedocs.org/pdf/jupyter-notebook/latest/jupyter-notebook.pdf)]
+- [Documentation for Jupyter Server](https://jupyter-server.readthedocs.io/en/latest/) [[PDF](https://media.readthedocs.org/pdf/jupyter-server/latest/jupyter-server.pdf)]
 - [Korean Version of Installation](https://github.com/ChungJooHo/Jupyter_Kor_doc/)
 - [Documentation for Project Jupyter](https://jupyter.readthedocs.io/en/latest/index.html) [[PDF](https://media.readthedocs.org/pdf/jupyter/latest/jupyter.pdf)]
-- [Issues](https://github.com/jupyter/notebook/issues)
+- [Issues](https://github.com/jupyter/jupyter-server/issues)
 - [Technical support - Jupyter Google Group](https://groups.google.com/forum/#!forum/jupyter)

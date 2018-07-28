@@ -1,10 +1,10 @@
 .. _working_remotely:
 
-Running a notebook server
-=========================
+Running a Jupyter server
+========================
 
 
-The :doc:`Jupyter notebook <notebook>` web application is based on a
+The :doc:`jupyter server <notebook>` web application is based on a
 server-client structure.  The notebook server uses a :ref:`two-process kernel
 architecture <ipython:ipythonzmq>` based on ZeroMQ_, as well as Tornado_ for
 serving HTTP requests.
@@ -44,39 +44,40 @@ This document describes how you can
 
 .. _notebook_server_security:
 
-Securing a notebook server
---------------------------
+Securing a Jupyter server
+-------------------------
 
-You can protect your notebook server with a simple single password. As of notebook
-5.0 this can be done automatically. To set up a password manually you can configure the
-:attr:`NotebookApp.password` setting in :file:`jupyter_notebook_config.py`.
+You can protect your Jupyter server with a simple single password. As of
+notebook 5.0 this can be done automatically. To set up a password manually you
+can configure the :attr:`ServerApp.password` setting in
+:file:`jupyter_server_config.py`.
 
 
-Prerequisite: A notebook configuration file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Prerequisite: A Jupyter server configuration file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Check to see if you have a notebook configuration file,
-:file:`jupyter_notebook_config.py`. The default location for this file
+Check to see if you have a Juptyer server configuration file,
+:file:`jupyter_server_config.py`. The default location for this file
 is your Jupyter folder located in your home directory:
 
-    - Windows: :file:`C:\\Users\\USERNAME\\.jupyter\\jupyter_notebook_config.py`
-    - OS X: :file:`/Users/USERNAME/.jupyter/jupyter_notebook_config.py`
-    - Linux: :file:`/home/USERNAME/.jupyter/jupyter_notebook_config.py`
+    - Windows: :file:`C:\\Users\\USERNAME\\.jupyter\\jupyter_server_config.py`
+    - OS X: :file:`/Users/USERNAME/.jupyter/jupyter_server_config.py`
+    - Linux: :file:`/home/USERNAME/.jupyter/jupyter_server_config.py`
 
 If you don't already have a Jupyter folder, or if your Jupyter folder doesn't contain
-a notebook configuration file, run the following command::
+a Jupyter server configuration file, run the following command::
 
-  $ jupyter notebook --generate-config
+  $ jupyter server --generate-config
 
-This command will create the Jupyter folder if necessary, and create notebook
-configuration file, :file:`jupyter_notebook_config.py`, in this folder.
+This command will create the Jupyter folder if necessary, and create a Jupyter
+server configuration file, :file:`jupyter_server_config.py`, in this folder.
 
 
 Automatic Password setup
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-As of notebook 5.3, the first time you log-in using a token, the notebook server
-should give you the opportunity to setup a password from the user interface.
+As of notebook 5.3, the first time you log-in using a token, the server should
+give you the opportunity to setup a password from the user interface.
 
 You will be presented with a form asking for the current _token_, as well as
 your _new_ _password_ ; enter both and click on ``Login and setup new password``.
@@ -86,20 +87,20 @@ the login token, otherwise follow the procedure to set a password from the
 command line.
 
 The ability to change the password at first login time may be disabled by
-integrations by setting the ``--NotebookApp.allow_password_change=False``
+integrations by setting the ``--ServerApp.allow_password_change=False``
 
 
 Starting at notebook version 5.0, you can enter and store a password for your
-notebook server with a single command. :command:`jupyter notebook password` will
+server with a single command. :command:`jupyter server password` will
 prompt you for your password and record the hashed password in your
-:file:`jupyter_notebook_config.json`.
+:file:`jupyter_server_config.json`.
 
 .. code-block:: bash
 
-    $ jupyter notebook password
+    $ jupyter server password
     Enter password:  ****
     Verify password: ****
-    [NotebookPasswordApp] Wrote hashed password to /Users/you/.jupyter/jupyter_notebook_config.json
+    [JupyterPasswordApp] Wrote hashed password to /Users/you/.jupyter/jupyter_server_config.json
 
 This can be used to reset a lost password; or if you believe your credentials
 have been leaked and desire to change your password. Changing your password will
@@ -115,7 +116,7 @@ You can prepare a hashed password manually, using the function
 
 .. code-block:: ipython
 
-    In [1]: from notebook.auth import passwd
+    In [1]: from jupyter_server.auth import passwd
     In [2]: passwd()
     Enter password:
     Verify password:
@@ -133,14 +134,14 @@ You can prepare a hashed password manually, using the function
 Adding hashed password to your notebook configuration file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 You can then add the hashed password to your
-:file:`jupyter_notebook_config.py`. The default location for this file
-:file:`jupyter_notebook_config.py` is in your Jupyter folder in your home
+:file:`jupyter_server_config.py`. The default location for this file
+:file:`jupyter_server_config.py` is in your Jupyter folder in your home
 directory, ``~/.jupyter``, e.g.::
 
-    c.NotebookApp.password = u'sha1:67c9e60bb8b6:9ffede0825894254b2e042ea597d771089e11aed'
+    c.ServerApp.password = u'sha1:67c9e60bb8b6:9ffede0825894254b2e042ea597d771089e11aed'
 
-Automatic password setup will store the hash in ``jupyter_notebook_config.json``
-while this method stores the hash in ``jupyter_notebook_config.py``. The ``.json``
+Automatic password setup will store the hash in ``jupyter_server_config.json``
+while this method stores the hash in ``jupyter_server_config.py``. The ``.json``
 configuration options take precedence over the ``.py`` one, thus the manual
 password may not take effect if the Json file has a password set.
 
@@ -162,7 +163,7 @@ You can start the notebook to communicate via a secure protocol mode by setting
 the ``certfile`` option to your self-signed certificate, i.e. ``mycert.pem``,
 with the command::
 
-    $ jupyter notebook --certfile=mycert.pem --keyfile mykey.key
+    $ jupyter server --certfile=mycert.pem --keyfile mykey.key
 
 .. tip::
 
@@ -200,27 +201,27 @@ Start by creating a certificate file and a hashed password, as explained in
 If you don't already have one, create a
 config file for the notebook using the following command line::
 
-  $ jupyter notebook --generate-config
+  $ jupyter server --generate-config
 
 In the ``~/.jupyter`` directory, edit the notebook config file,
-``jupyter_notebook_config.py``.  By default, the notebook config file has
+``jupyter_server_config.py``.  By default, the notebook config file has
 all fields commented out. The minimum set of configuration options that
-you should uncomment and edit in :file:`jupyter_notebook_config.py` is the
+you should uncomment and edit in :file:`jupyter_server_config.py` is the
 following::
 
      # Set options for certfile, ip, password, and toggle off
      # browser auto-opening
-     c.NotebookApp.certfile = u'/absolute/path/to/your/certificate/mycert.pem'
-     c.NotebookApp.keyfile = u'/absolute/path/to/your/certificate/mykey.key'
+     c.ServerApp.certfile = u'/absolute/path/to/your/certificate/mycert.pem'
+     c.ServerApp.keyfile = u'/absolute/path/to/your/certificate/mykey.key'
      # Set ip to '*' to bind on all interfaces (ips) for the public server
-     c.NotebookApp.ip = '*'
-     c.NotebookApp.password = u'sha1:bcd259ccf...<your hashed password here>'
-     c.NotebookApp.open_browser = False
+     c.ServerApp.ip = '*'
+     c.ServerApp.password = u'sha1:bcd259ccf...<your hashed password here>'
+     c.ServerApp.open_browser = False
 
      # It is a good idea to set a known, fixed port for server access
-     c.NotebookApp.port = 9999
+     c.ServerApp.port = 9999
 
-You can then start the notebook using the ``jupyter notebook`` command.
+You can then start the notebook using the ``jupyter server`` command.
 
 .. _using-lets-encrypt:
 
@@ -239,27 +240,27 @@ certificate with a few configuration changes. Here are the steps:
 
    .. code-block:: bash
 
-       $ jupyter notebook --generate-config
+       $ jupyter server --generate-config
 
 4. In the ``~/.jupyter`` directory, edit the notebook config file,
-``jupyter_notebook_config.py``.  By default, the notebook config file has
+``jupyter_server_config.py``.  By default, the notebook config file has
 all fields commented out. The minimum set of configuration options that
-you should to uncomment and edit in :file:`jupyter_notebook_config.py` is the
+you should to uncomment and edit in :file:`jupyter_server_config.py` is the
 following::
 
      # Set options for certfile, ip, password, and toggle off
      # browser auto-opening
-     c.NotebookApp.certfile = u'/absolute/path/to/your/certificate/fullchain.pem'
-     c.NotebookApp.keyfile = u'/absolute/path/to/your/certificate/privkey.pem'
+     c.ServerApp.certfile = u'/absolute/path/to/your/certificate/fullchain.pem'
+     c.ServerApp.keyfile = u'/absolute/path/to/your/certificate/privkey.pem'
      # Set ip to '*' to bind on all interfaces (ips) for the public server
-     c.NotebookApp.ip = '*'
-     c.NotebookApp.password = u'sha1:bcd259ccf...<your hashed password here>'
-     c.NotebookApp.open_browser = False
+     c.ServerApp.ip = '*'
+     c.ServerApp.password = u'sha1:bcd259ccf...<your hashed password here>'
+     c.ServerApp.open_browser = False
 
      # It is a good idea to set a known, fixed port for server access
-     c.NotebookApp.port = 9999
+     c.ServerApp.port = 9999
 
-You can then start the notebook using the ``jupyter notebook`` command.
+You can then start the notebook using the ``jupyter server`` command.
 
 .. important::
 
@@ -284,8 +285,8 @@ Firewall Setup
 
 To function correctly, the firewall on the computer running the jupyter
 notebook server must be configured to allow connections from client
-machines on the access port ``c.NotebookApp.port`` set in
-:file:`jupyter_notebook_config.py` to allow connections to the
+machines on the access port ``c.ServerApp.port`` set in
+:file:`jupyter_server_config.py` to allow connections to the
 web interface.  The firewall must also allow connections from
 127.0.0.1 (localhost) on ports from 49152 to 65535.
 These ports are used by the server to communicate with the notebook kernels.
@@ -300,16 +301,15 @@ of the notebooks in your working directory, is typically found and accessed
 at the default URL ``http://localhost:8888/``.
 
 If you prefer to customize the URL prefix for the notebook dashboard, you can
-do so through modifying ``jupyter_notebook_config.py``. For example, if you
+do so through modifying ``jupyter_server_config.py``. For example, if you
 prefer that the notebook dashboard be located with a sub-directory that
 contains other ipython files, e.g. ``http://localhost:8888/ipython/``,
 you can do so with configuration options like the following (see above for
-instructions about modifying ``jupyter_notebook_config.py``):
+instructions about modifying ``jupyter_server_config.py``):
 
 .. code-block:: python
 
-    c.NotebookApp.base_url = '/ipython/'
-
+    c.ServerApp.base_url = '/ipython/'
 
 Embedding the notebook in another website
 -----------------------------------------
@@ -319,11 +319,11 @@ e.g. in an IFrame. To do this, you may need to override the
 Content-Security-Policy to allow embedding. Assuming your website is at
 `https://mywebsite.example.com`, you can embed the notebook on your website
 with the following configuration setting in
-:file:`jupyter_notebook_config.py`:
+:file:`jupyter_server_config.py`:
 
 .. code-block:: python
 
-    c.NotebookApp.tornado_settings = {
+    c.ServerApp.tornado_settings = {
         'headers': {
             'Content-Security-Policy': "frame-ancestors https://mywebsite.example.com 'self' "
         }
@@ -355,13 +355,13 @@ websockets, and present you with a warning at startup. In this case, you need
 to configure your system not to use the proxy for the server's address.
 
 For example, in Firefox, go to the Preferences panel, Advanced section,
-Network tab, click 'Settings...', and add the address of the notebook server
+Network tab, click 'Settings...', and add the address of the Jupyter server
 to the 'No proxy for' field.
 
 Docker CMD
 ~~~~~~~~~~
 
-Using ``jupyter notebook`` as a
+Using ``jupyter server`` as a
 `Docker CMD <https://docs.docker.com/engine/reference/builder/#cmd>`_ results in
 kernels repeatedly crashing, likely due to a lack of `PID reaping
 <https://blog.phusion.nl/2015/01/20/docker-and-the-pid-1-zombie-reaping-problem/>`_.
@@ -376,4 +376,4 @@ Dockerfile `ENTRYPOINT`::
   ENTRYPOINT ["/usr/bin/tini", "--"]
 
   EXPOSE 8888
-  CMD ["jupyter", "notebook", "--port=8888", "--no-browser", "--ip=0.0.0.0"]
+  CMD ["jupyter", "server", "--port=8888", "--no-browser", "--ip=0.0.0.0"]

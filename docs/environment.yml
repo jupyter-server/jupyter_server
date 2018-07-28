@@ -1,4 +1,4 @@
-name: notebook_docs
+name: jupyter_server_docs
 dependencies:
 - python=3.5
 - sphinx_rtd_theme
