@@ -113,7 +113,10 @@ def find_package_data():
     os.chdir(cwd)
 
     package_data = {
+        'jupyter_server' : ['templates/*'],
         'jupyter_server.bundler.tests': ['resources/*', 'resources/*/*', 'resources/*/*/.*'],
+        'jupyter_server.services.api': ['api.yaml'],
+        'jupyter_server.i18n': ['*/LC_MESSAGES/*.*'],
     }
 
     return package_data
