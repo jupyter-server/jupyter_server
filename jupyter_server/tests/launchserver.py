@@ -59,7 +59,7 @@ class ServerTestBase(TestCase):
             try:
                 requests.get(url)
             except Exception as e:
-                if not cls.notebook_thread.is_alive():
+                if not cls.server_thread.is_alive():
                     raise RuntimeError("The Jupyter server failed to start")
                 time.sleep(POLL_INTERVAL)
             else:
@@ -70,8 +70,8 @@ class ServerTestBase(TestCase):
     @classmethod
     def wait_until_dead(cls):
         """Wait for the server process to terminate after shutdown"""
-        cls.notebook_thread.join(timeout=MAX_WAITTIME)
-        if cls.notebook_thread.is_alive():
+        cls.server_thread.join(timeout=MAX_WAITTIME)
+        if cls.server_thread.is_alive():
             raise TimeoutError("Undead Jupyter server")
 
     @classmethod
@@ -110,11 +110,10 @@ class ServerTestBase(TestCase):
         data_dir = cls.data_dir = tmp('data')
         config_dir = cls.config_dir = tmp('config')
         runtime_dir = cls.runtime_dir = tmp('runtime')
-        cls.root_dir = tmp('notebooks')
+        cls.root_dir = tmp('root_dir')
         cls.env_patch = patch.dict('os.environ', {
             'HOME': cls.home_dir,
             'PYTHONPATH': os.pathsep.join(sys.path),
-            'IPYTHONDIR': pjoin(cls.home_dir, '.ipython'),
             'JUPYTER_NO_CONFIG': '1', # needed in the future
             'JUPYTER_CONFIG_DIR' : config_dir,
             'JUPYTER_DATA_DIR' : data_dir,
@@ -140,7 +139,7 @@ class ServerTestBase(TestCase):
             if 'asyncio' in sys.modules:
                 import asyncio
                 asyncio.set_event_loop(asyncio.new_event_loop())
-            app = cls.notebook = ServerApp(
+            app = cls.server = ServerApp(
                 port=cls.port,
                 port_retries=0,
                 open_browser=False,
@@ -170,15 +169,15 @@ class ServerTestBase(TestCase):
                 # set the event, so failure to start doesn't cause a hang
                 started.set()
                 app.session_manager.close()
-        cls.notebook_thread = Thread(target=start_thread)
-        cls.notebook_thread.daemon = True
-        cls.notebook_thread.start()
+        cls.server_thread = Thread(target=start_thread)
+        cls.server_thread.daemon = True
+        cls.server_thread.start()
         started.wait()
         cls.wait_until_alive()
 
     @classmethod
     def teardown_class(cls):
-        cls.notebook.stop()
+        cls.server.stop()
         cls.wait_until_dead()
         cls.env_patch.stop()
         cls.path_patch.stop()

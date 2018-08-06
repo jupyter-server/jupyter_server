@@ -224,7 +224,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         kernel = self.kernel_manager.get_kernel(self.kernel_id)
         self.session.key = kernel.session.key
         future = self.request_kernel_info()
-        
+
         def give_up():
             """Don't wait forever for the kernel to reply"""
             if future.done():
@@ -307,8 +307,13 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         if channel not in self.channels:
             self.log.warning("No such channel: %r", channel)
             return
-        stream = self.channels[channel]
-        self.session.send(stream, msg)
+        am = self.kernel_manager.allowed_message_types
+        mt = msg['header']['msg_type']
+        if am and mt not in am:
+            self.log.warning('Received message of type "%s", which is not allowed. Ignoring.' % mt)
+        else:
+            stream = self.channels[channel]
+            self.session.send(stream, msg)
 
     def _on_zmq_reply(self, stream, msg_list):
         idents, fed_msg_list = self.session.feed_identities(msg_list)

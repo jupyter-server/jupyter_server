@@ -3,6 +3,8 @@
 import json
 import time
 
+from traitlets.config import Config
+
 from tornado.httpclient import HTTPRequest
 from tornado.ioloop import IOLoop
 from tornado.websocket import websocket_connect
@@ -184,3 +186,20 @@ class KernelAPITest(ServerTestBase):
                 break
         model = self.kern_api.get(kid).json()
         self.assertEqual(model['connections'], 0)
+
+
+class KernelFilterTest(ServerTestBase):
+    # A special install of ServerTestBase where only `kernel_info_request`
+    # messages are allowed.
+
+    config = Config({
+        'ServerApp': {
+            'MappingKernelManager': {
+                'allowed_message_types': ['kernel_info_request']
+            }
+        }
+    })
+
+    # Sanity check verifying that the configurable was properly set.
+    def test_config(self):
+        self.assertEqual(self.server.kernel_manager.allowed_message_types, ['kernel_info_request'])
