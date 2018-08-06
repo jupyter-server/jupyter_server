@@ -681,7 +681,7 @@ class APITest(ServerTestBase):
         """
         Temporarily patch the root dir of our checkpoint manager.
         """
-        cpm = self.notebook.contents_manager.checkpoints
+        cpm = self.server.contents_manager.checkpoints
         old_dirname = cpm.root_dir
         cpm.root_dir = dirname
         try:
@@ -717,7 +717,7 @@ class GenericFileCheckpointsAPITest(APITest):
     def test_config_did_something(self):
 
         self.assertIsInstance(
-            self.notebook.contents_manager.checkpoints,
+            self.server.contents_manager.checkpoints,
             GenericFileCheckpoints,
         )
 

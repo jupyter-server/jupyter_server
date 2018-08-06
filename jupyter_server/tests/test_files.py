@@ -57,7 +57,7 @@ class FilesTest(ServerTestBase):
                 r = self.request('GET', url_path_join('files', d, foo))
                 self.assertEqual(r.status_code, 404)
 
-        self.notebook.contents_manager.allow_hidden = True
+        self.server.contents_manager.allow_hidden = True
         try:
             for d in not_hidden:
                 path = pjoin(rootdir, d.replace('/', os.sep))
@@ -75,7 +75,7 @@ class FilesTest(ServerTestBase):
                     r.raise_for_status()
                     self.assertEqual(r.text, foo)
         finally:
-            self.notebook.contents_manager.allow_hidden = False
+            self.server.contents_manager.allow_hidden = False
 
     def test_contents_manager(self):
         "make sure ContentsManager returns right files (ipynb, bin, txt)."

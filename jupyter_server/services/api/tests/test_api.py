@@ -29,4 +29,4 @@ class KernelAPITest(ServerTestBase):
         assert data['kernels'] == 0
         assert data['last_activity'].endswith('Z')
         assert data['started'].endswith('Z')
-        assert data['started'] == isoformat(self.notebook.web_app.settings['started'])
+        assert data['started'] == isoformat(self.server.web_app.settings['started'])
