@@ -28,7 +28,11 @@ from ipython_genutils.py3compat import getcwd
 
 
 class MappingKernelManager(MultiKernelManager):
-    """A KernelManager that handles file mapping and HTTP error handling"""
+    """A KernelManager that handles
+     - File mapping
+     - HTTP error handling
+     - Kernel message filtering
+    """
 
     @default('kernel_manager_class')
     def _default_kernel_manager_class(self):
@@ -93,15 +97,15 @@ class MappingKernelManager(MultiKernelManager):
         no frontends are connected.
         """
     )
-    
+
     kernel_info_timeout = Float(60, config=True,
         help="""Timeout for giving up on a kernel (in seconds).
 
         On starting and restarting kernels, we check whether the
         kernel is running and responsive by sending kernel_info_requests.
         This sets the timeout in seconds for how long the kernel can take
-        before being presumed dead. 
-        This affects the MappingKernelManager (which handles kernel restarts) 
+        before being presumed dead.
+        This affects the MappingKernelManager (which handles kernel restarts)
         and the ZMQChannelsHandler (which handles the startup).
         """
     )
@@ -117,6 +121,12 @@ class MappingKernelManager(MultiKernelManager):
     def __init__(self, **kwargs):
         super(MappingKernelManager, self).__init__(**kwargs)
         self.last_kernel_activity = utcnow()
+
+    allowed_message_types = List(trait=Unicode(), config=True,
+        help="""White list of allowed kernel message types.
+        When the list is empty, all message types are allowed.
+        """
+    )
 
     #-------------------------------------------------------------------------
     # Methods for managing kernels and sessions
@@ -287,32 +297,32 @@ class MappingKernelManager(MultiKernelManager):
         # return a Future that will resolve when the kernel has successfully restarted
         channel = kernel.connect_shell()
         future = Future()
-        
+
         def finish():
             """Common cleanup when restart finishes/fails for any reason."""
             if not channel.closed():
                 channel.close()
             loop.remove_timeout(timeout)
             kernel.remove_restart_callback(on_restart_failed, 'dead')
-        
+
         def on_reply(msg):
             self.log.debug("Kernel info reply received: %s", kernel_id)
             finish()
             if not future.done():
                 future.set_result(msg)
-            
+
         def on_timeout():
             self.log.warning("Timeout waiting for kernel_info_reply: %s", kernel_id)
             finish()
             if not future.done():
                 future.set_exception(gen.TimeoutError("Timeout waiting for restart"))
-        
+
         def on_restart_failed():
             self.log.warning("Restarting kernel failed: %s", kernel_id)
             finish()
             if not future.done():
                 future.set_exception(RuntimeError("Restart failed"))
-        
+
         kernel.add_restart_callback(on_restart_failed, 'dead')
         kernel.session.send(channel, "kernel_info_request")
         channel.on_recv(on_reply)
@@ -366,7 +376,7 @@ class MappingKernelManager(MultiKernelManager):
 
     def start_watching_activity(self, kernel_id):
         """Start watching IOPub messages on a kernel for activity.
-        
+
         - update last_activity on every message
         - record execution_state from status messages
         """
