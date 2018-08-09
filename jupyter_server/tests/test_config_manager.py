@@ -9,15 +9,15 @@ from jupyter_server.config_manager import BaseJSONConfigManager
 def test_json():
     tmpdir = tempfile.mkdtemp()
     try:
-        root_data = dict(a=1, x=2, nest={'a':1, 'x':2})
+        root_data = dict(a=1, x=2, nest={'a': 1, 'x': 2})
         with open(os.path.join(tmpdir, 'foo.json'), 'w') as f:
             json.dump(root_data, f)
         # also make a foo.d/ directory with multiple json files
         os.makedirs(os.path.join(tmpdir, 'foo.d'))
         with open(os.path.join(tmpdir, 'foo.d', 'a.json'), 'w') as f:
-            json.dump(dict(a=2, b=1, nest={'a':2, 'b':1}), f)
+            json.dump(dict(a=2, b=1, nest={'a': 2, 'b': 1}), f)
         with open(os.path.join(tmpdir, 'foo.d', 'b.json'), 'w') as f:
-            json.dump(dict(a=3, b=2, c=3, nest={'a':3, 'b':2, 'c':3}, only_in_b={'x':1}), f)
+            json.dump(dict(a=3, b=2, c=3, nest={'a': 3, 'b': 2, 'c': 3}, only_in_b={'x': 1}), f)
         manager = BaseJSONConfigManager(config_dir=tmpdir, read_directory=False)
         data = manager.get('foo')
         assert 'a' in data
@@ -53,5 +53,3 @@ def test_json():
 
     finally:
         shutil.rmtree(tmpdir)
-
-

@@ -4,19 +4,12 @@ import getpass
 import logging
 import os
 import re
-import signal
-from subprocess import Popen, PIPE, STDOUT
-import sys
 from tempfile import NamedTemporaryFile
 
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch # py2
+from unittest.mock import patch
+import pytest
 
-import nose.tools as nt
-
-from ipython_genutils.tempdir import TemporaryDirectory
+from tempfile import TemporaryDirectory
 
 from traitlets.tests.utils import check_help_all_output
 from traitlets import TraitError
@@ -32,6 +25,7 @@ def test_help_output():
     """jupyter server --help-all works"""
     check_help_all_output('jupyter_server')
 
+
 def test_server_info_file():
     td = TemporaryDirectory()
     svapp = ServerApp(runtime_dir=td.name, log=logging.getLogger())
@@ -42,59 +36,67 @@ def test_server_info_file():
     svapp.initialize(argv=[])
     svapp.write_server_info_file()
     servers = get_servers()
-    nt.assert_equal(len(servers), 1)
-    nt.assert_equal(servers[0]['port'], svapp.port)
-    nt.assert_equal(servers[0]['url'], svapp.connection_url)
+    assert len(servers) == 1
+    assert servers[0]['port'] == svapp.port
+    assert servers[0]['url'] == svapp.connection_url
     svapp.remove_server_info_file()
-    nt.assert_equal(get_servers(), [])
+    assert get_servers() == []
 
     # The ENOENT error should be silenced.
     svapp.remove_server_info_file()
 
+
 def test_root_dir():
     with TemporaryDirectory() as td:
         app = ServerApp(root_dir=td)
-        nt.assert_equal(app.root_dir, td)
+        assert app.root_dir == td
+
 
 def test_no_create_root_dir():
     with TemporaryDirectory() as td:
         rootdir = os.path.join(td, 'notebooks')
         app = ServerApp()
-        with nt.assert_raises(TraitError):
+        with pytest.raises(TraitError):
             app.root_dir = rootdir
+
 
 def test_missing_root_dir():
     with TemporaryDirectory() as td:
         rootdir = os.path.join(td, 'root', 'dir', 'is', 'missing')
         app = ServerApp()
-        with nt.assert_raises(TraitError):
+        with pytest.raises(TraitError):
             app.root_dir = rootdir
+
 
 def test_invalid_root_dir():
     with NamedTemporaryFile() as tf:
         app = ServerApp()
-        with nt.assert_raises(TraitError):
+        with pytest.raises(TraitError):
             app.root_dir = tf
+
 
 def test_root_dir_with_slash():
     with TemporaryDirectory(suffix="_slash" + os.sep) as td:
         app = ServerApp(root_dir=td)
-        nt.assert_false(app.root_dir.endswith(os.sep))
+        assert not app.root_dir.endswith(os.sep)
+
 
 def test_root_dir_root():
-    root = os.path.abspath(os.sep) # gets the right value on Windows, Posix
+    root = os.path.abspath(os.sep)  # gets the right value on Windows, Posix
     app = ServerApp(root_dir=root)
-    nt.assert_equal(app.root_dir, root)
+    assert app.root_dir == root
+
 
 def test_generate_config():
     with TemporaryDirectory() as td:
         app = ServerApp(config_dir=td)
         app.initialize(['--generate-config', '--allow-root'])
-        with nt.assert_raises(NoStart):
+        with pytest.raises(NoStart):
             app.start()
         assert os.path.exists(os.path.join(td, 'jupyter_server_config.py'))
 
-#test if the version testin function works
+
+# test if the version testin function works
 def test_pep440_version():
 
     for version in [
@@ -105,18 +107,13 @@ def test_pep440_version():
         '1.2.3.dev1.post2',
         ]:
         def loc():
-            with nt.assert_raises(ValueError):
+            with pytest.raises(ValueError):
                 raise_on_bad_version(version)
         yield loc
 
-    for version in [
-        '4.1.1',
-        '4.2.1b3',
-        ]:
-
-        yield (raise_on_bad_version, version)
 
 pep440re = re.compile('^(\d+)\.(\d+)\.(\d+((a|b|rc)\d+)?)(\.post\d+)?(\.dev\d*)?$')
+
 
 def raise_on_bad_version(version):
     if not pep440re.match(version):
@@ -124,8 +121,10 @@ def raise_on_bad_version(version):
                          "which might lead to sdist and wheel being seen as 2 different release. "
                          "E.g: do not use dots for beta/alpha/rc markers.")
 
+
 def test_current_version():
     raise_on_bad_version(__version__)
+
 
 def test_server_password():
     password = 'secret'
@@ -138,11 +137,13 @@ def test_server_password():
             app.start()
             sv = ServerApp()
             sv.load_config_file()
-            nt.assert_not_equal(sv.password, '')
+            assert sv.password != ''
             passwd_check(sv.password, password)
+
 
 class TestingStopApp(serverapp.JupyterServerStopApp):
     """For testing the logic of JupyterServerStopApp."""
+
     def __init__(self, **kwargs):
         super(TestingStopApp, self).__init__(**kwargs)
         self.servers_shut_down = []
@@ -150,6 +151,7 @@ class TestingStopApp(serverapp.JupyterServerStopApp):
     def shutdown_server(self, server):
         self.servers_shut_down.append(server)
         return True
+
 
 def test_server_stop():
     def list_running_servers(runtime_dir):
@@ -173,14 +175,14 @@ def test_server_stop():
         app = TestingStopApp()
         app.initialize(['105'])
         app.start()
-    nt.assert_equal(len(app.servers_shut_down), 1)
-    nt.assert_equal(app.servers_shut_down[0]['port'], 105)
+    assert len(app.servers_shut_down) == 1
+    assert app.servers_shut_down[0]['port'] == 105
 
     # test no match
-    with mock_servers, patch('os.kill') as os_kill:
+    with mock_servers, patch('os.kill'):
         app = TestingStopApp()
         app.initialize(['999'])
-        with nt.assert_raises(SystemExit) as exc:
+        with pytest.raises(SystemExit) as exc:
             app.start()
-        nt.assert_equal(exc.exception.code, 1)
-    nt.assert_equal(len(app.servers_shut_down), 0)
+        assert exc.value.code == 1
+    assert len(app.servers_shut_down) == 0

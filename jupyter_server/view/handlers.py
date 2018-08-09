@@ -1,4 +1,4 @@
-#encoding: utf-8
+# encoding: utf-8
 """Tornado handlers for viewing HTML files."""
 
 # Copyright (c) Jupyter Development Team.
@@ -22,6 +22,7 @@ class ViewHandler(JupyterHandler):
         self.write(
             self.render_template('view.html', file_url=file_url, page_title=basename)
         )
+
 
 default_handlers = [
     (r"/view%s" % path_regex, ViewHandler),

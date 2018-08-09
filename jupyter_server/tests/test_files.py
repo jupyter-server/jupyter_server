@@ -1,14 +1,10 @@
 # coding: utf-8
 """Test the /files/ handler."""
 
+import json
 import io
 import os
-from unicodedata import normalize
-
-pjoin = os.path.join
-
-import requests
-import json
+from os.path import join as pjoin
 
 from nbformat import write
 from nbformat.v4 import (new_notebook,
@@ -17,7 +13,6 @@ from nbformat.v4 import (new_notebook,
 
 from jupyter_server.utils import url_path_join
 from .launchserver import ServerTestBase
-from ipython_genutils import py3compat
 
 
 class FilesTest(ServerTestBase):
