@@ -7,11 +7,12 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 # Distributed under the terms of the Modified BSD License.
 
 import json
-import os
 
-from tornado import gen, web
+from tornado import web
 
 from ...base.handlers import APIHandler
+from ...utils import force_async
+
 from jupyter_client.jsonutil import date_default
 from jupyter_server.utils import url_path_join
 from jupyter_client.kernelspec import NoSuchKernel
@@ -20,16 +21,14 @@ from jupyter_client.kernelspec import NoSuchKernel
 class SessionRootHandler(APIHandler):
 
     @web.authenticated
-    @gen.coroutine
-    def get(self):
+    async def get(self):
         # Return a list of running sessions
         sm = self.session_manager
-        sessions = yield gen.maybe_future(sm.list_sessions())
+        sessions = await force_async(sm.list_sessions())
         self.finish(json.dumps(sessions, default=date_default))
 
     @web.authenticated
-    @gen.coroutine
-    def post(self):
+    async def post(self):
         # Creates a new session
         #(unless a session already exists for the named session)
         sm = self.session_manager
@@ -62,15 +61,14 @@ class SessionRootHandler(APIHandler):
             self.log.debug("No kernel specified, using default kernel")
             kernel_name = None
 
-        exists = yield gen.maybe_future(sm.session_exists(path=path))
+        exists = sm.session_exists(path=path)
         if exists:
-            model = yield gen.maybe_future(sm.get_session(path=path))
+            model = sm.get_session(path=path)
         else:
             try:
-                model = yield gen.maybe_future(
-                    sm.create_session(path=path, kernel_name=kernel_name,
+                model = await sm.create_session(path=path, kernel_name=kernel_name,
                                       kernel_id=kernel_id, name=name,
-                                      type=mtype))
+                                      type=mtype)
             except NoSuchKernel:
                 msg = ("The '%s' kernel is not available. Please pick another "
                        "suitable kernel instead, or install that kernel." % kernel_name)
@@ -89,16 +87,14 @@ class SessionRootHandler(APIHandler):
 class SessionHandler(APIHandler):
 
     @web.authenticated
-    @gen.coroutine
-    def get(self, session_id):
+    async def get(self, session_id):
         # Returns the JSON model for a single session
         sm = self.session_manager
-        model = yield gen.maybe_future(sm.get_session(session_id=session_id))
+        model = await force_async(sm.get_session(session_id=session_id))
         self.finish(json.dumps(model, default=date_default))
 
     @web.authenticated
-    @gen.coroutine
-    def patch(self, session_id):
+    async def patch(self, session_id):
         """Patch updates sessions:
 
         - path updates session to track renamed paths
@@ -111,7 +107,7 @@ class SessionHandler(APIHandler):
             raise web.HTTPError(400, "No JSON data provided")
 
         # get the previous session model
-        before = yield gen.maybe_future(sm.get_session(session_id=session_id))
+        before = await force_async(sm.get_session(session_id=session_id))
 
         changes = {}
         if 'notebook' in model and 'path' in model['notebook']:
@@ -133,29 +129,28 @@ class SessionHandler(APIHandler):
                 changes['kernel_id'] = kernel_id
             elif model['kernel'].get('name') is not None:
                 kernel_name = model['kernel']['name']
-                kernel_id = yield sm.start_kernel_for_session(
+                kernel_id = await sm.start_kernel_for_session(
                     session_id, kernel_name=kernel_name, name=before['name'],
                     path=before['path'], type=before['type'])
                 changes['kernel_id'] = kernel_id
 
-        yield gen.maybe_future(sm.update_session(session_id, **changes))
-        model = yield gen.maybe_future(sm.get_session(session_id=session_id))
+        await force_async(sm.update_session(session_id, **changes))
+        model = await force_async(sm.get_session(session_id=session_id))
 
         if model['kernel']['id'] != before['kernel']['id']:
             # kernel_id changed because we got a new kernel
             # shutdown the old one
-            yield gen.maybe_future(
+            await force_async(
                 km.shutdown_kernel(before['kernel']['id'])
             )
         self.finish(json.dumps(model, default=date_default))
 
     @web.authenticated
-    @gen.coroutine
-    def delete(self, session_id):
+    async def delete(self, session_id):
         # Deletes the session with given session_id
         sm = self.session_manager
         try:
-            yield gen.maybe_future(sm.delete_session(session_id))
+            await force_async(sm.delete_session(session_id))
         except KeyError:
             # the kernel was deleted but the session wasn't!
             raise web.HTTPError(410, "Kernel deleted before session")

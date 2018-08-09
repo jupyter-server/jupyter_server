@@ -3,7 +3,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-import os
 import uuid
 
 try:
@@ -12,11 +11,11 @@ except ImportError:
     # fallback on pysqlite2 if Python was build without sqlite
     from pysqlite2 import dbapi2 as sqlite3
 
-from tornado import gen, web
+from tornado import web
 
 from traitlets.config.configurable import LoggingConfigurable
-from ipython_genutils.py3compat import unicode_type
 from traitlets import Instance
+from ...utils import force_async
 
 
 class SessionManager(LoggingConfigurable):
@@ -67,32 +66,24 @@ class SessionManager(LoggingConfigurable):
 
     def new_session_id(self):
         "Create a uuid for a new session"
-        return unicode_type(uuid.uuid4())
+        return str(uuid.uuid4())
 
-    @gen.coroutine
-    def create_session(self, path=None, name=None, type=None, kernel_name=None, kernel_id=None):
+    async def create_session(self, path=None, name=None, type=None, kernel_name=None, kernel_id=None):
         """Creates a session and returns its model"""
         session_id = self.new_session_id()
         if kernel_id is not None and kernel_id in self.kernel_manager:
             pass
         else:
-            kernel_id = yield self.start_kernel_for_session(session_id, path, name, type, kernel_name)
-        result = yield gen.maybe_future(
-            self.save_session(session_id, path=path, name=name, type=type, kernel_id=kernel_id)
-        )
-        # py2-compat
-        raise gen.Return(result)
+            kernel_id = await self.start_kernel_for_session(session_id, path, name, type, kernel_name)
+        return self.save_session(session_id, path=path, name=name, type=type, kernel_id=kernel_id)
 
-    @gen.coroutine
-    def start_kernel_for_session(self, session_id, path, name, type, kernel_name):
+    async def start_kernel_for_session(self, session_id, path, name, type, kernel_name):
         """Start a new kernel for a given session."""
         # allow contents manager to specify kernels cwd
         kernel_path = self.contents_manager.get_kernel_path(path=path)
-        kernel_id = yield gen.maybe_future(
+        return await force_async(
             self.kernel_manager.start_kernel(path=kernel_path, kernel_name=kernel_name)
         )
-        # py2-compat
-        raise gen.Return(kernel_id)
 
     def save_session(self, session_id, path=None, name=None, type=None, kernel_id=None):
         """Saves the items for the session with the given session_id
@@ -234,9 +225,8 @@ class SessionManager(LoggingConfigurable):
                 pass
         return result
 
-    @gen.coroutine
-    def delete_session(self, session_id):
+    async def delete_session(self, session_id):
         """Deletes the row in the session database with given session_id"""
         session = self.get_session(session_id=session_id)
-        yield gen.maybe_future(self.kernel_manager.shutdown_kernel(session['kernel']['id']))
+        await force_async(self.kernel_manager.shutdown_kernel(session['kernel']['id']))
         self.cursor.execute("DELETE FROM session WHERE session_id=?", (session_id,))

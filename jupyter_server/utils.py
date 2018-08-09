@@ -3,8 +3,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import print_function
-
 import ctypes
 import errno
 import os
@@ -12,13 +10,7 @@ import stat
 import sys
 from distutils.version import LooseVersion
 
-try:
-    from urllib.parse import quote, unquote, urlparse
-except ImportError:
-    from urllib import quote, unquote
-    from urlparse import urlparse
-
-from ipython_genutils import py3compat
+from urllib.parse import quote, unquote, urlparse
 
 # UF_HIDDEN is a stat flag not defined in the stat module.
 # It is used by BSD to indicate hidden files.
@@ -75,7 +67,7 @@ def url_escape(path):
 
     Turns '/foo bar/' into '/foo%20bar/'
     """
-    parts = py3compat.unicode_to_str(path, encoding='utf8').split('/')
+    parts = path.split('/')
     return u'/'.join([quote(p) for p in parts])
 
 def url_unescape(path):
@@ -84,9 +76,16 @@ def url_unescape(path):
     Turns '/foo%20bar/' into '/foo bar/'
     """
     return u'/'.join([
-        py3compat.str_to_unicode(unquote(p), encoding='utf8')
-        for p in py3compat.unicode_to_str(path, encoding='utf8').split('/')
+        unquote(p)
+        for p in path.split('/')
     ])
+
+
+def cast_unicode(s, encoding=None):
+    """Case an object to unicode"""
+    if isinstance(s, bytes):
+        return decode(s, encoding)
+    return s
 
 
 def is_file_hidden_win(abs_path, stat_res=None):
@@ -111,7 +110,7 @@ def is_file_hidden_win(abs_path, stat_res=None):
     win32_FILE_ATTRIBUTE_HIDDEN = 0x02
     try:
         attrs = ctypes.windll.kernel32.GetFileAttributesW(
-            py3compat.cast_unicode(abs_path)
+            cast_unicode(abs_path)
         )
     except AttributeError:
         pass
@@ -277,6 +276,16 @@ def check_version(v, check):
         return LooseVersion(v) >= LooseVersion(check)
     except TypeError:
         return True
+
+
+async def force_async(obj):
+    """Force an object to be asynchronous"""
+    if hasattr(obj, '__await__'):
+        return await obj
+
+    async def inner():
+        return obj
+    return await inner()
 
 
 # Copy of IPython.utils.process.check_pid:

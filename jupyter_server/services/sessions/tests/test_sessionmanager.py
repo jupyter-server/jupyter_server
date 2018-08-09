@@ -215,7 +215,7 @@ class TestSessionManager(TestCase):
             dict(path='/path/to/2/test2.ipynb', kernel_name='python'),
             dict(path='/path/to/3', name='foo', type='console', kernel_name='python'),
         )
-        sm.delete_session(sessions[1]['id'])
+        self.loop.run_sync(lambda: sm.delete_session(sessions[1]['id']))
         new_sessions = sm.list_sessions()
         expected = [{
                 'id': sessions[0]['id'],
