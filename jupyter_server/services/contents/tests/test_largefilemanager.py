@@ -1,5 +1,5 @@
 from unittest import TestCase
-from ipython_genutils.tempdir import TemporaryDirectory
+from tempfile import TemporaryDirectory
 from ..largefilemanager import LargeFileManager
 import os
 from tornado import web

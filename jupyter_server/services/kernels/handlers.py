@@ -230,7 +230,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         loop = IOLoop.current()
         loop.add_timeout(loop.time() + self.kernel_info_timeout, give_up)
         # actually wait for it
-        yield future
+        await future
 
     async def get(self, kernel_id):
         self.kernel_id = cast_unicode(kernel_id, 'ascii')

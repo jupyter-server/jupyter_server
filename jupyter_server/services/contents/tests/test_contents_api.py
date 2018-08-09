@@ -1,6 +1,7 @@
 # coding: utf-8
 """Test the contents webservice API."""
 
+from base64 import encodebytes, decodebytes
 from contextlib import contextmanager
 from functools import partial
 import io
@@ -10,11 +11,8 @@ import shutil
 import sys
 from unicodedata import normalize
 
-pjoin = os.path.join
-
-import requests
-
 from ..filecheckpoints import GenericFileCheckpoints
+from ....utils import cast_unicode
 
 from traitlets.config import Config
 from jupyter_server.utils import url_path_join, url_escape, to_os_path
@@ -24,13 +22,7 @@ from nbformat.v4 import (
     new_notebook, new_markdown_cell,
 )
 from nbformat import v2
-from ipython_genutils import py3compat
-from ipython_genutils.tempdir import TemporaryDirectory
-
-try: #PY3
-    from base64 import encodebytes, decodebytes
-except ImportError: #PY2
-    from base64 import encodestring as encodebytes, decodestring as decodebytes
+from tempfile import TemporaryDirectory
 
 
 def uniq_stable(elems):
@@ -42,15 +34,18 @@ def uniq_stable(elems):
     seen = set()
     return [x for x in elems if x not in seen and not seen.add(x)]
 
+
 def notebooks_only(dir_model):
-    return [nb for nb in dir_model['content'] if nb['type']=='notebook']
+    return [nb for nb in dir_model['content'] if nb['type'] == 'notebook']
+
 
 def dirs_only(dir_model):
-    return [x for x in dir_model['content'] if x['type']=='directory']
+    return [x for x in dir_model['content'] if x['type'] == 'directory']
 
 
 class API(object):
     """Wrapper for contents API calls."""
+
     def __init__(self, request):
         self.request = request
 
@@ -71,7 +66,7 @@ class API(object):
             params['type'] = type
         if format is not None:
             params['format'] = format
-        if content == False:
+        if content is False:
             params['content'] = '0'
         return self._req('GET', path, params=params)
 
@@ -85,7 +80,7 @@ class API(object):
         return self._req('POST', path, json.dumps({'type': 'directory'}))
 
     def copy(self, copy_from, path='/'):
-        body = json.dumps({'copy_from':copy_from})
+        body = json.dumps({'copy_from': copy_from})
         return self._req('POST', path, body)
 
     def create(self, path='/'):
@@ -98,7 +93,7 @@ class API(object):
         return self._req('PUT', path, json.dumps({'type': 'directory'}))
 
     def copy_put(self, copy_from, path='/'):
-        body = json.dumps({'copy_from':copy_from})
+        body = json.dumps({'copy_from': copy_from})
         return self._req('PUT', path, body)
 
     def save(self, path, body):
@@ -111,10 +106,10 @@ class API(object):
         body = json.dumps({'path': new_path})
         return self._req('PATCH', path, body)
 
-    def get_checkpoints(self,  path):
+    def get_checkpoints(self, path):
         return self._req('GET', url_path_join(path, 'checkpoints'))
 
-    def new_checkpoint(self,  path):
+    def new_checkpoint(self, path):
         return self._req('POST', url_path_join(path, 'checkpoints'))
 
     def restore_checkpoint(self, path, checkpoint_id):
@@ -142,7 +137,7 @@ class APITest(ServerTestBase):
     hidden_dirs = ['.hidden', '__pycache__']
 
     # Don't include root dir.
-    dirs = uniq_stable([py3compat.cast_unicode(d) for (d,n) in dirs_nbs[1:]])
+    dirs = uniq_stable([cast_unicode(d) for (d, n) in dirs_nbs[1:]])
     top_level_dirs = {normalize('NFC', d.split('/')[0]) for d in dirs}
 
     @staticmethod
@@ -245,9 +240,9 @@ class APITest(ServerTestBase):
 
         nbs = notebooks_only(self.api.list('foo').json())
         self.assertEqual(len(nbs), 4)
-        nbnames = { normalize('NFC', n['name']) for n in nbs }
-        expected = [ u'a.ipynb', u'b.ipynb', u'name with spaces.ipynb', u'unicodé.ipynb']
-        expected = { normalize('NFC', name) for name in expected }
+        nbnames = {normalize('NFC', n['name']) for n in nbs}
+        expected = [u'a.ipynb', u'b.ipynb', u'name with spaces.ipynb', u'unicodé.ipynb']
+        expected = {normalize('NFC', name) for name in expected}
         self.assertEqual(nbnames, expected)
 
         nbs = notebooks_only(self.api.list('ordering').json())
@@ -304,7 +299,7 @@ class APITest(ServerTestBase):
             }],
         }
         path = u'å b/Validate tést.ipynb'
-        self.make_txt(path, py3compat.cast_unicode(json.dumps(nb)))
+        self.make_txt(path, cast_unicode(json.dumps(nb)))
         model = self.api.read(path).json()
         self.assertEqual(model['path'], path)
         self.assertEqual(model['type'], 'notebook')
@@ -363,7 +358,7 @@ class APITest(ServerTestBase):
 
     def _check_created(self, resp, path, type='notebook'):
         self.assertEqual(resp.status_code, 201)
-        location_header = py3compat.str_to_unicode(resp.headers['Location'])
+        location_header = resp.headers['Location']
         self.assertEqual(location_header, url_path_join(self.url_prefix, u'api/contents', url_escape(path)))
         rjson = resp.json()
         self.assertEqual(rjson['name'], path.rsplit('/', 1)[-1])
@@ -420,14 +415,14 @@ class APITest(ServerTestBase):
 
     def test_mkdir_hidden_400(self):
         with assert_http_error(400):
-            resp = self.api.mkdir(u'å b/.hidden')
+            self.api.mkdir(u'å b/.hidden')
 
     def test_upload_txt(self):
         body = u'ünicode téxt'
         model = {
-            'content' : body,
-            'format'  : 'text',
-            'type'    : 'file',
+            'content': body,
+            'format': 'text',
+            'type': 'file',
         }
         path = u'å b/Upload tést.txt'
         resp = self.api.upload(path, body=json.dumps(model))
@@ -443,9 +438,9 @@ class APITest(ServerTestBase):
         body = b'\xFFblob'
         b64body = encodebytes(body).decode('ascii')
         model = {
-            'content' : b64body,
-            'format'  : 'base64',
-            'type'    : 'file',
+            'content': b64body,
+            'format': 'base64',
+            'type': 'file',
         }
         path = u'å b/Upload tést.blob'
         resp = self.api.upload(path, body=json.dumps(model))
@@ -495,12 +490,12 @@ class APITest(ServerTestBase):
 
     def test_copy_put_400(self):
         with assert_http_error(400):
-            resp = self.api.copy_put(u'å b/ç d.ipynb', u'å b/cøpy.ipynb')
+            self.api.copy_put(u'å b/ç d.ipynb', u'å b/cøpy.ipynb')
 
     def test_copy_dir_400(self):
         # can't copy directories
         with assert_http_error(400):
-            resp = self.api.copy(u'å b', u'foo')
+            self.api.copy(u'å b', u'foo')
 
     def test_delete(self):
         for d, name in self.dirs_nbs:
@@ -609,7 +604,7 @@ class APITest(ServerTestBase):
         hcell = new_markdown_cell('Created by test')
         nb.cells.append(hcell)
         # Save
-        nbmodel= {'content': nb, 'type': 'notebook'}
+        nbmodel = {'content': nb, 'type': 'notebook'}
         resp = self.api.save('foo/a.ipynb', body=json.dumps(nbmodel))
 
         # List checkpoints
@@ -720,5 +715,3 @@ class GenericFileCheckpointsAPITest(APITest):
             self.server.contents_manager.checkpoints,
             GenericFileCheckpoints,
         )
-
-

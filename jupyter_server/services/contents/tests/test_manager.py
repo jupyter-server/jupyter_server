@@ -1,6 +1,5 @@
 # coding: utf-8
 """Tests for the notebook manager."""
-from __future__ import print_function
 
 import os
 import sys
@@ -8,16 +7,15 @@ import time
 from contextlib import contextmanager
 from itertools import combinations
 
-from nose import SkipTest
 from tornado.web import HTTPError
 from unittest import TestCase
 from tempfile import NamedTemporaryFile
 
 from nbformat import v4 as nbformat
 
-from ipython_genutils.tempdir import TemporaryDirectory
+from tempfile import TemporaryDirectory
 from traitlets import TraitError
-from ipython_genutils.testing import decorators as dec
+import pytest
 
 from ..filemanager import FileContentsManager
 
@@ -76,7 +74,7 @@ class TestFileContentsManager(TestCase):
             root = td
             fm = FileContentsManager(root_dir=root)
             path = fm._get_os_path('/path/to/notebook/test.ipynb')
-            rel_path_list =  '/path/to/notebook/test.ipynb'.split('/')
+            rel_path_list = '/path/to/notebook/test.ipynb'.split('/')
             fs_path = os.path.join(fm.root_dir, *rel_path_list)
             self.assertEqual(path, fs_path)
 
@@ -108,7 +106,6 @@ class TestFileContentsManager(TestCase):
         self.assertEqual(cp_dir, os.path.join(root, cpm.checkpoint_dir, cp_name))
         self.assertEqual(cp_subdir, os.path.join(root, subd, cpm.checkpoint_dir, cp_name))
 
-    @dec.skipif(sys.platform == 'win32' and sys.version_info[0] < 3)
     def test_bad_symlink(self):
         with TemporaryDirectory() as td:
             cm = FileContentsManager(root_dir=td)
@@ -129,7 +126,6 @@ class TestFileContentsManager(TestCase):
             # broken symlinks should still be shown in the contents manager
             self.assertTrue('bad symlink' in contents)
 
-    @dec.skipif(sys.platform == 'win32' and sys.version_info[0] < 3)
     def test_good_symlink(self):
         with TemporaryDirectory() as td:
             cm = FileContentsManager(root_dir=td)
@@ -152,9 +148,9 @@ class TestFileContentsManager(TestCase):
     def test_403(self):
         if hasattr(os, 'getuid'):
             if os.getuid() == 0:
-                raise SkipTest("Can't test permissions as root")
+                pytest.skip("Can't test permissions as root")
         if sys.platform.startswith('win'):
-            raise SkipTest("Can't test permissions on Windows")
+            pytest.skip("Can't test permissions on Windows")
 
         with TemporaryDirectory() as td:
             cm = FileContentsManager(root_dir=td)
@@ -426,7 +422,6 @@ class TestContentsManager(TestCase):
         cm = self.contents_manager
         # Create a notebook
         model = cm.new_untitled(type='notebook')
-        name = model['name']
         path = model['path']
 
         # Change the name in the model for rename
@@ -637,6 +632,6 @@ class TestContentsManagerNoAtomic(TestContentsManager):
         self._temp_dir = TemporaryDirectory()
         self.td = self._temp_dir.name
         self.contents_manager = FileContentsManager(
-            root_dir = self.td,
+            root_dir=self.td,
         )
         self.contents_manager.use_atomic_writing = False

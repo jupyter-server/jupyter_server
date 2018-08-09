@@ -24,10 +24,7 @@ from ipython_genutils.py3compat import str_to_unicode
 from traitlets.config import Configurable
 from traitlets import Bool
 
-try: #PY3
-    from base64 import encodebytes, decodebytes
-except ImportError: #PY2
-    from base64 import encodestring as encodebytes, decodestring as decodebytes
+from base64 import encodebytes, decodebytes
 
 
 def replace_file(src, dst):
@@ -35,13 +32,8 @@ def replace_file(src, dst):
 
     switches between os.replace or os.rename based on python 2.7 or python 3
     """
-    if hasattr(os, 'replace'): # PY3
-        os.replace(src, dst)
-    else:
-        if os.name == 'nt' and os.path.exists(dst):
-            # Rename over existing file doesn't work on Windows
-            os.remove(dst)
-        os.rename(src, dst)
+    os.replace(src, dst)
+
 
 def copy2_safe(src, dst, log=None):
     """copy src to dst
@@ -55,17 +47,20 @@ def copy2_safe(src, dst, log=None):
         if log:
             log.debug("copystat on %s failed", dst, exc_info=True)
 
+
 def path_to_intermediate(path):
     '''Name of the intermediate file used in atomic writes.
 
     The .~ prefix will make Dropbox ignore the temporary file.'''
     dirname, basename = os.path.split(path)
-    return os.path.join(dirname, '.~'+basename)
+    return os.path.join(dirname, '.~' + basename)
+
 
 def path_to_invalid(path):
     '''Name of invalid file after a failed atomic write and subsequent read.'''
     dirname, basename = os.path.split(path)
-    return os.path.join(dirname, basename+'.invalid')
+    return os.path.join(dirname, basename + '.invalid')
+
 
 @contextmanager
 def atomic_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
@@ -111,7 +106,7 @@ def atomic_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
 
     try:
         yield fileobj
-    except:
+    except Exception:
         # Failed! Move the backup file back to the real path to avoid corruption
         fileobj.close()
         replace_file(tmp_path, path)
@@ -125,7 +120,6 @@ def atomic_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
     # Written successfully, now remove the backup copy
     if os.path.isfile(tmp_path):
         os.remove(tmp_path)
-
 
 
 @contextmanager
@@ -163,13 +157,11 @@ def _simple_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
 
     try:
         yield fileobj
-    except:
+    except Exception:
         fileobj.close()
         raise
 
     fileobj.close()
-
-
 
 
 class FileManagerMixin(Configurable):
@@ -189,7 +181,6 @@ class FileManagerMixin(Configurable):
 
     log : logging.Logger
     """
-
     use_atomic_writing = Bool(True, config=True, help=
     """By default notebooks are saved on disk on a temporary file and then if succefully written, it replaces the old ones.
       This procedure, namely 'atomic_writing', causes some bugs on file system whitout operation order enforcement (like some networked fs).
