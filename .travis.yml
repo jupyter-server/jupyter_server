@@ -41,11 +41,16 @@ script:
     - |
       if [[ $GROUP == docs ]]; then
         EXIT_STATUS=0
+
+        conda env create -f docs/environment.yml
+        source activate notebook_docs
+
         make -C docs/ html || EXIT_STATUS=$?
 
         if [[ $TRAVIS_EVENT_TYPE == cron ]]; then
           make -C docs/ linkcheck || EXIT_STATUS=$?;
         fi
+
         pip install nbval
         pytest --nbval --current-env docs || EXIT_STATUS=$?
         exit $EXIT_STATUS
