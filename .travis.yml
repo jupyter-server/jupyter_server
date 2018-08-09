@@ -25,7 +25,7 @@ before_install:
       fi
 
 install:
-    - pip install six  # avoid compatibility error with json_schema
+    - pip install -U six  # avoid compatibility error with json_schema
     - pip install --pre .[test]
     - wget https://github.com/jgm/pandoc/releases/download/1.19.1/pandoc-1.19.1-1-amd64.deb && sudo dpkg -i pandoc-1.19.1-1-amd64.deb
 
