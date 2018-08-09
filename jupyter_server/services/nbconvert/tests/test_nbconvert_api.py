@@ -1,4 +1,3 @@
-import requests
 
 from jupyter_server.utils import url_path_join
 from jupyter_server.tests.launchserver import ServerTestBase

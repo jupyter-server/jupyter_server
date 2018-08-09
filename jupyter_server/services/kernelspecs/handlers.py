@@ -9,12 +9,13 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-25%3A-
 import glob
 import json
 import os
-pjoin = os.path.join
+from os.path import join as pjoin
 
 from tornado import web
 
 from ...base.handlers import APIHandler
 from ...utils import url_path_join, url_unescape
+
 
 def kernelspec_model(handler, name, spec_dict, resource_dir):
     """Load a KernelSpec by name and return the REST API model"""
@@ -44,6 +45,7 @@ def kernelspec_model(handler, name, spec_dict, resource_dir):
             fname
         )
     return d
+
 
 class MainKernelSpecHandler(APIHandler):
 

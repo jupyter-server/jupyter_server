@@ -5,21 +5,18 @@ import errno
 import io
 import json
 import os
+from os.path import join as pjoin
 import shutil
 
-pjoin = os.path.join
-
-import requests
-
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
-from jupyter_server.utils import url_path_join, url_escape
+from jupyter_server.utils import url_path_join
 from jupyter_server.tests.launchserver import ServerTestBase, assert_http_error
 
 # Copied from jupyter_client.tests.test_kernelspec so updating that doesn't
 # break these tests
 sample_kernel_json = {
-    'argv':['cat', '{connection_file}'],
-    'display_name':'Test kernel',
+    'argv': ['cat', '{connection_file}'],
+    'display_name': 'Test kernel',
 }
 
 some_resource = u"The very model of a modern major general"
@@ -138,4 +135,3 @@ class APITest(ServerTestBase):
 
         with assert_http_error(404):
             self.ks_api.kernel_resource('sample', 'nonexistant.txt')
-

@@ -17,6 +17,7 @@ from jupyter_server.tests.launchserver import ServerTestBase, assert_http_error
 
 class KernelAPI(object):
     """Wrapper for kernel REST API requests"""
+
     def __init__(self, request, base_url, headers):
         self.request = request
         self.base_url = base_url
@@ -29,7 +30,7 @@ class KernelAPI(object):
         if 400 <= response.status_code < 600:
             try:
                 response.reason = response.json()['message']
-            except:
+            except Exception:
                 pass
         response.raise_for_status()
 
@@ -62,11 +63,12 @@ class KernelAPI(object):
             headers=self.headers,
         )
         f = websocket_connect(req)
-        return loop.run_sync(lambda : f)
+        return loop.run_sync(lambda: f)
 
 
 class KernelAPITest(ServerTestBase):
     """Test the kernels web service API"""
+
     def setUp(self):
         self.kern_api = KernelAPI(self.request,
                                   base_url=self.base_url(),

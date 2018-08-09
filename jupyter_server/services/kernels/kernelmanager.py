@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from functools import partial
 import os
 
-from tornado import gen, web
+from tornado import web
 from tornado.concurrent import Future
 from tornado.ioloop import IOLoop, PeriodicCallback
 
@@ -22,9 +22,10 @@ from traitlets import (Any, Bool, Dict, List, Unicode, TraitError, Integer,
        Float, Instance, default, validate
 )
 
+from ...utils import force_async
+
 from jupyter_server.utils import to_os_path, exists
 from jupyter_server._tz import utcnow, isoformat
-from ipython_genutils.py3compat import getcwd
 
 
 class MappingKernelManager(MultiKernelManager):
@@ -53,7 +54,7 @@ class MappingKernelManager(MultiKernelManager):
         try:
             return self.parent.root_dir
         except AttributeError:
-            return getcwd()
+            return os.getcwd()
 
     @validate('root_dir')
     def _update_root_dir(self, proposal):
@@ -72,7 +73,7 @@ class MappingKernelManager(MultiKernelManager):
         for users with poor network connections."""
     )
 
-    cull_interval_default = 300 # 5 minutes
+    cull_interval_default = 300  # 5 minutes
     cull_interval = Integer(cull_interval_default, config=True,
         help="""The interval (in seconds) on which to check for idle kernels exceeding the cull timeout value."""
     )
@@ -111,6 +112,7 @@ class MappingKernelManager(MultiKernelManager):
     )
 
     _kernel_buffers = Any()
+
     @default('_kernel_buffers')
     def _default_kernel_buffers(self):
         return defaultdict(lambda: {'buffer': [], 'session_key': '', 'channels': {}})
@@ -146,8 +148,7 @@ class MappingKernelManager(MultiKernelManager):
             os_path = os.path.dirname(os_path)
         return os_path
 
-    @gen.coroutine
-    def start_kernel(self, kernel_id=None, path=None, **kwargs):
+    async def start_kernel(self, kernel_id=None, path=None, **kwargs):
         """Start a kernel for a session and return its kernel_id.
 
         Parameters
@@ -166,7 +167,7 @@ class MappingKernelManager(MultiKernelManager):
         if kernel_id is None:
             if path is not None:
                 kwargs['cwd'] = self.cwd_for_path(path)
-            kernel_id = yield gen.maybe_future(
+            kernel_id = await force_async(
                 super(MappingKernelManager, self).start_kernel(**kwargs)
             )
             self._kernel_connections[kernel_id] = 0
@@ -186,8 +187,7 @@ class MappingKernelManager(MultiKernelManager):
         if not self._initialized_culler:
             self.initialize_culler()
 
-        # py2-compat
-        raise gen.Return(kernel_id)
+        return kernel_id
 
     def start_buffering(self, kernel_id, session_key, channels):
         """Start buffering messages for a kernel
@@ -315,7 +315,7 @@ class MappingKernelManager(MultiKernelManager):
             self.log.warning("Timeout waiting for kernel_info_reply: %s", kernel_id)
             finish()
             if not future.done():
-                future.set_exception(gen.TimeoutError("Timeout waiting for restart"))
+                future.set_exception(TimeoutError("Timeout waiting for restart"))
 
         def on_restart_failed():
             self.log.warning("Restarting kernel failed: %s", kernel_id)
@@ -349,7 +349,7 @@ class MappingKernelManager(MultiKernelManager):
         kernel = self._kernels[kernel_id]
 
         model = {
-            "id":kernel_id,
+            "id": kernel_id,
             "name": kernel.kernel_name,
             "last_activity": isoformat(kernel.last_activity),
             "execution_state": kernel.execution_state,
@@ -411,13 +411,12 @@ class MappingKernelManager(MultiKernelManager):
         """
         if not self._initialized_culler and self.cull_idle_timeout > 0:
             if self._culler_callback is None:
-                loop = IOLoop.current()
-                if self.cull_interval <= 0: #handle case where user set invalid value
+                if self.cull_interval <= 0:  # handle case where user set invalid value
                     self.log.warning("Invalid value for 'cull_interval' detected (%s) - using default value (%s).",
                         self.cull_interval, self.cull_interval_default)
                     self.cull_interval = self.cull_interval_default
                 self._culler_callback = PeriodicCallback(
-                    self.cull_kernels, 1000*self.cull_interval)
+                    self.cull_kernels, 1000 * self.cull_interval)
                 self.log.info("Culling kernels with idle durations > %s seconds at %s second intervals ...",
                     self.cull_idle_timeout, self.cull_interval)
                 if self.cull_busy:
