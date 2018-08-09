@@ -6,6 +6,7 @@ cache:
         - $HOME/.cache/pip
 python:
     - 3.6
+sudo: required
 
 env:
   global:
