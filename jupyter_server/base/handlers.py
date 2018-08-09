@@ -10,24 +10,15 @@ import json
 import mimetypes
 import os
 import re
-import sys
 import traceback
 import types
 import warnings
-try:
-    # py3
-    from http.client import responses
-    from http.cookies import Morsel
-except ImportError:
-    from httplib import responses
-    from Cookie import Morsel
-try:
-    from urllib.parse import urlparse # Py 3
-except ImportError:
-    from urlparse import urlparse # Py 2
+from http.client import responses
+from http.cookies import Morsel
+from urllib.parse import urlparse
 
 from jinja2 import TemplateNotFound
-from tornado import web, gen, escape, httputil
+from tornado import web, escape, httputil
 from tornado.log import app_log
 import prometheus_client
 
@@ -35,7 +26,6 @@ from jupyter_server._sysinfo import get_sys_info
 
 from traitlets.config import Application
 from ipython_genutils.path import filefind
-from ipython_genutils.py3compat import string_types
 
 import jupyter_server
 from jupyter_server._tz import utcnow
@@ -43,23 +33,28 @@ from jupyter_server.i18n import combine_translations
 from jupyter_server.utils import is_hidden, url_path_join, url_is_absolute, url_escape
 from jupyter_server.services.security import csp_report_uri
 
+
 #-----------------------------------------------------------------------------
 # Top-level handlers
 #-----------------------------------------------------------------------------
 non_alphanum = re.compile(r'[^A-Za-z0-9]')
 
 _sys_info_cache = None
+
+
 def json_sys_info():
     global _sys_info_cache
     if _sys_info_cache is None:
         _sys_info_cache = json.dumps(get_sys_info())
     return _sys_info_cache
 
+
 def log():
     if Application.initialized():
         return Application.instance().log
     else:
         return app_log
+
 
 class AuthenticatedHandler(web.RequestHandler):
     """A RequestHandler with an authenticated user."""
@@ -163,7 +158,7 @@ class AuthenticatedHandler(web.RequestHandler):
             self.request.host
         ))
         return self.settings.get('cookie_name', default_cookie_name)
-    
+
     @property
     def logged_in(self):
         """Is a user currently logged in?"""
@@ -217,23 +212,23 @@ class JupyterHandler(AuthenticatedHandler):
     def jinja_template_vars(self):
         """User-supplied values to supply to jinja templates."""
         return self.settings.get('jinja_template_vars', {})
-    
+
     #---------------------------------------------------------------
     # URLs
     #---------------------------------------------------------------
-    
+
     @property
     def version_hash(self):
         """The version hash to use for cache hints for static files"""
         return self.settings.get('version_hash', '')
-    
+
     @property
     def mathjax_url(self):
         url = self.settings.get('mathjax_url', '')
         if not url or url_is_absolute(url):
             return url
         return url_path_join(self.base_url, url)
-    
+
     @property
     def mathjax_config(self):
         return self.settings.get('mathjax_config', 'TeX-AMS-MML_HTMLorMML-full,Safe')
@@ -255,11 +250,11 @@ class JupyterHandler(AuthenticatedHandler):
         self.log.debug("Using contents: %s", self.settings.get('contents_js_source',
             'services/contents'))
         return self.settings.get('contents_js_source', 'services/contents')
-    
+
     #---------------------------------------------------------------
     # Manager objects
     #---------------------------------------------------------------
-    
+
     @property
     def kernel_manager(self):
         return self.settings['kernel_manager']
@@ -267,15 +262,15 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def contents_manager(self):
         return self.settings['contents_manager']
-    
+
     @property
     def session_manager(self):
         return self.settings['session_manager']
-    
+
     @property
     def terminal_manager(self):
         return self.settings['terminal_manager']
-    
+
     @property
     def kernel_spec_manager(self):
         return self.settings['kernel_spec_manager']
@@ -287,7 +282,7 @@ class JupyterHandler(AuthenticatedHandler):
     #---------------------------------------------------------------
     # CORS
     #---------------------------------------------------------------
-    
+
     @property
     def allow_origin(self):
         """Normal Access-Control-Allow-Origin"""
@@ -324,7 +319,7 @@ class JupyterHandler(AuthenticatedHandler):
 
         if self.allow_credentials:
             self.set_header("Access-Control-Allow-Credentials", 'true')
-    
+
     def set_attachment_header(self, filename):
         """Set Content-Disposition: attachment header
 
@@ -624,6 +619,7 @@ class APIHandler(JupyterHandler):
 
 class Template404(JupyterHandler):
     """Render our 404 template"""
+
     def prepare(self):
         raise web.HTTPError(404)
 
@@ -684,6 +680,7 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
             raise web.HTTPError(404)
         return abs_path
 
+
 def json_errors(method):
     """Decorate methods with this to return GitHub style JSON errors.
 
@@ -700,11 +697,13 @@ def json_errors(method):
         DeprecationWarning,
         stacklevel=2,
     )
+
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
         self.write_error = types.MethodType(APIHandler.write_error, self)
         return method(self, *args, **kwargs)
     return wrapper
+
 
 #-----------------------------------------------------------------------------
 # File handler
@@ -712,6 +711,7 @@ def json_errors(method):
 
 # to minimize subclass changes:
 HTTPError = web.HTTPError
+
 
 class FileFindHandler(JupyterHandler, web.StaticFileHandler):
     """subclass of StaticFileHandler for serving files from a search path"""
@@ -729,7 +729,7 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
     def initialize(self, path, default_filename=None, no_cache_paths=None):
         self.no_cache_paths = no_cache_paths or []
 
-        if isinstance(path, string_types):
+        if isinstance(path, str):
             path = [path]
 
         self.root = tuple(
@@ -826,6 +826,7 @@ class FilesRedirectHandler(JupyterHandler):
 
 class RedirectWithParams(web.RequestHandler):
     """Sam as web.RedirectHandler, but preserves URL parameters"""
+
     def initialize(self, url, permanent=True):
         self._url = url
         self._permanent = permanent
@@ -834,6 +835,7 @@ class RedirectWithParams(web.RequestHandler):
         sep = '&' if '?' in self._url else '?'
         url = sep.join([self._url, self.request.query])
         self.redirect(url, permanent=self._permanent)
+
 
 class PrometheusMetricsHandler(JupyterHandler):
     """

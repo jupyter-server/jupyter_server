@@ -12,7 +12,7 @@ import random
 import traceback
 import warnings
 
-from ipython_genutils.py3compat import cast_bytes, str_to_bytes, cast_unicode
+from ..encoding import cast_bytes, encode, cast_unicode
 from traitlets.config import Config, ConfigFileNotFound, JSONFileConfigLoader
 from jupyter_core.paths import jupyter_config_dir
 
@@ -61,7 +61,7 @@ def passwd(passphrase=None, algorithm='sha1'):
 
     h = hashlib.new(algorithm)
     salt = ('%0' + str(salt_len) + 'x') % random.getrandbits(4 * salt_len)
-    h.update(cast_bytes(passphrase, 'utf-8') + str_to_bytes(salt, 'ascii'))
+    h.update(cast_bytes(passphrase, 'utf-8') + encode(salt, 'ascii'))
 
     return ':'.join((algorithm, salt, h.hexdigest()))
 
@@ -109,6 +109,7 @@ def passwd_check(hashed_passphrase, passphrase):
 
     return h.hexdigest() == pw_digest
 
+
 @contextmanager
 def persist_config(config_file=None, mode=0o600):
     """Context manager that can be used to modify a config object
@@ -137,6 +138,7 @@ def persist_config(config_file=None, mode=0o600):
         tb = traceback.format_exc()
         warnings.warn("Failed to set permissions on %s:\n%s" % (config_file, tb),
             RuntimeWarning)
+
 
 def set_password(password=None, config_file=None):
     """Ask user for password, store it in JSON configuration file"""

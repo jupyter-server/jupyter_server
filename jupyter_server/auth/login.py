@@ -5,11 +5,7 @@
 
 import re
 import os
-
-try:
-    from urllib.parse import urlparse # Py 3
-except ImportError:
-    from urlparse import urlparse # Py 2
+from urllib.parse import urlparse
 import uuid
 
 from tornado.escape import url_escape
@@ -24,6 +20,7 @@ class LoginHandler(JupyterHandler):
 
     authenticates with a hashed password from the configuration.
     """
+
     def _render(self, message=None):
         self.write(self.render_template('login.html',
                 next=url_escape(self.get_argument('next', default=self.base_url)),
@@ -191,7 +188,7 @@ class LoginHandler(JupyterHandler):
     @classmethod
     def get_user_token(cls, handler):
         """Identify the user based on a token in the URL or Authorization header
-        
+
         Returns:
         - uuid if authenticated
         - None if not
@@ -217,7 +214,6 @@ class LoginHandler(JupyterHandler):
             return uuid.uuid4().hex
         else:
             return None
-
 
     @classmethod
     def validate_security(cls, app, ssl_options=None):
