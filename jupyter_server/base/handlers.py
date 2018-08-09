@@ -25,7 +25,7 @@ import prometheus_client
 from jupyter_server._sysinfo import get_sys_info
 
 from traitlets.config import Application
-from ipython_genutils.path import filefind
+from ..utils import filefind
 
 import jupyter_server
 from jupyter_server._tz import utcnow

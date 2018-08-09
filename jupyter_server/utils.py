@@ -208,31 +208,6 @@ def is_hidden(abs_path, abs_root=''):
 
     return False
 
-def samefile_simple(path, other_path):
-    """
-    Fill in for os.path.samefile when it is unavailable (Windows+py2).
-
-    Do a case-insensitive string comparison in this case
-    plus comparing the full stat result (including times)
-    because Windows + py2 doesn't support the stat fields
-    needed for identifying if it's the same file (st_ino, st_dev).
-
-    Only to be used if os.path.samefile is not available.
-
-    Parameters
-    -----------
-    path:       String representing a path to a file
-    other_path: String representing a path to another file
-
-    Returns
-    -----------
-    same:   Boolean that is True if both path and other path are the same
-    """
-    path_stat = os.stat(path)
-    other_path_stat = os.stat(other_path)
-    return (path.lower() == other_path.lower()
-        and path_stat == other_path_stat)
-
 
 def to_os_path(path, root=''):
     """Convert an API path to a filesystem path
@@ -280,6 +255,115 @@ async def force_async(obj):
     async def inner():
         return obj
     return await inner()
+
+
+def import_item(name):
+    """Import and return ``bar`` given the string ``foo.bar``.
+
+    Calling ``bar = import_item("foo.bar")`` is the functional equivalent of
+    executing the code ``from foo import bar``.
+
+    Parameters
+    ----------
+    name : string
+      The fully qualified name of the module/package being imported.
+
+    Returns
+    -------
+    mod : module object
+       The module that was imported.
+    """
+
+    parts = name.rsplit('.', 1)
+    if len(parts) == 2:
+        # called with 'foo.bar....'
+        package, obj = parts
+        module = __import__(package, fromlist=[obj])
+        try:
+            pak = getattr(module, obj)
+        except AttributeError:
+            raise ImportError('No module named %s' % obj)
+        return pak
+    else:
+        # called with un-dotted string
+        return __import__(parts[0])
+
+
+def expand_path(s):
+    """Expand $VARS and ~names in a string, like a shell
+
+    :Examples:
+
+       In [2]: os.environ['FOO']='test'
+
+       In [3]: expand_path('variable FOO is $FOO')
+       Out[3]: 'variable FOO is test'
+    """
+    # This is a pretty subtle hack. When expand user is given a UNC path
+    # on Windows (\\server\share$\%username%), os.path.expandvars, removes
+    # the $ to get (\\server\share\%username%). I think it considered $
+    # alone an empty var. But, we need the $ to remains there (it indicates
+    # a hidden share).
+    if os.name=='nt':
+        s = s.replace('$\\', 'IPYTHON_TEMP')
+    s = os.path.expandvars(os.path.expanduser(s))
+    if os.name=='nt':
+        s = s.replace('IPYTHON_TEMP', '$\\')
+    return s
+
+
+def filefind(filename, path_dirs=None):
+    """Find a file by looking through a sequence of paths.
+
+    This iterates through a sequence of paths looking for a file and returns
+    the full, absolute path of the first occurence of the file.  If no set of
+    path dirs is given, the filename is tested as is, after running through
+    :func:`expandvars` and :func:`expanduser`.  Thus a simple call::
+
+        filefind('myfile.txt')
+
+    will find the file in the current working dir, but::
+
+        filefind('~/myfile.txt')
+
+    Will find the file in the users home directory.  This function does not
+    automatically try any paths, such as the cwd or the user's home directory.
+
+    Parameters
+    ----------
+    filename : str
+        The filename to look for.
+    path_dirs : str, None or sequence of str
+        The sequence of paths to look for the file in.  If None, the filename
+        need to be absolute or be in the cwd.  If a string, the string is
+        put into a sequence and the searched.  If a sequence, walk through
+        each element and join with ``filename``, calling :func:`expandvars`
+        and :func:`expanduser` before testing for existence.
+
+    Returns
+    -------
+    Raises :exc:`IOError` or returns absolute path to file.
+    """
+
+    # If paths are quoted, abspath gets confused, strip them...
+    filename = filename.strip('"').strip("'")
+    # If the input is an absolute path, just check it exists
+    if os.path.isabs(filename) and os.path.isfile(filename):
+        return filename
+
+    if path_dirs is None:
+        path_dirs = ("",)
+    elif isinstance(path_dirs, str):
+        path_dirs = (path_dirs,)
+
+    for path in path_dirs:
+        if path == '.': path = os.getcwd()
+        testname = expand_path(os.path.join(path, filename))
+        if os.path.isfile(testname):
+            return os.path.abspath(testname)
+
+    raise IOError("File %r does not exist in any of the search paths: %r" %
+                  (filename, path_dirs) )
 
 
 # Copy of IPython.utils.process.check_pid:

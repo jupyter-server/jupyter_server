@@ -1,7 +1,5 @@
 """Base class for server tests."""
 
-from __future__ import print_function
-
 from binascii import hexlify
 from contextlib import contextmanager
 import errno
@@ -21,7 +19,7 @@ import jupyter_core.paths
 from traitlets.config import Config
 from ..serverapp import ServerApp
 from ..utils import url_path_join
-from ipython_genutils.tempdir import TemporaryDirectory
+from tempfile import TemporaryDirectory
 
 MAX_WAITTIME = 30   # seconds to wait for Jupyter server to start
 POLL_INTERVAL = 0.1  # time between attempts
@@ -151,7 +149,7 @@ class ServerTestBase(TestCase):
             )
             # don't register signal handler during tests
             app.init_signal = lambda: None
-            # clear log handlers and propagate to root for nose to capture it
+            # clear log handlers and propagate to root for pytest to capture it
             # needs to be redone after initialize, which reconfigures logging
             app.log.propagate = True
             app.log.handlers = []

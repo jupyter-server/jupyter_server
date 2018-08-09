@@ -3,11 +3,10 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from . import tools
-from ..utils import force_async
+from ..utils import force_async, import_item
 from jupyter_server.utils import url2path
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.services.config import ConfigManager
-from ipython_genutils.importstring import import_item
 from tornado import web
 
 

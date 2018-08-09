@@ -12,7 +12,7 @@ import pytest
 
 from ..fileio import atomic_writing
 
-from ipython_genutils.tempdir import TemporaryDirectory
+from tempfile import TemporaryDirectory
 
 
 def test_atomic_writing():

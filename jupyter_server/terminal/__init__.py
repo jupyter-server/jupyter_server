@@ -6,12 +6,13 @@ from ..utils import check_version
 if not check_version(terminado.__version__, '0.8.1'):
     raise ImportError("terminado >= 0.8.1 required, found %s" % terminado.__version__)
 
-from ipython_genutils.py3compat import which
+from shutil import which
 from terminado import NamedTermManager
 from tornado.log import app_log
 from jupyter_server.utils import url_path_join as ujoin
 from .handlers import TerminalHandler, TermSocket
 from . import api_handlers
+
 
 def initialize(webapp, root_dir, connection_url, settings):
     if os.name == 'nt':

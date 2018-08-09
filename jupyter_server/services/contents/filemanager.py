@@ -18,9 +18,8 @@ from tornado import web
 from .filecheckpoints import FileCheckpoints
 from .fileio import FileManagerMixin
 from .manager import ContentsManager
-from ...utils import exists
+from ...utils import exists, import_item
 
-from ipython_genutils.importstring import import_item
 from traitlets import Any, Unicode, Bool, TraitError, default, validate
 
 from jupyter_server import _tz as tz

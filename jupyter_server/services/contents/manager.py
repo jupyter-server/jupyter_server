@@ -15,7 +15,7 @@ from .checkpoints import Checkpoints
 from traitlets.config.configurable import LoggingConfigurable
 from nbformat import sign, validate as validate_nb, ValidationError
 from nbformat.v4 import new_notebook
-from ipython_genutils.importstring import import_item
+from ...utils import import_item
 from traitlets import (
     Any,
     Bool,

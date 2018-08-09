@@ -15,12 +15,12 @@ from tornado.concurrent import Future
 from tornado.ioloop import IOLoop
 
 from jupyter_client.jsonutil import date_default
-from ipython_genutils.py3compat import cast_unicode
-from jupyter_server.utils import url_path_join, url_escape
+
+from ...utils import url_path_join, url_escape, force_async
+from ...encoding import cast_unicode
 
 from ...base.handlers import APIHandler
 from ...base.zmqhandlers import AuthenticatedZMQStreamHandler, deserialize_binary_message
-from ...utils import force_async
 
 from jupyter_client import protocol_version as client_protocol_version
 

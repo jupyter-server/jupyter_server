@@ -6,17 +6,14 @@ Utilities for getting information about Jupyter and the system it's running in.
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import absolute_import
-
 import os
 import platform
-import pprint
 import sys
 import subprocess
 
-from ipython_genutils import py3compat, encoding
-
+from .encoding import DEFAULT_ENCODING
 import jupyter_server
+
 
 def pkg_commit_hash(pkg_path):
     """Get short form of commit hash given directory `pkg_path`
@@ -60,7 +57,7 @@ def pkg_commit_hash(pkg_path):
             else:
                 return u'', u''
         par_path = p.dirname(par_path)
-                
+
     return u'', u''
 
 
@@ -88,12 +85,12 @@ def pkg_info(pkg_path):
         sys_platform=sys.platform,
         platform=platform.platform(),
         os_name=os.name,
-        default_encoding=encoding.DEFAULT_ENCODING,
+        default_encoding=DEFAULT_ENCODING,
         )
+
 
 def get_sys_info():
     """Return useful information about the system as a dict."""
     p = os.path
     path = p.realpath(p.dirname(p.abspath(p.join(jupyter_server.__file__))))
     return pkg_info(path)
-
