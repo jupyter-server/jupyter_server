@@ -84,7 +84,7 @@ for more information.
     ],
     extras_require = {
         'test': ['pytest', 'pytest-cov', 'requests'],
-        'docs': ['sphinx', 'nbval']
+        'docs': ['sphinx', 'sphinx_rtd_theme', 'nbval']
     },
     entry_points = {
         'console_scripts': [
