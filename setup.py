@@ -38,6 +38,10 @@ from setupbase import (
     check_package_data_first,
 )
 
+
+install_requires = open('requirements.txt').read().split()
+
+
 setup_args = dict(
     name            = name,
     description     = "The Jupyter Server",
@@ -69,19 +73,7 @@ for more information.
     ],
     zip_safe = False,
     python_requires='>=3.5',
-    install_requires = [
-        'jinja2',
-        'tornado>=5',
-        'traitlets>=4.2.1',
-        'jupyter_core>=4.4.0',
-        'jupyter_client>=5.2.0',
-        'nbformat',
-        'nbconvert',
-        'ipykernel', # bless IPython kernel for now
-        'Send2Trash',
-        'terminado>=0.8.1',
-        'prometheus_client'
-    ],
+    install_requires = install_requires,
     extras_require = {
         'test': ['pytest', 'pytest-cov', 'requests']
     },

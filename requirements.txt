@@ -1,0 +1,11 @@
+jinja2
+tornado>=5
+traitlets>=4.2.1
+jupyter_core>=4.4.0
+jupyter_client>=5.2.0
+nbformat
+nbconvert
+ipykernel
+Send2Trash
+terminado>=0.8.1
+prometheus_client
