@@ -49,7 +49,7 @@ name = 'jupyter_server'
 
 # release.py contains version, authors, license, url, keywords, etc.
 version_ns = {}
-exec(open(pjoin(repo_root, name, '_version.py'), version_ns).read())
+exec(open(pjoin(repo_root, name, '_version.py')).read(), version_ns)
 
 version = version_ns['__version__']
 
