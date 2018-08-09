@@ -40,13 +40,13 @@ script:
     - 'if [[ $GROUP == python ]]; then py.test --cov=jupyter_server; fi'
     - |
       if [[ $GROUP == docs ]]; then
-        pip install .[docs]
         EXIT_STATUS=0
         make -C docs/ html || EXIT_STATUS=$?
 
         if [[ $TRAVIS_EVENT_TYPE == cron ]]; then
           make -C docs/ linkcheck || EXIT_STATUS=$?;
         fi
+        pip install nbval
         pytest --nbval --current-env docs || EXIT_STATUS=$?
         exit $EXIT_STATUS
       fi

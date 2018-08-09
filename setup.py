@@ -83,8 +83,7 @@ for more information.
         'prometheus_client'
     ],
     extras_require = {
-        'test': ['pytest', 'pytest-cov', 'requests'],
-        'docs': ['sphinx', 'sphinx_rtd_theme', 'nbval']
+        'test': ['pytest', 'pytest-cov', 'requests']
     },
     entry_points = {
         'console_scripts': [
