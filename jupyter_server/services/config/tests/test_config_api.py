@@ -3,14 +3,13 @@
 
 import json
 
-import requests
-
 from jupyter_server.utils import url_path_join
 from jupyter_server.tests.launchserver import ServerTestBase
 
 
 class ConfigAPI(object):
     """Wrapper for notebook API calls."""
+
     def __init__(self, request):
         self.request = request
 
@@ -34,6 +33,7 @@ class ConfigAPI(object):
 
 class APITest(ServerTestBase):
     """Test the config web service API"""
+
     def setUp(self):
         self.config_api = ConfigAPI(self.request)
 
@@ -53,12 +53,12 @@ class APITest(ServerTestBase):
 
         r = self.config_api.modify('example', {'foo': None,  # should delete foo
                                                'baz': 75,
-                                               'wib': [1,2,3],
+                                               'wib': [1, 2, 3],
                                                'sub': {'a': 8, 'b': None, 'd': 9},
                                                'sub2': {'c': None}  # should delete sub2
                                               })
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json(), {'baz': 75, 'wib': [1,2,3],
+        self.assertEqual(r.json(), {'baz': 75, 'wib': [1, 2, 3],
                                     'sub': {'a': 8, 'd': 9}})
 
     def test_get_unknown(self):
@@ -66,4 +66,3 @@ class APITest(ServerTestBase):
         r = self.config_api.get('nonexistant')
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json(), {})
-
