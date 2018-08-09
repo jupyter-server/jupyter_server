@@ -22,7 +22,7 @@ Setting Up a Development Environment
 Installing the Jupyter Server
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Use the following steps (requires Python 3.4+)::
+Use the following steps (requires Python 3.5+)::
 
     pip install --upgrade setuptools pip
     git clone https://github.com/jupyter/jupyter_server

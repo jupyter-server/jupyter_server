@@ -19,7 +19,7 @@ You can find the installation documentation for the
 The documentation for advanced usage of Jupyter notebook can be found
 [here](https://jupyter-server.readthedocs.io/en/latest/).
 
-Requires Python version 3.4 and above.
+Requires Python version 3.5 and above.
 
 For a local installation, make sure you have
 [pip installed](https://pip.readthedocs.io/en/stable/installing/) and run:

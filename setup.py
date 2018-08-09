@@ -18,8 +18,8 @@ name = "jupyter_server"
 
 # Minimal Python version sanity check
 v = sys.version_info
-if v[0] < 3 or (v[0] >= 3 and v[:2] < (3,4)):
-    error = "ERROR: %s requires Python version 3.4 or above." % name
+if v[0] < 3 or (v[0] >= 3 and v[:2] < (3,5)):
+    error = "ERROR: %s requires Python version 3.5 or above." % name
     print(error, file=sys.stderr)
     sys.exit(1)
 
@@ -68,6 +68,7 @@ for more information.
         'Programming Language :: Python :: 3',
     ],
     zip_safe = False,
+    python_requires='>=3.5',
     install_requires = [
         'jinja2',
         'tornado>=5',
