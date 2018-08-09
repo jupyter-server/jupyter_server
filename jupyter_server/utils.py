@@ -11,6 +11,7 @@ import sys
 from distutils.version import LooseVersion
 
 from urllib.parse import quote, unquote, urlparse
+from .encoding import cast_unicode
 
 # UF_HIDDEN is a stat flag not defined in the stat module.
 # It is used by BSD to indicate hidden files.
@@ -79,13 +80,6 @@ def url_unescape(path):
         unquote(p)
         for p in path.split('/')
     ])
-
-
-def cast_unicode(s, encoding=None):
-    """Case an object to unicode"""
-    if isinstance(s, bytes):
-        return decode(s, encoding)
-    return s
 
 
 def is_file_hidden_win(abs_path, stat_res=None):
