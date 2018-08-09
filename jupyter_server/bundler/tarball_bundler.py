@@ -5,6 +5,7 @@ import io
 import tarfile
 import nbformat
 
+
 def _jupyter_bundlerextension_paths():
     """Metadata for server bundlerextension"""
     return [{
@@ -13,10 +14,11 @@ def _jupyter_bundlerextension_paths():
         # module containing bundle function
         "module_name": "jupyter_server.bundler.tarball_bundler",
         # human-redable menu item label
-        "label" : "Tarball (tar.gz)",
+        "label": "Tarball (tar.gz)",
         # group under 'deploy' or 'download' menu
-        "group" : "download",
+        "group": "download",
     }]
+
 
 def bundle(handler, model):
     """Create a compressed tarball containing the notebook document.

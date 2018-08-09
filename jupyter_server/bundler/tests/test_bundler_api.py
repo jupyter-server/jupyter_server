@@ -5,6 +5,7 @@
 
 import io
 from os.path import join as pjoin
+from unittest.mock import patch
 
 from jupyter_server.tests.launchserver import ServerTestBase
 from nbformat import write
@@ -12,10 +13,6 @@ from nbformat.v4 import (
     new_notebook, new_markdown_cell, new_code_cell, new_output,
 )
 
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch # py3
 
 def bundle(handler, model):
     """Bundler test stub. Echo the notebook path."""
@@ -82,4 +79,3 @@ class BundleAPITest(ServerTestBase):
             mock.assert_called_with('stub_bundler')
         self.assertEqual(resp.status_code, 200)
         self.assertIn('testnb.ipynb', resp.text)
-

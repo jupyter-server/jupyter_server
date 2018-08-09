@@ -15,6 +15,7 @@ from traitlets import Bool
 BUNDLER_SECTION = "jupyter_server"
 BUNDLER_SUBSECTION = "bundlerextensions"
 
+
 def _get_bundler_metadata(module):
     """Gets the list of bundlers associated with a Python package.
 
@@ -37,6 +38,7 @@ def _get_bundler_metadata(module):
         raise KeyError('The Python module {} does not contain a valid bundlerextension'.format(module))
     bundlers = m._jupyter_bundlerextension_paths()
     return m, bundlers
+
 
 def _set_bundler_state(name, label, module_name, group, state,
                        user=True, sys_prefix=False, logger=None):
@@ -82,7 +84,7 @@ def _set_bundler_state(name, label, module_name, group, state,
                 name: {
                     "label": label,
                     "module_name": module_name,
-                    "group" : group
+                    "group": group
                 }
             }
         })
@@ -96,6 +98,7 @@ def _set_bundler_state(name, label, module_name, group, state,
     return (cm.get(BUNDLER_SECTION)
               .get(BUNDLER_SUBSECTION, {})
               .get(name) is not None) == state
+
 
 def _set_bundler_state_python(state, module, user, sys_prefix, logger=None):
     """Enables or disables bundlers defined in a Python package.
@@ -126,6 +129,7 @@ def _set_bundler_state_python(state, module, user, sys_prefix, logger=None):
                                logger=logger)
             for bundler in bundlers]
 
+
 def enable_bundler_python(module, user=True, sys_prefix=False, logger=None):
     """Enables bundlers defined in a Python package.
 
@@ -147,6 +151,7 @@ def enable_bundler_python(module, user=True, sys_prefix=False, logger=None):
     return _set_bundler_state_python(True, module, user, sys_prefix,
                                      logger=logger)
 
+
 def disable_bundler_python(module, user=True, sys_prefix=False, logger=None):
     """Disables bundlers defined in a Python package.
 
@@ -167,6 +172,7 @@ def disable_bundler_python(module, user=True, sys_prefix=False, logger=None):
     """
     return _set_bundler_state_python(False, module, user, sys_prefix,
                                      logger=logger)
+
 
 class ToggleBundlerExtensionApp(BaseExtensionApp):
     """A base class for apps that enable/disable bundlerextensions"""
@@ -211,6 +217,7 @@ class ToggleBundlerExtensionApp(BaseExtensionApp):
         else:
             raise NotImplementedError('Cannot install bundlers from non-Python packages')
 
+
 class EnableBundlerExtensionApp(ToggleBundlerExtensionApp):
     """An App that enables bundlerextensions"""
     name = "jupyter bundlerextension enable"
@@ -221,6 +228,7 @@ class EnableBundlerExtensionApp(ToggleBundlerExtensionApp):
         jupyter bundlerextension enable [--system|--sys-prefix]
     """
     _toggle_value = True
+
 
 class DisableBundlerExtensionApp(ToggleBundlerExtensionApp):
     """An App that disables bundlerextensions"""
@@ -299,6 +307,7 @@ jupyter bundlerextension disable --py <packagename>    # disable all bundlers in
         # get here, it didn't, so we should self.log.info a message.
         subcmds = ", ".join(sorted(self.subcommands))
         sys.exit("Please supply at least one subcommand: %s" % subcmds)
+
 
 main = BundlerExtensionApp.launch_instance
 

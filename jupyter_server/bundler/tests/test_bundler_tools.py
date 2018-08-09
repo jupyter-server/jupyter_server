@@ -11,6 +11,7 @@ import jupyter_server.bundler.tools as tools
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
+
 class TestBundlerTools(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
@@ -72,7 +73,7 @@ b/
         self.assertEqual(len(references), 2, str(references))
 
     def test_get_cell_reference_patterns_precode_backticks(self):
-        '''Should find three references in a fenced code block.''' 
+        '''Should find three references in a fenced code block.'''
         cell = {'cell_type':'markdown', 'source':'''```c
 a
 b/

@@ -3,11 +3,12 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from . import tools
+from ..utils import force_async
 from jupyter_server.utils import url2path
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.services.config import ConfigManager
 from ipython_genutils.importstring import import_item
-from tornado import web, gen
+from tornado import web
 
 
 class BundlerHandler(JupyterHandler):
@@ -40,8 +41,7 @@ class BundlerHandler(JupyterHandler):
         return cm.get('jupyter_server').get('bundlerextensions', {})[bundler_id]
 
     @web.authenticated
-    @gen.coroutine
-    def get(self, path):
+    async def get(self, path):
         """Bundle the given notebook.
 
         Parameters
@@ -74,7 +74,8 @@ class BundlerHandler(JupyterHandler):
 
         # Let the bundler respond in any way it sees fit and assume it will
         # finish the request
-        yield gen.maybe_future(bundler_mod.bundle(self, model))
+        await force_async(bundler_mod.bundle(self, model))
+
 
 _bundler_id_regex = r'(?P<bundler_id>[A-Za-z0-9_]+)'
 

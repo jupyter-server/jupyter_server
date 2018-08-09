@@ -3,13 +3,9 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from base64 import decodebytes
 import mimetypes
 import json
-
-try: #PY3
-    from base64 import decodebytes
-except ImportError: #PY2
-    from base64 import decodestring as decodebytes
 
 from tornado import web
 
@@ -82,4 +78,3 @@ class FilesHandler(JupyterHandler):
 
 
 default_handlers = []
-
