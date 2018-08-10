@@ -234,7 +234,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
 
     async def get(self, kernel_id):
         self.kernel_id = cast_unicode(kernel_id, 'ascii')
-        await super(ZMQChannelsHandler, self).get(kernel_id=kernel_id)
+        await force_async(super(ZMQChannelsHandler, self).get(kernel_id=kernel_id))
 
     async def _register_session(self):
         """Ensure we aren't creating a duplicate session.
@@ -247,7 +247,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         stale_handler = self._open_sessions.get(self.session_key)
         if stale_handler:
             self.log.warning("Replacing stale connection: %s", self.session_key)
-            await stale_handler.close()
+            await force_async(stale_handler.close())
         self._open_sessions[self.session_key] = self
 
     def open(self, kernel_id):

@@ -11,6 +11,8 @@ from jupyter_server.services.kernels.kernelmanager import MappingKernelManager
 from jupyter_server.services.contents.manager import ContentsManager
 from jupyter_server._tz import utcnow, isoformat
 
+from ....utils import force_async
+
 
 class DummyKernel(object):
     def __init__(self, kernel_name='python'):
@@ -57,7 +59,7 @@ class TestSessionManager(TestCase):
             sessions = []
             for kwargs in kwarg_list:
                 kwargs.setdefault('type', 'notebook')
-                session = await self.sm.create_session(**kwargs)
+                session = await force_async(self.sm.create_session(**kwargs))
                 sessions.append(session)
             return sessions
         return self.loop.run_sync(co_add)

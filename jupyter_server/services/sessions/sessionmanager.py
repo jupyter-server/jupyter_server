@@ -74,7 +74,7 @@ class SessionManager(LoggingConfigurable):
         if kernel_id is not None and kernel_id in self.kernel_manager:
             pass
         else:
-            kernel_id = await self.start_kernel_for_session(session_id, path, name, type, kernel_name)
+            kernel_id = await force_async(self.start_kernel_for_session(session_id, path, name, type, kernel_name))
         return self.save_session(session_id, path=path, name=name, type=type, kernel_id=kernel_id)
 
     async def start_kernel_for_session(self, session_id, path, name, type, kernel_name):

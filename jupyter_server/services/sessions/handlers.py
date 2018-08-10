@@ -66,9 +66,9 @@ class SessionRootHandler(APIHandler):
             model = sm.get_session(path=path)
         else:
             try:
-                model = await sm.create_session(path=path, kernel_name=kernel_name,
+                model = await force_async(sm.create_session(path=path, kernel_name=kernel_name,
                                       kernel_id=kernel_id, name=name,
-                                      type=mtype)
+                                      type=mtype))
             except NoSuchKernel:
                 msg = ("The '%s' kernel is not available. Please pick another "
                        "suitable kernel instead, or install that kernel." % kernel_name)
@@ -129,9 +129,9 @@ class SessionHandler(APIHandler):
                 changes['kernel_id'] = kernel_id
             elif model['kernel'].get('name') is not None:
                 kernel_name = model['kernel']['name']
-                kernel_id = await sm.start_kernel_for_session(
+                kernel_id = await force_async(sm.start_kernel_for_session(
                     session_id, kernel_name=kernel_name, name=before['name'],
-                    path=before['path'], type=before['type'])
+                    path=before['path'], type=before['type']))
                 changes['kernel_id'] = kernel_id
 
         await force_async(sm.update_session(session_id, **changes))
@@ -166,6 +166,5 @@ _session_id_regex = r"(?P<session_id>\w+-\w+-\w+-\w+-\w+)"
 
 default_handlers = [
     (r"/api/sessions/%s" % _session_id_regex, SessionHandler),
-    (r"/api/sessions",  SessionRootHandler)
+    (r"/api/sessions", SessionRootHandler)
 ]
-

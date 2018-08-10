@@ -214,11 +214,11 @@ class ContentsHandler(APIHandler):
                 raise web.HTTPError(400, "Cannot copy with PUT, only POST")
             exists = await force_async(self.contents_manager.file_exists(path))
             if exists:
-                await force_async(self._save(model, path))
+                await self._save(model, path)
             else:
-                await force_async(self._upload(model, path))
+                await self._upload(model, path)
         else:
-            await force_async(self._new_untitled(path))
+            await self._new_untitled(path)
 
     @web.authenticated
     async def delete(self, path=''):
