@@ -14,6 +14,7 @@ HTTP_REQUEST_DURATION_SECONDS = Histogram(
     ['method', 'handler', 'status_code'],
 )
 
+
 def prometheus_log_method(handler):
     """
     Tornado log handler for recording RED metrics.

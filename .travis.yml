@@ -3,14 +3,10 @@ language: python
 
 cache:
     directories:
-        - $HOME/.cache/bower
         - $HOME/.cache/pip
 python:
     - 3.6
-    - 2.7
-
 sudo: required
-
 
 env:
   global:
@@ -20,14 +16,14 @@ env:
 
 before_install:
     - pip install --upgrade pip
-    - pip install --upgrade setuptools wheel nose coverage codecov
     - |
       if [[ $GROUP == docs ]]; then
         pip install -r docs/doc-requirements.txt
+        pip install nbval
       fi
 
 install:
-    - pip install --pre .[test]
+    - pip install .[test]
     - wget https://github.com/jgm/pandoc/releases/download/1.19.1/pandoc-1.19.1-1-amd64.deb && sudo dpkg -i pandoc-1.19.1-1-amd64.deb
 
 
@@ -43,10 +39,11 @@ script:
       else
           true
       fi
-    - 'if [[ $GROUP == python ]]; then nosetests -v --with-coverage --cover-package=jupyter_server jupyter_server; fi'
+    - 'if [[ $GROUP == python ]]; then py.test --cov=jupyter_server; fi'
     - |
       if [[ $GROUP == docs ]]; then
         EXIT_STATUS=0
+
         make -C docs/ html || EXIT_STATUS=$?
 
         if [[ $TRAVIS_EVENT_TYPE == cron ]]; then
@@ -60,7 +57,7 @@ script:
 
 matrix:
     include:
-        - python: 3.4
+        - python: 3.6
           env: GROUP=python
         - python: 3.5
           env: GROUP=python

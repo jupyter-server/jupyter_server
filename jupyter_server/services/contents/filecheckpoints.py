@@ -13,7 +13,6 @@ from .checkpoints import (
 from .fileio import FileManagerMixin
 
 from jupyter_core.utils import ensure_dir_exists
-from ipython_genutils.py3compat import getcwd
 from traitlets import Unicode
 
 from jupyter_server import _tz as tz
@@ -45,7 +44,7 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
         try:
             return self.parent.root_dir
         except AttributeError:
-            return getcwd()
+            return os.getcwd()
 
     # ContentsManager-dependent checkpoint API
     def create_checkpoint(self, contents_mgr, path):
@@ -142,6 +141,7 @@ class GenericFileCheckpoints(GenericCheckpointsMixin, FileCheckpoints):
     Local filesystem Checkpoints that works with any conforming
     ContentsManager.
     """
+
     def create_file_checkpoint(self, content, format, path):
         """Create a checkpoint from the current content of a file."""
         path = path.strip('/')

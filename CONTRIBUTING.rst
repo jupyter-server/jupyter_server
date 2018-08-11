@@ -22,8 +22,7 @@ Setting Up a Development Environment
 Installing the Jupyter Server
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once you have installed the dependencies mentioned above, use the following
-steps::
+Use the following steps (requires Python 3.5+)::
 
     pip install --upgrade setuptools pip
     git clone https://github.com/jupyter/jupyter_server
@@ -65,11 +64,11 @@ Install dependencies::
 
 To run the Python tests, use::
 
-    nosetests
+    py.test
 
 If you want coverage statistics as well, you can run::
 
-    nosetests --with-coverage --cover-package=jupyter_server jupyter_server
+    py.test --cov=jupyter_server
 
 Building the Documentation
 --------------------------

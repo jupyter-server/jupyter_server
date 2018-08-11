@@ -6,14 +6,10 @@
 import os
 import shutil
 import unittest
+from unittest.mock import patch
 
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch # py2
-
-from ipython_genutils.tempdir import TemporaryDirectory
-from ipython_genutils import py3compat
+from tempfile import TemporaryDirectory
+from ...encoding import cast_unicode
 
 from traitlets.tests.utils import check_help_all_output
 
@@ -21,6 +17,7 @@ from jupyter_server.config_manager import BaseJSONConfigManager
 from ..bundlerextensions import (
     _get_config_dir, enable_bundler_python, disable_bundler_python
 )
+
 
 def test_help_output():
     check_help_all_output('jupyter_server.bundler.bundlerextensions')
@@ -30,11 +27,12 @@ def test_help_output():
 
 class TestBundlerExtensionCLI(unittest.TestCase):
     """Tests the bundlerextension CLI against the example zip_bundler."""
+
     def setUp(self):
         """Build an isolated config environment."""
         td = TemporaryDirectory()
 
-        self.test_dir = py3compat.cast_unicode(td.name)
+        self.test_dir = cast_unicode(td.name)
         self.data_dir = os.path.join(self.test_dir, 'data')
         self.config_dir = os.path.join(self.test_dir, 'config')
         self.system_data_dir = os.path.join(self.test_dir, 'system_data')

@@ -5,12 +5,10 @@
 
 from datetime import datetime
 import errno
-import io
 import os
 import shutil
 import stat
 import sys
-import warnings
 import mimetypes
 import nbformat
 
@@ -20,25 +18,17 @@ from tornado import web
 from .filecheckpoints import FileCheckpoints
 from .fileio import FileManagerMixin
 from .manager import ContentsManager
-from ...utils import exists
+from ...utils import exists, import_item
 
-from ipython_genutils.importstring import import_item
-from traitlets import Any, Unicode, Bool, TraitError, observe, default, validate
-from ipython_genutils.py3compat import getcwd, string_types
+from traitlets import Any, Unicode, Bool, TraitError, default, validate
 
 from jupyter_server import _tz as tz
-from jupyter_server.utils import (
-    is_hidden, is_file_hidden,
-    to_api_path,
-)
+from jupyter_server.utils import is_hidden, is_file_hidden
 from jupyter_server.base.handlers import AuthenticatedFileHandler
 from jupyter_server.transutils import _
 
-try:
-    from os.path import samefile
-except ImportError:
-    # windows + py2
-    from jupyter_server.utils import samefile_simple as samefile
+from os.path import samefile
+
 
 _script_exporter = None
 
@@ -52,7 +42,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         try:
             return self.parent.root_dir
         except AttributeError:
-            return getcwd()
+            return os.getcwd()
 
     post_save_hook = Any(None, config=True, allow_none=True,
         help="""Python callable or importstring thereof
@@ -75,7 +65,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
     @validate('post_save_hook')
     def _validate_post_save_hook(self, proposal):
         value = proposal['value']
-        if isinstance(value, string_types):
+        if isinstance(value, str):
             value = import_item(value)
         if not callable(value):
             raise TraitError("post_save_hook must be callable")
@@ -297,7 +287,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             model['format'] = 'json'
 
         return model
-
 
     def _file_model(self, path, content=True, format=None):
         """Build a model for a file
@@ -544,4 +533,3 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         else:
             parent_dir = ''
         return parent_dir
-

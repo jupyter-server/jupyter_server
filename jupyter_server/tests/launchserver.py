@@ -1,7 +1,5 @@
 """Base class for server tests."""
 
-from __future__ import print_function
-
 from binascii import hexlify
 from contextlib import contextmanager
 import errno
@@ -11,12 +9,7 @@ from threading import Thread, Event
 import time
 from unittest import TestCase
 
-pjoin = os.path.join
-
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch #py2
+from unittest.mock import patch
 
 import requests
 from tornado.ioloop import IOLoop
@@ -26,10 +19,10 @@ import jupyter_core.paths
 from traitlets.config import Config
 from ..serverapp import ServerApp
 from ..utils import url_path_join
-from ipython_genutils.tempdir import TemporaryDirectory
+from tempfile import TemporaryDirectory
 
 MAX_WAITTIME = 30   # seconds to wait for Jupyter server to start
-POLL_INTERVAL = 0.1 # time between attempts
+POLL_INTERVAL = 0.1  # time between attempts
 
 
 # TimeoutError is a builtin on Python 3. This can be removed when we stop
@@ -55,7 +48,7 @@ class ServerTestBase(TestCase):
     def wait_until_alive(cls):
         """Wait for the server to be alive"""
         url = cls.base_url() + 'api/contents'
-        for _ in range(int(MAX_WAITTIME/POLL_INTERVAL)):
+        for _ in range(int(MAX_WAITTIME / POLL_INTERVAL)):
             try:
                 requests.get(url)
             except Exception as e:
@@ -97,6 +90,7 @@ class ServerTestBase(TestCase):
     @classmethod
     def setup_class(cls):
         cls.tmp_dir = TemporaryDirectory()
+
         def tmp(*parts):
             path = os.path.join(cls.tmp_dir.name, *parts)
             try:
@@ -114,9 +108,9 @@ class ServerTestBase(TestCase):
         cls.env_patch = patch.dict('os.environ', {
             'HOME': cls.home_dir,
             'PYTHONPATH': os.pathsep.join(sys.path),
-            'JUPYTER_NO_CONFIG': '1', # needed in the future
-            'JUPYTER_CONFIG_DIR' : config_dir,
-            'JUPYTER_DATA_DIR' : data_dir,
+            'JUPYTER_NO_CONFIG': '1',  # needed in the future
+            'JUPYTER_CONFIG_DIR': config_dir,
+            'JUPYTER_DATA_DIR': data_dir,
             'JUPYTER_RUNTIME_DIR': runtime_dir,
         })
         cls.env_patch.start()
@@ -135,6 +129,7 @@ class ServerTestBase(TestCase):
         cls.token = hexlify(os.urandom(4)).decode('ascii')
 
         started = Event()
+
         def start_thread():
             if 'asyncio' in sys.modules:
                 import asyncio
@@ -153,8 +148,8 @@ class ServerTestBase(TestCase):
                 token=cls.token,
             )
             # don't register signal handler during tests
-            app.init_signal = lambda : None
-            # clear log handlers and propagate to root for nose to capture it
+            app.init_signal = lambda: None
+            # clear log handlers and propagate to root for pytest to capture it
             # needs to be redone after initialize, which reconfigures logging
             app.log.propagate = True
             app.log.handlers = []
@@ -182,13 +177,14 @@ class ServerTestBase(TestCase):
         cls.env_patch.stop()
         cls.path_patch.stop()
         cls.tmp_dir.cleanup()
+
         # cleanup global zmq Context, to ensure we aren't leaving dangling sockets
         def cleanup_zmq():
             zmq.Context.instance().term()
         t = Thread(target=cleanup_zmq)
         t.daemon = True
         t.start()
-        t.join(5) # give it a few seconds to clean up (this should be immediate)
+        t.join(5)  # give it a few seconds to clean up (this should be immediate)
         # if term never returned, there's zmq stuff still open somewhere, so shout about it.
         if t.is_alive():
             raise RuntimeError("Failed to teardown zmq Context, open sockets likely left lying around.")

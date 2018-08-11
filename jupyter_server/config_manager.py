@@ -11,7 +11,6 @@ import json
 import os
 import copy
 
-from six import PY3
 from traitlets.config import LoggingConfigurable
 from traitlets.traitlets import Unicode, Bool
 
@@ -71,11 +70,11 @@ class BaseJSONConfigManager(LoggingConfigurable):
 
     def file_name(self, section_name):
         """Returns the json filename for the section_name: {config_dir}/{section_name}.json"""
-        return os.path.join(self.config_dir, section_name+'.json')
+        return os.path.join(self.config_dir, section_name + '.json')
 
     def directory(self, section_name):
         """Returns the directory name for the section name: {config_dir}/{section_name}.d"""
-        return os.path.join(self.config_dir, section_name+'.d')
+        return os.path.join(self.config_dir, section_name + '.d')
 
     def get(self, section_name, include_root=True):
         """Retrieve the config data for the specified section.
@@ -119,10 +118,7 @@ class BaseJSONConfigManager(LoggingConfigurable):
         # in order to avoid writing half-finished corrupted data to disk.
         json_content = json.dumps(data, indent=2)
 
-        if PY3:
-            f = io.open(filename, 'w', encoding='utf-8')
-        else:
-            f = open(filename, 'wb')
+        f = io.open(filename, 'w', encoding='utf-8')
         with f:
             f.write(json_content)
 

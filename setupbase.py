@@ -11,19 +11,13 @@ This includes:
 # Copyright (c) IPython Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import print_function
-
 import os
 import re
 import pipes
-import shutil
 import sys
 
 from distutils import log
-from distutils.cmd import Command
-from fnmatch import fnmatch
 from glob import glob
-from multiprocessing.pool import ThreadPool
 from subprocess import check_call
 
 if sys.platform == 'win32':
@@ -42,20 +36,10 @@ pjoin = os.path.join
 repo_root = os.path.dirname(os.path.abspath(__file__))
 is_repo = os.path.isdir(pjoin(repo_root, '.git'))
 
+
 def oscmd(s):
     print(">", s)
     os.system(s)
-
-# Py3 compatibility hacks, without assuming IPython itself is installed with
-# the full py3compat machinery.
-
-try:
-    execfile
-except NameError:
-    def execfile(fname, globs, locs=None):
-        locs = locs or globs
-        exec(compile(open(fname).read(), fname, "exec"), globs, locs)
-
 
 #---------------------------------------------------------------------------
 # Basic project information
@@ -65,7 +49,7 @@ name = 'jupyter_server'
 
 # release.py contains version, authors, license, url, keywords, etc.
 version_ns = {}
-execfile(pjoin(repo_root, name, '_version.py'), version_ns)
+exec(open(pjoin(repo_root, name, '_version.py')).read(), version_ns)
 
 version = version_ns['__version__']
 
@@ -74,6 +58,7 @@ version = version_ns['__version__']
 loose_pep440re = re.compile(r'^([1-9]\d*!)?(0|[1-9]\d*)(\.(0|[1-9]\d*))*((a|b|rc)(0|[1-9]\d*))?(\.post(0|[1-9]\d*))?(\.dev(0|[1-9]\d*)?)?$')
 if not loose_pep440re.match(version):
     raise ValueError('Invalid version number `%s`, please follow pep440 convention or pip will get confused about which package is more recent.' % version)
+
 
 #---------------------------------------------------------------------------
 # Find packages
@@ -84,13 +69,14 @@ def find_packages():
     Find all of the packages.
     """
     packages = []
-    for dir,subdirs,files in os.walk(name):
+    for dir, subdirs, files in os.walk(name):
         package = dir.replace(os.path.sep, '.')
         if '__init__.py' not in files:
             # not a package
             continue
         packages.append(package)
     return packages
+
 
 #---------------------------------------------------------------------------
 # Find package data
@@ -108,12 +94,10 @@ def find_package_data():
     os.chdir('jupyter_server')
 
     os.chdir(os.path.join('tests',))
-    js_tests = glob('*.js') + glob('*/*.js')
-
     os.chdir(cwd)
 
     package_data = {
-        'jupyter_server' : ['templates/*'],
+        'jupyter_server': ['templates/*'],
         'jupyter_server.bundler.tests': ['resources/*', 'resources/*/*', 'resources/*/*/.*'],
         'jupyter_server.services.api': ['api.yaml'],
         'jupyter_server.i18n': ['*/LC_MESSAGES/*.*'],
@@ -146,12 +130,14 @@ def check_package_data_first(command):
             command.run(self)
     return DecoratedCommand
 
+
 def update_package_data(distribution):
     """update package_data to catch changes during setup"""
     build_py = distribution.get_command_obj('build_py')
     distribution.package_data = find_package_data()
     # re-init build_py options which load package_data
     build_py.finalize_options()
+
 
 #---------------------------------------------------------------------------
 # Notebook related?
@@ -167,4 +153,3 @@ def run(cmd, *args, **kwargs):
     log.info('> ' + list2cmdline(cmd))
     kwargs['shell'] = (sys.platform == 'win32')
     return check_call(cmd, *args, **kwargs)
-

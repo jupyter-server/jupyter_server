@@ -4,12 +4,10 @@ import errno
 from functools import partial
 import io
 import os
+from os.path import join as pjoin
 import json
-import requests
 import shutil
 import time
-
-pjoin = os.path.join
 
 from jupyter_server.utils import url_path_join
 from jupyter_server.tests.launchserver import ServerTestBase, assert_http_error
@@ -30,7 +28,7 @@ class SessionAPI(object):
         if 400 <= response.status_code < 600:
             try:
                 response.reason = response.json()['message']
-            except:
+            except Exception:
                 pass
         response.raise_for_status()
 
@@ -82,6 +80,7 @@ class SessionAPI(object):
 
 class SessionAPITest(ServerTestBase):
     """Test the sessions web service API"""
+
     def setUp(self):
         rootdir = self.root_dir
         subdir = pjoin(rootdir, 'foo')
@@ -229,7 +228,7 @@ class SessionAPITest(ServerTestBase):
         r.raise_for_status()
         kernel_list = r.json()
         after['kernel'].pop('last_activity')
-        [ k.pop('last_activity') for k in kernel_list ]
+        [k.pop('last_activity') for k in kernel_list]
         self.assertEqual(kernel_list, [after['kernel']])
 
     def test_modify_kernel_id(self):

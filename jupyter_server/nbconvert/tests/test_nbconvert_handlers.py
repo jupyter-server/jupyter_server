@@ -1,12 +1,13 @@
 # coding: utf-8
+from base64 import encodebytes
 import io
 import json
 import os
 from os.path import join as pjoin
 import shutil
+from shutil import which
 
-import requests
-
+import pytest
 from jupyter_server.utils import url_path_join
 from jupyter_server.tests.launchserver import ServerTestBase, assert_http_error
 from nbformat import write
@@ -14,16 +15,10 @@ from nbformat.v4 import (
     new_notebook, new_markdown_cell, new_code_cell, new_output,
 )
 
-from ipython_genutils.testing.decorators import onlyif_cmds_exist
-
-try: #PY3
-    from base64 import encodebytes
-except ImportError: #PY2
-    from base64 import encodestring as encodebytes
-
 
 class NbconvertAPI(object):
     """Wrapper for nbconvert API calls."""
+
     def __init__(self, request):
         self.request = request
 
@@ -37,7 +32,7 @@ class NbconvertAPI(object):
 
     def from_file(self, format, path, name, download=False):
         return self._req('GET', url_path_join(format, path, name),
-                         params={'download':download})
+                         params={'download': download})
 
     def from_post(self, format, nbmodel):
         body = json.dumps(nbmodel)
@@ -46,10 +41,12 @@ class NbconvertAPI(object):
     def list_formats(self):
         return self._req('GET', '')
 
+
 png_green_pixel = encodebytes(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00'
 b'\x00\x00\x01\x00\x00x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDAT'
 b'\x08\xd7c\x90\xfb\xcf\x00\x00\x02\\\x01\x1e.~d\x87\x00\x00\x00\x00IEND\xaeB`\x82'
 ).decode('ascii')
+
 
 class APITest(ServerTestBase):
     def setUp(self):
@@ -73,7 +70,7 @@ class APITest(ServerTestBase):
         cc1 = new_code_cell(source=u'print(2*6)')
         cc1.outputs.append(new_output(output_type="stream", text=u'12'))
         cc1.outputs.append(new_output(output_type="execute_result",
-            data={'image/png' : png_green_pixel},
+            data={'image/png': png_green_pixel},
             execution_count=1,
         ))
         nb.cells.append(cc1)
@@ -84,7 +81,7 @@ class APITest(ServerTestBase):
 
         self.nbconvert_api = NbconvertAPI(self.request)
 
-    @onlyif_cmds_exist('pandoc')
+    @pytest.mark.skipif(not which('pandoc'), reason='requires pandoc')
     def test_from_file(self):
         r = self.nbconvert_api.from_file('html', 'foo', 'testnb.ipynb')
         self.assertEqual(r.status_code, 200)
@@ -96,25 +93,25 @@ class APITest(ServerTestBase):
         self.assertIn(u'text/x-python', r.headers['Content-Type'])
         self.assertIn(u'print(2*6)', r.text)
 
-    @onlyif_cmds_exist('pandoc')
+    @pytest.mark.skipif(not which('pandoc'), reason='requires pandoc')
     def test_from_file_404(self):
         with assert_http_error(404):
             self.nbconvert_api.from_file('html', 'foo', 'thisdoesntexist.ipynb')
 
-    @onlyif_cmds_exist('pandoc')
+    @pytest.mark.skipif(not which('pandoc'), reason='requires pandoc')
     def test_from_file_download(self):
         r = self.nbconvert_api.from_file('python', 'foo', 'testnb.ipynb', download=True)
         content_disposition = r.headers['Content-Disposition']
         self.assertIn('attachment', content_disposition)
         self.assertIn('testnb.py', content_disposition)
 
-    @onlyif_cmds_exist('pandoc')
+    @pytest.mark.skipif(not which('pandoc'), reason='requires pandoc')
     def test_from_file_zip(self):
         r = self.nbconvert_api.from_file('latex', 'foo', 'testnb.ipynb', download=True)
         self.assertIn(u'application/zip', r.headers['Content-Type'])
         self.assertIn(u'.zip', r.headers['Content-Disposition'])
 
-    @onlyif_cmds_exist('pandoc')
+    @pytest.mark.skipif(not which('pandoc'), reason='requires pandoc')
     def test_from_post(self):
         nbmodel = self.request('GET', 'api/contents/foo/testnb.ipynb').json()
 
@@ -128,7 +125,7 @@ class APITest(ServerTestBase):
         self.assertIn(u'text/x-python', r.headers['Content-Type'])
         self.assertIn(u'print(2*6)', r.text)
 
-    @onlyif_cmds_exist('pandoc')
+    @pytest.mark.skipif(not which('pandoc'), reason='requires pandoc')
     def test_from_post_zip(self):
         nbmodel = self.request('GET', 'api/contents/foo/testnb.ipynb').json()
 

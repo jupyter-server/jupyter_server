@@ -25,4 +25,3 @@ class LogoutHandler(JupyterHandler):
 
 
 default_handlers = [(r"/logout", LogoutHandler)]
-

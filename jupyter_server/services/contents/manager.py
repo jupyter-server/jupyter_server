@@ -6,7 +6,6 @@
 from fnmatch import fnmatch
 import itertools
 import json
-import os
 import re
 
 from tornado.web import HTTPError, RequestHandler
@@ -16,7 +15,7 @@ from .checkpoints import Checkpoints
 from traitlets.config.configurable import LoggingConfigurable
 from nbformat import sign, validate as validate_nb, ValidationError
 from nbformat.v4 import new_notebook
-from ipython_genutils.importstring import import_item
+from ...utils import import_item
 from traitlets import (
     Any,
     Bool,
@@ -29,8 +28,6 @@ from traitlets import (
     validate,
     default,
 )
-from ipython_genutils.py3compat import string_types
-from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.transutils import _
 
 
@@ -106,7 +103,7 @@ class ContentsManager(LoggingConfigurable):
     @validate('pre_save_hook')
     def _validate_pre_save_hook(self, proposal):
         value = proposal['value']
-        if isinstance(value, string_types):
+        if isinstance(value, str):
             value = import_item(self.pre_save_hook)
         if not callable(value):
             raise TraitError("pre_save_hook must be callable")
@@ -354,29 +351,29 @@ class ContentsManager(LoggingConfigurable):
                 e.message, json.dumps(e.instance, indent=1, default=lambda obj: '<UNKNOWN>'),
             )
         return model
-    
+
     def new_untitled(self, path='', type='', ext=''):
         """Create a new untitled file or directory in path
-        
+
         path must be a directory
-        
+
         File extension can be specified.
-        
+
         Use `new` to create files with a fully specified path (including filename).
         """
         path = path.strip('/')
         if not self.dir_exists(path):
             raise HTTPError(404, 'No such directory: %s' % path)
-        
+
         model = {}
         if type:
             model['type'] = type
-        
+
         if ext == '.ipynb':
             model.setdefault('type', 'notebook')
         else:
             model.setdefault('type', 'file')
-        
+
         insert = ''
         if model['type'] == 'directory':
             untitled = self.untitled_directory
@@ -388,25 +385,25 @@ class ContentsManager(LoggingConfigurable):
             untitled = self.untitled_file
         else:
             raise HTTPError(400, "Unexpected model type: %r" % model['type'])
-        
+
         name = self.increment_filename(untitled + ext, path, insert=insert)
         path = u'{0}/{1}'.format(path, name)
         return self.new(model, path)
-    
+
     def new(self, model=None, path=''):
         """Create a new file or directory and return its model with no content.
-        
+
         To create a new untitled entity in a directory, use `new_untitled`.
         """
         path = path.strip('/')
         if model is None:
             model = {}
-        
+
         if path.endswith('.ipynb'):
             model.setdefault('type', 'notebook')
         else:
             model.setdefault('type', 'file')
-        
+
         # no content, not a directory, so fill out new-file model
         if 'content' not in model and model['type'] != 'directory':
             if model['type'] == 'notebook':
@@ -416,7 +413,7 @@ class ContentsManager(LoggingConfigurable):
                 model['content'] = ''
                 model['type'] = 'file'
                 model['format'] = 'text'
-        
+
         model = self.save(model, path)
         return model
 
@@ -437,20 +434,20 @@ class ContentsManager(LoggingConfigurable):
         else:
             from_dir = ''
             from_name = path
-        
+
         model = self.get(path)
         model.pop('path', None)
         model.pop('name', None)
         if model['type'] == 'directory':
             raise HTTPError(400, "Can't copy directories")
-        
+
         if to_path is None:
             to_path = from_dir
         if self.dir_exists(to_path):
             name = copy_pat.sub(u'.', from_name)
             to_name = self.increment_filename(name, to_path, insert='-Copy')
             to_path = u'{0}/{1}'.format(to_path, to_name)
-        
+
         model = self.save(model, to_path)
         return model
 

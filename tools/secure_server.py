@@ -6,8 +6,6 @@ Generate cert and keyfiles (rsa 1024) in ~/.ssh/, ask for a password, and add
 the corresponding entries in the JSON configuration file.
 """
 
-import six
-
 from jupyter_server.auth import passwd
 from traitlets.config.loader import JSONFileConfigLoader, ConfigFileNotFound
 from jupyter_core.paths import jupyter_config_dir
@@ -80,7 +78,7 @@ def persist_config(mode=0o600):
 
     filepath = os.path.join(jupyter_config_dir(), 'jupyter_server_config.json')
     with io.open(filepath, 'w') as f:
-        f.write(six.u(json.dumps(config, indent=2)))
+        f.write(json.dumps(config, indent=2))
     try:
         os.chmod(filepath, mode)
     except Exception:

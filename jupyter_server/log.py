@@ -9,9 +9,10 @@ import json
 from tornado.log import access_log
 from .metrics import prometheus_log_method
 
+
 def log_request(handler):
     """log a bit more information about each request than tornado's default
-    
+
     - move static file get success to debug-level (reduces noise)
     - get proxied IP instead of proxy IP
     - log referer for redirect and failed requests
@@ -28,7 +29,7 @@ def log_request(handler):
         log_method = access_log.warning
     else:
         log_method = access_log.error
-    
+
     request_time = 1000.0 * handler.request.request_time()
     ns = dict(
         status=status,

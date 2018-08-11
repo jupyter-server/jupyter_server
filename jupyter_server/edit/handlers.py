@@ -1,4 +1,4 @@
-#encoding: utf-8
+# encoding: utf-8
 """Tornado handlers for the terminal emulator."""
 
 # Copyright (c) Jupyter Development Team.
@@ -25,6 +25,7 @@ class EditorHandler(JupyterHandler):
             page_title=basename + " (editing)",
             )
         )
+
 
 default_handlers = [
     (r"/edit%s" % path_regex, EditorHandler),

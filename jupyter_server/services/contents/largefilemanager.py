@@ -1,9 +1,10 @@
-from jupyter_server.services.contents.filemanager import FileContentsManager
-from contextlib import contextmanager
+
 from tornado import web
-import nbformat
 import base64
-import os, io
+import os
+import io
+
+from .filemanager import FileContentsManager
 
 
 class LargeFileManager(FileContentsManager):
@@ -69,4 +70,3 @@ class LargeFileManager(FileContentsManager):
                 os_path = os.path.join(os.path.dirname(os_path), os.readlink(os_path))
             with io.open(os_path, 'ab') as f:
                 f.write(bcontent)
-

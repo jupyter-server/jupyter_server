@@ -1,4 +1,4 @@
-#encoding: utf-8
+# encoding: utf-8
 """Tornado handlers for the terminal emulator."""
 
 # Copyright (c) Jupyter Development Team.

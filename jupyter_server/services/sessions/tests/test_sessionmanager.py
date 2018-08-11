@@ -3,13 +3,15 @@
 from functools import partial
 from unittest import TestCase
 
-from tornado import gen, web
+from tornado import web
 from tornado.ioloop import IOLoop
 
 from ..sessionmanager import SessionManager
 from jupyter_server.services.kernels.kernelmanager import MappingKernelManager
 from jupyter_server.services.contents.manager import ContentsManager
 from jupyter_server._tz import utcnow, isoformat
+
+from ....utils import force_async
 
 
 class DummyKernel(object):
@@ -53,14 +55,13 @@ class TestSessionManager(TestCase):
         self.addCleanup(partial(self.loop.close, all_fds=True))
 
     def create_sessions(self, *kwarg_list):
-        @gen.coroutine
-        def co_add():
+        async def co_add():
             sessions = []
             for kwargs in kwarg_list:
                 kwargs.setdefault('type', 'notebook')
-                session = yield self.sm.create_session(**kwargs)
+                session = await force_async(self.sm.create_session(**kwargs))
                 sessions.append(session)
-            raise gen.Return(sessions)
+            return sessions
         return self.loop.run_sync(co_add)
 
     def create_session(self, **kwargs):
@@ -215,7 +216,7 @@ class TestSessionManager(TestCase):
             dict(path='/path/to/2/test2.ipynb', kernel_name='python'),
             dict(path='/path/to/3', name='foo', type='console', kernel_name='python'),
         )
-        sm.delete_session(sessions[1]['id'])
+        self.loop.run_sync(lambda: sm.delete_session(sessions[1]['id']))
         new_sessions = sm.list_sessions()
         expected = [{
                 'id': sessions[0]['id'],

@@ -1,21 +1,20 @@
-import imp
+
+from collections import OrderedDict
 import os
 import sys
 from unittest import TestCase
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch # py2
+from unittest.mock import patch
 
-from ipython_genutils.tempdir import TemporaryDirectory
-from ipython_genutils import py3compat
+from tempfile import TemporaryDirectory
+
+from ..encoding import cast_unicode
 
 from jupyter_server.config_manager import BaseJSONConfigManager
 from traitlets.tests.utils import check_help_all_output
 from jupyter_core import paths
 
 from jupyter_server.extensions import toggle_serverextension_python, _get_config_dir
-from jupyter_server import extensions, extensions_base
+from jupyter_server import extensions_base
 from jupyter_server.serverapp import ServerApp
 
 if sys.version_info > (3,):
@@ -24,7 +23,6 @@ else:
     class SimpleNamespace(object):
         pass
 
-from collections import OrderedDict
 
 def test_help_output():
     check_help_all_output('jupyter_server.extensions')
@@ -32,6 +30,7 @@ def test_help_output():
     check_help_all_output('jupyter_server.extensions', ['disable'])
     check_help_all_output('jupyter_server.extensions', ['install'])
     check_help_all_output('jupyter_server.extensions', ['uninstall'])
+
 
 outer_file = __file__
 
@@ -56,7 +55,7 @@ class MockEnvTestCase(TestCase):
     def tempdir(self):
         td = TemporaryDirectory()
         self.tempdirs.append(td)
-        return py3compat.cast_unicode(td.name)
+        return cast_unicode(td.name)
 
     def setUp(self):
         self.tempdirs = []
@@ -185,10 +184,9 @@ class TestOrderedServerExtension(MockEnvTestCase):
         del sys.modules['mockextension2']
         del sys.modules['mockextension1']
 
-
     def test_load_ordered(self):
         app = ServerApp()
-        app.jpserver_extensions = OrderedDict([('mockextension2',True),('mockextension1',True)])
+        app.jpserver_extensions = OrderedDict([('mockextension2', True), ('mockextension1', True)])
 
         app.init_server_extensions()
 

@@ -5,9 +5,10 @@
 
 import io
 import os
+import sys
 import zipfile
 
-from tornado import web, escape
+from tornado import web
 from tornado.log import app_log
 
 from ..base.handlers import (
@@ -16,14 +17,15 @@ from ..base.handlers import (
 )
 from nbformat import from_dict
 
-from ipython_genutils.py3compat import cast_bytes
-from ipython_genutils import text
+from ..encoding import cast_bytes
+
 
 def find_resource_files(output_files_dir):
     files = []
     for dirpath, dirnames, filenames in os.walk(output_files_dir):
         files.extend([os.path.join(dirpath, f) for f in filenames])
     return files
+
 
 def respond_zip(handler, name, output, resources):
     """Zip up the output and resource files and respond with the zip file.
@@ -53,6 +55,7 @@ def respond_zip(handler, name, output, resources):
 
     handler.finish(buffer.getvalue())
     return True
+
 
 def get_exporter(format, **kwargs):
     """get an exporter, raising appropriate errors"""
@@ -104,7 +107,12 @@ class NbconvertFileHandler(JupyterHandler):
         self.set_header('Last-Modified', model['last_modified'])
 
         # create resources dictionary
-        mod_date = model['last_modified'].strftime(text.date_format)
+        # datetime.strftime date format for ipython
+        if sys.platform == 'win32':
+            date_format = "%B %d, %Y"
+        else:
+            date_format = "%B %-d, %Y"
+        mod_date = model['last_modified'].strftime(date_format)
         nb_title = os.path.splitext(name)[0]
 
         resource_dict = {
@@ -158,7 +166,7 @@ class NbconvertPostHandler(JupyterHandler):
 
         try:
             output, resources = exporter.from_notebook_node(nbnode, resources={
-                "metadata": {"name": name[:name.rfind('.')],},
+                "metadata": {"name": name[:name.rfind('.')], },
                 "config_dir": self.application.settings['config_dir'],
             })
         except Exception as e:

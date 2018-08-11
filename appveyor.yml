@@ -6,21 +6,20 @@ environment:
   matrix:
     - CONDA_PY: 36
       CONDA_INSTALL_LOCN: "C:\\Miniconda36-x64"
-    - CONDA_PY: 27
-      CONDA_INSTALL_LOCN: "C:\\Miniconda-x64"
 
 platform:
   - x64
 
 build: off
+cache:
+  - '%LOCALAPPDATA%\pip\Cache'
 
 install:
   - cmd: call %CONDA_INSTALL_LOCN%\Scripts\activate.bat
   - cmd: conda config --set show_channel_urls true
   - cmd: conda config --add channels conda-forge
   #- cmd: conda update --yes --quiet conda
-  - cmd: conda install -y pyzmq tornado jupyter_client nbformat nbconvert ipykernel pip nose
   - cmd: pip install .[test]
 
 test_script:
-  - nosetests  -v jupyter_server --exclude-dir notebook\tests\selenium
+  - py.test
