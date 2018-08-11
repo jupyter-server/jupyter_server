@@ -5,6 +5,7 @@
 
 import ctypes
 import errno
+import inspect
 import os
 import stat
 import sys
@@ -249,7 +250,7 @@ def check_version(v, check):
 
 async def force_async(obj):
     """Force an object to be asynchronous"""
-    if hasattr(obj, '__await__'):
+    if inspect.isawaitable(obj):
         return await obj
 
     async def inner():
