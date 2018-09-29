@@ -12,6 +12,7 @@ class TerminalRootHandler(APIHandler):
         tm = self.terminal_manager
         terms = [{'name': name} for name in tm.terminals]
         self.finish(json.dumps(terms))
+
         # Update the metric below to the length of the list 'terms'
         TERMINAL_CURRENTLY_RUNNING_TOTAL.set(
             len(terms)
@@ -22,6 +23,7 @@ class TerminalRootHandler(APIHandler):
         """POST /terminals creates a new terminal and redirects to it"""
         name, _ = self.terminal_manager.new_named_terminal()
         self.finish(json.dumps({'name': name}))
+
         # Increase the metric by one because a new terminal was created
         TERMINAL_CURRENTLY_RUNNING_TOTAL.inc()
 
@@ -45,7 +47,10 @@ class TerminalHandler(APIHandler):
             yield tm.terminate(name, force=True)
             self.set_status(204)
             self.finish()
-            # Decrease the metric below by one because a terminal has been shutdown
-            TERMINAL_CURRENTLY_RUNNING_TOTAL.dec(1)
+
+            # Decrease the metric below by one
+            # because a terminal has been shutdown
+            TERMINAL_CURRENTLY_RUNNING_TOTAL.dec()
+
         else:
             raise web.HTTPError(404, "Terminal not found: %r" % name)
