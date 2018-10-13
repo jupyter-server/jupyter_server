@@ -8,7 +8,7 @@ import json
 
 from base64 import decodebytes
 
-from tornado import web
+from tornado import gen, web
 
 from jupyter_server.base.handlers import JupyterHandler
 
@@ -46,9 +46,9 @@ class FilesHandler(JupyterHandler):
             _, name = path.rsplit('/', 1)
         else:
             name = path
-
-        model = cm.get(path, type='file', content=include_body)
-
+        
+        model = yield gen.maybe_future(cm.get(path, type='file', content=include_body))
+        
         if self.get_argument("download", False):
             self.set_attachment_header(name)
 
