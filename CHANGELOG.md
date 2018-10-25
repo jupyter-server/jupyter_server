@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Adopt Jupyter Kernel Management and Jupyter Protocol for kernel management framework per [JEP #45](https://github.com/jupyter/enhancement-proposals/pull/45) ([#112](https://github.com/jupyter/jupyter_server/pull/112)).
+
 ## [0.2.1] - 2020-1-10
 
 ### Added

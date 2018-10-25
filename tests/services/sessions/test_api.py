@@ -40,7 +40,7 @@ class SessionClient:
         self,
         path,
         type='notebook',
-        kernel_name='python',
+        kernel_name='pyimport/kernel',
         kernel_id=None):
         body = {
             'path': path,
@@ -58,7 +58,7 @@ class SessionClient:
                 'path': path
             },
             'kernel': {
-                'name': 'python',
+                'name': 'pyimport/kernel',
                 'id': 'foo'
             }
         }
@@ -96,7 +96,6 @@ class SessionClient:
         time.sleep(0.1)
 
 
-
 @pytest.fixture
 def session_client(root_dir, fetch):
     subdir = root_dir.joinpath('foo')
@@ -114,6 +113,30 @@ def session_client(root_dir, fetch):
 
     # Remove subdir
     shutil.rmtree(str(subdir), ignore_errors=True)
+
+
+def assert_kernel_equality(actual, expected):
+    """ Compares kernel models after taking into account that execution_states
+        may differ from 'starting' to 'idle'.  The 'actual' argument is the
+        current state (which may have an 'idle' status) while the 'expected'
+        argument is the previous state (which may have a 'starting' status).
+    """
+    actual.pop('execution_state', None)
+    actual.pop('last_activity', None)
+    expected.pop('execution_state', None)
+    expected.pop('last_activity', None)
+    assert actual == expected
+
+
+def assert_session_equality(actual, expected):
+    """ Compares session models.  `actual` is the most current session,
+        while `expected` is the target of the comparison.  This order
+        matters when comparing the kernel sub-models.
+    """
+    assert actual['id'] == expected['id']
+    assert actual['path'] == expected['path']
+    assert actual['type'] == expected['type']
+    assert_kernel_equality(actual['kernel'], expected['kernel'])
 
 
 async def test_create(session_client):
@@ -134,13 +157,14 @@ async def test_create(session_client):
     # Check that the new session appears in list.
     resp = await session_client.list()
     sessions = j(resp)
-    assert sessions == [new_session]
+    assert len(sessions) == 1
+    assert_session_equality(sessions[0], new_session)
 
     # Retrieve that session.
     sid = new_session['id']
     resp = await session_client.get(sid)
     got = j(resp)
-    assert got == new_session
+    assert_session_equality(got, new_session)
 
     # Need to find a better solution to this.
     await session_client.cleanup()
@@ -183,23 +207,26 @@ async def test_create_with_kernel_id(session_client, fetch):
 
     resp = await session_client.create('foo/nb1.ipynb', kernel_id=kernel['id'])
     assert resp.code == 201
-    newsession = j(resp)
-    assert 'id' in newsession
-    assert newsession['path'] == 'foo/nb1.ipynb'
-    assert newsession['kernel']['id'] == kernel['id']
-    assert resp.headers['Location'] == '/api/sessions/{0}'.format(newsession['id'])
+    new_session = j(resp)
+    assert 'id' in new_session
+    assert new_session['path'] == 'foo/nb1.ipynb'
+    assert_kernel_equality(new_session['kernel'], kernel)
+    assert resp.headers['Location'] == '/api/sessions/{0}'.format(new_session['id'])
 
     resp = await session_client.list()
     sessions = j(resp)
-    assert sessions == [newsession]
+
+    assert_session_equality(sessions[0], new_session)
 
     # Retrieve it
-    sid = newsession['id']
+    sid = new_session['id']
     resp = await session_client.get(sid)
     got = j(resp)
-    assert got == newsession
+    assert_session_equality(got, new_session)
+
     # Need to find a better solution to this.
     await session_client.cleanup()
+
 
 async def test_delete(session_client):
     resp = await session_client.create('foo/nb1.ipynb')
@@ -219,6 +246,7 @@ async def test_delete(session_client):
     # Need to find a better solution to this.
     await session_client.cleanup()
 
+
 async def test_modify_path(session_client):
     resp = await session_client.create('foo/nb1.ipynb')
     newsession = j(resp)
@@ -230,6 +258,7 @@ async def test_modify_path(session_client):
     assert changed['path'] == 'nb2.ipynb'
     # Need to find a better solution to this.
     await session_client.cleanup()
+
 
 async def test_modify_path_deprecated(session_client):
     resp = await session_client.create('foo/nb1.ipynb')
@@ -243,6 +272,7 @@ async def test_modify_path_deprecated(session_client):
     # Need to find a better solution to this.
     await session_client.cleanup()
 
+
 async def test_modify_type(session_client):
     resp = await session_client.create('foo/nb1.ipynb')
     newsession = j(resp)
@@ -254,6 +284,7 @@ async def test_modify_type(session_client):
     assert changed['type'] == 'console'
     # Need to find a better solution to this.
     await session_client.cleanup()
+
 
 async def test_modify_kernel_name(session_client, fetch):
     resp = await session_client.create('foo/nb1.ipynb')
@@ -270,9 +301,9 @@ async def test_modify_kernel_name(session_client, fetch):
     # check kernel list, to be sure previous kernel was cleaned up
     resp = await fetch('api/kernels', method='GET')
     kernel_list = j(resp)
-    after['kernel'].pop('last_activity')
-    [ k.pop('last_activity') for k in kernel_list ]
-    assert kernel_list == [after['kernel']]
+
+    assert_kernel_equality(kernel_list[0], after['kernel'])
+
     # Need to find a better solution to this.
     await session_client.cleanup()
 
@@ -299,9 +330,7 @@ async def test_modify_kernel_id(session_client, fetch):
     resp = await fetch('api/kernels', method='GET')
     kernel_list = j(resp)
 
-    kernel.pop('last_activity')
-    [ k.pop('last_activity') for k in kernel_list ]
-    assert kernel_list == [kernel]
+    assert_kernel_equality(kernel_list[0], kernel)
 
     # Need to find a better solution to this.
     await session_client.cleanup()

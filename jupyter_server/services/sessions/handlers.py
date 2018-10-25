@@ -11,9 +11,9 @@ import json
 from tornado import gen, web
 
 from ...base.handlers import APIHandler
-from jupyter_client.jsonutil import date_default
+from jupyter_protocol.jsonutil import date_default
 from jupyter_server.utils import maybe_future, url_path_join
-from jupyter_client.kernelspec import NoSuchKernel
+from jupyter_kernel_mgmt.kernelspec import NoSuchKernel
 
 
 class SessionRootHandler(APIHandler):
@@ -132,9 +132,9 @@ class SessionHandler(APIHandler):
                 changes['kernel_id'] = kernel_id
             elif model['kernel'].get('name') is not None:
                 kernel_name = model['kernel']['name']
-                kernel_id = yield sm.start_kernel_for_session(
+                kernel_id = yield maybe_future(sm.start_kernel_for_session(
                     session_id, kernel_name=kernel_name, name=before['name'],
-                    path=before['path'], type=before['type'])
+                    path=before['path'], type=before['type']))
                 changes['kernel_id'] = kernel_id
 
         yield maybe_future(sm.update_session(session_id, **changes))
