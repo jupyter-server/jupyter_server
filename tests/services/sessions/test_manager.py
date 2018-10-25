@@ -1,7 +1,9 @@
 import pytest
 
-from tornado import web
+from tornado import gen, web
+from tornado.ioloop import IOLoop
 
+from jupyter_kernel_mgmt.discovery import KernelFinder
 from jupyter_server.services.sessions.sessionmanager import SessionManager
 from jupyter_server.services.kernels.kernelmanager import MappingKernelManager
 from jupyter_server.services.contents.manager import ContentsManager
@@ -9,8 +11,11 @@ from jupyter_server._tz import utcnow, isoformat
 
 
 class DummyKernel(object):
-    def __init__(self, kernel_name='python'):
-        self.kernel_name = kernel_name
+    def __init__(self, kernel_type='python'):
+        self.kernel_type = kernel_type
+
+    async def client_ready(self):
+        return  # Don't wait for anything
 
 
 dummy_date = utcnow()
@@ -26,10 +31,10 @@ class DummyMKM(MappingKernelManager):
     def _new_id(self):
         return next(self.id_letters)
 
-    async def start_kernel(self, kernel_id=None, path=None, kernel_name='python', **kwargs):
-        kernel_id = kernel_id or self._new_id()
-        k = self._kernels[kernel_id] = DummyKernel(kernel_name=kernel_name)
-        self._kernel_connections[kernel_id] = 0
+    async def start_launching_kernel(self, path=None, kernel_name='python', **kwargs):
+        kernel_id = self._new_id()
+        k = self._kernels[kernel_id] = DummyKernel(kernel_type=kernel_name)
+        k.n_connections = 0
         k.last_activity = dummy_date
         k.execution_state = 'idle'
         return kernel_id
@@ -41,7 +46,7 @@ class DummyMKM(MappingKernelManager):
 @pytest.fixture
 def session_manager():
     return SessionManager(
-        kernel_manager=DummyMKM(),
+        kernel_manager=DummyMKM(kernel_finder=KernelFinder(providers=[])),
         contents_manager=ContentsManager())
 
 

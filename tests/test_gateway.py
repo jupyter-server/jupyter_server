@@ -177,7 +177,7 @@ async def test_gateway_class_mappings(init_gateway, serverapp):
     # Ensure appropriate class mappings are in place.
     assert serverapp.kernel_manager_class.__name__ == 'GatewayKernelManager'
     assert serverapp.session_manager_class.__name__ == 'GatewaySessionManager'
-    assert serverapp.kernel_spec_manager_class.__name__ == 'GatewayKernelSpecManager'
+    assert serverapp.kernel_finder.__class__.__name__ == 'GatewayKernelFinder'
 
 
 async def test_gateway_get_kernelspecs(init_gateway, fetch):

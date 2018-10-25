@@ -1,4 +1,3 @@
-import sys
 import time
 import json
 import shutil
@@ -12,13 +11,6 @@ from nbformat import writes
 from ...utils import expected_http_error
 
 j = lambda r: json.loads(r.body.decode())
-
-
-@pytest.fixture(params=["MappingKernelManager", "AsyncMappingKernelManager"])
-def argv(request):
-    if request.param == "AsyncMappingKernelManager" and sys.version_info < (3, 6):
-        pytest.skip("Kernel manager is AsyncMappingKernelManager, Python version < 3.6")
-    return ["--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager." + request.param]
 
 
 class SessionClient:
@@ -48,7 +40,7 @@ class SessionClient:
         self,
         path,
         type='notebook',
-        kernel_name='python',
+        kernel_name='pyimport/kernel',
         kernel_id=None):
         body = {
             'path': path,
@@ -66,7 +58,7 @@ class SessionClient:
                 'path': path
             },
             'kernel': {
-                'name': 'python',
+                'name': 'pyimport/kernel',
                 'id': 'foo'
             }
         }
@@ -102,7 +94,6 @@ class SessionClient:
         for session in sessions:
             await self.delete(session['id'])
         time.sleep(0.1)
-
 
 
 @pytest.fixture
@@ -219,7 +210,7 @@ async def test_create_with_kernel_id(session_client, fetch):
     new_session = j(resp)
     assert 'id' in new_session
     assert new_session['path'] == 'foo/nb1.ipynb'
-    assert new_session['kernel']['id'] == kernel['id']
+    assert_kernel_equality(new_session['kernel'], kernel)
     assert resp.headers['Location'] == '/api/sessions/{0}'.format(new_session['id'])
 
     resp = await session_client.list()
@@ -232,8 +223,10 @@ async def test_create_with_kernel_id(session_client, fetch):
     resp = await session_client.get(sid)
     got = j(resp)
     assert_session_equality(got, new_session)
+
     # Need to find a better solution to this.
     await session_client.cleanup()
+
 
 async def test_delete(session_client):
     resp = await session_client.create('foo/nb1.ipynb')
@@ -253,6 +246,7 @@ async def test_delete(session_client):
     # Need to find a better solution to this.
     await session_client.cleanup()
 
+
 async def test_modify_path(session_client):
     resp = await session_client.create('foo/nb1.ipynb')
     newsession = j(resp)
@@ -264,6 +258,7 @@ async def test_modify_path(session_client):
     assert changed['path'] == 'nb2.ipynb'
     # Need to find a better solution to this.
     await session_client.cleanup()
+
 
 async def test_modify_path_deprecated(session_client):
     resp = await session_client.create('foo/nb1.ipynb')
@@ -277,6 +272,7 @@ async def test_modify_path_deprecated(session_client):
     # Need to find a better solution to this.
     await session_client.cleanup()
 
+
 async def test_modify_type(session_client):
     resp = await session_client.create('foo/nb1.ipynb')
     newsession = j(resp)
@@ -288,6 +284,7 @@ async def test_modify_type(session_client):
     assert changed['type'] == 'console'
     # Need to find a better solution to this.
     await session_client.cleanup()
+
 
 async def test_modify_kernel_name(session_client, fetch):
     resp = await session_client.create('foo/nb1.ipynb')
@@ -304,9 +301,9 @@ async def test_modify_kernel_name(session_client, fetch):
     # check kernel list, to be sure previous kernel was cleaned up
     resp = await fetch('api/kernels', method='GET')
     kernel_list = j(resp)
-    after['kernel'].pop('last_activity')
-    [ k.pop('last_activity') for k in kernel_list ]
-    assert kernel_list == [after['kernel']]
+
+    assert_kernel_equality(kernel_list[0], after['kernel'])
+
     # Need to find a better solution to this.
     await session_client.cleanup()
 
@@ -333,9 +330,7 @@ async def test_modify_kernel_id(session_client, fetch):
     resp = await fetch('api/kernels', method='GET')
     kernel_list = j(resp)
 
-    kernel.pop('last_activity')
-    [ k.pop('last_activity') for k in kernel_list ]
-    assert kernel_list == [kernel]
+    assert_kernel_equality(kernel_list[0], kernel)
 
     # Need to find a better solution to this.
     await session_client.cleanup()

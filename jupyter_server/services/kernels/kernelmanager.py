@@ -9,18 +9,19 @@
 
 from collections import defaultdict
 from datetime import datetime, timedelta
-from functools import partial
 import os
+import uuid
 
-from tornado import web
-from tornado.concurrent import Future
+from tornado import gen, web
 from tornado.ioloop import IOLoop, PeriodicCallback
+from tornado.locks import Event
 
-from jupyter_client.session import Session
-from jupyter_client.multikernelmanager import MultiKernelManager, AsyncMultiKernelManager
+from jupyter_kernel_mgmt.client import IOLoopKernelClient
+from jupyter_kernel_mgmt.restarter import TornadoKernelRestarter
 from traitlets import (Any, Bool, Dict, List, Unicode, TraitError, Integer,
        Float, Instance, default, validate
 )
+from traitlets.config.configurable import LoggingConfigurable
 
 from jupyter_server.utils import to_os_path, exists, ensure_async, run_sync
 from jupyter_server._tz import utcnow, isoformat
@@ -29,18 +30,146 @@ from ipython_genutils.py3compat import getcwd
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
 
 
-class MappingKernelManager(MultiKernelManager):
-    """A KernelManager that handles
-     - File mapping
-     - HTTP error handling
-     - Kernel message filtering
+class KernelInterface(LoggingConfigurable):
+    """A wrapper around one kernel, including manager, client and restarter.
+
+    A KernelInterface instance persists across kernel restarts, whereas
+    manager and client objects are recreated.
     """
+    def __init__(self, kernel_type, kernel_finder, connection_info, manager):
+        super(KernelInterface, self).__init__()
+        self.kernel_type = kernel_type
+        self.kernel_finder = kernel_finder
 
-    @default('kernel_manager_class')
-    def _default_kernel_manager_class(self):
-        return "jupyter_client.ioloop.IOLoopKernelManager"
+        self.connection_info = connection_info
+        self.manager = manager
+        self.n_connections = 0
+        self.execution_state = 'starting'
+        self.last_activity = utcnow()
 
-    kernel_argv = List(Unicode())
+        self.restarter = TornadoKernelRestarter(self.manager, self.kernel_type,
+                                           kernel_finder=self.kernel_finder)
+        self.restarter.add_callback(self._handle_kernel_died, 'died')
+        self.restarter.add_callback(self._handle_kernel_restarted, 'restarted')
+        self.restarter.start()
+
+        # A future that resolves when the client is connected
+        self.client_connected = self._connect_client()
+        self._client_connected_evt = Event()
+
+        self.buffer_for_key = None
+        # TODO: the buffer should likely be a memory bounded queue, we're starting with a list to keep it simple
+        self.buffer = []
+
+        # Message handlers stored here don't have to be re-added if the kernel
+        # is restarted.
+        self.msg_handlers = []
+
+    @classmethod
+    async def launch(cls, kernel_type, kernel_finder, **kwargs):
+        connection_info, manager = await kernel_finder.launch(kernel_type, **kwargs)
+        return cls(kernel_type, kernel_finder, connection_info, manager)
+
+    client = None
+
+    async def _connect_client(self):
+        """Connect a client and wait for it to be ready."""
+        self.client = IOLoopKernelClient(self.connection_info, self.manager)
+        await self.client.wait_for_ready()
+        self.client.add_handler(self._msg_received, {'shell', 'iopub', 'stdin'})
+        self._client_connected_evt.set()
+
+    def _close_client(self):
+        if self.client is not None:
+            self._client_connected_evt.clear()
+            self.client_connected.cancel()
+            self.client.close()
+            self.client = None
+
+    def client_ready(self):
+        """Return a future which resolves when the client is ready"""
+        if self.client is None:
+            return self._client_connected_evt.wait()
+        else:
+            return self.client_connected
+
+    def _msg_received(self, msg, channel):
+        loop = IOLoop.current()
+        for handler in self.msg_handlers:
+            loop.add_callback(handler, msg, channel)
+
+    async def shutdown(self, now=False):
+        self.restarter.stop()
+
+        if now or (self.client is None):
+            await self.manager.kill()
+        else:
+            await self.client_connected
+            await self.client.shutdown_or_terminate()
+
+        self._close_client()
+        await self.manager.cleanup()
+
+    asynd def interrupt(self):
+        await self.manager.interrupt()
+
+    async def _handle_kernel_died(self, data):
+        """Called when the auto-restarter notices the kernel has died"""
+        self._close_client()
+
+    async def _handle_kernel_restarted(self, data):
+        """Called when the kernel has been restarted"""
+        self.manager = data['manager']
+        self.connection_info = data['connection_info']
+        self.client_connected = self._connect_client()
+        await self.client_connected
+
+    async def restart(self):
+        await self.shutdown()
+        # The restart will trigger _handle_kernel_restarted() to connect a
+        # new client.
+        await self.restarter.do_restart()
+        # Resume monitoring the kernel for auto-restart
+        self.restarter.start()
+        await self._client_connected_evt.wait()
+
+    def start_buffering(self, session_key):
+        # record the session key because only one session can buffer
+        self.buffer_for_key = session_key
+
+        # forward any future messages to the internal buffer
+        self.client.add_handler(self._buffer_msg, {'shell', 'iopub', 'stdin'})
+
+    def _buffer_msg(self, msg, channel):
+        self.log.debug("Buffering msg on %s", channel)
+        self.buffer.append((msg, channel))
+
+    def get_buffer(self):
+        """Get the buffer for a given kernel, and stop buffering new messages
+        """
+        buffer, key = self.buffer, self.buffer_for_key
+        self.buffer = []
+        self.stop_buffering()
+        return buffer, key
+
+    def stop_buffering(self):
+        """Stop buffering kernel messages
+        """
+        self.client.remove_handler(self._buffer_msg)
+
+        if self.buffer:
+            self.log.info("Discarding %s buffered messages for %s",
+                len(self.buffer), self.buffer_for_key)
+        self.buffer = []
+        self.buffer_for_key = None
+
+
+class MappingKernelManager(LoggingConfigurable):
+    """A KernelManager that handles notebook mapping and HTTP error handling"""
+
+    default_kernel_name = Unicode('pyimport/kernel', config=True,
+        help="The name of the default kernel to start"
+    )
 
     root_dir = Unicode(config=True)
 
@@ -120,16 +249,27 @@ class MappingKernelManager(MultiKernelManager):
     last_kernel_activity = Instance(datetime,
         help="The last activity on any kernel, including shutting down a kernel")
 
-    def __init__(self, **kwargs):
-        self.pinned_superclass = MultiKernelManager
-        self.pinned_superclass.__init__(self, **kwargs)
-        self.last_kernel_activity = utcnow()
-
     allowed_message_types = List(trait=Unicode(), config=True,
         help="""White list of allowed kernel message types.
         When the list is empty, all message types are allowed.
         """
     )
+
+    def __init__(self, kernel_finder, **kwargs):
+        super(MappingKernelManager, self).__init__(**kwargs)
+        self.last_kernel_activity = utcnow()
+        self._kernels = {}
+        self._kernels_starting = {}
+        self._restarters = {}
+        self.kernel_finder = kernel_finder
+        self.initialize_culler()
+
+    def get_kernel(self, kernel_id):
+        """Return KernelInterface instance corresponding to kernel_id.
+           If kernel_id is not currently managed, HTTPError 404 is raised.
+        """
+        self._check_kernel_id(kernel_id)
+        return self._kernels[kernel_id]
 
     #-------------------------------------------------------------------------
     # Methods for managing kernels and sessions
@@ -138,7 +278,13 @@ class MappingKernelManager(MultiKernelManager):
     def _handle_kernel_died(self, kernel_id):
         """notice that a kernel died"""
         self.log.warning("Kernel %s died, removing from map.", kernel_id)
-        self.remove_kernel(kernel_id)
+        kernel = self._kernels.pop(kernel_id)
+        kernel.client.close()
+        kernel.manager.cleanup()
+
+        KERNEL_CURRENTLY_RUNNING_TOTAL.labels(
+            type=kernel.kernel_type
+        ).inc()
 
     def cwd_for_path(self, path):
         """Turn API path into absolute OS path."""
@@ -149,7 +295,7 @@ class MappingKernelManager(MultiKernelManager):
             os_path = os.path.dirname(os_path)
         return os_path
 
-    async def start_kernel(self, kernel_id=None, path=None, **kwargs):
+    async def start_kernel(self, kernel_id=None, path=None, kernel_name=None, **kwargs):
         """Start a kernel for a session and return its kernel_id.
 
         Parameters
@@ -166,32 +312,48 @@ class MappingKernelManager(MultiKernelManager):
             an existing kernel is returned, but it may be checked in the future.
         """
         if kernel_id is None:
-            if path is not None:
-                kwargs['cwd'] = self.cwd_for_path(path)
-            kernel_id = await ensure_async(self.pinned_superclass.start_kernel(self, **kwargs))
-            self._kernel_connections[kernel_id] = 0
-            self.start_watching_activity(kernel_id)
-            self.log.info("Kernel started: %s" % kernel_id)
-            self.log.debug("Kernel args: %r" % kwargs)
-            # register callback for failed auto-restart
-            self.add_restart_callback(kernel_id,
-                lambda : self._handle_kernel_died(kernel_id),
-                'dead',
-            )
-
-            # Increase the metric of number of kernels running
-            # for the relevant kernel type by 1
-            KERNEL_CURRENTLY_RUNNING_TOTAL.labels(
-                type=self._kernels[kernel_id].kernel_name
-            ).inc()
-
+            kernel_id = await ensure_async(self.start_launching_kernel(path=path, kernel_name=kernel_name, **kwargs))
+            await self.get_kernel(kernel_id).client_ready()
         else:
             self._check_kernel_id(kernel_id)
             self.log.info("Using existing kernel: %s" % kernel_id)
 
-        # Initialize culling if not already
-        if not self._initialized_culler:
-            self.initialize_culler()
+        return kernel_id
+
+    async def start_launching_kernel(self, path=None, kernel_name=None, **kwargs):
+        """Launch a new kernel, return its kernel ID
+
+        This is a coroutine which starts the process of launching a kernel.
+        Retrieve the KernelInterface object via the launch class method and call
+        ``.client_ready()`` to get a future for the rest of the startup & connection.
+        """
+        if path is not None:
+            kwargs['cwd'] = self.cwd_for_path(path)
+
+        if kernel_name is None:
+            kernel_name = 'pyimport/kernel'
+        elif '/' not in kernel_name:
+            kernel_name = 'spec/' + kernel_name
+
+        kernel = await KernelInterface.launch(kernel_name, self.kernel_finder, **kwargs)
+        kernel_id = kernel.manager.kernel_id
+        if kernel_id is None:  # if provider didn't set a kernel_id, let's associate one to this kernel
+            kernel_id = str(uuid.uuid4())
+        self._kernels[kernel_id] = kernel
+
+        self.start_watching_activity(kernel_id)
+        self.log.info("Kernel started: %s" % kernel_id)
+
+        kernel.restarter.add_callback(
+            lambda data: self._handle_kernel_died(kernel_id),
+            'failed'
+        )
+
+        # Increase the metric of number of kernels running
+        # for the relevant kernel type by 1
+        KERNEL_CURRENTLY_RUNNING_TOTAL.labels(
+            type=self._kernels[kernel_id].kernel_type
+        ).inc()
 
         return kernel_id
 
@@ -217,141 +379,77 @@ class MappingKernelManager(MultiKernelManager):
 
         self.log.info("Starting buffering for %s", session_key)
         self._check_kernel_id(kernel_id)
+        kernel = self._kernels[kernel_id]
         # clear previous buffering state
-        self.stop_buffering(kernel_id)
-        buffer_info = self._kernel_buffers[kernel_id]
-        # record the session key because only one session can buffer
-        buffer_info['session_key'] = session_key
-        # TODO: the buffer should likely be a memory bounded queue, we're starting with a list to keep it simple
-        buffer_info['buffer'] = []
-        buffer_info['channels'] = channels
+        kernel.stop_buffering()
+        kernel.start_buffering(session_key)
 
-        # forward any future messages to the internal buffer
-        def buffer_msg(channel, msg_parts):
-            self.log.debug("Buffering msg on %s:%s", kernel_id, channel)
-            buffer_info['buffer'].append((channel, msg_parts))
+    async def _shutdown_all(self):
+        futures = [self.shutdown_kernel(kid) for kid in self.list_kernel_ids()]
+        await gen.multi(futures)
 
-        for channel, stream in channels.items():
-            stream.on_recv(partial(buffer_msg, channel))
+    def shutdown_all(self):
+        # Blocking function to call when the notebook server is shutting down
+        loop = IOLoop.current()
+        loop.run_sync(self._shutdown_all)
 
-    def get_buffer(self, kernel_id, session_key):
-        """Get the buffer for a given kernel
-
-        Parameters
-        ----------
-        kernel_id : str
-            The id of the kernel to stop buffering.
-        session_key: str, optional
-            The session_key, if any, that should get the buffer.
-            If the session_key matches the current buffered session_key,
-            the buffer will be returned.
-        """
-        self.log.debug("Getting buffer for %s", kernel_id)
-        if kernel_id not in self._kernel_buffers:
-            return
-
-        buffer_info = self._kernel_buffers[kernel_id]
-        if buffer_info['session_key'] == session_key:
-            # remove buffer
-            self._kernel_buffers.pop(kernel_id)
-            # only return buffer_info if it's a match
-            return buffer_info
-        else:
-            self.stop_buffering(kernel_id)
-
-    def stop_buffering(self, kernel_id):
-        """Stop buffering kernel messages
-
-        Parameters
-        ----------
-        kernel_id : str
-            The id of the kernel to stop buffering.
-        """
-        self.log.debug("Clearing buffer for %s", kernel_id)
-        self._check_kernel_id(kernel_id)
-
-        if kernel_id not in self._kernel_buffers:
-            return
-        buffer_info = self._kernel_buffers.pop(kernel_id)
-        # close buffering streams
-        for stream in buffer_info['channels'].values():
-            if not stream.closed():
-                stream.on_recv(None)
-                stream.close()
-
-        msg_buffer = buffer_info['buffer']
-        if msg_buffer:
-            self.log.info("Discarding %s buffered messages for %s",
-                len(msg_buffer), buffer_info['session_key'])
-
-    def shutdown_kernel(self, kernel_id, now=False, restart=False):
+    async def shutdown_kernel(self, kernel_id, now=False):
         """Shutdown a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
-        kernel = self._kernels[kernel_id]
-        if kernel._activity_stream:
-            kernel._activity_stream.close()
-            kernel._activity_stream = None
-        self.stop_buffering(kernel_id)
-        self._kernel_connections.pop(kernel_id, None)
+        kernel = self._kernels.pop(kernel_id)
+        self.log.info("Shutting down kernel %s", kernel_id)
+        await kernel.shutdown(now=now)
+        self.last_kernel_activity = utcnow()
 
         # Decrease the metric of number of kernels
         # running for the relevant kernel type by 1
         KERNEL_CURRENTLY_RUNNING_TOTAL.labels(
-            type=self._kernels[kernel_id].kernel_name
+            type=kernel.kernel_type
         ).dec()
 
-        return self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
+    async def interrupt_kernel(self, kernel_id):
+        """Interrupt a kernel by kernel_id. """
+
+        self._check_kernel_id(kernel_id)
+        kernel = self.get_kernel(kernel_id)
+
+        # Don't interrupt a kernel while it's still starting
+        await kernel.client_ready()
+        await kernel.interrupt()
 
     async def restart_kernel(self, kernel_id):
-        """Restart a kernel by kernel_id"""
+        """Restart a kernel by kernel_id
+
+        The restarted kernel keeps the same ID and KernelInterface object.
+        """
         self._check_kernel_id(kernel_id)
-        await ensure_async(self.pinned_superclass.restart_kernel(self, kernel_id))
         kernel = self.get_kernel(kernel_id)
-        # return a Future that will resolve when the kernel has successfully restarted
-        channel = kernel.connect_shell()
-        future = Future()
 
-        def finish():
-            """Common cleanup when restart finishes/fails for any reason."""
-            if not channel.closed():
-                channel.close()
-            loop.remove_timeout(timeout)
-            kernel.remove_restart_callback(on_restart_failed, 'dead')
-
-        def on_reply(msg):
-            self.log.debug("Kernel info reply received: %s", kernel_id)
-            finish()
-            if not future.done():
-                future.set_result(msg)
-
-        def on_timeout():
-            self.log.warning("Timeout waiting for kernel_info_reply: %s", kernel_id)
-            finish()
-            if not future.done():
-                future.set_exception(TimeoutError("Timeout waiting for restart"))
-
-        def on_restart_failed():
-            self.log.warning("Restarting kernel failed: %s", kernel_id)
-            finish()
-            if not future.done():
-                future.set_exception(RuntimeError("Restart failed"))
-
-        kernel.add_restart_callback(on_restart_failed, 'dead')
-        kernel.session.send(channel, "kernel_info_request")
-        channel.on_recv(on_reply)
-        loop = IOLoop.current()
-        timeout = loop.add_timeout(loop.time() + self.kernel_info_timeout, on_timeout)
-        return future
+        try:
+            await gen.with_timeout(
+                timedelta(seconds=self.kernel_info_timeout),
+                kernel.restart(),
+            )
+        except gen.TimeoutError:
+            self.log.warning("Timeout waiting for kernel_info_reply: %s",
+                             kernel_id)
+            self._kernels.pop(kernel_id)
+            # Decrease the metric of number of kernels
+            # running for the relevant kernel type by 1
+            KERNEL_CURRENTLY_RUNNING_TOTAL.labels(
+                type=kernel.kernel_type
+            ).dec()
+            raise gen.TimeoutError("Timeout waiting for restart")
 
     def notify_connect(self, kernel_id):
         """Notice a new connection to a kernel"""
-        if kernel_id in self._kernel_connections:
-            self._kernel_connections[kernel_id] += 1
+        if kernel_id in self._kernels:
+            self._kernels[kernel_id].n_connections += 1
 
     def notify_disconnect(self, kernel_id):
         """Notice a disconnection from a kernel"""
-        if kernel_id in self._kernel_connections:
-            self._kernel_connections[kernel_id] -= 1
+        if kernel_id in self._kernels:
+            self._kernels[kernel_id].n_connections -= 1
 
     def kernel_model(self, kernel_id):
         """Return a JSON-safe dict representing a kernel
@@ -363,25 +461,29 @@ class MappingKernelManager(MultiKernelManager):
 
         model = {
             "id":kernel_id,
-            "name": kernel.kernel_name,
+            "name": kernel.kernel_type,
             "last_activity": isoformat(kernel.last_activity),
             "execution_state": kernel.execution_state,
-            "connections": self._kernel_connections[kernel_id],
+            "connections": kernel.n_connections,
         }
         return model
 
     def list_kernels(self):
-        """Returns a list of kernel_id's of kernels running."""
+        """Returns a list of models for kernels running."""
         kernels = []
-        kernel_ids = self.pinned_superclass.list_kernel_ids(self)
-        for kernel_id in kernel_ids:
+        for kernel_id in self._kernels.keys():
             model = self.kernel_model(kernel_id)
             kernels.append(model)
         return kernels
 
-    # override _check_kernel_id to raise 404 instead of KeyError
+    def list_kernel_ids(self):
+        return list(self._kernels.keys())
+
+    def __contains__(self, kernel_id):
+        return kernel_id in self._kernels
+
     def _check_kernel_id(self, kernel_id):
-        """Check a that a kernel_id exists and raise 404 if not."""
+        """Check that kernel_id exists and raise 404 if not."""
         if kernel_id not in self:
             raise web.HTTPError(404, u'Kernel does not exist: %s' % kernel_id)
 
@@ -394,30 +496,19 @@ class MappingKernelManager(MultiKernelManager):
         - record execution_state from status messages
         """
         kernel = self._kernels[kernel_id]
-        # add busy/activity markers:
-        kernel.execution_state = 'starting'
-        kernel.last_activity = utcnow()
-        kernel._activity_stream = kernel.connect_iopub()
-        session = Session(
-            config=kernel.session.config,
-            key=kernel.session.key,
-        )
 
-        def record_activity(msg_list):
+        def record_activity(msg, _channel):
             """Record an IOPub message arriving from a kernel"""
             self.last_kernel_activity = kernel.last_activity = utcnow()
 
-            idents, fed_msg_list = session.feed_identities(msg_list)
-            msg = session.deserialize(fed_msg_list)
-
-            msg_type = msg['header']['msg_type']
+            msg_type = msg.header['msg_type']
             if msg_type == 'status':
-                kernel.execution_state = msg['content']['execution_state']
+                kernel.execution_state = msg.content['execution_state']
                 self.log.debug("activity on %s: %s (%s)", kernel_id, msg_type, kernel.execution_state)
             else:
                 self.log.debug("activity on %s: %s", kernel_id, msg_type)
 
-        kernel._activity_stream.on_recv(record_activity)
+        kernel.msg_handlers.append(record_activity)
 
     def initialize_culler(self):
         """Start idle culler if 'cull_idle_timeout' is greater than zero.
@@ -456,50 +547,18 @@ class MappingKernelManager(MultiKernelManager):
 
     async def cull_kernel_if_idle(self, kernel_id):
         kernel = self._kernels[kernel_id]
-        self.log.debug("kernel_id=%s, kernel_name=%s, last_activity=%s", kernel_id, kernel.kernel_name, kernel.last_activity)
+        self.log.debug("kernel_id=%s, kernel_name=%s, last_activity=%s", kernel_id, kernel.kernel_type, kernel.last_activity)
         if kernel.last_activity is not None:
             dt_now = utcnow()
             dt_idle = dt_now - kernel.last_activity
             # Compute idle properties
             is_idle_time = dt_idle > timedelta(seconds=self.cull_idle_timeout)
             is_idle_execute = self.cull_busy or (kernel.execution_state != 'busy')
-            connections = self._kernel_connections.get(kernel_id, 0)
-            is_idle_connected = self.cull_connected or not connections
+            connections = kernel.n_connections
+            is_idle_connected = self.cull_connected or connections == 0
             # Cull the kernel if all three criteria are met
             if (is_idle_time and is_idle_execute and is_idle_connected):
                 idle_duration = int(dt_idle.total_seconds())
                 self.log.warning("Culling '%s' kernel '%s' (%s) with %d connections due to %s seconds of inactivity.",
-                                 kernel.execution_state, kernel.kernel_name, kernel_id, connections, idle_duration)
-                await self.shutdown_kernel(kernel_id)
-
-
-# AsyncMappingKernelManager inherits as much as possible from MappingKernelManager,
-# overriding only what is different.
-class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
-
-    @default('kernel_manager_class')
-    def _default_kernel_manager_class(self):
-        return "jupyter_client.ioloop.AsyncIOLoopKernelManager"
-
-    def __init__(self, **kwargs):
-        self.pinned_superclass = AsyncMultiKernelManager
-        self.pinned_superclass.__init__(self, **kwargs)
-        self.last_kernel_activity = utcnow()
-
-    async def shutdown_kernel(self, kernel_id, now=False, restart=False):
-        """Shutdown a kernel by kernel_id"""
-        self._check_kernel_id(kernel_id)
-        kernel = self._kernels[kernel_id]
-        if kernel._activity_stream:
-            kernel._activity_stream.close()
-            kernel._activity_stream = None
-        self.stop_buffering(kernel_id)
-        self._kernel_connections.pop(kernel_id, None)
-
-        # Decrease the metric of number of kernels
-        # running for the relevant kernel type by 1
-        KERNEL_CURRENTLY_RUNNING_TOTAL.labels(
-            type=self._kernels[kernel_id].kernel_name
-        ).dec()
-
-        return await self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
+                                 kernel.execution_state, kernel.kernel_type, kernel_id, connections, idle_duration)
+                await self.shutdown_kernel(kernel_id, now=True)

@@ -16,7 +16,7 @@ from tornado.httpclient import HTTPRequest
 from tornado.escape import url_escape, json_decode, utf8
 
 from ipython_genutils.py3compat import cast_unicode
-from jupyter_client.session import Session
+from jupyter_protocol.session import Session, new_id_bytes
 from traitlets.config.configurable import LoggingConfigurable
 
 from .managers import GatewayClient
@@ -58,7 +58,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
     def initialize(self):
         self.log.debug("Initializing websocket connection %s", self.request.path)
-        self.session = Session(config=self.config)
+        self.session = Session(key=new_id_bytes())
         self.gateway = GatewayWebSocketClient(gateway_url=GatewayClient.instance().url)
 
     async def get(self, kernel_id, *args, **kwargs):
@@ -227,8 +227,8 @@ class GatewayResourceHandler(APIHandler):
 
     @web.authenticated
     async def get(self, kernel_name, path, include_body=True):
-        ksm = self.kernel_spec_manager
-        kernel_spec_res = await ksm.get_kernel_spec_resource(kernel_name, path)
+        kf = self.kernel_finder
+        kernel_spec_res = await kf.get_kernel_spec_resource(kernel_name, path)
         if kernel_spec_res is None:
             self.log.warning("Kernelspec resource '{}' for '{}' not found.  Gateway may not support"
                              " resource serving.".format(path, kernel_name))

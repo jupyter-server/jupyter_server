@@ -86,8 +86,9 @@ for more information.
         'pyzmq>=17',
         'ipython_genutils',
         'traitlets>=4.2.1',
-        'jupyter_core>=4.4.0',
-        'jupyter_client>=6.1.1',
+        'jupyter_core>=4.6.1',
+        'jupyter_kernel_mgmt>=0.5',
+        'jupyter_protocol',
         'nbformat',
         'nbconvert<6',
         'ipykernel', # bless IPython kernel for now

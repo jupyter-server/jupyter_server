@@ -11,7 +11,7 @@ import json
 from tornado import web
 
 from jupyter_server.utils import url_path_join, url_escape, ensure_async
-from jupyter_client.jsonutil import date_default
+from jupyter_protocol.jsonutil import date_default
 
 from jupyter_server.base.handlers import (
     JupyterHandler, APIHandler, path_regex,

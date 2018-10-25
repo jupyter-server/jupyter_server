@@ -38,7 +38,7 @@ from base64 import encodebytes
 from jinja2 import Environment, FileSystemLoader
 
 from jupyter_server.transutils import trans, _
-from jupyter_server.utils import secure_write, run_sync
+from jupyter_server.utils import secure_write
 
 # Install the pyzmq ioloop. This has to be done before anything else from
 # tornado is imported.
@@ -70,13 +70,13 @@ from jupyter_server import (
 
 from .base.handlers import MainHandler, RedirectWithParams, Template404
 from .log import log_request
-from .services.kernels.kernelmanager import MappingKernelManager, AsyncMappingKernelManager
+from .services.kernels.kernelmanager import MappingKernelManager
 from .services.config import ConfigManager
 from .services.contents.manager import ContentsManager
 from .services.contents.filemanager import FileContentsManager
 from .services.contents.largefilemanager import LargeFileManager
 from .services.sessions.sessionmanager import SessionManager
-from .gateway.managers import GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
+from .gateway.managers import GatewayKernelFinder, GatewayClient
 
 from .auth.login import LoginHandler
 from .auth.logout import LogoutHandler
@@ -88,9 +88,7 @@ from jupyter_core.application import (
     JupyterApp, base_flags, base_aliases,
 )
 from jupyter_core.paths import jupyter_config_path
-from jupyter_client import KernelManager
-from jupyter_client.kernelspec import KernelSpecManager, NoSuchKernel, NATIVE_KERNEL_NAME
-from jupyter_client.session import Session
+from jupyter_kernel_mgmt.discovery import KernelFinder
 from nbformat.sign import NotebookNotary
 from traitlets import (
     Any, Dict, Unicode, Integer, List, Bool, Bytes, Instance,
@@ -162,13 +160,13 @@ def load_handlers(name):
 class ServerWebApplication(web.Application):
 
     def __init__(self, jupyter_app, default_services, kernel_manager, contents_manager,
-                 session_manager, kernel_spec_manager,
+                 session_manager, kernel_finder,
                  config_manager, extra_services, log,
                  base_url, default_url, settings_overrides, jinja_env_options):
 
         settings = self.init_settings(
             jupyter_app, kernel_manager, contents_manager,
-            session_manager, kernel_spec_manager, config_manager,
+            session_manager, kernel_finder, config_manager,
             extra_services, log, base_url,
             default_url, settings_overrides, jinja_env_options)
         handlers = self.init_handlers(default_services, settings)
@@ -176,7 +174,7 @@ class ServerWebApplication(web.Application):
         super(ServerWebApplication, self).__init__(handlers, **settings)
 
     def init_settings(self, jupyter_app, kernel_manager, contents_manager,
-                      session_manager, kernel_spec_manager,
+                      session_manager, kernel_finder,
                       config_manager, extra_services,
                       log, base_url, default_url, settings_overrides,
                       jinja_env_options=None):
@@ -251,10 +249,10 @@ class ServerWebApplication(web.Application):
             local_hostnames=jupyter_app.local_hostnames,
 
             # managers
+            kernel_finder=kernel_finder,
             kernel_manager=kernel_manager,
             contents_manager=contents_manager,
             session_manager=session_manager,
-            kernel_spec_manager=kernel_spec_manager,
             config_manager=config_manager,
 
             # handlers
@@ -532,7 +530,6 @@ aliases.update({
     'ip': 'ServerApp.ip',
     'port': 'ServerApp.port',
     'port-retries': 'ServerApp.port_retries',
-    'transport': 'KernelManager.transport',
     'keyfile': 'ServerApp.keyfile',
     'certfile': 'ServerApp.certfile',
     'client-ca': 'ServerApp.client_ca',
@@ -558,10 +555,8 @@ class ServerApp(JupyterApp):
     flags = Dict(flags)
     aliases = Dict(aliases)
     classes = [
-            KernelManager, Session, MappingKernelManager, KernelSpecManager,
-            ContentsManager, FileContentsManager, NotebookNotary,
-            GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
-        ]
+        MappingKernelManager, ContentsManager, FileContentsManager, NotebookNotary, GatewayClient,
+    ]
 
     subcommands = dict(
         list=(JupyterServerListApp, JupyterServerListApp.description.splitlines()[0]),
@@ -1030,6 +1025,12 @@ class ServerApp(JupyterApp):
         (shutdown the Jupyter server)."""
     )
 
+    kernel_providers = List(config=True,
+        help=_('A list of kernel provider instances. '
+               'If not specified, all installed kernel providers are found '
+               'using entry points.')
+    )
+
     contents_manager_class = Type(
         default_value=LargeFileManager,
         klass=ContentsManager,
@@ -1053,20 +1054,6 @@ class ServerApp(JupyterApp):
         default_value=ConfigManager,
         config = True,
         help=_('The config manager class to use')
-    )
-
-    kernel_spec_manager = Instance(KernelSpecManager, allow_none=True)
-
-    kernel_spec_manager_class = Type(
-        default_value=KernelSpecManager,
-        config=True,
-        help="""
-        The kernel spec manager class to use. Should be a subclass
-        of `jupyter_client.kernelspec.KernelSpecManager`.
-
-        The Api of KernelSpecManager is provisional and might change
-        without warning between this version of Jupyter and the next stable one.
-        """
     )
 
     login_handler_class = Type(
@@ -1230,6 +1217,7 @@ class ServerApp(JupyterApp):
 
     def init_configurables(self):
 
+
         # If gateway server is configured, replace appropriate managers to perform redirection.  To make
         # this determination, instantiate the GatewayClient config singleton.
         self.gateway_config = GatewayClient.instance(parent=self)
@@ -1237,25 +1225,18 @@ class ServerApp(JupyterApp):
         if self.gateway_config.gateway_enabled:
             self.kernel_manager_class = 'jupyter_server.gateway.managers.GatewayKernelManager'
             self.session_manager_class = 'jupyter_server.gateway.managers.GatewaySessionManager'
-            self.kernel_spec_manager_class = 'jupyter_server.gateway.managers.GatewayKernelSpecManager'
+            self.kernel_finder = GatewayKernelFinder(parent=self)  # no providers here, always go remote
+        else:
+            if self.kernel_providers:
+                self.kernel_finder = KernelFinder(self.kernel_providers)
+            else:
+                self.kernel_finder = KernelFinder.from_entrypoints()
 
-        self.kernel_spec_manager = self.kernel_spec_manager_class(
-            parent=self,
-        )
         self.kernel_manager = self.kernel_manager_class(
             parent=self,
             log=self.log,
-            connection_dir=self.runtime_dir,
-            kernel_spec_manager=self.kernel_spec_manager,
+            kernel_finder=self.kernel_finder,
         )
-        # Async randomly hangs on Python 3.5, prevent using it
-        if isinstance(self.kernel_manager, AsyncMappingKernelManager):
-            if sys.version_info < (3, 6):
-                raise ValueError("You are using `AsyncMappingKernelManager` in Python 3.5 (or lower),"
-                                 "which is not supported. Please upgrade Python to 3.6+.")
-            else:
-                self.log.info("Asynchronous kernel management has been configured to use '{}'.".
-                              format(self.kernel_manager.__class__.__name__))
         self.contents_manager = self.contents_manager_class(
             parent=self,
             log=self.log,
@@ -1309,7 +1290,7 @@ class ServerApp(JupyterApp):
 
         self.web_app = ServerWebApplication(
             self, self.default_services, self.kernel_manager, self.contents_manager,
-            self.session_manager, self.kernel_spec_manager,
+            self.session_manager, self.kernel_finder,
             self.config_manager, self.extra_services,
             self.log, self.base_url, self.default_url, self.tornado_settings,
             self.jinja_environment_options,
@@ -1683,12 +1664,12 @@ class ServerApp(JupyterApp):
         """Shutdown all kernels.
 
         The kernels will shutdown themselves when this process no longer exists,
-        but explicit shutdown allows the KernelManagers to cleanup the connection files.
+        but explicit shutdown allows the Kernel Providers to cleanup the connection files.
         """
         n_kernels = len(self.kernel_manager.list_kernel_ids())
         kernel_msg = trans.ngettext('Shutting down %d kernel', 'Shutting down %d kernels', n_kernels)
         self.log.info(kernel_msg % n_kernels)
-        run_sync(self.kernel_manager.shutdown_all())
+        self.kernel_manager.shutdown_all()
 
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
