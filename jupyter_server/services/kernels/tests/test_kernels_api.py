@@ -15,6 +15,7 @@ from jupyter_server.utils import url_path_join
 from jupyter_server.tests.launchserver import ServerTestBase, assert_http_error
 
 
+
 class KernelAPI(object):
     """Wrapper for kernel REST API requests"""
     def __init__(self, request, base_url, headers):
