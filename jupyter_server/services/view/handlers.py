@@ -5,8 +5,8 @@
 # Distributed under the terms of the Modified BSD License.
 
 from tornado import web
-from ..base.handlers import JupyterHandler, path_regex
-from ..utils import url_escape, url_path_join
+from jupyter_server.base.handlers import JupyterHandler, path_regex
+from jupyter_server.utils import url_escape, url_path_join
 
 
 class ViewHandler(JupyterHandler):
