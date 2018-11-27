@@ -98,7 +98,7 @@ for more information.
     entry_points = {
         'console_scripts': [
             'jupyter-server = jupyter_server.serverapp:main',
-            'jupyter-extension = jupyter_server.extensions:main',
+            'jupyter-extension = jupyter_server.extensionsapp:main',
             'jupyter-bundlerextension = jupyter_server.bundler.bundlerextensions:main',
         ]
     },
