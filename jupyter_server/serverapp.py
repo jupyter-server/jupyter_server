@@ -280,7 +280,7 @@ class ServerWebApplication(web.Application):
             handlers.extend(load_handlers(service))
         handlers.extend([(r"/login", settings['login_handler_class'])])
         handlers.extend([(r"/logout", settings['logout_handler_class'])])
-        handlers.extend(load_handlers('jupyter_server.files.handlers'))
+        handlers.extend(load_handlers('jupyter_server.services.files.handlers'))
         handlers.extend(load_handlers('jupyter_server.view.handlers'))
         handlers.extend(load_handlers('jupyter_server.services.nbconvert.handlers'))
         handlers.extend(load_handlers('jupyter_server.bundler.handlers'))

@@ -11,7 +11,7 @@ import re
 
 from tornado.web import HTTPError, RequestHandler
 
-from ...files.handlers import FilesHandler
+from ..files.handlers import FilesHandler
 from .checkpoints import Checkpoints
 from traitlets.config.configurable import LoggingConfigurable
 from nbformat import sign, validate as validate_nb, ValidationError
