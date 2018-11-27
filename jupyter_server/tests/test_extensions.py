@@ -14,8 +14,8 @@ from jupyter_server.config_manager import BaseJSONConfigManager
 from traitlets.tests.utils import check_help_all_output
 from jupyter_core import paths
 
-from jupyter_server.extensions import toggle_serverextension_python, _get_config_dir
-from jupyter_server import extensions, extensions_base
+from jupyter_server.extensionsapp import toggle_serverextension_python, _get_config_dir
+from jupyter_server import extensionsapp, extensions_base
 from jupyter_server.serverapp import ServerApp
 
 if sys.version_info > (3,):
@@ -27,11 +27,11 @@ else:
 from collections import OrderedDict
 
 def test_help_output():
-    check_help_all_output('jupyter_server.extensions')
-    check_help_all_output('jupyter_server.extensions', ['enable'])
-    check_help_all_output('jupyter_server.extensions', ['disable'])
-    check_help_all_output('jupyter_server.extensions', ['install'])
-    check_help_all_output('jupyter_server.extensions', ['uninstall'])
+    check_help_all_output('jupyter_server.extensionsapp')
+    check_help_all_output('jupyter_server.extensionsapp', ['enable'])
+    check_help_all_output('jupyter_server.extensionsapp', ['disable'])
+    check_help_all_output('jupyter_server.extensionsapp', ['install'])
+    check_help_all_output('jupyter_server.extensionsapp', ['uninstall'])
 
 outer_file = __file__
 

@@ -3,8 +3,8 @@
 import sys
 import os
 
-from ..extensions import BaseExtensionApp, _get_config_dir, GREEN_ENABLED, RED_DISABLED
-from .._version import __version__
+from jupyter_server.extensionsapp import BaseExtensionApp, _get_config_dir, GREEN_ENABLED, RED_DISABLED
+from jupyter_server._version import __version__
 from jupyter_server.config_manager import BaseJSONConfigManager
 
 from jupyter_core.paths import jupyter_config_path
