@@ -1050,6 +1050,20 @@ class ServerApp(JupyterApp):
         )
         self.exit(1)
 
+    notebook_dir = Unicode(config=True,
+        help=_("DEPRECATED, use root_dir.")
+    )
+
+    @default('notebook_dir')
+    def _default_notebook_dir(self):
+        self.log.warning(_("\n    notebook_dir is deprecated, use root_dir.\n"))
+        return self.root_dir
+
+    @validate('notebook_dir')
+    def _update_notebook_dir(self, change):
+        self.log.warning(_("\n    notebook_dir is deprecated, use root_dir.\n"))
+        self.root_dir = change['value']
+
     root_dir = Unicode(config=True,
         help=_("The directory to use for notebooks and kernels.")
     )
