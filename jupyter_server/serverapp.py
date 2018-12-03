@@ -1050,23 +1050,15 @@ class ServerApp(JupyterApp):
         )
         self.exit(1)
 
-    notebook_dir = Unicode(config=True,
+    notebook_dir = Unicode(
+        config=True,
         help=_("DEPRECATED, use root_dir.")
     )
 
-    @default('notebook_dir')
-    def _default_notebook_dir(self):
-        self.log.warning(_("\n    notebook_dir is deprecated, use root_dir.\n"))
-        return self.root_dir
-
     @observe('notebook_dir')
     def _update_notebook_dir(self, change):
-        self.log.warning(_("\n    notebook_dir is deprecated, use root_dir.\n"))
-        """Do a bit of validation of the notebook dir."""
-        new = change['new']
-        # Check that notebook_dir and root_dir are equal
-        if self.root_dir != new:
-            self.root_dir = new
+        self.log.warning(_("notebook_dir is deprecated, use root_dir"))
+        self.root_dir = change['new']
 
     root_dir = Unicode(config=True,
         help=_("The directory to use for notebooks and kernels.")
@@ -1102,9 +1094,6 @@ class ServerApp(JupyterApp):
         new = change['new']
         self.config.FileContentsManager.root_dir = new
         self.config.MappingKernelManager.root_dir = new
-        # Check that notebook_dir and root_dir are equal
-        if self.notebook_dir != new:
-            self.notebook_dir = new
 
     @observe('server_extensions')
     def _update_server_extensions(self, change):
