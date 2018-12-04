@@ -91,6 +91,10 @@ class ServerTestBase(TestCase):
         return response
 
     @classmethod
+    def get_argv(cls):
+        return []
+
+    @classmethod
     def setup_class(cls):
         cls.tmp_dir = TemporaryDirectory()
         def tmp(*parts):
@@ -154,7 +158,7 @@ class ServerTestBase(TestCase):
             # needs to be redone after initialize, which reconfigures logging
             app.log.propagate = True
             app.log.handlers = []
-            app.initialize(argv=[])
+            app.initialize(argv=cls.get_argv())
             app.log.propagate = True
             app.log.handlers = []
             loop = IOLoop.current()
