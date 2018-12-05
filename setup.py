@@ -99,6 +99,7 @@ for more information.
         'console_scripts': [
             'jupyter-server = jupyter_server.serverapp:main',
             'jupyter-extension = jupyter_server.extensions:main',
+            'jupyter-server-migrate=jupyter_server.migrate:main',
             'jupyter-bundlerextension = jupyter_server.bundler.bundlerextensions:main',
         ]
     },
