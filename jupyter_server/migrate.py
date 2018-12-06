@@ -1,11 +1,7 @@
-"""
-1. Load notebook config
-2. Rip out traits in notebook not in 
-3. Swap NotebookApp traits with ServerApp Traits.
-4. Remove ServerApp traits from NotebookApp.
-5. Write NotebookApp config to jupyter_notebook_config.py
-6. Write ServerApp config to jupyter_server_config.py
+"""Migrate jupyter_server configuration.
 
+This splits configuration that belongs in the ServerApp
+from the NotebookApp configuration.
 """
 
 import re
@@ -56,6 +52,7 @@ def read_configured_traits(config_file):
                     traits.append((data['cls'], data['trait'], data['value']))
     return traits
 
+
 def sort_configured_traits(traits):
     """Sort """
     server_trait_names = ServerApp.class_trait_names()
@@ -72,6 +69,7 @@ def sort_configured_traits(traits):
         else:
             notebook_traits.append(trait)
     return server_traits, notebook_traits
+
 
 def write_migrated_config(traits):
     """Build migrate config text for given app."""
