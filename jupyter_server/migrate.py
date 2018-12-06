@@ -6,7 +6,7 @@
 5. Write NotebookApp config to jupyter_notebook_config.py
 6. Write ServerApp config to jupyter_server_config.py
 
-# """
+"""
 
 import re
 import os
@@ -24,6 +24,17 @@ from notebook.notebookapp import NotebookApp
 
 pjoin = os.path.join
 
+# Regular expression to strip out notebook traits.
+trait_regex = r"\.(?P<trait>[\w]+)[\s]*=(?P<value>[^\n]+)"
+
+# Build a regular expression for services in ServerApp.
+classes = {cls.__name__: cls for cls in ServerApp.classes}
+classes["NotebookApp"] = NotebookApp
+classes["ServerApp"] = ServerApp
+classes_regex = re.compile(
+    r"(?P<cls>{}){}".format("|".join(classes.keys()), trait_regex)
+)
+
 
 def block_comment(s):
     """return a commented, wrapped block."""
@@ -31,65 +42,63 @@ def block_comment(s):
     return '# ' + s.replace('\n', '\n# ')
 
 
-# Regular expression to strip out notebook traits.
-trait_regex = re.compile(
-    r"c.NotebookApp\.(?P<trait>[\w]+)[\s]*=(?P<value>[^\n]+)")
-
-
-def find_traits_in_file(config_file):
-    """Search notebook config file for configured traits."""
-    found = {}
+def read_configured_traits(config_file):
+    traits = []
     with open(config_file, 'r') as f:
         for line in f.readlines():
             line = line.lstrip()
             # Search for lines that are not commented.
             if not line.startswith('#'):
                 # Search for NotebookApp traits.
-                match = trait_regex.search(line)
+                match = classes_regex.search(line)
                 if match:
                     data = match.groupdict()
-                    found[data['trait']] = data['value']
-    return found
+                    traits.append((data['cls'], data['trait'], data['value']))
+    return traits
 
+def sort_configured_traits(traits):
+    """Sort """
+    server_trait_names = ServerApp.class_trait_names()
+    server_traits, notebook_traits = [], []
+    for trait in traits:
+        cls, name, value = trait
+        if cls == "NotebookApp":
+            if name in server_trait_names:
+                server_traits.append(("ServerApp", name, value))
+            else:
+                notebook_traits.append("NotebookApp", name, value)
+        elif cls in classes: 
+            server_traits.append(trait)
+        else:
+            notebook_traits.append(trait)
+    return server_traits, notebook_traits
 
-def migrated_app_config(app, traits):
+def write_migrated_config(traits):
     """Build migrate config text for given app."""
     lines = [
         '#'+'-'*78,
         '# Migrated from NotebookApp (<notebook 5.0.0) configuration',
         '#'+'-'*78+'\n',
     ]
-    for name, value in traits.items():
-        trait = getattr(ServerApp, name)
-        trait_str = "c.{}.{} ={}\n".format(app.__name__, name, value)
+    for cls, name, value in traits:
+        trait = getattr(classes[cls], name)
+        trait_str = "c.{}.{} ={}\n".format(cls, name, value)
         lines.append(block_comment(trait.help))
         lines.append(trait_str)
-    lines.append(app.class_config_section())
     return '\n'.join(lines)
 
 
 def migrate_config(src, server_dst, notebook_dst):
     """Separate NotebookApp configuration from ServerApp configuration.
     """
-    # Find configured traits in old jupyter_notebook_config
-    found_traits = find_traits_in_file(src)
-    found_set = set(found_traits.keys())
+    traits = read_configured_traits(src)
+    server_traits, notebook_traits = sort_configured_traits(traits)
 
-    # Traits specific to the ServerApp.
-    server_trait_names = found_set.intersection(ServerApp.class_trait_names())
-    # Traits specific to the NotebookApp.
-    notebook_trait_names = found_set.difference(
-        NotebookApp.class_trait_names())
+    server_cfg = write_migrated_config(server_traits)
+    notebook_cfg = write_migrated_config(notebook_traits)
 
-    # Get values of traits from file.
-    server_traits = {name: found_traits[name]
-                     for name in server_trait_names}
-    notebook_traits = {name: found_traits[name]
-                       for name in notebook_trait_names}
-
-    # Build config text.
-    server_cfg = migrated_app_config(ServerApp, server_traits)
-    notebook_cfg = migrated_app_config(NotebookApp, notebook_traits)
+    server_cfg += ServerApp.class_config_section()
+    notebook_cfg += NotebookApp.class_config_section()
 
     # Append '_migrated' to src file.
     head, tail = os.path.splitext(src)
@@ -106,7 +115,6 @@ def migrate_config(src, server_dst, notebook_dst):
     migrated = True
     return migrated
 
-
 def migrate():
     migrated = False
     # Home directory
@@ -115,6 +123,7 @@ def migrate():
     notebook_dst = pjoin(jupyter_config_dir(), 'jupyter_notebook_config.py')
 
     if os.path.exists(server_dst) and os.path.exists(notebook_dst):
+        print("Configuration already migrated?")
         migrated = True
     else:
         migrate_config(src, server_dst, notebook_dst)
