@@ -74,7 +74,7 @@ from .services.contents.manager import ContentsManager
 from .services.contents.filemanager import FileContentsManager
 from .services.contents.largefilemanager import LargeFileManager
 from .services.sessions.sessionmanager import SessionManager
-from .gateway.managers import GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, Gateway
+from .gateway.managers import GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
 
 from .auth.login import LoginHandler
 from .auth.logout import LogoutHandler
@@ -306,12 +306,16 @@ class ServerWebApplication(web.Application):
         # Add extra handlers from contents manager.
         handlers.extend(settings['contents_manager'].get_extra_handlers())
 
-        # If gateway server is configured, replace appropriate handlers to perform redirection
-        if Gateway.instance().gateway_enabled:
-            handlers.extend(load_handlers('notebook.gateway.handlers'))
-        else:
-            handlers.extend(load_handlers('notebook.services.kernels.handlers'))
-            handlers.extend(load_handlers('notebook.services.kernelspecs.handlers'))
+        # If gateway mode is enabled, replace appropriate handlers to perform redirection
+        if GatewayClient.instance().gateway_enabled:
+            # for each handler required for gateway, locate its pattern
+            # in the current list and replace that entry...
+            gateway_handlers = load_handlers('jupyter_server.gateway.handlers')
+            for i, gwh in enumerate(gateway_handlers):
+                for j, h in enumerate(handlers):
+                    if gwh[0] == h[0]:
+                        handlers[j] = (gwh[0], gwh[1])
+                        break
 
         handlers.append(
             (r"/custom/(.*)", FileFindHandler, {
@@ -531,7 +535,7 @@ aliases.update({
     'notebook-dir': 'ServerApp.root_dir',
     'browser': 'ServerApp.browser',
     'pylab': 'ServerApp.pylab',
-    'gateway-url': 'ServerApp.gateway_url',
+    'gateway-url': 'GatewayClient.gateway_url',
 })
 
 #-----------------------------------------------------------------------------
@@ -552,7 +556,7 @@ class ServerApp(JupyterApp):
     classes = [
         KernelManager, Session, MappingKernelManager, KernelSpecManager,
         ContentsManager, FileContentsManager, NotebookNotary,
-        GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, Gateway,
+        GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient,
     ]
     flags = Dict(flags)
     aliases = Dict(aliases)
@@ -1223,8 +1227,9 @@ class ServerApp(JupyterApp):
 
     def init_configurables(self):
 
-        # If gateway server is configured, replace appropriate managers to perform redirection
-        self.gateway_config = Gateway.instance(parent=self)
+        # If gateway server is configured, replace appropriate managers to perform redirection.  To make
+        # this determination, instantiate the GatewayClient config singleton.
+        self.gateway_config = GatewayClient.instance(parent=self)
 
         if self.gateway_config.gateway_enabled:
             self.kernel_manager_class = 'jupyter_server.gateway.managers.GatewayKernelManager'

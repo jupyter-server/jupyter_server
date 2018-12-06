@@ -69,7 +69,7 @@ class TestSessionManager(TestCase):
     def test_get_session(self):
         sm = self.sm
         session_id = self.create_session(path='/path/to/test.ipynb', kernel_name='bar')['id']
-        model = sm.get_session(session_id=session_id)
+        model = self.loop.run_sync(lambda: sm.get_session(session_id=session_id))
         expected = {'id':session_id,
                     'path': u'/path/to/test.ipynb',
                     'notebook': {'path': u'/path/to/test.ipynb', 'name': None},
@@ -89,7 +89,8 @@ class TestSessionManager(TestCase):
         sm = self.sm
         session_id = self.create_session(path='/path/to/test.ipynb',
                                        kernel_name='foo')['id']
-        self.assertRaises(TypeError, sm.get_session, bad_id=session_id) # Bad keyword
+        with self.assertRaises(TypeError):
+            self.loop.run_sync(lambda: sm.get_session(bad_id=session_id)) # Bad keyword
 
     def test_get_session_dead_kernel(self):
         sm = self.sm
@@ -97,9 +98,9 @@ class TestSessionManager(TestCase):
         # kill the kernel
         sm.kernel_manager.shutdown_kernel(session['kernel']['id'])
         with self.assertRaises(KeyError):
-            sm.get_session(session_id=session['id'])
+            self.loop.run_sync(lambda: sm.get_session(session_id=session['id']))
         # no sessions left
-        listed = sm.list_sessions()
+        listed = self.loop.run_sync(lambda: sm.list_sessions())
         self.assertEqual(listed, [])
 
     def test_list_sessions(self):
@@ -109,8 +110,8 @@ class TestSessionManager(TestCase):
             dict(path='/path/to/2/test2.py', type='file', kernel_name='python'),
             dict(path='/path/to/3', name='foo', type='console', kernel_name='python'),
         )
-
-        sessions = sm.list_sessions()
+        
+        sessions = self.loop.run_sync(lambda: sm.list_sessions())
         expected = [
             {
                 'id':sessions[0]['id'],
@@ -161,7 +162,7 @@ class TestSessionManager(TestCase):
         )
         # kill one of the kernels
         sm.kernel_manager.shutdown_kernel(sessions[0]['kernel']['id'])
-        listed = sm.list_sessions()
+        listed = self.loop.run_sync(lambda: sm.list_sessions())
         expected = [
             {
                 'id': sessions[1]['id'],
@@ -184,8 +185,8 @@ class TestSessionManager(TestCase):
         sm = self.sm
         session_id = self.create_session(path='/path/to/test.ipynb',
                                        kernel_name='julia')['id']
-        sm.update_session(session_id, path='/path/to/new_name.ipynb')
-        model = sm.get_session(session_id=session_id)
+        self.loop.run_sync(lambda: sm.update_session(session_id, path='/path/to/new_name.ipynb'))
+        model = self.loop.run_sync(lambda: sm.get_session(session_id=session_id))
         expected = {'id':session_id,
                     'path': u'/path/to/new_name.ipynb',
                     'type': 'notebook',
@@ -206,7 +207,8 @@ class TestSessionManager(TestCase):
         sm = self.sm
         session_id = self.create_session(path='/path/to/test.ipynb',
                                        kernel_name='ir')['id']
-        self.assertRaises(TypeError, sm.update_session, session_id=session_id, bad_kw='test.ipynb') # Bad keyword
+        with self.assertRaises(TypeError):
+            self.loop.run_sync(lambda: sm.update_session(session_id=session_id, bad_kw='test.ipynb')) # Bad keyword
 
     def test_delete_session(self):
         sm = self.sm
@@ -215,8 +217,8 @@ class TestSessionManager(TestCase):
             dict(path='/path/to/2/test2.ipynb', kernel_name='python'),
             dict(path='/path/to/3', name='foo', type='console', kernel_name='python'),
         )
-        sm.delete_session(sessions[1]['id'])
-        new_sessions = sm.list_sessions()
+        self.loop.run_sync(lambda: sm.delete_session(sessions[1]['id']))
+        new_sessions = self.loop.run_sync(lambda: sm.list_sessions())
         expected = [{
                 'id': sessions[0]['id'],
                 'path': u'/path/to/1/test1.ipynb',
