@@ -26,6 +26,7 @@ import select
 import signal
 import socket
 import sys
+import tempfile
 import threading
 import time
 import warnings
@@ -97,7 +98,7 @@ from jupyter_core.paths import jupyter_runtime_dir, jupyter_path
 from jupyter_server._sysinfo import get_sys_info
 
 from ._tz import utcnow, utcfromtimestamp
-from .utils import url_path_join, check_pid, url_escape
+from .utils import url_path_join, check_pid, url_escape, urljoin, pathname2url
 
 #-----------------------------------------------------------------------------
 # Module globals
@@ -1088,6 +1089,13 @@ class ServerApp(JupyterApp):
         info_file = "jpserver-%s.json" % os.getpid()
         return os.path.join(self.runtime_dir, info_file)
 
+    browser_open_file = Unicode()
+
+    @default('browser_open_file')
+    def _default_browser_open_file(self):
+        basename = "jpserver-%s-open.html" % os.getpid()
+        return os.path.join(self.runtime_dir, basename)
+    
     pylab = Unicode('disabled', config=True,
         help=_("""
         DISABLED: use %pylab or %matplotlib in the notebook to enable matplotlib.
@@ -1594,6 +1602,67 @@ class ServerApp(JupyterApp):
             if e.errno != errno.ENOENT:
                 raise
 
+    def write_browser_open_file(self):
+        """Write an nbserver-<pid>-open.html file
+
+        This can be used to open the notebook in a browser
+        """
+        # default_url contains base_url, but so does connection_url
+        open_url = self.default_url[len(self.base_url):]
+
+        with open(self.browser_open_file, 'w', encoding='utf-8') as f:
+            self._write_browser_open_file(open_url, f)
+
+    def _write_browser_open_file(self, url, fh):
+        if self.token:
+            url = url_concat(url, {'token': self.one_time_token})
+        url = url_path_join(self.connection_url, url)
+
+        jinja2_env = self.web_app.settings['jinja2_env']
+        template = jinja2_env.get_template('browser-open.html')
+        fh.write(template.render(open_url=url))
+
+    def remove_browser_open_file(self):
+        """Remove the nbserver-<pid>-open.html file created for this server.
+
+        Ignores the error raised when the file has already been removed.
+        """
+        try:
+            os.unlink(self.browser_open_file)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
+
+    def launch_browser(self):
+        try:
+            browser = webbrowser.get(self.browser or None)
+        except webbrowser.Error as e:
+            self.log.warning(_('No web browser found: %s.') % e)
+            browser = None
+
+        if not browser:
+            return
+
+        if self.file_to_run:
+            if not os.path.exists(self.file_to_run):
+                self.log.critical(_("%s does not exist") % self.file_to_run)
+                self.exit(1)
+
+            relpath = os.path.relpath(self.file_to_run, self.notebook_dir)
+            uri = url_escape(url_path_join('notebooks', *relpath.split(os.sep)))
+
+            # Write a temporary file to open in the browser
+            fd, open_file = tempfile.mkstemp(suffix='.html')
+            with open(fd, 'w', encoding='utf-8') as fh:
+                self._write_browser_open_file(uri, fh)
+        else:
+            open_file = self.browser_open_file
+
+        b = lambda: browser.open(
+            urljoin('file:', pathname2url(open_file)),
+            new=self.webbrowser_open_new)
+        threading.Thread(target=b).start()
+
     def start(self):
         """ Start the Jupyter server app, after initialization
 
@@ -1623,29 +1692,10 @@ class ServerApp(JupyterApp):
                  "resources section at https://jupyter.org/community.html."))
 
         self.write_server_info_file()
+        self.write_browser_open_file()
 
         if self.open_browser or self.file_to_run:
-            try:
-                browser = webbrowser.get(self.browser or None)
-            except webbrowser.Error as e:
-                self.log.warning(_('No web browser found: %s.') % e)
-                browser = None
-
-            if self.file_to_run:
-                if not os.path.exists(self.file_to_run):
-                    self.log.critical(_("%s does not exist") % self.file_to_run)
-                    self.exit(1)
-
-                relpath = os.path.relpath(self.file_to_run, self.root_dir)
-                uri = url_escape(url_path_join('notebooks', *relpath.split(os.sep)))
-            else:
-                uri = self.base_url
-            if self.one_time_token:
-                uri = url_concat(uri, {'token': self.one_time_token})
-            if browser:
-                b = lambda : browser.open(url_path_join(self.connection_url, uri),
-                                          new=self.webbrowser_open_new)
-                threading.Thread(target=b).start()
+            self.launch_browser()
 
         if self.token and self._token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
@@ -1669,6 +1719,7 @@ class ServerApp(JupyterApp):
             info(_("Interrupted..."))
         finally:
             self.remove_server_info_file()
+            self.remove_browser_open_file()
             self.cleanup_kernels()
 
     def stop(self):
