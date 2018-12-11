@@ -1615,7 +1615,7 @@ class ServerApp(JupyterApp):
 
     def _write_browser_open_file(self, url, fh):
         if self.token:
-            url = url_concat(url, {'token': self.one_time_token})
+            url = url_concat(url, {'token': self.token})
         url = url_path_join(self.connection_url, url)
 
         jinja2_env = self.web_app.settings['jinja2_env']
