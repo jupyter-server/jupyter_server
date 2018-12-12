@@ -199,16 +199,10 @@ class LoginHandler(JupyterHandler):
             return
         # check login token from URL argument or Authorization header
         user_token = cls.get_token(handler)
-        one_time_token = handler.one_time_token
         authenticated = False
         if user_token == token:
             # token-authenticated, set the login cookie
             handler.log.debug("Accepting token-authenticated connection from %s", handler.request.remote_ip)
-            authenticated = True
-        elif one_time_token and user_token == one_time_token:
-            # one-time-token-authenticated, only allow this token once
-            handler.settings.pop('one_time_token', None)
-            handler.log.info("Accepting one-time-token-authenticated connection from %s", handler.request.remote_ip)
             authenticated = True
 
         if authenticated:
