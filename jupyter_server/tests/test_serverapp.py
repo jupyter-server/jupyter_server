@@ -23,6 +23,8 @@ from jupyter_server.auth.security import passwd_check
 
 ServerApp = serverapp.ServerApp
 
+from .launchnotebook import NotebookTestBase
+
 
 def test_help_output():
     """jupyter server --help-all works"""
@@ -181,3 +183,10 @@ def test_server_stop():
             app.start()
         nt.assert_equal(exc.exception.code, 1)
     nt.assert_equal(len(app.servers_shut_down), 0)
+
+
+class NotebookAppTests(NotebookTestBase):
+    def test_list_running_servers(self):
+        servers = list(notebookapp.list_running_servers())
+        assert len(servers) >= 1
+        assert self.port in {info['port'] for info in servers}
