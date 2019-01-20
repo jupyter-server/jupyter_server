@@ -54,7 +54,7 @@ class FilesHandler(JupyterHandler):
             self.set_attachment_header(name)
 
         # get mimetype from filename
-        if name.endswith('.ipynb'):
+        if name.lower().endswith('.ipynb'):
             self.set_header('Content-Type', 'application/x-ipynb+json')
         else:
             cur_mime = mimetypes.guess_type(name)[0]
