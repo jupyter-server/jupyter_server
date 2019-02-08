@@ -279,7 +279,7 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
         yield gen.maybe_future(res)
         res = super(AuthenticatedZMQStreamHandler, self).get(*args, **kwargs)
         yield gen.maybe_future(res)
-
+        
     def initialize(self):
         self.log.debug("Initializing websocket connection %s", self.request.path)
         self.session = Session(config=self.config)
