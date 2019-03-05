@@ -4,10 +4,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-import os
 import json
 import struct
-import warnings
 import sys
 import tornado
 
@@ -20,6 +18,8 @@ from jupyter_client.jsonutil import date_default, extract_dates
 from ipython_genutils.py3compat import cast_unicode
 
 from .handlers import JupyterHandler
+from jupyter_server.utils import maybe_future
+
 
 def serialize_binary_message(msg):
     """serialize a message as a binary blob
@@ -276,10 +276,10 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
         # pre_get can be a coroutine in subclasses
         # assign and yield in two step to avoid tornado 3 issues
         res = self.pre_get()
-        yield gen.maybe_future(res)
+        yield maybe_future(res)
         res = super(AuthenticatedZMQStreamHandler, self).get(*args, **kwargs)
-        yield gen.maybe_future(res)
-        
+        yield maybe_future(res)
+
     def initialize(self):
         self.log.debug("Initializing websocket connection %s", self.request.path)
         self.session = Session(config=self.config)
