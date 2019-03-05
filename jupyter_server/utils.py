@@ -395,10 +395,6 @@ else:
 
 def maybe_future(obj):
     """Like tornado's gen.maybe_future
-<<<<<<< HEAD:jupyter_server/utils.py
-=======
-
->>>>>>> dcee71015... patch gen.maybe_future for compatibility with tornado 6:notebook/utils.py
     but more compatible with asyncio for recent versions
     of tornado
     """
@@ -424,7 +420,3 @@ except ImportError:
 else:
     import tornado.gen
     tornado.gen.maybe_future = maybe_future
-<<<<<<< HEAD:jupyter_server/utils.py
-=======
-
->>>>>>> dcee71015... patch gen.maybe_future for compatibility with tornado 6:notebook/utils.py
