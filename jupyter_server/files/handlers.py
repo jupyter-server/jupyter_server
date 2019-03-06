@@ -6,14 +6,9 @@
 import mimetypes
 import json
 from base64 import decodebytes
-
-from base64 import decodebytes
-
 from tornado import gen, web
-
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.utils import maybe_future
-
 
 
 class FilesHandler(JupyterHandler):

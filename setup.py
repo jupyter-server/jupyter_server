@@ -95,7 +95,7 @@ for more information.
                  'nbval', 'nose-exclude', 'selenium', 'pytest', 'pytest-cov'],
         'test:sys_platform == "win32"': ['nose-exclude'],
     },
-    python_requires='>=3.5',
+    python_requires = '>=3.5',
     entry_points = {
         'console_scripts': [
             'jupyter-server = jupyter_server.serverapp:main',
