@@ -385,7 +385,6 @@ else:
 
 def maybe_future(obj):
     """Like tornado's deprecated gen.maybe_future
-
     but more compatible with asyncio for recent versions
     of tornado
     """

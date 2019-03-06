@@ -87,11 +87,7 @@ class KernelActionHandler(APIHandler):
                 self.log.error("Exception restarting kernel", exc_info=True)
                 self.set_status(500)
             else:
-<<<<<<< HEAD
-                model = yield gen.maybe_future(km.kernel_model(kernel_id))
-=======
                 model = yield maybe_future(km.kernel_model(kernel_id))
->>>>>>> use our own maybe_future
                 self.write(json.dumps(model, default=date_default))
         self.finish()
 

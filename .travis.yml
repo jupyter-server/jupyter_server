@@ -68,10 +68,6 @@ matrix:
           dist: xenial  # required for Python >= 3.7 (travis-ci/travis-ci#9069)
         - python: 3.6
           env: GROUP=docs
-        - python: 3.6
-          env:
-          - GROUP=python
-          - EXTRA_PIP="tornado<5"
 
 after_success:
     - codecov

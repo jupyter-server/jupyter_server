@@ -11,7 +11,6 @@ from jupyter_server.services.kernels.kernelmanager import MappingKernelManager
 from jupyter_server.services.contents.manager import ContentsManager
 from jupyter_server._tz import utcnow, isoformat
 
-
 class DummyKernel(object):
     def __init__(self, kernel_name='python'):
         self.kernel_name = kernel_name
@@ -19,17 +18,15 @@ class DummyKernel(object):
 dummy_date = utcnow()
 dummy_date_s = isoformat(dummy_date)
 
-
 class DummyMKM(MappingKernelManager):
     """MappingKernelManager interface that doesn't start kernels, for testing"""
-
     def __init__(self, *args, **kwargs):
         super(DummyMKM, self).__init__(*args, **kwargs)
         self.id_letters = iter(u'ABCDEFGHIJK')
 
     def _new_id(self):
         return next(self.id_letters)
-
+    
     def start_kernel(self, kernel_id=None, path=None, kernel_name='python', **kwargs):
         kernel_id = kernel_id or self._new_id()
         k = self._kernels[kernel_id] = DummyKernel(kernel_name=kernel_name)
@@ -43,7 +40,7 @@ class DummyMKM(MappingKernelManager):
 
 
 class TestSessionManager(TestCase):
-
+    
     def setUp(self):
         self.sm = SessionManager(
             kernel_manager=DummyMKM(),
@@ -62,7 +59,7 @@ class TestSessionManager(TestCase):
                 sessions.append(session)
             raise gen.Return(sessions)
         return self.loop.run_sync(co_add)
-
+    
     def create_session(self, **kwargs):
         return self.create_sessions(kwargs)[0]
 
@@ -201,7 +198,7 @@ class TestSessionManager(TestCase):
                     }
         }
         self.assertEqual(model, expected)
-
+    
     def test_bad_update_session(self):
         # try to update a session with a bad keyword ~ raise error
         sm = self.sm
