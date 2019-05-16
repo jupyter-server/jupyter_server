@@ -283,7 +283,6 @@ class ServerWebApplication(web.Application):
         handlers.extend(load_handlers('jupyter_server.files.handlers'))
         handlers.extend(load_handlers('jupyter_server.view.handlers'))
         handlers.extend(load_handlers('jupyter_server.nbconvert.handlers'))
-        handlers.extend(load_handlers('jupyter_server.bundler.handlers'))
         handlers.extend(load_handlers('jupyter_server.kernelspecs.handlers'))
         handlers.extend(load_handlers('jupyter_server.edit.handlers'))
         handlers.extend(load_handlers('jupyter_server.services.api.handlers'))
