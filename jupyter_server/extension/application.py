@@ -49,17 +49,11 @@ class ExtensionApp(JupyterApp):
     ]
 
     static_file_path = List(Unicode(),
-        help="""paths to search for serving static files.
-        
-        This allows adding javascript/css to be available from the notebook server machine,
-        or overriding individual files in the IPython
-        """
+        help="""paths to search for serving static files for the extension."""
     ).tag(config=True)
 
     template_path = List(Unicode(), 
-        help=_("""Paths to search for serving jinja templates.
-
-        Can be used to override templates from notebook.templates.""")
+        help=_("""Paths to search for serving jinja templates for the extension.""")
     ).tag(config=True)
 
     settings = Dict(
@@ -95,11 +89,11 @@ class ExtensionApp(JupyterApp):
         pass
 
     def initialize_templates(self):
-        """"""
+        """Override this method to add handling of template files."""
         pass
 
     def initialize_settings(self):
-        """"""
+        """Override this method to add handling of settings."""
         pass
 
     @staticmethod
@@ -110,16 +104,18 @@ class ExtensionApp(JupyterApp):
         return serverapp
 
     def initialize(self, serverapp, argv=None):
+        """Initialize the extension app."""
         super(ExtensionApp, self).initialize(argv=argv)
         self.serverapp = serverapp
 
     def start(self, **kwargs):
+        """Start the extension app."""
         # Start the server.
         self.serverapp.start()
 
     @classmethod
     def launch_instance(cls, argv=None, **kwargs):
-        """Lśunch the ServerApp and Server Extension Application. 
+        """Launch the ServerApp and Server Extension Application. 
         
         Properly orders the steps to initialize and start the server and extension.
         """
