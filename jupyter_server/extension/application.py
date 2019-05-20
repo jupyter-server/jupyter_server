@@ -48,12 +48,18 @@ class ExtensionApp(JupyterApp):
         ServerApp
     ]
 
-    static_file_path = List(Unicode(),
-        help="""paths to search for serving static files for the extension."""
+    static_paths = List(Unicode(),
+        help="""paths to search for serving static files.
+        
+        This allows adding javascript/css to be available from the notebook server machine,
+        or overriding individual files in the IPython
+        """
     ).tag(config=True)
 
-    template_path = List(Unicode(), 
-        help=_("""Paths to search for serving jinja templates for the extension.""")
+    template_paths = List(Unicode(), 
+        help=_("""Paths to search for serving jinja templates.
+
+        Can be used to override templates from notebook.templates.""")
     ).tag(config=True)
 
     settings = Dict(
@@ -70,18 +76,18 @@ class ExtensionApp(JupyterApp):
 
     def initialize_static_handler(self):
         # Check to see if 
-        if len(self.static_file_path) > 0:
+        if len(self.static_paths) > 0:
             # Append the extension's static directory to server handlers.
             static_url = url_path_join("/static", self.extension_name, "(.*)")
 
             # Construct handler.
-            handler = (static_url, FileFindHandler, {'path': self.static_file_path})
+            handler = (static_url, FileFindHandler, {'path': self.static_paths})
             self.handlers.append(handler)
 
             # Add the file paths to webapp settings.
             self.settings.update({
-                "{}_static_path".format(self.extension_name): self.static_file_path,
-                "{}_template_path".format(self.extension_name): self.template_path
+                "{}_static_paths".format(self.extension_name): self.static_paths,
+                "{}_template_paths".format(self.extension_name): self.template_paths
             })
 
     def initialize_handlers(self):
@@ -147,7 +153,6 @@ class ExtensionApp(JupyterApp):
 
         # Make extension settings accessible to handlers inside webapp settings.
         webapp.settings.update(**extension.settings)
-        webapp.settings.update(**)
 
         # Add handlers to serverapp.
         webapp.add_handlers('.*$', extension.handlers)

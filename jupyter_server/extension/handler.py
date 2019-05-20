@@ -25,7 +25,7 @@ class ExtensionHandler(JupyterHandler):
 
     @property
     def static_path(self):
-        return self.settings['{}_static_path'.format(self.extension_name)]
+        return self.settings['{}_static_paths'.format(self.extension_name)]
 
     def static_url(self, path, include_host=None, **kwargs):
         """Returns a static URL for the given relative static file path.
@@ -44,7 +44,17 @@ class ExtensionHandler(JupyterHandler):
         that value will be used as the default for all `static_url`
         calls that do not pass ``include_host`` as a keyword argument.
         """
-        self.require_setting("{}_static_path".format(self.extension_name), "static_url")
+        key = "{}_static_paths".format(self.extension_name)
+        try:
+            self.require_setting(key, "static_url")
+        except e:
+            if key in self.settings:
+                raise Exception(
+                    "This extension doesn't have any static paths listed. Check that the "
+                    "extension's `static_paths` trait is set."
+                )
+            else:
+                raise e
 
         get_url = self.settings.get(
             "static_handler_class", FileFindHandler
