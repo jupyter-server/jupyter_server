@@ -2,7 +2,7 @@ from jupyter_server.base.handlers import JupyterHandler, FileFindHandler
 from traitlets import Unicode, default
 
 
-class ExtensionHandler(JupyterHandler):
+class ServerHandlerExtensionBase(JupyterHandler):
     """Base class for Jupyter server extension handlers. 
 
     Subclasses can serve static files behind a namespaced 

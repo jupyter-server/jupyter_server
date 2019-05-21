@@ -18,7 +18,7 @@ from jupyter_server.utils import url_path_join
 from jupyter_server.base.handlers import FileFindHandler
 
 
-class ExtensionApp(JupyterApp):
+class ServerAppExtensionBase(JupyterApp):
     """A base class for writing configurable Jupyter Server extension applications.
 
     These applications can be loaded using jupyter_server's 
@@ -48,6 +48,11 @@ class ExtensionApp(JupyterApp):
         ServerApp
     ]
 
+    @property
+    def static_url_prefix(self):
+        return "/static/{extension_name}/".format(
+            extension_name=self.extension_name)
+
     static_paths = List(Unicode(),
         help="""paths to search for serving static files.
         
@@ -74,8 +79,34 @@ class ExtensionApp(JupyterApp):
         help=_("The default URL to redirect to from `/`")
     )
 
-    def initialize_static_handler(self):
-        # Check to see if 
+    def initialize_settings(self):
+        """Override this method to add handling of settings."""
+        pass
+
+    def initialize_handlers(self):
+        """Override this method to append handlers to a Jupyter Server."""
+        pass
+
+    def initialize_templates(self):
+        """Override this method to add handling of template files."""
+        pass
+
+    def _prepare_settings(self):
+        webapp = self.serverapp.web_app
+
+        # Get setting defined by subclass.
+        self.initialize_settings()
+        
+        # Update with server settings so that they are available to handlers.
+        self.settings.update(**webapp.settings)
+
+    def _prepare_handlers(self):
+        webapp = self.serverapp.web_app
+
+        # Get handlers defined by subclass
+        self.initialize_handlers()
+        
+        # Add static endpoint for this extension, if static paths are given.
         if len(self.static_paths) > 0:
             # Append the extension's static directory to server handlers.
             static_url = url_path_join("/static", self.extension_name, "(.*)")
@@ -90,17 +121,11 @@ class ExtensionApp(JupyterApp):
                 "{}_template_paths".format(self.extension_name): self.template_paths
             })
 
-    def initialize_handlers(self):
-        """Override this method to append handlers to a Jupyter Server."""
-        pass
+        # Add handlers to serverapp.
+        webapp.add_handlers('.*$', self.handlers)
 
-    def initialize_templates(self):
-        """Override this method to add handling of template files."""
-        pass
-
-    def initialize_settings(self):
-        """Override this method to add handling of settings."""
-        pass
+    def _prepare_templates(self):
+        self.initialize_templates()
 
     @staticmethod
     def initialize_server():
@@ -111,7 +136,7 @@ class ExtensionApp(JupyterApp):
 
     def initialize(self, serverapp, argv=None):
         """Initialize the extension app."""
-        super(ExtensionApp, self).initialize(argv=argv)
+        super(ServerAppExtensionBase, self).initialize(argv=argv)
         self.serverapp = serverapp
 
     def start(self, **kwargs):
@@ -128,7 +153,7 @@ class ExtensionApp(JupyterApp):
         # Initialize the server
         serverapp = cls.initialize_server()
 
-        # Load the extension
+        # Load the extension nk
         extension = cls.load_jupyter_server_extension(serverapp, argv=argv, **kwargs)
         
         # Start the browser at this extensions default_url.
@@ -146,15 +171,9 @@ class ExtensionApp(JupyterApp):
         # Create an instance and initialize extension.
         extension = cls()
         extension.initialize(serverapp, argv=argv)
-        extension.initialize_settings()
-        extension.initialize_handlers()
-        extension.initialize_static_handler()
-        extension.initialize_templates()
 
-        # Make extension settings accessible to handlers inside webapp settings.
-        webapp.settings.update(**extension.settings)
-
-        # Add handlers to serverapp.
-        webapp.add_handlers('.*$', extension.handlers)
-
+        # Initialize settings
+        extension._prepare_settings()
+        extension._prepare_handlers()
+        extension._prepare_templates()
         return extension
