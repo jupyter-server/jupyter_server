@@ -18,7 +18,7 @@ from jupyter_server.utils import url_path_join
 from jupyter_server.base.handlers import FileFindHandler
 
 
-class ServerAppExtensionBase(JupyterApp):
+class ExtensionApp(JupyterApp):
     """A base class for writing configurable Jupyter Server extension applications.
 
     These applications can be loaded using jupyter_server's 
@@ -92,55 +92,78 @@ class ServerAppExtensionBase(JupyterApp):
         pass
 
     def _prepare_settings(self):
+        # Make webapp settings accessible to initialize_settings method
         webapp = self.serverapp.web_app
-
-        # Get setting defined by subclass.
-        self.initialize_settings()
-        
-        # Update with server settings so that they are available to handlers.
         self.settings.update(**webapp.settings)
+
+        # Add static and template paths to settings.
+        self.settings.update({
+            "{}_static_paths".format(self.extension_name): self.static_paths,
+        })
+
+
+        # Get setting defined by subclass using initialize_settings method.
+        self.initialize_settings()
+
+        # Update server settings with extension settings.
+        webapp.settings.update(**self.settings)
 
     def _prepare_handlers(self):
         webapp = self.serverapp.web_app
+        print(webapp.default_router.rules)
 
-        # Get handlers defined by subclass
+        # Get handlers defined by extension subclass.
         self.initialize_handlers()
-        
+
+        # prepend base_url onto the patterns that we match
+        new_handlers = []
+        for handler in self.handlers:
+            pattern = url_path_join(webapp.settings['base_url'], handler[0])
+            new_handler = tuple([pattern] + list(handler[1:]))
+            new_handlers.append(new_handler)
+
         # Add static endpoint for this extension, if static paths are given.
         if len(self.static_paths) > 0:
             # Append the extension's static directory to server handlers.
             static_url = url_path_join("/static", self.extension_name, "(.*)")
-
+            
             # Construct handler.
-            handler = (static_url, FileFindHandler, {'path': self.static_paths})
-            self.handlers.append(handler)
+            handler = (
+                static_url, 
+                webapp.settings['static_handler_class'], 
+                {'path': self.static_paths}
+            )
 
-            # Add the file paths to webapp settings.
-            self.settings.update({
-                "{}_static_paths".format(self.extension_name): self.static_paths,
-                "{}_template_paths".format(self.extension_name): self.template_paths
-            })
+            new_handlers.append(handler)
 
-        # Add handlers to serverapp.
-        webapp.add_handlers('.*$', self.handlers)
+        webapp.add_handlers('.*$', new_handlers)
 
     def _prepare_templates(self):
+
+        if len(self.template_paths) > 0:
+            self.settings.update({
+                "{}_template_paths".format(self.extension_name): self.template_paths
+            })
         self.initialize_templates()
 
     @staticmethod
     def initialize_server():
         """Add handlers to server."""
-        serverapp = ServerApp()
+        serverapp = ServerApp.instance()
         serverapp.initialize()
         return serverapp
 
     def initialize(self, serverapp, argv=None):
         """Initialize the extension app."""
-        super(ServerAppExtensionBase, self).initialize(argv=argv)
+        super(ExtensionApp, self).initialize(argv=argv)
         self.serverapp = serverapp
 
     def start(self, **kwargs):
-        """Start the extension app."""
+        """Start the extension app.
+        
+        Also starts the server. This allows extensions to add settings to the 
+        server before it starts.
+        """
         # Start the server.
         self.serverapp.start()
 
@@ -173,7 +196,7 @@ class ServerAppExtensionBase(JupyterApp):
         extension.initialize(serverapp, argv=argv)
 
         # Initialize settings
+        extension._prepare_templates()
         extension._prepare_settings()
         extension._prepare_handlers()
-        extension._prepare_templates()
         return extension

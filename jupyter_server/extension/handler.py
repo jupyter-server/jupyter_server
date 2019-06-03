@@ -2,7 +2,7 @@ from jupyter_server.base.handlers import JupyterHandler, FileFindHandler
 from traitlets import Unicode, default
 
 
-class ServerHandlerExtensionBase(JupyterHandler):
+class ExtensionHandler(JupyterHandler):
     """Base class for Jupyter server extension handlers. 
 
     Subclasses can serve static files behind a namespaced 
@@ -12,7 +12,7 @@ class ServerHandlerExtensionBase(JupyterHandler):
     their own namespace and avoid intercepting requests for 
     other extensions. 
     """
-    extension_name = Unicode(help="Name of the extenxsion")
+    extension_name = Unicode("",help="Name of the extenxsion")
 
     @default('extension_name')
     def _default_extension_name(self):
@@ -47,7 +47,7 @@ class ServerHandlerExtensionBase(JupyterHandler):
         key = "{}_static_paths".format(self.extension_name)
         try:
             self.require_setting(key, "static_url")
-        except e:
+        except Exception as e:
             if key in self.settings:
                 raise Exception(
                     "This extension doesn't have any static paths listed. Check that the "
@@ -74,4 +74,5 @@ class ServerHandlerExtensionBase(JupyterHandler):
             "static_path": self.static_path,
             "static_url_prefix": self.static_url_prefix
         }
+
         return base + get_url(settings, path, **kwargs)
