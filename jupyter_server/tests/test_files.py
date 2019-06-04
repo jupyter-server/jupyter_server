@@ -135,15 +135,6 @@ class FilesTest(ServerTestBase):
         self.assertIn('attachment', disposition)
         self.assertIn("filename*=utf-8''test.txt", disposition)
 
-    def test_view_html(self):
-        rootdir = self.root_dir
-
-        html = '<div>Test test</div>'
-        with open(pjoin(rootdir, 'test.html'), 'w') as f:
-            f.write(html)
-
-        r = self.request('GET', 'view/test.html')
-        self.assertEqual(r.status_code, 200)
 
     def test_old_files_redirect(self):
         """pre-2.0 'files/' prefixed links are properly redirected"""
