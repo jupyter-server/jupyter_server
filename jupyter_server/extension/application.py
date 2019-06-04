@@ -101,7 +101,6 @@ class ExtensionApp(JupyterApp):
             "{}_static_paths".format(self.extension_name): self.static_paths,
         })
 
-
         # Get setting defined by subclass using initialize_settings method.
         self.initialize_settings()
 
@@ -110,7 +109,6 @@ class ExtensionApp(JupyterApp):
 
     def _prepare_handlers(self):
         webapp = self.serverapp.web_app
-        print(webapp.default_router.rules)
 
         # Get handlers defined by extension subclass.
         self.initialize_handlers()
@@ -139,7 +137,7 @@ class ExtensionApp(JupyterApp):
         webapp.add_handlers('.*$', new_handlers)
 
     def _prepare_templates(self):
-
+        # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
             self.settings.update({
                 "{}_template_paths".format(self.extension_name): self.template_paths
@@ -147,10 +145,10 @@ class ExtensionApp(JupyterApp):
         self.initialize_templates()
 
     @staticmethod
-    def initialize_server():
+    def initialize_server(argv=None):
         """Add handlers to server."""
-        serverapp = ServerApp.instance()
-        serverapp.initialize()
+        serverapp = ServerApp()
+        serverapp.initialize(argv=argv)
         return serverapp
 
     def initialize(self, serverapp, argv=None):
@@ -174,7 +172,7 @@ class ExtensionApp(JupyterApp):
         Properly orders the steps to initialize and start the server and extension.
         """
         # Initialize the server
-        serverapp = cls.initialize_server()
+        serverapp = cls.initialize_server(argv=argv)
 
         # Load the extension nk
         extension = cls.load_jupyter_server_extension(serverapp, argv=argv, **kwargs)
@@ -195,7 +193,7 @@ class ExtensionApp(JupyterApp):
         extension = cls()
         extension.initialize(serverapp, argv=argv)
 
-        # Initialize settings
+        # Initialize extension template, settings, and handlers.
         extension._prepare_templates()
         extension._prepare_settings()
         extension._prepare_handlers()
