@@ -12,17 +12,58 @@ from traitlets import (
 
 from jupyter_core.application import JupyterApp
 
-from jupyter_server.serverapp import ServerApp
+from jupyter_server.serverapp import ServerApp, aliases, flags
 from jupyter_server.transutils import trans, _
 from jupyter_server.utils import url_path_join
 from jupyter_server.base.handlers import FileFindHandler
 
 
-class ExtensionApp(JupyterApp):
-    """A base class for writing configurable Jupyter Server extension applications.
+# Remove alias for nested classes in ServerApp.
+# Nested classes are not allowed in ExtensionApp.
+try:
+    aliases.pop('transport')
+except KeyError:
+    pass
 
-    These applications can be loaded using jupyter_server's 
-    extension load mechanism or launched using Jupyter's command line interface.
+
+def _preparse_command_line(Application):
+    """Looks for 'help' or 'version' commands in command line. If found,
+    raises the help and version of current Application.
+
+    This is useful for traitlets applications that have to parse
+    the command line multiple times, but want to control when
+    when 'help' and 'version' is raised.
+    """
+    # Arguments after a '--' argument are for the script IPython may be
+    # about to run, not IPython iteslf. For arguments parsed here (help and
+    # version), we want to only search the arguments up to the first
+    # occurrence of '--', which we're calling interpreted_argv.
+    try:
+        interpreted_argv = sys.argv[:sys.argv.index('--')]
+    except ValueError:
+        interpreted_argv = sys.argv
+
+    if any(x in interpreted_argv for x in ('-h', '--help-all', '--help')):
+        app = Application()
+        app.print_help('--help-all' in interpreted_argv)
+        app.exit(0)
+
+    if '--version' in interpreted_argv or '-V' in interpreted_argv:
+        app = Application()
+        app.print_version()
+        app.exit(0)
+
+
+class ExtensionApp(JupyterApp):
+    """Base class for configurable Jupyter Server Extension Applications.
+
+    ExtensionApp subclasses can be initialized two ways:
+    1. Extension is listed as a jpserver_extension, and ServerApp calls 
+        its load_jupyter_server_extension classmethod. This is the 
+        classic way of loading a server extension.
+    2. Extension is launched directly by calling its `launch_instance`
+        class method. This method can be set as a entry_point in 
+        the extensions setup.py
     """
     # Name of the extension
     extension_name = Unicode(
@@ -45,8 +86,12 @@ class ExtensionApp(JupyterApp):
 
     # Extension can configure the ServerApp from the command-line
     classes = [
-        ServerApp
+        ServerApp,
     ]
+
+    aliases = aliases
+    flags = flags
+
 
     @property
     def static_url_prefix(self):
@@ -131,7 +176,6 @@ class ExtensionApp(JupyterApp):
                 webapp.settings['static_handler_class'], 
                 {'path': self.static_paths}
             )
-
             new_handlers.append(handler)
 
         webapp.add_handlers('.*$', new_handlers)
@@ -145,10 +189,14 @@ class ExtensionApp(JupyterApp):
         self.initialize_templates()
 
     @staticmethod
-    def initialize_server(argv=None):
-        """Add handlers to server."""
+    def initialize_server():
+        """Get an instance of the Jupyter Server."""
+        # Get a jupyter server instance
         serverapp = ServerApp()
-        serverapp.initialize(argv=argv)
+        # Initialize ServerApp config.
+        # Parses the command line looking for 
+        # ServerApp configuration.
+        serverapp.initialize()
         return serverapp
 
     def initialize(self, serverapp, argv=None):
@@ -171,21 +219,36 @@ class ExtensionApp(JupyterApp):
         
         Properly orders the steps to initialize and start the server and extension.
         """
-        # Initialize the server
-        serverapp = cls.initialize_server(argv=argv)
+        # Check for help or version arguments.
+        _preparse_command_line(cls)
 
-        # Load the extension nk
-        extension = cls.load_jupyter_server_extension(serverapp, argv=argv, **kwargs)
+        # Initialize the server
+        serverapp = cls.initialize_server()
+
+        # Load the extension
+        args = sys.argv[1:]  # slice out extension config.
+        extension = cls.load_jupyter_server_extension(serverapp, argv=args, **kwargs)
         
         # Start the browser at this extensions default_url.
-        serverapp.default_url = extension.default_url
+        try:
+            server_config = extension.config['ServerApp']
+            if 'default_url' not in server_config:
+                serverapp.default_url = extension.default_url
+        except KeyError: 
+            pass
 
         # Start the application.
         extension.start()
 
     @classmethod
     def load_jupyter_server_extension(cls, serverapp, argv=None, **kwargs):
-        """Load this extension following the server extension loading mechanism."""
+        """Enables loading this extension application using the typical
+        `load_jupyter_server_extension` mechanism.
+
+        - Initializes the ExtensionApp 
+        - Loads configuration from file. 
+        - 
+        oad this extension following the server extension loading mechanism."""
         # Get webapp from the server.
         webapp = serverapp.web_app
         
