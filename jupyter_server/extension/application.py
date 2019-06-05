@@ -1,7 +1,5 @@
 import sys
 
-from traitlets.config.application import catch_config_error
-from traitlets.config.configurable import Configurable
 from traitlets import (
     Unicode, 
     List, 
@@ -13,9 +11,8 @@ from traitlets import (
 from jupyter_core.application import JupyterApp
 
 from jupyter_server.serverapp import ServerApp, aliases, flags
-from jupyter_server.transutils import trans, _
+from jupyter_server.transutils import _
 from jupyter_server.utils import url_path_join
-from jupyter_server.base.handlers import FileFindHandler
 
 
 # Remove alias for nested classes in ServerApp.
