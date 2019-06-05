@@ -43,14 +43,22 @@ def _preparse_command_line(Application):
     except ValueError:
         interpreted_argv = sys.argv
 
+    # Catch any help calls.
     if any(x in interpreted_argv for x in ('-h', '--help-all', '--help')):
         app = Application()
         app.print_help('--help-all' in interpreted_argv)
         app.exit(0)
 
+    # Catch version commands
     if '--version' in interpreted_argv or '-V' in interpreted_argv:
         app = Application()
         app.print_version()
+        app.exit(0)
+
+    # Catch generate-config commands.
+    if '--generate-config' in interpreted_argv:
+        app = Application()
+        app.write_default_config()
         app.exit(0)
 
 
@@ -91,7 +99,6 @@ class ExtensionApp(JupyterApp):
 
     aliases = aliases
     flags = flags
-
 
     @property
     def static_url_prefix(self):
@@ -219,7 +226,9 @@ class ExtensionApp(JupyterApp):
         
         Properly orders the steps to initialize and start the server and extension.
         """
-        # Check for help or version arguments.
+        # Check for help, version, and generate-config arguments
+        # before initializing server to make sure these
+        # arguments trigger actions from the extension not the server.
         _preparse_command_line(cls)
 
         # Initialize the server
@@ -229,7 +238,8 @@ class ExtensionApp(JupyterApp):
         args = sys.argv[1:]  # slice out extension config.
         extension = cls.load_jupyter_server_extension(serverapp, argv=args, **kwargs)
         
-        # Start the browser at this extensions default_url.
+        # Start the browser at this extensions default_url, unless user
+        # configures ServerApp.default_url on command line.
         try:
             server_config = extension.config['ServerApp']
             if 'default_url' not in server_config:
@@ -242,13 +252,17 @@ class ExtensionApp(JupyterApp):
 
     @classmethod
     def load_jupyter_server_extension(cls, serverapp, argv=None, **kwargs):
-        """Enables loading this extension application using the typical
+        """Enables loading this extension application via the documented
         `load_jupyter_server_extension` mechanism.
 
+        This method:
         - Initializes the ExtensionApp 
-        - Loads configuration from file. 
-        - 
-        oad this extension following the server extension loading mechanism."""
+        - Loads the extension's config from file
+        - Loads the extension's config from argv
+        - Initializes templates environment
+        - Passes settings to webapp
+        - Appends handlers to webapp.
+        """
         # Get webapp from the server.
         webapp = serverapp.web_app
         
