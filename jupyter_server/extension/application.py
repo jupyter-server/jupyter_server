@@ -118,11 +118,11 @@ class ExtensionApp(JupyterApp):
 
     settings = Dict(
         help=_("""Settings that will passed to the server.""")
-    )
+    ).tag(config=True)
 
     handlers = List(
         help=_("""Handlers appended to the server.""")
-    )
+    ).tag(config=True)
 
     default_url = Unicode('/', config=True,
         help=_("The default URL to redirect to from `/`")
