@@ -788,6 +788,16 @@ class TrailingSlashHandler(web.RequestHandler):
     post = put = get
 
 
+class MainHandler(JupyterHandler):
+    """Simple handler for base_url."""
+
+    def get(self):
+        html = self.render_template("main.html")
+        self.write(html)
+
+    post = put = get
+
+
 class FilesRedirectHandler(JupyterHandler):
     """Handler for redirecting relative URLs to the /files/ handler"""
 
@@ -859,6 +869,7 @@ path_regex = r"(?P<path>(?:(?:/[^/]+)+|/?))"
 
 default_handlers = [
     (r".*/", TrailingSlashHandler),
+    (r"/", MainHandler),
     (r"api", APIVersionHandler),
     (r'/(robots\.txt|favicon\.ico)', web.StaticFileHandler),
     (r'/metrics', PrometheusMetricsHandler)
