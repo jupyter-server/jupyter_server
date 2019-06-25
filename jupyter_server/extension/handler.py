@@ -12,11 +12,9 @@ class ExtensionHandler(JupyterHandler):
     their own namespace and avoid intercepting requests for 
     other extensions. 
     """
-    extension_name = Unicode("",help="Name of the extenxsion")
-
-    @default('extension_name')
-    def _default_extension_name(self):
-        raise Exception("extension_name must be set in {}.".format(self.__class__))
+    def initialize(self, extension_name, **kwargs):
+        self.extension_name = extension_name
+        super(ExtensionHandler, self).initialize(**kwargs)
 
     @property
     def static_url_prefix(self):
