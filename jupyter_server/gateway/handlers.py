@@ -92,6 +92,8 @@ class WebSocketChannelsHandler(WebSocketHandler, IPythonHandler):
     def write_message(self, message, binary=False):
         """Send message back to notebook client.  This is called via callback from self.gateway._read_messages."""
         if self.ws_connection:  # prevent WebSocketClosedError
+            if isinstance(message, bytes):
+                binary = True
             super(WebSocketChannelsHandler, self).write_message(message, binary=binary)
         elif self.log.isEnabledFor(logging.DEBUG):
             msg_summary = WebSocketChannelsHandler._get_message_summary(json_decode(utf8(message)))
