@@ -24,8 +24,9 @@ except KeyError:
 
 
 def _preparse_command_line(Application):
-    """Looks for 'help' or 'version' commands in command line. If found,
-    raises the help and version of current Application.
+    """Looks for 'help', 'version', and 'generate-config; commands 
+    in command line. If found, raises the help and version of 
+    current Application.
 
     This is useful for traitlets applications that have to parse
     the command line multiple times, but want to control when
@@ -164,9 +165,20 @@ class ExtensionApp(JupyterApp):
 
         # prepend base_url onto the patterns that we match
         new_handlers = []
-        for handler in self.handlers:
-            pattern = url_path_join(webapp.settings['base_url'], handler[0])
-            new_handler = tuple([pattern] + list(handler[1:]))
+        for handler_items in self.handlers:
+            # Build url pattern including base_url
+            pattern = url_path_join(webapp.settings['base_url'], handler_items[0])
+            handler = handler_items[1]
+            
+            # Get handler kwargs, if given
+            kwargs = {}
+            try: 
+                kwargs.update(handler_items[2])
+            except IndexError:
+                pass
+            kwargs['extension_name'] = self.extension_name
+
+            new_handler = (pattern, handler, kwargs)
             new_handlers.append(new_handler)
 
         # Add static endpoint for this extension, if static paths are given.
