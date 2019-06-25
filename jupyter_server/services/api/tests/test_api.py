@@ -1,8 +1,8 @@
 """Test the basic /api endpoints"""
 
-import requests
+from datetime import timedelta
 
-from jupyter_server._tz import isoformat
+from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.utils import url_path_join
 from jupyter_server.tests.launchserver import ServerTestBase
 
@@ -30,3 +30,18 @@ class KernelAPITest(ServerTestBase):
         assert data['last_activity'].endswith('Z')
         assert data['started'].endswith('Z')
         assert data['started'] == isoformat(self.server.web_app.settings['started'])
+
+    def test_no_track_activity(self):
+        # initialize with old last api activity
+        old = utcnow() - timedelta(days=1)
+        settings = self.server.web_app.settings
+        settings['api_last_activity'] = old
+        # accessing status doesn't update activity
+        self.get('status')
+        assert settings['api_last_activity'] == old
+        # accessing with ?no_track_activity doesn't update activity
+        self.get('contents?no_track_activity=1')
+        assert settings['api_last_activity'] == old
+        # accessing without ?no_track_activity does update activity
+        self.get('contents')
+        assert settings['api_last_activity'] > old
