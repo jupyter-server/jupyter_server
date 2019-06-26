@@ -7,6 +7,7 @@ from traitlets import (
     default, 
     validate
 )
+from traitlets.config import Config
 
 from jupyter_core.application import JupyterApp
 
@@ -140,6 +141,14 @@ class ExtensionApp(JupyterApp):
     def initialize_templates(self):
         """Override this method to add handling of template files."""
         pass
+
+    def _prepare_config(self):
+        """Builds a Config object from the extension's traits and passes
+        the object to the webapp's settings as `<extension_name>_config`.  
+        """
+        traits = self.class_own_traits().keys()
+        config = Config({t: getattr(self, t) for t in traits})
+        self.settings['{}_config'.format(self.extension_name)] = config
 
     def _prepare_settings(self):
         # Make webapp settings accessible to initialize_settings method
@@ -280,6 +289,7 @@ class ExtensionApp(JupyterApp):
         extension.initialize(serverapp, argv=argv)
 
         # Initialize extension template, settings, and handlers.
+        extension._prepare_config()
         extension._prepare_templates()
         extension._prepare_settings()
         extension._prepare_handlers()
