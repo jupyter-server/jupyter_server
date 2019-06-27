@@ -147,8 +147,8 @@ class ExtensionApp(JupyterApp):
         the object to the webapp's settings as `<extension_name>_config`.  
         """
         traits = self.class_own_traits().keys()
-        config = Config({t: getattr(self, t) for t in traits})
-        self.settings['{}_config'.format(self.extension_name)] = config
+        self.config = Config({t: getattr(self, t) for t in traits})
+        self.settings['{}_config'.format(self.extension_name)] = self.config
 
     def _prepare_settings(self):
         # Make webapp settings accessible to initialize_settings method
