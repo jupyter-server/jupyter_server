@@ -17,6 +17,10 @@ class ExtensionHandler(JupyterHandler):
         super(ExtensionHandler, self).initialize(**kwargs)
 
     @property
+    def config(self):
+        return self.settings["{}_config".format(self.extension_name)]
+
+    @property
     def static_url_prefix(self):
         return "/static/{extension_name}/".format(
             extension_name=self.extension_name)
