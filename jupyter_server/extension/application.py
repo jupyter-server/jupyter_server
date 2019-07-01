@@ -226,8 +226,15 @@ class ExtensionApp(JupyterApp):
 
     def initialize(self, serverapp, argv=None):
         """Initialize the extension app."""
+        # Initialize the extension application
         super(ExtensionApp, self).initialize(argv=argv)
         self.serverapp = serverapp
+
+        # Intialize config, settings, templates, and handlers.
+        self._prepare_config()
+        self._prepare_templates()
+        self._prepare_settings()
+        self._prepare_handlers()
 
     def start(self, **kwargs):
         """Start the extension app.
@@ -252,8 +259,13 @@ class ExtensionApp(JupyterApp):
         # Initialize the server
         serverapp = cls.initialize_server()
 
+        # Handle arguments.
+        if argv is not None:
+            args = sys.argv[1:]  # slice out extension config.
+        else:
+            args = argv
+
         # Load the extension
-        args = sys.argv[1:]  # slice out extension config.
         extension = cls.load_jupyter_server_extension(serverapp, argv=args, **kwargs)
         
         # Start the browser at this extensions default_url, unless user
@@ -287,10 +299,4 @@ class ExtensionApp(JupyterApp):
         # Create an instance and initialize extension.
         extension = cls()
         extension.initialize(serverapp, argv=argv)
-
-        # Initialize extension template, settings, and handlers.
-        extension._prepare_config()
-        extension._prepare_templates()
-        extension._prepare_settings()
-        extension._prepare_handlers()
         return extension
