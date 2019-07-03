@@ -214,10 +214,10 @@ class ExtensionApp(JupyterApp):
         self.initialize_templates()
 
     @staticmethod
-    def initialize_server(argv=None):
+    def initialize_server(argv=None, **kwargs):
         """Get an instance of the Jupyter Server."""
         # Get a jupyter server instance
-        serverapp = ServerApp.instance()
+        serverapp = ServerApp(**kwargs)
         # Initialize ServerApp config.
         # Parses the command line looking for 
         # ServerApp configuration.
@@ -269,9 +269,6 @@ class ExtensionApp(JupyterApp):
         """Initialize and configure this extension, then add the extension's
         settings and handlers to the server's web application.
         """
-        # Get webapp from the server.
-        webapp = serverapp.web_app
-        
         # Configure and initialize extension.
         extension = cls()
         extension.initialize(serverapp, argv=argv)
@@ -279,14 +276,11 @@ class ExtensionApp(JupyterApp):
         return extension
 
     @classmethod
-    def _prepare_launch(cls, argv=None, **kwargs):
+    def _prepare_launch(cls, serverapp, argv=None, **kwargs):
         """Prepare the extension application for launch by 
         configuring the server and the extension from argv.
         Does not start the ioloop.
         """
-        # initialize server using argv.
-        serverapp = cls.initialize_server(argv=argv)
-
         # Load the extension
         extension = cls.load_jupyter_server_extension(serverapp, argv=argv, **kwargs)
         
@@ -303,10 +297,9 @@ class ExtensionApp(JupyterApp):
 
     @classmethod
     def launch_instance(cls, argv=None, **kwargs):
-        """Launch the extension like an application. Starts a server and appends 
-        the extension to the server.
-        
-        Properly orders the steps to initialize and start the server and extension.
+        """Launch the extension like an application. Initializes+configs a stock server 
+        and appends the extension to the server. Then starts the server and routes to
+        extension's landing page.
         """
         # Check for help, version, and generate-config arguments
         # before initializing server to make sure these
@@ -315,6 +308,10 @@ class ExtensionApp(JupyterApp):
         # Handle arguments.
         if argv is not None:
             argv = sys.argv[1:]  # slice out extension config.
-        extension = cls._prepare_launch(argv=argv, **kwargs)
+        
+        # Get a jupyter server
+        serverapp = cls.initialize_server(argv=argv)
+        extension = cls._prepare_launch(serverapp, argv=argv, **kwargs)
+        # Start the ioloop.
         extension.start_server()
 
