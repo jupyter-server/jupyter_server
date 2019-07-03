@@ -27,6 +27,7 @@ class ExtensionTestingMixin:
         self.serverapp.http_server.stop()
         self.serverapp.clear_instance()
 
+
 class TestExtensionAppInitialize(ExtensionTestingMixin):
 
     def setUp(self):

@@ -214,7 +214,7 @@ class ExtensionApp(JupyterApp):
         self.initialize_templates()
 
     @staticmethod
-    def initialize_server(argv=None, **kwargs):
+    def initialize_server(argv=[], **kwargs):
         """Get an instance of the Jupyter Server."""
         # Get a jupyter server instance
         serverapp = ServerApp(**kwargs)
@@ -224,7 +224,7 @@ class ExtensionApp(JupyterApp):
         serverapp.initialize(argv=argv)
         return serverapp
 
-    def initialize(self, serverapp, argv=None):
+    def initialize(self, serverapp, argv=[]):
         """Initialize the extension app.
         
         This method:
@@ -265,7 +265,7 @@ class ExtensionApp(JupyterApp):
         self.serverapp.start(**kwargs)
 
     @classmethod
-    def load_jupyter_server_extension(cls, serverapp, argv=None, **kwargs):
+    def load_jupyter_server_extension(cls, serverapp, argv=[], **kwargs):
         """Initialize and configure this extension, then add the extension's
         settings and handlers to the server's web application.
         """
@@ -276,7 +276,7 @@ class ExtensionApp(JupyterApp):
         return extension
 
     @classmethod
-    def _prepare_launch(cls, serverapp, argv=None, **kwargs):
+    def _prepare_launch(cls, serverapp, argv=[], **kwargs):
         """Prepare the extension application for launch by 
         configuring the server and the extension from argv.
         Does not start the ioloop.
@@ -307,11 +307,13 @@ class ExtensionApp(JupyterApp):
         _preparse_command_line(cls)
         # Handle arguments.
         if argv is not None:
-            argv = sys.argv[1:]  # slice out extension config.
+            args = sys.argv[1:]  # slice out extension config.
+        else:
+            args = []
         
-        # Get a jupyter server
-        serverapp = cls.initialize_server(argv=argv)
-        extension = cls._prepare_launch(serverapp, argv=argv, **kwargs)
+        # Get a jupyter server instance.
+        serverapp = cls.initialize_server(argv=args)
+        extension = cls._prepare_launch(serverapp, argv=args, **kwargs)
         # Start the ioloop.
         extension.start_server()
 
