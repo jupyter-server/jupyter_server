@@ -83,7 +83,7 @@ class ExtensionApp(JupyterApp):
         raise Exception("The extension must be given a `name`.")
 
     @validate("extension_name")
-    def _default_extension_name(self, obj, value):
+    def _valid_extension_name(self, obj, value):
         if isinstance(name, str):
             # Validate that extension_name doesn't contain any invalid characters.
             for char in [' ', '.', '+', '/']:
@@ -214,47 +214,75 @@ class ExtensionApp(JupyterApp):
         self.initialize_templates()
 
     @staticmethod
-    def initialize_server():
+    def initialize_server(argv=[], **kwargs):
         """Get an instance of the Jupyter Server."""
         # Get a jupyter server instance
-        serverapp = ServerApp()
+        serverapp = ServerApp(**kwargs)
         # Initialize ServerApp config.
         # Parses the command line looking for 
         # ServerApp configuration.
-        serverapp.initialize()
+        serverapp.initialize(argv=argv)
         return serverapp
 
-    def initialize(self, serverapp, argv=None):
-        """Initialize the extension app."""
+    def initialize(self, serverapp, argv=[]):
+        """Initialize the extension app.
+        
+        This method:
+        - Loads the extension's config from file
+        - Updates the extension's config from argv
+        - Initializes templates environment
+        - Passes settings to webapp
+        - Appends handlers to webapp.
+        """
+        # Initialize the extension application
         super(ExtensionApp, self).initialize(argv=argv)
         self.serverapp = serverapp
 
-    def start(self, **kwargs):
-        """Start the extension app.
+        # Intialize config, settings, templates, and handlers.
+        self._prepare_config()
+        self._prepare_templates()
+        self._prepare_settings()
+        self._prepare_handlers()
+
+    def listen(self):
+        """Extension doesn't listen for anything. IOLoop lives
+        in the attached server.
+        """
+        pass
+
+    def start(self):
+        """Extension has nothing to `start`. See `start_server`
+        for starting the jupyter server application.
+        """
+        pass
+
+    def start_server(self, **kwargs):
+        """Start the Jupyter server.
         
-        Also starts the server. This allows extensions to add settings to the 
-        server before it starts.
+        Server should be started after extension is initialized.
         """
         # Start the server.
-        self.serverapp.start()
+        self.serverapp.start(**kwargs)
 
     @classmethod
-    def launch_instance(cls, argv=None, **kwargs):
-        """Launch the ServerApp and Server Extension Application. 
-        
-        Properly orders the steps to initialize and start the server and extension.
+    def load_jupyter_server_extension(cls, serverapp, argv=[], **kwargs):
+        """Initialize and configure this extension, then add the extension's
+        settings and handlers to the server's web application.
         """
-        # Check for help, version, and generate-config arguments
-        # before initializing server to make sure these
-        # arguments trigger actions from the extension not the server.
-        _preparse_command_line(cls)
+        # Configure and initialize extension.
+        extension = cls()
+        extension.initialize(serverapp, argv=argv)
 
-        # Initialize the server
-        serverapp = cls.initialize_server()
+        return extension
 
+    @classmethod
+    def _prepare_launch(cls, serverapp, argv=[], **kwargs):
+        """Prepare the extension application for launch by 
+        configuring the server and the extension from argv.
+        Does not start the ioloop.
+        """
         # Load the extension
-        args = sys.argv[1:]  # slice out extension config.
-        extension = cls.load_jupyter_server_extension(serverapp, argv=args, **kwargs)
+        extension = cls.load_jupyter_server_extension(serverapp, argv=argv, **kwargs)
         
         # Start the browser at this extensions default_url, unless user
         # configures ServerApp.default_url on command line.
@@ -265,32 +293,27 @@ class ExtensionApp(JupyterApp):
         except KeyError: 
             pass
 
-        # Start the application.
-        extension.start()
+        return extension
 
     @classmethod
-    def load_jupyter_server_extension(cls, serverapp, argv=None, **kwargs):
-        """Enables loading this extension application via the documented
-        `load_jupyter_server_extension` mechanism.
-
-        This method:
-        - Initializes the ExtensionApp 
-        - Loads the extension's config from file
-        - Loads the extension's config from argv
-        - Initializes templates environment
-        - Passes settings to webapp
-        - Appends handlers to webapp.
+    def launch_instance(cls, argv=None, **kwargs):
+        """Launch the extension like an application. Initializes+configs a stock server 
+        and appends the extension to the server. Then starts the server and routes to
+        extension's landing page.
         """
-        # Get webapp from the server.
-        webapp = serverapp.web_app
+        # Check for help, version, and generate-config arguments
+        # before initializing server to make sure these
+        # arguments trigger actions from the extension not the server.
+        _preparse_command_line(cls)
+        # Handle arguments.
+        if argv is not None:
+            args = sys.argv[1:]  # slice out extension config.
+        else:
+            args = []
         
-        # Create an instance and initialize extension.
-        extension = cls()
-        extension.initialize(serverapp, argv=argv)
+        # Get a jupyter server instance.
+        serverapp = cls.initialize_server(argv=args)
+        extension = cls._prepare_launch(serverapp, argv=args, **kwargs)
+        # Start the ioloop.
+        extension.start_server()
 
-        # Initialize extension template, settings, and handlers.
-        extension._prepare_config()
-        extension._prepare_templates()
-        extension._prepare_settings()
-        extension._prepare_handlers()
-        return extension
