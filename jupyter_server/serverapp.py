@@ -33,6 +33,7 @@ import time
 import warnings
 import webbrowser
 import urllib
+from glob import glob
 
 from types import ModuleType
 from base64 import encodebytes
@@ -94,6 +95,8 @@ from traitlets import (
 )
 from ipython_genutils import py3compat
 from jupyter_core.paths import jupyter_runtime_dir, jupyter_path
+from jupyter_telemetry.eventlog import EventLog
+
 from jupyter_server._sysinfo import get_sys_info
 
 from ._tz import utcnow, utcfromtimestamp
@@ -272,6 +275,7 @@ class ServerWebApplication(web.Application):
             server_root_dir=root_dir,
             jinja2_env=env,
             terminals_available=False,  # Set later if terminals are available
+            eventlog=jupyter_app.eventlog,
             serverapp=jupyter_app
         )
 
@@ -1619,6 +1623,19 @@ class ServerApp(JupyterApp):
             DeprecationWarning
         )
 
+    def init_eventlog(self):
+        self.eventlog = EventLog(parent=self)
+
+        schemas_glob = os.path.join(
+            os.path.dirname(__file__),
+            'event-schemas',
+            '*.json'
+        )
+
+        for schema_file in glob(schemas_glob):
+            with open(schema_file) as f:
+                self.eventlog.register_schema(json.load(f))
+
     @catch_config_error
     def initialize(self, argv=None, find_extensions=True, new_httpserver=True):
         """Initialize the Server application class, configurables, web application, and http server.
@@ -1649,8 +1666,10 @@ class ServerApp(JupyterApp):
             self.find_server_extensions()
         self.init_logging()
         self.init_server_extensions()
+        self.init_eventlog()
         self.init_configurables()
         self.init_components()
+        self.init_eventlog()
         self.init_webapp()
         if new_httpserver:
             self.init_httpserver()

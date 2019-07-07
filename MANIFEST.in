@@ -8,6 +8,9 @@ include setupbase.py
 # include everything in package_data
 recursive-include jupyter_server *
 
+# Event Schemas
+graft jupyter_server/event-schemas
+
 # Documentation
 graft docs
 exclude docs/\#*
