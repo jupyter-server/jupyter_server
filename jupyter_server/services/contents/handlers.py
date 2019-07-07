@@ -9,10 +9,14 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-27%3A-
 import json
 
 from tornado import web
-
-from jupyter_server.utils import url_path_join, url_escape, ensure_async
 from jupyter_client.jsonutil import date_default
 
+from jupyter_server.utils import (
+    url_path_join,
+    url_escape,
+    ensure_async,
+    eventlogging_schema_fqn
+)
 from jupyter_server.base.handlers import (
     JupyterHandler, APIHandler, path_regex,
 )
@@ -113,7 +117,7 @@ class ContentsHandler(APIHandler):
         validate_model(model, expect_content=content)
         self._finish_model(model, location=False)
         self.eventlog.record_event(
-            'jupyter.org/contentsmanager-actions', 1,
+            eventlogging_schema_fqn('contentsmanager-actions'), 1,
             { 'action': 'get', 'path': model['path'] }
         )
 
@@ -130,7 +134,7 @@ class ContentsHandler(APIHandler):
         self._finish_model(model)
         self.log.info(model)
         self.eventlog.record_event(
-            'jupyter.org/contentsmanager-actions', 1,
+            eventlogging_schema_fqn('contentsmanager-actions'), 1,
             # FIXME: 'path' always has a leading slash, while model['path'] does not.
             # What to do here for source_path? path munge manually? Eww
             { 'action': 'rename', 'path': model['path'], 'source_path': path }
@@ -148,7 +152,7 @@ class ContentsHandler(APIHandler):
         validate_model(model, expect_content=False)
         self._finish_model(model)
         self.eventlog.record_event(
-            'jupyter.org/contentsmanager-actions', 1,
+            eventlogging_schema_fqn('contentsmanager-actions'), 1,
             { 'action': 'copy', 'path': model['path'], 'source_path': copy_from }
         )
 
@@ -160,7 +164,7 @@ class ContentsHandler(APIHandler):
         validate_model(model, expect_content=False)
         self._finish_model(model)
         self.eventlog.record_event(
-            'jupyter.org/contentsmanager-actions', 1,
+            eventlogging_schema_fqn('contentsmanager-actions'), 1,
             { 'action': 'upload', 'path': model['path'] }
         )
 
@@ -173,7 +177,7 @@ class ContentsHandler(APIHandler):
         validate_model(model, expect_content=False)
         self._finish_model(model)
         self.eventlog.record_event(
-            'jupyter.org/contentsmanager-actions', 1,
+            eventlogging_schema_fqn('contentsmanager-actions'), 1,
             # Set path to path of created object, not directory it was created in
             { 'action': 'create', 'path': model['path'] }
         )
@@ -188,7 +192,7 @@ class ContentsHandler(APIHandler):
         self._finish_model(model)
 
         self.eventlog.record_event(
-            'jupyter.org/contentsmanager-actions', 1,
+            eventlogging_schema_fqn('contentsmanager-actions'), 1,
             { 'action': 'save', 'path': model['path'] }
         )
 
@@ -261,7 +265,7 @@ class ContentsHandler(APIHandler):
         self.set_status(204)
         self.finish()
         self.eventlog.record_event(
-            'jupyter.org/contentsmanager-actions', 1,
+            eventlogging_schema_fqn('contentsmanager-actions'), 1,
             { 'action': 'delete', 'path': path }
         )
 

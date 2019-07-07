@@ -440,3 +440,12 @@ def run_sync(maybe_async):
                 result = asyncio.ensure_future(maybe_async)
         return result
     return wrapped()
+
+
+def eventlogging_schema_fqn(name):
+    """
+    Return fully qualified event schema name
+
+    Matches convention for this particular repo
+    """
+    return 'eventlogging.jupyter.org/notebook/{}'.format(name)
