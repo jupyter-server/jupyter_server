@@ -204,6 +204,10 @@ class JupyterHandler(AuthenticatedHandler):
         """User-supplied values to supply to jinja templates."""
         return self.settings.get('jinja_template_vars', {})
 
+    @property
+    def eventlog(self):
+        return self.settings.get('eventlog')
+
     #---------------------------------------------------------------
     # URLs
     #---------------------------------------------------------------

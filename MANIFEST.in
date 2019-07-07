@@ -5,6 +5,9 @@ include setupbase.py
 include Dockerfile
 graft tools
 
+# Event Schemas
+graft jupyter_server/event-schemas
+
 # Documentation
 graft docs
 exclude docs/\#*
