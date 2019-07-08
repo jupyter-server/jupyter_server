@@ -126,7 +126,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     def create_stream(self):
         km = self.kernel_manager
         identity = self.session.bsession
-        for channel in ('shell', 'iopub', 'stdin'):
+        for channel in ('shell', 'control', 'iopub', 'stdin'):
             meth = getattr(km, 'connect_' + channel)
             self.channels[channel] = stream = meth(self.kernel_id, identity=identity)
             stream.channel = channel
