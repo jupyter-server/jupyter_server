@@ -49,7 +49,8 @@ setup_args = dict(
         'terminado>=0.8.3',
         'prometheus_client',
         "pywin32>=1.0 ; sys_platform == 'win32'",
-        "anyio>=2.0.2",
+        'anyio>=2.0.2',
+        'jupyter_telemetry'
     ],
     extras_require = {
         'test': ['coverage', 'requests',
