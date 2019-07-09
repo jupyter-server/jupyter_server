@@ -33,6 +33,7 @@ import time
 import warnings
 import webbrowser
 import urllib
+from ruamel.yaml import YAML
 from glob import glob
 
 from types import ModuleType
@@ -1626,14 +1627,14 @@ class ServerApp(JupyterApp):
     def init_eventlog(self):
         self.eventlog = EventLog(parent=self)
 
+        yaml = YAML(typ='safe')
         event_schemas_dir = os.path.join(os.path.dirname(__file__), 'event-schemas')
         # Recursively register all .json files under event-schemas
         for dirname, _, files in os.walk(event_schemas_dir):
             for file in files:
-                if file.endswith('.json'):
+                if file.endswith('.yaml'):
                     file_path = os.path.join(dirname, file)
-                    with open(file_path) as f:
-                        self.eventlog.register_schema(json.load(f))
+                    self.eventlog.register_schema_file(file_path)
 
     @catch_config_error
     def initialize(self, argv=None, find_extensions=True, new_httpserver=True):
