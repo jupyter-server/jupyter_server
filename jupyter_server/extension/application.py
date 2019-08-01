@@ -152,8 +152,8 @@ class ExtensionApp(JupyterApp):
         the object to the webapp's settings as `<extension_name>_config`.  
         """
         traits = self.class_own_traits().keys()
-        self.config = Config({t: getattr(self, t) for t in traits})
-        self.settings['{}_config'.format(self.extension_name)] = self.config
+        self.extension_config = Config({t: getattr(self, t) for t in traits})
+        self.settings['{}_config'.format(self.extension_name)] = self.extension_config
 
     def _prepare_settings(self):
         # Make webapp settings accessible to initialize_settings method
@@ -279,7 +279,6 @@ class ExtensionApp(JupyterApp):
         # Configure and initialize extension.
         extension = cls()
         extension.initialize(serverapp, argv=argv)
-
         return extension
 
     @classmethod
@@ -290,7 +289,6 @@ class ExtensionApp(JupyterApp):
         """
         # Load the extension
         extension = cls.load_jupyter_server_extension(serverapp, argv=argv, **kwargs)
-        
         # Start the browser at this extensions default_url, unless user
         # configures ServerApp.default_url on command line.
         try:
@@ -313,11 +311,10 @@ class ExtensionApp(JupyterApp):
         # arguments trigger actions from the extension not the server.
         _preparse_command_line(cls)
         # Handle arguments.
-        if argv is not None:
+        if argv is None:
             args = sys.argv[1:]  # slice out extension config.
         else:
             args = []
-        
         # Get a jupyter server instance.
         serverapp = cls.initialize_server(argv=args)
         extension = cls._prepare_launch(serverapp, argv=args, **kwargs)
