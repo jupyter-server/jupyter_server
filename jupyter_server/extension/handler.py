@@ -12,9 +12,8 @@ class ExtensionHandler(JupyterHandler):
     their own namespace and avoid intercepting requests for 
     other extensions. 
     """
-    def initialize(self, extension_name, **kwargs):
+    def initialize(self, extension_name):
         self.extension_name = extension_name
-        super(ExtensionHandler, self).initialize(**kwargs)
 
     @property
     def config(self):
