@@ -1569,8 +1569,7 @@ class ServerApp(JupyterApp):
                 relpath = os.path.relpath(self.file_to_run, self.root_dir)
                 uri = url_escape(url_path_join('notebooks', *relpath.split(os.sep)))
             else:
-                # default_url contains base_url, but so does connection_url
-                uri = self.default_url[len(self.base_url):]
+                uri = self.base_url
             if self.one_time_token:
                 uri = url_concat(uri, {'token': self.one_time_token})
             if browser:
