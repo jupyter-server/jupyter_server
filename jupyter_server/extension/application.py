@@ -80,16 +80,21 @@ class ExtensionApp(JupyterApp):
 
     @default("extension_name")
     def _default_extension_name(self):
-        raise Exception("The extension must be given a `name`.")
+        raise ValueError("The extension must be given a `name`.")
 
-    @validate("extension_name")
-    def _valid_extension_name(self, obj, value):
-        if isinstance(name, str):
+    INVALID_EXTENSION_NAME_CHARS = [' ', '.', '+', '/']
+
+    def _validate_extension_name(self):
+        value = self.extension_name
+        if isinstance(value, str):
             # Validate that extension_name doesn't contain any invalid characters.
-            for char in [' ', '.', '+', '/']:
-                self.error(obj, value)
+            for c in ExtensionApp.INVALID_EXTENSION_NAME_CHARS:
+                if c in value:
+                    raise ValueError("Extension name '{name}' cannot contain any of the following characters: "
+                                     "{invalid_chars}.".
+                                     format(name=value, invalid_chars=ExtensionApp.INVALID_EXTENSION_NAME_CHARS))
             return value
-        self.error(obj, value) 
+        raise ValueError("Extension name must be a string, found {type}.".format(type=type(value)))
 
     # Extension can configure the ServerApp from the command-line
     classes = [
@@ -235,11 +240,12 @@ class ExtensionApp(JupyterApp):
         - Passes settings to webapp
         - Appends handlers to webapp.
         """
+        self._validate_extension_name()
         # Initialize the extension application
         super(ExtensionApp, self).initialize(argv=argv)
         self.serverapp = serverapp
 
-        # Intialize config, settings, templates, and handlers.
+        # Initialize config, settings, templates, and handlers.
         self._prepare_config()
         self._prepare_templates()
         self._prepare_settings()
