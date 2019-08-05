@@ -75,7 +75,7 @@ try:
 except NameError:
     raw_input = input
 
-from .base.handlers import Template404, RedirectWithParams
+from .base.handlers import MainHandler, RedirectWithParams, Template404
 from .log import log_request
 from .services.kernels.kernelmanager import MappingKernelManager
 from .services.config import ConfigManager
@@ -304,13 +304,18 @@ class ServerWebApplication(web.Application):
         )
         # register base handlers last
         handlers.extend(load_handlers('jupyter_server.base.handlers'))
-        # set the URL that will be redirected from `/`
-        handlers.append(
-            (r'/?', RedirectWithParams, {
-                'url' : settings['default_url'],
-                'permanent': False, # want 302, not 301
-            })
-        )
+
+        if settings['default_url'] != '/':
+            # set the URL that will be redirected from `/`
+            handlers.append(
+                (r'/?', RedirectWithParams, {
+                    'url' : settings['default_url'],
+                    'permanent': False, # want 302, not 301
+                })
+            )
+        else:
+            handlers.append(
+                (r"/", MainHandler))
 
         # prepend base_url onto the patterns that we match
         new_handlers = []
