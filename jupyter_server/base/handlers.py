@@ -869,7 +869,6 @@ path_regex = r"(?P<path>(?:(?:/[^/]+)+|/?))"
 
 default_handlers = [
     (r".*/", TrailingSlashHandler),
-    (r"/", MainHandler),
     (r"api", APIVersionHandler),
     (r'/(robots\.txt|favicon\.ico)', web.StaticFileHandler),
     (r'/metrics', PrometheusMetricsHandler)
