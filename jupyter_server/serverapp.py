@@ -1415,8 +1415,10 @@ class ServerApp(JupyterApp):
                     func = getattr(mod, 'load_jupyter_server_extension', None)
                     if func is not None:
                         func(self)
-                    # Add debug log for loaded extensions.
-                    self.log.debug("%s is enabled and loaded." % modulename)
+                        # Add debug log for loaded extensions.
+                        self.log.debug("%s is enabled and loaded." % modulename)
+                    else:
+                        self.log.warning("%s is enabled but no `load_jupyter_server_extension` function was found")
                 except Exception:
                     if self.reraise_server_extension_failures:
                         raise
