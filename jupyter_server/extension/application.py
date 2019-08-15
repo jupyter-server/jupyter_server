@@ -61,17 +61,17 @@ def _preparse_command_line(Application):
         app.exit(0)
 
 
-class ExtensionApp(JupyterApp):
+
+class StandaloneApp(JupyterApp):
     """Base class for configurable Jupyter Server Extension Applications.
 
-    ExtensionApp subclasses can be initialized two ways:
-    1. Extension is listed as a jpserver_extension, and ServerApp calls 
-        its load_jupyter_server_extension classmethod. This is the 
-        classic way of loading a server extension.
-    2. Extension is launched directly by calling its `launch_instance`
-        class method. This method can be set as a entry_point in 
-        the extensions setup.py
+    StandaloneApp subclasses are launched directly by calling its
+    `launch_instance` class method. This method can be set as an
+    entry_point in the extensions setup.py
     """
+
+    standalone = True
+
     # Name of the extension
     extension_name = Unicode(
         "",
@@ -88,11 +88,11 @@ class ExtensionApp(JupyterApp):
         value = self.extension_name
         if isinstance(value, str):
             # Validate that extension_name doesn't contain any invalid characters.
-            for c in ExtensionApp.INVALID_EXTENSION_NAME_CHARS:
+            for c in StandaloneApp.INVALID_EXTENSION_NAME_CHARS:
                 if c in value:
                     raise ValueError("Extension name '{name}' cannot contain any of the following characters: "
                                      "{invalid_chars}.".
-                                     format(name=value, invalid_chars=ExtensionApp.INVALID_EXTENSION_NAME_CHARS))
+                                     format(name=value, invalid_chars=StandaloneApp.INVALID_EXTENSION_NAME_CHARS))
             return value
         raise ValueError("Extension name must be a string, found {type}.".format(type=type(value)))
 
@@ -219,15 +219,15 @@ class ExtensionApp(JupyterApp):
             })
         self.initialize_templates()
 
-    @staticmethod
-    def initialize_server(argv=[], **kwargs):
+    @classmethod
+    def initialize_server(cls, argv=[], **kwargs):
         """Get an instance of the Jupyter Server."""
         # Get a jupyter server instance
         serverapp = ServerApp(**kwargs)
         # Initialize ServerApp config.
         # Parses the command line looking for 
         # ServerApp configuration.
-        serverapp.initialize(argv=argv)
+        serverapp.initialize(argv=argv, load_extensions=cls.standalone is False)
         return serverapp
 
     def initialize(self, serverapp, argv=[]):
@@ -242,7 +242,7 @@ class ExtensionApp(JupyterApp):
         """
         self._validate_extension_name()
         # Initialize the extension application
-        super(ExtensionApp, self).initialize(argv=argv)
+        super(StandaloneApp, self).initialize(argv=argv)
         self.serverapp = serverapp
 
         # Initialize config, settings, templates, and handlers.
@@ -272,8 +272,8 @@ class ExtensionApp(JupyterApp):
         self.serverapp.start(**kwargs)
 
     @classmethod
-    def load_jupyter_server_extension(cls, serverapp, argv=[], **kwargs):
-        """Initialize and configure this extension, then add the extension's
+    def _load_app(cls, serverapp, argv=[], **kwargs):
+        """Initialize and configure this app, then add the apps's
         settings and handlers to the server's web application.
         """
         # Configure and initialize extension.
@@ -321,3 +321,25 @@ class ExtensionApp(JupyterApp):
         # Start the ioloop.
         extension.start_server()
 
+
+class ExtensionApp(StandaloneApp):
+    """Base class for configurable Jupyter Server Extension Applications.
+
+    ExtensionApp subclasses can be initialized two ways:
+    1. Extension is listed as a jpserver_extension, and ServerApp calls
+        its load_jupyter_server_extension classmethod. This is the
+        classic way of loading a server extension.
+    2. Extension is launched directly by calling its `launch_instance`
+        class method. This method can be set as a entry_point in
+        the extensions setup.py
+    """
+
+    standalone = False
+
+    @classmethod
+    def load_jupyter_server_extension(cls, serverapp, argv=[], **kwargs):
+        """Initialize and configure this extension, then add the extension's
+        settings and handlers to the server's web application.
+        """
+        # Configure and initialize extension.
+        return cls._load_app(serverapp, argv=argv, **kwargs)
