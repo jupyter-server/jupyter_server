@@ -62,7 +62,7 @@ def _preparse_command_line(Application):
 
 
 
-class StandaloneApp(JupyterApp):
+class ExtensionAppBase(JupyterApp):
     """Base class for configurable Jupyter Server Extension Applications.
 
     StandaloneApp subclasses are launched directly by calling its
@@ -70,7 +70,7 @@ class StandaloneApp(JupyterApp):
     entry_point in the extensions setup.py
     """
 
-    standalone = True
+    standalone = None
 
     # Name of the extension
     extension_name = Unicode(
@@ -227,7 +227,12 @@ class StandaloneApp(JupyterApp):
         # Initialize ServerApp config.
         # Parses the command line looking for 
         # ServerApp configuration.
-        serverapp.initialize(argv=argv, load_extensions=cls.standalone is False)
+        if cls.standalone not in (True, False):
+            raise ValueError(
+                'Application "standalone" class attribute needs to be set '
+                'to either True or False')
+        serverapp.initialize(
+            argv=argv, load_extensions=cls.standalone is False)
         return serverapp
 
     def initialize(self, serverapp, argv=[]):
@@ -322,7 +327,11 @@ class StandaloneApp(JupyterApp):
         extension.start_server()
 
 
-class ExtensionApp(StandaloneApp):
+class StandaloneApp(ExtensionAppBase):
+    standalone = True
+
+
+class ExtensionApp(ExtensionAppBase):
     """Base class for configurable Jupyter Server Extension Applications.
 
     ExtensionApp subclasses can be initialized two ways:
