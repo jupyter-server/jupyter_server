@@ -222,14 +222,14 @@ class ExtensionApp(JupyterApp):
         self.initialize_templates()
 
     @staticmethod
-    def initialize_server(argv=[], **kwargs):
+    def initialize_server(argv=[], load_other_extensions=True, **kwargs):
         """Get an instance of the Jupyter Server."""
         # Get a jupyter server instance
         serverapp = ServerApp(**kwargs)
         # Initialize ServerApp config.
         # Parses the command line looking for 
         # ServerApp configuration.
-        serverapp.initialize(argv=argv, load_extensions=self.load_other_extensions)
+        serverapp.initialize(argv=argv, load_extensions=load_other_extensions)
         return serverapp
 
     def initialize(self, serverapp, argv=[]):
@@ -318,7 +318,7 @@ class ExtensionApp(JupyterApp):
         else:
             args = []
         # Get a jupyter server instance.
-        serverapp = cls.initialize_server(argv=args)
+        serverapp = cls.initialize_server(argv=args, load_other_extensions=cls.load_other_extensions)
         extension = cls._prepare_launch(serverapp, argv=args, **kwargs)
         # Start the ioloop.
         extension.start_server()
