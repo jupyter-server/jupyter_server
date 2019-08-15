@@ -492,11 +492,6 @@ flags['allow-root']=(
     _("Allow the server to be run from root user.")
 )
 
-flags['standalone']=(
-    {'ServerApp' : {'standalone' : True}},
-    _("Run the server without enabling extensions.")
-)
-
 # Add notebook manager flags
 flags.update(boolean_flag('script', 'FileContentsManager.save_script',
                'DEPRECATED, IGNORED',
@@ -547,6 +542,7 @@ class ServerApp(JupyterApp):
     )
 
     _log_formatter_cls = LogFormatter
+    _standalone_only = False
 
     @default('log_level')
     def _default_log_level(self):
@@ -1143,12 +1139,6 @@ class ServerApp(JupyterApp):
          is not available.
          """))
 
-    standalone = Bool(
-        False,
-        config=True,
-        help="Run the server without enabling extensions."
-    )
-
     def parse_command_line(self, argv=None):
         super(ServerApp, self).parse_command_line(argv)
 
@@ -1480,7 +1470,7 @@ class ServerApp(JupyterApp):
         self.init_webapp()
         self.init_terminals()
         self.init_signal()
-        if self.standalone is False:
+        if self._standalone_only is False:
             self.init_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
