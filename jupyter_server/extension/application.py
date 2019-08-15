@@ -70,7 +70,7 @@ class ExtensionAppBase(JupyterApp):
     entry_point in the extensions setup.py
     """
 
-    standalone = None
+    load_other_extensions = True
 
     # Name of the extension
     extension_name = Unicode(
@@ -227,12 +227,12 @@ class ExtensionAppBase(JupyterApp):
         # Initialize ServerApp config.
         # Parses the command line looking for 
         # ServerApp configuration.
-        if cls.standalone not in (True, False):
+        if cls.load_other_extensions not in (True, False):
             raise ValueError(
-                'Application "standalone" class attribute needs to be set '
+                '"load_other_extensions" class attribute needs to be set '
                 'to either True or False')
         serverapp.initialize(
-            argv=argv, load_extensions=cls.standalone is False)
+            argv=argv, load_extensions=cls.load_other_extensions)
         return serverapp
 
     def initialize(self, serverapp, argv=[]):
@@ -328,7 +328,9 @@ class ExtensionAppBase(JupyterApp):
 
 
 class StandaloneApp(ExtensionAppBase):
-    standalone = True
+    # This is most often the case, but it can make sense for a subclass to
+    # want to load other enabled extensions
+    load_other_extensions = False
 
 
 class ExtensionApp(ExtensionAppBase):
@@ -342,8 +344,6 @@ class ExtensionApp(ExtensionAppBase):
         class method. This method can be set as a entry_point in
         the extensions setup.py
     """
-
-    standalone = False
 
     @classmethod
     def load_jupyter_server_extension(cls, serverapp, argv=[], **kwargs):
