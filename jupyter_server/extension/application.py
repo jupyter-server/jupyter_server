@@ -318,7 +318,17 @@ class ExtensionApp(JupyterApp):
         else:
             args = []
         # Get a jupyter server instance.
-        serverapp = cls.initialize_server(argv=args, load_other_extensions=cls.load_other_extensions)
+        serverapp = cls.initialize_server(
+            argv=args, 
+            load_other_extensions=cls.load_other_extensions
+        )
+        # Log if extension is blocking other extensions from loading.
+        if cls.load_other_extensions:
+            serverapp.log.info(
+                "{ext_name} is running without loading "
+                "other extensions.".format(ext_name=cls.extension_name)
+            )
+
         extension = cls._prepare_launch(serverapp, argv=args, **kwargs)
         # Start the ioloop.
         extension.start_server()
