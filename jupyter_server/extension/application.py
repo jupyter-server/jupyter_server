@@ -72,7 +72,7 @@ class ExtensionApp(JupyterApp):
         class method. This method can be set as a entry_point in 
         the extensions setup.py
     """
-    _standalone_only = False
+    load_other_extensions = True
 
     # Name of the extension
     extension_name = Unicode(
@@ -226,11 +226,10 @@ class ExtensionApp(JupyterApp):
         """Get an instance of the Jupyter Server."""
         # Get a jupyter server instance
         serverapp = ServerApp(**kwargs)
-        serverapp._standalone_only = self._standalone_only
         # Initialize ServerApp config.
         # Parses the command line looking for 
         # ServerApp configuration.
-        serverapp.initialize(argv=argv)
+        serverapp.initialize(argv=argv, load_extensions=self.load_other_extensions)
         return serverapp
 
     def initialize(self, serverapp, argv=[]):

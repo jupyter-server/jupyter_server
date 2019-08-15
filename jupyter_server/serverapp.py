@@ -542,7 +542,6 @@ class ServerApp(JupyterApp):
     )
 
     _log_formatter_cls = LogFormatter
-    _standalone_only = False
 
     @default('log_level')
     def _default_log_level(self):
@@ -1460,7 +1459,7 @@ class ServerApp(JupyterApp):
             pc.start()
 
     @catch_config_error
-    def initialize(self, argv=None):
+    def initialize(self, argv=None, load_extensions=True):
         super(ServerApp, self).initialize(argv)
         self.init_logging()
         if self._dispatching:
@@ -1470,7 +1469,7 @@ class ServerApp(JupyterApp):
         self.init_webapp()
         self.init_terminals()
         self.init_signal()
-        if self._standalone_only is False:
+        if load_extensions:
             self.init_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
