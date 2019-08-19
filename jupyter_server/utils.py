@@ -11,6 +11,7 @@ import os
 import stat
 import sys
 from distutils.version import LooseVersion
+from contextlib import contextmanager
 
 try:
     from inspect import isawaitable
@@ -232,6 +233,30 @@ def is_hidden(abs_path, abs_root=''):
         path = os.path.dirname(path)
 
     return False
+
+@contextmanager
+def secure_write(fname):
+    """
+    Opens a file in the most restricted pattern available for
+    writing content. This limits the file mode to `600` and yields
+    the resulting opened filed handle.
+
+    Parameters
+    ----------
+
+    fname : unicode
+        The path to the file to write
+    """
+    try:
+        with os.fdopen(os.open(fname, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600), 'w') as f:
+            yield f
+    finally:
+        try:
+            # Ensure existing files have their permissions changed
+            os.chmod(fname, 0o600)
+        except:
+            os.remove(fname)
+            raise
 
 def samefile_simple(path, other_path):
     """

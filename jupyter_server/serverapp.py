@@ -40,6 +40,7 @@ except ImportError: #PY2
 from jinja2 import Environment, FileSystemLoader
 
 from jupyter_server.transutils import trans, _
+from jupyter_server.utils import secure_write
 
 # Install the pyzmq ioloop. This has to be done before anything else from
 # tornado is imported.
@@ -678,7 +679,7 @@ class ServerApp(JupyterApp):
     def _default_cookie_secret(self):
         if os.path.exists(self.cookie_secret_file):
             with io.open(self.cookie_secret_file, 'rb') as f:
-                key =  f.read()
+                key = f.read()
         else:
             key = encodebytes(os.urandom(32))
             self._write_cookie_secret_file(key)
@@ -690,18 +691,11 @@ class ServerApp(JupyterApp):
         """write my secret to my secret_file"""
         self.log.info(_("Writing notebook server cookie secret to %s"), self.cookie_secret_file)
         try:
-            with io.open(self.cookie_secret_file, 'wb') as f:
+            with secure_write(self.cookie_secret_file) as f:
                 f.write(secret)
         except OSError as e:
             self.log.error(_("Failed to write cookie secret to %s: %s"),
                            self.cookie_secret_file, e)
-        try:
-            os.chmod(self.cookie_secret_file, 0o600)
-        except OSError:
-            self.log.warning(
-                _("Could not set permissions on %s"),
-                self.cookie_secret_file
-            )
 
     token = Unicode('<generated>',
         help=_("""Token used for authenticating first-time connections to the server.

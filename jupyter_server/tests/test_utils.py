@@ -5,11 +5,14 @@
 
 import ctypes
 import os
+import stat
+import shutil
+import tempfile
 
 import nose.tools as nt
 
 from traitlets.tests.utils import check_help_all_output
-from jupyter_server.utils import url_escape, url_unescape, is_hidden, is_file_hidden
+from jupyter_server.utils import url_escape, url_unescape, is_hidden, is_file_hidden, secure_write
 from ipython_genutils.py3compat import cast_unicode
 from ipython_genutils.tempdir import TemporaryDirectory
 from ipython_genutils.testing.decorators import skip_if_not_win32
@@ -91,3 +94,24 @@ def test_is_hidden_win32():
         assert is_hidden(subdir1, root)
         assert is_file_hidden(subdir1)
 
+def test_secure_write():
+    directory = tempfile.mkdtemp()
+    fname = os.path.join(directory, 'check_perms')
+    try:
+        with secure_write(fname) as f:
+            f.write('test 1')
+        mode = os.stat(fname).st_mode
+        nt.assert_equal('0o600', oct(stat.S_IMODE(mode)))
+        with open(fname, 'r') as f:
+            nt.assert_equal(f.read(), 'test 1')
+
+        # Try changing file permissions ahead of time
+        os.chmod(fname, 0o755)
+        with secure_write(fname) as f:
+            f.write('test 2')
+        mode = os.stat(fname).st_mode
+        nt.assert_equal('0o600', oct(stat.S_IMODE(mode)))
+        with open(fname, 'r') as f:
+            nt.assert_equal(f.read(), 'test 2')
+    finally:
+        shutil.rmtree(directory)
