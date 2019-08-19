@@ -691,7 +691,7 @@ class ServerApp(JupyterApp):
         """write my secret to my secret_file"""
         self.log.info(_("Writing notebook server cookie secret to %s"), self.cookie_secret_file)
         try:
-            with secure_write(self.cookie_secret_file) as f:
+            with secure_write(self.cookie_secret_file, True) as f:
                 f.write(secret)
         except OSError as e:
             self.log.error(_("Failed to write cookie secret to %s: %s"),

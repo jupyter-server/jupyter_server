@@ -235,7 +235,7 @@ def is_hidden(abs_path, abs_root=''):
     return False
 
 @contextmanager
-def secure_write(fname):
+def secure_write(fname, binary=False):
     """
     Opens a file in the most restricted pattern available for
     writing content. This limits the file mode to `600` and yields
@@ -247,8 +247,9 @@ def secure_write(fname):
     fname : unicode
         The path to the file to write
     """
+    mode = 'wb' if binary else 'w'
     try:
-        with os.fdopen(os.open(fname, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600), 'w') as f:
+        with os.fdopen(os.open(fname, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600), mode) as f:
             yield f
     finally:
         try:
