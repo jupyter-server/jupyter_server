@@ -101,7 +101,7 @@ def test_secure_write():
         with secure_write(fname) as f:
             f.write('test 1')
         mode = os.stat(fname).st_mode
-        nt.assert_equal('0o600', oct(stat.S_IMODE(mode)))
+        nt.assert_equal('0600', oct(stat.S_IMODE(mode)).replace('0o', '0'))
         with open(fname, 'r') as f:
             nt.assert_equal(f.read(), 'test 1')
 
@@ -110,7 +110,7 @@ def test_secure_write():
         with secure_write(fname) as f:
             f.write('test 2')
         mode = os.stat(fname).st_mode
-        nt.assert_equal('0o600', oct(stat.S_IMODE(mode)))
+        nt.assert_equal('0600', oct(stat.S_IMODE(mode)).replace('0o', '0'))
         with open(fname, 'r') as f:
             nt.assert_equal(f.read(), 'test 2')
     finally:
