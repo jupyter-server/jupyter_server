@@ -1493,7 +1493,8 @@ class ServerApp(JupyterApp):
             info += kernel_msg % n_kernels
             info += "\n"
         # Format the info so that the URL fits on a single line in 80 char display
-        info += _("The Jupyter Server is running at:\n%s") % self.display_url
+        info += _("Jupyter Server {version} is running at:\n{url}".
+                  format(version=ServerApp.version, url=self.display_url))
         return info
 
     def server_info(self):
@@ -1507,6 +1508,7 @@ class ServerApp(JupyterApp):
                 'root_dir': os.path.abspath(self.root_dir),
                 'password': bool(self.password),
                 'pid': os.getpid(),
+                'version': ServerApp.version,
                }
 
     def write_server_info_file(self):

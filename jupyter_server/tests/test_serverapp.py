@@ -45,6 +45,7 @@ def test_server_info_file():
     nt.assert_equal(len(servers), 1)
     nt.assert_equal(servers[0]['port'], svapp.port)
     nt.assert_equal(servers[0]['url'], svapp.connection_url)
+    nt.assert_equal(servers[0]['version'], svapp.version)
     svapp.remove_server_info_file()
     nt.assert_equal(get_servers(), [])
 
