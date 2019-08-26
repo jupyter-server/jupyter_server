@@ -5,6 +5,7 @@
 
 import ctypes
 import os
+import re
 import stat
 import shutil
 import tempfile
@@ -15,7 +16,7 @@ from traitlets.tests.utils import check_help_all_output
 from jupyter_server.utils import url_escape, url_unescape, is_hidden, is_file_hidden, secure_write
 from ipython_genutils.py3compat import cast_unicode
 from ipython_genutils.tempdir import TemporaryDirectory
-from ipython_genutils.testing.decorators import skip_if_not_win32
+from ipython_genutils.testing.decorators import skip_if_not_win32, skip_win32
 
 
 def test_help_output():
@@ -94,7 +95,50 @@ def test_is_hidden_win32():
         assert is_hidden(subdir1, root)
         assert is_file_hidden(subdir1)
 
-def test_secure_write():
+@skip_if_not_win32
+def test_secure_write_win32():
+    def fetch_win32_permissions(filename):
+        '''Extracts file permissions on windows using icacls'''
+        role_permissions = {}
+        for index, line in enumerate(os.popen("icacls %s" % filename).read().splitlines()):
+            if index == 0:
+                line = line.split(filename)[-1].strip().lower()
+            match = re.match(r'\s*([^:]+):\(([^\)]*)\)', line)
+            if match:
+                usergroup, permissions = match.groups()
+                usergroup = usergroup.lower().split('\\')[-1]
+                permissions = set(p.lower() for p in permissions.split(','))
+                role_permissions[usergroup] = permissions
+            elif not line.strip():
+                break
+        return role_permissions
+
+    def check_user_only_permissions(fname):
+        # Windows has it's own permissions ACL patterns
+        import win32api
+        username = win32api.GetUserName().lower()
+        permissions = fetch_win32_permissions(fname)
+        print(permissions) # for easier debugging
+        nt.assert_true(username in permissions)
+        nt.assert_equal(permissions[username], set(['r', 'w']))
+        nt.assert_true('administrators' in permissions)
+        nt.assert_equal(permissions['administrators'], set(['f']))
+        nt.assert_true('everyone' not in permissions)
+        nt.assert_equal(len(permissions), 2)
+
+    directory = tempfile.mkdtemp()
+    fname = os.path.join(directory, 'check_perms')
+    try:
+        with secure_write(fname) as f:
+            f.write('test 1')
+        check_user_only_permissions(fname)
+        with open(fname, 'r') as f:
+            nt.assert_equal(f.read(), 'test 1')
+    finally:
+        shutil.rmtree(directory)
+
+@skip_win32
+def test_secure_write_unix():
     directory = tempfile.mkdtemp()
     fname = os.path.join(directory, 'check_perms')
     try:
