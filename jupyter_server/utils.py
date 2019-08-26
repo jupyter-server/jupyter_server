@@ -269,7 +269,7 @@ def win32_restrict_file_to_user(fname):
 
 # TODO: Move to jupyter_core
 @contextmanager
-def secure_write(fname):
+def secure_write(fname, binary=False):
     """Opens a file in the most restricted pattern available for
     writing content. This limits the file mode to `600` and yields
     the resulting opened filed handle.
@@ -280,6 +280,7 @@ def secure_write(fname):
     fname : unicode
         The path to the file to write
     """
+    mode = 'wb' if binary else 'w'
     try:
         os.remove(fname)
     except (IOError, OSError):
@@ -298,7 +299,7 @@ def secure_write(fname):
         # Enforce that the file got the requested permissions.
         assert '0600' == oct(stat.S_IMODE(os.stat(fname).st_mode)).replace('0o', '0')
 
-    with os.fdopen(os.open(fname, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600), 'w') as f:
+    with os.fdopen(os.open(fname, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600), mode) as f:
         yield f
 
 def samefile_simple(path, other_path):
