@@ -20,6 +20,10 @@ class ExtensionHandler(JupyterHandler):
         return self.settings["{}_config".format(self.extension_name)]
 
     @property
+    def server_config(self):
+        return self.settings["config"]
+
+    @property
     def static_url_prefix(self):
         return "/static/{extension_name}/".format(
             extension_name=self.extension_name)

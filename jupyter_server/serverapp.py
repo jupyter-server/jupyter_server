@@ -1415,6 +1415,10 @@ class ServerApp(JupyterApp):
                     func = getattr(mod, 'load_jupyter_server_extension', None)
                     if func is not None:
                         func(self)
+                        # Add debug log for loaded extensions.
+                        self.log.debug("%s is enabled and loaded." % modulename)
+                    else:
+                        self.log.warning("%s is enabled but no `load_jupyter_server_extension` function was found")
                 except Exception:
                     if self.reraise_server_extension_failures:
                         raise
@@ -1459,7 +1463,7 @@ class ServerApp(JupyterApp):
             pc.start()
 
     @catch_config_error
-    def initialize(self, argv=None):
+    def initialize(self, argv=None, load_extensions=True):
         super(ServerApp, self).initialize(argv)
         self.init_logging()
         if self._dispatching:
@@ -1469,7 +1473,8 @@ class ServerApp(JupyterApp):
         self.init_webapp()
         self.init_terminals()
         self.init_signal()
-        self.init_server_extensions()
+        if load_extensions:
+            self.init_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
 
