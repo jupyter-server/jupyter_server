@@ -281,25 +281,26 @@ def secure_write(fname, binary=False):
         The path to the file to write
     """
     mode = 'wb' if binary else 'w'
+    open_flag = os.O_CREAT | os.O_WRONLY | os.O_TRUNC
     try:
         os.remove(fname)
     except (IOError, OSError):
-        # Skip any issues with file not existing
+        # Skip any issues with the file not existing
         pass
-
-    # Touch file
-    fd = os.open(fname, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600)
-    os.close(fd)
     
     if os.name == 'nt':
         # Python on windows does not respect the group and public bits for chmod, so we need
         # to take additional steps to secure the contents.
+        # Touch file pre-emptively to avoid editing permissions in open files in Windows
+        fd = os.open(fname, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600)
+        os.close(fd)
+        open_flag = os.O_WRONLY | os.O_TRUNC
         win32_restrict_file_to_user(fname)
-    else:
-        # Enforce that the file got the requested permissions.
-        assert '0600' == oct(stat.S_IMODE(os.stat(fname).st_mode)).replace('0o', '0')
 
-    with os.fdopen(os.open(fname, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600), mode) as f:
+    with os.fdopen(os.open(fname, open_flag, 0o600), mode) as f:
+        if os.name != 'nt':
+            # Enforce that the file got the requested permissions before writing
+            assert '0600' == oct(stat.S_IMODE(os.stat(fname).st_mode)).replace('0o', '0')
         yield f
 
 def samefile_simple(path, other_path):
