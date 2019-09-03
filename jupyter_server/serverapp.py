@@ -492,6 +492,10 @@ flags['allow-root']=(
     {'ServerApp' : {'allow_root' : True}},
     _("Allow the server to be run from root user.")
 )
+flags["no-browser"] = (
+    {"ServerApp": {"open_browser": False}},
+    _("Prevent the opening of the default url in the browser."),
+)
 
 # Add notebook manager flags
 flags.update(boolean_flag('script', 'FileContentsManager.save_script',
