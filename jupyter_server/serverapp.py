@@ -120,6 +120,26 @@ jupyter server  --certfile=mycert.pem # use SSL/TLS certificate
 jupyter server password              # enter a password to protect the server
 """
 
+JUPYTER_SERVICES = dict(
+    auth=None,
+    api=['jupyter_server.services.api.handlers'],
+    config=['jupyter_server.services.config.handlers'],
+    contents=['jupyter_server.services.contents.handlers'],
+    edit=['jupyter_server.edit.handlers'],
+    files=['jupyter_server.files.handlers'],
+    kernels=['jupyter_server.services.kernels.handlers'],
+    kernelspecs=[
+        'jupyter_server.kernelspecs.handlers', 
+        'jupyter_server.services.kernelspecs.handlers'],
+    nbconvert=[
+        'jupyter_server.nbconvert.handlers', 
+        'jupyter_server.services.nbconvert.handlers'],
+    security=['jupyter_server.services.security.handlers'],
+    sessions=['jupyter_server.services.sessions.handlers'],
+    shutdown=['jupyter_server.services.shutdown'],
+    view=['jupyter_server.view.handlers']
+)
+
 #-----------------------------------------------------------------------------
 # Helper functions
 #-----------------------------------------------------------------------------
@@ -146,7 +166,7 @@ def load_handlers(name):
 
 class ServerWebApplication(web.Application):
 
-    def __init__(self, jupyter_app, kernel_manager, contents_manager,
+    def __init__(self, jupyter_app, default_services, kernel_manager, contents_manager,
                  session_manager, kernel_spec_manager,
                  config_manager, extra_services, log,
                  base_url, default_url, settings_overrides, jinja_env_options):
@@ -157,7 +177,7 @@ class ServerWebApplication(web.Application):
             session_manager, kernel_spec_manager, config_manager,
             extra_services, log, base_url,
             default_url, settings_overrides, jinja_env_options)
-        handlers = self.init_handlers(settings)
+        handlers = self.init_handlers(default_services, settings)
 
         super(ServerWebApplication, self).__init__(handlers, **settings)
 
@@ -271,30 +291,30 @@ class ServerWebApplication(web.Application):
         settings.update(settings_overrides)
         return settings
 
-    def init_handlers(self, settings):
+    def init_handlers(self, default_services, settings):
         """Load the (URL pattern, handler) tuples for each component."""
-
         # Order matters. The first handler to match the URL will handle the request.
         handlers = []
         # load extra services specified by users before default handlers
         for service in settings['extra_services']:
             handlers.extend(load_handlers(service))
-        handlers.extend([(r"/login", settings['login_handler_class'])])
-        handlers.extend([(r"/logout", settings['logout_handler_class'])])
-        handlers.extend(load_handlers('jupyter_server.files.handlers'))
-        handlers.extend(load_handlers('jupyter_server.view.handlers'))
-        handlers.extend(load_handlers('jupyter_server.nbconvert.handlers'))
-        handlers.extend(load_handlers('jupyter_server.kernelspecs.handlers'))
-        handlers.extend(load_handlers('jupyter_server.edit.handlers'))
-        handlers.extend(load_handlers('jupyter_server.services.api.handlers'))
-        handlers.extend(load_handlers('jupyter_server.services.config.handlers'))
-        handlers.extend(load_handlers('jupyter_server.services.kernels.handlers'))
-        handlers.extend(load_handlers('jupyter_server.services.contents.handlers'))
-        handlers.extend(load_handlers('jupyter_server.services.sessions.handlers'))
-        handlers.extend(load_handlers('jupyter_server.services.nbconvert.handlers'))
-        handlers.extend(load_handlers('jupyter_server.services.kernelspecs.handlers'))
-        handlers.extend(load_handlers('jupyter_server.services.security.handlers'))
-        handlers.extend(load_handlers('jupyter_server.services.shutdown'))
+
+        # Add auth services.
+        if 'auth' in default_services:
+            default_services.pop('auth')
+            handlers.extend([(r"/login", settings['login_handler_class'])])
+            handlers.extend([(r"/logout", settings['logout_handler_class'])])
+
+        # Load default services. Raise exception if service not found in JUPYTER_SERVICES.      
+        for service in default_services:
+            if service in JUPYTER_SERVICES:
+                for loc in JUPYTER_SERVICES[service]:
+                    handlers.extend(load_handlers(loc))
+            else:
+                raise Exception("{} is not recognized as a default "
+                                "service of jupyter_server.".format(service))
+
+        # Add extra handlers from contents manager.
         handlers.extend(settings['contents_manager'].get_extra_handlers())
 
         handlers.append(
@@ -545,6 +565,21 @@ class ServerApp(JupyterApp):
         stop=(JupyterServerStopApp, JupyterServerStopApp.description.splitlines()[0]),
         password=(JupyterPasswordApp, JupyterPasswordApp.description.splitlines()[0]),
     )
+
+    default_services = [
+        'api',
+        'config', 
+        'contents', 
+        'edit', 
+        'files', 
+        'kernels', 
+        'kernelspecs', 
+        'nbconvert',
+        'security',
+        'sessions',
+        'shutdown',
+        'view'
+    ]
 
     _log_formatter_cls = LogFormatter
 
@@ -1220,7 +1255,7 @@ class ServerApp(JupyterApp):
             sys.exit(1)
 
         self.web_app = ServerWebApplication(
-            self, self.kernel_manager, self.contents_manager,
+            self, self.default_services, self.kernel_manager, self.contents_manager,
             self.session_manager, self.kernel_spec_manager,
             self.config_manager, self.extra_services,
             self.log, self.base_url, self.default_url, self.tornado_settings,
