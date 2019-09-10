@@ -568,6 +568,7 @@ class ServerApp(JupyterApp):
 
     default_services = [
         'api',
+        'auth',
         'config', 
         'contents', 
         'edit', 
