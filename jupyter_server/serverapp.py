@@ -301,7 +301,7 @@ class ServerWebApplication(web.Application):
 
         # Add auth services.
         if 'auth' in default_services:
-            default_services.pop('auth')
+            default_services.remove('auth')
             handlers.extend([(r"/login", settings['login_handler_class'])])
             handlers.extend([(r"/logout", settings['logout_handler_class'])])
 
