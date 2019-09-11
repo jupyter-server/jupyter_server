@@ -308,8 +308,9 @@ class ServerWebApplication(web.Application):
         # found in JUPYTER_SERVICE_HANLDERS.      
         for service in default_services:
             if service in JUPYTER_SERVICE_HANDLERS:
-                for loc in JUPYTER_SERVICE_HANDLERS[service]:
-                    if loc is not None:
+                locations = JUPYTER_SERVICE_HANDLERS[service]
+                if locations is not None:
+                    for loc in locations:
                         handlers.extend(load_handlers(loc))
             else:
                 raise Exception("{} is not recognized as a jupyter_server "
