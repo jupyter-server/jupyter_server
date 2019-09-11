@@ -314,7 +314,7 @@ class ServerWebApplication(web.Application):
             else:
                 raise Exception("{} is not recognized as a jupyter_server "
                                 "service. If this is a custom service, "
-                                "try adding to the "
+                                "try adding it to the "
                                 "`extra_services` list.".format(service))
 
         # Add extra handlers from contents manager.
