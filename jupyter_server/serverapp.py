@@ -120,7 +120,7 @@ jupyter server  --certfile=mycert.pem # use SSL/TLS certificate
 jupyter server password              # enter a password to protect the server
 """
 
-JUPYTER_SERVICES = dict(
+JUPYTER_SERVICE_HANDLERS = dict(
     auth=None,
     api=['jupyter_server.services.api.handlers'],
     config=['jupyter_server.services.config.handlers'],
@@ -301,18 +301,21 @@ class ServerWebApplication(web.Application):
 
         # Add auth services.
         if 'auth' in default_services:
-            default_services.remove('auth')
             handlers.extend([(r"/login", settings['login_handler_class'])])
             handlers.extend([(r"/logout", settings['logout_handler_class'])])
 
-        # Load default services. Raise exception if service not found in JUPYTER_SERVICES.      
+        # Load default services. Raise exception if service not 
+        # found in JUPYTER_SERVICE_HANLDERS.      
         for service in default_services:
-            if service in JUPYTER_SERVICES:
-                for loc in JUPYTER_SERVICES[service]:
-                    handlers.extend(load_handlers(loc))
+            if service in JUPYTER_SERVICE_HANDLERS:
+                for loc in JUPYTER_SERVICE_HANDLERS[service]:
+                    if loc is not None:
+                        handlers.extend(load_handlers(loc))
             else:
-                raise Exception("{} is not recognized as a default "
-                                "service of jupyter_server.".format(service))
+                raise Exception("{} is not recognized as a jupyter_server "
+                                "service. If this is a custom service, "
+                                "try adding to the "
+                                "`extra_services` list.".format(service))
 
         # Add extra handlers from contents manager.
         handlers.extend(settings['contents_manager'].get_extra_handlers())
@@ -566,7 +569,10 @@ class ServerApp(JupyterApp):
         password=(JupyterPasswordApp, JupyterPasswordApp.description.splitlines()[0]),
     )
 
-    default_services = [
+    # A list of service handlers to expose.
+    # Subclasses can override this list to
+    # expose a subset of these handlers.
+    exposed_services = [
         'api',
         'auth',
         'config', 
