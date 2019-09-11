@@ -569,15 +569,15 @@ class ServerApp(JupyterApp):
         password=(JupyterPasswordApp, JupyterPasswordApp.description.splitlines()[0]),
     )
 
-    # A list of service handlers to expose.
+    # A list of services whose handlers will be exposed.
     # Subclasses can override this list to
     # expose a subset of these handlers.
-    exposed_services = [
+    default_services = [
         'api',
         'auth',
         'config', 
         'contents', 
-        'edit', 
+        'edit',
         'files', 
         'kernels', 
         'kernelspecs', 
