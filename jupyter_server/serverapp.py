@@ -573,7 +573,7 @@ class ServerApp(JupyterApp):
     # A list of services whose handlers will be exposed.
     # Subclasses can override this list to
     # expose a subset of these handlers.
-    default_services = [
+    default_services = (
         'api',
         'auth',
         'config', 
@@ -587,7 +587,7 @@ class ServerApp(JupyterApp):
         'sessions',
         'shutdown',
         'view'
-    ]
+    )
 
     _log_formatter_cls = LogFormatter
 
