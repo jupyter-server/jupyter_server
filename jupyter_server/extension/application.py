@@ -228,7 +228,7 @@ class ExtensionApp(JupyterApp):
     def initialize_server(argv=[], load_other_extensions=True, **kwargs):
         """Get an instance of the Jupyter Server."""
         # Get a jupyter server instance
-        serverapp = ServerApp(**kwargs)
+        serverapp = ServerApp.instance(**kwargs)
         # Initialize ServerApp config.
         # Parses the command line looking for 
         # ServerApp configuration.
@@ -270,6 +270,7 @@ class ExtensionApp(JupyterApp):
         """Stop the underlying Jupyter server.
         """
         self.serverapp.stop()
+        self.serverapp.clear_instance()
 
     @classmethod
     def load_jupyter_server_extension(cls, serverapp, argv=[], **kwargs):
