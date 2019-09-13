@@ -880,7 +880,7 @@ class ServerApp(JupyterApp):
        """
     )
 
-    open_browser = Bool(True, config=True,
+    open_browser = Bool(False, config=True,
                         help="""Whether to open in a browser after starting.
                         The specific browser used is platform dependent and
                         determined by the python standard library `webbrowser`
