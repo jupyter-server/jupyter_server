@@ -254,16 +254,16 @@ def win32_restrict_file_to_user(fname):
     import ntsecuritycon as con
 
     # everyone, _domain, _type = win32security.LookupAccountName("", "Everyone")
-    admins, _domain, _type = win32security.LookupAccountName("", "Administrators")
+    admins = win32security.CreateWellKnownSid(win32security.WinBuiltinAdministratorsSid)
     user, _domain, _type = win32security.LookupAccountName("", win32api.GetUserName())
-    
+
     sd = win32security.GetFileSecurity(fname, win32security.DACL_SECURITY_INFORMATION)
 
     dacl = win32security.ACL()
     # dacl.AddAccessAllowedAce(win32security.ACL_REVISION, con.FILE_ALL_ACCESS, everyone)
     dacl.AddAccessAllowedAce(win32security.ACL_REVISION, con.FILE_GENERIC_READ | con.FILE_GENERIC_WRITE, user)
     dacl.AddAccessAllowedAce(win32security.ACL_REVISION, con.FILE_ALL_ACCESS, admins)
-    
+
     sd.SetSecurityDescriptorDacl(1, dacl, 0)
     win32security.SetFileSecurity(fname, win32security.DACL_SECURITY_INFORMATION, sd)
 
@@ -287,7 +287,7 @@ def secure_write(fname, binary=False):
     except (IOError, OSError):
         # Skip any issues with the file not existing
         pass
-    
+
     if os.name == 'nt':
         # Python on windows does not respect the group and public bits for chmod, so we need
         # to take additional steps to secure the contents.
