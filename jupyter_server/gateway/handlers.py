@@ -5,7 +5,7 @@ import os
 import logging
 import mimetypes
 
-from ..base.handlers import APIHandler, IPythonHandler
+from ..base.handlers import APIHandler, JupyterHandler
 from ..utils import url_path_join
 
 from tornado import gen, web
@@ -25,7 +25,7 @@ from .managers import GatewayClient
 GATEWAY_WS_PING_INTERVAL_SECS = int(os.getenv('GATEWAY_WS_PING_INTERVAL_SECS', 30))
 
 
-class WebSocketChannelsHandler(WebSocketHandler, IPythonHandler):
+class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
     session = None
     gateway = None
