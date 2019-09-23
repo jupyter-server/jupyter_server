@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 from tornado import gen
 from tornado.httpclient import HTTPRequest, HTTPResponse, HTTPError
-from traitlets.config import Config
+from ipython_genutils.py3compat import str_to_unicode
 from .launchserver import ServerTestBase
 from jupyter_server.gateway.managers import GatewayClient
 
@@ -57,7 +57,7 @@ def mock_gateway_request(url, **kwargs):
 
     # Fetch all kernelspecs
     if endpoint.endswith('/api/kernelspecs') and method == 'GET':
-        response_buf = StringIO(json.dumps(kernelspecs))
+        response_buf = StringIO(str_to_unicode(json.dumps(kernelspecs)))
         response = yield gen.maybe_future(HTTPResponse(request, 200, buffer=response_buf))
         raise gen.Return(response)
 
@@ -66,7 +66,7 @@ def mock_gateway_request(url, **kwargs):
         requested_kernelspec = endpoint.rpartition('/')[2]
         kspecs = kernelspecs.get('kernelspecs')
         if requested_kernelspec in kspecs:
-            response_buf = StringIO(json.dumps(kspecs.get(requested_kernelspec)))
+            response_buf = StringIO(str_to_unicode(json.dumps(kspecs.get(requested_kernelspec))))
             response = yield gen.maybe_future(HTTPResponse(request, 200, buffer=response_buf))
             raise gen.Return(response)
         else:
@@ -81,7 +81,7 @@ def mock_gateway_request(url, **kwargs):
         nt.assert_equal(name, kspec_name)   # Ensure that KERNEL_ env values get propagated
         model = generate_model(name)
         running_kernels[model.get('id')] = model  # Register model as a running kernel
-        response_buf = StringIO(json.dumps(model))
+        response_buf = StringIO(str_to_unicode(json.dumps(model)))
         response = yield gen.maybe_future(HTTPResponse(request, 201, buffer=response_buf))
         raise gen.Return(response)
 
@@ -91,7 +91,7 @@ def mock_gateway_request(url, **kwargs):
         for kernel_id in running_kernels.keys():
             model = running_kernels.get(kernel_id)
             kernels.append(model)
-        response_buf = StringIO(json.dumps(kernels))
+        response_buf = StringIO(str_to_unicode(json.dumps(kernels)))
         response = yield gen.maybe_future(HTTPResponse(request, 200, buffer=response_buf))
         raise gen.Return(response)
 
@@ -107,7 +107,7 @@ def mock_gateway_request(url, **kwargs):
                 raise HTTPError(404, message='Kernel does not exist: %s' % requested_kernel_id)
         elif action == 'restart':
             if requested_kernel_id in running_kernels:
-                response_buf = StringIO(json.dumps(running_kernels.get(requested_kernel_id)))
+                response_buf = StringIO(str_to_unicode(json.dumps(running_kernels.get(requested_kernel_id))))
                 response = yield gen.maybe_future(HTTPResponse(request, 204, buffer=response_buf))
                 raise gen.Return(response)
             else:
@@ -123,10 +123,10 @@ def mock_gateway_request(url, **kwargs):
         raise gen.Return(response)
 
     # Fetch existing kernel
-    if endpoint.rfind('/api/kernels/') >= 0  and method == 'GET':
-        requested_kernel_id =  endpoint.rpartition('/')[2]
+    if endpoint.rfind('/api/kernels/') >= 0 and method == 'GET':
+        requested_kernel_id = endpoint.rpartition('/')[2]
         if requested_kernel_id in running_kernels:
-            response_buf = StringIO(json.dumps(running_kernels.get(requested_kernel_id)))
+            response_buf = StringIO(str_to_unicode(json.dumps(running_kernels.get(requested_kernel_id))))
             response = yield gen.maybe_future(HTTPResponse(request, 200, buffer=response_buf))
             raise gen.Return(response)
         else:
@@ -351,4 +351,3 @@ class TestGateway(ServerTestBase):
             response = self.request('DELETE', '/api/kernels/' + kernel_id)
             self.assertEqual(response.status_code, 204)
             self.assertEqual(response.reason, 'No Content')
-
