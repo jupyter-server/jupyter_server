@@ -535,7 +535,7 @@ aliases.update({
     'notebook-dir': 'ServerApp.root_dir',
     'browser': 'ServerApp.browser',
     'pylab': 'ServerApp.pylab',
-    'gateway-url': 'GatewayClient.gateway_url',
+    'gateway-url': 'GatewayClient.url',
 })
 
 #-----------------------------------------------------------------------------
