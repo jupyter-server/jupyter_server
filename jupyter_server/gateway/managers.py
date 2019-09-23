@@ -598,7 +598,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
 
 
 class GatewaySessionManager(SessionManager):
-    kernel_manager = Instance('notebook.gateway.managers.GatewayKernelManager')
+    kernel_manager = Instance('jupyter_server.gateway.managers.GatewayKernelManager')
 
     @gen.coroutine
     def kernel_culled(self, kernel_id):

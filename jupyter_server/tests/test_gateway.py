@@ -6,8 +6,8 @@ from datetime import datetime
 from tornado import gen
 from tornado.httpclient import HTTPRequest, HTTPResponse, HTTPError
 from traitlets.config import Config
-from .launchnotebook import NotebookTestBase
-from notebook.gateway.managers import GatewayClient
+from .launchserver import ServerTestBase
+from jupyter_server.gateway.managers import GatewayClient
 
 try:
     from unittest.mock import patch, Mock
@@ -133,10 +133,10 @@ def mock_gateway_request(url, **kwargs):
             raise HTTPError(404, message='Kernel does not exist: %s' % requested_kernel_id)
 
 
-mocked_gateway = patch('notebook.gateway.managers.gateway_request', mock_gateway_request)
+mocked_gateway = patch('jupyter_server.gateway.managers.gateway_request', mock_gateway_request)
 
 
-class TestGateway(NotebookTestBase):
+class TestGateway(ServerTestBase):
 
     mock_gateway_url = 'http://mock-gateway-server:8889'
     mock_http_user = 'alice'
@@ -165,17 +165,17 @@ class TestGateway(NotebookTestBase):
         return argv
 
     def test_gateway_options(self):
-        nt.assert_equal(self.notebook.gateway_config.gateway_enabled, True)
-        nt.assert_equal(self.notebook.gateway_config.url, TestGateway.mock_gateway_url)
-        nt.assert_equal(self.notebook.gateway_config.http_user, TestGateway.mock_http_user)
-        nt.assert_equal(self.notebook.gateway_config.connect_timeout, self.notebook.gateway_config.connect_timeout)
-        nt.assert_equal(self.notebook.gateway_config.connect_timeout, 44.4)
+        nt.assert_equal(self.server.gateway_config.gateway_enabled, True)
+        nt.assert_equal(self.server.gateway_config.url, TestGateway.mock_gateway_url)
+        nt.assert_equal(self.server.gateway_config.http_user, TestGateway.mock_http_user)
+        nt.assert_equal(self.server.gateway_config.connect_timeout, self.server.gateway_config.connect_timeout)
+        nt.assert_equal(self.server.gateway_config.connect_timeout, 44.4)
 
     def test_gateway_class_mappings(self):
         # Ensure appropriate class mappings are in place.
-        nt.assert_equal(self.notebook.kernel_manager_class.__name__, 'GatewayKernelManager')
-        nt.assert_equal(self.notebook.session_manager_class.__name__, 'GatewaySessionManager')
-        nt.assert_equal(self.notebook.kernel_spec_manager_class.__name__, 'GatewayKernelSpecManager')
+        nt.assert_equal(self.server.kernel_manager_class.__name__, 'GatewayKernelManager')
+        nt.assert_equal(self.server.session_manager_class.__name__, 'GatewaySessionManager')
+        nt.assert_equal(self.server.kernel_spec_manager_class.__name__, 'GatewayKernelSpecManager')
 
     def test_gateway_get_kernelspecs(self):
         # Validate that kernelspecs come from gateway.
@@ -249,11 +249,11 @@ class TestGateway(NotebookTestBase):
         self.assertFalse(self.is_kernel_running(kernel_id))
 
     def create_session(self, kernel_name):
-        """Creates a session for a kernel.  The session is created against the notebook server
+        """Creates a session for a kernel.  The session is created against the server
            which then uses the gateway for kernel management.
         """
         with mocked_gateway:
-            nb_path = os.path.join(self.notebook_dir, 'testgw.ipynb')
+            nb_path = os.path.join(self.root_dir, 'testgw.ipynb')
             kwargs = dict()
             kwargs['json'] = {'path': nb_path, 'type': 'notebook', 'kernel': {'name': kernel_name}}
 
