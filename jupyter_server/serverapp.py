@@ -1580,7 +1580,7 @@ class ServerApp(JupyterApp):
         info += _("Jupyter Server {version} is running at:\n{url}".
                   format(version=ServerApp.version, url=self.display_url))
         if self.gateway_config.gateway_enabled:
-            info += _("\nKernels will be managed by the Gateway server running at:\n%s") % self.gateway_url
+            info += _("\nKernels will be managed by the Gateway server running at:\n%s") % self.gateway_config.url
         return info
 
     def server_info(self):
