@@ -19,9 +19,8 @@ import sys
 name = "jupyter_server"
 
 # Minimal Python version sanity check
-v = sys.version_info
-if v[:2] < (2,7) or (v[0] >= 3 and v[:2] < (3,3)):
-    error = "ERROR: %s requires Python version 2.7 or 3.3 or above." % name
+if sys.version_info < (3,5):
+    error = "ERROR: %s requires Python version 3.5 or above." % name
     print(error, file=sys.stderr)
     sys.exit(1)
 
@@ -67,8 +66,10 @@ for more information.
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     zip_safe = False,
     install_requires = [
@@ -90,12 +91,11 @@ for more information.
         "pywin32>=1.0 ; sys_platform == 'win32'"
     ],
     extras_require = {
-        ':python_version == "2.7"': ['ipaddress'],
-        'test:python_version == "2.7"': ['mock'],
         'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
                  'nbval', 'nose-exclude', 'selenium'],
         'test:sys_platform == "win32"': ['nose-exclude'],
     },
+    python_requires='>=3.5',
     entry_points = {
         'console_scripts': [
             'jupyter-server = jupyter_server.serverapp:main',

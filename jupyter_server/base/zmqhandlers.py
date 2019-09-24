@@ -9,13 +9,9 @@ import json
 import struct
 import warnings
 import sys
-
-try:
-    from urllib.parse import urlparse # Py 3
-except ImportError:
-    from urlparse import urlparse # Py 2
-
 import tornado
+
+from urllib.parse import urlparse
 from tornado import gen, ioloop, web
 from tornado.websocket import WebSocketHandler
 

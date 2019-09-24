@@ -31,12 +31,7 @@ import time
 import warnings
 import webbrowser
 
-try: #PY3
-    from base64 import encodebytes
-except ImportError: #PY2
-    from base64 import encodestring as encodebytes
-
-
+from base64 import encodebytes
 from jinja2 import Environment, FileSystemLoader
 
 from jupyter_server.transutils import trans, _
@@ -69,12 +64,6 @@ from jupyter_server import (
     DEFAULT_TEMPLATE_PATH_LIST,
     __version__,
 )
-
-# py23 compatibility
-try:
-    raw_input = raw_input
-except NameError:
-    raw_input = input
 
 from .base.handlers import MainHandler, RedirectWithParams, Template404
 from .log import log_request

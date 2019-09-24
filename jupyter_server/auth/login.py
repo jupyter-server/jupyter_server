@@ -5,12 +5,9 @@
 
 import re
 import os
-
-try:
-    from urllib.parse import urlparse # Py 3
-except ImportError:
-    from urlparse import urlparse # Py 2
 import uuid
+
+from urllib.parse import urlparse
 
 from tornado.escape import url_escape
 
