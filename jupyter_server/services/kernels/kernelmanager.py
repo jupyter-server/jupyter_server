@@ -26,7 +26,7 @@ from jupyter_server.utils import to_os_path, exists
 from jupyter_server._tz import utcnow, isoformat
 from ipython_genutils.py3compat import getcwd
 
-from notebook.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
+from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
 
 
 class MappingKernelManager(MultiKernelManager):
