@@ -27,10 +27,7 @@ from nbformat import v2
 from ipython_genutils import py3compat
 from ipython_genutils.tempdir import TemporaryDirectory
 
-try: #PY3
-    from base64 import encodebytes, decodebytes
-except ImportError: #PY2
-    from base64 import encodestring as encodebytes, decodestring as decodebytes
+from base64 import encodebytes, decodebytes
 
 
 def uniq_stable(elems):

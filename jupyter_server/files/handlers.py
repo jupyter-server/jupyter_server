@@ -6,10 +6,7 @@
 import mimetypes
 import json
 
-try: #PY3
-    from base64 import decodebytes
-except ImportError: #PY2
-    from base64 import decodestring as decodebytes
+from base64 import decodebytes
 
 from tornado import web
 

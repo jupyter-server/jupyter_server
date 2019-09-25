@@ -8,11 +8,7 @@ import signal
 from subprocess import Popen, PIPE, STDOUT
 import sys
 from tempfile import NamedTemporaryFile
-
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch # py2
+from unittest.mock import patch
 
 import nose.tools as nt
 

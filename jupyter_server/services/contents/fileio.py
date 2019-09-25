@@ -24,24 +24,13 @@ from ipython_genutils.py3compat import str_to_unicode
 from traitlets.config import Configurable
 from traitlets import Bool
 
-try: #PY3
-    from base64 import encodebytes, decodebytes
-except ImportError: #PY2
-    from base64 import encodestring as encodebytes, decodestring as decodebytes
+from base64 import encodebytes, decodebytes
 
 
 def replace_file(src, dst):
     """ replace dst with src
-
-    switches between os.replace or os.rename based on python 2.7 or python 3
     """
-    if hasattr(os, 'replace'): # PY3
-        os.replace(src, dst)
-    else:
-        if os.name == 'nt' and os.path.exists(dst):
-            # Rename over existing file doesn't work on Windows
-            os.remove(dst)
-        os.rename(src, dst)
+    os.replace(src, dst)
 
 def copy2_safe(src, dst, log=None):
     """copy src to dst
