@@ -23,7 +23,7 @@ from jupyter_server.auth.security import passwd_check
 
 ServerApp = serverapp.ServerApp
 
-from .launchnotebook import NotebookTestBase
+from .launchserver import ServerTestBase
 
 
 def test_help_output():
@@ -185,8 +185,8 @@ def test_server_stop():
     nt.assert_equal(len(app.servers_shut_down), 0)
 
 
-class NotebookAppTests(NotebookTestBase):
+class ServerAppTests(ServerTestBase):
     def test_list_running_servers(self):
-        servers = list(notebookapp.list_running_servers())
+        servers = list(serverapp.list_running_servers())
         assert len(servers) >= 1
         assert self.port in {info['port'] for info in servers}

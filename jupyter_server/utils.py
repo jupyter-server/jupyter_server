@@ -26,11 +26,9 @@ except ImportError:
     class ConcurrentFuture:
         """If concurrent.futures isn't importable, nothing will be a c.f.Future"""
         pass
-    from urllib.parse import quote, unquote, urlparse, urljoin
-    from urllib.request import pathname2url
-except ImportError:
-    from urllib import quote, unquote, pathname2url
-    from urlparse import urlparse, urljoin
+
+from urllib.parse import quote, unquote, urlparse, urljoin
+from urllib.request import pathname2url
 
 
 # tornado.concurrent.Future is asyncio.Future
