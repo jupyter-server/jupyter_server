@@ -151,6 +151,19 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+# Add custom note for each doc page
+
+rst_prolog = ""
+
+rst_prolog += """
+.. important::
+    This documentation covers Jupyter Server, an **early developer preview**,
+    and is not suitable for general usage yet. Features and implementation are
+    subject to change.
+    For production use cases, please use the stable notebook server in the
+    `Jupyter Notebook repo <(https://github.com/jupyter/notebook>`_
+    and `Jupyter Notebook documentation <https://jupyter-notebook.readthedocs.io/en/stable/public_server.html>`_.
+"""
 
 # -- Options for HTML output ----------------------------------------------
 
