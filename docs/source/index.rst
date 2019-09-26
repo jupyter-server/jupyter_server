@@ -1,6 +1,6 @@
-====================
-The Jupyter Notebook
-====================
+==================================
+Jupyter Server (Developer Preview)
+==================================
 
 * `Installation <https://jupyter.readthedocs.io/en/latest/install.html>`_
 * `Starting the Notebook <https://jupyter.readthedocs.io/en/latest/running.html>`_
