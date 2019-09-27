@@ -160,8 +160,9 @@ rst_prolog += """
     This documentation covers Jupyter Server, an **early developer preview**,
     and is not suitable for general usage yet. Features and implementation are
     subject to change.
+
     For production use cases, please use the stable notebook server in the
-    `Jupyter Notebook repo <(https://github.com/jupyter/notebook>`_
+    `Jupyter Notebook repo <https://github.com/jupyter/notebook>`_
     and `Jupyter Notebook documentation <https://jupyter-notebook.readthedocs.io/en/stable/public_server.html>`_.
 """
 
