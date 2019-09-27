@@ -1542,7 +1542,8 @@ class ServerApp(JupyterApp):
         if self._dispatching:
             return
         self.init_configurables()
-        self.init_server_extension_config()
+        if load_extensions:
+            self.init_server_extension_config()
         self.init_components()
         self.init_webapp()
         self.init_terminals()
