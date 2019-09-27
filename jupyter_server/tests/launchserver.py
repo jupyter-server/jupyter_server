@@ -91,6 +91,21 @@ class ServerTestBase(TestCase):
         return response
 
     @classmethod
+    def get_patch_env(cls):
+        return {
+            'HOME': cls.home_dir,
+            'PYTHONPATH': os.pathsep.join(sys.path),
+            'JUPYTER_NO_CONFIG': '1', # needed in the future
+            'JUPYTER_CONFIG_DIR' : cls.config_dir,
+            'JUPYTER_DATA_DIR' : cls.data_dir,
+            'JUPYTER_RUNTIME_DIR': cls.runtime_dir,
+        }
+
+    @classmethod
+    def get_argv(cls):
+        return []
+
+    @classmethod
     def setup_class(cls):
         cls.tmp_dir = TemporaryDirectory()
         def tmp(*parts):
@@ -107,14 +122,7 @@ class ServerTestBase(TestCase):
         config_dir = cls.config_dir = tmp('config')
         runtime_dir = cls.runtime_dir = tmp('runtime')
         cls.root_dir = tmp('root_dir')
-        cls.env_patch = patch.dict('os.environ', {
-            'HOME': cls.home_dir,
-            'PYTHONPATH': os.pathsep.join(sys.path),
-            'JUPYTER_NO_CONFIG': '1', # needed in the future
-            'JUPYTER_CONFIG_DIR' : config_dir,
-            'JUPYTER_DATA_DIR' : data_dir,
-            'JUPYTER_RUNTIME_DIR': runtime_dir,
-        })
+        cls.env_patch = patch.dict('os.environ', cls.get_patch_env())
         cls.env_patch.start()
         cls.path_patch = patch.multiple(
             jupyter_core.paths,
@@ -154,7 +162,7 @@ class ServerTestBase(TestCase):
             # needs to be redone after initialize, which reconfigures logging
             app.log.propagate = True
             app.log.handlers = []
-            app.initialize(argv=[])
+            app.initialize(argv=cls.get_argv())
             app.log.propagate = True
             app.log.handlers = []
             loop = IOLoop.current()
