@@ -137,12 +137,8 @@ class TestInstallServerExtension(MockEnvTestCase):
         toggle_serverextension_python('mockext_both', enabled=True, user=False)
         toggle_serverextension_python('mockext_both', enabled=False, user=True)
 
-<<<<<<< HEAD:jupyter_server/tests/test_extensions.py
         app = ServerApp(jpserver_extensions={'mockext_py': True})
-=======
-        app = NotebookApp(nbserver_extensions={'mockext_py': True})
         app.init_server_extension_config()
->>>>>>> 134c8b6c0... surface config.d nbserver_extensions to the NotebookApp config object:notebook/tests/test_serverextensions.py
         app.init_server_extensions()
 
         assert mock_user.loaded
