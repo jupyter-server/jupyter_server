@@ -31,6 +31,7 @@ import threading
 import time
 import warnings
 import webbrowser
+import urllib
 
 from base64 import encodebytes
 from jinja2 import Environment, FileSystemLoader
@@ -1357,31 +1358,53 @@ class ServerApp(JupyterApp):
     @property
     def display_url(self):
         if self.custom_display_url:
-            url = self.custom_display_url
-            if not url.endswith('/'):
-                url += '/'
+            parts = urllib.parse.urlparse(self.custom_display_url)
+            path = parts.path
+            ip = parts.hostname
         else:
+            path = None
             if self.ip in ('', '0.0.0.0'):
                 ip = "%s" % socket.gethostname()
             else:
                 ip = self.ip
-            url = self._url(ip)
+
+        token = None
         if self.token:
             # Don't log full token if it came from config
             token = self.token if self._token_generated else '...'
-            url = (url_concat(url, {'token': token})
-                  + '\n or '
-                  + url_concat(self._url('127.0.0.1'), {'token': token}))
+
+        url = (
+            self.get_url(ip=ip, path=path, token=token)
+            + '\n or '
+            + self.get_url(ip='127.0.0.1', path=path, token=token)
+        )    
         return url
 
     @property
     def connection_url(self):
         ip = self.ip if self.ip else 'localhost'
-        return self._url(ip)
+        return self.get_url(ip=ip)
 
-    def _url(self, ip):
-        proto = 'https' if self.certfile else 'http'
-        return "%s://%s:%i%s" % (proto, ip, self.port, self.base_url)
+    def get_url(self, ip=None, path=None, token=None):
+        """Build a url for the application.
+        """
+        if not ip:
+            ip = self.ip
+        if not path:
+            path = url_path_join(self.base_url, self.default_url)
+        # Build query string.
+        if self.token:
+            token = urllib.parse.urlencode({'token': token})
+        # Build the URL Parts to dump.
+        urlparts = urllib.parse.ParseResult(
+            scheme='https' if self.certfile else 'http',
+            netloc="{ip}:{port}".format(ip=ip, port=self.port),
+            path=path,
+            params=None,
+            query=token,
+            fragment=None
+        )
+        return urlparts.geturl()
 
     def init_terminals(self):
         if not self.terminals_enabled:
@@ -1429,7 +1452,7 @@ class ServerApp(JupyterApp):
         """
         info = self.log.info
         info(_('interrupted'))
-        print(self.notebook_info())
+        print(self.running_server_info())
         yes = _('y')
         no = _('n')
         sys.stdout.write(_("Shutdown this Jupyter server (%s/[%s])? ") % (yes, no))
@@ -1457,7 +1480,7 @@ class ServerApp(JupyterApp):
         self.io_loop.add_callback_from_signal(self.io_loop.stop)
 
     def _signal_info(self, sig, frame):
-        print(self.notebook_info())
+        print(self.running_server_info())
 
     def init_components(self):
         """Check the components submodule, and warn if it's unclean"""
@@ -1586,7 +1609,7 @@ class ServerApp(JupyterApp):
         self.log.info(kernel_msg % n_kernels)
         self.kernel_manager.shutdown_all()
 
-    def notebook_info(self, kernel_count=True):
+    def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
         info = self.contents_manager.info_string() + "\n"
         if kernel_count:
@@ -1715,7 +1738,7 @@ class ServerApp(JupyterApp):
                 self.exit(1)
 
         info = self.log.info
-        for line in self.notebook_info(kernel_count=False).split("\n"):
+        for line in self.running_server_info(kernel_count=False).split("\n"):
             info(line)
         info(_("Use Control-C to stop this server and shut down all kernels (twice to skip confirmation)."))
         if 'dev' in jupyter_server.__version__:
@@ -1735,7 +1758,7 @@ class ServerApp(JupyterApp):
             # with auth info.
             self.log.critical('\n'.join([
                 '\n',
-                'To access the notebook, open this file in a browser:',
+                'To access the server, open this file in a browser:',
                 '    %s' % urljoin('file:', pathname2url(self.browser_open_file)),
                 'Or copy and paste one of these URLs:',
                 '    %s' % self.display_url,
