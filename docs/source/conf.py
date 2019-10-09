@@ -69,7 +69,6 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
     'IPython.sphinxext.ipython_console_highlighting',
-    'nbsphinx',
     'sphinxcontrib_github_alt',
 ]
 
@@ -140,7 +139,8 @@ language = None
 #show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'default'
+highlight_language = 'python3'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []

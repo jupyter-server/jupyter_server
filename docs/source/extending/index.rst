@@ -12,6 +12,4 @@ override the notebook's defaults with your own custom behavior.
     contents
     savehooks
     handlers
-    frontend_extensions
-    keymaps
     bundler_extensions

@@ -30,11 +30,10 @@ and editing settings is similar for all the Jupyter applications.
 
 .. _configure_server:
 
-Jupyter server
---------------
+Server-specific configuration
+-----------------------------
 
-The  Jupyter server runs the language kernel and communicates with the
-front-end client (i.e. JupyterLab).
+The  Jupyter server runs the language kernel and communicates with Jupyter Server frontends.
 
   - Configuring the Jupyter server
 
