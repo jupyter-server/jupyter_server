@@ -140,6 +140,38 @@ class ExtensionApp(JupyterApp):
         help=_("The default URL to redirect to from `/`")
     )
 
+    custom_display_url = Unicode(u'', config=True,
+        help=_("""Override URL shown to users.
+
+        Replace actual URL, including protocol, address, port and base URL,
+        with the given value when displaying URL to the users. Do not change
+        the actual connection URL. If authentication token is enabled, the
+        token is added to the custom URL automatically.
+
+        This option is intended to be used when the URL to display to the user
+        cannot be determined reliably by the Jupyter server (proxified
+        or containerized setups for example).""")
+    )
+
+    @default('custom_display_url') 
+    def _default_custom_display_url(self):
+        """URL to display to the user."""
+        # Get url from server.
+        url = url_path_join(self.serverapp.base_url, self.default_url)
+        return self.serverapp.get_url(self.serverapp.ip, url)
+
+    def _write_browser_open_file(self, url, fh):
+        """Use to hijacks the server's browser-open file and open at 
+        the extension's homepage.
+        """
+        # Ignore server's url
+        del url
+        path = url_path_join(self.serverapp.base_url, self.default_url)
+        url = self.serverapp.get_url(path=path)
+        jinja2_env = self.serverapp.web_app.settings['jinja2_env']
+        template = jinja2_env.get_template('browser-open.html')
+        fh.write(template.render(open_url=url))
+
     def initialize_settings(self):
         """Override this method to add handling of settings."""
         pass
@@ -256,15 +288,21 @@ class ExtensionApp(JupyterApp):
         self._prepare_settings()
         self._prepare_handlers()
 
-    def start(self, **kwargs):
+    def start(self):
         """Start the underlying Jupyter server.
         
         Server should be started after extension is initialized.
         """
-        # Start the browser at this extensions default_url.
-        self.serverapp.default_url = self.default_url
+        # Override the browser open file to 
+        # Override the server's display url to show extension's display URL.
+        self.serverapp.custom_display_url = self.custom_display_url
+        # Override the server's default option and open a broswer window.
+        self.serverapp.open_browser = True
+        # Hijack the server's browser-open file to land on
+        # the extensions home page.
+        self.serverapp._write_browser_open_file = self._write_browser_open_file
         # Start the server.
-        self.serverapp.start(**kwargs) 
+        self.serverapp.start() 
 
     def stop(self):
         """Stop the underlying Jupyter server.
