@@ -6,6 +6,8 @@ Jupyter Server does not come with a frontend out-of-the-box; instead, a frontend
 .. note::  This documentation is written for experienced developers.
 
 
+.. _frontend:
+
 Writing a frontend application
 ------------------------------
 
@@ -61,14 +63,20 @@ To create a new Jupyter frontend application, subclass the ``ExtensionApp`` like
             # Change the jinja templating environment
             self.settings.update({'myfrontend_jinja2_env': ...}) 
 
-The ``ExtensionApp`` uses the following methods and properties to connect your frontend to the Jupyter server. Overwrite these methods to add your custom settings, handlers and templates:
+The ``ExtensionApp`` uses the following methods and properties to connect your frontend to the Jupyter server. Overwrite these pieces to add your custom settings, handlers and templates:
+
+Methods
 
 * ``initialize_setting()``: adds custom settings to the Tornado Web Application.
 * ``initialize_handlers()``: appends handlers to the Tornado Web Application.
 * ``initialize_templates()``: initialize the templating engine (e.g. jinja2) for your frontend.
+
+Properties
+
 * ``name``: the name of the extension
 * ``default_url``: the url that your extension will serve its homepage.
 * ``load_other_extensions``: should your extension expose other server extensions when launched directly?
+
 
 Writing frontend handlers
 -------------------------

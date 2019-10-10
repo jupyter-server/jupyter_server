@@ -58,7 +58,7 @@ Server extensions
 - `Distributing Jupyter Extensions as Python Packages <https://jupyter-server.readthedocs.io/en/latest/examples/Server/Distributing%20Jupyter%20Extensions%20as%20Python%20Packages.html#Distributing-Jupyter-Extensions-as-Python-Packages>`_
 - `Extending the Server <https://jupyter-server.readthedocs.io/en/latest/extending/index.html>`_
 
-:ref:`Security in Jupyter:  <server_security>` Since security
+Since security
 policies vary from organization to organization, we encourage you to
 consult with your security team on settings that would be best for your use
 cases. Our documentation offers some responsible security practices, and we

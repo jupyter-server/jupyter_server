@@ -3,7 +3,7 @@
 Contents API
 ============
 
-.. currentmodule:: notebook.services.contents
+.. currentmodule:: jupyter_server.services.contents
 
 The Jupyter Notebook web application provides a graphical interface for
 creating, opening, renaming, and deleting files in a virtual filesystem.
@@ -22,7 +22,7 @@ We refer to this interface as the **Contents API**.
 Data Model
 ----------
 
-.. currentmodule:: notebook.services.contents.manager
+.. currentmodule:: jupyter_server.services.contents.manager
 
 Filesystem Entities
 ~~~~~~~~~~~~~~~~~~~
@@ -197,13 +197,13 @@ ContentsManager.
 
 Customizing Checkpoints
 -----------------------
-.. currentmodule:: notebook.services.contents.checkpoints
+.. currentmodule:: jupyter_server.services.contents.checkpoints
 
 Customized Checkpoint definitions allows behavior to be 
 altered and extended.
 
 The ``Checkpoints`` and ``GenericCheckpointsMixin`` classes
-(from :mod:`notebook.services.contents.checkpoints`)
+(from :mod:`jupyter_server.services.contents.checkpoints`)
 have reusable code and are intended to be used together, 
 but require the following methods to be implemented.
 
@@ -250,9 +250,9 @@ for a more complete example.
 
 Testing
 -------
-.. currentmodule:: notebook.services.contents.tests
+.. currentmodule:: jupyter_server.services.contents.tests
 
-:mod:`notebook.services.contents.tests` includes several test suites written
+:mod:`jupyter_server.services.contents.tests` includes several test suites written
 against the abstract Contents API.  This means that an excellent way to test a
 new ContentsManager subclass is to subclass our tests to make them use your
 ContentsManager.

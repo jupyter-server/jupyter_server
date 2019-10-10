@@ -2,7 +2,7 @@
 Jupyter Server (Developer Preview)
 ==================================
 
-Jupyter Server is a fork of the `Jupyter Notebook`_'s Tornado_ Server. It provides all the core services, APIs and `REST endpoints`_ from the classic Notebook Server without the Jupyter Notebook (Javascript) frontend. In fact, the Jupyter Server provides no frontend out-of-the-box; rather, it exposes hooks for Jupyter frontend creators to register their frontends with the Server. 
+Jupyter Server is a fork of the `Jupyter Notebook`_'s Tornado_ Server. It provides all the core services, APIs and `REST endpoints`_ from the classic Notebook Server without the Jupyter Notebook (Javascript) frontend. In fact, the Jupyter Server provides no frontend out-of-the-box; rather, it exposes `hooks <frontends.html>`_ for Jupyter frontend creators to register their frontends with the Server. 
 
 Before the Jupyter Server project, the `Jupyter Notebook`_ was the only first-class frontend to the Tornado Server. As a consequence, other Jupyter frontends had to include Jupyter Notebook (and all of its Javascript code) as a dependency. The Jupyter Server project views all frontends—including the `Jupyter Notebook`_—as equal and separate . 
 
@@ -24,9 +24,7 @@ To install the latest release of ``jupyter_server``, use *pip*:
    :maxdepth: 1
    :caption: Table of Contents
 
-   server_config
    frontends
-
    changelog
 
 .. toctree::

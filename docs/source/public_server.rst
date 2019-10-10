@@ -4,7 +4,7 @@ Running a Jupyter server
 ========================
 
 
-The :doc:`jupyter server <notebook>` web application is based on a
+The Jupyter Server's web application is based on a
 server-client structure.  The notebook server uses a :ref:`two-process kernel
 architecture <ipython:ipythonzmq>` based on ZeroMQ_, as well as Tornado_ for
 serving HTTP requests.

@@ -140,7 +140,7 @@ language = None
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'default'
-highlight_language = 'python3'
+#highlight_language = 'python3'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []

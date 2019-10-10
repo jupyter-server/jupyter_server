@@ -77,5 +77,3 @@ but this is **NOT RECOMMENDED**, unless authentication or access restrictions ar
     c.ServerApp.token = ''
     c.ServerApp.password = ''
 
-
-.. _server_security:
