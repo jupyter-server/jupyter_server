@@ -9,7 +9,6 @@ dependencies:
 - ipykernel
 - sphinx
 - pip:
-  - nbsphinx
   - Send2Trash
   - prometheus_client
   - sphinxcontrib_github_alt

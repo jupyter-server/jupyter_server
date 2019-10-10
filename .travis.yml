@@ -54,7 +54,6 @@ script:
           make -C docs/ linkcheck || EXIT_STATUS=$?;
         fi
 
-        pytest --nbval --current-env docs || EXIT_STATUS=$?
         exit $EXIT_STATUS
       fi
 

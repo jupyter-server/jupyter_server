@@ -13,7 +13,7 @@ Here are some examples of what you can implement using bundler extensions:
   blog site
 * Create a snapshot of the current notebook environment and bundle that
   definition plus notebook into a zip download
-* Deploy a notebook as a standalone, interactive `dashboard <https://github.com/jupyter-incubator/dashboards_bundlers>`_
+* Deploy a notebook as a standalone, interactive `dashboard <https://github.com/jupyter-attic/dashboards_bundlers>`_
 
 To implement a bundler extension, you must do all of the following:
 
