@@ -104,7 +104,7 @@ To launch the application, simply call the ``ExtensionApp``'s ``launch_instance`
     main()
 
 
-To make your frontend executable from anywher on your system, added this method as an entry-point oin your application's ``setup.py`` 
+To make your frontend executable from anywhere on your system, added this method as an entry-point in your application's ``setup.py``:
 
 .. code-block:: python
 
