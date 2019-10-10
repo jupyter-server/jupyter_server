@@ -74,8 +74,8 @@ If you want coverage statistics as well, you can run::
 Building the Documentation
 --------------------------
 
-To build the documentation you'll need `Sphinx <http://www.sphinx-doc.org/>`_,
-`pandoc <http://pandoc.org/>`_ and a few other packages.
+To build the documentation you'll need `Sphinx <http://www.sphinx-doc.org/en/master/>`_,
+`pandoc <https://pandoc.org/>`_ and a few other packages.
 
 To install (and activate) a `conda environment`_ named ``server_docs``
 containing all the necessary packages (except pandoc), use::
@@ -85,7 +85,7 @@ containing all the necessary packages (except pandoc), use::
     activate notebook_docs         # Windows
 
 .. _conda environment:
-    https://conda.io/docs/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file
+    https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file
 
 If you want to install the necessary packages with ``pip`` instead::
 

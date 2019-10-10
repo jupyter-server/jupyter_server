@@ -55,7 +55,6 @@ The  Jupyter server runs the language kernel and communicates with Jupyter Serve
 Server extensions
 -----------------
 
-- `Distributing Jupyter Extensions as Python Packages <https://jupyter-server.readthedocs.io/en/latest/examples/Server/Distributing%20Jupyter%20Extensions%20as%20Python%20Packages.html#Distributing-Jupyter-Extensions-as-Python-Packages>`_
 - `Extending the Server <https://jupyter-server.readthedocs.io/en/latest/extending/index.html>`_
 
 Since security
