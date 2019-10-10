@@ -1,7 +1,10 @@
 Creating a Jupyter Server Frontend
 ==================================
 
-Jupyter Server does not come with frontend out-of-the-box; instead, frontends are installed separately and loaded as server extensions. This page demonstrates the best way to write a Jupyter Server frontend from scatch (warning, this documentation is directed a developers).
+Jupyter Server does not come with a frontend out-of-the-box; instead, a frontend is installed separately and loaded as a server extension. This page demonstrates the best way to write a Jupyter Server frontend from scratch.
+
+.. note::  This documentation is written for experienced developers.
+
 
 Writing a frontend application
 ------------------------------
