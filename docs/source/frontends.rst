@@ -19,7 +19,7 @@ The ExtensionApp:
     - loads itself as a server extension beside other Jupyter frontends and extensions.
     - provides a command-line interface to launch the frontend extension directly (starting a server along the way).
 
-To create a new Jupyter frontend application, subclass the ExtensionApp like the example below:
+To create a new Jupyter frontend application, subclass the ``ExtensionApp`` like the example below:
 
 .. code-block:: python
 
