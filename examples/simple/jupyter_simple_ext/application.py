@@ -1,15 +1,22 @@
 import os, jinja2
-from .handler import ServerSimpleHandler
-from .handler_template import ServerSimpleTemplateHandler
 from jupyter_server.extension.application import ExtensionApp
+from .handlers import ParameterHandler, TemplateHandler, Page1Handler, IndexHandler, ErrorHandler
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")
 
-class ServerSimple(ExtensionApp):
+print(DEFAULT_TEMPLATE_FILES_PATH)
+
+class SimpleServer(ExtensionApp):
     
-    # Name of the extension
-    extension_name = "server_simple"
+    # The name of the extension
+    extension_name = "simple_ext"
+
+    # default_url: the url that your extension will serve its homepage.
+    default_url = '/simple_ext'
+
+    # load_other_extensions: should your extension expose other server extensions when launched directly?
+    load_other_extensions = True
 
     # Local path to static files directory.
     static_paths = [
@@ -22,15 +29,13 @@ class ServerSimple(ExtensionApp):
     ]
 
     def initialize_handlers(self):
-        self.handlers.append(
-            (r'/server_simple', ServerSimpleHandler, {})
-        )
-        self.handlers.append(
-            (r'/server_simple/(.+)$', ServerSimpleHandler, {})
-        )
-        self.handlers.append(
-            (r'/template', ServerSimpleTemplateHandler, {})
-        )
+        self.handlers.extend([
+            (r'/simple_ext/params/(.+)$', ParameterHandler),
+            (r'/simple_ext/template', TemplateHandler),
+            (r'/simple_ext/page1/(.*)$', Page1Handler),
+            (r'/simple_ext/?', IndexHandler),
+            (r'/simple_ext/(.*)', ErrorHandler)
+        ])
 
     def initialize_templates(self):
         jenv_opt = {"autoescape": True}
@@ -39,7 +44,7 @@ class ServerSimple(ExtensionApp):
             extensions=["jinja2.ext.i18n"],
             **jenv_opt
         )
-        template_settings = {"server_simple_jinja2_env": env}
+        template_settings = {"simple_ext_jinja2_env": env}
         self.settings.update(**template_settings)
 
     def initialize_settings(self):
@@ -49,4 +54,4 @@ class ServerSimple(ExtensionApp):
 # Main entry point
 #-----------------------------------------------------------------------------
 
-main = launch_new_instance = ServerSimple.launch_instance
+main = launch_new_instance = SimpleServer.launch_instance

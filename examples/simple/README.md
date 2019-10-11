@@ -1,15 +1,18 @@
 # Jupyter Server Simple Extension Example
 
-This folder contains an example to develop an simple extension on top of Jupyter Server.
+This folder contains an example of a simple extension on top of Jupyter Server.
+
+You need yarn and python3.
 
 ```bash
-# Install the server simple extension.
-python setup.py develop
+# Install and build.
+make install
+make build
 ```
 
 ```bash
 # Start the jupyter server simple extension.
-jupyter server-simple
+make start
 ```
 
 Render server content in your browser.
@@ -17,18 +20,17 @@ Render server content in your browser.
 ```bash
 # Default server page.
 open http://localhost:8888
-# Default favicon.
-open http://localhost:8888/favicon.ico
+# Favicon static content.
+open http://localhost:8888/static/simple_ext/favicon.ico
 # HTML static page.
-open http://localhost:8888/static/server_simple/test.html
+open http://localhost:8888/static/simple_ext/test.html
 # Content from Handlers.
-open http://localhost:8888/server_simple
-open http://localhost:8888/server_simple/something?var1=foo
+open http://localhost:8888/simple_ext/params/test?var1=foo
 # Content from Template.
-open http://localhost:8888/template
+open http://localhost:8888/simple_ext/page1/test
+# Content from Template with Typescript.
+open http://localhost:8888/simple_ext
+open http://localhost:8888/simple_ext/template
+# Error content.
+open http://localhost:8888/simple_ext/nope
 ```
-
-## TO FIX
-
-+ The token created in `browser-open.html` is `None` - http://localhost:8888/?token=None
-+ This static favicon request fails with `403 : Forbidden - favicon.ico is not in root static directory` - http://localhost:8888/static/server_simple/favicon.ico

@@ -1,0 +1,18 @@
+{
+  "name": "jupyter-server-simple-ext",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p src && webpack",
+    "clean": "rimraf build",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "rifraf": "2.0.3",
+    "webpack": "~4.29.6",
+    "webpack-cli": "^3.3.0",
+    "whatwg-fetch": "~2.0.3",
+    "typescript": "3.6.4"
+  }
+}
