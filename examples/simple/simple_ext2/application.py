@@ -5,8 +5,6 @@ from .handlers import ParameterHandler, TemplateHandler, IndexHandler, ErrorHand
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")
 
-print('--- {}'.format(DEFAULT_STATIC_FILES_PATH))
-
 class SimpleApp2(ExtensionApp):
     
     # The name of the extension
