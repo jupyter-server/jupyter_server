@@ -5,17 +5,17 @@ from .handlers import ParameterHandler, TemplateHandler, Page1Handler, IndexHand
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")
 
-print(DEFAULT_TEMPLATE_FILES_PATH)
+print('--- {}'.format(DEFAULT_STATIC_FILES_PATH))
 
-class SimpleServer(ExtensionApp):
+class SimpleApp1(ExtensionApp):
     
     # The name of the extension
-    extension_name = "simple_ext"
+    extension_name = "simple_ext1"
 
-    # default_url: the url that your extension will serve its homepage.
-    default_url = '/simple_ext'
+    # Te url that your extension will serve its homepage.
+    default_url = '/simple_ext1'
 
-    # load_other_extensions: should your extension expose other server extensions when launched directly?
+    # Should your extension expose other server extensions when launched directly?
     load_other_extensions = True
 
     # Local path to static files directory.
@@ -30,11 +30,11 @@ class SimpleServer(ExtensionApp):
 
     def initialize_handlers(self):
         self.handlers.extend([
-            (r'/simple_ext/params/(.+)$', ParameterHandler),
-            (r'/simple_ext/template', TemplateHandler),
-            (r'/simple_ext/page1/(.*)$', Page1Handler),
-            (r'/simple_ext/?', IndexHandler),
-            (r'/simple_ext/(.*)', ErrorHandler)
+            (r'/simple_ext1/params/(.+)$', ParameterHandler),
+            (r'/simple_ext1/template', TemplateHandler),
+            (r'/simple_ext1/page1/(.*)$', Page1Handler),
+            (r'/simple_ext1/?', IndexHandler),
+            (r'/simple_ext1/(.*)', ErrorHandler)
         ])
 
     def initialize_templates(self):
@@ -44,7 +44,7 @@ class SimpleServer(ExtensionApp):
             extensions=["jinja2.ext.i18n"],
             **jenv_opt
         )
-        template_settings = {"simple_ext_jinja2_env": env}
+        template_settings = {"simple_ext1_jinja2_env": env}
         self.settings.update(**template_settings)
 
     def initialize_settings(self):
@@ -54,4 +54,4 @@ class SimpleServer(ExtensionApp):
 # Main entry point
 #-----------------------------------------------------------------------------
 
-main = launch_new_instance = SimpleServer.launch_instance
+main = launch_new_instance = SimpleApp1.launch_instance

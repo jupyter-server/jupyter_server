@@ -1,7 +1,7 @@
 module.exports = {
-  entry: ['./jupyter_simple_ext/static/index.js'],
+  entry: ['./simple_ext1/static/index.js'],
   output: {
-    path: require('path').join(__dirname, 'jupyter_simple_ext', 'static'),
+    path: require('path').join(__dirname, 'simple_ext1', 'static'),
     filename: 'bundle.js'
   },
   mode: 'development'

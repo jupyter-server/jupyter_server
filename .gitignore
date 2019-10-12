@@ -15,8 +15,7 @@ notebook/static/*/built/
 notebook/static/built/
 notebook/static/*/js/main.min.js*
 notebook/static/lab/*bundle.js
-**/node_modules
-**/yarn.lock
+node_modules
 *.py[co]
 __pycache__
 *.egg-info
@@ -42,3 +41,4 @@ config.rst
 
 package-lock.json
 geckodriver.log
+yarn.lock

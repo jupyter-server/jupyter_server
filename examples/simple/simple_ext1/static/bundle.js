@@ -86,25 +86,25 @@
 /************************************************************************/
 /******/ ({
 
-/***/ "./jupyter_simple_ext/static/index.js":
-/*!********************************************!*\
-  !*** ./jupyter_simple_ext/static/index.js ***!
-  \********************************************/
+/***/ "./simple_ext1/static/index.js":
+/*!*************************************!*\
+  !*** ./simple_ext1/static/index.js ***!
+  \*************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-eval("function main() {\n    let div = document.getElementById(\"mydiv\");\n    div.innerText = \"<h1>Hello from Typescript</h1>\";\n}\nwindow.addEventListener('load', main);\n\n\n//# sourceURL=webpack:///./jupyter_simple_ext/static/index.js?");
+eval("function main() {\n    let div = document.getElementById(\"mydiv\");\n    div.innerText = \"Hello from Typescript\";\n}\nwindow.addEventListener('load', main);\n\n\n//# sourceURL=webpack:///./simple_ext1/static/index.js?");
 
 /***/ }),
 
 /***/ 0:
-/*!**************************************************!*\
-  !*** multi ./jupyter_simple_ext/static/index.js ***!
-  \**************************************************/
+/*!*******************************************!*\
+  !*** multi ./simple_ext1/static/index.js ***!
+  \*******************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-eval("module.exports = __webpack_require__(/*! ./jupyter_simple_ext/static/index.js */\"./jupyter_simple_ext/static/index.js\");\n\n\n//# sourceURL=webpack:///multi_./jupyter_simple_ext/static/index.js?");
+eval("module.exports = __webpack_require__(/*! ./simple_ext1/static/index.js */\"./simple_ext1/static/index.js\");\n\n\n//# sourceURL=webpack:///multi_./simple_ext1/static/index.js?");
 
 /***/ })
 
