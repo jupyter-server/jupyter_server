@@ -56,7 +56,7 @@ can configure the :attr:`ServerApp.password` setting in
 Prerequisite: A Jupyter server configuration file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Check to see if you have a Juptyer server configuration file,
+Check to see if you have a Jupyter server configuration file,
 :file:`jupyter_server_config.py`. The default location for this file
 is your Jupyter folder located in your home directory:
 
