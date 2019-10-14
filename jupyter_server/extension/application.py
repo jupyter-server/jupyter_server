@@ -167,7 +167,7 @@ class ExtensionApp(JupyterApp):
         # Ignore server's url
         del url
         path = url_path_join(self.serverapp.base_url, self.default_url)
-        url = self.serverapp.get_url(path=path)
+        url = self.serverapp.get_url(path=path, token=self.serverapp.token)
         jinja2_env = self.serverapp.web_app.settings['jinja2_env']
         template = jinja2_env.get_template('browser-open.html')
         fh.write(template.render(open_url=url))

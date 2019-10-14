@@ -1386,14 +1386,13 @@ class ServerApp(JupyterApp):
         return self.get_url(ip=ip)
 
     def get_url(self, ip=None, path=None, token=None):
-        """Build a url for the application.
-        """
+        """Build a url for the application with reasonable defaults."""
         if not ip:
-            ip = self.ip
+            ip = self.ip if self.ip else 'localhost'
         if not path:
             path = url_path_join(self.base_url, self.default_url)
         # Build query string.
-        if self.token:
+        if token:
             token = urllib.parse.urlencode({'token': token})
         # Build the URL Parts to dump.
         urlparts = urllib.parse.ParseResult(
