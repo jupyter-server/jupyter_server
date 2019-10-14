@@ -1,8 +1,7 @@
 {
     "ServerApp": {
         "jpserver_extensions": {
-            "simple_ext1": true,
-            "simple_ext2": true
+            "simple_ext1": true
         }
     }
 }

@@ -9,31 +9,31 @@ You need `python3` to build and run the server extensions.
 ```bash
 conda create -y -n jext python=3.7
 conda activate jext
-make build
+pip install -e .
 ```
 
-**OPTIONAL** If you want to build the Typescript code, you need `npm` on your local env. Compiled javascript is provided as artifcat in this repository, so this Typescript build step is optional. The Typescript source and configuration has been taken from https://github.com/markellekelly/jupyter-server-example.
+**OPTIONAL** If you want to build the Typescript code, you need `npm` on your local env. Compiled javascript is provided as artifact in this repository, so this Typescript build step is optional. The Typescript source and configuration has been taken from https://github.com/markellekelly/jupyter-server-example.
 
 ```bash
-make install-ts
-make build-ts
+npm install
+npm run build
 ```
 
 ## Start Extension 1 and Extension 2
 
 ```bash
 # Start the jupyter server, it will load both simple_ext1 and simple_ext2 based on the provided trait.
-make start1+2
+jupyter server --ServerApp.jpserver_extensions="{'simple_ext1': True, 'simple_ext2': True}"
 ```
 
-Optionally, you can copy `simple_ext.json` configuration to your env `etc` folder and start only Extension 1, which will also start Extension 2.
+Optionally, you can copy `simple_ext1.json` and `simple_ext2.json` configuration to your env `etc` folder and start only Extension 1, which will also start Extension 2.
 
 ```bash
-make uninstall
-make install
+pip uninstall -y simple_ext
+python setup.py install
 cp -r ./etc $(dirname $(which jupyter))/..
 # Start the jupyter server extension simple_ext1, it will also load simple_ext2 because of load_other_extensions = True..
-make start1
+jupyter simple-ext1
 ```
 
 Now you can render Server content in your browser.
@@ -76,7 +76,7 @@ Now stop the server and start again with only Extension 2.
 
 ```bash
 # Start the jupyter server extension simple_ext2, it will NOT load simple_ext1 because of load_other_extensions = False.
-make start2
+jupyter simple-ext2
 ```
 
 Try with the above links to check that only Extension 2 is responding (Extension 1 URLs should give you an error).
