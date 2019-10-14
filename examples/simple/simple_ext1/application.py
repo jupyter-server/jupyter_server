@@ -1,6 +1,6 @@
 import os, jinja2
 from jupyter_server.extension.application import ExtensionApp
-from .handlers import ParameterHandler, TemplateHandler, Page1Handler, IndexHandler, ErrorHandler
+from .handlers import RedirectHandler, ParameterHandler, TemplateHandler, Page1Handler, IndexHandler, ErrorHandler
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")
@@ -28,6 +28,7 @@ class SimpleApp1(ExtensionApp):
 
     def initialize_handlers(self):
         self.handlers.extend([
+            (r'/', RedirectHandler),
             (r'/simple_ext1/params/(.+)$', ParameterHandler),
             (r'/simple_ext1/template', TemplateHandler),
             (r'/simple_ext1/page1/(.*)$', Page1Handler),

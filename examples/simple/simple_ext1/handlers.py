@@ -6,6 +6,10 @@ class TemplateHandler(ExtensionHandler):
         """Return the jinja template object for a given name"""
         return self.settings['simple_ext1_jinja2_env'].get_template(name)
 
+class RedirectHandler(ExtensionHandler):
+    def get(self):
+        self.redirect("/static/simple_ext1/favicon.ico")
+
 class IndexHandler(TemplateHandler):
     
     def get(self):

@@ -2,12 +2,7 @@
 
 This folder contains an example of 2 simple extensions on top of Jupyter Server.
 
-OPTIONAL If you want to build the Typescript code, you need `npm` on your local env. Compiled javascript is provided as artifcat in this repository, so this Typescript build step is optional. The Typescript source and configuration has been taken from https://github.com/markellekelly/jupyter-server-example.
-
-```bash
-make install-ts
-make build-ts
-```
+## Install
 
 You need `python3` to build and run the server extensions.
 
@@ -17,12 +12,21 @@ conda activate jext
 make build
 ```
 
+**OPTIONAL** If you want to build the Typescript code, you need `npm` on your local env. Compiled javascript is provided as artifcat in this repository, so this Typescript build step is optional. The Typescript source and configuration has been taken from https://github.com/markellekelly/jupyter-server-example.
+
+```bash
+make install-ts
+make build-ts
+```
+
+## Start Extension 1 and Extension 2
+
 ```bash
 # Start the jupyter server, it will load both simple_ext1 and simple_ext2 based on the provided trait.
 make start1+2
 ```
 
-Optionally, you can copy `simple_ext.json` configuration to your env `etc` folder and start only App 1.
+Optionally, you can copy `simple_ext.json` configuration to your env `etc` folder and start only Extension 1, which will also start Extension 2.
 
 ```bash
 make uninstall
@@ -32,10 +36,10 @@ cp -r ./etc $(dirname $(which jupyter))/..
 make start1
 ```
 
-Render default Server content in your browser.
+Now you can render Server content in your browser.
 
 ```bash
-# Default server page.
+# Default server page should redirect to `/static/simple_ext1/favicon.ico`.
 open http://localhost:8888
 ```
 
@@ -66,6 +70,8 @@ open http://localhost:8888/static/simple_ext2/test.html
 open http://localhost:8888/simple_ext2/params/test?var1=foo
 ```
 
+## Start only Extension 2
+
 Now stop the server and start again with only Extension 2.
 
 ```bash
@@ -73,8 +79,4 @@ Now stop the server and start again with only Extension 2.
 make start2
 ```
 
-Try with the above links to check that only Extension 2 is responding.
-
-## TODO
-
-+ Automatic redirect on the default home page.
+Try with the above links to check that only Extension 2 is responding (Extension 1 URLs should give you an error).
