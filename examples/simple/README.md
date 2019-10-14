@@ -2,14 +2,14 @@
 
 This folder contains an example of 2 simple extensions on top of Jupyter Server.
 
-OPTIONAL (compiled js is provided) If you want to build the typescript code, you need npm installed.
+OPTIONAL If you want to build the Typescript code, you need `npm` on your local env. Compiled javascript is provided as artifcat in this repository, so this Typescript build step is optional. The Typescript source and configuration has been taken from https://github.com/markellekelly/jupyter-server-example.
 
 ```bash
 make install-ts
 make build-ts
 ```
 
-You need python3 to build and run the extensions.
+You need `python3` to build and run the server extensions.
 
 ```bash
 conda create -y -n jext python=3.7
