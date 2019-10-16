@@ -28,7 +28,7 @@ setuptools.setup(
     packages = find_packages(),
     python_requires = '>=3.5',
     install_requires = [
-        'jupyter_server==0.1.1',
+        'jupyter_server',
         'jinja2',
     ],
     tests_requires = [
