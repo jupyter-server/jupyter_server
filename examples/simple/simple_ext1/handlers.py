@@ -1,19 +1,8 @@
 from jupyter_server.extension.handler import ExtensionHandler
 
-class TemplateHandler(ExtensionHandler):
-
-    def get_template(self, name):
-        """Return the jinja template object for a given name"""
-        return self.settings['simple_ext1_jinja2_env'].get_template(name)
-
 class RedirectHandler(ExtensionHandler):
     def get(self):
         self.redirect("/static/simple_ext1/favicon.ico")
-
-class IndexHandler(TemplateHandler):
-    
-    def get(self):
-        self.write(self.render_template("index.html"))
 
 class ParameterHandler(ExtensionHandler):
     
@@ -25,18 +14,24 @@ class ParameterHandler(ExtensionHandler):
         self.write('<p>var1: {}</p>'.format(var1))
         self.write('<p>components: {}</p>'.format(components))
 
-class TemplateHandler(TemplateHandler):
+class BaseTemplateHandler(ExtensionHandler):
+
+    def get_template(self, path):
+        """Return the jinja template object for a given name"""
+        return self.settings['simple_ext1_jinja2_env'].get_template(path)
+
+class TypescriptHandler(BaseTemplateHandler):
     
     def get(self):
-        print(self.get_template('simple_ext1.html'))
-        self.write(self.render_template('simple_ext1.html'))
+        self.write(self.render_template("typescript.html"))
 
-class Page1Handler(TemplateHandler):
+class TemplateHandler(BaseTemplateHandler):
     
     def get(self, path):
-        self.write(self.render_template('page1.html', text=path))
+#        print(self.get_template('simple1.html'))
+        self.write(self.render_template('simple1.html', path=path))
 
-class ErrorHandler(TemplateHandler):
+class ErrorHandler(BaseTemplateHandler):
     
     def get(self, path):
-        self.write(self.render_template('error.html'))
+        self.write(self.render_template('error.html', path=path))

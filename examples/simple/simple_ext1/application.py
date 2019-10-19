@@ -1,6 +1,6 @@
 import os, jinja2
 from jupyter_server.extension.application import ExtensionApp
-from .handlers import RedirectHandler, ParameterHandler, TemplateHandler, Page1Handler, IndexHandler, ErrorHandler
+from .handlers import RedirectHandler, ParameterHandler, TemplateHandler, TypescriptHandler, ErrorHandler
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")
@@ -11,7 +11,7 @@ class SimpleApp1(ExtensionApp):
     extension_name = "simple_ext1"
 
     # Te url that your extension will serve its homepage.
-    default_url = '/simple_ext1'
+    default_url = '/template/home'
 
     # Should your extension expose other server extensions when launched directly?
     load_other_extensions = True
@@ -28,11 +28,10 @@ class SimpleApp1(ExtensionApp):
 
     def initialize_handlers(self):
         self.handlers.extend([
-            (r'/', RedirectHandler),
             (r'/simple_ext1/params/(.+)$', ParameterHandler),
-            (r'/simple_ext1/template', TemplateHandler),
-            (r'/simple_ext1/page1/(.*)$', Page1Handler),
-            (r'/simple_ext1/?', IndexHandler),
+            (r'/simple_ext1/template1/(.*)$', TemplateHandler),
+            (r'/simple_ext1/redirect', RedirectHandler),
+            (r'/simple_ext1/typescript/?', TypescriptHandler),
             (r'/simple_ext1/(.*)', ErrorHandler)
         ])
 

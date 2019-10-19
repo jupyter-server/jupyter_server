@@ -1,16 +1,5 @@
 from jupyter_server.extension.handler import ExtensionHandler
 
-class TemplateHandler(ExtensionHandler):
-
-    def get_template(self, name):
-        """Return the jinja template object for a given name"""
-        return self.settings['simple_ext2_jinja2_env'].get_template(name)
-
-class IndexHandler(TemplateHandler):
-    
-    def get(self):
-        self.write(self.render_template("index.html"))
-
 class ParameterHandler(ExtensionHandler):
     
     def get(self, matched_part=None, *args, **kwargs):
@@ -21,13 +10,24 @@ class ParameterHandler(ExtensionHandler):
         self.write('<p>var1: {}</p>'.format(var1))
         self.write('<p>components: {}</p>'.format(components))
 
-class TemplateHandler(TemplateHandler):
+class BaseTemplateHandler(ExtensionHandler):
+
+    def get_template(self, name):
+        """Return the jinja template object for a given name"""
+        return self.settings['simple_ext2_jinja2_env'].get_template(name)
+
+class IndexHandler(BaseTemplateHandler):
     
     def get(self):
-        print(self.get_template('simple_ext2.html'))
-        self.write(self.render_template('simple_ext2.html'))
+        self.write(self.render_template("index.html"))
 
-class ErrorHandler(TemplateHandler):
+class TemplateHandler(BaseTemplateHandler):
+    
+    def get(self, path):
+        print(self.get_template('simple_ext2.html'))
+        self.write(self.render_template('simple_ext2.html', path=path))
+
+class ErrorHandler(BaseTemplateHandler):
     
     def get(self, path):
         self.write(self.render_template('error.html'))

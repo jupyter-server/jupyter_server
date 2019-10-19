@@ -44,21 +44,27 @@ open http://localhost:8888
 ```
 
 Render Extension 1 Server content in your browser.
-
+x
 ```bash
-# Favicon static content.
-open http://localhost:8888/static/simple_ext1/favicon.ico
+# Jupyter Server Home Page
+open http://localhost:8888/
+# TODO Fix Default URL.
+# Home page as defined by default_url = '/template1/home'.
+open http://localhost:8888/simple_ext1/
 # HTML static page.
 open http://localhost:8888/static/simple_ext1/test.html
 # Content from Handlers.
 open http://localhost:8888/simple_ext1/params/test?var1=foo
 # Content from Template.
-open http://localhost:8888/simple_ext1/page1/test
+open http://localhost:8888/simple_ext1/template1/test
 # Content from Template with Typescript.
-open http://localhost:8888/simple_ext1
-open http://localhost:8888/simple_ext1/template
+open http://localhost:8888/simple_ext1/typescript
 # Error content.
 open http://localhost:8888/simple_ext1/nope
+# Redirect.
+open http://localhost:8888/simple_ext1/redirect
+# Favicon static content.
+open http://localhost:8888/static/simple_ext1/favicon.ico
 ```
 
 Render Extension 2 Server content in your browser.
