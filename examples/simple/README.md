@@ -85,4 +85,4 @@ Now stop the server and start again with only Extension 2.
 jupyter simple-ext2
 ```
 
-Try with the above links to check that only Extension 2 is responding (Extension 1 URLs should give you an error).
+Try with the above links to check that only Extension 2 is responding (Extension 1 URLs should give you an 404 error).
