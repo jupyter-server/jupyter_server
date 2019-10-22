@@ -282,11 +282,13 @@ class ExtensionApp(JupyterApp):
         super(ExtensionApp, self).initialize(argv=argv)
         self.serverapp = serverapp
 
-        # Initialize config, settings, templates, and handlers.
-        self._prepare_config()
-        self._prepare_templates()
-        self._prepare_settings()
-        self._prepare_handlers()
+        # Initialize config, settings, templates, and handlers if serverapp has a web_app.
+        # Subcommands may not have a web_app attribute.
+        if hasattr(self.serverapp, 'web_app'):
+            self._prepare_config()
+            self._prepare_templates()
+            self._prepare_settings()
+            self._prepare_handlers()
 
     def start(self):
         """Start the underlying Jupyter server.
@@ -319,6 +321,8 @@ class ExtensionApp(JupyterApp):
         extension = cls()
         extension.initialize(serverapp, argv=argv)
         return extension
+    
+    subcommands = dict()
 
     @classmethod
     def launch_instance(cls, argv=None, **kwargs):
@@ -338,7 +342,8 @@ class ExtensionApp(JupyterApp):
         # Get a jupyter server instance.
         serverapp = cls.initialize_server(
             argv=args, 
-            load_other_extensions=cls.load_other_extensions
+            load_other_extensions=cls.load_other_extensions,
+            subcommands = cls.subcommands
         )
         # Log if extension is blocking other extensions from loading.
         if not cls.load_other_extensions:
