@@ -1675,7 +1675,7 @@ class ServerApp(JupyterApp):
 
         jinja2_env = self.web_app.settings['jinja2_env']
         template = jinja2_env.get_template('browser-open.html')
-        fh.write(template.render(open_url=url))
+        fh.write(template.render(open_url=url, base_url=self.base_url))
 
     def remove_browser_open_file(self):
         """Remove the nbserver-<pid>-open.html file created for this server.
