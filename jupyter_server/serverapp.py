@@ -1703,7 +1703,7 @@ class ServerApp(JupyterApp):
                 self.log.critical(_("%s does not exist") % self.file_to_run)
                 self.exit(1)
 
-            relpath = os.path.relpath(self.file_to_run, self.notebook_dir)
+            relpath = os.path.relpath(self.file_to_run, self.root_dir)
             uri = url_escape(url_path_join('notebooks', *relpath.split(os.sep)))
 
             # Write a temporary file to open in the browser
