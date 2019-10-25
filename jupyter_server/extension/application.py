@@ -1,6 +1,8 @@
 import sys
 import re
 
+from jinja2 import Environment, FileSystemLoader
+
 from traitlets import (
     Unicode, 
     List, 
@@ -155,6 +157,12 @@ class ExtensionApp(JupyterApp):
         Can be used to override templates from notebook.templates.""")
     ).tag(config=True)
 
+    jinja2_options = Dict(
+        help=_("""Options to pass to the jinja2 environment for this
+        extension.
+        """)
+    ).tag(config=True)
+
     settings = Dict(
         help=_("""Settings that will passed to the server.""")
     ).tag(config=True)
@@ -302,7 +310,24 @@ class ExtensionApp(JupyterApp):
             self.settings.update({
                 "{}_template_paths".format(self.extension_name): self.template_paths
             })
+
+        # Create a jinja environment for logging html templates.
+        self.jinja2_env = Environment(
+            loader=FileSystemLoader(self.template_paths), 
+            extensions=['jinja2.ext.i18n'],
+            autoescape=True,
+            **self.jinja_options
+        )
+
+        # Get templates defined in a subclass.
         self.initialize_templates()
+
+        # Add the jinja2 environment for this extension to the tornado settings.
+        self.settings.update(
+            {
+                "{}_jinja2_env".format(self.extension_name): self.jinja2_env 
+            }
+        )
 
     @staticmethod
     def initialize_server(argv=[], load_other_extensions=True, **kwargs):

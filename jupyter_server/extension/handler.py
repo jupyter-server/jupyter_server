@@ -32,6 +32,11 @@ class ExtensionHandler(JupyterHandler):
     def static_path(self):
         return self.settings['{}_static_paths'.format(self.extension_name)]
 
+    def get_template(self, name):
+        """Return the jinja template object for a given name"""
+        env = '{}_jinja2_env'.format(self.extension_name)
+        return self.settings[env].get_template(name)
+
     def static_url(self, path, include_host=None, **kwargs):
         """Returns a static URL for the given relative static file path.
         This method requires you set the ``{extension_name}_static_path`` 
