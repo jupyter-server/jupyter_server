@@ -316,7 +316,7 @@ class ExtensionApp(JupyterApp):
             loader=FileSystemLoader(self.template_paths), 
             extensions=['jinja2.ext.i18n'],
             autoescape=True,
-            **self.jinja_options
+            **self.jinja2_options
         )
 
         # Get templates defined in a subclass.
