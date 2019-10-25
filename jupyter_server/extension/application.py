@@ -4,7 +4,8 @@ import re
 from traitlets import (
     Unicode, 
     List, 
-    Dict, 
+    Dict,
+    Bool,
     default, 
     validate
 )
