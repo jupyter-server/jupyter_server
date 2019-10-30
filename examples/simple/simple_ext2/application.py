@@ -7,7 +7,7 @@ DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates
 
 class SimpleApp2(ExtensionApp):
     
-    # The name of the extension
+    # The name of the extension.
     extension_name = "simple_ext2"
 
     # Te url that your extension will serve its homepage.

@@ -1,17 +1,18 @@
 import os, jinja2
 from jupyter_server.extension.application import ExtensionApp
-from .handlers import RedirectHandler, ParameterHandler, TemplateHandler, TypescriptHandler, ErrorHandler
+from .handlers import (DefaultHandler, RedirectHandler, ParameterHandler, 
+  TemplateHandler, TypescriptHandler, ErrorHandler)
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")
 
 class SimpleApp1(ExtensionApp):
     
-    # The name of the extension
+    # The name of the extension.
     extension_name = "simple_ext1"
 
     # Te url that your extension will serve its homepage.
-    default_url = '/template/home'
+    default_url = '/default'
 
     # Should your extension expose other server extensions when launched directly?
     load_other_extensions = True
@@ -28,11 +29,12 @@ class SimpleApp1(ExtensionApp):
 
     def initialize_handlers(self):
         self.handlers.extend([
-            (r'/simple_ext1/params/(.+)$', ParameterHandler),
-            (r'/simple_ext1/template1/(.*)$', TemplateHandler),
-            (r'/simple_ext1/redirect', RedirectHandler),
-            (r'/simple_ext1/typescript/?', TypescriptHandler),
-            (r'/simple_ext1/(.*)', ErrorHandler)
+            (r'/{}/default'.format(self.extension_name), DefaultHandler),
+            (r'/{}/params/(.+)$'.format(self.extension_name), ParameterHandler),
+            (r'/{}/template1/(.*)$'.format(self.extension_name), TemplateHandler),
+            (r'/{}/redirect'.format(self.extension_name), RedirectHandler),
+            (r'/{}/typescript/?'.format(self.extension_name), TypescriptHandler),
+            (r'/{}/(.*)', ErrorHandler)
         ])
 
     def initialize_templates(self):
@@ -45,8 +47,15 @@ class SimpleApp1(ExtensionApp):
         template_settings = {"simple_ext1_jinja2_env": env}
         self.settings.update(**template_settings)
 
+    def get_conf(self, key):
+        return self.settings.get('config').get('SimpleApp1').get(key, None)
+
     def initialize_settings(self):
-        pass
+        self.settings.get('config').get('SimpleApp1').update({'app': 'OK'})
+        self.log.info('SimpleApp1.app {}'.format(self.get_conf('app')))
+        self.log.info('SimpleApp1.file {}'.format(self.get_conf('file')))
+        self.log.info('SimpleApp1.cli {}'.format(self.get_conf('cli')))
+        self.log.info('Complete Settings {}'.format(self.settings))
 
 #-----------------------------------------------------------------------------
 # Main entry point
