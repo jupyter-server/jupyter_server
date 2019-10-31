@@ -1,10 +1,18 @@
 import os
 from simple_ext1.application import SimpleApp1
+from jupyter_server.serverapp import aliases, flags
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "./../simple_ext1/static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "./../simple_ext1/templates")
 
 class SimpleApp11(SimpleApp1):
+    flags['hello']=(
+        {'SimpleApp11' : {'hello' : True}},
+        "Say hello on startup."
+    )
+    aliases.update({
+        'notebook-dir': 'ServerApp.notebook_dir',
+    })
     
     # The name of the extension.
     extension_name = "simple_ext11"
@@ -19,14 +27,16 @@ class SimpleApp11(SimpleApp1):
         DEFAULT_TEMPLATE_FILES_PATH
     ]
 
-    def initialize_handlers(self):
-        super().initialize_handlers()
-
-    def initialize_templates(self):
-        super().initialize_templates()
+    def get_conf(self, key):
+        simple_app_11 = self.settings.get('config').get('SimpleApp11')
+        if simple_app_11:
+            return simple_app_11.get(key, None)
+        return None
 
     def initialize_settings(self):
-        super().initialize_templates()
+        if self.get_conf('hello') == True:
+            self.log.info('Hello Simple11 - You have provided the --hello flag or defined a c.SimpleApp1.hello == True')
+        super().initialize_settings()
 
 #-----------------------------------------------------------------------------
 # Main entry point

@@ -99,11 +99,17 @@ Try with the above links to check that only Extension 2 is responding (Extension
 
 ## Extension 11 extending Extension 1
 
+`Extension 11` extends `Extension 1`. It also implemnets additional flags and aliases.
+
+The `--hello` flag will log on startup `Hello Simple11 - You have provided the --hello flag or defined a c.SimpleApp1.hello == True`.
+
 ```bash
-jupyter simple-ext11
+jupyter simple-ext11 --hello
 # or...
-jupyter server --ServerApp.jpserver_extensions="{'simple_ext11': True}"
+jupyter server --ServerApp.jpserver_extensions="{'simple_ext11': True}" --hello
 ```
+
+Ensure the following URLs give respond correctly.
 
 ```bash
 # Jupyter Server Home Page.
