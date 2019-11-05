@@ -1675,7 +1675,7 @@ class ServerApp(JupyterApp):
 
         jinja2_env = self.web_app.settings['jinja2_env']
         template = jinja2_env.get_template('browser-open.html')
-        fh.write(template.render(open_url=url))
+        fh.write(template.render(open_url=url, base_url=self.base_url))
 
     def remove_browser_open_file(self):
         """Remove the nbserver-<pid>-open.html file created for this server.
@@ -1703,7 +1703,7 @@ class ServerApp(JupyterApp):
                 self.log.critical(_("%s does not exist") % self.file_to_run)
                 self.exit(1)
 
-            relpath = os.path.relpath(self.file_to_run, self.notebook_dir)
+            relpath = os.path.relpath(self.file_to_run, self.root_dir)
             uri = url_escape(url_path_join('notebooks', *relpath.split(os.sep)))
 
             # Write a temporary file to open in the browser
