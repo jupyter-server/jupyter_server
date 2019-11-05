@@ -56,6 +56,8 @@ class SimpleApp1(ExtensionApp):
         self.log.info('SimpleApp1.file {}'.format(self.get_conf('file')))
         self.log.info('SimpleApp1.cli {}'.format(self.get_conf('cli')))
         self.log.info('Complete Settings {}'.format(self.settings))
+        # TODO Check this setting/config handling... Updating does not look to be fine here...
+        self.settings["{}_config".format(self.extension_name)].update(**self.settings.get('config').get('SimpleApp1'))
 
 #-----------------------------------------------------------------------------
 # Main entry point

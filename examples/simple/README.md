@@ -7,8 +7,8 @@ This folder contains an example of 2 simple extensions on top of Jupyter Server.
 You need `python3` to build and run the server extensions.
 
 ```bash
-conda create -y -n jext python=3.7 && \
-  conda activate jext && \
+conda create -y -n jupyter_server_example python=3.7 && \
+  conda activate jupyter_server_example && \
   pip install -e .
 ```
 
@@ -33,10 +33,11 @@ pip uninstall -y simple_ext
 python setup.py install
 cp -r ./etc $(dirname $(which jupyter))/..
 # Start the jupyter server extension simple_ext1, it will also load simple_ext2 because of load_other_extensions = True..
+# When you invoke with the entrypoint, the default url will be opened in your browser.
 jupyter simple-ext1
 ```
 
-Now you can render Extension 1 Server content in your browser.
+Now you can render `Extension 1` Server content in your browser.
 
 ```bash
 # Jupyter Server Home Page.
@@ -60,7 +61,7 @@ open http://localhost:8888/simple_ext1/redirect
 open http://localhost:8888/static/simple_ext1/favicon.ico
 ```
 
-You can also render Extension 2 Server content in your browser.
+You can also render `Extension 2` Server content in your browser.
 
 ```bash
 # HTML static page.
@@ -71,7 +72,7 @@ open http://localhost:8888/simple_ext2/params/test?var1=foo
 
 ## Settings
 
-Start with additional settings.
+Stop any running server (with CTRL+C) and start with additional settings on the command line.
 
 ```bash
 jupyter server --ServerApp.jpserver_extensions="{'simple_ext1': True, 'simple_ext2': True}" --SimpleApp1.cli=OK
@@ -83,12 +84,12 @@ Check the log, it should return on startup something like the following base on 
 [SimpleApp1] SimpleApp1.app OK
 [SimpleApp1] SimpleApp1.file OK
 [SimpleApp1] SimpleApp1.cli OK
-[SimpleApp1] Complete Settings {'simple_ext1_config': {}, 'simple_ext1_template_paths': ['/home/datalayer/repos/jupyter-server/examples/simple/simple_ext1/templates'], 'simple_ext1_jinja2_env': <jinja2.environment.Environment object at 0x105ed7438>, 'log_function': <function log_request at 0x105e2d950>, 'base_url': '/', 'default_url': '/', 'template_path': ['/opt/datalayer/opt/miniconda3/envs/datalayer/lib/python3.7/site-packages/jupyter_server', '/opt/datalayer/opt/miniconda3/envs/datalayer/lib/python3.7/site-packages/jupyter_server/templates'], 'static_path': ['/opt/datalayer/opt/miniconda3/envs/datalayer/lib/python3.7/site-packages/jupyter_server/static'], 'static_custom_path': ['/home/datalayer/.jupyter/custom', '/opt/datalayer/opt/miniconda3/envs/datalayer/lib/python3.7/site-packages/jupyter_server/static/custom'], 'static_handler_class': <class 'jupyter_server.base.handlers.FileFindHandler'>, 'static_url_prefix': ...
+[SimpleApp1] Complete Settings {'simple_ext1_config': {}, 'simple_ext1_template_paths': ['/home/datalayer/repos/jupyter-server/examples/simple/simple_ext1/templates'], 'simple_ext1_jinja2_env': <jinja2.environment.Environment object at 0x105ed7438>, 'log_function': <function log_request at 0x105e2d950>, 'base_url': '/', 'default_url': '/', 'template_path': ...
 ```
 
 ## Start only Extension 2
-`
-Now stop the server and start again with only Extension 2.
+
+Now stop agin the server and start with only `Extension 2`.
 
 ```bash
 # Start the jupyter server extension simple_ext2, it will NOT load simple_ext1 because of load_other_extensions = False.
@@ -103,10 +104,14 @@ Try with the above links to check that only Extension 2 is responding (Extension
 
 The `--hello` flag will log on startup `Hello Simple11 - You have provided the --hello flag or defined a c.SimpleApp1.hello == True`.
 
+The `--simple11-dir` alias will set `SimpleExt11.simple11_dir` settings.
+
+Stop any running server and then start the simple-ext11.
+
 ```bash
-jupyter simple-ext11 --hello
+jupyter simple-ext11 --hello --simple11-dir any_folder
 # or...
-jupyter server --ServerApp.jpserver_extensions="{'simple_ext11': True}" --hello
+jupyter server --ServerApp.jpserver_extensions="{'simple_ext11': True}" --hello --simple11-dir any_folder
 ```
 
 Ensure the following URLs give respond correctly.
