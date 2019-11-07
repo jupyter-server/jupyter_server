@@ -1,7 +1,7 @@
 import os, jinja2
 from jupyter_server.extension.application import ExtensionApp
-from .handlers import (DefaultHandler, RedirectHandler, ParameterHandler, 
-  TemplateHandler, TypescriptHandler, ErrorHandler)
+from .handlers import (DefaultHandler, RedirectHandler, 
+  ParameterHandler, TemplateHandler, TypescriptHandler, ErrorHandler)
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")

@@ -42,10 +42,10 @@ Now you can render `Extension 1` Server content in your browser.
 ```bash
 # Jupyter Server Home Page.
 open http://localhost:8888/
-# TODO Fix Default URL, it does not show on startup.
 # Home page as defined by default_url = '/default'.
 open http://localhost:8888/simple_ext1/default
 # HTML static page.
+open http://localhost:8888/static/simple_ext1/home.html
 open http://localhost:8888/static/simple_ext1/test.html
 # Content from Handlers.
 open http://localhost:8888/simple_ext1/params/test?var1=foo
