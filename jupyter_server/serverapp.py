@@ -951,7 +951,9 @@ class ServerApp(JupyterApp):
         help=_("Extra keyword arguments to pass to `get_secure_cookie`."
              " See tornado's get_secure_cookie docs for details.")
     )
-    ssl_options = Dict(config=True,
+    ssl_options = Dict(
+            allow_none=True,
+            config=True,
             help=_("""Supply SSL options for the tornado HTTPServer.
             See the tornado docs for details."""))
 
