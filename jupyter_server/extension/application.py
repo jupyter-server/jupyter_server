@@ -1,4 +1,5 @@
 import sys
+import re
 
 from traitlets import (
     Unicode, 
@@ -24,7 +25,25 @@ except KeyError:
     pass
 
 
-def _preparse_command_line(Application):
+def _preparse_for_subcommand(Application, argv):
+    """Preparse command line to look for subcommands.
+    """
+    # Read in arguments from command line.
+    if len(argv) == 0:
+        return
+
+    # Find any subcommands.
+    if Application.subcommands and len(argv) > 0:
+        # we have subcommands, and one may have been specified
+        subc, subargv = argv[0], argv[1:]
+        if re.match(r'^\w(\-?\w)*$', subc) and subc in Application.subcommands:
+            # it's a subcommand, and *not* a flag or class parameter
+            app = Application()
+            app.initialize_subcommand(subc, subargv)
+            return app.subapp
+
+
+def _preparse_for_stopping_flags(Application, argv):
     """Looks for 'help', 'version', and 'generate-config; commands 
     in command line. If found, raises the help and version of 
     current Application.
@@ -38,9 +57,9 @@ def _preparse_command_line(Application):
     # version), we want to only search the arguments up to the first
     # occurrence of '--', which we're calling interpreted_argv.
     try:
-        interpreted_argv = sys.argv[:sys.argv.index('--')]
+        interpreted_argv = argv[:argv.index('--')]
     except ValueError:
-        interpreted_argv = sys.argv
+        interpreted_argv = argv
 
     # Catch any help calls.
     if any(x in interpreted_argv for x in ('-h', '--help-all', '--help')):
@@ -108,6 +127,8 @@ class ExtensionApp(JupyterApp):
 
     aliases = aliases
     flags = flags
+
+    subcommands = {}
 
     @property
     def static_url_prefix(self):
@@ -293,6 +314,7 @@ class ExtensionApp(JupyterApp):
         
         Server should be started after extension is initialized.
         """
+        super(ExtensionApp, self).start()
         # Override the browser open file to 
         # Override the server's display url to show extension's display URL.
         self.serverapp.custom_display_url = self.custom_display_url
@@ -302,7 +324,7 @@ class ExtensionApp(JupyterApp):
         # the extensions home page.
         self.serverapp._write_browser_open_file = self._write_browser_open_file
         # Start the server.
-        self.serverapp.start() 
+        self.serverapp.start()
 
     def stop(self):
         """Stop the underlying Jupyter server.
@@ -320,34 +342,40 @@ class ExtensionApp(JupyterApp):
         extension.initialize(serverapp, argv=argv)
         return extension
 
+
     @classmethod
     def launch_instance(cls, argv=None, **kwargs):
         """Launch the extension like an application. Initializes+configs a stock server 
         and appends the extension to the server. Then starts the server and routes to
         extension's landing page.
         """
-        # Check for help, version, and generate-config arguments
-        # before initializing server to make sure these
-        # arguments trigger actions from the extension not the server.
-        _preparse_command_line(cls)
         # Handle arguments.
         if argv is None:
             args = sys.argv[1:]  # slice out extension config.
         else:
             args = []
-        # Get a jupyter server instance.
-        serverapp = cls.initialize_server(
-            argv=args, 
-            load_other_extensions=cls.load_other_extensions
-        )
-        # Log if extension is blocking other extensions from loading.
-        if not cls.load_other_extensions:
-            serverapp.log.info(
-                "{ext_name} is running without loading "
-                "other extensions.".format(ext_name=cls.extension_name)
+        # Check for subcommands
+        subapp = _preparse_for_subcommand(cls, args)
+        if subapp:
+            subapp.start()
+        else:
+            # Check for help, version, and generate-config arguments
+            # before initializing server to make sure these
+            # arguments trigger actions from the extension not the server.
+            _preparse_for_stopping_flags(cls, args) 
+            # Get a jupyter server instance.
+            serverapp = cls.initialize_server(
+                argv=args, 
+                load_other_extensions=cls.load_other_extensions
             )
+            # Log if extension is blocking other extensions from loading.
+            if not cls.load_other_extensions:
+                serverapp.log.info(
+                    "{ext_name} is running without loading "
+                    "other extensions.".format(ext_name=cls.extension_name)
+                )
 
-        extension = cls.load_jupyter_server_extension(serverapp, argv=args, **kwargs)
-        # Start the ioloop.
-        extension.start()
+            extension = cls.load_jupyter_server_extension(serverapp, argv=args, **kwargs)
+            # Start the ioloop.
+            extension.start()
 
