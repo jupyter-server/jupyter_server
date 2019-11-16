@@ -51,13 +51,13 @@ class SimpleApp1(ExtensionApp):
         return self.settings.get('config').get('SimpleApp1').get(key, None)
 
     def initialize_settings(self):
-        self.settings.get('config').get('SimpleApp1').update({'app': 'OK'})
         self.log.info('SimpleApp1.app {}'.format(self.get_conf('app')))
         self.log.info('SimpleApp1.file {}'.format(self.get_conf('file')))
         self.log.info('SimpleApp1.cli {}'.format(self.get_conf('cli')))
         self.log.info('Complete Settings {}'.format(self.settings))
         # TODO Check this setting/config handling... Updating does not look to be fine here...
-        self.settings["{}_config".format(self.extension_name)].update(**self.settings.get('config').get('SimpleApp1'))
+#        self.settings.get('config').get(self.extension_name).update({'app': 'OK'})
+#        self.settings["{}_config".format(self.extension_name)].update(**self.settings.get('config').get('SimpleApp1'))
 
 #-----------------------------------------------------------------------------
 # Main entry point

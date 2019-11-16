@@ -100,11 +100,49 @@ Try with the above links to check that only Extension 2 is responding (Extension
 
 ## Extension 11 extending Extension 1
 
-`Extension 11` extends `Extension 1`. It also implemnets additional flags and aliases.
+`Extension 11` extends `Extension 1`.
 
-The `--hello` flag will log on startup `Hello Simple11 - You have provided the --hello flag or defined a c.SimpleApp1.hello == True`.
+It brings a few more configs. Run `jupyter simple-ext11 --generate-config && vi ~/.jupyter/jupyter_config.py`.
 
-The `--simple11-dir` alias will set `SimpleExt11.simple11_dir` settings.
+The generated configuration should contains the following.
+
+```bash
+...
+#  Can be used to override templates from notebook.templates.
+#c.ExtensionApp.template_paths = []
+
+#------------------------------------------------------------------------------
+# SimpleApp1(ExtensionApp) configuration
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# SimpleApp11(SimpleApp1) configuration
+#------------------------------------------------------------------------------
+
+## Say hello
+#c.SimpleApp11.hello = False
+
+## Ignore Javascript
+#c.SimpleApp11.ignore_js = False
+
+## Simple directory
+#c.SimpleApp11.simple11_dir = ''
+
+#------------------------------------------------------------------------------
+# ServerApp(JupyterApp) configuration
+#------------------------------------------------------------------------------
+
+## Set the Access-Control-Allow-Credentials: true header
+#c.ServerApp.allow_credentials = False
+...
+```
+
+The `hello`, `ignoare_js` and `simple11_dir` are traits defined on the SimpleApp11 class.
+
+It also implements additional flags and aliases for these traits.
+
++ The `--hello` flag will log on startup `Hello Simple11 - You have provided the --hello flag or defined a c.SimpleApp1.hello == True`.
++ The `--simple11-dir` alias will set `SimpleExt11.simple11_dir` settings.
 
 Stop any running server and then start the simple-ext11.
 
