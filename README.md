@@ -12,6 +12,8 @@ usage yet. Features and implementation are subject to change. Please use the
 stable [notebook server](https://github.com/jupyter/notebook) for production
 usecases.**
 
+Read more on the Jupyter Server [roadmap](https://github.com/jupyter/jupyter_server/issues/127).
+
 ## Installation
 
 You can find the installation documentation for the
@@ -44,7 +46,18 @@ See [`CONTRIBUTING.rst`](CONTRIBUTING.rst) for how to set up a local development
 
 If you are interested in contributing to the project, see [`CONTRIBUTING.rst`](CONTRIBUTING.rst).
 
+## Weekly Dev Meeting
+
+We have videoconference meetings every week where we discuss what we have been working on and get feedback from one another.
+
+Anyone is welcome to attend, if they would like to discuss a topic or just to listen in.
+
+When: Thursdays [8:00am, Pacific time](https://www.thetimezoneconverter.com/?t=8%3A00%20am&tz=San%20Francisco&)
+Where: [calpoly/jupyter Zoom](https://calpoly.zoom.us/my/jupyter)
+What: [Meeting notes](https://github.com/jupyter/jupyter_server/issues/126)
+
 ## Resources
+
 - [Project Jupyter website](https://jupyter.org)
 - [Online Demo at try.jupyter.org](https://try.jupyter.org)
 - [Documentation for Jupyter Server](https://jupyter-server.readthedocs.io/en/latest/) [[PDF](https://media.readthedocs.org/pdf/jupyter-server/latest/jupyter-server.pdf)]
