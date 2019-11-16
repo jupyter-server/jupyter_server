@@ -8,7 +8,7 @@ DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "./../simp
 
 class SimpleApp11(SimpleApp1):
     flags['hello']=(
-        { 'SimpleApp11' : {'hello' : False} }, "Say hello on startup."
+        { 'SimpleApp11' : {'hello' : True} }, "Say hello on startup."
     )
     aliases.update({
         'simple11-dir': 'SimpleApp11.simple11_dir',
