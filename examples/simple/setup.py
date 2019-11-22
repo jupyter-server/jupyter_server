@@ -7,7 +7,9 @@ def get_data_files():
     """Get the data files for the package.
     """
     data_files = [
-        ('etc/jupyter/jupyter_server_config.d', ['etc/jupyter/jupyter_server_config.d/simple_ext.json']),
+        ('etc/jupyter/jupyter_server_config.d', ['etc/jupyter/jupyter_server_config.d/simple_ext1.json']),
+        ('etc/jupyter/jupyter_server_config.d', ['etc/jupyter/jupyter_server_config.d/simple_ext2.json']),
+        ('etc/jupyter/jupyter_server_config.d', ['etc/jupyter/jupyter_server_config.d/simple_ext11.json']),
     ]
     def add_data_files(path):
         for (dirpath, dirnames, filenames) in os.walk(path):
@@ -36,6 +38,7 @@ setuptools.setup(
         'pytest-cov',
         'pylint',
     ],
+    include_package_data=True,
     data_files = get_data_files(),
     entry_points = {
         'console_scripts': [
