@@ -507,7 +507,6 @@ class APITest(ServerTestBase):
 
         for d in self.dirs + ['/']:
             nbs = notebooks_only(self.api.list(d).json())
-            print('------')
             print(d)
             print(nbs)
             self.assertEqual(nbs, [])

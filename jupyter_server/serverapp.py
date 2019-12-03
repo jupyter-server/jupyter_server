@@ -1207,6 +1207,7 @@ class ServerApp(JupyterApp):
          """))
 
     def parse_command_line(self, argv=None):
+
         super(ServerApp, self).parse_command_line(argv)
 
         if self.extra_args:

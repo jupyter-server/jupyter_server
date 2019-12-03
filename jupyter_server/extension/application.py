@@ -108,6 +108,10 @@ class ExtensionApp(JupyterApp):
 
     INVALID_EXTENSION_NAME_CHARS = [' ', '.', '+', '/']
 
+    def _config_file_name_default(self):
+        """The default config file name."""
+        return 'jupyter_{}_config'.format(self.extension_name)
+
     def _validate_extension_name(self):
         value = self.extension_name
         if isinstance(value, str):
@@ -211,6 +215,7 @@ class ExtensionApp(JupyterApp):
         """
         traits = self.class_own_traits().keys()
         self.extension_config = Config({t: getattr(self, t) for t in traits})
+        self.serverapp.web_app.settings['{}_config'.format(self.extension_name)] = self.extension_config
         self.settings['{}_config'.format(self.extension_name)] = self.extension_config
 
     def _prepare_settings(self):
