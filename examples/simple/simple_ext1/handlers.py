@@ -3,14 +3,13 @@ from jupyter_server.extension.handler import ExtensionHandler
 class DefaultHandler(ExtensionHandler):
     def get(self):
         # The ExtensionApp’s config object.
-        self.log.info("Settings: {}".format(self.settings))
-        self.log.info("Config: {}".format(self.config))
-        # TODO The ServerApp’s config object.
+#        self.log.info("Settings in {} Default Handler: {}".format(self.extension_name, self.settings))
+        self.log.info("Config in {} Default Handler: {}".format(self.extension_name, self.config))
         # self.log.info(self.server_config)
         # The name of the extension to which this handler is linked.
-        self.log.info("Extension Name: {}".format(self.extension_name))
+        self.log.info("Extension Name in {} Default Handler: {}".format(self.extension_name, self.extension_name))
         # A method for getting the url to static files (prefixed with /static/<extension_name>).
-        self.log.info("Static URL for /:".format(self.static_url(path='/')))
+        self.log.info("Static URL for / in simple_ext1 Default Handler:".format(self.static_url(path='/')))
         self.write('<h1>Hello Simple 1 - I am the default...</h1>')
 
 class RedirectHandler(ExtensionHandler):

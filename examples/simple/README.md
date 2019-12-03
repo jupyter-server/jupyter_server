@@ -29,7 +29,7 @@ jupyter server --ServerApp.jpserver_extensions="{'simple_ext1': True, 'simple_ex
 Optionally, you can copy `simple_ext1.json` and `simple_ext2.json` configuration to your env `etc` folder and start only Extension 1, which will also start Extension 2.
 
 ```bash
-pip uninstall -y simple_ext
+pip uninstall -y jupyter_simple_ext
 python setup.py install
 cp -r ./etc $(dirname $(which jupyter))/..
 # Start the jupyter server extension simple_ext1, it will also load simple_ext2 because of load_other_extensions = True..
@@ -100,9 +100,9 @@ Try with the above links to check that only Extension 2 is responding (Extension
 
 ## Extension 11 extending Extension 1
 
-`Extension 11` extends `Extension 1`.
+`Extension 11` extends `Extension 1` and brings a few more configs.
 
-It brings a few more configs. Run `jupyter simple-ext11 --generate-config && vi ~/.jupyter/jupyter_config.py`.
+Run `jupyter simple-ext11 --generate-config && vi ~/.jupyter/jupyter_config.py`.
 
 The generated configuration should contains the following.
 

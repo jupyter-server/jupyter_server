@@ -1,4 +1,5 @@
 import os, jinja2
+from traitlets import Unicode
 from jupyter_server.extension.application import ExtensionApp
 from .handlers import (DefaultHandler, RedirectHandler, 
   ParameterHandler, TemplateHandler, TypescriptHandler, ErrorHandler)
@@ -27,6 +28,21 @@ class SimpleApp1(ExtensionApp):
         DEFAULT_TEMPLATE_FILES_PATH
     ]
 
+    file = Unicode('',
+        config=True,
+        help='File path'
+    )
+
+    app = Unicode('',
+        config=True,
+        help='File path'
+    )
+
+    cli = Unicode('',
+        config=True,
+        help='File path'
+    )
+
     def initialize_handlers(self):
         self.handlers.extend([
             (r'/{}/default'.format(self.extension_name), DefaultHandler),
@@ -48,14 +64,18 @@ class SimpleApp1(ExtensionApp):
         self.settings.update(**template_settings)
 
     def get_conf(self, key):
-        return self.settings.get('config').get('SimpleApp1').get(key, None)
+        c = self.settings.get('config').get(type(self).__name__)
+        if c:
+            return c.get(key, None)
+        else:
+            return None
 
     def initialize_settings(self):
-        self.log.info('SimpleApp1.app {}'.format(self.get_conf('app')))
-        self.log.info('SimpleApp1.file {}'.format(self.get_conf('file')))
-        self.log.info('SimpleApp1.cli {}'.format(self.get_conf('cli')))
-        self.log.info('Complete Settings {}'.format(self.settings))
-        # TODO Check this setting/config handling... Updating does not look to be fine here...
+        self.log.info('333 {}'.format(self.config))
+#        self.log.info('SimpleApp1.app {}'.format(self.get_conf('app')))
+#        self.log.info('SimpleApp1.file {}'.format(self.get_conf('file')))
+#        self.log.info('SimpleApp1.cli {}'.format(self.get_conf('cli')))
+#        self.log.info('Complete Settings {}'.format(self.settings))
 #        self.settings.get('config').get(self.extension_name).update({'app': 'OK'})
 #        self.settings["{}_config".format(self.extension_name)].update(**self.settings.get('config').get('SimpleApp1'))
 

@@ -23,7 +23,7 @@ def get_data_files():
     return data_files
 
 setuptools.setup(
-    name = 'simple_ext',
+    name = 'jupyter_simple_ext',
     version = VERSION,
     description = 'Jupyter Simple Extension',
     long_description = open('README.md').read(),

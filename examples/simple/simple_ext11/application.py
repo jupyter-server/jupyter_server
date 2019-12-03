@@ -54,20 +54,18 @@ class SimpleApp11(SimpleApp1):
     def simple11_dir_formatted(self):
         return "/" + self.simple11_dir
 
-    def get_conf(self, key):
-        return self.settings.get('config').get('SimpleApp11').get(key, None)
-
     def initialize_settings(self):
-        self.log.info('SimpleApp11.hello: {}'.format(self.get_conf('hello')))
+        self.log.info('SimpleApp11.hello: {}'.format(super().get_conf('hello')))
         self.log.info('hello: {}'.format(self.hello))
         if self.get_conf('hello') == True:
             self.log.info("Hello Simple11 - You have provided the --hello flag or defined 'c.SimpleApp1.hello == True' in jupyter_server_config.py")
         self.log.info('SimpleApp11.simple11_dir: {}'.format(self.get_conf('simple11_dir')))
         self.log.info('SimpleApp11.ignore_js: {}'.format(self.get_conf('ignore_js')))
         self.log.info('ignore_js: {}'.format(self.ignore_js))
-        # TODO Check this setting/config handling... Updating does not look to be fine here...
-        self.settings["{}_config".format(self.extension_name)].update(**self.settings.get('config').get('SimpleApp11'))
-        super().initialize_settings()
+        c = self.settings.get('config').get(type(self).__name__)
+        if c:
+            self.settings["{}_config".format(self.extension_name)].update(**c)
+#        super().initialize_settings()
 
 #-----------------------------------------------------------------------------
 # Main entry point
