@@ -1312,7 +1312,7 @@ class ServerApp(JupyterApp):
             self.ssl_options['keyfile'] = self.keyfile
         if self.client_ca:
             self.ssl_options['ca_certs'] = self.client_ca
-        if not self.ssl_options:
+        if len(self.ssl_options) == 0:
             # None indicates no SSL config
             self.ssl_options = None
         else:
@@ -1554,10 +1554,30 @@ class ServerApp(JupyterApp):
                           self.shutdown_no_activity_timeout)
             pc = ioloop.PeriodicCallback(self.shutdown_no_activity, 60000)
             pc.start()
-    
+
+    @property
+    def http_server(self):
+        """An instance of Tornado's HTTPServer class for the Server Web Application."""
+        try:
+            return self._http_server
+        except AttributeError:
+            raise AttributeError(
+                'An HTTPServer instance has not been created for the '
+                'Server Web Application. To create an HTTPServer for this '
+                'application, call `.init_httpserver()`.'
+                )
+
     def init_httpserver(self):
-        """initialize tornado httpserver"""
-        self.http_server = httpserver.HTTPServer(
+        """Creates an instance of a Tornado HTTPServer for the Server Web Application
+        and sets the http_server attribute.        
+        """
+        # Check that a web_app has been initialized before starting a server.
+        if not hasattr(self, 'web_app'):
+            raise AttributeError('A tornado web application has not be initialized. '
+                                 'Try calling `.init_webapp()` first.')
+            
+        # Create an instance of the server.
+        self._http_server = httpserver.HTTPServer(
             self.web_app, 
             ssl_options=self.ssl_options,
             xheaders=self.trust_xheaders,
@@ -1588,6 +1608,21 @@ class ServerApp(JupyterApp):
 
     @catch_config_error
     def initialize(self, argv=None, load_extensions=True, new_httpserver=True):
+        """Initialize the Server application class, configurables, web application, and http server.
+
+        Parameters
+        ----------
+        argv: list or None
+            CLI arguments to parse.
+        
+        load_extensions: bool
+            If True, the server will load server extensions listed in the jpserver_extension trait.
+            Otherwise, no server extensions will be loaded.
+        
+        new_httpserver: bool
+            If True, a tornado HTTPServer instance will be created and configured for the Server Web
+            Application. This will set the http_server attribute of this class.
+        """
         super(ServerApp, self).initialize(argv)
         self.init_logging()
         if self._dispatching:
@@ -1794,7 +1829,9 @@ class ServerApp(JupyterApp):
 
     def stop(self):
         def _stop():
-            self.http_server.stop()
+            # Stop a server if its set.
+            if hasattr(self, '_http_server'):
+                self.http_server.stop()
             self.io_loop.stop()
         self.io_loop.add_callback(_stop)
 
