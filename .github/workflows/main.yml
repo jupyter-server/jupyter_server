@@ -24,16 +24,6 @@ jobs:
     - name: Install the Python dependencies
       run: |
         pip install -e .[test]
-    - name: Install the Python dependencies
+    - name: Run the tests
       run: |
-        jupyter kernelspec list
-        symlinks=$(find . -type l| grep -v './git-hooks')
-        if [[ $(echo $symlinks) ]]; then
-          echo "Repository contains symlinks which won't work on windows:"
-          echo $symlinks
-          echo ""
-          false
-        else
-          true
-        fi
         nosetests -v jupyter_server
