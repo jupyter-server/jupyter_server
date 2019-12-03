@@ -25,7 +25,6 @@ install:
     - pip freeze
     - wget https://github.com/jgm/pandoc/releases/download/1.19.1/pandoc-1.19.1-1-amd64.deb && sudo dpkg -i pandoc-1.19.1-1-amd64.deb
 
-
 script:
     - jupyter kernelspec list
     - |
@@ -50,7 +49,6 @@ script:
 
         exit $EXIT_STATUS
       fi
-
 
 matrix:
     include:
