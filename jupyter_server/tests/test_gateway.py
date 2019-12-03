@@ -4,7 +4,8 @@ import json
 import uuid
 from datetime import datetime
 from tornado import gen
-from tornado.httpclient import HTTPRequest, HTTPResponse, HTTPError
+from tornado.web import HTTPError
+from tornado.httpclient import HTTPRequest, HTTPResponse
 from ipython_genutils.py3compat import str_to_unicode
 from .launchserver import ServerTestBase
 from jupyter_server.gateway.managers import GatewayClient
