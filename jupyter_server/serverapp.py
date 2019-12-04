@@ -1529,7 +1529,7 @@ class ServerApp(JupyterApp):
                         # Add debug log for loaded extensions.
                         self.log.debug("%s is enabled and loaded." % modulename)
                     else:
-                        self.log.warning("%s is enabled but no `load_jupyter_server_extension` function was found")
+                        self.log.warning("%s is enabled but no `load_jupyter_server_extension` function was found" % modulename)
                 except Exception:
                     if self.reraise_server_extension_failures:
                         raise
