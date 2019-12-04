@@ -52,12 +52,16 @@ script:
 
 matrix:
     include:
+        - python: 3.5
+          env: GROUP=python
         - python: 3.6
           env: GROUP=python
         - python: 3.7
           env: GROUP=python
         - python: 3.8
           env: GROUP=python
+        - python: 3.5
+          env: GROUP=docs
         - python: 3.6
           env: GROUP=docs
         - python: 3.7
