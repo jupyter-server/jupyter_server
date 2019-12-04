@@ -36,6 +36,13 @@ import urllib
 from base64 import encodebytes
 from jinja2 import Environment, FileSystemLoader
 
+from .config_manager import BaseJSONConfigManager
+from .extensions_base import (
+    GREEN_ENABLED, RED_DISABLED, GREEN_OK, RED_X
+)
+
+from .extensions import validate_serverextension
+
 from jupyter_server.transutils import trans, _
 from jupyter_server.utils import secure_write
 
@@ -371,6 +378,45 @@ class ServerWebApplication(web.Application):
         return max(sources)
 
 
+class JupyterServerListExtensionsApp(JupyterApp):
+    """An App that lists (and validates) Server Extensions"""
+    name = "jupyter serverextension list"
+    version = __version__
+    description = "List all server extensions known by the configuration system"
+    user = Bool(False, config=True, help="Whether to do a user install")
+    sys_prefix = Bool(False, config=True, help="Use the sys.prefix as the prefix")
+    python = Bool(False, config=True, help="Install from a Python package")
+
+    def list_server_extensions(self):
+        """List all enabled and disabled server extensions, by config path
+
+        Enabled extensions are validated, potentially generating warnings.
+        """
+        config_dirs = jupyter_config_path()
+        for config_dir in config_dirs:
+            cm = BaseJSONConfigManager(parent=self, config_dir=config_dir)
+            data = cm.get("jupyter_server_config")
+            server_extensions = (
+                data.setdefault("ServerApp", {})
+                .setdefault("jpserver_extensions", {})
+            )
+            if server_extensions:
+                print(u'config dir: {}'.format(config_dir))
+            for import_name, enabled in server_extensions.items():
+                print(u'    {} {}'.format(
+                              import_name,
+                              GREEN_ENABLED if enabled else RED_DISABLED))
+                validate_serverextension(import_name, self.log)
+
+    def _log_format_default(self):
+        """A default format for messages"""
+        return "%(message)s"
+
+    def start(self):
+        """Perform the App's actions as configured"""
+        self.list_server_extensions()
+
+
 class JupyterPasswordApp(JupyterApp):
     """Set a password for the Jupyter server.
 
@@ -566,6 +612,7 @@ class ServerApp(JupyterApp):
         list=(JupyterServerListApp, JupyterServerListApp.description.splitlines()[0]),
         stop=(JupyterServerStopApp, JupyterServerStopApp.description.splitlines()[0]),
         password=(JupyterPasswordApp, JupyterPasswordApp.description.splitlines()[0]),
+        listextensions=(JupyterServerListExtensionsApp, JupyterServerListExtensionsApp.description.splitlines()[0]),
     )
 
     # A list of services whose handlers will be exposed.
