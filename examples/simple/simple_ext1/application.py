@@ -71,7 +71,7 @@ class SimpleApp1(ExtensionApp):
             return None
 
     def initialize_settings(self):
-        self.log.info('333 {}'.format(self.config))
+        self.log.info('Config {}'.format(self.config))
 #        self.log.info('SimpleApp1.app {}'.format(self.get_conf('app')))
 #        self.log.info('SimpleApp1.file {}'.format(self.get_conf('file')))
 #        self.log.info('SimpleApp1.cli {}'.format(self.get_conf('cli')))
