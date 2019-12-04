@@ -1,13 +1,15 @@
 # Jupyter Server Simple Extension Example
 
-This folder contains an example of 2 simple extensions on top of Jupyter Server.
+This folder contains example of simple extensions on top of Jupyter Server and review configuration aspects.
 
 ## Install
 
 You need `python3` to build and run the server extensions.
 
 ```bash
-conda create -y -n jupyter_server_example python=3.7 && \
+git clone https://github.com/jupyter/jupyter_server && \
+  cd examples/simple && \
+  conda create -y -n jupyter_server_example python=3.7 && \
   conda activate jupyter_server_example && \
   pip install -e .
 ```
@@ -15,26 +17,15 @@ conda create -y -n jupyter_server_example python=3.7 && \
 **OPTIONAL** If you want to build the Typescript code, you need `npm` on your local env. Compiled javascript is provided as artifact in this repository, so this Typescript build step is optional. The Typescript source and configuration has been taken from https://github.com/markellekelly/jupyter-server-example.
 
 ```bash
-npm install
-npm run build
+npm install && \
+  npm run build
 ```
 
-## Start Extension 1 and Extension 2
+## Start Extension 1
 
 ```bash
-# Start the jupyter server, it will load both simple_ext1 and simple_ext2 based on the provided trait.
-jupyter server --ServerApp.jpserver_extensions="{'simple_ext1': True, 'simple_ext2': True}"
-```
-
-Optionally, you can copy `simple_ext1.json` and `simple_ext2.json` configuration to your env `etc` folder and start only Extension 1, which will also start Extension 2.
-
-```bash
-pip uninstall -y jupyter_simple_ext
-python setup.py install
-cp -r ./etc $(dirname $(which jupyter))/..
-# Start the jupyter server extension simple_ext1, it will also load simple_ext2 because of load_other_extensions = True..
-# When you invoke with the entrypoint, the default url will be opened in your browser.
-jupyter simple-ext1
+# Start the jupyter server activating simple_ext1 extension.
+jupyter server --ServerApp.jpserver_extensions="{'simple_ext1': True}"
 ```
 
 Now you can render `Extension 1` Server content in your browser.
@@ -61,6 +52,15 @@ open http://localhost:8888/simple_ext1/redirect
 open http://localhost:8888/static/simple_ext1/favicon.ico
 ```
 
+## Start Extension 2
+
+The following command starts both `simple_ext1` and `simple_ext2` extensions.
+
+```bash
+# Start the jupyter server, it will load both simple_ext1 and simple_ext2 based on the provided trait.
+jupyter server --ServerApp.jpserver_extensions="{'simple_ext1': True, 'simple_ext2': True}"
+```
+
 You can also render `Extension 2` Server content in your browser.
 
 ```bash
@@ -70,12 +70,29 @@ open http://localhost:8888/static/simple_ext2/test.html
 open http://localhost:8888/simple_ext2/params/test?var1=foo
 ```
 
-## Settings
+## Start with Entrypoints
 
-Stop any running server (with CTRL+C) and start with additional settings on the command line.
+Optionally, you can copy `simple_ext1.json` and `simple_ext2.json` configuration to your env `etc` folder and start only Extension 1, which will also start Extension 2.
 
 ```bash
-jupyter server --ServerApp.jpserver_extensions="{'simple_ext1': True, 'simple_ext2': True}" --SimpleApp1.cli=OK
+pip uninstall -y jupyter_simple_ext && \
+  python setup.py install && \
+  cp -r ./etc $(dirname $(which jupyter))/..
+# Start the jupyter server extension simple_ext1, it will also load simple_ext2 because of load_other_extensions = True..
+# When you invoke with the entrypoint, the default url will be opened in your browser.
+jupyter simple-ext1
+```
+
+## Configuration
+
+Stop any running server (with `CTRL+C`) and start with additional configuration on the command line.
+
+The provided settings via CLI will override the configuration that reside in the files (`jupyter_simple_ext1_config.py`...)
+
+```bash
+jupyter server \ 
+  --ServerApp.jpserver_extensions="{'simple_ext1': True, 'simple_ext2': True}" \
+  --SimpleApp1.cli=OK
 ```
 
 Check the log, it should return on startup something like the following base on the trait you have defined in the CLI and in the `jupyter_server_config.py`.
@@ -84,7 +101,6 @@ Check the log, it should return on startup something like the following base on 
 [SimpleApp1] SimpleApp1.app OK
 [SimpleApp1] SimpleApp1.file OK
 [SimpleApp1] SimpleApp1.cli OK
-[SimpleApp1] Complete Settings {'simple_ext1_config': {}, 'simple_ext1_template_paths': ['/home/datalayer/repos/jupyter-server/examples/simple/simple_ext1/templates'], 'simple_ext1_jinja2_env': <jinja2.environment.Environment object at 0x105ed7438>, 'log_function': <function log_request at 0x105e2d950>, 'base_url': '/', 'default_url': '/', 'template_path': ...
 ```
 
 ## Start only Extension 2
@@ -137,7 +153,7 @@ The generated configuration should contains the following.
 ...
 ```
 
-The `hello`, `ignoare_js` and `simple11_dir` are traits defined on the SimpleApp11 class.
+The `hello`, `ignore_js` and `simple11_dir` are traits defined on the SimpleApp11 class.
 
 It also implements additional flags and aliases for these traits.
 
@@ -152,7 +168,7 @@ jupyter simple-ext11 --hello --simple11-dir any_folder
 jupyter server --ServerApp.jpserver_extensions="{'simple_ext11': True}" --hello --simple11-dir any_folder
 ```
 
-Ensure the following URLs give respond correctly.
+Ensure the following URLs respond correctly.
 
 ```bash
 # Jupyter Server Home Page.
