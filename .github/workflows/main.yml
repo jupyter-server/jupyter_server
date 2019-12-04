@@ -1,4 +1,4 @@
-name: CI
+name: Jupyter Server Tests
 on:
   push:
     branches: 
@@ -26,4 +26,4 @@ jobs:
         pip install -e .[test]
     - name: Run the tests
       run: |
-        nosetests -v jupyter_server
+        pytest
