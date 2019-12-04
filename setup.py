@@ -19,7 +19,7 @@ import sys
 name = "jupyter_server"
 
 # Minimal Python version sanity check
-if sys.version_info < (3,6):
+if sys.version_info < (3,5):
     error = "ERROR: %s requires Python version 3.5 or above." % name
     print(error, file=sys.stderr)
     sys.exit(1)
