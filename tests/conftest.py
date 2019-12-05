@@ -157,7 +157,7 @@ def configurable_serverapp(
         app.log.propagate = True
         app.log.handlers = []
         # Initialize app without httpserver
-        app.initialize(argv=argv, new_httpserver=True)
+        app.initialize(argv=argv, new_httpserver=False)
         app.log.propagate = True
         app.log.handlers = []
         # Start app without ioloop
