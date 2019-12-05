@@ -80,7 +80,7 @@ async def test_list_notebooks(fetch, contents, path, name):
         'api', 'contents', path,
         method='GET',
     )
-    data = json.loads(response.body)
+    data = json.loads(response.body.decode())
     nbs = notebooks_only(data)
     assert len(nbs) > 0
     assert name+'.ipynb' in [n['name'] for n in nbs]
@@ -96,7 +96,7 @@ async def test_get_dir_no_contents(fetch, contents, path, name):
             content='0',
         )
     )
-    model = json.loads(response.body)
+    model = json.loads(response.body.decode())
     assert model['path'] == path
     assert model['type'] == 'directory'
     assert 'content' in model
@@ -120,7 +120,7 @@ async def test_get_nb_contents(fetch, contents, path, name):
         method='GET',
         params=dict(content='1') 
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['name'] == nbname
     assert model['path'] == nbpath
     assert model['type'] == 'notebook'
@@ -139,7 +139,7 @@ async def test_get_nb_no_contents(fetch, contents, path, name):
         method='GET',
         params=dict(content='0') 
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['name'] == nbname
     assert model['path'] == nbpath
     assert model['type'] == 'notebook'
@@ -162,7 +162,7 @@ async def test_get_nb_invalid(contents_dir, fetch, contents):
         'api', 'contents', nbpath,
         method='GET',
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['path'] == nbpath
     assert model['type'] == 'notebook'
     assert 'content' in model
@@ -188,7 +188,7 @@ async def test_get_text_file_contents(fetch, contents, path, name):
         method='GET',
         params=dict(content='1') 
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['name'] == txtname
     assert model['path'] == txtpath
     assert 'content' in model
@@ -225,7 +225,7 @@ async def test_get_binary_file_contents(fetch, contents, path, name):
         method='GET',
         params=dict(content='1') 
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['name'] == blobname
     assert model['path'] == blobpath
     assert 'content' in model
@@ -270,11 +270,11 @@ def _check_created(r, contents_dir, path, name, type='notebook'):
     assert r.code == 201
     location = '/api/contents/' + tornado.escape.url_escape(fpath, plus=False)
     assert r.headers['Location'] == location
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['name'] == name
     assert model['path'] == fpath
     assert model['type'] == type
-    path = contents_dir / fpath
+    path = contents_dir + '/' + fpath
     if type == 'directory':
         assert pathlib.Path(path).is_dir()
     else:
@@ -289,7 +289,7 @@ async def test_create_untitled(fetch, contents, contents_dir):
         method='POST',
         body=json.dumps({'ext': '.ipynb'})
     )
-    _check_created(r, contents_dir, path, name, type='notebook')
+    _check_created(r, str(contents_dir), path, name, type='notebook')
 
     name = 'Untitled1.ipynb'
     r = await fetch(
@@ -297,7 +297,7 @@ async def test_create_untitled(fetch, contents, contents_dir):
         method='POST',
         body=json.dumps({'ext': '.ipynb'})
     )
-    _check_created(r, contents_dir, path, name, type='notebook')
+    _check_created(r, str(contents_dir), path, name, type='notebook')
 
     path = 'foo/bar'
     name = 'Untitled.ipynb'
@@ -306,7 +306,7 @@ async def test_create_untitled(fetch, contents, contents_dir):
         method='POST',
         body=json.dumps({'ext': '.ipynb'})
     )
-    _check_created(r, contents_dir, path, name, type='notebook')
+    _check_created(r, str(contents_dir), path, name, type='notebook')
 
 
 async def test_create_untitled_txt(fetch, contents, contents_dir):
@@ -317,13 +317,13 @@ async def test_create_untitled_txt(fetch, contents, contents_dir):
         method='POST',
         body=json.dumps({'ext': '.txt'})
     )
-    _check_created(r, contents_dir, path, name, type='file')
+    _check_created(r, str(contents_dir), path, name, type='file')
 
     r = await fetch(
         'api', 'contents', path, name,
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['type'] == 'file'
     assert model['format'] == 'text'
     assert model['content'] == ''
@@ -339,7 +339,7 @@ async def test_upload(fetch, contents, contents_dir):
         method='PUT',
         body=json.dumps(nbmodel)
     )
-    _check_created(r, contents_dir, path, name)
+    _check_created(r, str(contents_dir), path, name)
 
 
 async def test_mkdir_untitled(fetch, contents, contents_dir):
@@ -350,7 +350,7 @@ async def test_mkdir_untitled(fetch, contents, contents_dir):
         method='POST',
         body=json.dumps({'type': 'directory'})
     )
-    _check_created(r, contents_dir, path, name, type='directory')
+    _check_created(r, str(contents_dir), path, name, type='directory')
 
     name = 'Untitled Folder 1'
     r = await fetch(
@@ -358,7 +358,7 @@ async def test_mkdir_untitled(fetch, contents, contents_dir):
         method='POST',
         body=json.dumps({'type': 'directory'})
     )
-    _check_created(r, contents_dir, path, name, type='directory')
+    _check_created(r, str(contents_dir), path, name, type='directory')
 
     name = 'Untitled Folder'
     path = 'foo/bar'
@@ -367,7 +367,7 @@ async def test_mkdir_untitled(fetch, contents, contents_dir):
         method='POST',
         body=json.dumps({'type': 'directory'})
     )
-    _check_created(r, contents_dir, path, name, type='directory')
+    _check_created(r, str(contents_dir), path, name, type='directory')
 
 
 async def test_mkdir(fetch, contents, contents_dir):
@@ -378,7 +378,7 @@ async def test_mkdir(fetch, contents, contents_dir):
         method='PUT',
         body=json.dumps({'type': 'directory'})
     )
-    _check_created(r, contents_dir, path, name, type='directory')
+    _check_created(r, str(contents_dir), path, name, type='directory')
 
 
 async def test_mkdir_hidden_400(fetch):
@@ -411,7 +411,7 @@ async def test_upload_txt(fetch, contents, contents_dir):
         'api', 'contents', path, name,
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['type'] == 'file'
     assert model['format'] == 'text'
     assert model['path'] == path+'/'+name
@@ -438,7 +438,7 @@ async def test_upload_b64(fetch, contents, contents_dir):
         'api', 'contents', path, name,
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['type'] == 'file'
     assert model['path'] == path+'/'+name
     assert model['format'] == 'base64'
@@ -455,7 +455,7 @@ async def test_copy(fetch, contents, contents_dir):
         method='POST',
         body=json.dumps({'copy_from': path+'/'+name})
     )
-    _check_created(r, contents_dir, path, copy, type='notebook')
+    _check_created(r, str(contents_dir), path, copy, type='notebook')
     
     # Copy the same file name
     copy2 = 'ç d-Copy2.ipynb'
@@ -464,7 +464,7 @@ async def test_copy(fetch, contents, contents_dir):
         method='POST',
         body=json.dumps({'copy_from': path+'/'+name})
     )
-    _check_created(r, contents_dir, path, copy2, type='notebook')
+    _check_created(r, str(contents_dir), path, copy2, type='notebook')
 
     # copy a copy.
     copy3 = 'ç d-Copy3.ipynb'
@@ -473,7 +473,7 @@ async def test_copy(fetch, contents, contents_dir):
         method='POST',
         body=json.dumps({'copy_from': path+'/'+copy2})
     )
-    _check_created(r, contents_dir, path, copy3, type='notebook')
+    _check_created(r, str(contents_dir), path, copy3, type='notebook')
 
 
 async def test_copy_path(fetch, contents, contents_dir):
@@ -486,14 +486,14 @@ async def test_copy_path(fetch, contents, contents_dir):
         method='POST',
         body=json.dumps({'copy_from': path1+'/'+name})
     )
-    _check_created(r, contents_dir, path2, name, type='notebook')
+    _check_created(r, str(contents_dir), path2, name, type='notebook')
 
     r = await fetch(
         'api', 'contents', path2,
         method='POST',
         body=json.dumps({'copy_from': path1+'/'+name})
     )
-    _check_created(r, contents_dir, path2, copy, type='notebook')
+    _check_created(r, str(contents_dir), path2, copy, type='notebook')
 
 
 async def test_copy_put_400(fetch, contents, contents_dir):
@@ -535,7 +535,7 @@ async def test_delete_dirs(fetch, contents, folders):
             method='GET'
         )
         # Get JSON blobs for each content.
-        listing = json.loads(r.body)['content']
+        listing = json.loads(r.body.decode())['content']
         # Delete all content
         for model in listing:
             await fetch(
@@ -547,7 +547,7 @@ async def test_delete_dirs(fetch, contents, folders):
         'api', 'contents',
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['content'] == []
 
 
@@ -581,10 +581,10 @@ async def test_rename(fetch, contents, contents_dir):
     assert r.code == 200
     location = '/api/contents/' + fpath
     assert r.headers['Location'] == location
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['name'] == new_name
     assert model['path'] == fpath
-    fpath = contents_dir / fpath
+    fpath = str(contents_dir / fpath)
     assert pathlib.Path(fpath).is_file()
 
     # Check that the files have changed
@@ -592,7 +592,7 @@ async def test_rename(fetch, contents, contents_dir):
         'api', 'contents', path,
         method='GET'
     )
-    listing = json.loads(r.body)
+    listing = json.loads(r.body.decode())
     nbnames = [name['name'] for name in listing['content']]
     assert 'z.ipynb' in nbnames
     assert 'a.ipynb' not in nbnames
@@ -607,7 +607,7 @@ async def test_checkpoints_follow_file(fetch, contents):
         'api', 'contents', path, name,
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     
     # Create a checkpoint of initial state
     r = await fetch(
@@ -615,7 +615,7 @@ async def test_checkpoints_follow_file(fetch, contents):
         method='POST',
         allow_nonstandard_methods=True
     )
-    cp1 = json.loads(r.body)
+    cp1 = json.loads(r.body.decode())
     
     # Modify file and save.
     nbcontent = model['content']
@@ -634,14 +634,14 @@ async def test_checkpoints_follow_file(fetch, contents):
         'api', 'contents', path, name, 'checkpoints',
         method='GET',
     )
-    cps = json.loads(r.body)
+    cps = json.loads(r.body.decode())
     assert cps == [cp1]
 
     r = await fetch(
         'api', 'contents', path, name,
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     nbcontent = model['content']
     nb = from_dict(nbcontent)
     assert nb.cells[0].source == "Created by test"
@@ -666,7 +666,7 @@ async def test_save(fetch, contents):
         'api', 'contents', 'foo/a.ipynb',
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     nbmodel = model['content']
     nb = from_dict(nbmodel)
     nb.cells.append(new_markdown_cell('Created by test ³'))
@@ -681,7 +681,7 @@ async def test_save(fetch, contents):
         'api', 'contents', 'foo/a.ipynb',
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     newnb = from_dict(model['content'])
     assert newnb.cells[0].source == 'Created by test ³'
 
@@ -692,14 +692,14 @@ async def test_checkpoints(fetch, contents):
         'api', 'contents', path,
         method='GET' 
     )
-    model = json.loads(resp.body)
+    model = json.loads(resp.body.decode())
     r = await fetch(
         'api', 'contents', path, 'checkpoints',
         method='POST',
         allow_nonstandard_methods=True
     )
     assert r.code == 201
-    cp1 = json.loads(r.body)
+    cp1 = json.loads(r.body.decode())
     assert set(cp1) == {'id', 'last_modified'}
     assert r.headers['Location'].split('/')[-1] == cp1['id']
 
@@ -722,14 +722,14 @@ async def test_checkpoints(fetch, contents):
         'api', 'contents', path, 'checkpoints',
         method='GET'
     )
-    cps = json.loads(r.body)
+    cps = json.loads(r.body.decode())
     assert cps == [cp1]
 
     r = await fetch(
         'api', 'contents', path,
         method='GET' 
     )
-    nbcontent = json.loads(r.body)['content']
+    nbcontent = json.loads(r.body.decode())['content']
     nb = from_dict(nbcontent)
     assert nb.cells[0].source == 'Created by test'
 
@@ -745,7 +745,7 @@ async def test_checkpoints(fetch, contents):
         'api', 'contents', path,
         method='GET'
     )
-    nbcontent = json.loads(r.body)['content']
+    nbcontent = json.loads(r.body.decode())['content']
     nb = from_dict(nbcontent)
     assert nb.cells == []
 
@@ -760,7 +760,7 @@ async def test_checkpoints(fetch, contents):
         'api', 'contents', path, 'checkpoints',
         method='GET'
     )
-    cps = json.loads(r.body)
+    cps = json.loads(r.body.decode())
     assert cps == []
 
 
@@ -770,14 +770,14 @@ async def test_file_checkpoints(fetch, contents):
         'api', 'contents', path,
         method='GET' 
     )
-    orig_content = json.loads(resp.body)['content']
+    orig_content = json.loads(resp.body.decode())['content']
     r = await fetch(
         'api', 'contents', path, 'checkpoints',
         method='POST',
         allow_nonstandard_methods=True
     )
     assert r.code == 201
-    cp1 = json.loads(r.body)
+    cp1 = json.loads(r.body.decode())
     assert set(cp1) == {'id', 'last_modified'}
     assert r.headers['Location'].split('/')[-1] == cp1['id']
 
@@ -801,14 +801,14 @@ async def test_file_checkpoints(fetch, contents):
         'api', 'contents', path, 'checkpoints',
         method='GET'
     )
-    cps = json.loads(r.body)
+    cps = json.loads(r.body.decode())
     assert cps == [cp1]
 
     r = await fetch(
         'api', 'contents', path,
         method='GET' 
     )
-    content = json.loads(r.body)['content']
+    content = json.loads(r.body.decode())['content']
     assert content == new_content
 
     # Restore Checkpoint cp1
@@ -823,7 +823,7 @@ async def test_file_checkpoints(fetch, contents):
         'api', 'contents', path,
         method='GET'
     )
-    restored_content = json.loads(r.body)['content']
+    restored_content = json.loads(r.body.decode())['content']
     assert restored_content == orig_content
 
     # Delete cp1
@@ -837,5 +837,5 @@ async def test_file_checkpoints(fetch, contents):
         'api', 'contents', path, 'checkpoints',
         method='GET'
     )
-    cps = json.loads(r.body)
+    cps = json.loads(r.body.decode())
     assert cps == []

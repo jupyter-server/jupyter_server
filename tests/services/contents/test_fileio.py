@@ -11,6 +11,7 @@ from ipython_genutils.testing.decorators import skip_if_not_win32 as _skip_if_no
 
 from jupyter_server.services.contents.fileio import atomic_writing
 
+
 @functools.wraps(_skip_win32)
 def skip_win32(f):
     # Patches the "skip_win32" method to allow pytest fixtures
@@ -31,12 +32,12 @@ def test_atomic_writing(tmp_path):
     f1.write_text('Before')
 
     if os.name != 'nt':
-        os.chmod(f1, 0o701)
+        os.chmod(str(f1), 0o701)
         orig_mode = stat.S_IMODE(os.stat(str(f1)).st_mode)
 
     f2 = tmp_path / 'flamingo'
     try:
-        os.symlink(f1, f2)
+        os.symlink(str(f1), str(f2))
         have_symlink = True
     except (AttributeError, NotImplementedError, OSError):
         # AttributeError: Python doesn't support it
@@ -49,13 +50,13 @@ def test_atomic_writing(tmp_path):
             f.write('Failing write')
             raise CustomExc
 
-    with io.open(f1, 'r') as f:
+    with io.open(str(f1), 'r') as f:
         assert f.read() == 'Before'
     
     with atomic_writing(str(f1)) as f:
         f.write('Overwritten')
 
-    with io.open(f1, 'r') as f:
+    with io.open(str(f1), 'r') as f:
         assert f.read() == 'Overwritten'
 
     if os.name != 'nt':
@@ -67,7 +68,7 @@ def test_atomic_writing(tmp_path):
         with atomic_writing(str(f2)) as f:
             f.write(u'written from symlink')
         
-        with io.open(f1, 'r') as f:
+        with io.open(str(f1), 'r') as f:
             assert f.read() == 'written from symlink'
 
 
@@ -84,24 +85,24 @@ def handle_umask():
 def test_atomic_writing_umask(handle_umask, tmp_path):
 
     os.umask(0o022)
-    f1 = tmp_path / '1'
-    with atomic_writing(str(f1)) as f:
+    f1 = str(tmp_path / '1')
+    with atomic_writing(f1) as f:
         f.write('1')
-    mode = stat.S_IMODE(os.stat(str(f1)).st_mode)
+    mode = stat.S_IMODE(os.stat(f1).st_mode)
     assert mode == 0o644
 
     os.umask(0o057)
-    f2 = tmp_path / '2'
+    f2 = str(tmp_path / '2')
 
-    with atomic_writing(str(f2)) as f:
+    with atomic_writing(f2) as f:
         f.write('2')
 
-    mode = stat.S_IMODE(os.stat(str(f2)).st_mode)
+    mode = stat.S_IMODE(os.stat(f2).st_mode)
     assert mode == 0o620
 
 
 def test_atomic_writing_newlines(tmp_path):
-    path = tmp_path / 'testfile'
+    path = str(tmp_path / 'testfile')
 
     lf = u'a\nb\nc\n'
     plat = lf.replace(u'\n', os.linesep)

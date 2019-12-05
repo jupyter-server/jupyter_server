@@ -114,7 +114,7 @@ async def test_from_post(fetch, notebook):
         'api/contents/foo/testnb.ipynb',
         method='GET',
     )
-    nbmodel = json.loads(r.body)
+    nbmodel = json.loads(r.body.decode())
 
     r = await fetch(
         'nbconvert', 'html',
@@ -142,7 +142,7 @@ async def test_from_post_zip(fetch, notebook):
         'api/contents/foo/testnb.ipynb',
         method='GET',
     )
-    nbmodel = json.loads(r.body)
+    nbmodel = json.loads(r.body.decode())
 
     r = await fetch(
         'nbconvert', 'latex',

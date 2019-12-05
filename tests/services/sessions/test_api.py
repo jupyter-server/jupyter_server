@@ -24,7 +24,7 @@ async def test_create(fetch):
         'api', 'sessions',
         method='GET'
     )
-    sessions = json.loads(r.body)
+    sessions = json.loads(r.body.decode())
     assert len(sessions) == 0
 
     # Create a session.
@@ -35,7 +35,7 @@ async def test_create(fetch):
         body=json.dumps(model)
     )
     assert r.code == 201
-    new_session = json.loads(r.body)
+    new_session = json.loads(r.body.decode())
     assert 'id' in new_session
     assert new_session['path'] == 'foo/nb1.ipynb'
     assert new_session['type'] == 'notebook'
@@ -46,7 +46,7 @@ async def test_create(fetch):
         'api', 'sessions',
         method='GET'
     )
-    sessions = json.loads(r.body)
+    sessions = json.loads(r.body.decode())
     assert sessions == [new_session]
 
     # Retrieve that session.
@@ -55,7 +55,7 @@ async def test_create(fetch):
         'api', 'sessions', sid,
         method='GET'
     )
-    got = json.loads(r.body)
+    got = json.loads(r.body.decode())
     assert got == new_session
 
 

@@ -19,7 +19,7 @@ some_resource = u"The very model of a modern major general"
 def kernelspecs(data_dir):
     spec_names = ['sample', 'sample 2']
     for name in spec_names:
-        sample_kernel_dir = data_dir / 'kernels' / name
+        sample_kernel_dir = data_dir.joinpath('kernels', name)
         sample_kernel_dir.mkdir(parents=True)
         # Create kernel json file
         sample_kernel_file = sample_kernel_dir.joinpath('kernel.json')
@@ -30,7 +30,7 @@ def kernelspecs(data_dir):
 
 
 async def test_list_kernelspecs_bad(fetch, kernelspecs, data_dir):
-    bad_kernel_dir = data_dir / 'kernels' / 'bad'
+    bad_kernel_dir = data_dir.joinpath(data_dir, 'kernels', 'bad')
     bad_kernel_dir.mkdir(parents=True)
     bad_kernel_json = bad_kernel_dir.joinpath('kernel.json')
     bad_kernel_json.write_text('garbage')
@@ -39,7 +39,7 @@ async def test_list_kernelspecs_bad(fetch, kernelspecs, data_dir):
         'api', 'kernelspecs',
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert isinstance(model, dict)
     assert model['default'] == NATIVE_KERNEL_NAME
     specs = model['kernelspecs']
@@ -52,7 +52,7 @@ async def test_list_kernelspecs(fetch, kernelspecs):
         'api', 'kernelspecs',
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert isinstance(model, dict)
     assert model['default'] == NATIVE_KERNEL_NAME
     specs = model['kernelspecs']
@@ -74,7 +74,7 @@ async def test_get_kernelspecs(fetch, kernelspecs):
         'api', 'kernelspecs', 'Sample',
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['name'].lower() == 'sample'
     assert isinstance(model['spec'], dict)
     assert model['spec']['display_name'] == 'Test kernel'
@@ -86,7 +86,7 @@ async def test_get_kernelspec_spaces(fetch, kernelspecs):
         'api', 'kernelspecs', 'sample%202',
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['name'].lower() == 'sample 2'
 
 

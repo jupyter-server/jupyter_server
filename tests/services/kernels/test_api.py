@@ -41,7 +41,7 @@ async def test_no_kernels(fetch):
         'api', 'kernels',
         method='GET'
     )
-    kernels = json.loads(r.body)
+    kernels = json.loads(r.body.decode())
     assert kernels == []
 
 
@@ -51,7 +51,7 @@ async def test_default_kernels(fetch):
         method='POST',
         allow_nonstandard_methods=True
     )
-    kernel = json.loads(r.body)
+    kernel = json.loads(r.body.decode())
     assert r.headers['location'] == '/api/kernels/' + kernel['id']
     assert r.code == 201
     assert isinstance(kernel, dict)
@@ -74,7 +74,7 @@ async def test_main_kernel_handler(fetch):
             'name': NATIVE_KERNEL_NAME
         })
     )
-    kernel1 = json.loads(r.body)
+    kernel1 = json.loads(r.body.decode())
     assert r.headers['location'] == '/api/kernels/' + kernel1['id']
     assert r.code == 201
     assert isinstance(kernel1, dict)
@@ -92,7 +92,7 @@ async def test_main_kernel_handler(fetch):
         'api', 'kernels',
         method='GET'
     )
-    kernel_list = json.loads(r.body)
+    kernel_list = json.loads(r.body.decode())
     assert r.code == 200
     assert isinstance(kernel_list, list)
     assert kernel_list[0]['id'] == kernel1['id']
@@ -106,7 +106,7 @@ async def test_main_kernel_handler(fetch):
             'name': NATIVE_KERNEL_NAME
         })
     )
-    kernel2 = json.loads(r.body)
+    kernel2 = json.loads(r.body.decode())
     assert isinstance(kernel2, dict)
 
     # Get kernel list again
@@ -114,7 +114,7 @@ async def test_main_kernel_handler(fetch):
         'api', 'kernels',
         method='GET'
     )
-    kernel_list = json.loads(r.body)
+    kernel_list = json.loads(r.body.decode())
     assert r.code == 200
     assert isinstance(kernel_list, list)
     assert len(kernel_list) == 2
@@ -133,7 +133,7 @@ async def test_main_kernel_handler(fetch):
         method='POST',
         allow_nonstandard_methods=True
     )
-    restarted_kernel = json.loads(r.body)
+    restarted_kernel = json.loads(r.body.decode())
     assert restarted_kernel['id'] == kernel2['id']
     assert restarted_kernel['name'] == kernel2['name']
 
@@ -147,12 +147,12 @@ async def test_kernel_handler(fetch):
             'name': NATIVE_KERNEL_NAME
         })
     )
-    kernel_id = json.loads(r.body)['id']
+    kernel_id = json.loads(r.body.decode())['id']
     r = await fetch(
         'api', 'kernels', kernel_id,
         method='GET'
     )
-    kernel = json.loads(r.body)
+    kernel = json.loads(r.body.decode())
     assert r.code == 200
     assert isinstance(kernel, dict)
     assert 'id' in kernel
@@ -179,7 +179,7 @@ async def test_kernel_handler(fetch):
         'api', 'kernels',
         method='GET'
     )
-    kernel_list = json.loads(r.body)
+    kernel_list = json.loads(r.body.decode())
     assert kernel_list == []
 
     # Request to delete a non-existent kernel id
@@ -201,14 +201,14 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
             'name': NATIVE_KERNEL_NAME
         })
     )
-    kid = json.loads(r.body)['id']
+    kid = json.loads(r.body.decode())['id']
     
     # Get kernel info
     r = await fetch(
         'api', 'kernels', kid,
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['connections'] == 0
 
     # Open a websocket connection.
@@ -221,7 +221,7 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
         'api', 'kernels', kid,
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['connections'] == 1
 
     # Close websocket
@@ -232,7 +232,7 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
             'api', 'kernels', kid,
             method='GET'
         )
-        model = json.loads(r.body)
+        model = json.loads(r.body.decode())
         if model['connections'] > 0:
             time.sleep(0.1)
         else:
@@ -242,7 +242,7 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
         'api', 'kernels', kid,
         method='GET'
     )
-    model = json.loads(r.body)
+    model = json.loads(r.body.decode())
     assert model['connections'] == 0
 
 

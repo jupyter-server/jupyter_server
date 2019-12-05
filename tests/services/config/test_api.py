@@ -18,7 +18,7 @@ async def test_create_retrieve_config(fetch):
         method='GET',
     )
     assert response2.code == 200
-    assert json.loads(response2.body) == sample
+    assert json.loads(response2.body.decode()) == sample
 
 
 async def test_modify(fetch):
@@ -56,7 +56,7 @@ async def test_modify(fetch):
     )
 
     assert response2.code == 200
-    assert json.loads(response2.body) == diff
+    assert json.loads(response2.body.decode()) == diff
     
 
 async def test_get_unknown(fetch):
@@ -65,4 +65,4 @@ async def test_get_unknown(fetch):
         method='GET',
     )
     assert response.code == 200
-    assert json.loads(response.body) == {}
+    assert json.loads(response.body.decode()) == {}

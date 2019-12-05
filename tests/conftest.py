@@ -42,7 +42,7 @@ def expected_http_error(error, expected_code, expected_message=None):
         if expected_code != e.code:
             return False
         if expected_message:
-            message = json.loads(e.response.body)['message']
+            message = json.loads(e.response.body.decode())['message']
             if expected_message != message:
                 return False
         return True
@@ -72,10 +72,10 @@ def environ(
     monkeypatch.setenv('JUPYTER_CONFIG_DIR', str(config_dir))
     monkeypatch.setenv('JUPYTER_DATA_DIR', str(data_dir))
     monkeypatch.setenv('JUPYTER_RUNTIME_DIR', str(runtime_dir))
-    monkeypatch.setattr(jupyter_core.paths, 'SYSTEM_JUPYTER_PATH', [mkdir(tmp_path, 'share', 'jupyter')])
-    monkeypatch.setattr(jupyter_core.paths, 'ENV_JUPYTER_PATH', [mkdir(tmp_path, 'env', 'share', 'jupyter')])
-    monkeypatch.setattr(jupyter_core.paths, 'SYSTEM_CONFIG_PATH', [mkdir(tmp_path, 'etc', 'jupyter')])
-    monkeypatch.setattr(jupyter_core.paths, 'ENV_CONFIG_PATH', [mkdir(tmp_path, 'env', 'etc', 'jupyter')])
+    monkeypatch.setattr(jupyter_core.paths, 'SYSTEM_JUPYTER_PATH', [str(mkdir(tmp_path, 'share', 'jupyter'))])
+    monkeypatch.setattr(jupyter_core.paths, 'ENV_JUPYTER_PATH', [str(mkdir(tmp_path, 'env', 'share', 'jupyter'))])
+    monkeypatch.setattr(jupyter_core.paths, 'SYSTEM_CONFIG_PATH', [str(mkdir(tmp_path, 'etc', 'jupyter'))])
+    monkeypatch.setattr(jupyter_core.paths, 'ENV_CONFIG_PATH', [str(mkdir(tmp_path, 'env', 'etc', 'jupyter'))])
 
 
 @pytest.fixture

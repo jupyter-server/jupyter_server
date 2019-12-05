@@ -27,4 +27,4 @@ install:
   - cmd: pip install .[test]
 
 test_script:
-  - pytest jupyter_server
+  - pytest

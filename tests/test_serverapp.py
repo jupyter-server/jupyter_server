@@ -63,7 +63,7 @@ def test_root_dir(tmp_path, configurable_serverapp):
 def invalid_root_dir(tmp_path, request):
     path = tmp_path.joinpath(*request.param)
     # If the path is a file, create it. 
-    if os.path.splitext(path)[1] != '':
+    if os.path.splitext(str(path))[1] != '':
         path.write_text('')
     return str(path)
 

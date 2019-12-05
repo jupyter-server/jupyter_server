@@ -6,7 +6,7 @@ async def test_list_formats(fetch):
         'api', 'nbconvert',
         method='GET'
     )
-    formats = json.loads(r.body)
+    formats = json.loads(r.body.decode())
     assert isinstance(formats, dict)
     assert 'python' in formats
     assert 'html' in formats
