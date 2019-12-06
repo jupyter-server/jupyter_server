@@ -50,7 +50,18 @@ def _init_asyncio_patch():
 def asyncio_patch():
     _init_asyncio_patch()
 
+@pytest.fixture
+def io_loop(asyncio_patch):
+    """
+    Create new io loop for each test, and tear it down after.
+    """
+    loop = tornado.ioloop.IOLoop()
+    loop.make_current()
+    yield loop
+    loop.clear_current()
+    loop.close(all_fds=True)
 
+    
 def mkdir(tmp_path, *parts):
     path = tmp_path.joinpath(*parts)
     if not path.exists():
