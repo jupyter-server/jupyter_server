@@ -18,6 +18,50 @@ from jupyter_server.utils import url_path_join
 
 pytest_plugins = ("pytest_tornasync")
 
+def _init_asyncio_patch():
+    if sys.platform.startswith("win"): # and sys.version_info >= (3, 8):
+        # Windows specific event-loop policy.  Although WindowsSelectorEventLoop is the current
+        # default event loop priot to Python 3.8, WindowsProactorEventLoop becomes the default
+        # in Python 3.8.  However, using WindowsProactorEventLoop fails during creation of
+        # IOLoopKernelClient because it doesn't implement add_reader(), while using
+        # WindowsSelectorEventLoop fails during asyncio.create_subprocess_exec() because it
+        # doesn't implement _make_subprocess_transport().  As a result, we need to force the use of
+        # the WindowsSelectorEventLoop, and essentially make process management synchronous on Windows
+        # (via use_sync_subprocess). (sigh)
+        # See https://github.com/takluyver/jupyter_kernel_mgmt/issues/31
+        # The following approach to this is from https://github.com/jupyter/notebook/pull/5047 by @minrk
+        try:
+            from asyncio import (
+                WindowsProactorEventLoopPolicy,
+                WindowsSelectorEventLoopPolicy,
+            )
+        except ImportError:
+            pass
+            # not affected
+        else:
+            if type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy:
+                # WindowsProactorEventLoopPolicy is not compatible with tornado 6
+                # fallback to the pre-3.8 default of Selector
+                asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
+            print(asyncio.get_event_loop_policy())
+
+
+@pytest.fixture
+def asyncio_patch():
+    _init_asyncio_patch()
+
+
+@pytest.fixture
+def io_loop(asyncio_patch):
+    """
+    Create new io loop for each test, and tear it down after.
+    """
+    loop = tornado.ioloop.IOLoop()
+    loop.make_current()
+    yield loop
+    loop.clear_current()
+    loop.close(all_fds=True)
+
 
 def mkdir(tmp_path, *parts):
     path = tmp_path.joinpath(*parts)
@@ -64,7 +108,8 @@ def environ(
     data_dir,
     config_dir,
     runtime_dir,
-    root_dir
+    root_dir,
+    asyncio_patch
     ):
     monkeypatch.setenv('HOME', str(home_dir))
     monkeypatch.setenv('PYTHONPATH', os.pathsep.join(sys.path))
