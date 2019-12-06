@@ -25,7 +25,7 @@ jobs:
       run: |
         pip install -e .[test]
     - name: ipykernel fix on windows 3.8
-      if: ${{ matrix.os }} == 'windows-latest' and ${{ matrix.python-version }} == '3.8'
+      if: matrix.os == 'windows-latest' and matrix.python-version == '3.8'
       run: |
         pip install --upgrade git+https://github.com/ipython/ipykernel.git
     - name: Run the tests
