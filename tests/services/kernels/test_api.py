@@ -211,7 +211,7 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
     model = json.loads(r.body.decode())
     assert model['connections'] == 0
 
-    time.sleep(60)
+    time.sleep(1)
     # Open a websocket connection.
     ws = await ws_fetch(
         'api', 'kernels', kid, 'channels'
