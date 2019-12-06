@@ -30,9 +30,7 @@ def ws_fetch(auth_header, http_port):
         # Make request.
         req = tornado.httpclient.HTTPRequest(
             url, 
-            headers=auth_header,
-            connect_timeout=60,
-            request_timeout=60
+            headers=auth_header
         )
         return tornado.websocket.websocket_connect(req)
     return client_fetch
@@ -213,6 +211,7 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
     model = json.loads(r.body.decode())
     assert model['connections'] == 0
 
+    time.sleep(60)
     # Open a websocket connection.
     ws = await ws_fetch(
         'api', 'kernels', kid, 'channels'
