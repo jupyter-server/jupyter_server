@@ -32,6 +32,7 @@ def ws_fetch(auth_header, http_port):
             url, 
             headers=auth_header
         )
+        print(http_port)
         return tornado.websocket.websocket_connect(req)
     return client_fetch
 
@@ -193,6 +194,7 @@ def ws_fetch(auth_header, http_port):
 
 
 async def test_connection(fetch, ws_fetch, http_port, auth_header):
+    print('hello')
     # Create kernel
     r = await fetch(
         'api', 'kernels',

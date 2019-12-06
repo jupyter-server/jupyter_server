@@ -18,6 +18,34 @@ from jupyter_server.utils import url_path_join
 
 pytest_plugins = ("pytest_tornasync")
 
+
+def _init_asyncio_patch():
+    """set default asyncio policy to be compatible with tornado
+    Tornado 6 (at least) is not compatible with the default
+    asyncio implementation on Windows
+    Pick the older SelectorEventLoopPolicy on Windows
+    if the known-incompatible default policy is in use.
+    do this as early as possible to make it a low priority and overrideable
+    ref: https://github.com/tornadoweb/tornado/issues/2608
+    FIXME: if/when tornado supports the defaults in asyncio,
+            remove and bump tornado requirement for py38
+    """
+    if sys.platform.startswith("win") and sys.version_info >= (3, 8):
+        import asyncio
+        try:
+            from asyncio import (
+                WindowsProactorEventLoopPolicy,
+                WindowsSelectorEventLoopPolicy,
+            )
+        except ImportError:
+            pass
+            # not affected
+        else:
+            if type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy:
+                # WindowsProactorEventLoopPolicy is not compatible with tornado 6
+                # fallback to the pre-3.8 default of Selector
+                asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
+
 # NOTE: This is a temporary fix for Windows 3.8
 # We have to override the io_loop fixture with an 
 # asyncio patch. This will probably be removed in 
@@ -27,10 +55,11 @@ if sys.platform.startswith("win") and sys.version_info >= (3, 8):
     @pytest.fixture
     def asyncio_patch():
         print("Patch is applied")
-        ServerApp()._init_asyncio_patch()
+        _init_asyncio_patch()
 
     @pytest.fixture
     def io_loop(asyncio_patch):
+        print("IO Loop is patched.")
         loop = tornado.ioloop.IOLoop()
         loop.make_current()
         yield loop
