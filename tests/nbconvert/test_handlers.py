@@ -47,7 +47,7 @@ def notebook(root_dir):
 
     # Write file to tmp dir.
     nbfile = subdir / 'testnb.ipynb'
-    nbfile.write_text(writes(nb, version=4))
+    nbfile.write_text(writes(nb, version=4), encoding='utf-8')
 
 
 @onlyif_cmds_exist('pandoc')

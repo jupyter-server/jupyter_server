@@ -1606,7 +1606,8 @@ class ServerApp(JupyterApp):
                               'no available port could be found.'))
             self.exit(1)
 
-    def _init_asyncio_patch(self):
+    @staticmethod
+    def _init_asyncio_patch():
         """set default asyncio policy to be compatible with tornado
         Tornado 6 (at least) is not compatible with the default
         asyncio implementation on Windows
