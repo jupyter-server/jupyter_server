@@ -50,6 +50,7 @@ def _init_asyncio_patch():
 def asyncio_patch():
     _init_asyncio_patch()
 
+
 @pytest.fixture
 def io_loop(asyncio_patch):
     """
@@ -61,7 +62,7 @@ def io_loop(asyncio_patch):
     loop.clear_current()
     loop.close(all_fds=True)
 
-    
+
 def mkdir(tmp_path, *parts):
     path = tmp_path.joinpath(*parts)
     if not path.exists():
