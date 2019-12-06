@@ -951,7 +951,9 @@ class ServerApp(JupyterApp):
         help=_("Extra keyword arguments to pass to `get_secure_cookie`."
              " See tornado's get_secure_cookie docs for details.")
     )
-    ssl_options = Dict(config=True,
+    ssl_options = Dict(
+            allow_none=True,
+            config=True,
             help=_("""Supply SSL options for the tornado HTTPServer.
             See the tornado docs for details."""))
 
@@ -1278,7 +1280,7 @@ class ServerApp(JupyterApp):
         logger.setLevel(self.log.level)
 
     def init_webapp(self):
-        """initialize tornado webapp and httpserver"""
+        """initialize tornado webapp"""
         self.tornado_settings['allow_origin'] = self.allow_origin
         self.tornado_settings['websocket_compression_options'] = self.websocket_compression_options
         if self.allow_origin_pat:
@@ -1305,56 +1307,29 @@ class ServerApp(JupyterApp):
             self.log, self.base_url, self.default_url, self.tornado_settings,
             self.jinja_environment_options,
         )
-        ssl_options = self.ssl_options
         if self.certfile:
-            ssl_options['certfile'] = self.certfile
+            self.ssl_options['certfile'] = self.certfile
         if self.keyfile:
-            ssl_options['keyfile'] = self.keyfile
+            self.ssl_options['keyfile'] = self.keyfile
         if self.client_ca:
-            ssl_options['ca_certs'] = self.client_ca
-        if not ssl_options:
+            self.ssl_options['ca_certs'] = self.client_ca
+        if len(self.ssl_options) == 0:
             # None indicates no SSL config
-            ssl_options = None
+            self.ssl_options = None
         else:
             # SSL may be missing, so only import it if it's to be used
             import ssl
             # PROTOCOL_TLS selects the highest ssl/tls protocol version that both the client and
             # server support. When PROTOCOL_TLS is not available use PROTOCOL_SSLv23.
             # PROTOCOL_TLS is new in version 2.7.13, 3.5.3 and 3.6
-            ssl_options.setdefault(
+            self.ssl_options.setdefault(
                 'ssl_version',
                 getattr(ssl, 'PROTOCOL_TLS', ssl.PROTOCOL_SSLv23)
             )
-            if ssl_options.get('ca_certs', False):
-                ssl_options.setdefault('cert_reqs', ssl.CERT_REQUIRED)
+            if self.ssl_options.get('ca_certs', False):
+                self.ssl_options.setdefault('cert_reqs', ssl.CERT_REQUIRED)
 
-        self.login_handler_class.validate_security(self, ssl_options=ssl_options)
-        self.http_server = httpserver.HTTPServer(self.web_app, ssl_options=ssl_options,
-                                                 xheaders=self.trust_xheaders,
-                                                 max_body_size=self.max_body_size,
-                                                 max_buffer_size=self.max_buffer_size)
-
-        success = None
-        for port in random_ports(self.port, self.port_retries+1):
-            try:
-                self.http_server.listen(port, self.ip)
-            except socket.error as e:
-                if e.errno == errno.EADDRINUSE:
-                    self.log.info(_('The port %i is already in use, trying another port.') % port)
-                    continue
-                elif e.errno in (errno.EACCES, getattr(errno, 'WSAEACCES', errno.EACCES)):
-                    self.log.warning(_("Permission to listen on port %i denied") % port)
-                    continue
-                else:
-                    raise
-            else:
-                self.port = port
-                success = True
-                break
-        if not success:
-            self.log.critical(_('ERROR: the Jupyter server could not be started because '
-                              'no available port could be found.'))
-            self.exit(1)
+        self.login_handler_class.validate_security(self, ssl_options=self.ssl_options)
 
     @property
     def display_url(self):
@@ -1490,7 +1465,7 @@ class ServerApp(JupyterApp):
     def init_server_extension_config(self):
         """Consolidate server extensions specified by all configs.
 
-        The resulting list is stored on self.nbserver_extensions and updates config object.
+        The resulting list is stored on self.jpserver_extensions and updates config object.
         
         The extension API is experimental, and may change in future releases.
         """
@@ -1519,6 +1494,7 @@ class ServerApp(JupyterApp):
         
         The extension API is experimental, and may change in future releases.
         """
+        # Initialize extensions
         for modulename, enabled in sorted(self.jpserver_extensions.items()):
             if enabled:
                 try:
@@ -1580,8 +1556,103 @@ class ServerApp(JupyterApp):
             pc = ioloop.PeriodicCallback(self.shutdown_no_activity, 60000)
             pc.start()
 
+    @property
+    def http_server(self):
+        """An instance of Tornado's HTTPServer class for the Server Web Application."""
+        try:
+            return self._http_server
+        except AttributeError:
+            raise AttributeError(
+                'An HTTPServer instance has not been created for the '
+                'Server Web Application. To create an HTTPServer for this '
+                'application, call `.init_httpserver()`.'
+                )
+
+    def init_httpserver(self):
+        """Creates an instance of a Tornado HTTPServer for the Server Web Application
+        and sets the http_server attribute.        
+        """
+        # Check that a web_app has been initialized before starting a server.
+        if not hasattr(self, 'web_app'):
+            raise AttributeError('A tornado web application has not be initialized. '
+                                 'Try calling `.init_webapp()` first.')
+            
+        # Create an instance of the server.
+        self._http_server = httpserver.HTTPServer(
+            self.web_app, 
+            ssl_options=self.ssl_options,
+            xheaders=self.trust_xheaders,
+            max_body_size=self.max_body_size,
+            max_buffer_size=self.max_buffer_size
+        )
+        success = None
+        for port in random_ports(self.port, self.port_retries+1):
+            try:
+                self.http_server.listen(port, self.ip)
+            except socket.error as e:
+                if e.errno == errno.EADDRINUSE:
+                    self.log.info(_('The port %i is already in use, trying another port.') % port)
+                    continue
+                elif e.errno in (errno.EACCES, getattr(errno, 'WSAEACCES', errno.EACCES)):
+                    self.log.warning(_("Permission to listen on port %i denied") % port)
+                    continue
+                else:
+                    raise
+            else:
+                self.port = port
+                success = True
+                break
+        if not success:
+            self.log.critical(_('ERROR: the Jupyter server could not be started because '
+                              'no available port could be found.'))
+            self.exit(1)
+
+    @staticmethod
+    def _init_asyncio_patch():
+        """set default asyncio policy to be compatible with tornado
+        Tornado 6 (at least) is not compatible with the default
+        asyncio implementation on Windows
+        Pick the older SelectorEventLoopPolicy on Windows
+        if the known-incompatible default policy is in use.
+        do this as early as possible to make it a low priority and overrideable
+        ref: https://github.com/tornadoweb/tornado/issues/2608
+        FIXME: if/when tornado supports the defaults in asyncio,
+               remove and bump tornado requirement for py38
+        """
+        if sys.platform.startswith("win") and sys.version_info >= (3, 8):
+            import asyncio
+            try:
+                from asyncio import (
+                    WindowsProactorEventLoopPolicy,
+                    WindowsSelectorEventLoopPolicy,
+                )
+            except ImportError:
+                pass
+                # not affected
+            else:
+                if type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy:
+                    # WindowsProactorEventLoopPolicy is not compatible with tornado 6
+                    # fallback to the pre-3.8 default of Selector
+                    asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
+
     @catch_config_error
-    def initialize(self, argv=None, load_extensions=True):
+    def initialize(self, argv=None, load_extensions=True, new_httpserver=True):
+        """Initialize the Server application class, configurables, web application, and http server.
+
+        Parameters
+        ----------
+        argv: list or None
+            CLI arguments to parse.
+        
+        load_extensions: bool
+            If True, the server will load server extensions listed in the jpserver_extension trait.
+            Otherwise, no server extensions will be loaded.
+        
+        new_httpserver: bool
+            If True, a tornado HTTPServer instance will be created and configured for the Server Web
+            Application. This will set the http_server attribute of this class.
+        """
+        self._init_asyncio_patch()
         super(ServerApp, self).initialize(argv)
         self.init_logging()
         if self._dispatching:
@@ -1591,6 +1662,8 @@ class ServerApp(JupyterApp):
             self.init_server_extension_config()
         self.init_components()
         self.init_webapp()
+        if new_httpserver:
+            self.init_httpserver()
         self.init_terminals()
         self.init_signal()
         if load_extensions:
@@ -1719,12 +1792,7 @@ class ServerApp(JupyterApp):
             new=self.webbrowser_open_new)
         threading.Thread(target=b).start()
 
-    def start(self):
-        """ Start the Jupyter server app, after initialization
-
-        This method takes no arguments so all configuration and initialization
-        must be done prior to calling this method."""
-
+    def start_app(self):
         super(ServerApp, self).start()
 
         if not self.allow_root:
@@ -1764,6 +1832,8 @@ class ServerApp(JupyterApp):
                 '    %s' % self.display_url,
             ]))
 
+    def start_ioloop(self):
+        """Start the IO Loop."""
         self.io_loop = ioloop.IOLoop.current()
         if sys.platform.startswith('win'):
             # add no-op to wake every 5s
@@ -1773,15 +1843,25 @@ class ServerApp(JupyterApp):
         try:
             self.io_loop.start()
         except KeyboardInterrupt:
-            info(_("Interrupted..."))
+            self.log.info(_("Interrupted..."))
         finally:
             self.remove_server_info_file()
             self.remove_browser_open_file()
             self.cleanup_kernels()
 
+    def start(self):
+        """ Start the Jupyter server app, after initialization
+
+        This method takes no arguments so all configuration and initialization
+        must be done prior to calling this method."""
+        self.start_app()
+        self.start_ioloop()
+
     def stop(self):
         def _stop():
-            self.http_server.stop()
+            # Stop a server if its set.
+            if hasattr(self, '_http_server'):
+                self.http_server.stop()
             self.io_loop.stop()
         self.io_loop.add_callback(_stop)
 
