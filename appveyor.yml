@@ -4,14 +4,17 @@ matrix:
 
 environment:
   matrix:
-    - CONDA_PY: 35
-      CONDA_INSTALL_LOCN: "C:\\Miniconda35-x64"
-    - CONDA_PY: 36
-      CONDA_INSTALL_LOCN: "C:\\Miniconda36-x64"
-    - CONDA_PY: 37
-      CONDA_INSTALL_LOCN: "C:\\Miniconda37-x64"
-    - CONDA_PY: 38
-      CONDA_INSTALL_LOCN: "C:\\Miniconda38-x64"
+    # - CONDA_PY: 35
+    #   CONDA_INSTALL_LOCN: "C:\\Miniconda35-x64"
+    # - CONDA_PY: 36
+    #   CONDA_INSTALL_LOCN: "C:\\Miniconda36-x64"
+    # - CONDA_PY: 37
+    #   CONDA_INSTALL_LOCN: "C:\\Miniconda37-x64"
+    - PYTHON: "C:\\Miniconda38-x64"
+      PYTHON_VERSION: "3.8"
+      ZIP_VERSION: "cp38"
+      PYTHON_ARCH: "64"
+      TARGET: "x86_64-pc-windows-msvc"
 
 platform:
   - x64
