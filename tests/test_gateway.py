@@ -188,7 +188,7 @@ async def test_gateway_get_kernelspecs(init_gateway, fetch):
             method='GET'
         )
         assert r.code == 200
-        content = json.loads(r.body.decode('utf-8'), encoding='utf-8')
+        content = json.loads(r.body.decode('utf-8'))
         kspecs = content.get('kernelspecs')
         assert len(kspecs) == 2
         assert kspecs.get('kspec_bar').get('name') == 'kspec_bar'
@@ -202,7 +202,7 @@ async def test_gateway_get_named_kernelspec(init_gateway, fetch):
             method='GET'
         )
         assert r.code == 200
-        kspec_foo = json.loads(r.body.decode('utf-8'), encoding='utf-8')
+        kspec_foo = json.loads(r.body.decode('utf-8'))
         assert kspec_foo.get('name') == 'kspec_foo'
 
         with pytest.raises(tornado.httpclient.HTTPClientError) as e:
@@ -288,7 +288,7 @@ async def create_session(root_dir, fetch, kernel_name):
             body=body
         )
         assert r.code == 201
-        model = json.loads(r.body.decode('utf-8'), encoding='utf-8')
+        model = json.loads(r.body.decode('utf-8'))
         assert model.get('path') == str(nb_path)
         kernel_id = model.get('kernel').get('id')
         # ensure its in the running_kernels and name matches.
@@ -325,7 +325,7 @@ async def is_kernel_running(fetch, kernel_id):
             method='GET'
         )
         assert r.code == 200
-        kernels = json.loads(r.body.decode('utf-8'), encoding='utf-8')
+        kernels = json.loads(r.body.decode('utf-8'))
         assert len(kernels) == len(running_kernels)
         for model in kernels:
             if model.get('id') == kernel_id:
@@ -348,7 +348,7 @@ async def create_kernel(fetch, kernel_name):
             body=body
         )
         assert r.code == 201
-        model = json.loads(r.body.decode('utf-8'), encoding='utf-8')
+        model = json.loads(r.body.decode('utf-8'))
         kernel_id = model.get('id')
         # ensure its in the running_kernels and name matches.
         running_kernel = running_kernels.get(kernel_id)
@@ -383,7 +383,7 @@ async def restart_kernel(fetch, kernel_id):
             allow_nonstandard_methods=True
         )
         assert r.code == 200
-        model = json.loads(r.body.decode('utf-8'), encoding='utf-8')
+        model = json.loads(r.body.decode('utf-8'))
         restarted_kernel_id = model.get('id')
         # ensure its in the running_kernels and name matches.
         running_kernel = running_kernels.get(restarted_kernel_id)
