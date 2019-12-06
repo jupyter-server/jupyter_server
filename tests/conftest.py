@@ -18,22 +18,23 @@ from jupyter_server.utils import url_path_join
 
 pytest_plugins = ("pytest_tornasync")
 
+# NOTE: This is a temporary fix for Windows 3.8
+# We have to override the io_loop fixture with an 
+# asyncio patch. This will probably be removed in 
+# the future.
+if sys.platform.startswith("win") and sys.version_info >= (3, 8):
 
-@pytest.fixture
-def asyncio_patch():
-    ServerApp()._init_asyncio_patch()
+    @pytest.fixture
+    def asyncio_patch():
+        ServerApp()._init_asyncio_patch()
 
-
-@pytest.fixture
-def io_loop(asyncio_patch):
-    """
-    Create new io loop for each test, and tear it down after.
-    """
-    loop = tornado.ioloop.IOLoop()
-    loop.make_current()
-    yield loop
-    loop.clear_current()
-    loop.close(all_fds=True)
+    @pytest.fixture
+    def io_loop(asyncio_patch):
+        loop = tornado.ioloop.IOLoop()
+        loop.make_current()
+        yield loop
+        loop.clear_current()
+        loop.close(all_fds=True)
 
 
 def mkdir(tmp_path, *parts):
