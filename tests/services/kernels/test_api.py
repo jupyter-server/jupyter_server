@@ -22,7 +22,7 @@ def ws_fetch(auth_header, http_port):
         urlparts = urllib.parse.urlparse('ws://localhost:{}'.format(http_port))
         urlparts = urlparts._replace(
             path=path,
-            query=urllib.parse.urlencode(params),
+            query=urllib.parse.urlencode(params)
         )
         url = urlparts.geturl()
         # Add auth keys to header
@@ -30,7 +30,8 @@ def ws_fetch(auth_header, http_port):
         # Make request.
         req = tornado.httpclient.HTTPRequest(
             url, 
-            headers=auth_header
+            headers=auth_header,
+            connect_timeout=120
         )
         print(http_port)
         return tornado.websocket.websocket_connect(req)
