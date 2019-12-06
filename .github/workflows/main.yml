@@ -1,4 +1,4 @@
-name: CI
+name: Jupyter Server Tests
 on:
   push:
     branches: 
@@ -24,6 +24,10 @@ jobs:
     - name: Install the Python dependencies
       run: |
         pip install -e .[test]
+    - name: ipykernel fix on windows 3.8
+      if: matrix.os == 'windows-latest' && matrix.python-version == '3.8'
+      run: |
+        pip install --upgrade git+https://github.com/ipython/ipykernel.git
     - name: Run the tests
       run: |
-        nosetests -v jupyter_server
+        pytest

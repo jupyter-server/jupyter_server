@@ -83,7 +83,7 @@ for more information.
         'jupyter_core>=4.4.0',
         'jupyter_client>=5.3.1',
         'nbformat',
-        'nbconvert',
+        'nbconvert<6',
         'ipykernel', # bless IPython kernel for now
         'Send2Trash',
         'terminado>=0.8.1',
@@ -92,7 +92,7 @@ for more information.
     ],
     extras_require = {
         'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
-                 'nbval', 'nose-exclude', 'selenium', 'pytest', 'pytest-cov'],
+                 'pytest', 'pytest-cov', 'pytest-tornasync'],
         'test:sys_platform == "win32"': ['nose-exclude'],
     },
     python_requires = '>=3.5',

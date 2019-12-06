@@ -37,7 +37,7 @@ script:
       else
           true
       fi
-    - 'if [[ $GROUP == python ]]; then nosetests -v jupyter_server; fi'
+    - 'if [[ $GROUP == python ]]; then pytest; fi'
     - |
       if [[ $GROUP == docs ]]; then
         EXIT_STATUS=0
