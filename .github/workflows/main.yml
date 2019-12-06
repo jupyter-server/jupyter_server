@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         python-version: [ '3.5', '3.6', '3.7', '3.8' ]
     steps:
     - name: Checkout
@@ -26,4 +26,4 @@ jobs:
         pip install -e .[test]
     - name: Run the tests
       run: |
-        pytest -s
+        pytest
