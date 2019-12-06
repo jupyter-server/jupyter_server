@@ -33,7 +33,6 @@ def ws_fetch(auth_header, http_port):
             headers=auth_header,
             connect_timeout=120
         )
-        print(http_port)
         return tornado.websocket.websocket_connect(req)
     return client_fetch
 

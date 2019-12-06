@@ -27,12 +27,10 @@ if sys.platform.startswith("win") and sys.version_info >= (3, 8):
 
     @pytest.fixture
     def asyncio_patch():
-        print("Patch is applied")
         ServerApp()._init_asyncio_patch()
 
     @pytest.fixture
     def io_loop(asyncio_patch):
-        print("IO Loop is patched.")
         loop = tornado.ioloop.IOLoop()
         loop.make_current()
         yield loop
