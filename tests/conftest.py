@@ -188,5 +188,5 @@ def fetch(http_server_client, auth_header, base_url):
         # Add auth keys to header
         headers.update(auth_header)
         # Make request.
-        return http_server_client.fetch(url, headers=headers, **kwargs)
+        return http_server_client.fetch(url, headers=headers, request_timeout=20, **kwargs)
     return client_fetch
