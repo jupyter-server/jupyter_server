@@ -276,7 +276,7 @@ async def test_modify_kernel_name(session_client, fetch):
     # Need to find a better solution to this.
     await session_client.cleanup()
 
-#### NOT FINISHED WITH THIS TEST
+
 async def test_modify_kernel_id(session_client, fetch):
     resp = await session_client.create('foo/nb1.ipynb')
     before = j(resp)
