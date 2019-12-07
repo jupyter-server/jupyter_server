@@ -102,6 +102,8 @@ from jupyter_server._sysinfo import get_sys_info
 from ._tz import utcnow, utcfromtimestamp
 from .utils import url_path_join, check_pid, url_escape, urljoin, pathname2url
 
+from jupyter_server.extensions import ServerExtensionApp
+
 #-----------------------------------------------------------------------------
 # Module globals
 #-----------------------------------------------------------------------------
@@ -566,6 +568,7 @@ class ServerApp(JupyterApp):
         list=(JupyterServerListApp, JupyterServerListApp.description.splitlines()[0]),
         stop=(JupyterServerStopApp, JupyterServerStopApp.description.splitlines()[0]),
         password=(JupyterPasswordApp, JupyterPasswordApp.description.splitlines()[0]),
+        extension=(ServerExtensionApp, ServerExtensionApp.description.splitlines()[0]),
     )
 
     # A list of services whose handlers will be exposed.

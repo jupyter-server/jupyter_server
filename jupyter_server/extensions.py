@@ -158,7 +158,7 @@ flags['python'] = flags['py']
 
 class ToggleServerExtensionApp(BaseExtensionApp):
     """A base class for enabling/disabling extensions"""
-    name = "jupyter serverextension enable/disable"
+    name = "jupyter server extension enable/disable"
     description = "Enable/disable a server extension using frontend configuration files."
     
     flags = flags
@@ -213,31 +213,31 @@ class ToggleServerExtensionApp(BaseExtensionApp):
 
 class EnableServerExtensionApp(ToggleServerExtensionApp):
     """An App that enables (and validates) Server Extensions"""
-    name = "jupyter serverextension enable"
+    name = "jupyter server extension enable"
     description = """
-    Enable a serverextension in configuration.
+    Enable a server extension in configuration.
     
     Usage
-        jupyter serverextension enable [--system|--sys-prefix]
+        jupyter server extension enable [--system|--sys-prefix]
     """
     _toggle_value = True
 
 
 class DisableServerExtensionApp(ToggleServerExtensionApp):
     """An App that disables Server Extensions"""
-    name = "jupyter serverextension disable"
+    name = "jupyter server extension disable"
     description = """
-    Disable a serverextension in configuration.
+    Disable a server extension in configuration.
     
     Usage
-        jupyter serverextension disable [--system|--sys-prefix]
+        jupyter server extension disable [--system|--sys-prefix]
     """
     _toggle_value = False
 
 
 class ListServerExtensionsApp(BaseExtensionApp):
     """An App that lists (and validates) Server Extensions"""
-    name = "jupyter serverextension list"
+    name = "jupyter server extension list"
     version = __version__
     description = "List all server extensions known by the configuration system"
 
@@ -268,15 +268,15 @@ class ListServerExtensionsApp(BaseExtensionApp):
 
 
 _examples = """
-jupyter serverextension list                        # list all configured server extensions
-jupyter serverextension enable --py <packagename>   # enable all server extensions in a Python package
-jupyter serverextension disable --py <packagename>  # disable all server extensions in a Python package
+jupyter server extension list                        # list all configured server extensions
+jupyter server extension enable --py <packagename>   # enable all server extensions in a Python package
+jupyter server extension disable --py <packagename>  # disable all server extensions in a Python package
 """
 
 
 class ServerExtensionApp(BaseExtensionApp):
     """Root level server extension app"""
-    name = "jupyter serverextension"
+    name = "jupyter server extension"
     version = __version__
     description = "Work with Jupyter server extensions"
     examples = _examples
