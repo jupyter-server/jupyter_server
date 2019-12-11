@@ -81,6 +81,12 @@ def _preparse_for_stopping_flags(Application, argv):
         app.exit(0)
 
 
+flags['no-browser']=(
+    {'ExtensionApp' : {'open_browser' : True}},
+    _("Prevent the opening of the default url in the browser.")
+)
+
+
 class ExtensionApp(JupyterApp):
     """Base class for configurable Jupyter Server Extension Applications.
 
