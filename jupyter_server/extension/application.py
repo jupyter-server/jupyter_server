@@ -110,7 +110,9 @@ class ExtensionApp(JupyterApp):
 
     def _config_file_name_default(self):
         """The default config file name."""
-        return 'jupyter_{}_config'.format(self.extension_name)
+        if not self.name:
+            return ''
+        return 'jupyter_{}_config'.format(self.extension_name.replace('-','_'))
 
     def _validate_extension_name(self):
         value = self.extension_name
