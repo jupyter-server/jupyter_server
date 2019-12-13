@@ -131,3 +131,9 @@ To make your frontend executable from anywhere on your system, added this method
             ]
         }
     )
+
+Examples
+--------
+
+You can check some simple example on the `GitHub jupyter_server repository
+<https://github.com/jupyter/jupyter_server/tree/master/jupyter_server/example/simple>`_.
