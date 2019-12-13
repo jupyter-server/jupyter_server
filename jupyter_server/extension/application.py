@@ -216,7 +216,6 @@ class ExtensionApp(JupyterApp):
         traits = self.class_own_traits().keys()
         self.extension_config = Config({t: getattr(self, t) for t in traits})
         self.serverapp.web_app.settings['{}_config'.format(self.extension_name)] = self.extension_config
-        self.settings['{}_config'.format(self.extension_name)] = self.extension_config
 
     def _prepare_settings(self):
         # Make webapp settings accessible to initialize_settings method
