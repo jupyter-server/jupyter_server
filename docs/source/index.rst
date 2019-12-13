@@ -32,7 +32,8 @@ To install the latest release of ``jupyter_server``, use *pip*:
    :caption: Configuration
 
    config_overview
-   config.rst
+   config
+   migrate_from_notebook
    public_server
    security
    extending/index.rst

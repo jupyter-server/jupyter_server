@@ -107,9 +107,6 @@ def find_package_data():
     cwd = os.getcwd()
     os.chdir('jupyter_server')
 
-    os.chdir(os.path.join('tests',))
-    js_tests = glob('*.js') + glob('*/*.js')
-
     os.chdir(cwd)
 
     package_data = {

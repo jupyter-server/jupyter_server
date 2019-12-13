@@ -4,12 +4,19 @@ matrix:
 
 environment:
   matrix:
+    - CONDA_PY: 35
+      CONDA_PY_SPEC: 3.5
+      CONDA_INSTALL_LOCN: "C:\\Miniconda35-x64"
     - CONDA_PY: 36
+      CONDA_PY_SPEC: 3.6
       CONDA_INSTALL_LOCN: "C:\\Miniconda36-x64"
     - CONDA_PY: 37
-      CONDA_INSTALL_LOCN: "C:\\Miniconda36-x64"
+      CONDA_PY_SPEC: 3.7
+      CONDA_INSTALL_LOCN: "C:\\Miniconda37-x64"
     - CONDA_PY: 38
-      CONDA_INSTALL_LOCN: "C:\\Miniconda36-x64"
+      CONDA_PY_SPEC: 3.8
+      # appveyor doesn't come with this directory, so use 37's since we're creating an env anyway
+      CONDA_INSTALL_LOCN: "C:\\Miniconda37-x64"
 
 platform:
   - x64
@@ -18,11 +25,17 @@ build: off
 
 install:
   - cmd: call %CONDA_INSTALL_LOCN%\Scripts\activate.bat
+  - cmd: set CONDA_PY=%CONDA_PY%
+  - cmd: set CONDA_PY_SPEC=%CONDA_PY_SPEC%
   - cmd: conda config --set show_channel_urls true
   - cmd: conda config --add channels conda-forge
-  #- cmd: conda update --yes --quiet conda
-  - cmd: conda install -y pyzmq tornado jupyter_client nbformat nbconvert ipykernel pip nose
+  - cmd: conda update --yes --quiet conda
+  - cmd: conda info -a
+  - cmd: conda create -y -q -n test-env-%CONDA_PY% python=%CONDA_PY_SPEC% pyzmq tornado jupyter_client nbformat nbconvert ipykernel pip nose
+  - cmd: conda activate test-env-%CONDA_PY%
   - cmd: pip install .[test]
+# FIXME: Use patch for python 3.8, windows issues (https://github.com/ipython/ipykernel/pull/456) - remove once released
+  - IF %CONDA_PY% == 38 pip install --upgrade git+https://github.com/ipython/ipykernel.git
 
 test_script:
-  - nosetests  -v jupyter_server --exclude-dir jupyter_server\tests\selenium
+  - pytest

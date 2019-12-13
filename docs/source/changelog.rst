@@ -21,9 +21,19 @@ We strongly recommend that you upgrade to version 9+ of pip before upgrading ``j
     Use ``pip install pip --upgrade`` to upgrade pip. Check pip version with
     ``pip --version``.
 
+.. _release-0.0.2:
+
+0.0.2
+-----
+
+- Introduce new extension module
+- Pytest for unit tests
+- Server documentation
+- NbClassic for migration from notebook
+
 .. _release-0.0.1:
 
 0.0.1
 -----
 
-First release of the Jupyter Server.
+- First release of the Jupyter Server.
