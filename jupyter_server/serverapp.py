@@ -1151,14 +1151,6 @@ class ServerApp(JupyterApp):
             raise TraitError(trans.gettext("No such notebook dir: '%r'") % value)
         return value
 
-    @observe('root_dir')
-    def _update_root_dir(self, change):
-        """Do a bit of validation of the notebook dir."""
-        # setting App.root_dir implies setting notebook and kernel dirs as well
-        new = change['new']
-        self.config.FileContentsManager.root_dir = new
-        self.config.MappingKernelManager.root_dir = new
-
     @observe('server_extensions')
     def _update_server_extensions(self, change):
         self.log.warning(_("server_extensions is deprecated, use jpserver_extensions"))
