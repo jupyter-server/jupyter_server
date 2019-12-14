@@ -4,7 +4,8 @@ import re
 from traitlets import (
     Unicode, 
     List, 
-    Dict, 
+    Dict,
+    Bool,
     default, 
     validate
 )
@@ -78,6 +79,12 @@ def _preparse_for_stopping_flags(Application, argv):
         app = Application()
         app.write_default_config()
         app.exit(0)
+
+
+flags['no-browser']=(
+    {'ExtensionApp' : {'open_browser' : True}},
+    _("Prevent the opening of the default url in the browser.")
+)
 
 
 class ExtensionApp(JupyterApp):
@@ -174,6 +181,11 @@ class ExtensionApp(JupyterApp):
 
     default_url = Unicode('/', config=True,
         help=_("The default URL to redirect to from `/`")
+    )
+
+    open_browser = Bool(
+        True,
+        help=_("Should the extension open a browser window?")
     )
 
     custom_display_url = Unicode(u'', config=True,
@@ -335,7 +347,7 @@ class ExtensionApp(JupyterApp):
         # Override the server's display url to show extension's display URL.
         self.serverapp.custom_display_url = self.custom_display_url
         # Override the server's default option and open a broswer window.
-        self.serverapp.open_browser = True
+        self.serverapp.open_browser = self.open_browser
         # Hijack the server's browser-open file to land on
         # the extensions home page.
         self.serverapp._write_browser_open_file = self._write_browser_open_file
