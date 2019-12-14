@@ -49,11 +49,18 @@ def test_instance_creation_with_instance_args(trait_name, trait_value):
 def test_instance_creation_with_argv(serverapp, trait_name, trait_value):
     kwarg = {}
     kwarg.setdefault(trait_name, trait_value)
-
     argv = [
         '--MockExtension.{name}={value}'.format(name=trait_name, value=trait_value)
     ]
-
     mock_extension = MockExtension()
     mock_extension.initialize(serverapp, argv=argv)
     assert getattr(mock_extension, trait_name) == trait_value
+
+
+def test_extensionapp_load_config_file(config_file, serverapp, extended_serverapp):
+    # Assert default config_file_paths is the same in the app and extension.
+    assert extended_serverapp.config_file_paths == serverapp.config_file_paths
+    assert extended_serverapp.config_file_name == 'jupyter_mock_config'
+    assert extended_serverapp.config_dir == serverapp.config_dir
+    # Assert that the trait is updated by config file
+    assert extended_serverapp.mock_trait == 'config from file'

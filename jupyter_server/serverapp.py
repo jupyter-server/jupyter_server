@@ -1124,6 +1124,16 @@ class ServerApp(JupyterApp):
         )
         self.exit(1)
 
+    notebook_dir = Unicode(
+        config=True,
+        help=_("DEPRECATED, use root_dir.")
+    )
+
+    @observe('notebook_dir')
+    def _update_notebook_dir(self, change):
+        self.log.warning(_("notebook_dir is deprecated, use root_dir"))
+        self.root_dir = change['new']
+
     root_dir = Unicode(config=True,
         help=_("The directory to use for notebooks and kernels.")
     )
@@ -1150,14 +1160,6 @@ class ServerApp(JupyterApp):
         if not os.path.isdir(value):
             raise TraitError(trans.gettext("No such notebook dir: '%r'") % value)
         return value
-
-    @observe('root_dir')
-    def _update_root_dir(self, change):
-        """Do a bit of validation of the notebook dir."""
-        # setting App.root_dir implies setting notebook and kernel dirs as well
-        new = change['new']
-        self.config.FileContentsManager.root_dir = new
-        self.config.MappingKernelManager.root_dir = new
 
     @observe('server_extensions')
     def _update_server_extensions(self, change):
@@ -1209,6 +1211,7 @@ class ServerApp(JupyterApp):
          """))
 
     def parse_command_line(self, argv=None):
+
         super(ServerApp, self).parse_command_line(argv)
 
         if self.extra_args:
@@ -1504,7 +1507,7 @@ class ServerApp(JupyterApp):
                         # Add debug log for loaded extensions.
                         self.log.debug("%s is enabled and loaded." % modulename)
                     else:
-                        self.log.warning("%s is enabled but no `load_jupyter_server_extension` function was found")
+                        self.log.warning("%s is enabled but no `load_jupyter_server_extension` function was found" % modulename)
                 except Exception:
                     if self.reraise_server_extension_failures:
                         raise

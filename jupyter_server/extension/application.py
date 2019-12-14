@@ -4,7 +4,8 @@ import re
 from traitlets import (
     Unicode, 
     List, 
-    Dict, 
+    Dict,
+    Bool,
     default, 
     validate
 )
@@ -80,6 +81,12 @@ def _preparse_for_stopping_flags(Application, argv):
         app.exit(0)
 
 
+flags['no-browser']=(
+    {'ExtensionApp' : {'open_browser' : True}},
+    _("Prevent the opening of the default url in the browser.")
+)
+
+
 class ExtensionApp(JupyterApp):
     """Base class for configurable Jupyter Server Extension Applications.
 
@@ -95,12 +102,10 @@ class ExtensionApp(JupyterApp):
 
     # Name of the extension
     extension_name = Unicode(
-        "",
         help="Name of extension."
     )
 
-    @default("extension_name")
-    def _default_extension_name(self):
+    def _extension_name_default(self):
         try:
             return self.name
         except AttributeError:
@@ -108,8 +113,9 @@ class ExtensionApp(JupyterApp):
 
     INVALID_EXTENSION_NAME_CHARS = [' ', '.', '+', '/']
 
-    def _validate_extension_name(self):
-        value = self.extension_name
+    @validate('extension_name')
+    def _validate_extension_name(self, value):
+        #value = self.extension_name
         if isinstance(value, str):
             # Validate that extension_name doesn't contain any invalid characters.
             for c in ExtensionApp.INVALID_EXTENSION_NAME_CHARS:
@@ -157,8 +163,29 @@ class ExtensionApp(JupyterApp):
         help=_("""Handlers appended to the server.""")
     ).tag(config=True)
 
+    def _config_dir_default(self):
+        """Point the config directory at the server's config_dir by default."""
+        try:
+            return self.serverapp.config_dir
+        except AttributeError:
+            raise AttributeError(
+                "The ExtensionApp has not ServerApp "
+                "initialized. Try `.initialize_server()`."
+            )
+
+    def _config_file_name_default(self):
+        """The default config file name."""
+        if not self.extension_name:
+            return ''
+        return 'jupyter_{}_config'.format(self.extension_name.replace('-','_'))
+
     default_url = Unicode('/', config=True,
         help=_("The default URL to redirect to from `/`")
+    )
+
+    open_browser = Bool(
+        True,
+        help=_("Should the extension open a browser window?")
     )
 
     custom_display_url = Unicode(u'', config=True,
@@ -298,10 +325,11 @@ class ExtensionApp(JupyterApp):
         - Passes settings to webapp
         - Appends handlers to webapp.
         """
-        self._validate_extension_name()
+        # Initialize ServerApp.
+        self.serverapp = serverapp
+        
         # Initialize the extension application
         super(ExtensionApp, self).initialize(argv=argv)
-        self.serverapp = serverapp
 
         # Initialize config, settings, templates, and handlers.
         self._prepare_config()
@@ -319,7 +347,7 @@ class ExtensionApp(JupyterApp):
         # Override the server's display url to show extension's display URL.
         self.serverapp.custom_display_url = self.custom_display_url
         # Override the server's default option and open a broswer window.
-        self.serverapp.open_browser = True
+        self.serverapp.open_browser = self.open_browser
         # Hijack the server's browser-open file to land on
         # the extensions home page.
         self.serverapp._write_browser_open_file = self._write_browser_open_file

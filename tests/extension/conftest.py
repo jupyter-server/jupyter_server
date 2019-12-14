@@ -21,6 +21,13 @@ class MockExtension(ExtensionApp):
 
 
 @pytest.fixture
+def config_file(config_dir):
+    f = config_dir.joinpath('jupyter_mock_config.py')
+    f.write_text("c.MockExtension.mock_trait ='config from file'")
+    return f
+
+
+@pytest.fixture
 def extended_serverapp(serverapp):
     m = MockExtension()
     m.initialize(serverapp)
