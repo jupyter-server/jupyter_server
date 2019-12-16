@@ -27,6 +27,9 @@ try:
 except KeyError:
     pass
 
+#-----------------------------------------------------------------------------
+# Util functions and classes.
+#-----------------------------------------------------------------------------
 
 def _preparse_for_subcommand(Application, argv):
     """Preparse command line to look for subcommands.
@@ -92,7 +95,6 @@ class ExtensionAppJinjaMixin:
         """)
     ).tag(config=True)
 
-
     def _prepare_templates(self):
         # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
@@ -118,12 +120,18 @@ class ExtensionAppJinjaMixin:
             }
         )
 
+#-----------------------------------------------------------------------------
+# Aliases and Flags
+#-----------------------------------------------------------------------------
 
 flags['no-browser']=(
     {'ExtensionApp' : {'open_browser' : True}},
     _("Prevent the opening of the default url in the browser.")
 )
 
+#-----------------------------------------------------------------------------
+# ExtensionApp
+#-----------------------------------------------------------------------------
 
 class ExtensionApp(JupyterApp):
     """Base class for configurable Jupyter Server Extension Applications.
