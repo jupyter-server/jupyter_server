@@ -12,6 +12,7 @@ from tornado.escape import url_escape
 from traitlets.config import Config
 
 import jupyter_core.paths
+import jupyter_server.extension.serverextension
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.utils import url_path_join
 
@@ -73,6 +74,10 @@ data_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'data'))
 config_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'config'))
 runtime_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'runtime'))
 root_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'root_dir'))
+system_jupyter_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'share', 'jupyter'))
+env_jupyter_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'env', 'share', 'jupyter'))
+system_config_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'etc', 'jupyter'))
+env_config_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'env', 'etc', 'jupyter'))
 argv = pytest.fixture(lambda: [])
 
 @pytest.fixture
@@ -83,7 +88,11 @@ def environ(
     data_dir,
     config_dir,
     runtime_dir,
-    root_dir
+    root_dir,
+    system_jupyter_path,
+    system_config_path,
+    env_jupyter_path,
+    env_config_path
     ):
     monkeypatch.setenv('HOME', str(home_dir))
     monkeypatch.setenv('PYTHONPATH', os.pathsep.join(sys.path))
@@ -91,10 +100,10 @@ def environ(
     monkeypatch.setenv('JUPYTER_CONFIG_DIR', str(config_dir))
     monkeypatch.setenv('JUPYTER_DATA_DIR', str(data_dir))
     monkeypatch.setenv('JUPYTER_RUNTIME_DIR', str(runtime_dir))
-    monkeypatch.setattr(jupyter_core.paths, 'SYSTEM_JUPYTER_PATH', [str(mkdir(tmp_path, 'share', 'jupyter'))])
-    monkeypatch.setattr(jupyter_core.paths, 'ENV_JUPYTER_PATH', [str(mkdir(tmp_path, 'env', 'share', 'jupyter'))])
-    monkeypatch.setattr(jupyter_core.paths, 'SYSTEM_CONFIG_PATH', [str(mkdir(tmp_path, 'etc', 'jupyter'))])
-    monkeypatch.setattr(jupyter_core.paths, 'ENV_CONFIG_PATH', [str(mkdir(tmp_path, 'env', 'etc', 'jupyter'))])
+    monkeypatch.setattr(jupyter_core.paths, 'SYSTEM_JUPYTER_PATH', [str(system_jupyter_path)])
+    monkeypatch.setattr(jupyter_core.paths, 'ENV_JUPYTER_PATH', [str(env_jupyter_path)])
+    monkeypatch.setattr(jupyter_core.paths, 'SYSTEM_CONFIG_PATH', [str(system_config_path)])
+    monkeypatch.setattr(jupyter_core.paths, 'ENV_CONFIG_PATH', [str(env_config_path)])
 
 
 @pytest.fixture

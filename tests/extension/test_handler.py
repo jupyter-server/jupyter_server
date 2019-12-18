@@ -1,7 +1,7 @@
 import pytest
 
 from jupyter_server.serverapp import ServerApp
-from .conftest import MockExtension
+from .conftest import MockExtensionApp
 
 # ------------------ Start tests -------------------
 
@@ -16,7 +16,7 @@ async def test_handler(fetch, extended_serverapp):
 
 async def test_handler_setting(fetch, serverapp):
     # Configure trait in Mock Extension.
-    m = MockExtension(mock_trait='test mock trait')
+    m = MockExtensionApp(mock_trait='test mock trait')
     m.initialize(serverapp)
 
     # Test that the extension trait was picked up by the webapp.
@@ -30,8 +30,8 @@ async def test_handler_setting(fetch, serverapp):
 
 async def test_handler_argv(fetch, serverapp):
     # Configure trait in Mock Extension.
-    m = MockExtension()
-    argv = ['--MockExtension.mock_trait="test mock trait"']
+    m = MockExtensionApp()
+    argv = ['--MockExtensionApp.mock_trait="test mock trait"']
     m.initialize(serverapp, argv=argv)
 
     # Test that the extension trait was picked up by the webapp.

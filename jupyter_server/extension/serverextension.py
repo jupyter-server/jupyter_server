@@ -1,53 +1,139 @@
 # coding: utf-8
-"""Utilities for installing server extensions"""
+"""Utilities for installing extensions"""
 
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import print_function
-
-import importlib
+import os
 import sys
-
-from jupyter_core.paths import jupyter_config_path
-from ._version import __version__
-from .config_manager import BaseJSONConfigManager
-from .extensions_base import (
-    BaseExtensionApp, _get_config_dir, GREEN_ENABLED, RED_DISABLED, GREEN_OK, RED_X
-)
-from traitlets import Bool
+import importlib
+from tornado.log import LogFormatter
+from traitlets import Bool, Any
 from traitlets.utils.importstring import import_item
+
+from jupyter_core.application import JupyterApp
+from jupyter_core.paths import (
+    jupyter_config_dir, 
+    jupyter_config_path, 
+    ENV_CONFIG_PATH, 
+    SYSTEM_CONFIG_PATH
+)
+from jupyter_server._version import __version__
+from jupyter_server.config_manager import BaseJSONConfigManager
+
+
+class ArgumentConflict(ValueError):
+    pass
+
+_base_flags = {}
+_base_flags.update(JupyterApp.flags)
+_base_flags.pop("y", None)
+_base_flags.pop("generate-config", None)
+_base_flags.update({
+    "user" : ({
+        "BaseExtensionApp" : {
+            "user" : True,
+        }}, "Apply the operation only for the given user"
+    ),
+    "system" : ({
+        "BaseExtensionApp" : {
+            "user" : False,
+            "sys_prefix": False,
+        }}, "Apply the operation system-wide"
+    ),
+    "sys-prefix" : ({
+        "BaseExtensionApp" : {
+            "sys_prefix" : True,
+        }}, "Use sys.prefix as the prefix for installing extensions (for environments, packaging)"
+    ),
+    "py" : ({
+        "BaseExtensionApp" : {
+            "python" : True,
+        }}, "Install from a Python package"
+    )
+})
+_base_flags['python'] = _base_flags['py']
+
+_base_aliases = {}
+_base_aliases.update(JupyterApp.aliases)
+
+
+class BaseExtensionApp(JupyterApp):
+    """Base extension installer app"""
+    _log_formatter_cls = LogFormatter
+    flags = _base_flags
+    aliases = _base_aliases
+    version = __version__
+
+    user = Bool(False, config=True, help="Whether to do a user install")
+    sys_prefix = Bool(True, config=True, help="Use the sys.prefix as the prefix")
+    python = Bool(False, config=True, help="Install from a Python package")
+
+    def _log_format_default(self):
+        """A default format for messages"""
+        return "%(message)s"
+
+def _get_config_dir(user=False, sys_prefix=False):
+    """Get the location of config files for the current context
+
+    Returns the string to the enviornment
+
+    Parameters
+    ----------
+
+    user : bool [default: False]
+        Get the user's .jupyter config directory
+    sys_prefix : bool [default: False]
+        Get sys.prefix, i.e. ~/.envs/my-env/etc/jupyter
+    """
+    user = False if sys_prefix else user
+    if user and sys_prefix:
+        raise ArgumentConflict("Cannot specify more than one of user or sys_prefix")
+    if user:
+        extdir = jupyter_config_dir()
+    elif sys_prefix:
+        extdir = ENV_CONFIG_PATH[0]
+    else:
+        extdir = SYSTEM_CONFIG_PATH[0]
+    return extdir
+
+
+# Constants for pretty print extension listing function.
+# Window doesn't support coloring in the commandline
+GREEN_ENABLED = '\033[32menabled\033[0m' if os.name != 'nt' else 'enabled'
+RED_DISABLED = '\033[31mdisabled\033[0m' if os.name != 'nt' else 'disabled'
+GREEN_OK = '\033[32mOK\033[0m' if os.name != 'nt' else 'ok'
+RED_X = '\033[31m X\033[0m' if os.name != 'nt' else ' X'
 
 # ------------------------------------------------------------------------------
 # Public API
 # ------------------------------------------------------------------------------
 
-def toggle_serverextension_python(import_name, enabled=None, parent=None,
-                                  user=True, sys_prefix=False, logger=None):
-    """Toggle a server extension.
+class ExtensionValidationError(Exception): pass
 
-    By default, toggles the extension in the system-wide Jupyter configuration
-    location (e.g. /usr/local/etc/jupyter).
 
-    Parameters
-    ----------
-
-    import_name : str
-        Importable Python module (dotted-notation) exposing the magic-named
-        `load_jupyter_server_extension` function
-    enabled : bool [default: None]
-        Toggle state for the extension.  Set to None to toggle, True to enable,
-        and False to disable the extension.
-    parent : Configurable [default: None]
-    user : bool [default: True]
-        Toggle in the user's configuration location (e.g. ~/.jupyter).
-    sys_prefix : bool [default: False]
-        Toggle in the current Python environment's configuration location
-        (e.g. ~/.envs/my-env/etc/jupyter). Will override `user`.
-    logger : Jupyter logger [optional]
-        Logger instance to use
+def validate_server_extension(import_name):
+    """Tries to import the extension module. 
+    Raises a validation error if module is not found.
     """
-    user = False if sys_prefix else user
+    try:
+        mod = importlib.import_module(import_name)
+        func = getattr(mod, 'load_jupyter_server_extension')
+        version = getattr(mod, '__version__', '')
+        return mod, func, version
+    # If the extension does not exist, raise an exception
+    except ModuleNotFoundError:
+        raise ExtensionValidationError(f'{import_name} is not importable.')
+    # If the extension does not have a `load_jupyter_server_extension` function, raise exception.
+    except AttributeError:
+        raise ExtensionValidationError(f'Found module "{import_name}" but cannot load it.')
+
+
+def toggle_server_extension_python(import_name, enabled=None, parent=None, user=False, sys_prefix=True):
+    """Toggle the boolean setting for a given server extension
+    in a Jupyter config file.
+    """
+    sys_prefix = False if user else sys_prefix
     config_dir = _get_config_dir(user=user, sys_prefix=sys_prefix)
     cm = BaseJSONConfigManager(parent=parent, config_dir=config_dir)
     cfg = cm.get("jupyter_server_config")
@@ -55,72 +141,10 @@ def toggle_serverextension_python(import_name, enabled=None, parent=None,
         cfg.setdefault("ServerApp", {})
         .setdefault("jpserver_extensions", {})
     )
-
     old_enabled = server_extensions.get(import_name, None)
     new_enabled = enabled if enabled is not None else not old_enabled
-
-    if logger:
-        if new_enabled:
-            logger.info(u"Enabling: %s" % (import_name))
-        else:
-            logger.info(u"Disabling: %s" % (import_name))
-
     server_extensions[import_name] = new_enabled
-
-    if logger:
-        logger.info(u"- Writing config: {}".format(config_dir))
-
     cm.update("jupyter_server_config", cfg)
-
-    if new_enabled:
-        validate_serverextension(import_name, logger)
-
-def validate_serverextension(import_name, logger=None):
-    """Assess the health of an installed server extension
-
-    Returns a list of validation warnings.
-
-    Parameters
-    ----------
-
-    import_name : str
-        Importable Python module (dotted-notation) exposing the magic-named
-        `load_jupyter_server_extension` function
-    logger : Jupyter logger [optional]
-        Logger instance to use
-    """
-
-    warnings = []
-    infos = []
-
-    func = None
-
-    if logger:
-        logger.info("    - Validating...")
-
-    try:
-        mod = importlib.import_module(import_name)
-        func = getattr(mod, 'load_jupyter_server_extension', None)
-        version = getattr(mod, '__version__', '')
-    except Exception:
-        logger.warning("Error loading server extension %s", import_name)
-
-    import_msg = u"     {} is {} importable?"
-    if func is not None:
-        infos.append(import_msg.format(GREEN_OK, import_name))
-    else:
-        warnings.append(import_msg.format(RED_X, import_name))
-
-    post_mortem = u"      {} {} {}"
-    if logger:
-        if warnings:
-            [logger.info(info) for info in infos]
-            [logger.warn(warning) for warning in warnings]
-        else:
-            logger.info(post_mortem.format(import_name, version, GREEN_OK))
-
-    return warnings
-
 
 # ----------------------------------------------------------------------
 # Applications
@@ -163,9 +187,12 @@ class ToggleServerExtensionApp(BaseExtensionApp):
     
     flags = flags
 
-    user = Bool(True, config=True, help="Whether to do a user install")
-    sys_prefix = Bool(False, config=True, help="Use the sys.prefix as the prefix")
+    user = Bool(False, config=True, help="Whether to do a user install")
+    sys_prefix = Bool(True, config=True, help="Use the sys.prefix as the prefix")
     python = Bool(False, config=True, help="Install from a Python package")
+    _toggle_value = Bool()
+    _toggle_pre_message = ''
+    _toggle_post_message = ''
     
     def toggle_server_extension(self, import_name):
         """Change the status of a named server extension.
@@ -179,9 +206,26 @@ class ToggleServerExtensionApp(BaseExtensionApp):
             Importable Python module (dotted-notation) exposing the magic-named
             `load_jupyter_server_extension` function
         """
-        toggle_serverextension_python(
-            import_name, self._toggle_value, parent=self, user=self.user,
-            sys_prefix=self.sys_prefix, logger=self.log)
+        try:
+            self.log.info(f"{self._toggle_pre_message.capitalize()}: {import_name}")
+            # Validate the server extension.
+            self.log.info(f"    - Validating {import_name}...")
+            _, __, version = validate_server_extension(import_name)
+
+            # Toggle the server extension to active.
+            toggle_server_extension_python(
+                import_name, 
+                self._toggle_value, 
+                parent=self, 
+                user=self.user,
+                sys_prefix=self.sys_prefix
+            )
+            self.log.info(f"      {import_name} {version} {GREEN_OK}")
+
+            # If successful, let's log.
+            self.log.info(f"    - Extension successfully {self._toggle_post_message}.")
+        except ExtensionValidationError as err:
+            self.log.info(f"     {RED_X} Validation failed: {err}")
 
     def toggle_server_extension_python(self, package):
         """Change the status of some server extensions in a Python package.
@@ -195,7 +239,7 @@ class ToggleServerExtensionApp(BaseExtensionApp):
             Importable Python module exposing the
             magic-named `_jupyter_server_extension_paths` function
         """
-        m, server_exts = _get_server_extension_metadata(package)
+        _, server_exts = _get_server_extension_metadata(package)
         for server_ext in server_exts:
             module = server_ext['module']
             self.toggle_server_extension(module)
@@ -221,6 +265,8 @@ class EnableServerExtensionApp(ToggleServerExtensionApp):
         jupyter server extension enable [--system|--sys-prefix]
     """
     _toggle_value = True
+    _toggle_pre_message = "enabling"
+    _toggle_post_message = "enabled"
 
 
 class DisableServerExtensionApp(ToggleServerExtensionApp):
@@ -233,6 +279,8 @@ class DisableServerExtensionApp(ToggleServerExtensionApp):
         jupyter server extension disable [--system|--sys-prefix]
     """
     _toggle_value = False
+    _toggle_pre_message = "disabling"
+    _toggle_post_message = "disabled"
 
 
 class ListServerExtensionsApp(BaseExtensionApp):
@@ -255,12 +303,18 @@ class ListServerExtensionsApp(BaseExtensionApp):
                 .setdefault("jpserver_extensions", {})
             )
             if server_extensions:
-                print(u'config dir: {}'.format(config_dir))
+                self.log.info(u'config dir: {}'.format(config_dir))
             for import_name, enabled in server_extensions.items():
-                print(u'    {} {}'.format(
+                self.log.info(u'    {} {}'.format(
                               import_name,
                               GREEN_ENABLED if enabled else RED_DISABLED))
-                validate_serverextension(import_name, self.log)
+                try:
+                    self.log.info(f"    - Validating {import_name}...")
+                    _, __, version = validate_server_extension(import_name)
+                    self.log.info(f"      {import_name} {version} {GREEN_OK}")
+
+                except ExtensionValidationError as err:
+                    self.log.warn(f"      {RED_X} {err}")
 
     def start(self):
         """Perform the App's actions as configured"""
@@ -302,7 +356,6 @@ main = ServerExtensionApp.launch_instance
 # ------------------------------------------------------------------------------
 # Private API
 # ------------------------------------------------------------------------------
-
 
 def _get_server_extension_metadata(module):
     """Load server extension metadata from a module.

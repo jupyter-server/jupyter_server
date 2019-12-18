@@ -102,7 +102,7 @@ from jupyter_server._sysinfo import get_sys_info
 from ._tz import utcnow, utcfromtimestamp
 from .utils import url_path_join, check_pid, url_escape, urljoin, pathname2url
 
-from jupyter_server.extensions import ServerExtensionApp
+from jupyter_server.extension.serverextension import ServerExtensionApp
 
 #-----------------------------------------------------------------------------
 # Module globals
@@ -1485,7 +1485,7 @@ class ServerApp(JupyterApp):
         manager = ConfigManager(read_config_path=config_path)
         section = manager.get(self.config_file_name)
         extensions = section.get('ServerApp', {}).get('jpserver_extensions', {})
-        
+
         for modulename, enabled in sorted(extensions.items()):
             if modulename not in self.jpserver_extensions:
                 self.config.ServerApp.jpserver_extensions.update({modulename: enabled})
