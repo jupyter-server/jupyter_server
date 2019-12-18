@@ -122,7 +122,7 @@ def validate_server_extension(import_name):
         version = getattr(mod, '__version__', '')
         return mod, func, version
     # If the extension does not exist, raise an exception
-    except ModuleNotFoundError:
+    except ImportError:
         raise ExtensionValidationError('{} is not importable.'.format(import_name))
     # If the extension does not have a `load_jupyter_server_extension` function, raise exception.
     except AttributeError:
