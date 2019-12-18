@@ -123,10 +123,10 @@ def validate_server_extension(import_name):
         return mod, func, version
     # If the extension does not exist, raise an exception
     except ModuleNotFoundError:
-        raise ExtensionValidationError(f'{import_name} is not importable.')
+        raise ExtensionValidationError('{} is not importable.'.format(import_name))
     # If the extension does not have a `load_jupyter_server_extension` function, raise exception.
     except AttributeError:
-        raise ExtensionValidationError(f'Found module "{import_name}" but cannot load it.')
+        raise ExtensionValidationError('Found module "{}" but cannot load it.'.format(import_name))
 
 
 def toggle_server_extension_python(import_name, enabled=None, parent=None, user=False, sys_prefix=True):
@@ -207,9 +207,9 @@ class ToggleServerExtensionApp(BaseExtensionApp):
             `load_jupyter_server_extension` function
         """
         try:
-            self.log.info(f"{self._toggle_pre_message.capitalize()}: {import_name}")
+            self.log.info("{}: {}".format(self._toggle_pre_message.capitalize(), import_name))
             # Validate the server extension.
-            self.log.info(f"    - Validating {import_name}...")
+            self.log.info("    - Validating {}...".format(import_name))
             _, __, version = validate_server_extension(import_name)
 
             # Toggle the server extension to active.
@@ -220,12 +220,12 @@ class ToggleServerExtensionApp(BaseExtensionApp):
                 user=self.user,
                 sys_prefix=self.sys_prefix
             )
-            self.log.info(f"      {import_name} {version} {GREEN_OK}")
+            self.log.info("      {} {} {}".format(import_item, version, GREEN_OK))
 
             # If successful, let's log.
-            self.log.info(f"    - Extension successfully {self._toggle_post_message}.")
+            self.log.info("    - Extension successfully {}.".format(self._toggle_post_message))
         except ExtensionValidationError as err:
-            self.log.info(f"     {RED_X} Validation failed: {err}")
+            self.log.info("     {} Validation failed: {}".format(RED_X, err))
 
     def toggle_server_extension_python(self, package):
         """Change the status of some server extensions in a Python package.
@@ -309,12 +309,12 @@ class ListServerExtensionsApp(BaseExtensionApp):
                               import_name,
                               GREEN_ENABLED if enabled else RED_DISABLED))
                 try:
-                    self.log.info(f"    - Validating {import_name}...")
+                    self.log.info("    - Validating {}...".format(import_name))
                     _, __, version = validate_server_extension(import_name)
-                    self.log.info(f"      {import_name} {version} {GREEN_OK}")
+                    self.log.info("      {} {} {}".format(import_name, version, GREEN_OK))
 
                 except ExtensionValidationError as err:
-                    self.log.warn(f"      {RED_X} {err}")
+                    self.log.warn("      {} {}".format(RED_X, err))
 
     def start(self):
         """Perform the App's actions as configured"""

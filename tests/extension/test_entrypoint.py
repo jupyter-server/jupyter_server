@@ -19,7 +19,7 @@ def test_server_extension_enable(environ, inject_mock_extension, script_runner):
     extension_name = 'mockextension'
     ret = script_runner.run('jupyter', 'server', 'extension', 'enable', extension_name)
     assert ret.success
-    assert f'Enabling: {extension_name}' in ret.stderr
+    assert 'Enabling: {}'.format(extension_name) in ret.stderr
 
 
 def test_server_extension_disable(environ, script_runner):
@@ -28,4 +28,4 @@ def test_server_extension_disable(environ, script_runner):
     extension_name = 'mockextension'
     ret = script_runner.run('jupyter', 'server', 'extension', 'disable', extension_name)
     assert ret.success
-    assert f'Disabling: {extension_name}' in ret.stderr
+    assert 'Disabling: {}'.format(extension_name) in ret.stderr
