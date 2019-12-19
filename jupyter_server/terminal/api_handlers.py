@@ -21,11 +21,9 @@ class TerminalRootHandler(APIHandler):
     @web.authenticated
     def post(self):
         """POST /terminals creates a new terminal and redirects to it"""
-        data = self.get_json_body()
-        if data and data.get('cwd'):
-            cwd = data['cwd']
+        data = self.get_json_body() or {}
 
-        name, _ = self.terminal_manager.new_named_terminal(cwd=cwd)
+        name, _ = self.terminal_manager.new_named_terminal(**data)
         self.finish(json.dumps({'name': name}))
 
         # Increase the metric by one because a new terminal was created

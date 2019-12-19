@@ -239,4 +239,3 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
 
 async def test_config2(serverapp):
     assert serverapp.kernel_manager.allowed_message_types == []
-
