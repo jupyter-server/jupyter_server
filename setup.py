@@ -92,14 +92,13 @@ for more information.
     ],
     extras_require = {
         'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
-                 'pytest', 'pytest-cov', 'pytest-tornasync'],
+                 'pytest', 'pytest-cov', 'pytest-tornasync', 'pytest-console-scripts'],
         'test:sys_platform == "win32"': ['nose-exclude'],
     },
     python_requires = '>=3.5',
     entry_points = {
         'console_scripts': [
             'jupyter-server = jupyter_server.serverapp:main',
-            'jupyter-extension = jupyter_server.extensions:main',
             'jupyter-bundlerextension = jupyter_server.bundler.bundlerextensions:main',
         ]
     },

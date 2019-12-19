@@ -418,7 +418,6 @@ class ExtensionApp(JupyterApp):
         extension.initialize(serverapp, argv=argv)
         return extension
 
-
     @classmethod
     def launch_instance(cls, argv=None, **kwargs):
         """Launch the extension like an application. Initializes+configs a stock server 
