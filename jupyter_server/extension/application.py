@@ -1,6 +1,8 @@
 import sys
 import re
 
+from jinja2 import Environment, FileSystemLoader
+
 from traitlets import (
     Unicode, 
     List, 
@@ -25,6 +27,9 @@ try:
 except KeyError:
     pass
 
+#-----------------------------------------------------------------------------
+# Util functions and classes.
+#-----------------------------------------------------------------------------
 
 def _preparse_for_subcommand(Application, argv):
     """Preparse command line to look for subcommands.
@@ -81,11 +86,52 @@ def _preparse_for_stopping_flags(Application, argv):
         app.exit(0)
 
 
+class ExtensionAppJinjaMixin:
+    """Use Jinja templates for HTML templates on top of an ExtensionApp."""
+    
+    jinja2_options = Dict(
+        help=_("""Options to pass to the jinja2 environment for this
+        extension.
+        """)
+    ).tag(config=True)
+
+    def _prepare_templates(self):
+        # Add templates to web app settings if extension has templates.
+        if len(self.template_paths) > 0:
+            self.settings.update({
+                "{}_template_paths".format(self.extension_name): self.template_paths
+            })
+
+        # Create a jinja environment for logging html templates.
+        self.jinja2_env = Environment(
+            loader=FileSystemLoader(self.template_paths), 
+            extensions=['jinja2.ext.i18n'],
+            autoescape=True,
+            **self.jinja2_options
+        )
+
+        # Get templates defined in a subclass.
+        self.initialize_templates()
+
+        # Add the jinja2 environment for this extension to the tornado settings.
+        self.settings.update(
+            {
+                "{}_jinja2_env".format(self.extension_name): self.jinja2_env 
+            }
+        )
+
+#-----------------------------------------------------------------------------
+# Aliases and Flags
+#-----------------------------------------------------------------------------
+
 flags['no-browser']=(
     {'ExtensionApp' : {'open_browser' : True}},
     _("Prevent the opening of the default url in the browser.")
 )
 
+#-----------------------------------------------------------------------------
+# ExtensionApp
+#-----------------------------------------------------------------------------
 
 class ExtensionApp(JupyterApp):
     """Base class for configurable Jupyter Server Extension Applications.
@@ -98,6 +144,9 @@ class ExtensionApp(JupyterApp):
         class method. This method can be set as a entry_point in 
         the extensions setup.py
     """
+    # Subclasses should override this trait. Tells the server if
+    # this extension allows other other extensions to be loaded
+    # side-by-side when launched directly.
     load_other_extensions = True
 
     # Name of the extension
@@ -302,7 +351,6 @@ class ExtensionApp(JupyterApp):
             self.settings.update({
                 "{}_template_paths".format(self.extension_name): self.template_paths
             })
-        self.initialize_templates()
 
     @staticmethod
     def initialize_server(argv=[], load_other_extensions=True, **kwargs):
@@ -406,4 +454,3 @@ class ExtensionApp(JupyterApp):
             extension = cls.load_jupyter_server_extension(serverapp, argv=args, **kwargs)
             # Start the ioloop.
             extension.start()
-
