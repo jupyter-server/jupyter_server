@@ -24,7 +24,7 @@ async def test_terminal_create(fetch):
 
     resp_list = await fetch(
         'api', 'terminals',
-        method='POST',
+        method='GET',
         # body=body,
         allow_nonstandard_methods=True,
     )
