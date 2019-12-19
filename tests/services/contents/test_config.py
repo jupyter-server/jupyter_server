@@ -6,7 +6,7 @@ from jupyter_server.services.contents.filecheckpoints import GenericFileCheckpoi
 
 @pytest.fixture
 def config():
-    return {'FileContentsManager': {'checkpoints_class': GenericFileCheckpoints}}
+    return {"FileContentsManager": {"checkpoints_class": GenericFileCheckpoints}}
 
 
 def test_config_did_something(serverapp):

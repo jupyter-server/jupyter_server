@@ -34,7 +34,7 @@ from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.transutils import _
 
 
-copy_pat = re.compile(r'\-Copy\d*\.')
+copy_pat = re.compile(r"\-Copy\d*\.")
 
 
 class ContentsManager(LoggingConfigurable):
@@ -56,34 +56,44 @@ class ContentsManager(LoggingConfigurable):
 
     """
 
-    root_dir = Unicode('/', config=True)
+    root_dir = Unicode("/", config=True)
 
     allow_hidden = Bool(False, config=True, help="Allow access to hidden files")
 
     notary = Instance(sign.NotebookNotary)
+
     def _notary_default(self):
         return sign.NotebookNotary(parent=self)
 
-    hide_globs = List(Unicode(), [
-            u'__pycache__', '*.pyc', '*.pyo',
-            '.DS_Store', '*.so', '*.dylib', '*~',
-        ], config=True, help="""
+    hide_globs = List(
+        Unicode(),
+        [u"__pycache__", "*.pyc", "*.pyo", ".DS_Store", "*.so", "*.dylib", "*~",],
+        config=True,
+        help="""
         Glob patterns to hide in file and directory listings.
-    """)
-
-    untitled_notebook = Unicode(_("Untitled"), config=True,
-        help="The base name used when creating untitled notebooks."
+    """,
     )
 
-    untitled_file = Unicode("untitled", config=True,
-        help="The base name used when creating untitled files."
+    untitled_notebook = Unicode(
+        _("Untitled"),
+        config=True,
+        help="The base name used when creating untitled notebooks.",
     )
 
-    untitled_directory = Unicode("Untitled Folder", config=True,
-        help="The base name used when creating untitled directories."
+    untitled_file = Unicode(
+        "untitled", config=True, help="The base name used when creating untitled files."
     )
 
-    pre_save_hook = Any(None, config=True, allow_none=True,
+    untitled_directory = Unicode(
+        "Untitled Folder",
+        config=True,
+        help="The base name used when creating untitled directories.",
+    )
+
+    pre_save_hook = Any(
+        None,
+        config=True,
+        allow_none=True,
         help="""Python callable or importstring thereof
 
         To be called on a contents model prior to save.
@@ -100,12 +110,12 @@ class ContentsManager(LoggingConfigurable):
           Modifying this dict will affect the file that is stored.
         - path: the API path of the save destination
         - contents_manager: this ContentsManager instance
-        """
+        """,
     )
 
-    @validate('pre_save_hook')
+    @validate("pre_save_hook")
     def _validate_pre_save_hook(self, proposal):
-        value = proposal['value']
+        value = proposal["value"]
         if isinstance(value, string_types):
             value = import_item(self.pre_save_hook)
         if not callable(value):
@@ -117,7 +127,9 @@ class ContentsManager(LoggingConfigurable):
         if self.pre_save_hook:
             try:
                 self.log.debug("Running pre-save hook on %s", path)
-                self.pre_save_hook(model=model, path=path, contents_manager=self, **kwargs)
+                self.pre_save_hook(
+                    model=model, path=path, contents_manager=self, **kwargs
+                )
             except Exception:
                 self.log.error("Pre-save hook failed on %s", path, exc_info=True)
 
@@ -125,19 +137,19 @@ class ContentsManager(LoggingConfigurable):
     checkpoints = Instance(Checkpoints, config=True)
     checkpoints_kwargs = Dict(config=True)
 
-    @default('checkpoints')
+    @default("checkpoints")
     def _default_checkpoints(self):
         return self.checkpoints_class(**self.checkpoints_kwargs)
 
-    @default('checkpoints_kwargs')
+    @default("checkpoints_kwargs")
     def _default_checkpoints_kwargs(self):
-        return dict(
-            parent=self,
-            log=self.log,
-        )
+        return dict(parent=self, log=self.log,)
 
     files_handler_class = Type(
-        FilesHandler, klass=RequestHandler, allow_none=True, config=True,
+        FilesHandler,
+        klass=RequestHandler,
+        allow_none=True,
+        config=True,
         help="""handler class to use when serving raw file requests.
 
         Default is a fallback that talks to the ContentsManager API,
@@ -147,7 +159,7 @@ class ContentsManager(LoggingConfigurable):
         which will be much more efficient.
 
         Access to these files should be Authenticated.
-        """
+        """,
     )
 
     files_handler_params = Dict(
@@ -156,7 +168,7 @@ class ContentsManager(LoggingConfigurable):
 
         For example, StaticFileHandlers generally expect a `path` argument
         specifying the root directory from which to serve files.
-        """
+        """,
     )
 
     def get_extra_handlers(self):
@@ -210,7 +222,7 @@ class ContentsManager(LoggingConfigurable):
         """
         raise NotImplementedError
 
-    def file_exists(self, path=''):
+    def file_exists(self, path=""):
         """Does a file exist at the given path?
 
         Like os.path.isfile
@@ -227,7 +239,7 @@ class ContentsManager(LoggingConfigurable):
         exists : bool
             Whether the file exists.
         """
-        raise NotImplementedError('must be implemented in a subclass')
+        raise NotImplementedError("must be implemented in a subclass")
 
     def exists(self, path):
         """Does a file or directory exist at the given path?
@@ -248,7 +260,7 @@ class ContentsManager(LoggingConfigurable):
 
     def get(self, path, content=True, type=None, format=None):
         """Get a file or directory model."""
-        raise NotImplementedError('must be implemented in a subclass')
+        raise NotImplementedError("must be implemented in a subclass")
 
     def save(self, model, path):
         """
@@ -258,22 +270,22 @@ class ContentsManager(LoggingConfigurable):
         should call self.run_pre_save_hook(model=model, path=path) prior to
         writing any data.
         """
-        raise NotImplementedError('must be implemented in a subclass')
+        raise NotImplementedError("must be implemented in a subclass")
 
     def delete_file(self, path):
         """Delete the file or directory at path."""
-        raise NotImplementedError('must be implemented in a subclass')
+        raise NotImplementedError("must be implemented in a subclass")
 
     def rename_file(self, old_path, new_path):
         """Rename a file or directory."""
-        raise NotImplementedError('must be implemented in a subclass')
+        raise NotImplementedError("must be implemented in a subclass")
 
     # ContentsManager API part 2: methods that have useable default
     # implementations, but can be overridden in subclasses.
 
     def delete(self, path):
         """Delete a file/directory and any associated checkpoints."""
-        path = path.strip('/')
+        path = path.strip("/")
         if not path:
             raise HTTPError(400, "Can't delete root")
         self.delete_file(path)
@@ -290,8 +302,8 @@ class ContentsManager(LoggingConfigurable):
         For use in PATCH requests, to enable renaming a file without
         re-uploading its contents. Only used for renaming at the moment.
         """
-        path = path.strip('/')
-        new_path = model.get('path', path).strip('/')
+        path = path.strip("/")
+        new_path = model.get("path", path).strip("/")
         if path != new_path:
             self.rename(path, new_path)
         model = self.get(new_path, content=False)
@@ -310,9 +322,9 @@ class ContentsManager(LoggingConfigurable):
         notebook server. FileContentsManager overrides this to use the
         directory containing the notebook.
         """
-        return ''
+        return ""
 
-    def increment_filename(self, filename, path='', insert=''):
+    def increment_filename(self, filename, path="", insert=""):
         """Increment a filename until it is unique.
 
         Parameters
@@ -330,96 +342,98 @@ class ContentsManager(LoggingConfigurable):
             A filename that is unique, based on the input filename.
         """
         # Extract the full suffix from the filename (e.g. .tar.gz)
-        path = path.strip('/')
-        basename, dot, ext = filename.rpartition('.')
-        if ext != 'ipynb':
-                basename, dot, ext = filename.partition('.')
-                
+        path = path.strip("/")
+        basename, dot, ext = filename.rpartition(".")
+        if ext != "ipynb":
+            basename, dot, ext = filename.partition(".")
+
         suffix = dot + ext
 
         for i in itertools.count():
             if i:
-                insert_i = '{}{}'.format(insert, i)
+                insert_i = "{}{}".format(insert, i)
             else:
-                insert_i = ''
-            name = u'{basename}{insert}{suffix}'.format(basename=basename,
-                insert=insert_i, suffix=suffix)
-            if not self.exists(u'{}/{}'.format(path, name)):
+                insert_i = ""
+            name = u"{basename}{insert}{suffix}".format(
+                basename=basename, insert=insert_i, suffix=suffix
+            )
+            if not self.exists(u"{}/{}".format(path, name)):
                 break
         return name
 
     def validate_notebook_model(self, model):
         """Add failed-validation message to model"""
         try:
-            validate_nb(model['content'])
+            validate_nb(model["content"])
         except ValidationError as e:
-            model['message'] = u'Notebook validation failed: {}:\n{}'.format(
-                e.message, json.dumps(e.instance, indent=1, default=lambda obj: '<UNKNOWN>'),
+            model["message"] = u"Notebook validation failed: {}:\n{}".format(
+                e.message,
+                json.dumps(e.instance, indent=1, default=lambda obj: "<UNKNOWN>"),
             )
         return model
-    
-    def new_untitled(self, path='', type='', ext=''):
+
+    def new_untitled(self, path="", type="", ext=""):
         """Create a new untitled file or directory in path
-        
+
         path must be a directory
-        
+
         File extension can be specified.
-        
+
         Use `new` to create files with a fully specified path (including filename).
         """
-        path = path.strip('/')
+        path = path.strip("/")
         if not self.dir_exists(path):
-            raise HTTPError(404, 'No such directory: %s' % path)
-        
+            raise HTTPError(404, "No such directory: %s" % path)
+
         model = {}
         if type:
-            model['type'] = type
-        
-        if ext == '.ipynb':
-            model.setdefault('type', 'notebook')
+            model["type"] = type
+
+        if ext == ".ipynb":
+            model.setdefault("type", "notebook")
         else:
-            model.setdefault('type', 'file')
-        
-        insert = ''
-        if model['type'] == 'directory':
+            model.setdefault("type", "file")
+
+        insert = ""
+        if model["type"] == "directory":
             untitled = self.untitled_directory
-            insert = ' '
-        elif model['type'] == 'notebook':
+            insert = " "
+        elif model["type"] == "notebook":
             untitled = self.untitled_notebook
-            ext = '.ipynb'
-        elif model['type'] == 'file':
+            ext = ".ipynb"
+        elif model["type"] == "file":
             untitled = self.untitled_file
         else:
-            raise HTTPError(400, "Unexpected model type: %r" % model['type'])
-        
+            raise HTTPError(400, "Unexpected model type: %r" % model["type"])
+
         name = self.increment_filename(untitled + ext, path, insert=insert)
-        path = u'{0}/{1}'.format(path, name)
+        path = u"{0}/{1}".format(path, name)
         return self.new(model, path)
-    
-    def new(self, model=None, path=''):
+
+    def new(self, model=None, path=""):
         """Create a new file or directory and return its model with no content.
-        
+
         To create a new untitled entity in a directory, use `new_untitled`.
         """
-        path = path.strip('/')
+        path = path.strip("/")
         if model is None:
             model = {}
-        
-        if path.endswith('.ipynb'):
-            model.setdefault('type', 'notebook')
+
+        if path.endswith(".ipynb"):
+            model.setdefault("type", "notebook")
         else:
-            model.setdefault('type', 'file')
-        
+            model.setdefault("type", "file")
+
         # no content, not a directory, so fill out new-file model
-        if 'content' not in model and model['type'] != 'directory':
-            if model['type'] == 'notebook':
-                model['content'] = new_notebook()
-                model['format'] = 'json'
+        if "content" not in model and model["type"] != "directory":
+            if model["type"] == "notebook":
+                model["content"] = new_notebook()
+                model["format"] = "json"
             else:
-                model['content'] = ''
-                model['type'] = 'file'
-                model['format'] = 'text'
-        
+                model["content"] = ""
+                model["type"] = "file"
+                model["format"] = "text"
+
         model = self.save(model, path)
         return model
 
@@ -433,29 +447,29 @@ class ContentsManager(LoggingConfigurable):
 
         from_path must be a full path to a file.
         """
-        path = from_path.strip('/')
+        path = from_path.strip("/")
         if to_path is not None:
-            to_path = to_path.strip('/')
+            to_path = to_path.strip("/")
 
-        if '/' in path:
-            from_dir, from_name = path.rsplit('/', 1)
+        if "/" in path:
+            from_dir, from_name = path.rsplit("/", 1)
         else:
-            from_dir = ''
+            from_dir = ""
             from_name = path
-        
+
         model = self.get(path)
-        model.pop('path', None)
-        model.pop('name', None)
-        if model['type'] == 'directory':
+        model.pop("path", None)
+        model.pop("name", None)
+        if model["type"] == "directory":
             raise HTTPError(400, "Can't copy directories")
-        
+
         if to_path is None:
             to_path = from_dir
         if self.dir_exists(to_path):
-            name = copy_pat.sub(u'.', from_name)
-            to_name = self.increment_filename(name, to_path, insert='-Copy')
-            to_path = u'{0}/{1}'.format(to_path, to_name)
-        
+            name = copy_pat.sub(u".", from_name)
+            to_name = self.increment_filename(name, to_path, insert="-Copy")
+            to_path = u"{0}/{1}".format(to_path, to_name)
+
         model = self.save(model, to_path)
         return model
 
@@ -471,12 +485,12 @@ class ContentsManager(LoggingConfigurable):
             The path of a notebook
         """
         model = self.get(path)
-        nb = model['content']
+        nb = model["content"]
         self.log.warning("Trusting notebook %s", path)
         self.notary.mark_cells(nb, True)
         self.check_and_sign(nb, path)
 
-    def check_and_sign(self, nb, path=''):
+    def check_and_sign(self, nb, path=""):
         """Check for trusted cells, and sign the notebook.
 
         Called as a part of saving notebooks.
@@ -493,7 +507,7 @@ class ContentsManager(LoggingConfigurable):
         else:
             self.log.warning("Notebook %s is not trusted", path)
 
-    def mark_trusted_cells(self, nb, path=''):
+    def mark_trusted_cells(self, nb, path=""):
         """Mark cells as trusted if the notebook signature matches.
 
         Called as a part of loading notebooks.

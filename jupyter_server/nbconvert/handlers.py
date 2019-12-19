@@ -11,7 +11,8 @@ from tornado import web, escape
 from tornado.log import app_log
 
 from ..base.handlers import (
-    JupyterHandler, FilesRedirectHandler,
+    JupyterHandler,
+    FilesRedirectHandler,
     path_regex,
 )
 from nbformat import from_dict
@@ -19,11 +20,13 @@ from nbformat import from_dict
 from ipython_genutils.py3compat import cast_bytes
 from ipython_genutils import text
 
+
 def find_resource_files(output_files_dir):
     files = []
     for dirpath, dirnames, filenames in os.walk(output_files_dir):
         files.extend([os.path.join(dirpath, f) for f in filenames])
     return files
+
 
 def respond_zip(handler, name, output, resources):
     """Zip up the output and resource files and respond with the zip file.
@@ -32,27 +35,30 @@ def respond_zip(handler, name, output, resources):
     files, in which case we serve the plain output file.
     """
     # Check if we have resource files we need to zip
-    output_files = resources.get('outputs', None)
+    output_files = resources.get("outputs", None)
     if not output_files:
         return False
 
     # Headers
-    zip_filename = os.path.splitext(name)[0] + '.zip'
+    zip_filename = os.path.splitext(name)[0] + ".zip"
     handler.set_attachment_header(zip_filename)
-    handler.set_header('Content-Type', 'application/zip')
-    handler.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+    handler.set_header("Content-Type", "application/zip")
+    handler.set_header(
+        "Cache-Control", "no-store, no-cache, must-revalidate, max-age=0"
+    )
 
     # Prepare the zip file
     buffer = io.BytesIO()
-    zipf = zipfile.ZipFile(buffer, mode='w', compression=zipfile.ZIP_DEFLATED)
-    output_filename = os.path.splitext(name)[0] + resources['output_extension']
-    zipf.writestr(output_filename, cast_bytes(output, 'utf-8'))
+    zipf = zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED)
+    output_filename = os.path.splitext(name)[0] + resources["output_extension"]
+    zipf.writestr(output_filename, cast_bytes(output, "utf-8"))
     for filename, data in output_files.items():
         zipf.writestr(os.path.basename(filename), data)
     zipf.close()
 
     handler.finish(buffer.getvalue())
     return True
+
 
 def get_exporter(format, **kwargs):
     """get an exporter, raising appropriate errors"""
@@ -77,52 +83,46 @@ def get_exporter(format, **kwargs):
 
 class NbconvertFileHandler(JupyterHandler):
 
-    SUPPORTED_METHODS = ('GET',)
+    SUPPORTED_METHODS = ("GET",)
 
     @web.authenticated
     def get(self, format, path):
 
         exporter = get_exporter(format, config=self.config, log=self.log)
 
-        path = path.strip('/')
+        path = path.strip("/")
         # If the notebook relates to a real file (default contents manager),
         # give its path to nbconvert.
-        if hasattr(self.contents_manager, '_get_os_path'):
+        if hasattr(self.contents_manager, "_get_os_path"):
             os_path = self.contents_manager._get_os_path(path)
             ext_resources_dir, basename = os.path.split(os_path)
         else:
             ext_resources_dir = None
 
         model = self.contents_manager.get(path=path)
-        name = model['name']
-        if model['type'] != 'notebook':
+        name = model["name"]
+        if model["type"] != "notebook":
             # not a notebook, redirect to files
             return FilesRedirectHandler.redirect_to_files(self, path)
 
-        nb = model['content']
+        nb = model["content"]
 
-        self.set_header('Last-Modified', model['last_modified'])
+        self.set_header("Last-Modified", model["last_modified"])
 
         # create resources dictionary
-        mod_date = model['last_modified'].strftime(text.date_format)
+        mod_date = model["last_modified"].strftime(text.date_format)
         nb_title = os.path.splitext(name)[0]
 
         resource_dict = {
-            "metadata": {
-                "name": nb_title,
-                "modified_date": mod_date
-            },
-            "config_dir": self.application.settings['config_dir']
+            "metadata": {"name": nb_title, "modified_date": mod_date},
+            "config_dir": self.application.settings["config_dir"],
         }
 
         if ext_resources_dir:
-            resource_dict['metadata']['path'] = ext_resources_dir
+            resource_dict["metadata"]["path"] = ext_resources_dir
 
         try:
-            output, resources = exporter.from_notebook_node(
-                nb,
-                resources=resource_dict
-            )
+            output, resources = exporter.from_notebook_node(nb, resources=resource_dict)
         except Exception as e:
             self.log.exception("nbconvert failed: %s", e)
             raise web.HTTPError(500, "nbconvert failed: %s" % e)
@@ -131,36 +131,42 @@ class NbconvertFileHandler(JupyterHandler):
             return
 
         # Force download if requested
-        if self.get_argument('download', 'false').lower() == 'true':
-            filename = os.path.splitext(name)[0] + resources['output_extension']
+        if self.get_argument("download", "false").lower() == "true":
+            filename = os.path.splitext(name)[0] + resources["output_extension"]
             self.set_attachment_header(filename)
 
         # MIME type
         if exporter.output_mimetype:
-            self.set_header('Content-Type',
-                            '%s; charset=utf-8' % exporter.output_mimetype)
+            self.set_header(
+                "Content-Type", "%s; charset=utf-8" % exporter.output_mimetype
+            )
 
-        self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        self.set_header(
+            "Cache-Control", "no-store, no-cache, must-revalidate, max-age=0"
+        )
         self.finish(output)
 
 
 class NbconvertPostHandler(JupyterHandler):
 
-    SUPPORTED_METHODS = ('POST',)
+    SUPPORTED_METHODS = ("POST",)
 
     @web.authenticated
     def post(self, format):
         exporter = get_exporter(format, config=self.config)
 
         model = self.get_json_body()
-        name = model.get('name', 'notebook.ipynb')
-        nbnode = from_dict(model['content'])
+        name = model.get("name", "notebook.ipynb")
+        nbnode = from_dict(model["content"])
 
         try:
-            output, resources = exporter.from_notebook_node(nbnode, resources={
-                "metadata": {"name": name[:name.rfind('.')],},
-                "config_dir": self.application.settings['config_dir'],
-            })
+            output, resources = exporter.from_notebook_node(
+                nbnode,
+                resources={
+                    "metadata": {"name": name[: name.rfind(".")],},
+                    "config_dir": self.application.settings["config_dir"],
+                },
+            )
         except Exception as e:
             raise web.HTTPError(500, "nbconvert failed: %s" % e)
 
@@ -169,21 +175,21 @@ class NbconvertPostHandler(JupyterHandler):
 
         # MIME type
         if exporter.output_mimetype:
-            self.set_header('Content-Type',
-                            '%s; charset=utf-8' % exporter.output_mimetype)
+            self.set_header(
+                "Content-Type", "%s; charset=utf-8" % exporter.output_mimetype
+            )
 
         self.finish(output)
 
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # URL to handler mappings
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 _format_regex = r"(?P<format>\w+)"
 
 
 default_handlers = [
     (r"/nbconvert/%s" % _format_regex, NbconvertPostHandler),
-    (r"/nbconvert/%s%s" % (_format_regex, path_regex),
-         NbconvertFileHandler),
+    (r"/nbconvert/%s%s" % (_format_regex, path_regex), NbconvertFileHandler),
 ]

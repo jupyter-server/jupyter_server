@@ -1,4 +1,4 @@
-#encoding: utf-8
+# encoding: utf-8
 """Tornado handlers for the terminal emulator."""
 
 # Copyright (c) Jupyter Development Team.
@@ -14,17 +14,20 @@ class EditorHandler(JupyterHandler):
 
     @web.authenticated
     def get(self, path):
-        path = path.strip('/')
+        path = path.strip("/")
         if not self.contents_manager.file_exists(path):
-            raise web.HTTPError(404, u'File does not exist: %s' % path)
+            raise web.HTTPError(404, u"File does not exist: %s" % path)
 
-        basename = path.rsplit('/', 1)[-1]
-        self.write(self.render_template('edit.html',
-            file_path=url_escape(path),
-            basename=basename,
-            page_title=basename + " (editing)",
+        basename = path.rsplit("/", 1)[-1]
+        self.write(
+            self.render_template(
+                "edit.html",
+                file_path=url_escape(path),
+                basename=basename,
+                page_title=basename + " (editing)",
             )
         )
+
 
 default_handlers = [
     (r"/edit%s" % path_regex, EditorHandler),
