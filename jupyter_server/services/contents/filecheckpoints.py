@@ -29,7 +29,7 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
     """
 
     checkpoint_dir = Unicode(
-        '.ipynb_checkpoints',
+        ".ipynb_checkpoints",
         config=True,
         help="""The directory name in which to keep file checkpoints
 
@@ -50,7 +50,7 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
     # ContentsManager-dependent checkpoint API
     def create_checkpoint(self, contents_mgr, path):
         """Create a checkpoint."""
-        checkpoint_id = u'checkpoint'
+        checkpoint_id = u"checkpoint"
         src_path = contents_mgr._get_os_path(path)
         dest_path = self.checkpoint_path(checkpoint_id, path)
         self._copy(src_path, dest_path)
@@ -69,16 +69,14 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
         new_cp_path = self.checkpoint_path(checkpoint_id, new_path)
         if os.path.isfile(old_cp_path):
             self.log.debug(
-                "Renaming checkpoint %s -> %s",
-                old_cp_path,
-                new_cp_path,
+                "Renaming checkpoint %s -> %s", old_cp_path, new_cp_path,
             )
             with self.perm_to_403():
                 shutil.move(old_cp_path, new_cp_path)
 
     def delete_checkpoint(self, checkpoint_id, path):
         """delete a file's checkpoint"""
-        path = path.strip('/')
+        path = path.strip("/")
         cp_path = self.checkpoint_path(checkpoint_id, path)
         if not os.path.isfile(cp_path):
             self.no_such_checkpoint(path, checkpoint_id)
@@ -92,7 +90,7 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
 
         This contents manager currently only supports one checkpoint per file.
         """
-        path = path.strip('/')
+        path = path.strip("/")
         checkpoint_id = "checkpoint"
         os_path = self.checkpoint_path(checkpoint_id, path)
         if not os.path.isfile(os_path):
@@ -103,14 +101,12 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
     # Checkpoint-related utilities
     def checkpoint_path(self, checkpoint_id, path):
         """find the path to a checkpoint"""
-        path = path.strip('/')
-        parent, name = ('/' + path).rsplit('/', 1)
-        parent = parent.strip('/')
+        path = path.strip("/")
+        parent, name = ("/" + path).rsplit("/", 1)
+        parent = parent.strip("/")
         basename, ext = os.path.splitext(name)
         filename = u"{name}-{checkpoint_id}{ext}".format(
-            name=basename,
-            checkpoint_id=checkpoint_id,
-            ext=ext,
+            name=basename, checkpoint_id=checkpoint_id, ext=ext,
         )
         os_path = self._get_os_path(path=parent)
         cp_dir = os.path.join(os_path, self.checkpoint_dir)
@@ -123,17 +119,13 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
         """construct the info dict for a given checkpoint"""
         stats = os.stat(os_path)
         last_modified = tz.utcfromtimestamp(stats.st_mtime)
-        info = dict(
-            id=checkpoint_id,
-            last_modified=last_modified,
-        )
+        info = dict(id=checkpoint_id, last_modified=last_modified,)
         return info
 
     # Error Handling
     def no_such_checkpoint(self, path, checkpoint_id):
         raise HTTPError(
-            404,
-            u'Checkpoint does not exist: %s@%s' % (path, checkpoint_id)
+            404, u"Checkpoint does not exist: %s@%s" % (path, checkpoint_id)
         )
 
 
@@ -142,9 +134,10 @@ class GenericFileCheckpoints(GenericCheckpointsMixin, FileCheckpoints):
     Local filesystem Checkpoints that works with any conforming
     ContentsManager.
     """
+
     def create_file_checkpoint(self, content, format, path):
         """Create a checkpoint from the current content of a file."""
-        path = path.strip('/')
+        path = path.strip("/")
         # only the one checkpoint ID:
         checkpoint_id = u"checkpoint"
         os_checkpoint_path = self.checkpoint_path(checkpoint_id, path)
@@ -157,7 +150,7 @@ class GenericFileCheckpoints(GenericCheckpointsMixin, FileCheckpoints):
 
     def create_notebook_checkpoint(self, nb, path):
         """Create a checkpoint from the current content of a notebook."""
-        path = path.strip('/')
+        path = path.strip("/")
         # only the one checkpoint ID:
         checkpoint_id = u"checkpoint"
         os_checkpoint_path = self.checkpoint_path(checkpoint_id, path)
@@ -170,7 +163,7 @@ class GenericFileCheckpoints(GenericCheckpointsMixin, FileCheckpoints):
 
     def get_notebook_checkpoint(self, checkpoint_id, path):
         """Get a checkpoint for a notebook."""
-        path = path.strip('/')
+        path = path.strip("/")
         self.log.info("restoring %s from checkpoint %s", path, checkpoint_id)
         os_checkpoint_path = self.checkpoint_path(checkpoint_id, path)
 
@@ -178,16 +171,13 @@ class GenericFileCheckpoints(GenericCheckpointsMixin, FileCheckpoints):
             self.no_such_checkpoint(path, checkpoint_id)
 
         return {
-            'type': 'notebook',
-            'content': self._read_notebook(
-                os_checkpoint_path,
-                as_version=4,
-            ),
+            "type": "notebook",
+            "content": self._read_notebook(os_checkpoint_path, as_version=4,),
         }
 
     def get_file_checkpoint(self, checkpoint_id, path):
         """Get a checkpoint for a file."""
-        path = path.strip('/')
+        path = path.strip("/")
         self.log.info("restoring %s from checkpoint %s", path, checkpoint_id)
         os_checkpoint_path = self.checkpoint_path(checkpoint_id, path)
 
@@ -196,7 +186,7 @@ class GenericFileCheckpoints(GenericCheckpointsMixin, FileCheckpoints):
 
         content, format = self._read_file(os_checkpoint_path, format=None)
         return {
-            'type': 'file',
-            'content': content,
-            'format': format,
+            "type": "file",
+            "content": content,
+            "format": format,
         }

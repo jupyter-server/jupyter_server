@@ -29,7 +29,7 @@ from ipython_genutils import py3compat
 
 # UF_HIDDEN is a stat flag not defined in the stat module.
 # It is used by BSD to indicate hidden files.
-UF_HIDDEN = getattr(stat, 'UF_HIDDEN', 32768)
+UF_HIDDEN = getattr(stat, "UF_HIDDEN", 32768)
 
 
 def exists(path):
@@ -49,51 +49,61 @@ def url_path_join(*pieces):
     Use to prevent double slash when joining subpath. This will leave the
     initial and final / in place
     """
-    initial = pieces[0].startswith('/')
-    final = pieces[-1].endswith('/')
-    stripped = [s.strip('/') for s in pieces]
-    result = '/'.join(s for s in stripped if s)
-    if initial: result = '/' + result
-    if final: result = result + '/'
-    if result == '//': result = '/'
+    initial = pieces[0].startswith("/")
+    final = pieces[-1].endswith("/")
+    stripped = [s.strip("/") for s in pieces]
+    result = "/".join(s for s in stripped if s)
+    if initial:
+        result = "/" + result
+    if final:
+        result = result + "/"
+    if result == "//":
+        result = "/"
     return result
+
 
 def url_is_absolute(url):
     """Determine whether a given URL is absolute"""
     return urlparse(url).path.startswith("/")
 
+
 def path2url(path):
     """Convert a local file path to a URL"""
-    pieces = [ quote(p) for p in path.split(os.sep) ]
+    pieces = [quote(p) for p in path.split(os.sep)]
     # preserve trailing /
-    if pieces[-1] == '':
-        pieces[-1] = '/'
+    if pieces[-1] == "":
+        pieces[-1] = "/"
     url = url_path_join(*pieces)
     return url
 
+
 def url2path(url):
     """Convert a URL to a local file path"""
-    pieces = [ unquote(p) for p in url.split('/') ]
+    pieces = [unquote(p) for p in url.split("/")]
     path = os.path.join(*pieces)
     return path
+
 
 def url_escape(path):
     """Escape special characters in a URL path
 
     Turns '/foo bar/' into '/foo%20bar/'
     """
-    parts = py3compat.unicode_to_str(path, encoding='utf8').split('/')
-    return u'/'.join([quote(p) for p in parts])
+    parts = py3compat.unicode_to_str(path, encoding="utf8").split("/")
+    return u"/".join([quote(p) for p in parts])
+
 
 def url_unescape(path):
     """Unescape special characters in a URL path
 
     Turns '/foo%20bar/' into '/foo bar/'
     """
-    return u'/'.join([
-        py3compat.str_to_unicode(unquote(p), encoding='utf8')
-        for p in py3compat.unicode_to_str(path, encoding='utf8').split('/')
-    ])
+    return u"/".join(
+        [
+            py3compat.str_to_unicode(unquote(p), encoding="utf8")
+            for p in py3compat.unicode_to_str(path, encoding="utf8").split("/")
+        ]
+    )
 
 
 def is_file_hidden_win(abs_path, stat_res=None):
@@ -112,7 +122,7 @@ def is_file_hidden_win(abs_path, stat_res=None):
         Ignored on Windows, exists for compatibility with POSIX version of the
         function.
     """
-    if os.path.basename(abs_path).startswith('.'):
+    if os.path.basename(abs_path).startswith("."):
         return True
 
     win32_FILE_ATTRIBUTE_HIDDEN = 0x02
@@ -127,6 +137,7 @@ def is_file_hidden_win(abs_path, stat_res=None):
             return True
 
     return False
+
 
 def is_file_hidden_posix(abs_path, stat_res=None):
     """Is a file hidden?
@@ -144,7 +155,7 @@ def is_file_hidden_posix(abs_path, stat_res=None):
         The result of calling stat() on abs_path. If not passed, this function
         will call stat() internally.
     """
-    if os.path.basename(abs_path).startswith('.'):
+    if os.path.basename(abs_path).startswith("."):
         return True
 
     if stat_res is None or stat.S_ISLNK(stat_res.st_mode):
@@ -162,17 +173,19 @@ def is_file_hidden_posix(abs_path, stat_res=None):
             return True
 
     # check UF_HIDDEN
-    if getattr(stat_res, 'st_flags', 0) & UF_HIDDEN:
+    if getattr(stat_res, "st_flags", 0) & UF_HIDDEN:
         return True
 
     return False
 
-if sys.platform == 'win32':
+
+if sys.platform == "win32":
     is_file_hidden = is_file_hidden_win
 else:
     is_file_hidden = is_file_hidden_posix
 
-def is_hidden(abs_path, abs_root=''):
+
+def is_hidden(abs_path, abs_root=""):
     """Is a file hidden or contained in a hidden directory?
 
     This will start with the rightmost path element and work backwards to the
@@ -200,8 +213,8 @@ def is_hidden(abs_path, abs_root=''):
 
     if not abs_root:
         abs_root = abs_path.split(os.sep, 1)[0] + os.sep
-    inside_root = abs_path[len(abs_root):]
-    if any(part.startswith('.') for part in inside_root.split(os.sep)):
+    inside_root = abs_path[len(abs_root) :]
+    if any(part.startswith(".") for part in inside_root.split(os.sep)):
         return True
 
     # check UF_HIDDEN on any location up to root.
@@ -216,13 +229,16 @@ def is_hidden(abs_path, abs_root=''):
             st = os.lstat(path)
         except OSError:
             return True
-        if getattr(st, 'st_flags', 0) & UF_HIDDEN:
+        if getattr(st, "st_flags", 0) & UF_HIDDEN:
             return True
         path = os.path.dirname(path)
 
     return False
 
+
 # TODO: Move to jupyter_core
+
+
 def win32_restrict_file_to_user(fname):
     """Secure a windows file to read-only access for the user.
     Follows guidance from win32 library creator:
@@ -249,11 +265,14 @@ def win32_restrict_file_to_user(fname):
 
     dacl = win32security.ACL()
     # dacl.AddAccessAllowedAce(win32security.ACL_REVISION, con.FILE_ALL_ACCESS, everyone)
-    dacl.AddAccessAllowedAce(win32security.ACL_REVISION, con.FILE_GENERIC_READ | con.FILE_GENERIC_WRITE, user)
+    dacl.AddAccessAllowedAce(
+        win32security.ACL_REVISION, con.FILE_GENERIC_READ | con.FILE_GENERIC_WRITE, user
+    )
     dacl.AddAccessAllowedAce(win32security.ACL_REVISION, con.FILE_ALL_ACCESS, admins)
 
     sd.SetSecurityDescriptorDacl(1, dacl, 0)
     win32security.SetFileSecurity(fname, win32security.DACL_SECURITY_INFORMATION, sd)
+
 
 # TODO: Move to jupyter_core
 @contextmanager
@@ -268,7 +287,7 @@ def secure_write(fname, binary=False):
     fname : unicode
         The path to the file to write
     """
-    mode = 'wb' if binary else 'w'
+    mode = "wb" if binary else "w"
     open_flag = os.O_CREAT | os.O_WRONLY | os.O_TRUNC
     try:
         os.remove(fname)
@@ -276,7 +295,7 @@ def secure_write(fname, binary=False):
         # Skip any issues with the file not existing
         pass
 
-    if os.name == 'nt':
+    if os.name == "nt":
         # Python on windows does not respect the group and public bits for chmod, so we need
         # to take additional steps to secure the contents.
         # Touch file pre-emptively to avoid editing permissions in open files in Windows
@@ -286,10 +305,13 @@ def secure_write(fname, binary=False):
         win32_restrict_file_to_user(fname)
 
     with os.fdopen(os.open(fname, open_flag, 0o600), mode) as f:
-        if os.name != 'nt':
+        if os.name != "nt":
             # Enforce that the file got the requested permissions before writing
-            assert '0600' == oct(stat.S_IMODE(os.stat(fname).st_mode)).replace('0o', '0')
+            assert "0600" == oct(stat.S_IMODE(os.stat(fname).st_mode)).replace(
+                "0o", "0"
+            )
         yield f
+
 
 def samefile_simple(path, other_path):
     """
@@ -313,32 +335,32 @@ def samefile_simple(path, other_path):
     """
     path_stat = os.stat(path)
     other_path_stat = os.stat(other_path)
-    return (path.lower() == other_path.lower()
-        and path_stat == other_path_stat)
+    return path.lower() == other_path.lower() and path_stat == other_path_stat
 
 
-def to_os_path(path, root=''):
+def to_os_path(path, root=""):
     """Convert an API path to a filesystem path
 
     If given, root will be prepended to the path.
     root must be a filesystem path already.
     """
-    parts = path.strip('/').split('/')
-    parts = [p for p in parts if p != ''] # remove duplicate splits
+    parts = path.strip("/").split("/")
+    parts = [p for p in parts if p != ""]  # remove duplicate splits
     path = os.path.join(root, *parts)
     return path
 
-def to_api_path(os_path, root=''):
+
+def to_api_path(os_path, root=""):
     """Convert a filesystem path to an API path
 
     If given, root will be removed from the path.
     root must be a filesystem path already.
     """
     if os_path.startswith(root):
-        os_path = os_path[len(root):]
+        os_path = os_path[len(root) :]
     parts = os_path.strip(os.path.sep).split(os.path.sep)
-    parts = [p for p in parts if p != ''] # remove duplicate splits
-    path = '/'.join(parts)
+    parts = [p for p in parts if p != ""]  # remove duplicate splits
+    path = "/".join(parts)
     return path
 
 
@@ -357,11 +379,14 @@ def check_version(v, check):
 
 # Copy of IPython.utils.process.check_pid:
 
+
 def _check_pid_win32(pid):
     import ctypes
+
     # OpenProcess returns 0 if no such process (of ours) exists
     # positive int otherwise
-    return bool(ctypes.windll.kernel32.OpenProcess(1,0,pid))
+    return bool(ctypes.windll.kernel32.OpenProcess(1, 0, pid))
+
 
 def _check_pid_posix(pid):
     """Copy of IPython.utils.process.check_pid"""
@@ -377,7 +402,8 @@ def _check_pid_posix(pid):
     else:
         return True
 
-if sys.platform == 'win32':
+
+if sys.platform == "win32":
     check_pid = _check_pid_win32
 else:
     check_pid = _check_pid_posix
@@ -397,4 +423,3 @@ def maybe_future(obj):
         f = asyncio.Future()
         f.set_result(obj)
         return f
-

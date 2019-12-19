@@ -58,7 +58,7 @@ class BaseJSONConfigManager(LoggingConfigurable):
     default values in a {section_name}.d directory.
     """
 
-    config_dir = Unicode('.')
+    config_dir = Unicode(".")
     read_directory = Bool(True)
 
     def ensure_config_dir_exists(self):
@@ -71,11 +71,11 @@ class BaseJSONConfigManager(LoggingConfigurable):
 
     def file_name(self, section_name):
         """Returns the json filename for the section_name: {config_dir}/{section_name}.json"""
-        return os.path.join(self.config_dir, section_name+'.json')
+        return os.path.join(self.config_dir, section_name + ".json")
 
     def directory(self, section_name):
         """Returns the directory name for the section name: {config_dir}/{section_name}.d"""
-        return os.path.join(self.config_dir, section_name+'.d')
+        return os.path.join(self.config_dir, section_name + ".d")
 
     def get(self, section_name, include_root=True):
         """Retrieve the config data for the specified section.
@@ -88,18 +88,22 @@ class BaseJSONConfigManager(LoggingConfigurable):
         """
         paths = [self.file_name(section_name)] if include_root else []
         if self.read_directory:
-            pattern = os.path.join(self.directory(section_name), '*.json')
+            pattern = os.path.join(self.directory(section_name), "*.json")
             # These json files should be processed first so that the
             # {section_name}.json take precedence.
             # The idea behind this is that installing a Python package may
             # put a json file somewhere in the a .d directory, while the
             # .json file is probably a user configuration.
             paths = sorted(glob.glob(pattern)) + paths
-        self.log.debug('Paths used for configuration of %s: \n\t%s', section_name, '\n\t'.join(paths))
+        self.log.debug(
+            "Paths used for configuration of %s: \n\t%s",
+            section_name,
+            "\n\t".join(paths),
+        )
         data = {}
         for path in paths:
             if os.path.isfile(path):
-                with io.open(path, encoding='utf-8') as f:
+                with io.open(path, encoding="utf-8") as f:
                     recursive_update(data, json.load(f))
         return data
 
@@ -120,9 +124,9 @@ class BaseJSONConfigManager(LoggingConfigurable):
         json_content = json.dumps(data, indent=2)
 
         if PY3:
-            f = io.open(filename, 'w', encoding='utf-8')
+            f = io.open(filename, "w", encoding="utf-8")
         else:
-            f = open(filename, 'wb')
+            f = open(filename, "wb")
         with f:
             f.write(json_content)
 

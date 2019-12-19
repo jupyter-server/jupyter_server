@@ -17,13 +17,13 @@ from jupyter_server.serverapp import ServerApp
 from jupyter_server.utils import url_path_join
 
 
-pytest_plugins = ("pytest_tornasync")
+pytest_plugins = "pytest_tornasync"
 
 
 # NOTE: This is a temporary fix for Windows 3.8
-# We have to override the io_loop fixture with an 
-# asyncio patch. This will probably be removed in 
-# the future.                   
+# We have to override the io_loop fixture with an
+# asyncio patch. This will probably be removed in
+# the future.
 if sys.platform.startswith("win") and sys.version_info >= (3, 8):
 
     @pytest.fixture
@@ -55,30 +55,39 @@ def expected_http_error(error, expected_code, expected_message=None):
         if expected_message is not None and expected_message != str(e):
             return False
         return True
-    elif any([
-        isinstance(e, tornado.httpclient.HTTPClientError), 
-        isinstance(e, tornado.httpclient.HTTPError)
-    ]):
+    elif any(
+        [
+            isinstance(e, tornado.httpclient.HTTPClientError),
+            isinstance(e, tornado.httpclient.HTTPError),
+        ]
+    ):
         if expected_code != e.code:
             return False
         if expected_message:
-            message = json.loads(e.response.body.decode())['message']
+            message = json.loads(e.response.body.decode())["message"]
             if expected_message != message:
                 return False
         return True
 
 
 config = pytest.fixture(lambda: {})
-home_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'home'))
-data_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'data'))
-config_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'config'))
-runtime_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'runtime'))
-root_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'root_dir'))
-system_jupyter_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'share', 'jupyter'))
-env_jupyter_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'env', 'share', 'jupyter'))
-system_config_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'etc', 'jupyter'))
-env_config_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, 'env', 'etc', 'jupyter'))
+home_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "home"))
+data_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "data"))
+config_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "config"))
+runtime_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "runtime"))
+root_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "root_dir"))
+system_jupyter_path = pytest.fixture(
+    lambda tmp_path: mkdir(tmp_path, "share", "jupyter")
+)
+env_jupyter_path = pytest.fixture(
+    lambda tmp_path: mkdir(tmp_path, "env", "share", "jupyter")
+)
+system_config_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "etc", "jupyter"))
+env_config_path = pytest.fixture(
+    lambda tmp_path: mkdir(tmp_path, "env", "etc", "jupyter")
+)
 argv = pytest.fixture(lambda: [])
+
 
 @pytest.fixture
 def environ(
@@ -92,48 +101,45 @@ def environ(
     system_jupyter_path,
     system_config_path,
     env_jupyter_path,
-    env_config_path
-    ):
-    monkeypatch.setenv('HOME', str(home_dir))
-    monkeypatch.setenv('PYTHONPATH', os.pathsep.join(sys.path))
-    monkeypatch.setenv('JUPYTER_NO_CONFIG', '1')
-    monkeypatch.setenv('JUPYTER_CONFIG_DIR', str(config_dir))
-    monkeypatch.setenv('JUPYTER_DATA_DIR', str(data_dir))
-    monkeypatch.setenv('JUPYTER_RUNTIME_DIR', str(runtime_dir))
-    monkeypatch.setattr(jupyter_core.paths, 'SYSTEM_JUPYTER_PATH', [str(system_jupyter_path)])
-    monkeypatch.setattr(jupyter_core.paths, 'ENV_JUPYTER_PATH', [str(env_jupyter_path)])
-    monkeypatch.setattr(jupyter_core.paths, 'SYSTEM_CONFIG_PATH', [str(system_config_path)])
-    monkeypatch.setattr(jupyter_core.paths, 'ENV_CONFIG_PATH', [str(env_config_path)])
+    env_config_path,
+):
+    monkeypatch.setenv("HOME", str(home_dir))
+    monkeypatch.setenv("PYTHONPATH", os.pathsep.join(sys.path))
+    monkeypatch.setenv("JUPYTER_NO_CONFIG", "1")
+    monkeypatch.setenv("JUPYTER_CONFIG_DIR", str(config_dir))
+    monkeypatch.setenv("JUPYTER_DATA_DIR", str(data_dir))
+    monkeypatch.setenv("JUPYTER_RUNTIME_DIR", str(runtime_dir))
+    monkeypatch.setattr(
+        jupyter_core.paths, "SYSTEM_JUPYTER_PATH", [str(system_jupyter_path)]
+    )
+    monkeypatch.setattr(jupyter_core.paths, "ENV_JUPYTER_PATH", [str(env_jupyter_path)])
+    monkeypatch.setattr(
+        jupyter_core.paths, "SYSTEM_CONFIG_PATH", [str(system_config_path)]
+    )
+    monkeypatch.setattr(jupyter_core.paths, "ENV_CONFIG_PATH", [str(env_config_path)])
 
 
 @pytest.fixture
-def configurable_serverapp(    
-    environ,
-    http_port, 
-    tmp_path, 
-    home_dir,
-    data_dir,
-    config_dir,
-    runtime_dir,
-    root_dir
-    ):
-
+def configurable_serverapp(
+    environ, http_port, tmp_path, home_dir, data_dir, config_dir, runtime_dir, root_dir
+):
     def serverapp(
-        config={}, 
-        argv=[], 
+        config={},
+        argv=[],
         environ=environ,
-        http_port=http_port, 
-        tmp_path=tmp_path, 
+        http_port=http_port,
+        tmp_path=tmp_path,
         home_dir=home_dir,
         data_dir=data_dir,
         config_dir=config_dir,
         runtime_dir=runtime_dir,
         root_dir=root_dir,
-        **kwargs):
+        **kwargs
+    ):
         c = Config(config)
-        c.NotebookNotary.db_file = ':memory:'
-        token = hexlify(os.urandom(4)).decode('ascii')
-        url_prefix = '/'
+        c.NotebookNotary.db_file = ":memory:"
+        token = hexlify(os.urandom(4)).decode("ascii")
+        url_prefix = "/"
         app = ServerApp.instance(
             port=http_port,
             port_retries=0,
@@ -148,7 +154,7 @@ def configurable_serverapp(
             token=token,
             **kwargs
         )
-        app.init_signal = lambda : None
+        app.init_signal = lambda: None
         app.log.propagate = True
         app.log.handlers = []
         # Initialize app without httpserver
@@ -179,7 +185,7 @@ def app(serverapp):
 
 @pytest.fixture
 def auth_header(serverapp):
-    return {'Authorization': 'token {token}'.format(token=serverapp.token)}
+    return {"Authorization": "token {token}".format(token=serverapp.token)}
 
 
 @pytest.fixture
@@ -189,12 +195,13 @@ def http_port(http_server_port):
 
 @pytest.fixture
 def base_url(http_server_port):
-    return '/'
+    return "/"
 
 
 @pytest.fixture
 def fetch(http_server_client, auth_header, base_url):
     """fetch fixture that handles auth, base_url, and path"""
+
     def client_fetch(*parts, headers={}, params={}, **kwargs):
         # Handle URL strings
         path_url = url_escape(url_path_join(base_url, *parts), plus=False)
@@ -203,5 +210,8 @@ def fetch(http_server_client, auth_header, base_url):
         # Add auth keys to header
         headers.update(auth_header)
         # Make request.
-        return http_server_client.fetch(url, headers=headers, request_timeout=20, **kwargs)
+        return http_server_client.fetch(
+            url, headers=headers, request_timeout=20, **kwargs
+        )
+
     return client_fetch

@@ -21,7 +21,7 @@ from jupyter_core.paths import jupyter_config_dir
 salt_len = 12
 
 
-def passwd(passphrase=None, algorithm='sha1'):
+def passwd(passphrase=None, algorithm="sha1"):
     """Generate hashed password and salt for use in server configuration.
 
     In the server configuration, set `c.ServerApp.password` to
@@ -49,21 +49,21 @@ def passwd(passphrase=None, algorithm='sha1'):
     """
     if passphrase is None:
         for i in range(3):
-            p0 = getpass.getpass('Enter password: ')
-            p1 = getpass.getpass('Verify password: ')
+            p0 = getpass.getpass("Enter password: ")
+            p1 = getpass.getpass("Verify password: ")
             if p0 == p1:
                 passphrase = p0
                 break
             else:
-                print('Passwords do not match.')
+                print("Passwords do not match.")
         else:
-            raise ValueError('No matching passwords found. Giving up.')
+            raise ValueError("No matching passwords found. Giving up.")
 
     h = hashlib.new(algorithm)
-    salt = ('%0' + str(salt_len) + 'x') % random.getrandbits(4 * salt_len)
-    h.update(cast_bytes(passphrase, 'utf-8') + str_to_bytes(salt, 'ascii'))
+    salt = ("%0" + str(salt_len) + "x") % random.getrandbits(4 * salt_len)
+    h.update(cast_bytes(passphrase, "utf-8") + str_to_bytes(salt, "ascii"))
 
-    return ':'.join((algorithm, salt, h.hexdigest()))
+    return ":".join((algorithm, salt, h.hexdigest()))
 
 
 def passwd_check(hashed_passphrase, passphrase):
@@ -93,7 +93,7 @@ def passwd_check(hashed_passphrase, passphrase):
     False
     """
     try:
-        algorithm, salt, pw_digest = hashed_passphrase.split(':', 2)
+        algorithm, salt, pw_digest = hashed_passphrase.split(":", 2)
     except (ValueError, TypeError):
         return False
 
@@ -105,9 +105,10 @@ def passwd_check(hashed_passphrase, passphrase):
     if len(pw_digest) == 0:
         return False
 
-    h.update(cast_bytes(passphrase, 'utf-8') + cast_bytes(salt, 'ascii'))
+    h.update(cast_bytes(passphrase, "utf-8") + cast_bytes(salt, "ascii"))
 
     return h.hexdigest() == pw_digest
+
 
 @contextmanager
 def persist_config(config_file=None, mode=0o600):
@@ -118,9 +119,11 @@ def persist_config(config_file=None, mode=0o600):
     """
 
     if config_file is None:
-        config_file = os.path.join(jupyter_config_dir(), 'jupyter_server_config.json')
+        config_file = os.path.join(jupyter_config_dir(), "jupyter_server_config.json")
 
-    loader = JSONFileConfigLoader(os.path.basename(config_file), os.path.dirname(config_file))
+    loader = JSONFileConfigLoader(
+        os.path.basename(config_file), os.path.dirname(config_file)
+    )
     try:
         config = loader.load_config()
     except ConfigFileNotFound:
@@ -128,15 +131,17 @@ def persist_config(config_file=None, mode=0o600):
 
     yield config
 
-    with io.open(config_file, 'w', encoding='utf8') as f:
+    with io.open(config_file, "w", encoding="utf8") as f:
         f.write(cast_unicode(json.dumps(config, indent=2)))
 
     try:
         os.chmod(config_file, mode)
     except Exception as e:
         tb = traceback.format_exc()
-        warnings.warn("Failed to set permissions on %s:\n%s" % (config_file, tb),
-            RuntimeWarning)
+        warnings.warn(
+            "Failed to set permissions on %s:\n%s" % (config_file, tb), RuntimeWarning
+        )
+
 
 def set_password(password=None, config_file=None):
     """Ask user for password, store it in JSON configuration file"""

@@ -32,6 +32,7 @@ def replace_file(src, dst):
     """
     os.replace(src, dst)
 
+
 def copy2_safe(src, dst, log=None):
     """copy src to dst
 
@@ -44,20 +45,23 @@ def copy2_safe(src, dst, log=None):
         if log:
             log.debug("copystat on %s failed", dst, exc_info=True)
 
-def path_to_intermediate(path):
-    '''Name of the intermediate file used in atomic writes.
 
-    The .~ prefix will make Dropbox ignore the temporary file.'''
+def path_to_intermediate(path):
+    """Name of the intermediate file used in atomic writes.
+
+    The .~ prefix will make Dropbox ignore the temporary file."""
     dirname, basename = os.path.split(path)
-    return os.path.join(dirname, '.~'+basename)
+    return os.path.join(dirname, ".~" + basename)
+
 
 def path_to_invalid(path):
-    '''Name of invalid file after a failed atomic write and subsequent read.'''
+    """Name of invalid file after a failed atomic write and subsequent read."""
     dirname, basename = os.path.split(path)
-    return os.path.join(dirname, basename+'.invalid')
+    return os.path.join(dirname, basename + ".invalid")
+
 
 @contextmanager
-def atomic_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
+def atomic_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     """Context manager to write to a file only if the entire write is successful.
 
     This works by copying the previous file contents to a temporary file in the
@@ -93,10 +97,10 @@ def atomic_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
 
     if text:
         # Make sure that text files have Unix linefeeds by default
-        kwargs.setdefault('newline', '\n')
-        fileobj = io.open(path, 'w', encoding=encoding, **kwargs)
+        kwargs.setdefault("newline", "\n")
+        fileobj = io.open(path, "w", encoding=encoding, **kwargs)
     else:
-        fileobj = io.open(path, 'wb', **kwargs)
+        fileobj = io.open(path, "wb", **kwargs)
 
     try:
         yield fileobj
@@ -116,9 +120,8 @@ def atomic_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
         os.remove(tmp_path)
 
 
-
 @contextmanager
-def _simple_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
+def _simple_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     """Context manager to write file without doing atomic writing
     ( for weird filesystem eg: nfs).
 
@@ -145,10 +148,10 @@ def _simple_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
 
     if text:
         # Make sure that text files have Unix linefeeds by default
-        kwargs.setdefault('newline', '\n')
-        fileobj = io.open(path, 'w', encoding=encoding, **kwargs)
+        kwargs.setdefault("newline", "\n")
+        fileobj = io.open(path, "w", encoding=encoding, **kwargs)
     else:
-        fileobj = io.open(path, 'wb', **kwargs)
+        fileobj = io.open(path, "wb", **kwargs)
 
     try:
         yield fileobj
@@ -157,8 +160,6 @@ def _simple_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
         raise
 
     fileobj.close()
-
-
 
 
 class FileManagerMixin(Configurable):
@@ -179,10 +180,13 @@ class FileManagerMixin(Configurable):
     log : logging.Logger
     """
 
-    use_atomic_writing = Bool(True, config=True, help=
-    """By default notebooks are saved on disk on a temporary file and then if succefully written, it replaces the old ones.
+    use_atomic_writing = Bool(
+        True,
+        config=True,
+        help="""By default notebooks are saved on disk on a temporary file and then if succefully written, it replaces the old ones.
       This procedure, namely 'atomic_writing', causes some bugs on file system whitout operation order enforcement (like some networked fs).
-      If set to False, the new notebook is written directly on the old one which could fail (eg: full filesystem or quota )""")
+      If set to False, the new notebook is written directly on the old one which could fail (eg: full filesystem or quota )""",
+    )
 
     @contextmanager
     def open(self, os_path, *args, **kwargs):
@@ -205,7 +209,7 @@ class FileManagerMixin(Configurable):
                     yield f
 
     @contextmanager
-    def perm_to_403(self, os_path=''):
+    def perm_to_403(self, os_path=""):
         """context manager for turning permission errors into 403."""
         try:
             yield
@@ -215,9 +219,9 @@ class FileManagerMixin(Configurable):
                 # this may not work perfectly on unicode paths on Python 2,
                 # but nobody should be doing that anyway.
                 if not os_path:
-                    os_path = str_to_unicode(e.filename or 'unknown file')
+                    os_path = str_to_unicode(e.filename or "unknown file")
                 path = to_api_path(os_path, root=self.root_dir)
-                raise HTTPError(403, u'Permission denied: %s' % path)
+                raise HTTPError(403, u"Permission denied: %s" % path)
             else:
                 raise
 
@@ -253,7 +257,7 @@ class FileManagerMixin(Configurable):
 
     def _read_notebook(self, os_path, as_version=4):
         """Read a notebook from an os path."""
-        with self.open(os_path, 'r', encoding='utf-8') as f:
+        with self.open(os_path, "r", encoding="utf-8") as f:
             try:
                 return nbformat.read(f, as_version=as_version)
             except Exception as e:
@@ -266,8 +270,7 @@ class FileManagerMixin(Configurable):
 
             if not self.use_atomic_writing or not os.path.exists(tmp_path):
                 raise HTTPError(
-                    400,
-                    u"Unreadable Notebook: %s %r" % (os_path, e_orig),
+                    400, u"Unreadable Notebook: %s %r" % (os_path, e_orig),
                 )
 
             # Move the bad file aside, restore the intermediate, and try again.
@@ -278,7 +281,7 @@ class FileManagerMixin(Configurable):
 
     def _save_notebook(self, os_path, nb):
         """Save a notebook to an os_path."""
-        with self.atomic_writing(os_path, encoding='utf-8') as f:
+        with self.atomic_writing(os_path, encoding="utf-8") as f:
             nbformat.write(nb, f, version=nbformat.NO_CONVERT)
 
     def _read_file(self, os_path, format):
@@ -293,40 +296,35 @@ class FileManagerMixin(Configurable):
         if not os.path.isfile(os_path):
             raise HTTPError(400, "Cannot read non-file %s" % os_path)
 
-        with self.open(os_path, 'rb') as f:
+        with self.open(os_path, "rb") as f:
             bcontent = f.read()
 
-        if format is None or format == 'text':
+        if format is None or format == "text":
             # Try to interpret as unicode if format is unknown or if unicode
             # was explicitly requested.
             try:
-                return bcontent.decode('utf8'), 'text'
+                return bcontent.decode("utf8"), "text"
             except UnicodeError:
-                if format == 'text':
+                if format == "text":
                     raise HTTPError(
-                        400,
-                        "%s is not UTF-8 encoded" % os_path,
-                        reason='bad format',
+                        400, "%s is not UTF-8 encoded" % os_path, reason="bad format",
                     )
-        return encodebytes(bcontent).decode('ascii'), 'base64'
+        return encodebytes(bcontent).decode("ascii"), "base64"
 
     def _save_file(self, os_path, content, format):
         """Save content of a generic file."""
-        if format not in {'text', 'base64'}:
+        if format not in {"text", "base64"}:
             raise HTTPError(
-                400,
-                "Must specify format of file contents as 'text' or 'base64'",
+                400, "Must specify format of file contents as 'text' or 'base64'",
             )
         try:
-            if format == 'text':
-                bcontent = content.encode('utf8')
+            if format == "text":
+                bcontent = content.encode("utf8")
             else:
-                b64_bytes = content.encode('ascii')
+                b64_bytes = content.encode("ascii")
                 bcontent = decodebytes(b64_bytes)
         except Exception as e:
-            raise HTTPError(
-                400, u'Encoding error saving %s: %s' % (os_path, e)
-            )
+            raise HTTPError(400, u"Encoding error saving %s: %s" % (os_path, e))
 
         with self.atomic_writing(os_path, text=False) as f:
             f.write(bcontent)
