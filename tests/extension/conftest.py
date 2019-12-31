@@ -4,6 +4,7 @@ from traitlets import Unicode
 
 
 from jupyter_core import paths
+from jupyter_server.extension import serverextension
 from jupyter_server.extension.serverextension import _get_config_dir
 from jupyter_server.extension.application import ExtensionApp
 from jupyter_server.extension.handler import ExtensionHandler
@@ -55,9 +56,8 @@ def inject_mock_extension(environ, extension_environ):
 
         Usage: inject_mock_extension({'extension_name': ExtensionClass})
     """
-    def ext(module_dict):
-        name = list(module_dict.keys())[0]
-        cls = list(module_dict.values())[0]
-        sys.modules[name] = e = cls()
+    def ext(modulename="mockextension"):
+        sys.modules[modulename] = e = MockExtensionApp()
         return e
+
     return ext
