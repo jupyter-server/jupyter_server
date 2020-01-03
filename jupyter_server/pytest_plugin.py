@@ -26,9 +26,11 @@ pytest_plugins = "pytest_tornasync"
 # We have to override the io_loop fixture with an
 # asyncio patch. This will probably be removed in
 # the future.
+print("\n\n\n{} {} \n\n\n\n".format(sys.platform.startswith("win"), sys.version_info >= (3, 8)))
+
 if sys.platform.startswith("win") and sys.version_info >= (3, 8):
 
-    print("Running temporary patch for Windows 3.8")
+    print("\n\n\n\nRunning temporary patch for Windows 3.8\n\n\n\n")
 
     @pytest.fixture
     def asyncio_patch():
