@@ -28,6 +28,8 @@ pytest_plugins = "pytest_tornasync"
 # the future.
 if sys.platform.startswith("win") and sys.version_info >= (3, 8):
 
+    print("Running temporary patch for Windows 3.8")
+
     @pytest.fixture
     def asyncio_patch():
         ServerApp()._init_asyncio_patch()

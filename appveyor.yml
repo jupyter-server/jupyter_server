@@ -38,4 +38,4 @@ install:
   - IF %CONDA_PY% == 38 pip install --upgrade git+https://github.com/ipython/ipykernel.git
 
 test_script:
-  - pytest
+  - pytest -s -v
