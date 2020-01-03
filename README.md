@@ -21,10 +21,19 @@ You can find the installation documentation for the
 The documentation for advanced usage of Jupyter notebook can be found
 [here](https://jupyter-server.readthedocs.io/en/latest/).
 
-For a local installation, make sure you have
+To install the latest release locally, make sure you have
 [pip installed](https://pip.readthedocs.io/en/stable/installing/) and run:
 
     $ pip install jupyter_server
+
+If Jupyter Server is a dependency of your project/application, it is important that you pin it to a version that works for your application. Currently, Jupyter Server only has minor releases and patch releases. Minor release may include API-breaking changes while patch release will never break API.
+
+* [0.2.x](https://github.com/jupyter/jupyter_server/tree/0.2.x): Extension Application API added.
+* [0.3.x](https://github.com/jupyter/jupyter_server/tree/master) (master): Kernels API changed. Kernel Providers are the new way to interface with kernels.
+
+To install the latest patch release of a given version:
+
+    $ pip intall jupyter_server>=0.2
 
 ## Usage - Running Jupyter Server
 
