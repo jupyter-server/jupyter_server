@@ -16,6 +16,8 @@ from jupyter_server.extension import serverextension
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.utils import url_path_join
 
+import nbformat
+
 
 pytest_plugins = "pytest_tornasync"
 
@@ -184,7 +186,6 @@ def base_url(http_server_port):
 @pytest.fixture
 def fetch(http_server_client, auth_header, base_url):
     """fetch fixture that handles auth, base_url, and path"""
-
     def client_fetch(*parts, headers={}, params={}, **kwargs):
         # Handle URL strings
         path_url = url_escape(url_path_join(base_url, *parts), plus=False)
@@ -196,5 +197,22 @@ def fetch(http_server_client, auth_header, base_url):
         return http_server_client.fetch(
             url, headers=headers, request_timeout=20, **kwargs
         )
-
     return client_fetch
+
+
+@pytest.fixture
+def create_notebook(root_dir):
+    """Create a notebook in the test's home directory."""
+    def inner(nbpath):
+        nbpath = root_dir.joinpath(nbpath)
+        # Check that the notebook has the correct file extension.
+        if nbpath.suffix != '.ipynb':
+            raise Exception("File extension for notebook must be .ipynb")
+        # If the notebook path has a parent directory, make sure it's created.
+        parent = nbpath.parent
+        parent.mkdir(parents=True, exist_ok=True)
+        # Create a notebook string and write to file.
+        nb = nbformat.v4.new_notebook()
+        nbtext = nbformat.writes(nb, version=4)
+        nbpath.write_text(nbtext)
+    return inner
