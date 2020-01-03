@@ -26,7 +26,7 @@ pytest_plugins = "pytest_tornasync"
 # We have to override the io_loop fixture with an
 # asyncio patch. This will probably be removed in
 # the future.
-print("\n\n\n{} {} \n\n\n\n".format(sys.platform.startswith("win"), sys.version_info >= (3, 8)))
+print("\n\n\n{} {} \n\n\n\n".format(sys.platform, sys.version_info))
 
 if sys.platform.startswith("win") and sys.version_info >= (3, 8):
 
