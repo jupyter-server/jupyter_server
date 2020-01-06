@@ -14,16 +14,17 @@ from jupyter_server.utils import maybe_future
 
 
 class APISpecHandler(web.StaticFileHandler, JupyterHandler):
+
     def initialize(self):
         web.StaticFileHandler.initialize(self, path=os.path.dirname(__file__))
 
     @web.authenticated
     def get(self):
         self.log.warning("Serving api spec (experimental, incomplete)")
-        return web.StaticFileHandler.get(self, "api.yaml")
+        return web.StaticFileHandler.get(self, 'api.yaml')
 
     def get_content_type(self):
-        return "text/x-yaml"
+        return 'text/x-yaml'
 
 
 class APIStatusHandler(APIHandler):
@@ -34,17 +35,17 @@ class APIStatusHandler(APIHandler):
     @gen.coroutine
     def get(self):
         # if started was missing, use unix epoch
-        started = self.settings.get("started", utcfromtimestamp(0))
+        started = self.settings.get('started', utcfromtimestamp(0))
         started = isoformat(started)
 
         kernels = yield maybe_future(self.kernel_manager.list_kernels())
-        total_connections = sum(k["connections"] for k in kernels)
+        total_connections = sum(k['connections'] for k in kernels)
         last_activity = isoformat(self.application.last_activity())
         model = {
-            "started": started,
-            "last_activity": last_activity,
-            "kernels": len(kernels),
-            "connections": total_connections,
+            'started': started,
+            'last_activity': last_activity,
+            'kernels': len(kernels),
+            'connections': total_connections,
         }
         self.finish(json.dumps(model, sort_keys=True))
 

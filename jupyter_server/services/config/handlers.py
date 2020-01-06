@@ -11,11 +11,11 @@ from tornado import web
 from ipython_genutils.py3compat import PY3
 from ...base.handlers import APIHandler
 
-
 class ConfigHandler(APIHandler):
+
     @web.authenticated
     def get(self, section_name):
-        self.set_header("Content-Type", "application/json")
+        self.set_header("Content-Type", 'application/json')
         self.finish(json.dumps(self.config_manager.get(section_name)))
 
     @web.authenticated
