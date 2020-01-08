@@ -24,7 +24,8 @@ class CSPReportHandler(APIHandler):
     def post(self):
         """Log a content security policy violation report"""
         self.log.warning(
-            "Content security violation: %s", self.request.body.decode("utf8", "replace")
+            "Content security violation: %s",
+            self.request.body.decode("utf8", "replace"),
         )
 
 

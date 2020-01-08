@@ -210,7 +210,8 @@ class LoginHandler(JupyterHandler):
         if user_token == token:
             # token-authenticated, set the login cookie
             handler.log.debug(
-                "Accepting token-authenticated connection from %s", handler.request.remote_ip
+                "Accepting token-authenticated connection from %s",
+                handler.request.remote_ip,
             )
             authenticated = True
 

@@ -13,7 +13,12 @@ from .utils import expected_http_error
 
 
 @pytest.fixture(
-    params=[[False, ["å b"]], [False, ["å b", "ç. d"]], [True, [".å b"]], [True, ["å b", ".ç d"]]]
+    params=[
+        [False, ["å b"]],
+        [False, ["å b", "ç. d"]],
+        [True, [".å b"]],
+        [True, ["å b", ".ç d"]],
+    ]
 )
 def maybe_hidden(request):
     return request.param

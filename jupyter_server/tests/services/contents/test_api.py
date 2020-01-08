@@ -368,7 +368,12 @@ async def test_mkdir(jp_fetch, contents, contents_dir, _check_created):
     name = "New ∂ir"
     path = "å b"
     r = await jp_fetch(
-        "api", "contents", path, name, method="PUT", body=json.dumps({"type": "directory"})
+        "api",
+        "contents",
+        path,
+        name,
+        method="PUT",
+        body=json.dumps({"type": "directory"}),
     )
     _check_created(r, str(contents_dir), path, name, type="directory")
 
@@ -376,7 +381,11 @@ async def test_mkdir(jp_fetch, contents, contents_dir, _check_created):
 async def test_mkdir_hidden_400(jp_fetch):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch(
-            "api", "contents", "å b/.hidden", method="PUT", body=json.dumps({"type": "directory"})
+            "api",
+            "contents",
+            "å b/.hidden",
+            method="PUT",
+            body=json.dumps({"type": "directory"}),
         )
     assert expected_http_error(e, 400)
 
@@ -427,21 +436,33 @@ async def test_copy(jp_fetch, contents, contents_dir, _check_created):
     name = "ç d.ipynb"
     copy = "ç d-Copy1.ipynb"
     r = await jp_fetch(
-        "api", "contents", path, method="POST", body=json.dumps({"copy_from": path + "/" + name})
+        "api",
+        "contents",
+        path,
+        method="POST",
+        body=json.dumps({"copy_from": path + "/" + name}),
     )
     _check_created(r, str(contents_dir), path, copy, type="notebook")
 
     # Copy the same file name
     copy2 = "ç d-Copy2.ipynb"
     r = await jp_fetch(
-        "api", "contents", path, method="POST", body=json.dumps({"copy_from": path + "/" + name})
+        "api",
+        "contents",
+        path,
+        method="POST",
+        body=json.dumps({"copy_from": path + "/" + name}),
     )
     _check_created(r, str(contents_dir), path, copy2, type="notebook")
 
     # copy a copy.
     copy3 = "ç d-Copy3.ipynb"
     r = await jp_fetch(
-        "api", "contents", path, method="POST", body=json.dumps({"copy_from": path + "/" + copy2})
+        "api",
+        "contents",
+        path,
+        method="POST",
+        body=json.dumps({"copy_from": path + "/" + copy2}),
     )
     _check_created(r, str(contents_dir), path, copy3, type="notebook")
 
@@ -452,12 +473,20 @@ async def test_copy_path(jp_fetch, contents, contents_dir, _check_created):
     name = "a.ipynb"
     copy = "a-Copy1.ipynb"
     r = await jp_fetch(
-        "api", "contents", path2, method="POST", body=json.dumps({"copy_from": path1 + "/" + name})
+        "api",
+        "contents",
+        path2,
+        method="POST",
+        body=json.dumps({"copy_from": path1 + "/" + name}),
     )
     _check_created(r, str(contents_dir), path2, name, type="notebook")
 
     r = await jp_fetch(
-        "api", "contents", path2, method="POST", body=json.dumps({"copy_from": path1 + "/" + name})
+        "api",
+        "contents",
+        path2,
+        method="POST",
+        body=json.dumps({"copy_from": path1 + "/" + name}),
     )
     _check_created(r, str(contents_dir), path2, copy, type="notebook")
 
@@ -477,7 +506,11 @@ async def test_copy_put_400(jp_fetch, contents, contents_dir, _check_created):
 async def test_copy_dir_400(jp_fetch, contents, contents_dir, _check_created):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch(
-            "api", "contents", "foo", method="POST", body=json.dumps({"copy_from": "å b"})
+            "api",
+            "contents",
+            "foo",
+            method="POST",
+            body=json.dumps({"copy_from": "å b"}),
         )
     assert expected_http_error(e, 400)
 
@@ -561,7 +594,13 @@ async def test_checkpoints_follow_file(jp_fetch, contents):
 
     # Create a checkpoint of initial state
     r = await jp_fetch(
-        "api", "contents", path, name, "checkpoints", method="POST", allow_nonstandard_methods=True
+        "api",
+        "contents",
+        path,
+        name,
+        "checkpoints",
+        method="POST",
+        allow_nonstandard_methods=True,
     )
     cp1 = json.loads(r.body.decode())
 
@@ -629,7 +668,12 @@ async def test_checkpoints(jp_fetch, contents):
     resp = await jp_fetch("api", "contents", path, method="GET")
     model = json.loads(resp.body.decode())
     r = await jp_fetch(
-        "api", "contents", path, "checkpoints", method="POST", allow_nonstandard_methods=True
+        "api",
+        "contents",
+        path,
+        "checkpoints",
+        method="POST",
+        allow_nonstandard_methods=True,
     )
     assert r.code == 201
     cp1 = json.loads(r.body.decode())
@@ -687,7 +731,12 @@ async def test_file_checkpoints(jp_fetch, contents):
     resp = await jp_fetch("api", "contents", path, method="GET")
     orig_content = json.loads(resp.body.decode())["content"]
     r = await jp_fetch(
-        "api", "contents", path, "checkpoints", method="POST", allow_nonstandard_methods=True
+        "api",
+        "contents",
+        path,
+        "checkpoints",
+        method="POST",
+        allow_nonstandard_methods=True,
     )
     assert r.code == 201
     cp1 = json.loads(r.body.decode())
@@ -743,6 +792,11 @@ async def test_trust(jp_fetch, contents):
     # It should be able to trust a notebook that exists
     for path in contents["notebooks"]:
         r = await jp_fetch(
-            "api", "contents", str(path), "trust", method="POST", allow_nonstandard_methods=True
+            "api",
+            "contents",
+            str(path),
+            "trust",
+            method="POST",
+            allow_nonstandard_methods=True,
         )
         assert r.code == 201

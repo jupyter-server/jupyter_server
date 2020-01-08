@@ -371,7 +371,12 @@ async def interrupt_kernel(jp_fetch, kernel_id):
     """Issues request to interrupt the given kernel"""
     with mocked_gateway:
         r = await jp_fetch(
-            "api", "kernels", kernel_id, "interrupt", method="POST", allow_nonstandard_methods=True
+            "api",
+            "kernels",
+            kernel_id,
+            "interrupt",
+            method="POST",
+            allow_nonstandard_methods=True,
         )
         assert r.code == 204
         assert r.reason == "No Content"
@@ -381,7 +386,12 @@ async def restart_kernel(jp_fetch, kernel_id):
     """Issues request to retart the given kernel"""
     with mocked_gateway:
         r = await jp_fetch(
-            "api", "kernels", kernel_id, "restart", method="POST", allow_nonstandard_methods=True
+            "api",
+            "kernels",
+            kernel_id,
+            "restart",
+            method="POST",
+            allow_nonstandard_methods=True,
         )
         assert r.code == 200
         model = json.loads(r.body.decode("utf-8"))

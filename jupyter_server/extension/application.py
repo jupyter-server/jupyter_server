@@ -495,7 +495,8 @@ class ExtensionApp(JupyterApp):
                     RedirectHandler,
                     {
                         "url": url_path_join(
-                            serverapp.base_url, "static/base/images/favicon-notebook.ico"
+                            serverapp.base_url,
+                            "static/base/images/favicon-notebook.ico",
                         )
                     },
                 ),
@@ -504,7 +505,8 @@ class ExtensionApp(JupyterApp):
                     RedirectHandler,
                     {
                         "url": url_path_join(
-                            serverapp.base_url, "static/base/images/favicon-terminal.ico"
+                            serverapp.base_url,
+                            "static/base/images/favicon-terminal.ico",
                         )
                     },
                 ),

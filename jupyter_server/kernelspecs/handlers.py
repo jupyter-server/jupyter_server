@@ -2,6 +2,7 @@ from tornado import web
 
 from ..base.handlers import JupyterHandler
 from ..services.kernelspecs.handlers import kernel_name_regex
+from jupyter_server.utils import authorized
 
 
 class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
@@ -11,6 +12,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
         web.StaticFileHandler.initialize(self, path="")
 
     @web.authenticated
+    @authorized("read")
     def get(self, kernel_name, path, include_body=True):
         ksm = self.kernel_spec_manager
         try:
@@ -21,6 +23,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
         return web.StaticFileHandler.get(self, path, include_body=include_body)
 
     @web.authenticated
+    @authorized("read")
     def head(self, kernel_name, path):
         return self.get(kernel_name, path, include_body=False)
 

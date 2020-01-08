@@ -24,6 +24,7 @@ from tornado.httpclient import AsyncHTTPClient
 from tornado.httpclient import HTTPClient
 from tornado.httpclient import HTTPRequest
 from tornado.netutil import Resolver
+from tornado.web import HTTPError
 
 
 def url_path_join(*pieces):
@@ -385,3 +386,45 @@ def is_namespace_package(namespace):
         # e.g. module not installed
         return None
     return isinstance(spec.submodule_search_locations, _NamespacePath)
+
+
+def authorized(action, resource=None, message=None):
+    """A decorator for tornado.web.RequestHandler methods
+    that verifies whether the current user is authorized
+    to make the following request.
+
+    Helpful for adding an 'authorization' layer to
+    a REST API.
+
+    Parameters
+    ----------
+    action : str
+        the type of permission or action to check.
+
+    resource: str or None
+        the name of the resource the action is being authorized
+        to access.
+
+    message : str or none
+        a message for the unauthorized action.
+    """
+    # Get message
+    if message is None:
+        "User is not authorized to make this request."
+
+    error = HTTPError(status_code=401, log_message=message)
+
+    def wrapper(method):
+        def inner(self, *args, **kwargs):
+            user = self.current_user
+            # If the user is allowed to do this action,
+            # call the method.
+            if self.user_is_authorized(user, action, resource):
+                return method(self, *args, **kwargs)
+            # else raise an exception.
+            else:
+                raise error
+
+        return inner
+
+    return wrapper

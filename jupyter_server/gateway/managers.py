@@ -192,7 +192,8 @@ class GatewayKernelSpecManager(KernelSpecManager):
 
         self.base_endpoint = GatewayKernelSpecManager._get_endpoint_for_user_filter(base_endpoint)
         self.base_resource_endpoint = url_path_join(
-            GatewayClient.instance().url, GatewayClient.instance().kernelspecs_resource_endpoint
+            GatewayClient.instance().url,
+            GatewayClient.instance().kernelspecs_resource_endpoint,
         )
 
     @staticmethod
@@ -259,7 +260,8 @@ class GatewayKernelSpecManager(KernelSpecManager):
                 # message is not used, but might as well make it useful for troubleshooting
                 raise KeyError(
                     "kernelspec {kernel_name} not found on Gateway server at: {gateway_url}".format(
-                        kernel_name=kernel_name, gateway_url=GatewayClient.instance().url
+                        kernel_name=kernel_name,
+                        gateway_url=GatewayClient.instance().url,
                     )
                 ) from error
             else:

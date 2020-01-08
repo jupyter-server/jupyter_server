@@ -52,7 +52,12 @@ pytestmark = pytest.mark.skipif(not which("pandoc"), reason="Command 'pandoc' is
 
 async def test_from_file(jp_fetch, notebook):
     r = await jp_fetch(
-        "nbconvert", "html", "foo", "testnb.ipynb", method="GET", params={"download": False}
+        "nbconvert",
+        "html",
+        "foo",
+        "testnb.ipynb",
+        method="GET",
+        params={"download": False},
     )
 
     assert r.code == 200
@@ -61,7 +66,12 @@ async def test_from_file(jp_fetch, notebook):
     assert "print" in r.body.decode()
 
     r = await jp_fetch(
-        "nbconvert", "python", "foo", "testnb.ipynb", method="GET", params={"download": False}
+        "nbconvert",
+        "python",
+        "foo",
+        "testnb.ipynb",
+        method="GET",
+        params={"download": False},
     )
 
     assert r.code == 200
@@ -84,7 +94,12 @@ async def test_from_file_404(jp_fetch, notebook):
 
 async def test_from_file_download(jp_fetch, notebook):
     r = await jp_fetch(
-        "nbconvert", "python", "foo", "testnb.ipynb", method="GET", params={"download": True}
+        "nbconvert",
+        "python",
+        "foo",
+        "testnb.ipynb",
+        method="GET",
+        params={"download": True},
     )
     content_disposition = r.headers["Content-Disposition"]
     assert "attachment" in content_disposition
@@ -93,7 +108,12 @@ async def test_from_file_download(jp_fetch, notebook):
 
 async def test_from_file_zip(jp_fetch, notebook):
     r = await jp_fetch(
-        "nbconvert", "latex", "foo", "testnb.ipynb", method="GET", params={"download": True}
+        "nbconvert",
+        "latex",
+        "foo",
+        "testnb.ipynb",
+        method="GET",
+        params={"download": True},
     )
     assert "application/zip" in r.headers["Content-Type"]
     assert ".zip" in r.headers["Content-Disposition"]

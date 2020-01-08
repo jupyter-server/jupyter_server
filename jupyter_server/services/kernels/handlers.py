@@ -23,6 +23,7 @@ from tornado.ioloop import IOLoop
 from ...base.handlers import APIHandler
 from ...base.zmqhandlers import AuthenticatedZMQStreamHandler
 from ...base.zmqhandlers import deserialize_binary_message
+from jupyter_server.utils import authorized
 from jupyter_server.utils import ensure_async
 from jupyter_server.utils import url_escape
 from jupyter_server.utils import url_path_join
@@ -30,12 +31,14 @@ from jupyter_server.utils import url_path_join
 
 class MainKernelHandler(APIHandler):
     @web.authenticated
+    @authorized("read", resource="kernels")
     async def get(self):
         km = self.kernel_manager
         kernels = await ensure_async(km.list_kernels())
         self.finish(json.dumps(kernels, default=json_default))
 
     @web.authenticated
+    @authorized("write", resource="kernels")
     async def post(self):
         km = self.kernel_manager
         model = self.get_json_body()
@@ -54,12 +57,14 @@ class MainKernelHandler(APIHandler):
 
 class KernelHandler(APIHandler):
     @web.authenticated
+    @authorized("read", resource="kernels")
     async def get(self, kernel_id):
         km = self.kernel_manager
         model = await ensure_async(km.kernel_model(kernel_id))
         self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
+    @authorized("write", resource="kernels")
     async def delete(self, kernel_id):
         km = self.kernel_manager
         await ensure_async(km.shutdown_kernel(kernel_id))
@@ -69,6 +74,7 @@ class KernelHandler(APIHandler):
 
 class KernelActionHandler(APIHandler):
     @web.authenticated
+    @authorized("write", resource="kernels")
     async def post(self, kernel_id, action):
         km = self.kernel_manager
         if action == "interrupt":
@@ -118,7 +124,10 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         return self.settings.get("rate_limit_window", 1.0)
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, getattr(self, "kernel_id", "uninitialized"))
+        return "%s(%s)" % (
+            self.__class__.__name__,
+            getattr(self, "kernel_id", "uninitialized"),
+        )
 
     def create_stream(self):
         km = self.kernel_manager
@@ -482,7 +491,9 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         def write_stderr(error_message):
             self.log.warning(error_message)
             msg = self.session.msg(
-                "stream", content={"text": error_message + "\n", "name": "stderr"}, parent=parent
+                "stream",
+                content={"text": error_message + "\n", "name": "stderr"},
+                parent=parent,
             )
             msg["channel"] = "iopub"
             self.write_message(json.dumps(msg, default=json_default))
@@ -506,7 +517,11 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             self._iopub_msgs_exceeded = False
             self._iopub_data_exceeded = False
 
-        if channel == "iopub" and msg_type not in {"status", "comm_open", "execute_input"}:
+        if channel == "iopub" and msg_type not in {
+            "status",
+            "comm_open",
+            "execute_input",
+        }:
 
             # Remove the counts queued for removal.
             now = IOLoop.current().time()
@@ -681,6 +696,9 @@ _kernel_action_regex = r"(?P<action>restart|interrupt)"
 default_handlers = [
     (r"/api/kernels", MainKernelHandler),
     (r"/api/kernels/%s" % _kernel_id_regex, KernelHandler),
-    (r"/api/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex), KernelActionHandler),
+    (
+        r"/api/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex),
+        KernelActionHandler,
+    ),
     (r"/api/kernels/%s/channels" % _kernel_id_regex, ZMQChannelsHandler),
 ]
