@@ -9,6 +9,8 @@ import inspect
 import os
 import socket
 import sys
+import functools
+
 from distutils.version import LooseVersion
 from contextlib import contextmanager
 
@@ -19,6 +21,9 @@ from urllib.request import pathname2url
 from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest
 from tornado.netutil import Resolver
 from tornado.ioloop import IOLoop
+from tornado.web import HTTPError
+
+from ipython_genutils import py3compat
 
 
 def url_path_join(*pieces):
@@ -352,3 +357,47 @@ async def async_fetch(
     with _request_for_tornado_client(urlstring) as request:
         response = await AsyncHTTPClient(io_loop).fetch(request)
     return response
+
+def authorized(action, resource=None, message=None):
+    """A decorator for tornado.web.RequestHandler methods
+    that verifies whether the current user is authorized
+    to make the following request.
+
+    Helpful for adding an 'authorization' layer to
+    a REST API.
+
+    Parameters
+    ----------
+    action : str
+        the type of permission or action to check.
+
+    resource: str or None
+        the name of the resource the action is being authorized
+        to access.
+
+    message : str or none
+        a message for the unauthorized action.
+    """
+    # Get message
+    if message is None:
+        "User is not authorized to make this request."
+
+    error = HTTPError(
+        status_code=401,
+        log_message=message
+    )
+
+    def wrapper(method):
+
+        def inner(self, *args, **kwargs):
+            user = self.current_user
+            # If the user is allowed to do this action,
+            # call the method.
+            if self.user_is_authorized(user, action, resource):
+                return method(self, *args, **kwargs)
+            # else raise an exception.
+            else:
+                raise error
+        return inner
+
+    return wrapper

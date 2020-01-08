@@ -259,9 +259,14 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
         the websocket finishes completing.
         """
         # authenticate the request before opening the websocket
-        if self.get_current_user() is None:
+        user = self.get_current_user()
+        if user is None:
             self.log.warning("Couldn't authenticate WebSocket connection")
             raise web.HTTPError(403)
+
+        # authorize the user.
+        if not self.user_is_authorized(user, 'execute', 'channels'):
+            raise web.HTTPError(401)
 
         if self.get_argument('session_id', False):
             self.session.session = cast_unicode(self.get_argument('session_id'))

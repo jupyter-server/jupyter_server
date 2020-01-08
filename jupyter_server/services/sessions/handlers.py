@@ -15,10 +15,13 @@ from jupyter_client.jsonutil import date_default
 from jupyter_server.utils import url_path_join, ensure_async
 from jupyter_client.kernelspec import NoSuchKernel
 
+from jupyter_server.utils import authorized
+
 
 class SessionRootHandler(APIHandler):
 
     @web.authenticated
+    @authorized('read', resource='sessions')
     async def get(self):
         # Return a list of running sessions
         sm = self.session_manager
@@ -26,6 +29,7 @@ class SessionRootHandler(APIHandler):
         self.finish(json.dumps(sessions, default=date_default))
 
     @web.authenticated
+    @authorized('write', resource='sessions')
     async def post(self):
         # Creates a new session
         #(unless a session already exists for the named session)
@@ -86,6 +90,7 @@ class SessionRootHandler(APIHandler):
 class SessionHandler(APIHandler):
 
     @web.authenticated
+    @authorized('read', resource='sessions')
     async def get(self, session_id):
         # Returns the JSON model for a single session
         sm = self.session_manager
@@ -93,6 +98,7 @@ class SessionHandler(APIHandler):
         self.finish(json.dumps(model, default=date_default))
 
     @web.authenticated
+    @authorized('write', resource='sessions')
     async def patch(self, session_id):
         """Patch updates sessions:
 
@@ -143,6 +149,7 @@ class SessionHandler(APIHandler):
         self.finish(json.dumps(model, default=date_default))
 
     @web.authenticated
+    @authorized('write', resource='sessions')
     async def delete(self, session_id):
         # Deletes the session with given session_id
         sm = self.session_manager

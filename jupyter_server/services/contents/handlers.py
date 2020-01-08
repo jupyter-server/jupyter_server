@@ -17,6 +17,7 @@ from jupyter_server.base.handlers import (
     JupyterHandler, APIHandler, path_regex,
 )
 
+from jupyter_server.utils import authorized
 
 def validate_model(model, expect_content):
     """
@@ -88,6 +89,7 @@ class ContentsHandler(APIHandler):
         self.finish(json.dumps(model, default=date_default))
 
     @web.authenticated
+    @authorized('read', resource='contents')
     async def get(self, path=''):
         """Return a model for a file or directory.
 
@@ -114,6 +116,7 @@ class ContentsHandler(APIHandler):
         self._finish_model(model, location=False)
 
     @web.authenticated
+    @authorized('write', resource='contents')
     async def patch(self, path=''):
         """PATCH renames a file or directory without re-uploading content."""
         cm = self.contents_manager
@@ -162,6 +165,7 @@ class ContentsHandler(APIHandler):
         self._finish_model(model)
 
     @web.authenticated
+    @authorized('write', resource='contents')
     async def post(self, path=''):
         """Create a new file in the specified path.
 
@@ -198,6 +202,7 @@ class ContentsHandler(APIHandler):
             await self._new_untitled(path)
 
     @web.authenticated
+    @authorized('write', resource='contents')
     async def put(self, path=''):
         """Saves the file in the location specified by name and path.
 
@@ -222,6 +227,7 @@ class ContentsHandler(APIHandler):
             await self._new_untitled(path)
 
     @web.authenticated
+    @authorized('write', resource='contents')
     async def delete(self, path=''):
         """delete a file in the given path"""
         cm = self.contents_manager
@@ -234,6 +240,7 @@ class ContentsHandler(APIHandler):
 class CheckpointsHandler(APIHandler):
 
     @web.authenticated
+    @authorized('read', resource='checkpoints')
     async def get(self, path=''):
         """get lists checkpoints for a file"""
         cm = self.contents_manager
@@ -242,6 +249,7 @@ class CheckpointsHandler(APIHandler):
         self.finish(data)
 
     @web.authenticated
+    @authorized('write', resource='checkpoints')
     async def post(self, path=''):
         """post creates a new checkpoint"""
         cm = self.contents_manager
@@ -257,6 +265,7 @@ class CheckpointsHandler(APIHandler):
 class ModifyCheckpointsHandler(APIHandler):
 
     @web.authenticated
+    @authorized('write', resource='checkpoints')
     async def post(self, path, checkpoint_id):
         """post restores a file from a checkpoint"""
         cm = self.contents_manager
@@ -265,6 +274,7 @@ class ModifyCheckpointsHandler(APIHandler):
         self.finish()
 
     @web.authenticated
+    @authorized('write', resource='checkpoints')
     async def delete(self, path, checkpoint_id):
         """delete clears a checkpoint for a given file"""
         cm = self.contents_manager
@@ -292,11 +302,13 @@ class TrustNotebooksHandler(JupyterHandler):
     """ Handles trust/signing of notebooks """
 
     @web.authenticated
+    @authorized('write', resource='trust_notebook')
     async def post(self,path=''):
         cm = self.contents_manager
         await ensure_async(cm.trust_notebook(path))
         self.set_status(201)
         self.finish()
+
 #-----------------------------------------------------------------------------
 # URL to handler mappings
 #-----------------------------------------------------------------------------
