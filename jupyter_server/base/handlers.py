@@ -185,7 +185,16 @@ class AuthenticatedHandler(web.RequestHandler):
         return bool(self.login_handler.get_login_available(self.settings))
 
 
-class JupyterHandler(AuthenticatedHandler):
+class AuthorizedHandlerMixin:
+    """A mixin class for Tornado request handlers that checks whether
+    the current user is authorized to execute the current action.
+    """
+    def user_is_authorized(self, user, action, resource):
+        """Check is `user` is authorized to do `action` on given `resource`."""
+        return True
+
+
+class JupyterHandler(AuthenticatedHandler, AuthorizedHandlerMixin):
     """Jupyter-specific extensions to authenticated handling
 
     Mostly property shortcuts to Jupyter-specific settings.

@@ -8,7 +8,8 @@ import json
 from base64 import decodebytes
 from tornado import web
 from jupyter_server.base.handlers import JupyterHandler
-from jupyter_server.utils import ensure_async
+from jupyter_server.utils import ensure_async, authorized
+
 
 class FilesHandler(JupyterHandler):
     """serve files via ContentsManager
@@ -27,10 +28,12 @@ class FilesHandler(JupyterHandler):
                "; sandbox allow-scripts"
 
     @web.authenticated
+    @authorized('read')
     def head(self, path):
         self.get(path, include_body=False)
 
     @web.authenticated
+    @authorized('read')
     async def get(self, path, include_body=True):
         cm = self.contents_manager
 
