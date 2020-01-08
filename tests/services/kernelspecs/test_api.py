@@ -5,7 +5,7 @@ import tornado
 
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 
-from ...conftest import expected_http_error
+from ...utils import expected_http_error
 
 
 sample_kernel_json = {

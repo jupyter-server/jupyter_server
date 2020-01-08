@@ -18,7 +18,7 @@ from base64 import encodebytes
 
 import pytest
 
-from ..conftest import expected_http_error
+from ..utils import expected_http_error
 
 
 png_green_pixel = encodebytes(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00'

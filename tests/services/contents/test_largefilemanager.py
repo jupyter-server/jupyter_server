@@ -2,7 +2,7 @@ import pytest
 import tornado
 
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
-from ...conftest import expected_http_error
+from ...utils import expected_http_error
 
 contents_manager = pytest.fixture(lambda tmp_path: LargeFileManager(root_dir=str(tmp_path)))
 
@@ -28,7 +28,7 @@ def test_save(contents_manager):
     'model,err_message',
     [
         (
-            {'name': 'test', 'path': 'test', 'chunk': 1}, 
+            {'name': 'test', 'path': 'test', 'chunk': 1},
             'HTTP 400: Bad Request (No file type provided)'
         ),
         (
@@ -40,7 +40,7 @@ def test_save(contents_manager):
             'HTTP 400: Bad Request (No file content provided)',
         ),
         (
-            {'name': 'test', 'path': 'test', 'chunk': 2, 'type': 'file', 
+            {'name': 'test', 'path': 'test', 'chunk': 2, 'type': 'file',
                 'content': u'test', 'format': 'json'},
             "HTTP 400: Bad Request (Must specify format of file contents as 'text' or 'base64')"
         )

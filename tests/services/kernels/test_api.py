@@ -10,7 +10,7 @@ from tornado.escape import url_escape
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 
 from jupyter_server.utils import url_path_join
-from ...conftest import expected_http_error
+from ...utils import expected_http_error
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def ws_fetch(auth_header, http_port):
         headers.update(auth_header)
         # Make request.
         req = tornado.httpclient.HTTPRequest(
-            url, 
+            url,
             headers=auth_header,
             connect_timeout=120
         )
@@ -204,7 +204,7 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
         })
     )
     kid = json.loads(r.body.decode())['id']
-    
+
     # Get kernel info
     r = await fetch(
         'api', 'kernels', kid,
@@ -218,7 +218,7 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
     ws = await ws_fetch(
         'api', 'kernels', kid, 'channels'
     )
-    
+
     # Test that it was opened.
     r = await fetch(
         'api', 'kernels', kid,
@@ -240,7 +240,7 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
             time.sleep(0.1)
         else:
             break
-    
+
     r = await fetch(
         'api', 'kernels', kid,
         method='GET'

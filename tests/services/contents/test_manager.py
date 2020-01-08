@@ -11,7 +11,7 @@ from itertools import combinations
 from nbformat import v4 as nbformat
 
 from jupyter_server.services.contents.filemanager import FileContentsManager
-from ...conftest import expected_http_error
+from ...utils import expected_http_error
 
 # -------------- Functions ----------------------------
 
@@ -141,7 +141,7 @@ def test_checkpoint_subdir(tmp_path):
 
 
 @pytest.mark.skipif(
-    sys.platform == 'win32' and sys.version_info[0] < 3, 
+    sys.platform == 'win32' and sys.version_info[0] < 3,
     reason="System platform is Windows, version < 3"
 )
 def test_bad_symlink(tmp_path):
@@ -166,7 +166,7 @@ def test_bad_symlink(tmp_path):
 
 
 @pytest.mark.skipif(
-    sys.platform == 'win32' and sys.version_info[0] < 3, 
+    sys.platform == 'win32' and sys.version_info[0] < 3,
     reason="System platform is Windows, version < 3"
 )
 def test_good_symlink(tmp_path):
@@ -354,7 +354,7 @@ def test_get(contents_manager):
     for key, value in expected_model.items():
         assert file_model[key] == value
     assert 'created' in file_model
-    assert 'last_modified' in file_model 
+    assert 'last_modified' in file_model
 
     # Create a sub-sub directory to test getting directory contents with a
     # subdir.
@@ -516,7 +516,7 @@ def test_rename(contents_manager):
     # Creating a notebook in a non_existant directory should fail
     with pytest.raises(HTTPError) as e:
         cm.new_untitled("foo/bar_diff", ext=".ipynb")
-    assert expected_http_error(e, 404)        
+    assert expected_http_error(e, 404)
 
     cm.rename("foo/bar", "foo/bar_diff")
 

@@ -1,8 +1,6 @@
 import json
 import tornado
 
-pytest_plugins = "pytest_jupyter_server"
-
 
 def mkdir(tmp_path, *parts):
     path = tmp_path.joinpath(*parts)

@@ -2,7 +2,7 @@ import os
 import pytest
 import tornado
 
-from .conftest import expected_http_error
+from .utils import expected_http_error
 
 from nbformat import writes
 from nbformat.v4 import (new_notebook,
@@ -112,7 +112,7 @@ async def test_contents_manager(fetch, serverapp, root_dir):
     assert r.headers['content-type'] == 'application/octet-stream'
     assert r.body[:1] == b'\xff'
     assert len(r.body) == 6
- 
+
     r = await fetch(
         'files/test.txt',
         method='GET'

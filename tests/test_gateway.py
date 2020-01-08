@@ -14,7 +14,7 @@ from jupyter_server.gateway.managers import GatewayClient
 
 from unittest.mock import patch
 from io import StringIO
-from .conftest import expected_http_error
+from .utils import expected_http_error
 
 
 def generate_kernelspec(name):
