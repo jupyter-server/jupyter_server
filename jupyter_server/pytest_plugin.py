@@ -19,7 +19,6 @@ from jupyter_server.utils import url_path_join
 import nbformat
 
 # This shouldn't be needed anymore, since pytest_tornasync is found in entrypoints
-# Removing to avoid race conditions.
 pytest_plugins = "pytest_tornasync"
 
 # NOTE: This is a temporary fix for Windows 3.8
