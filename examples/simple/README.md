@@ -135,7 +135,7 @@ Try with the above links to check that only Extension 2 is responding (Extension
 
 Run `jupyter simple-ext11 --generate-config && vi ~/.jupyter/jupyter_config.py`.
 
-> --generate-config returns an execption `"The ExtensionApp has not ServerApp "`
+> --generate-config returns an exception `"The ExtensionApp has not ServerApp "`
 
 The generated configuration should contains the following.
 
