@@ -28,19 +28,19 @@ class SimpleApp1(ExtensionApp):
         DEFAULT_TEMPLATE_FILES_PATH
     ]
 
-    file = Unicode('',
+    configA = Unicode('',
         config=True,
-        help='File path'
+        help='Config A example.'
     )
 
-    app = Unicode('',
+    configB = Unicode('',
         config=True,
-        help='File path'
+        help='Config B example.'
     )
 
-    cli = Unicode('',
+    configC = Unicode('',
         config=True,
-        help='File path'
+        help='Config C example.'
     )
 
     def initialize_handlers(self):
@@ -53,31 +53,8 @@ class SimpleApp1(ExtensionApp):
             (r'/{}/(.*)', ErrorHandler)
         ])
 
-    def initialize_templates(self):
-        jenv_opt = {"autoescape": True}
-        env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(self.template_paths),
-            extensions=["jinja2.ext.i18n"],
-            **jenv_opt
-        )
-        template_settings = {"simple_ext1_jinja2_env": env}
-        self.settings.update(**template_settings)
-
-    def get_conf(self, key):
-        c = self.settings.get('config').get(type(self).__name__)
-        if c:
-            return c.get(key, None)
-        else:
-            return None
-
     def initialize_settings(self):
         self.log.info('Config {}'.format(self.config))
-#        self.log.info('SimpleApp1.app {}'.format(self.get_conf('app')))
-#        self.log.info('SimpleApp1.file {}'.format(self.get_conf('file')))
-#        self.log.info('SimpleApp1.cli {}'.format(self.get_conf('cli')))
-#        self.log.info('Complete Settings {}'.format(self.settings))
-#        self.settings.get('config').get(self.extension_name).update({'app': 'OK'})
-#        self.settings["{}_config".format(self.extension_name)].update(**self.settings.get('config').get('SimpleApp1'))
 
 #-----------------------------------------------------------------------------
 # Main entry point

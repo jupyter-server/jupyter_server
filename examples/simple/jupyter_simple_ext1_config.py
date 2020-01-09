@@ -1,3 +1,3 @@
-c.SimpleApp1.app = 'an app'
-c.SimpleApp1.cli = 'a cli'
-c.SimpleApp1.file = 'a file'
+c.SimpleApp1.configA = 'ConfigA from file'
+c.SimpleApp1.configB = 'ConfigB from file'
+c.SimpleApp1.configC = 'ConfigC from file'

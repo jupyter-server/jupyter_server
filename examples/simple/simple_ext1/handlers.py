@@ -2,15 +2,12 @@ from jupyter_server.extension.handler import ExtensionHandler
 
 class DefaultHandler(ExtensionHandler):
     def get(self):
-        # The ExtensionApp’s config object.
-#        self.log.info("Settings in {} Default Handler: {}".format(self.extension_name, self.settings))
-        self.log.info("Config in {} Default Handler: {}".format(self.extension_name, self.config))
-        # self.log.info(self.server_config)
         # The name of the extension to which this handler is linked.
         self.log.info("Extension Name in {} Default Handler: {}".format(self.extension_name, self.extension_name))
         # A method for getting the url to static files (prefixed with /static/<extension_name>).
         self.log.info("Static URL for / in simple_ext1 Default Handler:".format(self.static_url(path='/')))
         self.write('<h1>Hello Simple 1 - I am the default...</h1>')
+        self.write('Config in {} Default Handler: {}'.format(self.extension_name, self.config))
 
 class RedirectHandler(ExtensionHandler):
     def get(self):
@@ -28,7 +25,7 @@ class ParameterHandler(ExtensionHandler):
 class BaseTemplateHandler(ExtensionHandler):
     def get_template(self, path):
         """Return the jinja template object for a given name"""
-        return self.settings['simple_ext1_jinja2_env'].get_template(path)
+        return self.settings['{}_jinja2_env'.format(self.extension_name)].get_template(path)
 
 class TypescriptHandler(BaseTemplateHandler):
     def get(self):
@@ -36,7 +33,7 @@ class TypescriptHandler(BaseTemplateHandler):
 
 class TemplateHandler(BaseTemplateHandler):
     def get(self, path):
-#        print(self.get_template('simple1.html'))
+        """ Optionaly, you can print(self.get_template('simple1.html'))"""
         self.write(self.render_template('simple1.html', path=path))
 
 class ErrorHandler(BaseTemplateHandler):

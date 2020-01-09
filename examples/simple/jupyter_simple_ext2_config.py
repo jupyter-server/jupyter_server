@@ -1,1 +1,1 @@
-c.SimpleApp2.file = 'OK'
+c.SimpleApp2.configD = 'ConfigD from file'

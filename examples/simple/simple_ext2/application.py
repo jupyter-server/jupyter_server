@@ -1,4 +1,5 @@
 import os, jinja2
+from traitlets import Unicode
 from jupyter_server.extension.application import ExtensionApp
 from .handlers import ParameterHandler, TemplateHandler, IndexHandler, ErrorHandler
 
@@ -26,6 +27,11 @@ class SimpleApp2(ExtensionApp):
         DEFAULT_TEMPLATE_FILES_PATH
     ]
 
+    configD = Unicode('',
+        config=True,
+        help='Config D example.'
+    )
+
     def initialize_handlers(self):
         self.handlers.extend([
             (r'/simple_ext2/params/(.+)$', ParameterHandler),
@@ -34,18 +40,8 @@ class SimpleApp2(ExtensionApp):
             (r'/simple_ext2/(.*)', ErrorHandler)
         ])
 
-    def initialize_templates(self):
-        jenv_opt = {"autoescape": True}
-        env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(self.template_paths),
-            extensions=["jinja2.ext.i18n"],
-            **jenv_opt
-        )
-        template_settings = {"simple_ext2_jinja2_env": env}
-        self.settings.update(**template_settings)
-
     def initialize_settings(self):
-        pass
+        self.log.info('Config {}'.format(self.config))
 
 #-----------------------------------------------------------------------------
 # Main entry point
