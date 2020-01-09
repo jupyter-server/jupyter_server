@@ -29,6 +29,7 @@ import nbformat
 # the future.
 print("\n\n\n{} {} \n\n\n\n".format(sys.platform, sys.version_info))
 
+
 if sys.platform.startswith("win") and sys.version_info >= (3, 8):
 
     print("\n\n\n\nRunning temporary patch for Windows 3.8\n\n\n\n")
