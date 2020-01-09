@@ -4,15 +4,15 @@ matrix:
 
 environment:
   matrix:
-    # - CONDA_PY: 35
-    #   CONDA_PY_SPEC: 3.5
-    #   CONDA_INSTALL_LOCN: "C:\\Miniconda35-x64"
-    # - CONDA_PY: 36
-    #   CONDA_PY_SPEC: 3.6
-    #   CONDA_INSTALL_LOCN: "C:\\Miniconda36-x64"
-    # - CONDA_PY: 37
-    #   CONDA_PY_SPEC: 3.7
-    #   CONDA_INSTALL_LOCN: "C:\\Miniconda37-x64"
+    - CONDA_PY: 35
+      CONDA_PY_SPEC: 3.5
+      CONDA_INSTALL_LOCN: "C:\\Miniconda35-x64"
+    - CONDA_PY: 36
+      CONDA_PY_SPEC: 3.6
+      CONDA_INSTALL_LOCN: "C:\\Miniconda36-x64"
+    - CONDA_PY: 37
+      CONDA_PY_SPEC: 3.7
+      CONDA_INSTALL_LOCN: "C:\\Miniconda37-x64"
     - CONDA_PY: 38
       CONDA_PY_SPEC: 3.8
       # appveyor doesn't come with this directory, so use 37's since we're creating an env anyway
