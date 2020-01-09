@@ -20,8 +20,7 @@ import nbformat
 
 # This shouldn't be needed anymore, since pytest_tornasync is found in entrypoints
 # Removing to avoid race conditions.
-# pytest_plugins = "pytest_tornasync"
-
+pytest_plugins = "pytest_tornasync"
 
 # NOTE: This is a temporary fix for Windows 3.8
 # We have to override the io_loop fixture with an
@@ -29,22 +28,17 @@ import nbformat
 # the future.
 print("\n\n\n{} {} \n\n\n\n".format(sys.platform, sys.version_info))
 
+@pytest.fixture
+def asyncio_patch():
+    ServerApp()._init_asyncio_patch()
 
-if sys.platform.startswith("win") and sys.version_info >= (3, 8):
-
-    print("\n\n\n\nRunning temporary patch for Windows 3.8\n\n\n\n")
-
-    @pytest.fixture
-    def asyncio_patch():
-        ServerApp()._init_asyncio_patch()
-
-    @pytest.fixture
-    def io_loop(asyncio_patch):
-        loop = tornado.ioloop.IOLoop()
-        loop.make_current()
-        yield loop
-        loop.clear_current()
-        loop.close(all_fds=True)
+@pytest.fixture
+def io_loop(asyncio_patch):
+    loop = tornado.ioloop.IOLoop()
+    loop.make_current()
+    yield loop
+    loop.clear_current()
+    loop.close(all_fds=True)
 
 
 def mkdir(tmp_path, *parts):
