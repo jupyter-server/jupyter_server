@@ -28,19 +28,15 @@ To install the latest release locally, make sure you have
 
 ### Versioning and Branches
 
-If Jupyter Server is a dependency of your project/application, it is important that you pin it to a version that works for your application. Currently, Jupyter Server only has minor versions and patch versions. Different minor versions may include API-changes while patch versions do not change API.
+If Jupyter Server is a dependency of your project/application, it is important that you pin it to a version that works for your application. Currently, Jupyter Server only has minor and patch versions. Different minor versions likely include API-changes while patch versions do not change API.
 
-Each minor version has its own branch in this repo, and patches are applied to their relevant minor version. The master branch of the latest minor version.
+When a new minor version in released on PyPI, a branch for that version will be created in this repository, and the version of the master branch will be bumped to the next minor version number. That way, the master branch always reflects the latest un-released version.
 
-The available minor versions are:
-* [0.2.x](https://github.com/jupyter/jupyter_server/tree/0.2.x): Extension Application API added.
-* [0.3.x](https://github.com/jupyter/jupyter_server/tree/master) (master): Kernels API changed. Kernel Providers are the new way to interface with kernels.
-
-You can see which versions are released by going to the ["releases"](https://github.com/jupyter/jupyter_server/releases) tab.
+To see the changes between releases, checkout the [CHANGELOG](https://github.com/jupyter/jupyter_server/blob/master/CHANGELOG.md).
 
 To install the latest patch of a given version:
 
-    $ pip intall jupyter_server>=0.2
+    $ pip install jupyter_server>=0.2
 
 ## Usage - Running Jupyter Server
 
