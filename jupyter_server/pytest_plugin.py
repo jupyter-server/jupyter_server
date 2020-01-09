@@ -25,7 +25,6 @@ pytest_plugins = "pytest_tornasync"
 # We have to override the io_loop fixture with an
 # asyncio patch. This will probably be removed in
 # the future.
-print("\n\n\n{} {} \n\n\n\n".format(sys.platform, sys.version_info))
 
 @pytest.fixture
 def asyncio_patch():
