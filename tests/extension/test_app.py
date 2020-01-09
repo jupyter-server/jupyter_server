@@ -3,11 +3,11 @@ import pytest
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.extension.application import ExtensionApp
 
-from .conftest import MockExtension
+from .conftest import MockExtensionApp
 
 
 def test_instance_creation():
-    mock_extension = MockExtension()
+    mock_extension = MockExtensionApp()
     assert mock_extension.static_paths == []
     assert mock_extension.template_paths == []
     assert mock_extension.settings == {}
@@ -15,7 +15,7 @@ def test_instance_creation():
 
 
 def test_initialize(serverapp):
-    mock_extension = MockExtension()
+    mock_extension = MockExtensionApp()
     mock_extension.initialize(serverapp)
     # Check that settings and handlers were added to the mock extension.
     assert isinstance(mock_extension.serverapp, ServerApp)
@@ -38,7 +38,7 @@ traits = [
 def test_instance_creation_with_instance_args(trait_name, trait_value):
     kwarg = {}
     kwarg.setdefault(trait_name, trait_value)
-    mock_extension = MockExtension(**kwarg)
+    mock_extension = MockExtensionApp(**kwarg)
     assert getattr(mock_extension, trait_name) == trait_value
 
 
@@ -50,9 +50,9 @@ def test_instance_creation_with_argv(serverapp, trait_name, trait_value):
     kwarg = {}
     kwarg.setdefault(trait_name, trait_value)
     argv = [
-        '--MockExtension.{name}={value}'.format(name=trait_name, value=trait_value)
+        '--MockExtensionApp.{name}={value}'.format(name=trait_name, value=trait_value)
     ]
-    mock_extension = MockExtension()
+    mock_extension = MockExtensionApp()
     mock_extension.initialize(serverapp, argv=argv)
     assert getattr(mock_extension, trait_name) == trait_value
 
@@ -60,7 +60,7 @@ def test_instance_creation_with_argv(serverapp, trait_name, trait_value):
 def test_extensionapp_load_config_file(config_file, serverapp, extended_serverapp):
     # Assert default config_file_paths is the same in the app and extension.
     assert extended_serverapp.config_file_paths == serverapp.config_file_paths
-    assert extended_serverapp.config_file_name == 'jupyter_mock_config'
+    assert extended_serverapp.config_file_name == 'jupyter_mockextension_config'
     assert extended_serverapp.config_dir == serverapp.config_dir
     # Assert that the trait is updated by config file
     assert extended_serverapp.mock_trait == 'config from file'

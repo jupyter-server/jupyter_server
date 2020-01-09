@@ -2,6 +2,16 @@ from jupyter_server.base.handlers import JupyterHandler, FileFindHandler
 from traitlets import Unicode, default
 
 
+class ExtensionHandlerJinjaMixin:
+    """Mixin class for ExtensionApp handlers that use jinja templating for 
+    template rendering.
+    """
+    def get_template(self, name):
+        """Return the jinja template object for a given name"""
+        env = '{}_jinja2_env'.format(self.extension_name)
+        return self.settings[env].get_template(name)
+
+
 class ExtensionHandler(JupyterHandler):
     """Base class for Jupyter server extension handlers. 
 

@@ -69,7 +69,7 @@ To run the Python tests, use::
 
 If you want coverage statistics as well, you can run::
 
-    py.test --cov notebook -v --pyargs jupyter_server
+    py.test --cov notebook -v
 
 Building the Documentation
 --------------------------
@@ -82,7 +82,7 @@ containing all the necessary packages (except pandoc), use::
 
     conda env create -f docs/environment.yml
     source activate server_docs  # Linux and OS X
-    activate notebook_docs         # Windows
+    activate server_docs         # Windows
 
 .. _conda environment:
     https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file
