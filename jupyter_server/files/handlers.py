@@ -28,12 +28,12 @@ class FilesHandler(JupyterHandler):
                "; sandbox allow-scripts"
 
     @web.authenticated
-    @authorized('read')
+    @authorized("read", resource="files")
     def head(self, path):
         self.get(path, include_body=False)
 
     @web.authenticated
-    @authorized('read')
+    @authorized("read", resource="files")
     async def get(self, path, include_body=True):
         cm = self.contents_manager
 

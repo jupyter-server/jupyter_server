@@ -3,11 +3,13 @@ import json
 from tornado import web
 
 from ...base.handlers import APIHandler
+from jupyter_server.utils import authorized
 
 
 class NbconvertRootHandler(APIHandler):
 
     @web.authenticated
+    @authorized("read", resource="nbconvert")
     def get(self):
         try:
             from nbconvert.exporters import base

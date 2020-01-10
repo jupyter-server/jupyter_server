@@ -8,8 +8,6 @@ import errno
 import inspect
 import os
 import sys
-import functools
-
 from distutils.version import LooseVersion
 
 from urllib.parse import quote, unquote, urlparse, urljoin
@@ -188,7 +186,6 @@ async def ensure_async(obj):
     return obj
 
 
-<<<<<<< HEAD
 def run_sync(maybe_async):
     """If async, runs maybe_async and blocks until it has executed,
     possibly creating an event loop.
@@ -231,7 +228,6 @@ def run_sync(maybe_async):
                 raise e
         return result
     return wrapped()
-=======
 
 def authorized(action, resource=None, message=None):
     """A decorator for tornado.web.RequestHandler methods
@@ -276,4 +272,3 @@ def authorized(action, resource=None, message=None):
         return inner
 
     return wrapper
->>>>>>> add authorization layer to request handlers
