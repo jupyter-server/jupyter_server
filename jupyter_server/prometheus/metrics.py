@@ -1,5 +1,5 @@
 """
-Prometheus metrics exported by Jupyter Notebook Server
+Prometheus metrics exported by Jupyter Server
 
 Read https://prometheus.io/docs/practices/naming/ for naming
 conventions for metrics & labels.
