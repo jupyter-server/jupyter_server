@@ -6,6 +6,7 @@ from ...base.handlers import APIHandler
 
 
 class NbconvertRootHandler(APIHandler):
+
     @web.authenticated
     def get(self):
         try:
@@ -31,7 +32,6 @@ class NbconvertRootHandler(APIHandler):
             }
 
         self.finish(json.dumps(res))
-
 
 default_handlers = [
     (r"/api/nbconvert", NbconvertRootHandler),

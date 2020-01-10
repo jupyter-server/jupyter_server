@@ -1,4 +1,4 @@
-# encoding: utf-8
+#encoding: utf-8
 """Tornado handlers for the terminal emulator."""
 
 # Copyright (c) Jupyter Development Team.
@@ -13,17 +13,14 @@ from ..base.zmqhandlers import WebSocketMixin
 
 class TerminalHandler(JupyterHandler):
     """Render the terminal interface."""
-
     @web.authenticated
     def get(self, term_name):
-        self.write(
-            self.render_template(
-                "terminal.html", ws_path="terminals/websocket/%s" % term_name
-            )
-        )
+        self.write(self.render_template('terminal.html',
+                   ws_path="terminals/websocket/%s" % term_name))
 
 
 class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
+
     def origin_check(self):
         """Terminado adds redundant origin_check
 
@@ -38,8 +35,8 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
 
     def on_message(self, message):
         super(TermSocket, self).on_message(message)
-        self.application.settings["terminal_last_activity"] = utcnow()
+        self.application.settings['terminal_last_activity'] = utcnow()
 
     def write_message(self, message, binary=False):
         super(TermSocket, self).write_message(message, binary=binary)
-        self.application.settings["terminal_last_activity"] = utcnow()
+        self.application.settings['terminal_last_activity'] = utcnow()

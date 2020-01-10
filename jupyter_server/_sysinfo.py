@@ -18,7 +18,6 @@ from ipython_genutils import py3compat, encoding
 
 import jupyter_server
 
-
 def pkg_commit_hash(pkg_path):
     """Get short form of commit hash given directory `pkg_path`
 
@@ -46,25 +45,23 @@ def pkg_commit_hash(pkg_path):
     par_path = pkg_path
     while cur_path != par_path:
         cur_path = par_path
-        if p.exists(p.join(cur_path, ".git")):
+        if p.exists(p.join(cur_path, '.git')):
             try:
-                proc = subprocess.Popen(
-                    ["git", "rev-parse", "--short", "HEAD"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    cwd=pkg_path,
-                )
+                proc = subprocess.Popen(['git', 'rev-parse', '--short', 'HEAD'],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    cwd=pkg_path)
                 repo_commit, _ = proc.communicate()
             except OSError:
                 repo_commit = None
 
             if repo_commit:
-                return "repository", repo_commit.strip().decode("ascii")
+                return 'repository', repo_commit.strip().decode('ascii')
             else:
-                return u"", u""
+                return u'', u''
         par_path = p.dirname(par_path)
-
-    return u"", u""
+                
+    return u'', u''
 
 
 def pkg_info(pkg_path):
@@ -92,11 +89,11 @@ def pkg_info(pkg_path):
         platform=platform.platform(),
         os_name=os.name,
         default_encoding=encoding.DEFAULT_ENCODING,
-    )
-
+        )
 
 def get_sys_info():
     """Return useful information about the system as a dict."""
     p = os.path
     path = p.realpath(p.dirname(p.abspath(p.join(jupyter_server.__file__))))
     return pkg_info(path)
+

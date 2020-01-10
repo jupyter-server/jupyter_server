@@ -6,10 +6,9 @@ class ExtensionHandlerJinjaMixin:
     """Mixin class for ExtensionApp handlers that use jinja templating for 
     template rendering.
     """
-
     def get_template(self, name):
         """Return the jinja template object for a given name"""
-        env = "{}_jinja2_env".format(self.extension_name)
+        env = '{}_jinja2_env'.format(self.extension_name)
         return self.settings[env].get_template(name)
 
 
@@ -23,7 +22,6 @@ class ExtensionHandler(JupyterHandler):
     their own namespace and avoid intercepting requests for 
     other extensions. 
     """
-
     def initialize(self, extension_name):
         self.extension_name = extension_name
 
@@ -37,11 +35,12 @@ class ExtensionHandler(JupyterHandler):
 
     @property
     def static_url_prefix(self):
-        return "/static/{extension_name}/".format(extension_name=self.extension_name)
+        return "/static/{extension_name}/".format(
+            extension_name=self.extension_name)
 
     @property
     def static_path(self):
-        return self.settings["{}_static_paths".format(self.extension_name)]
+        return self.settings['{}_static_paths'.format(self.extension_name)]
 
     def static_url(self, path, include_host=None, **kwargs):
         """Returns a static URL for the given relative static file path.
@@ -88,7 +87,7 @@ class ExtensionHandler(JupyterHandler):
         # static directory.
         settings = {
             "static_path": self.static_path,
-            "static_url_prefix": self.static_url_prefix,
+            "static_url_prefix": self.static_url_prefix
         }
 
         return base + get_url(settings, path, **kwargs)

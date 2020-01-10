@@ -39,18 +39,18 @@ def serialize_binary_message(msg):
     """
     # don't modify msg or buffer list in-place
     msg = msg.copy()
-    buffers = list(msg.pop("buffers"))
+    buffers = list(msg.pop('buffers'))
     if sys.version_info < (3, 4):
         buffers = [x.tobytes() for x in buffers]
-    bmsg = json.dumps(msg, default=date_default).encode("utf8")
+    bmsg = json.dumps(msg, default=date_default).encode('utf8')
     buffers.insert(0, bmsg)
     nbufs = len(buffers)
     offsets = [4 * (nbufs + 1)]
     for buf in buffers[:-1]:
         offsets.append(offsets[-1] + len(buf))
-    offsets_buf = struct.pack("!" + "I" * (nbufs + 1), nbufs, *offsets)
+    offsets_buf = struct.pack('!' + 'I' * (nbufs + 1), nbufs, *offsets)
     buffers.insert(0, offsets_buf)
-    return b"".join(buffers)
+    return b''.join(buffers)
 
 
 def deserialize_binary_message(bmsg):
@@ -68,18 +68,17 @@ def deserialize_binary_message(bmsg):
 
     message dictionary
     """
-    nbufs = struct.unpack("!i", bmsg[:4])[0]
-    offsets = list(struct.unpack("!" + "I" * nbufs, bmsg[4 : 4 * (nbufs + 1)]))
+    nbufs = struct.unpack('!i', bmsg[:4])[0]
+    offsets = list(struct.unpack('!' + 'I' * nbufs, bmsg[4:4*(nbufs+1)]))
     offsets.append(None)
     bufs = []
     for start, stop in zip(offsets[:-1], offsets[1:]):
         bufs.append(bmsg[start:stop])
-    msg = json.loads(bufs[0].decode("utf8"))
-    msg["header"] = extract_dates(msg["header"])
-    msg["parent_header"] = extract_dates(msg["parent_header"])
-    msg["buffers"] = bufs[1:]
+    msg = json.loads(bufs[0].decode('utf8'))
+    msg['header'] = extract_dates(msg['header'])
+    msg['parent_header'] = extract_dates(msg['parent_header'])
+    msg['buffers'] = bufs[1:]
     return msg
-
 
 # ping interval for keeping websockets alive (30 seconds)
 WS_PING_INTERVAL = 30000
@@ -87,56 +86,54 @@ WS_PING_INTERVAL = 30000
 
 class WebSocketMixin(object):
     """Mixin for common websocket options"""
-
     ping_callback = None
     last_ping = 0
     last_pong = 0
     stream = None
-
+    
     @property
     def ping_interval(self):
         """The interval for websocket keep-alive pings.
-
+        
         Set ws_ping_interval = 0 to disable pings.
         """
-        return self.settings.get("ws_ping_interval", WS_PING_INTERVAL)
-
+        return self.settings.get('ws_ping_interval', WS_PING_INTERVAL)
+    
     @property
     def ping_timeout(self):
         """If no ping is received in this many milliseconds,
         close the websocket connection (VPNs, etc. can fail to cleanly close ws connections).
         Default is max of 3 pings or 30 seconds.
         """
-        return self.settings.get(
-            "ws_ping_timeout", max(3 * self.ping_interval, WS_PING_INTERVAL)
+        return self.settings.get('ws_ping_timeout',
+            max(3 * self.ping_interval, WS_PING_INTERVAL)
         )
 
     def check_origin(self, origin=None):
         """Check Origin == Host or Access-Control-Allow-Origin.
-
+        
         Tornado >= 4 calls this method automatically, raising 403 if it returns False.
         """
 
-        if self.allow_origin == "*" or (
-            hasattr(self, "skip_check_origin") and self.skip_check_origin()
-        ):
+        if self.allow_origin == '*' or (
+            hasattr(self, 'skip_check_origin') and self.skip_check_origin()):
             return True
 
         host = self.request.headers.get("Host")
         if origin is None:
             origin = self.get_origin()
-
+        
         # If no origin or host header is provided, assume from script
         if origin is None or host is None:
             return True
-
+        
         origin = origin.lower()
         origin_host = urlparse(origin).netloc
-
+        
         # OK if origin matches host
         if origin_host == host:
             return True
-
+        
         # Check CORS headers
         if self.allow_origin:
             allow = self.allow_origin == origin
@@ -146,10 +143,8 @@ class WebSocketMixin(object):
             # No CORS headers deny the request
             allow = False
         if not allow:
-            self.log.warning(
-                "Blocking Cross Origin WebSocket Attempt.  Origin: %s, Host: %s",
-                origin,
-                host,
+            self.log.warning("Blocking Cross Origin WebSocket Attempt.  Origin: %s, Host: %s",
+                origin, host,
             )
         return allow
 
@@ -182,15 +177,12 @@ class WebSocketMixin(object):
         now = ioloop.IOLoop.current().time()
         since_last_pong = 1e3 * (now - self.last_pong)
         since_last_ping = 1e3 * (now - self.last_ping)
-        if (
-            since_last_ping < 2 * self.ping_interval
-            and since_last_pong > self.ping_timeout
-        ):
+        if since_last_ping < 2*self.ping_interval and since_last_pong > self.ping_timeout:
             self.log.warning("WebSocket ping timeout after %i ms.", since_last_pong)
             self.close()
             return
 
-        self.ping(b"")
+        self.ping(b'')
         self.last_ping = now
 
     def on_pong(self, data):
@@ -198,10 +190,9 @@ class WebSocketMixin(object):
 
 
 class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
-
-    if tornado.version_info < (4, 1):
+    
+    if tornado.version_info < (4,1):
         """Backport send_error from tornado 4.1 to 4.0"""
-
         def send_error(self, *args, **kwargs):
             if self.stream is None:
                 super(WebSocketHandler, self).send_error(*args, **kwargs)
@@ -212,16 +203,17 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
                 # we can close the connection more gracefully.
                 self.stream.close()
 
+    
     def _reserialize_reply(self, msg_or_list, channel=None):
         """Reserialize a reply message using JSON.
 
         msg_or_list can be an already-deserialized msg dict or the zmq buffer list.
         If it is the zmq list, it will be deserialized with self.session.
-
+        
         This takes the msg list from the ZMQ socket and serializes the result for the websocket.
         This method should be used by self._on_zmq_reply to build messages that can
         be sent back to the browser.
-
+        
         """
         if isinstance(msg_or_list, dict):
             # already unpacked
@@ -230,8 +222,8 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             idents, msg_list = self.session.feed_identities(msg_or_list)
             msg = self.session.deserialize(msg_list)
         if channel:
-            msg["channel"] = channel
-        if msg["buffers"]:
+            msg['channel'] = channel
+        if msg['buffers']:
             buf = serialize_binary_message(msg)
             return buf
         else:
@@ -245,7 +237,7 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             self.log.warning("zmq message arrived on closed channel")
             self.close()
             return
-        channel = getattr(stream, "channel", None)
+        channel = getattr(stream, 'channel', None)
         try:
             msg = self._reserialize_reply(msg_list, channel=channel)
         except Exception:
@@ -255,6 +247,7 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
 
 
 class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
+
     def set_default_headers(self):
         """Undo the set_default_headers in JupyterHandler
 
@@ -273,8 +266,8 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
             self.log.warning("Couldn't authenticate WebSocket connection")
             raise web.HTTPError(403)
 
-        if self.get_argument("session_id", False):
-            self.session.session = cast_unicode(self.get_argument("session_id"))
+        if self.get_argument('session_id', False):
+            self.session.session = cast_unicode(self.get_argument('session_id'))
         else:
             self.log.warning("No session ID specified")
 
@@ -292,4 +285,4 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
         self.session = Session(config=self.config)
 
     def get_compression_options(self):
-        return self.settings.get("websocket_compression_options", None)
+        return self.settings.get('websocket_compression_options', None)
