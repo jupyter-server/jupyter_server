@@ -15,10 +15,9 @@ from jupyter_client.kernelspec import NoSuchKernel
 from tornado import web
 
 from ...base.handlers import APIHandler
+from jupyter_server.utils import authorized
 from jupyter_server.utils import ensure_async
 from jupyter_server.utils import url_path_join
-
-from jupyter_server.utils import authorized
 
 
 class SessionRootHandler(APIHandler):

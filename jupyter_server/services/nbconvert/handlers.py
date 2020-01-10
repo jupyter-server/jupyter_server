@@ -5,6 +5,7 @@ from anyio.to_thread import run_sync
 from tornado import web
 
 from ...base.handlers import APIHandler
+from jupyter_server.utils import authorized
 
 
 LOCK = asyncio.Lock()
@@ -12,6 +13,7 @@ LOCK = asyncio.Lock()
 
 class NbconvertRootHandler(APIHandler):
     @web.authenticated
+    @authorized("read", resource="nbconvert")
     async def get(self):
         try:
             from nbconvert.exporters import base

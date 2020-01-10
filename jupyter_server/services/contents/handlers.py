@@ -18,7 +18,6 @@ from jupyter_server.base.handlers import path_regex
 from jupyter_server.utils import ensure_async
 from jupyter_server.utils import url_escape
 from jupyter_server.utils import url_path_join
-
 from jupyter_server.utils import authorized
 
 
@@ -243,7 +242,7 @@ class ContentsHandler(APIHandler):
 
 class CheckpointsHandler(APIHandler):
     @web.authenticated
-    @authorized("read", resource="checkpoints")
+    @authorized("read", resource="contents")
     async def get(self, path=""):
         """get lists checkpoints for a file"""
         cm = self.contents_manager
@@ -252,7 +251,7 @@ class CheckpointsHandler(APIHandler):
         self.finish(data)
 
     @web.authenticated
-    @authorized("write", resource="checkpoints")
+    @authorized("write", resource="contents")
     async def post(self, path=""):
         """post creates a new checkpoint"""
         cm = self.contents_manager
@@ -272,7 +271,7 @@ class CheckpointsHandler(APIHandler):
 
 class ModifyCheckpointsHandler(APIHandler):
     @web.authenticated
-    @authorized("write", resource="checkpoints")
+    @authorized("write", resource="contents")
     async def post(self, path, checkpoint_id):
         """post restores a file from a checkpoint"""
         cm = self.contents_manager
@@ -281,7 +280,7 @@ class ModifyCheckpointsHandler(APIHandler):
         self.finish()
 
     @web.authenticated
-    @authorized("write", resource="checkpoints")
+    @authorized("write", resource="contents")
     async def delete(self, path, checkpoint_id):
         """delete clears a checkpoint for a given file"""
         cm = self.contents_manager
@@ -306,7 +305,7 @@ class TrustNotebooksHandler(JupyterHandler):
     """ Handles trust/signing of notebooks """
 
     @web.authenticated
-    @authorized("write", resource="trust_notebook")
+    @authorized("write", resource="contents")
     async def post(self, path=""):
         cm = self.contents_manager
         await ensure_async(cm.trust_notebook(path))
