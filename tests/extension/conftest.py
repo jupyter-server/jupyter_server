@@ -35,20 +35,16 @@ class MockExtensionApp(ExtensionApp):
 
 
 @pytest.fixture
-def extension_environ(env_config_path, monkeypatch):
-    monkeypatch.setattr(serverextension, 'ENV_CONFIG_PATH', [str(env_config_path)])
-    monkeypatch.setattr(serverextension, 'ENV_CONFIG_PATH', [str(env_config_path)])
-
-
-@pytest.fixture
 def config_file(config_dir):
-    f = config_dir.joinpath('jupyter_mockextension_config.py')
+    """"""
+    f = config_dir.joinpath("jupyter_mockextension_config.py")
     f.write_text("c.MockExtensionApp.mock_trait ='config from file'")
     return f
 
 
 @pytest.fixture
 def extended_serverapp(serverapp):
+    """"""
     m = MockExtensionApp()
     m.initialize(serverapp)
     return m
@@ -56,7 +52,12 @@ def extended_serverapp(serverapp):
 
 @pytest.fixture
 def inject_mock_extension(environ, extension_environ):
-    def ext(modulename='mockextension'):
+    """Fixture that can be used to inject a mock Jupyter Server extension into the tests namespace.
+
+        Usage: inject_mock_extension({'extension_name': ExtensionClass})
+    """
+    def ext(modulename="mockextension"):
         sys.modules[modulename] = e = MockExtensionApp()
         return e
+
     return ext

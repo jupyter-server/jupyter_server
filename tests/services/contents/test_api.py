@@ -15,7 +15,7 @@ from jupyter_server.utils import url_path_join
 
 from base64 import encodebytes, decodebytes
 
-from ...conftest import expected_http_error
+from ...utils import expected_http_error
 
 
 def notebooks_only(dir_model):
@@ -118,7 +118,7 @@ async def test_get_nb_contents(fetch, contents, path, name):
     r = await fetch(
         'api', 'contents', nbpath,
         method='GET',
-        params=dict(content='1') 
+        params=dict(content='1')
     )
     model = json.loads(r.body.decode())
     assert model['name'] == nbname
@@ -137,7 +137,7 @@ async def test_get_nb_no_contents(fetch, contents, path, name):
     r = await fetch(
         'api', 'contents', nbpath,
         method='GET',
-        params=dict(content='0') 
+        params=dict(content='0')
     )
     model = json.loads(r.body.decode())
     assert model['name'] == nbname
@@ -186,7 +186,7 @@ async def test_get_text_file_contents(fetch, contents, path, name):
     r = await fetch(
         'api', 'contents', txtpath,
         method='GET',
-        params=dict(content='1') 
+        params=dict(content='1')
     )
     model = json.loads(r.body.decode())
     assert model['name'] == txtname
@@ -223,7 +223,7 @@ async def test_get_binary_file_contents(fetch, contents, path, name):
     r = await fetch(
         'api', 'contents', blobpath,
         method='GET',
-        params=dict(content='1') 
+        params=dict(content='1')
     )
     model = json.loads(r.body.decode())
     assert model['name'] == blobname
@@ -285,7 +285,7 @@ async def test_create_untitled(fetch, contents, contents_dir):
     path = 'å b'
     name = 'Untitled.ipynb'
     r = await fetch(
-        'api', 'contents', path, 
+        'api', 'contents', path,
         method='POST',
         body=json.dumps({'ext': '.ipynb'})
     )
@@ -293,7 +293,7 @@ async def test_create_untitled(fetch, contents, contents_dir):
 
     name = 'Untitled1.ipynb'
     r = await fetch(
-        'api', 'contents', path, 
+        'api', 'contents', path,
         method='POST',
         body=json.dumps({'ext': '.ipynb'})
     )
@@ -302,7 +302,7 @@ async def test_create_untitled(fetch, contents, contents_dir):
     path = 'foo/bar'
     name = 'Untitled.ipynb'
     r = await fetch(
-        'api', 'contents', path, 
+        'api', 'contents', path,
         method='POST',
         body=json.dumps({'ext': '.ipynb'})
     )
@@ -313,7 +313,7 @@ async def test_create_untitled_txt(fetch, contents, contents_dir):
     name = 'untitled.txt'
     path = 'foo/bar'
     r = await fetch(
-        'api', 'contents', path, 
+        'api', 'contents', path,
         method='POST',
         body=json.dumps({'ext': '.txt'})
     )
@@ -456,7 +456,7 @@ async def test_copy(fetch, contents, contents_dir):
         body=json.dumps({'copy_from': path+'/'+name})
     )
     _check_created(r, str(contents_dir), path, copy, type='notebook')
-    
+
     # Copy the same file name
     copy2 = 'ç d-Copy2.ipynb'
     r = await fetch(
@@ -601,14 +601,14 @@ async def test_rename(fetch, contents, contents_dir):
 async def test_checkpoints_follow_file(fetch, contents):
     path = 'foo'
     name = 'a.ipynb'
-    
+
     # Read initial file.
     r = await fetch(
         'api', 'contents', path, name,
         method='GET'
     )
     model = json.loads(r.body.decode())
-    
+
     # Create a checkpoint of initial state
     r = await fetch(
         'api', 'contents', path, name, 'checkpoints',
@@ -616,7 +616,7 @@ async def test_checkpoints_follow_file(fetch, contents):
         allow_nonstandard_methods=True
     )
     cp1 = json.loads(r.body.decode())
-    
+
     # Modify file and save.
     nbcontent = model['content']
     nb = from_dict(nbcontent)
@@ -690,7 +690,7 @@ async def test_checkpoints(fetch, contents):
     path = 'foo/a.ipynb'
     resp = await fetch(
         'api', 'contents', path,
-        method='GET' 
+        method='GET'
     )
     model = json.loads(resp.body.decode())
     r = await fetch(
@@ -708,7 +708,7 @@ async def test_checkpoints(fetch, contents):
     nb = from_dict(nbcontent)
     hcell = new_markdown_cell('Created by test')
     nb.cells.append(hcell)
-    
+
     # Save it.
     nbmodel = {'content': nb, 'type': 'notebook'}
     resp = await fetch(
@@ -716,7 +716,7 @@ async def test_checkpoints(fetch, contents):
         method='PUT',
         body=json.dumps(nbmodel)
     )
-    
+
     # List checkpoints
     r = await fetch(
         'api', 'contents', path, 'checkpoints',
@@ -727,7 +727,7 @@ async def test_checkpoints(fetch, contents):
 
     r = await fetch(
         'api', 'contents', path,
-        method='GET' 
+        method='GET'
     )
     nbcontent = json.loads(r.body.decode())['content']
     nb = from_dict(nbcontent)
@@ -768,7 +768,7 @@ async def test_file_checkpoints(fetch, contents):
     path = 'foo/a.txt'
     resp = await fetch(
         'api', 'contents', path,
-        method='GET' 
+        method='GET'
     )
     orig_content = json.loads(resp.body.decode())['content']
     r = await fetch(
@@ -788,14 +788,14 @@ async def test_file_checkpoints(fetch, contents):
         'type': 'file',
         'format': 'text',
     }
-    
+
     # Save it.
     resp = await fetch(
         'api', 'contents', path,
         method='PUT',
         body=json.dumps(model)
     )
-    
+
     # List checkpoints
     r = await fetch(
         'api', 'contents', path, 'checkpoints',
@@ -806,7 +806,7 @@ async def test_file_checkpoints(fetch, contents):
 
     r = await fetch(
         'api', 'contents', path,
-        method='GET' 
+        method='GET'
     )
     content = json.loads(r.body.decode())['content']
     assert content == new_content
