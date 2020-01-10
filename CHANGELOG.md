@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2020-1-10
+
+### Added
+
+- **pytest-plugin** for Jupyter Server.
+    - Allows one to write async/await syntax in tests functions.
+    - Some particularly useful fixtures include:
+        - `serverapp`: a default ServerApp instance that handles setup+teardown.
+        - `configurable_serverapp`: a function that returns a ServerApp instance.
+        - `fetch`: an awaitable function that tests makes requests to the server API
+        - `create_notebook`: a function that writes a notebook to a given temporary file path.
 
 ## [0.2.0] - 2019-12-19
 
