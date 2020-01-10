@@ -9,8 +9,6 @@ import inspect
 import os
 import socket
 import sys
-import functools
-
 from distutils.version import LooseVersion
 from contextlib import contextmanager
 

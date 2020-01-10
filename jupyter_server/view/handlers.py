@@ -6,12 +6,13 @@
 
 from tornado import web
 from ..base.handlers import JupyterHandler, path_regex
-from ..utils import ensure_async, url_escape, url_path_join
+from ..utils import ensure_async, url_escape, url_path_join, authorized
 
 
 class ViewHandler(JupyterHandler):
     """Render HTML files within an iframe."""
     @web.authenticated
+    @authorized("read", resource="view")
     async def get(self, path):
         path = path.strip('/')
         if not await ensure_async(self.contents_manager.file_exists(path)):

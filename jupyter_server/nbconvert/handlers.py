@@ -20,6 +20,9 @@ from nbformat import from_dict
 from ipython_genutils.py3compat import cast_bytes
 from ipython_genutils import text
 
+from jupyter_server.utils import authorized
+
+
 def find_resource_files(output_files_dir):
     files = []
     for dirpath, dirnames, filenames in os.walk(output_files_dir):
@@ -81,6 +84,7 @@ class NbconvertFileHandler(JupyterHandler):
     SUPPORTED_METHODS = ('GET',)
 
     @web.authenticated
+    @authorized("read", resource="nbconvert")
     async def get(self, format, path):
         self.check_xsrf_cookie()
         exporter = get_exporter(format, config=self.config, log=self.log)
@@ -150,6 +154,7 @@ class NbconvertPostHandler(JupyterHandler):
     SUPPORTED_METHODS = ('POST',)
 
     @web.authenticated
+    @authorized("write", resource="nbconvert")
     def post(self, format):
         exporter = get_exporter(format, config=self.config)
 

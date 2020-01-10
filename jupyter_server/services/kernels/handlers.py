@@ -27,14 +27,14 @@ from jupyter_server.utils import authorized
 class MainKernelHandler(APIHandler):
 
     @web.authenticated
-    @authorized('read', resource='kernels')
+    @authorized("read", resource="kernels")
     async def get(self):
         km = self.kernel_manager
         kernels = await ensure_async(km.list_kernels())
         self.finish(json.dumps(kernels, default=date_default))
 
     @web.authenticated
-    @authorized('write', resource='kernels')
+    @authorized("write", resource="kernels")
     async def post(self):
         km = self.kernel_manager
         model = self.get_json_body()
@@ -57,14 +57,14 @@ class MainKernelHandler(APIHandler):
 class KernelHandler(APIHandler):
 
     @web.authenticated
-    @authorized('read', resource='kernels')
+    @authorized("read", resource="kernels")
     async def get(self, kernel_id):
         km = self.kernel_manager
         model = await ensure_async(km.kernel_model(kernel_id))
         self.finish(json.dumps(model, default=date_default))
 
     @web.authenticated
-    @authorized('write', resource='kernels')
+    @authorized("write", resource="kernels")
     async def delete(self, kernel_id):
         km = self.kernel_manager
         await ensure_async(km.shutdown_kernel(kernel_id))
@@ -75,7 +75,7 @@ class KernelHandler(APIHandler):
 class KernelActionHandler(APIHandler):
 
     @web.authenticated
-    @authorized('write', resource='kernels')
+    @authorized("write", resource="kernels")
     async def post(self, kernel_id, action):
         km = self.kernel_manager
         if action == 'interrupt':
