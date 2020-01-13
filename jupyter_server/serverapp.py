@@ -596,14 +596,9 @@ class ServerApp(JupyterApp):
     def _default_log_level(self):
         return logging.INFO
 
-    @default('log_datefmt')
-    def _default_log_datefmt(self):
-        """Exclude date from default date format"""
-        return "%H:%M:%S"
-
     @default('log_format')
     def _default_log_format(self):
-        """override default log format to include time"""
+        """override default log format to include date & time"""
         return u"%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
 
     # file to be opened in the Jupyter server
