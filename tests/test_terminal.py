@@ -2,6 +2,7 @@ import shutil
 import pytest
 import json
 import asyncio
+import sys
 
 
 @pytest.fixture
@@ -38,7 +39,7 @@ async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
     resp = await fetch(
         'api', 'terminals',
         method='POST',
-        body=json.dumps({'cwd': terminal_path.as_posix()}),
+        body=json.dumps({'cwd': str(terminal_path)}),
         allow_nonstandard_methods=True,
     )
 
@@ -49,7 +50,10 @@ async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
         'terminals', 'websocket', term_name
     )
 
-    ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
+    if sys.platform != "win32":
+        ws.write_message(json.dumps(['stdin', 'echo %cd%\r\n']))
+    else:
+        ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
 
     message_stdout = ''
     while True:
@@ -65,4 +69,4 @@ async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
 
     ws.close()
 
-    assert terminal_path.as_posix() in message_stdout
+    assert str(terminal_path) in message_stdout
