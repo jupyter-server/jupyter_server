@@ -163,6 +163,7 @@ def serverapp(configurable_serverapp, config, argv):
 
 @pytest.fixture
 def app(serverapp):
+    """app fixture is needed by pytest_tornasync plugin"""
     return serverapp.web_app
 
 
@@ -177,7 +178,7 @@ def http_port(http_server_port):
 
 
 @pytest.fixture
-def base_url(http_server_port):
+def base_url():
     return "/"
 
 
