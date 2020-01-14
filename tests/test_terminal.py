@@ -50,7 +50,7 @@ async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
         'terminals', 'websocket', term_name
     )
 
-    if sys.platform != "win32":
+    if sys.platform == "win32":
         ws.write_message(json.dumps(['stdin', 'echo %cd%\r\n']))
     else:
         ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
