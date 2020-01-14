@@ -105,7 +105,7 @@ Stop any running server (with `CTRL+C`) and start with additional configuration 
 The provided settings via CLI will override the configuration that reside in the files (`jupyter_simple_ext1_config.py`...)
 
 ```bash
-jupyter simple-ext1 --SimpleApp1.configA "ConfigA from command line"
+jupyter simple-ext1 --SimpleApp1.configA="ConfigA from command line"
 ```
 
 Check the log, it should return on startup something like the following base on the trait you have defined in the CLI and in the `jupyter_simple_ext1_config.py`.
