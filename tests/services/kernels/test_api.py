@@ -13,30 +13,6 @@ from jupyter_server.utils import url_path_join
 from ...utils import expected_http_error
 
 
-@pytest.fixture
-def ws_fetch(auth_header, http_port):
-    """fetch fixture that handles auth, base_url, and path"""
-    def client_fetch(*parts, headers={}, params={}, **kwargs):
-        # Handle URL strings
-        path = url_escape(url_path_join(*parts), plus=False)
-        urlparts = urllib.parse.urlparse('ws://localhost:{}'.format(http_port))
-        urlparts = urlparts._replace(
-            path=path,
-            query=urllib.parse.urlencode(params)
-        )
-        url = urlparts.geturl()
-        # Add auth keys to header
-        headers.update(auth_header)
-        # Make request.
-        req = tornado.httpclient.HTTPRequest(
-            url,
-            headers=auth_header,
-            connect_timeout=120
-        )
-        return tornado.websocket.websocket_connect(req)
-    return client_fetch
-
-
 async def test_no_kernels(fetch):
     r = await fetch(
         'api', 'kernels',

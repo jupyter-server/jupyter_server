@@ -15,6 +15,7 @@ import jupyter_core.paths
 from jupyter_server.extension import serverextension
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.utils import url_path_join
+from jupyter_server.services.contents.filemanager import FileContentsManager
 
 import nbformat
 
@@ -62,6 +63,11 @@ system_config_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "etc", "jup
 env_config_path = pytest.fixture(
     lambda tmp_path: mkdir(tmp_path, "env", "etc", "jupyter")
 )
+some_resource = u"The very model of a modern major general"
+sample_kernel_json = {
+    'argv':['cat', '{connection_file}'],
+    'display_name':'Test kernel',
+}
 argv = pytest.fixture(lambda: [])
 
 
@@ -197,6 +203,52 @@ def fetch(http_server_client, auth_header, base_url):
             url, headers=headers, request_timeout=20, **kwargs
         )
     return client_fetch
+
+
+@pytest.fixture
+def ws_fetch(auth_header, http_port):
+    """websocket fetch fixture that handles auth, base_url, and path"""
+    def client_fetch(*parts, headers={}, params={}, **kwargs):
+        # Handle URL strings
+        path = url_escape(url_path_join(*parts), plus=False)
+        urlparts = urllib.parse.urlparse('ws://localhost:{}'.format(http_port))
+        urlparts = urlparts._replace(
+            path=path,
+            query=urllib.parse.urlencode(params)
+        )
+        url = urlparts.geturl()
+        # Add auth keys to header
+        headers.update(auth_header)
+        # Make request.
+        req = tornado.httpclient.HTTPRequest(
+            url,
+            headers=auth_header,
+            connect_timeout=120
+        )
+        return tornado.websocket.websocket_connect(req)
+    return client_fetch
+
+
+@pytest.fixture
+def kernelspecs(data_dir):
+    spec_names = ['sample', 'sample 2']
+    for name in spec_names:
+        sample_kernel_dir = data_dir.joinpath('kernels', name)
+        sample_kernel_dir.mkdir(parents=True)
+        # Create kernel json file
+        sample_kernel_file = sample_kernel_dir.joinpath('kernel.json')
+        sample_kernel_file.write_text(json.dumps(sample_kernel_json))
+        # Create resources text
+        sample_kernel_resources = sample_kernel_dir.joinpath('resource.txt')
+        sample_kernel_resources.write_text(some_resource)
+
+
+# contents_manager_atomic = pytest.fixture(lambda tmp_path: FileContentsManager(root_dir=str(tmp_path), use_atomic_writing=True))
+# contents_manager_nonatomic = pytest.fixture(lambda tmp_path: FileContentsManager(root_dir=str(tmp_path), use_atomic_writing=False))
+
+@pytest.fixture(params=[True, False])
+def contents_manager(request, tmp_path):
+    return FileContentsManager(root_dir=str(tmp_path), use_atomic_writing=request.param)
 
 
 @pytest.fixture
