@@ -3,8 +3,6 @@ import pytest
 from jupyter_core import paths
 from jupyter_server.extension import serverextension
 
-from .conftest import MockExtensionApp
-
 # All test coroutines will be treated as marked.
 pytestmark = pytest.mark.script_launch_mode('subprocess')
 
