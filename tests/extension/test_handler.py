@@ -13,6 +13,14 @@ async def test_handler(fetch, extended_serverapp):
     assert r.body.decode() == 'mock trait'
 
 
+async def test_handler_template(fetch, extended_serverapp):
+    r = await fetch(
+        'mock_template',
+        method='GET'
+    )
+    assert r.code == 200
+
+
 async def test_handler_setting(fetch, serverapp, make_mock_extension_app):
     # Configure trait in Mock Extension.
     m = make_mock_extension_app(mock_trait='test mock trait')
