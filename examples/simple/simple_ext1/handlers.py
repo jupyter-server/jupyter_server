@@ -1,4 +1,4 @@
-from jupyter_server.extension.handler import ExtensionHandler
+from jupyter_server.extension.handler import ExtensionHandler, ExtensionHandlerJinjaMixin
 
 class DefaultHandler(ExtensionHandler):
     def get(self):
@@ -22,10 +22,7 @@ class ParameterHandler(ExtensionHandler):
         self.write('<p>var1: {}</p>'.format(var1))
         self.write('<p>components: {}</p>'.format(components))
 
-class BaseTemplateHandler(ExtensionHandler):
-    def get_template(self, path):
-        """Return the jinja template object for a given name"""
-        return self.settings['{}_jinja2_env'.format(self.extension_name)].get_template(path)
+class BaseTemplateHandler(ExtensionHandlerJinjaMixin, ExtensionHandler): pass
 
 class TypescriptHandler(BaseTemplateHandler):
     def get(self):

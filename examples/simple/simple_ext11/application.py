@@ -47,7 +47,7 @@ class SimpleApp11(SimpleApp1):
 
     @observe('ignore_js')
     def _update_ignore_js(self, change):
-        """TODO The observe does not work"""
+        """TODO Does the observe work?"""
         self.log.info('ignore_js has just changed: {}'.format(change))
 
     @property

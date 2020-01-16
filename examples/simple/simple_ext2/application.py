@@ -1,12 +1,12 @@
 import os, jinja2
 from traitlets import Unicode
-from jupyter_server.extension.application import ExtensionApp
+from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
 from .handlers import ParameterHandler, TemplateHandler, IndexHandler, ErrorHandler
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")
 
-class SimpleApp2(ExtensionApp):
+class SimpleApp2(ExtensionAppJinjaMixin, ExtensionApp):
     
     # The name of the extension.
     extension_name = "simple_ext2"
