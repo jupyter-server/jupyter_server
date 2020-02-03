@@ -138,6 +138,18 @@ async def test_main_kernel_handler(fetch):
     assert restarted_kernel['id'] == kernel2['id']
     assert restarted_kernel['name'] == kernel2['name']
 
+    # Start a kernel with a path
+    r = await fetch(
+        'api', 'kernels',
+        method='POST',
+                body=json.dumps({
+            'name': NATIVE_KERNEL_NAME,
+            'path': '/foo'
+        })
+    )
+    kernel3 = json.loads(r.body.decode())
+    assert isinstance(kernel3, dict)
+
 
 async def test_kernel_handler(fetch):
     # Create a kernel
