@@ -453,7 +453,7 @@ paths:
                 description: Kernel spec name (defaults to default kernel spec for server)
               path:
                 type: string
-                description: path the cwd of the kernel
+                description: API path from root to the cwd of the kernel
       responses:
         201:
           description: Kernel started
