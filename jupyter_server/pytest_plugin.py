@@ -52,6 +52,7 @@ data_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "data"))
 config_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "config"))
 runtime_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "runtime"))
 root_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "root_dir"))
+template_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "templates"))
 system_jupyter_path = pytest.fixture(
     lambda tmp_path: mkdir(tmp_path, "share", "jupyter")
 )

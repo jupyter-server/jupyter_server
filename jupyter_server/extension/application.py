@@ -352,6 +352,7 @@ class ExtensionApp(JupyterApp):
             self.settings.update({
                 "{}_template_paths".format(self.extension_name): self.template_paths
             })
+        self.initialize_templates()
 
     @staticmethod
     def initialize_server(argv=[], load_other_extensions=True, **kwargs):
