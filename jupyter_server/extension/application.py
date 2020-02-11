@@ -154,6 +154,7 @@ class ExtensionApp(JupyterApp):
         help="Name of extension."
     )
 
+    @default('extension_name')
     def _extension_name_default(self):
         try:
             return self.name
@@ -163,8 +164,8 @@ class ExtensionApp(JupyterApp):
     INVALID_EXTENSION_NAME_CHARS = [' ', '.', '+', '/']
 
     @validate('extension_name')
-    def _validate_extension_name(self, value):
-        #value = self.extension_name
+    def _validate_extension_name(self, proposal):
+        value = proposal['value']
         if isinstance(value, str):
             # Validate that extension_name doesn't contain any invalid characters.
             for c in ExtensionApp.INVALID_EXTENSION_NAME_CHARS:
@@ -351,6 +352,7 @@ class ExtensionApp(JupyterApp):
             self.settings.update({
                 "{}_template_paths".format(self.extension_name): self.template_paths
             })
+        self.initialize_templates()
 
     @staticmethod
     def initialize_server(argv=[], load_other_extensions=True, **kwargs):

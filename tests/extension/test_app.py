@@ -3,19 +3,17 @@ import pytest
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.extension.application import ExtensionApp
 
-from .conftest import MockExtensionApp
 
-
-def test_instance_creation():
-    mock_extension = MockExtensionApp()
+def test_instance_creation(make_mock_extension_app, template_dir):
+    mock_extension = make_mock_extension_app()
     assert mock_extension.static_paths == []
-    assert mock_extension.template_paths == []
+    assert mock_extension.template_paths == [str(template_dir)]
     assert mock_extension.settings == {}
-    assert mock_extension.handlers == [] 
+    assert mock_extension.handlers == []
 
 
-def test_initialize(serverapp):
-    mock_extension = MockExtensionApp()
+def test_initialize(serverapp, make_mock_extension_app):
+    mock_extension = make_mock_extension_app()
     mock_extension.initialize(serverapp)
     # Check that settings and handlers were added to the mock extension.
     assert isinstance(mock_extension.serverapp, ServerApp)
@@ -35,10 +33,10 @@ traits = [
     'trait_name,trait_value',
     traits
 )
-def test_instance_creation_with_instance_args(trait_name, trait_value):
+def test_instance_creation_with_instance_args(trait_name, trait_value, make_mock_extension_app):
     kwarg = {}
     kwarg.setdefault(trait_name, trait_value)
-    mock_extension = MockExtensionApp(**kwarg)
+    mock_extension = make_mock_extension_app(**kwarg)
     assert getattr(mock_extension, trait_name) == trait_value
 
 
@@ -46,13 +44,13 @@ def test_instance_creation_with_instance_args(trait_name, trait_value):
     'trait_name,trait_value',
     traits
 )
-def test_instance_creation_with_argv(serverapp, trait_name, trait_value):
+def test_instance_creation_with_argv(serverapp, trait_name, trait_value, make_mock_extension_app):
     kwarg = {}
     kwarg.setdefault(trait_name, trait_value)
     argv = [
         '--MockExtensionApp.{name}={value}'.format(name=trait_name, value=trait_value)
     ]
-    mock_extension = MockExtensionApp()
+    mock_extension = make_mock_extension_app()
     mock_extension.initialize(serverapp, argv=argv)
     assert getattr(mock_extension, trait_name) == trait_value
 
