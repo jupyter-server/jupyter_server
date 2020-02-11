@@ -244,9 +244,6 @@ def kernelspecs(data_dir):
         sample_kernel_resources.write_text(some_resource)
 
 
-# contents_manager_atomic = pytest.fixture(lambda tmp_path: FileContentsManager(root_dir=str(tmp_path), use_atomic_writing=True))
-# contents_manager_nonatomic = pytest.fixture(lambda tmp_path: FileContentsManager(root_dir=str(tmp_path), use_atomic_writing=False))
-
 @pytest.fixture(params=[True, False])
 def contents_manager(request, tmp_path):
     return FileContentsManager(root_dir=str(tmp_path), use_atomic_writing=request.param)
