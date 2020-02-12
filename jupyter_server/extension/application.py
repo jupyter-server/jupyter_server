@@ -18,7 +18,7 @@ from jupyter_core.application import JupyterApp
 from jupyter_server.serverapp import ServerApp, aliases, flags
 from jupyter_server.transutils import _
 from jupyter_server.utils import url_path_join
-from .handler import ExtensionHandler
+from .handler import ExtensionHandlerMixin
 
 # Remove alias for nested classes in ServerApp.
 # Nested classes are not allowed in ExtensionApp.
@@ -321,7 +321,7 @@ class ExtensionApp(JupyterApp):
             
             # Get handler kwargs, if given
             kwargs = {}
-            if issubclass(handler, ExtensionHandler):
+            if issubclass(handler, ExtensionHandlerMixin):
                 kwargs['extension_name'] = self.extension_name
             try: 
                 kwargs.update(handler_items[2])
