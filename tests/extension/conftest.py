@@ -4,20 +4,21 @@ from traitlets import Unicode
 
 
 from jupyter_core import paths
+from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.extension import serverextension
 from jupyter_server.extension.serverextension import _get_config_dir
 from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
-from jupyter_server.extension.handler import ExtensionHandler, ExtensionHandlerJinjaMixin
+from jupyter_server.extension.handler import ExtensionHandlerMixin, ExtensionHandlerJinjaMixin
 
 # ----------------- Mock Extension App ----------------------
 
-class MockExtensionHandler(ExtensionHandler):
+class MockExtensionHandler(ExtensionHandlerMixin, JupyterHandler):
 
     def get(self):
         self.finish(self.config.mock_trait)
 
 
-class MockExtensionTemplateHandler(ExtensionHandlerJinjaMixin, ExtensionHandler):
+class MockExtensionTemplateHandler(ExtensionHandlerJinjaMixin, ExtensionHandlerMixin, JupyterHandler):
 
     def get(self):
         self.write(self.render_template("index.html"))
