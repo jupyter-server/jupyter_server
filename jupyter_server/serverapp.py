@@ -1500,9 +1500,18 @@ class ServerApp(JupyterApp):
             _, metadata = _get_server_extension_metadata(modulename)
             app_obj = metadata[0].get('app', None)
             if issubclass(app_obj, JupyterApp):
+                # Initialize extension app
                 app = app_obj(parent=self)
+                # Update the app's config, setting
+                # any traits given by the serverapp's
+                # parsed command line args.
                 app.update_config(app.config)
+                # Load any config from an extension's
+                # config file and make update the
+                # app's config again.
                 app.load_config_file()
+                # Pass any relevant config to the
+                # serverapp's (parent) config.
                 self.update_config(app.config)
 
     def init_server_extensions(self):
