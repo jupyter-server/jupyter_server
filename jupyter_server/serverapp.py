@@ -1499,7 +1499,9 @@ class ServerApp(JupyterApp):
         for modulename in sorted(self.jpserver_extensions):
             _, metadata = _get_server_extension_metadata(modulename)
             app_obj = metadata[0].get('app', None)
-            if issubclass(app_obj, JupyterApp):
+            if app_obj:
+                if not issubclass(app_obj, JupyterApp):
+                    raise TypeError(abb_obj.__name__ + "must be a subclass of JupyterApp")
                 # Initialize extension app
                 app = app_obj(parent=self)
                 # Update the app's config, setting
