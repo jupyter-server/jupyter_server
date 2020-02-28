@@ -283,6 +283,7 @@ class ExtensionApp(JupyterApp):
         """Builds a Config object from the extension's traits and passes
         the object to the webapp's settings as `<extension_name>_config`.
         """
+        self.update_config(self.config)
         traits = self.class_own_traits().keys()
         self.extension_config = Config({t: getattr(self, t) for t in traits})
         self.settings['{}_config'.format(self.extension_name)] = self.extension_config
@@ -365,7 +366,7 @@ class ExtensionApp(JupyterApp):
         serverapp.initialize(argv=argv, load_extensions=load_other_extensions)
         return serverapp
 
-    def initialize(self, serverapp, argv=[]):
+    def initialize(self, serverapp, argv=None):
         """Initialize the extension app.
 
         This method:
@@ -377,6 +378,12 @@ class ExtensionApp(JupyterApp):
         """
         # Initialize ServerApp.
         self.serverapp = serverapp
+
+        # If argv is given, parse and update config.
+        if argv:
+            self.parse_command_line(argv)
+        # Load config from file.
+        self.load_config_file()
 
         # Initialize config, settings, templates, and handlers.
         self._prepare_config()

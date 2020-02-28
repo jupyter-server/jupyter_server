@@ -42,13 +42,13 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         }]
 
 @pytest.fixture
-def make_mock_extension_app(template_dir):
+def make_mock_extension_app(template_dir, config_dir):
     def _make_mock_extension_app(**kwargs):
         kwargs.setdefault('template_paths', [str(template_dir)])
-        return MockExtensionApp(**kwargs)
+        return MockExtensionApp(config_dir=str(config_dir), **kwargs)
 
     # TODO Should the index template creation be only be done only once?
-    index = template_dir.joinpath("index.html")    
+    index = template_dir.joinpath("index.html")
     index.write_text("""
 <!DOCTYPE HTML>
 <html>

@@ -1501,7 +1501,7 @@ class ServerApp(JupyterApp):
             app_obj = metadata[0].get('app', None)
             if app_obj:
                 if not issubclass(app_obj, JupyterApp):
-                    raise TypeError(abb_obj.__name__ + "must be a subclass of JupyterApp")
+                    raise TypeError(abb_obj.__name__ + " must be a subclass of JupyterApp.")
                 # Initialize extension app
                 app = app_obj(parent=self)
                 # Update the app's config, setting
