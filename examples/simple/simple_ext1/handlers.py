@@ -1,6 +1,7 @@
-from jupyter_server.extension.handler import ExtensionHandler, ExtensionHandlerJinjaMixin
+from jupyter_server.base.handlers import JupyterHandler
+from jupyter_server.extension.handler import ExtensionHandlerMixin, ExtensionHandlerJinjaMixin
 
-class DefaultHandler(ExtensionHandler):
+class DefaultHandler(ExtensionHandlerMixin, JupyterHandler):
     def get(self):
         # The name of the extension to which this handler is linked.
         self.log.info("Extension Name in {} Default Handler: {}".format(self.extension_name, self.extension_name))
@@ -9,11 +10,11 @@ class DefaultHandler(ExtensionHandler):
         self.write('<h1>Hello Simple 1 - I am the default...</h1>')
         self.write('Config in {} Default Handler: {}'.format(self.extension_name, self.config))
 
-class RedirectHandler(ExtensionHandler):
+class RedirectHandler(ExtensionHandlerMixin, JupyterHandler):
     def get(self):
         self.redirect("/static/{}/favicon.ico".format(self.extension_name))
 
-class ParameterHandler(ExtensionHandler):    
+class ParameterHandler(ExtensionHandlerMixin, JupyterHandler):    
     def get(self, matched_part=None, *args, **kwargs):
         var1 = self.get_argument('var1', default=None)
         components = [x for x in self.request.path.split("/") if x]
@@ -22,7 +23,7 @@ class ParameterHandler(ExtensionHandler):
         self.write('<p>var1: {}</p>'.format(var1))
         self.write('<p>components: {}</p>'.format(components))
 
-class BaseTemplateHandler(ExtensionHandlerJinjaMixin, ExtensionHandler): pass
+class BaseTemplateHandler(ExtensionHandlerJinjaMixin, ExtensionHandlerMixin, JupyterHandler): pass
 
 class TypescriptHandler(BaseTemplateHandler):
     def get(self):

@@ -10,8 +10,8 @@ You need `python3` to build and run the server extensions.
 # Clone, create a conda env and install from source.
 git clone https://github.com/jupyter/jupyter_server && \
   cd examples/simple && \
-  conda create -y -n jupyter_server_example python=3.7 && \
-  conda activate jupyter_server_example && \
+  conda create -y -n jupyter-server-example python=3.7 && \
+  conda activate jupyter-server-example && \
   pip install -e .
 ```
 
@@ -154,7 +154,7 @@ Stop any running server and then start the simple-ext11.
 
 ```bash
 jupyter simple-ext11 --hello --simple11-dir any_folder
-# or...
+# TODO FIX the following command, simple11 does not work launching with jpserver_extensions parameter.
 jupyter server --ServerApp.jpserver_extensions="{'simple_ext11': True}" --hello --simple11-dir any_folder
 ```
 

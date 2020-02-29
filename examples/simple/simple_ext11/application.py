@@ -61,6 +61,9 @@ class SimpleApp11(SimpleApp1):
         self.log.info('ignore_js: {}'.format(self.ignore_js))
         super().initialize_settings()
 
+    def initialize_handlers(self):
+        super().initialize_handlers()
+
 #-----------------------------------------------------------------------------
 # Main entry point
 #-----------------------------------------------------------------------------
