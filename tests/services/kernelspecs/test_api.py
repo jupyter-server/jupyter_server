@@ -3,30 +3,11 @@ import json
 
 import tornado
 
+from jupyter_server.pytest_plugin import some_resource
+
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 
-from ...conftest import expected_http_error
-
-
-sample_kernel_json = {
-    'argv':['cat', '{connection_file}'],
-    'display_name':'Test kernel',
-}
-some_resource = u"The very model of a modern major general"
-
-
-@pytest.fixture
-def kernelspecs(data_dir):
-    spec_names = ['sample', 'sample 2']
-    for name in spec_names:
-        sample_kernel_dir = data_dir.joinpath('kernels', name)
-        sample_kernel_dir.mkdir(parents=True)
-        # Create kernel json file
-        sample_kernel_file = sample_kernel_dir.joinpath('kernel.json')
-        sample_kernel_file.write_text(json.dumps(sample_kernel_json))
-        # Create resources text
-        sample_kernel_resources = sample_kernel_dir.joinpath('resource.txt')
-        sample_kernel_resources.write_text(some_resource)
+from ...utils import expected_http_error
 
 
 async def test_list_kernelspecs_bad(fetch, kernelspecs, data_dir):

@@ -92,7 +92,7 @@ for more information.
     ],
     extras_require = {
         'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
-                 'pytest', 'pytest-cov', 'pytest-tornasync', 'pytest-console-scripts'],
+                 'pytest==5.3.2', 'pytest-cov', 'pytest-tornasync', 'pytest-console-scripts'],
         'test:sys_platform == "win32"': ['nose-exclude'],
     },
     python_requires = '>=3.5',
@@ -100,6 +100,9 @@ for more information.
         'console_scripts': [
             'jupyter-server = jupyter_server.serverapp:main',
             'jupyter-bundlerextension = jupyter_server.bundler.bundlerextensions:main',
+        ],
+        'pytest11': [
+            'pytest_jupyter_server = jupyter_server.pytest_plugin'
         ]
     },
 )

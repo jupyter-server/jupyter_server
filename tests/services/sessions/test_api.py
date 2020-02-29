@@ -8,7 +8,7 @@ import tornado
 from nbformat.v4 import new_notebook
 from nbformat import writes
 
-from ...conftest import expected_http_error
+from ...utils import expected_http_error
 
 j = lambda r: json.loads(r.body.decode())
 
@@ -37,9 +37,9 @@ class SessionClient:
         return await self._req(id, method='GET')
 
     async def create(
-        self, 
-        path, 
-        type='notebook', 
+        self,
+        path,
+        type='notebook',
         kernel_name='python',
         kernel_id=None):
         body = {
@@ -114,7 +114,7 @@ def session_client(root_dir, fetch):
 
     # Remove subdir
     shutil.rmtree(str(subdir), ignore_errors=True)
-    
+
 
 async def test_create(session_client):
     # Make sure no sessions exist.
@@ -170,7 +170,7 @@ async def test_create_deprecated(session_client):
     assert resp.code == 201
     newsession = j(resp)
     assert newsession['path'] == 'foo/nb1.ipynb'
-    assert newsession['type'] == 'notebook' 
+    assert newsession['type'] == 'notebook'
     assert newsession['notebook']['path'] == 'foo/nb1.ipynb'
     # Need to find a better solution to this.
     await session_client.cleanup()

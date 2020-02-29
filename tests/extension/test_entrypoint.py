@@ -15,9 +15,10 @@ def test_server_extension_list(environ, script_runner):
 def test_server_extension_enable(environ, inject_mock_extension, script_runner):
     # 'mock' is not a valid extension The entry point should complete
     # but print to sterr.
+    extension_name = "mockextension"
     inject_mock_extension()
-    extension_name = 'mockextension'
-    ret = script_runner.run('jupyter', 'server', 'extension', 'enable', extension_name)
+
+    ret = script_runner.run("jupyter", "server", "extension", "enable", extension_name)
     assert ret.success
     assert 'Enabling: {}'.format(extension_name) in ret.stderr
 

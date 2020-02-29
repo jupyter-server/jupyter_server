@@ -6,13 +6,13 @@ from types import SimpleNamespace
 
 from traitlets.tests.utils import check_help_all_output
 
-from ..conftest import mkdir
+from ..utils import mkdir
 
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.extension import serverextension
 from jupyter_server.extension.serverextension import (
     validate_server_extension,
-    toggle_server_extension_python, 
+    toggle_server_extension_python,
     _get_config_dir
 )
 from jupyter_server.config_manager import BaseJSONConfigManager
@@ -49,8 +49,8 @@ def test_disable(inject_mock_extension):
 
 
 def test_merge_config(
-    env_config_path, 
-    inject_mock_extension, 
+    env_config_path,
+    inject_mock_extension,
     configurable_serverapp
     ):
     # enabled at sys level
@@ -79,7 +79,7 @@ def test_merge_config(
 
     # Enable the last extension, mockext_py, using the CLI interface.
     app = configurable_serverapp(
-        config_dir=str(env_config_path), 
+        config_dir=str(env_config_path),
         argv=['--ServerApp.jpserver_extensions={"mockext_py":True}']
     )
     # Verify that extensions are enabled and merged properly.

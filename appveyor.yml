@@ -21,7 +21,7 @@ environment:
 platform:
   - x64
 
-build: off
+build: false
 
 install:
   - cmd: call %CONDA_INSTALL_LOCN%\Scripts\activate.bat
@@ -31,11 +31,9 @@ install:
   - cmd: conda config --add channels conda-forge
   - cmd: conda update --yes --quiet conda
   - cmd: conda info -a
-  - cmd: conda create -y -q -n test-env-%CONDA_PY% python=%CONDA_PY_SPEC% pyzmq tornado jupyter_client nbformat nbconvert ipykernel pip nose
+  - cmd: conda create -y -q -n test-env-%CONDA_PY% python=%CONDA_PY_SPEC% pip pyzmq tornado jupyter_client nbformat nbconvert nose
   - cmd: conda activate test-env-%CONDA_PY%
-  - cmd: pip install .[test]
-# FIXME: Use patch for python 3.8, windows issues (https://github.com/ipython/ipykernel/pull/456) - remove once released
-  - IF %CONDA_PY% == 38 pip install --upgrade git+https://github.com/ipython/ipykernel.git
+  - cmd: pip install -e .[test]
 
 test_script:
-  - pytest
+  - pytest -s -v

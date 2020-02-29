@@ -14,7 +14,7 @@ Writing a frontend application
 Jupyter Server provides two key classes for writing a server frontend: 
 
     - ``ExtensionApp``
-    - ``ExtensionHandler``
+    - ``ExtensionHandlerMixin``
 
 The ExtensionApp:
 
@@ -81,13 +81,13 @@ Properties
 Writing frontend handlers
 -------------------------
 
-To write handlers for an ``ExtensionApp``, use the ``ExtensionHandler`` class. This class routes Tornado's ``static_url`` attribute to the ``/static/<extension_name>/`` namespace where your frontend's static files will be served.
+To write handlers for an ``ExtensionApp``, use the ``ExtensionHandlerMixin`` class. This class routes Tornado's ``static_url`` attribute to the ``/static/<extension_name>/`` namespace where your frontend's static files will be served.
 
 .. code-block:: python
 
-    from jupyter_server.extension import ExtensionHandler
+    from jupyter_server.extension import ExtensionHandlerMixin
 
-    class MyFrontendHandler(ExtensionHandler):
+    class MyFrontendHandler(ExtensionHandlerMixin, JupyterHandler):
 
         urls = ['/myfrontend/hello']
 
@@ -97,7 +97,7 @@ To write handlers for an ``ExtensionApp``, use the ``ExtensionHandler`` class. T
         def post(self):
             ...
 
-ExtensionHandler comes with the following properties:
+ExtensionHandlerMixin comes with the following properties:
 
 * ``config``: the ExtensionApp's config object.
 * ``server_config``: the ServerApp's config object.

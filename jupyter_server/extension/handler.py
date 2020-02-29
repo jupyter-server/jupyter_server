@@ -1,4 +1,4 @@
-from jupyter_server.base.handlers import JupyterHandler, FileFindHandler
+from jupyter_server.base.handlers import FileFindHandler
 from traitlets import Unicode, default
 
 
@@ -12,7 +12,7 @@ class ExtensionHandlerJinjaMixin:
         return self.settings[env].get_template(name)
 
 
-class ExtensionHandler(JupyterHandler):
+class ExtensionHandlerMixin():
     """Base class for Jupyter server extension handlers. 
 
     Subclasses can serve static files behind a namespaced 
