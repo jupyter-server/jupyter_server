@@ -767,8 +767,8 @@ class ServerApp(JupyterApp):
 
     max_body_size = Integer(512 * 1024 * 1024, config=True,
         help="""
-        Sets the maximum allowed size of the client request body, specified in 
-        the Content-Length request header field. If the size in a request 
+        Sets the maximum allowed size of the client request body, specified in
+        the Content-Length request header field. If the size in a request
         exceeds the configured value, a malformed HTTP message is returned to
         the client.
 
@@ -778,7 +778,7 @@ class ServerApp(JupyterApp):
 
     max_buffer_size = Integer(512 * 1024 * 1024, config=True,
         help="""
-        Gets or sets the maximum amount of memory, in bytes, that is allocated 
+        Gets or sets the maximum amount of memory, in bytes, that is allocated
         for use by the buffer manager.
         """
     )
@@ -1313,7 +1313,8 @@ class ServerApp(JupyterApp):
             self.ssl_options['keyfile'] = self.keyfile
         if self.client_ca:
             self.ssl_options['ca_certs'] = self.client_ca
-        if len(self.ssl_options) == 0:
+        if not self.ssl_options:
+            # could be an empty dict or None
             # None indicates no SSL config
             self.ssl_options = None
         else:
@@ -1353,7 +1354,7 @@ class ServerApp(JupyterApp):
             self.get_url(ip=ip, path=path, token=token)
             + '\n or '
             + self.get_url(ip='127.0.0.1', path=path, token=token)
-        )    
+        )
         return url
 
     @property
@@ -1466,7 +1467,7 @@ class ServerApp(JupyterApp):
         """Consolidate server extensions specified by all configs.
 
         The resulting list is stored on self.jpserver_extensions and updates config object.
-        
+
         The extension API is experimental, and may change in future releases.
         """
         # Load server extensions with ConfigManager.
@@ -1491,7 +1492,7 @@ class ServerApp(JupyterApp):
 
         Import the module, then call the load_jupyter_server_extension function,
         if one exists.
-        
+
         The extension API is experimental, and may change in future releases.
         """
         # Initialize extensions
@@ -1570,16 +1571,16 @@ class ServerApp(JupyterApp):
 
     def init_httpserver(self):
         """Creates an instance of a Tornado HTTPServer for the Server Web Application
-        and sets the http_server attribute.        
+        and sets the http_server attribute.
         """
         # Check that a web_app has been initialized before starting a server.
         if not hasattr(self, 'web_app'):
             raise AttributeError('A tornado web application has not be initialized. '
                                  'Try calling `.init_webapp()` first.')
-            
+
         # Create an instance of the server.
         self._http_server = httpserver.HTTPServer(
-            self.web_app, 
+            self.web_app,
             ssl_options=self.ssl_options,
             xheaders=self.trust_xheaders,
             max_body_size=self.max_body_size,
@@ -1643,11 +1644,11 @@ class ServerApp(JupyterApp):
         ----------
         argv: list or None
             CLI arguments to parse.
-        
+
         load_extensions: bool
             If True, the server will load server extensions listed in the jpserver_extension trait.
             Otherwise, no server extensions will be loaded.
-        
+
         new_httpserver: bool
             If True, a tornado HTTPServer instance will be created and configured for the Server Web
             Application. This will set the http_server attribute of this class.
