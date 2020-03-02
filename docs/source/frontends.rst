@@ -28,7 +28,7 @@ To create a new Jupyter frontend application, subclass the ``ExtensionApp`` like
 
 .. code-block:: python
 
-    from jupyter_server.extension import ExtensionApp
+    from jupyter_server.extension.application import ExtensionApp
 
 
     class MyFrontend(ExtensionApp):
@@ -85,7 +85,7 @@ To write handlers for an ``ExtensionApp``, use the ``ExtensionHandler`` class. T
 
 .. code-block:: python
 
-    from jupyter_server.extension import ExtensionHandler
+    from jupyter_server.extension.handler import ExtensionHandler
 
     class MyFrontendHandler(ExtensionHandler):
 
