@@ -11,7 +11,7 @@ Jupyter Server does not come with a frontend out-of-the-box; instead, a frontend
 Writing a frontend application
 ------------------------------
 
-Jupyter Server provides two key classes for writing a server frontend: 
+Jupyter Server provides two key classes for writing a server frontend:
 
     - ``ExtensionApp``
     - ``ExtensionHandlerMixin``
@@ -28,7 +28,7 @@ To create a new Jupyter frontend application, subclass the ``ExtensionApp`` like
 
 .. code-block:: python
 
-    from jupyter_server.extension import ExtensionApp
+    from jupyter_server.extension.application import ExtensionApp
 
 
     class MyFrontend(ExtensionApp):
@@ -38,7 +38,7 @@ To create a new Jupyter frontend application, subclass the ``ExtensionApp`` like
         default_url = 'myfrontend'
         load_other_extensions = True
 
-        # --- ExtensionApp traits you can configure --- 
+        # --- ExtensionApp traits you can configure ---
         static_paths = [...]
         template_paths = [...]
         settings = {...}
@@ -61,7 +61,7 @@ To create a new Jupyter frontend application, subclass the ``ExtensionApp`` like
         def initialize_templates(self):
             ...
             # Change the jinja templating environment
-            self.settings.update({'myfrontend_jinja2_env': ...}) 
+            self.settings.update({'myfrontend_jinja2_env': ...})
 
 The ``ExtensionApp`` uses the following methods and properties to connect your frontend to the Jupyter server. Overwrite these pieces to add your custom settings, handlers and templates:
 
@@ -85,7 +85,7 @@ To write handlers for an ``ExtensionApp``, use the ``ExtensionHandlerMixin`` cla
 
 .. code-block:: python
 
-    from jupyter_server.extension import ExtensionHandlerMixin
+    from jupyter_server.extension.handler import ExtensionHandlerMixin
 
     class MyFrontendHandler(ExtensionHandlerMixin, JupyterHandler):
 
@@ -121,7 +121,7 @@ To make your frontend executable from anywhere on your system, added this method
 
     from setuptools import setup
 
-    
+
     setup(
         name='myfrontend',
         ...
