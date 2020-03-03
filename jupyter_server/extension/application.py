@@ -91,7 +91,6 @@ class ExtensionAppJinjaMixin:
 
     jinja2_options = Dict(
         help=_("""Options to pass to the jinja2 environment for this
-        extension.
         """)
     ).tag(config=True)
 
@@ -283,6 +282,7 @@ class ExtensionApp(JupyterApp):
         """Builds a Config object from the extension's traits and passes
         the object to the webapp's settings as `<extension_name>_config`.
         """
+        # Verify all traits are up-to-date with config
         self.update_config(self.config)
         traits = self.class_own_traits().keys()
         self.extension_config = Config({t: getattr(self, t) for t in traits})
@@ -382,6 +382,7 @@ class ExtensionApp(JupyterApp):
         # If argv is given, parse and update config.
         if argv:
             self.parse_command_line(argv)
+
         # Load config from file.
         self.load_config_file()
 
@@ -421,7 +422,7 @@ class ExtensionApp(JupyterApp):
         """
         # Configure and initialize extension.
         extension = cls(parent=serverapp)
-        extension.initialize(serverapp)
+        extension.initialize(serverapp=serverapp)
         return extension
 
     @classmethod

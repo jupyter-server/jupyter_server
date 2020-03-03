@@ -47,7 +47,7 @@ def mkdir(tmp_path, *parts):
     return path
 
 
-config = pytest.fixture(lambda: {})
+server_config = pytest.fixture(lambda: {})
 home_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "home"))
 data_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "data"))
 config_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "config"))
@@ -111,10 +111,10 @@ def extension_environ(env_config_path, monkeypatch):
 
 @pytest.fixture
 def configurable_serverapp(
-    environ, http_port, tmp_path, home_dir, data_dir, config_dir, runtime_dir, root_dir, io_loop
+    environ, http_port, tmp_path, home_dir, data_dir, config_dir, runtime_dir, root_dir, io_loop, server_config, **kwargs
 ):
     def serverapp(
-        config={},
+        config=server_config,
         argv=[],
         environ=environ,
         http_port=http_port,
@@ -160,8 +160,8 @@ def configurable_serverapp(
 
 
 @pytest.fixture
-def serverapp(configurable_serverapp, config, argv):
-    app = configurable_serverapp(config=config, argv=argv)
+def serverapp(configurable_serverapp, server_config, argv):
+    app = configurable_serverapp(config=server_config, argv=argv)
     yield app
     app.remove_server_info_file()
     app.remove_browser_open_file()
