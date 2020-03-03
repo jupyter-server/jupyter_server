@@ -136,4 +136,4 @@ Examples
 --------
 
 You can check some simple example on the `GitHub jupyter_server repository
-<https://github.com/jupyter/jupyter_server/tree/master/jupyter_server/example/simple>`_.
+<https://github.com/jupyter/jupyter_server/tree/master/examples/simple>`_.
