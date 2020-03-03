@@ -3,7 +3,7 @@ from traitlets.config import Config
 
 
 @pytest.fixture
-def config():
+def server_config():
     return Config({
         'ServerApp': {
             'MappingKernelManager': {
