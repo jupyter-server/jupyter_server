@@ -1,10 +1,13 @@
 import sys
 import re
 
+from jinja2 import Environment, FileSystemLoader
+
 from traitlets import (
     Unicode, 
     List, 
-    Dict, 
+    Dict,
+    Bool,
     default, 
     validate
 )
@@ -15,7 +18,7 @@ from jupyter_core.application import JupyterApp
 from jupyter_server.serverapp import ServerApp, aliases, flags
 from jupyter_server.transutils import _
 from jupyter_server.utils import url_path_join
-from .handler import ExtensionHandler
+from .handler import ExtensionHandlerMixin
 
 # Remove alias for nested classes in ServerApp.
 # Nested classes are not allowed in ExtensionApp.
@@ -24,6 +27,9 @@ try:
 except KeyError:
     pass
 
+#-----------------------------------------------------------------------------
+# Util functions and classes.
+#-----------------------------------------------------------------------------
 
 def _preparse_for_subcommand(Application, argv):
     """Preparse command line to look for subcommands.
@@ -80,6 +86,53 @@ def _preparse_for_stopping_flags(Application, argv):
         app.exit(0)
 
 
+class ExtensionAppJinjaMixin:
+    """Use Jinja templates for HTML templates on top of an ExtensionApp."""
+    
+    jinja2_options = Dict(
+        help=_("""Options to pass to the jinja2 environment for this
+        extension.
+        """)
+    ).tag(config=True)
+
+    def _prepare_templates(self):
+        # Add templates to web app settings if extension has templates.
+        if len(self.template_paths) > 0:
+            self.settings.update({
+                "{}_template_paths".format(self.extension_name): self.template_paths
+            })
+
+        # Create a jinja environment for logging html templates.
+        self.jinja2_env = Environment(
+            loader=FileSystemLoader(self.template_paths), 
+            extensions=['jinja2.ext.i18n'],
+            autoescape=True,
+            **self.jinja2_options
+        )
+
+        # Get templates defined in a subclass.
+        self.initialize_templates()
+
+        # Add the jinja2 environment for this extension to the tornado settings.
+        self.settings.update(
+            {
+                "{}_jinja2_env".format(self.extension_name): self.jinja2_env 
+            }
+        )
+
+#-----------------------------------------------------------------------------
+# Aliases and Flags
+#-----------------------------------------------------------------------------
+
+flags['no-browser']=(
+    {'ExtensionApp' : {'open_browser' : True}},
+    _("Prevent the opening of the default url in the browser.")
+)
+
+#-----------------------------------------------------------------------------
+# ExtensionApp
+#-----------------------------------------------------------------------------
+
 class ExtensionApp(JupyterApp):
     """Base class for configurable Jupyter Server Extension Applications.
 
@@ -91,16 +144,18 @@ class ExtensionApp(JupyterApp):
         class method. This method can be set as a entry_point in 
         the extensions setup.py
     """
+    # Subclasses should override this trait. Tells the server if
+    # this extension allows other other extensions to be loaded
+    # side-by-side when launched directly.
     load_other_extensions = True
 
     # Name of the extension
     extension_name = Unicode(
-        "",
         help="Name of extension."
     )
 
-    @default("extension_name")
-    def _default_extension_name(self):
+    @default('extension_name')
+    def _extension_name_default(self):
         try:
             return self.name
         except AttributeError:
@@ -108,8 +163,9 @@ class ExtensionApp(JupyterApp):
 
     INVALID_EXTENSION_NAME_CHARS = [' ', '.', '+', '/']
 
-    def _validate_extension_name(self):
-        value = self.extension_name
+    @validate('extension_name')
+    def _validate_extension_name(self, proposal):
+        value = proposal['value']
         if isinstance(value, str):
             # Validate that extension_name doesn't contain any invalid characters.
             for c in ExtensionApp.INVALID_EXTENSION_NAME_CHARS:
@@ -157,8 +213,29 @@ class ExtensionApp(JupyterApp):
         help=_("""Handlers appended to the server.""")
     ).tag(config=True)
 
+    def _config_dir_default(self):
+        """Point the config directory at the server's config_dir by default."""
+        try:
+            return self.serverapp.config_dir
+        except AttributeError:
+            raise AttributeError(
+                "The ExtensionApp has not ServerApp "
+                "initialized. Try `.initialize_server()`."
+            )
+
+    def _config_file_name_default(self):
+        """The default config file name."""
+        if not self.extension_name:
+            return ''
+        return 'jupyter_{}_config'.format(self.extension_name.replace('-','_'))
+
     default_url = Unicode('/', config=True,
         help=_("The default URL to redirect to from `/`")
+    )
+
+    open_browser = Bool(
+        True,
+        help=_("Should the extension open a browser window?")
     )
 
     custom_display_url = Unicode(u'', config=True,
@@ -244,7 +321,7 @@ class ExtensionApp(JupyterApp):
             
             # Get handler kwargs, if given
             kwargs = {}
-            if issubclass(handler, ExtensionHandler):
+            if issubclass(handler, ExtensionHandlerMixin):
                 kwargs['extension_name'] = self.extension_name
             try: 
                 kwargs.update(handler_items[2])
@@ -298,10 +375,11 @@ class ExtensionApp(JupyterApp):
         - Passes settings to webapp
         - Appends handlers to webapp.
         """
-        self._validate_extension_name()
+        # Initialize ServerApp.
+        self.serverapp = serverapp
+        
         # Initialize the extension application
         super(ExtensionApp, self).initialize(argv=argv)
-        self.serverapp = serverapp
 
         # Initialize config, settings, templates, and handlers.
         self._prepare_config()
@@ -319,7 +397,7 @@ class ExtensionApp(JupyterApp):
         # Override the server's display url to show extension's display URL.
         self.serverapp.custom_display_url = self.custom_display_url
         # Override the server's default option and open a broswer window.
-        self.serverapp.open_browser = True
+        self.serverapp.open_browser = self.open_browser
         # Hijack the server's browser-open file to land on
         # the extensions home page.
         self.serverapp._write_browser_open_file = self._write_browser_open_file
@@ -341,7 +419,6 @@ class ExtensionApp(JupyterApp):
         extension = cls()
         extension.initialize(serverapp, argv=argv)
         return extension
-
 
     @classmethod
     def launch_instance(cls, argv=None, **kwargs):
@@ -378,4 +455,3 @@ class ExtensionApp(JupyterApp):
             extension = cls.load_jupyter_server_extension(serverapp, argv=args, **kwargs)
             # Start the ioloop.
             extension.start()
-

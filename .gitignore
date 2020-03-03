@@ -33,6 +33,7 @@ src
 *.swp
 *.map
 .idea/
+.vscode/
 Read the Docs
 config.rst
 
@@ -41,3 +42,4 @@ config.rst
 
 package-lock.json
 geckodriver.log
+yarn.lock

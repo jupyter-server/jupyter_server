@@ -19,8 +19,8 @@ import sys
 name = "jupyter_server"
 
 # Minimal Python version sanity check
-if sys.version_info < (3,6):
-    error = "ERROR: %s requires Python version 3.6 or above." % name
+if sys.version_info < (3,5):
+    error = "ERROR: %s requires Python version 3.5 or above." % name
     print(error, file=sys.stderr)
     sys.exit(1)
 
@@ -67,6 +67,7 @@ for more information.
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
@@ -82,7 +83,7 @@ for more information.
         'jupyter_core>=4.4.0',
         'jupyter_client>=5.3.1',
         'nbformat',
-        'nbconvert',
+        'nbconvert<6',
         'ipykernel', # bless IPython kernel for now
         'Send2Trash',
         'terminado>=0.8.1',
@@ -91,15 +92,17 @@ for more information.
     ],
     extras_require = {
         'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
-                 'nbval', 'nose-exclude', 'selenium', 'pytest', 'pytest-cov'],
+                 'pytest==5.3.2', 'pytest-cov', 'pytest-tornasync', 'pytest-console-scripts'],
         'test:sys_platform == "win32"': ['nose-exclude'],
     },
-    python_requires = '>=3.6',
+    python_requires = '>=3.5',
     entry_points = {
         'console_scripts': [
             'jupyter-server = jupyter_server.serverapp:main',
-            'jupyter-extension = jupyter_server.extensions:main',
             'jupyter-bundlerextension = jupyter_server.bundler.bundlerextensions:main',
+        ],
+        'pytest11': [
+            'pytest_jupyter_server = jupyter_server.pytest_plugin'
         ]
     },
 )

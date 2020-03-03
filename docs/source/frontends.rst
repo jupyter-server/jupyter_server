@@ -11,10 +11,10 @@ Jupyter Server does not come with a frontend out-of-the-box; instead, a frontend
 Writing a frontend application
 ------------------------------
 
-Jupyter Server provides two key classes for writing a server frontend: 
+Jupyter Server provides two key classes for writing a server frontend:
 
     - ``ExtensionApp``
-    - ``ExtensionHandler``
+    - ``ExtensionHandlerMixin``
 
 The ExtensionApp:
 
@@ -28,7 +28,7 @@ To create a new Jupyter frontend application, subclass the ``ExtensionApp`` like
 
 .. code-block:: python
 
-    from jupyter_server.extension import ExtensionApp
+    from jupyter_server.extension.application import ExtensionApp
 
 
     class MyFrontend(ExtensionApp):
@@ -38,7 +38,7 @@ To create a new Jupyter frontend application, subclass the ``ExtensionApp`` like
         default_url = 'myfrontend'
         load_other_extensions = True
 
-        # --- ExtensionApp traits you can configure --- 
+        # --- ExtensionApp traits you can configure ---
         static_paths = [...]
         template_paths = [...]
         settings = {...}
@@ -61,7 +61,7 @@ To create a new Jupyter frontend application, subclass the ``ExtensionApp`` like
         def initialize_templates(self):
             ...
             # Change the jinja templating environment
-            self.settings.update({'myfrontend_jinja2_env': ...}) 
+            self.settings.update({'myfrontend_jinja2_env': ...})
 
 The ``ExtensionApp`` uses the following methods and properties to connect your frontend to the Jupyter server. Overwrite these pieces to add your custom settings, handlers and templates:
 
@@ -81,13 +81,13 @@ Properties
 Writing frontend handlers
 -------------------------
 
-To write handlers for an ``ExtensionApp``, use the ``ExtensionHandler`` class. This class routes Tornado's ``static_url`` attribute to the ``/static/<extension_name>/`` namespace where your frontend's static files will be served.
+To write handlers for an ``ExtensionApp``, use the ``ExtensionHandlerMixin`` class. This class routes Tornado's ``static_url`` attribute to the ``/static/<extension_name>/`` namespace where your frontend's static files will be served.
 
 .. code-block:: python
 
-    from jupyter_server.extension import ExtensionHandler
+    from jupyter_server.extension.handler import ExtensionHandlerMixin
 
-    class MyFrontendHandler(ExtensionHandler):
+    class MyFrontendHandler(ExtensionHandlerMixin, JupyterHandler):
 
         urls = ['/myfrontend/hello']
 
@@ -97,7 +97,7 @@ To write handlers for an ``ExtensionApp``, use the ``ExtensionHandler`` class. T
         def post(self):
             ...
 
-ExtensionHandler comes with the following properties:
+ExtensionHandlerMixin comes with the following properties:
 
 * ``config``: the ExtensionApp's config object.
 * ``server_config``: the ServerApp's config object.
@@ -121,7 +121,7 @@ To make your frontend executable from anywhere on your system, added this method
 
     from setuptools import setup
 
-    
+
     setup(
         name='myfrontend',
         ...
@@ -131,3 +131,9 @@ To make your frontend executable from anywhere on your system, added this method
             ]
         }
     )
+
+Examples
+--------
+
+You can check some simple example on the `GitHub jupyter_server repository
+<https://github.com/jupyter/jupyter_server/tree/master/examples/simple>`_.

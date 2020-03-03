@@ -441,14 +441,19 @@ paths:
       tags:
         - kernels
       parameters:
-        - name: name
+        - name: options
           in: body
-          description: Kernel spec name (defaults to default kernel spec for server)
           schema:
             type: object
+            required:
+              - name
             properties:
               name:
                 type: string
+                description: Kernel spec name (defaults to default kernel spec for server)
+              path:
+                type: string
+                description: API path from root to the cwd of the kernel
       responses:
         201:
           description: Kernel started
