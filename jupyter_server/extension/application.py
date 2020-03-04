@@ -178,7 +178,7 @@ class ExtensionApp(JupyterApp):
     @classmethod
     def _jupyter_server_extension_paths(cls):
         return [{
-            "module": cls.__module__.split('.')[0],
+            "module": cls.extension_name,
             "app": cls
         }]
 
@@ -358,8 +358,7 @@ class ExtensionApp(JupyterApp):
         # Get a jupyter server instance
         serverapp = ServerApp.instance(**kwargs)
         # Add extension to jpserver_extensions trait in server.
-        mod = cls._jupyter_server_extension_paths()[0]['module']
-        serverapp.jpserver_extensions.update({mod: True})
+        serverapp.jpserver_extensions.update({cls.extension_name: True})
         # Initialize ServerApp config.
         # Parses the command line looking for
         # ServerApp configuration.

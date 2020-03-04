@@ -35,10 +35,11 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         self.handlers.append(('/mock_template', MockExtensionTemplateHandler))
         self.loaded = True
 
-    @staticmethod
-    def _jupyter_server_extension_paths():
+    @classmethod
+    def _jupyter_server_extension_paths(cls):
         return [{
-            'module': '_mockdestination/index'
+            'module': '_mockdestination/index',
+            'app': cls
         }]
 
 @pytest.fixture

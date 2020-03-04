@@ -1322,6 +1322,7 @@ class ServerApp(JupyterApp):
             self.ssl_options['ca_certs'] = self.client_ca
         if not self.ssl_options:
             # could be an empty dict or None
+            # None indicates no SSL config
             self.ssl_options = None
         else:
             # SSL may be missing, so only import it if it's to be used
@@ -1497,24 +1498,27 @@ class ServerApp(JupyterApp):
         # Load configuration from ExtensionApp's they affect
         # the ServerApp class.
         for modulename in sorted(self.jpserver_extensions):
-            _, metadata = _get_server_extension_metadata(modulename)
-            app_obj = metadata[0].get('app', None)
-            if app_obj:
-                if not issubclass(app_obj, JupyterApp):
-                    raise TypeError(abb_obj.__name__ + " must be a subclass of JupyterApp.")
-                # Initialize extension app
-                app = app_obj(parent=self)
-                # Update the app's config, setting
-                # any traits given by the serverapp's
-                # parsed command line args.
-                app.update_config(app.config)
-                # Load any config from an extension's
-                # config file and make update the
-                # app's config again.
-                app.load_config_file()
-                # Pass any relevant config to the
-                # serverapp's (parent) config.
-                self.update_config(app.config)
+            # Get extension metadata from jupyter extension paths.
+            _, metadata_list = _get_server_extension_metadata(modulename)
+            # If this extension is an ExtensionApp, load it's config.
+            for metadata in metadata_list:
+                app_obj = metadata.get('app', None)
+                if app_obj:
+                    if not issubclass(app_obj, JupyterApp):
+                        raise TypeError(abb_obj.__name__ + " must be a subclass of JupyterApp.")
+                    # Initialize extension app
+                    app = app_obj(parent=self)
+                    # Update the app's config, setting
+                    # any traits given by the serverapp's
+                    # parsed command line args.
+                    app.update_config(app.config)
+                    # Load any config from an extension's
+                    # config file and make update the
+                    # app's config again.
+                    app.load_config_file()
+                    # Pass any relevant config to the
+                    # serverapp's (parent) config.
+                    self.update_config(app.config)
 
     def init_server_extensions(self):
         """Load any extensions specified by config.
@@ -1525,22 +1529,56 @@ class ServerApp(JupyterApp):
         The extension API is experimental, and may change in future releases.
         """
         # Initialize extensions
-        for modulename, enabled in sorted(self.jpserver_extensions.items()):
+        for module_name, enabled in sorted(self.jpserver_extensions.items()):
             if enabled:
+                # Look for extensions on jupyter_server_extension_paths
                 try:
-                    mod = importlib.import_module(modulename)
-                    func = getattr(mod, 'load_jupyter_server_extension', None)
-                    if func is not None:
-                        func(self)
-                        # Add debug log for loaded extensions.
-                        self.log.debug("%s is enabled and loaded." % modulename)
-                    else:
-                        self.log.warning("%s is enabled but no `load_jupyter_server_extension` function was found" % modulename)
-                except Exception:
+                    mod, metadata_list = _get_server_extension_metadata(module_name)
+                except KeyError:
+                    log_msg = _(
+                        "Error loading server extension "
+                        "{module_name}. There is no `_jupyter_server_extension_path` "
+                        "defined at the root of the extension module. Check "
+                        "with the author of the extension to ensure this function "
+                        "is added.".format(module_name=module_name)
+                    )
+                    self.log.warning(log_msg)
+                except:
                     if self.reraise_server_extension_failures:
                         raise
-                    self.log.warning(_("Error loading server extension %s"), modulename,
+                    self.log.warning(_("Error loading server extension %s"), module_name,
                                   exc_info=True)
+
+                for metadata in metadata_list:
+                    # Check if this server extension is a ExtensionApp object.
+                    extapp = metadata.get('app', None)
+                    extmod = metadata.get('module', None)
+                    # Load the extension module.
+                    if extapp:
+                        extapp.load_jupyter_server_extension(self)
+                        log_msg = (
+                            "{module_name} is enabled and "
+                            "loaded".format(module_name=module_name)
+                        )
+                        self.log.debug(log_msg)
+                    elif extmod:
+                        func = getattr(extmod, 'load_jupyter_server_extension', None)
+                        if func is not None:
+                            func(self)
+                            # Add debug log for loaded extensions.
+                            log_msg = _(
+                                "{module_name} is enabled and "
+                                "loaded".format(module_name=module_name)
+                            )
+                            self.log.debug(log_msg)
+                        else:
+                            log_msg = _(
+                                "{module_name} is enabled but no "
+                                "`load_jupyter_server_extension` function "
+                                "was found.".format(module_name=module_name)
+                            )
+                            self.log.warning(log_msg)
+
 
     def init_mime_overrides(self):
         # On some Windows machines, an application has registered incorrect
