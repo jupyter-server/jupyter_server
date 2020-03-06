@@ -274,6 +274,7 @@ class ServerWebApplication(web.Application):
             server_root_dir=root_dir,
             jinja2_env=env,
             terminals_available=False,  # Set later if terminals are available
+            serverapp=self
         )
 
         # allow custom overrides for the tornado web app.
@@ -1531,10 +1532,13 @@ class ServerApp(JupyterApp):
         # Initialize extensions
         for module_name, enabled in sorted(self.jpserver_extensions.items()):
             if enabled:
-                # Look for extensions on jupyter_server_extension_paths
+                # Search for server extensions by loading each extension module
+                # and looking for the `_jupyter_server_extension_paths` function.
                 try:
                     mod, metadata_list = _get_server_extension_metadata(module_name)
                 except KeyError:
+                    # A KeyError suggests that the module does not have a
+                    # _jupyter_server_extension-path.
                     log_msg = _(
                         "Error loading server extension "
                         "{module_name}. There is no `_jupyter_server_extension_path` "
@@ -1548,6 +1552,7 @@ class ServerApp(JupyterApp):
                         raise
                     self.log.warning(_("Error loading server extension %s"), module_name,
                                   exc_info=True)
+
 
                 for metadata in metadata_list:
                     # Check if this server extension is a ExtensionApp object.

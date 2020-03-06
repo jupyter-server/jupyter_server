@@ -3,27 +3,37 @@ from traitlets import Unicode, default
 
 
 class ExtensionHandlerJinjaMixin:
-    """Mixin class for ExtensionApp handlers that use jinja templating for 
+    """Mixin class for ExtensionApp handlers that use jinja templating for
     template rendering.
     """
-    def get_template(self, name):
+    def get_template(self, name, *ns):
         """Return the jinja template object for a given name"""
         env = '{}_jinja2_env'.format(self.extension_name)
-        return self.settings[env].get_template(name)
+        return self.settings[env].get_template(name, *ns)
 
 
-class ExtensionHandlerMixin():
-    """Base class for Jupyter server extension handlers. 
+class ExtensionHandlerMixin:
+    """Base class for Jupyter server extension handlers.
 
-    Subclasses can serve static files behind a namespaced 
-    endpoint: "/static/<extension_name>/" 
+    Subclasses can serve static files behind a namespaced
+    endpoint: "/static/<extension_name>/"
 
     This allows multiple extensions to serve static files under
-    their own namespace and avoid intercepting requests for 
-    other extensions. 
+    their own namespace and avoid intercepting requests for
+    other extensions.
     """
     def initialize(self, extension_name):
         self.extension_name = extension_name
+
+    @property
+    def extensionapp(self):
+        key = "{extension_name}".format(extension_name=self.extension_name)
+        return self.settings[key]
+
+    @property
+    def serverapp(self):
+        key = "serverapp"
+        return self.settings[key]
 
     @property
     def config(self):
@@ -44,8 +54,8 @@ class ExtensionHandlerMixin():
 
     def static_url(self, path, include_host=None, **kwargs):
         """Returns a static URL for the given relative static file path.
-        This method requires you set the ``{extension_name}_static_path`` 
-        setting in your extension (which specifies the root directory 
+        This method requires you set the ``{extension_name}_static_path``
+        setting in your extension (which specifies the root directory
         of your static files).
         This method returns a versioned url (by default appending
         ``?v=<signature>``), which allows the static files to be

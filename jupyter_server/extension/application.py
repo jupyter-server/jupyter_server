@@ -95,6 +95,9 @@ class ExtensionAppJinjaMixin:
     ).tag(config=True)
 
     def _prepare_templates(self):
+        # Get templates defined in a subclass.
+        self.initialize_templates()
+
         # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
             self.settings.update({
@@ -109,8 +112,6 @@ class ExtensionAppJinjaMixin:
             **self.jinja2_options
         )
 
-        # Get templates defined in a subclass.
-        self.initialize_templates()
 
         # Add the jinja2 environment for this extension to the tornado settings.
         self.settings.update(
@@ -174,13 +175,6 @@ class ExtensionApp(JupyterApp):
                                      format(name=value, invalid_chars=ExtensionApp.INVALID_EXTENSION_NAME_CHARS))
             return value
         raise ValueError("Extension name must be a string, found {type}.".format(type=type(value)))
-
-    @classmethod
-    def _jupyter_server_extension_paths(cls):
-        return [{
-            "module": cls.extension_name,
-            "app": cls
-        }]
 
     # Extension can configure the ServerApp from the command-line
     classes = [
@@ -296,6 +290,7 @@ class ExtensionApp(JupyterApp):
         # Add static and template paths to settings.
         self.settings.update({
             "{}_static_paths".format(self.extension_name): self.static_paths,
+            "{}".format(self.extension_name): self
         })
 
         # Get setting defined by subclass using initialize_settings method.
