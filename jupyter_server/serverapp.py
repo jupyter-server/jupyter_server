@@ -1819,7 +1819,7 @@ class ServerApp(JupyterApp):
         self.write_server_info_file()
         self.write_browser_open_file()
 
-        if self.open_browser or self.file_to_run:
+        if self.open_browser:
             self.launch_browser()
 
         if self.token and self._token_generated:
