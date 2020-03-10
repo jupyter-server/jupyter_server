@@ -6,10 +6,10 @@ class ExtensionHandlerJinjaMixin:
     """Mixin class for ExtensionApp handlers that use jinja templating for
     template rendering.
     """
-    def get_template(self, name, *ns):
+    def get_template(self, name):
         """Return the jinja template object for a given name"""
         env = '{}_jinja2_env'.format(self.extension_name)
-        return self.settings[env].get_template(name, *ns)
+        return self.settings[env].get_template(name)
 
 
 class ExtensionHandlerMixin:
