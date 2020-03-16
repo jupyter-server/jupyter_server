@@ -414,8 +414,8 @@ class ExtensionApp(JupyterApp):
         """Initialize and configure this extension, then add the extension's
         settings and handlers to the server's web application.
         """
-        # Configure and initialize extension.
-        extension = cls(parent=serverapp)
+        # Get loaded extension from serverapp.
+        extension = serverapp.enabled_extensions[cls.extension_name]
         extension.initialize(serverapp=serverapp)
         return extension
 

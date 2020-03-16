@@ -13,13 +13,42 @@ from traitlets.utils.importstring import import_item
 
 from jupyter_core.application import JupyterApp
 from jupyter_core.paths import (
-    jupyter_config_dir, 
-    jupyter_config_path, 
-    ENV_CONFIG_PATH, 
+    jupyter_config_dir,
+    jupyter_config_path,
+    ENV_CONFIG_PATH,
     SYSTEM_CONFIG_PATH
 )
 from jupyter_server._version import __version__
 from jupyter_server.config_manager import BaseJSONConfigManager
+
+
+def _get_server_extension_metadata(module):
+    """Load server extension metadata from a module.
+
+    Returns a tuple of (
+        the package as loaded
+        a list of server extension specs: [
+            {
+                "module": "mockextension"
+            }
+        ]
+    )
+
+    Parameters
+    ----------
+
+    module : str
+        Importable Python module exposing the
+        magic-named `_jupyter_server_extension_paths` function
+    """
+
+
+
+
+    m = import_item(module)
+    if not hasattr(m, '_jupyter_server_extension_paths'):
+        raise KeyError(u'The Python module {} does not include any valid server extensions'.format(module))
+    return m, m._jupyter_server_extension_paths()
 
 
 class ArgumentConflict(ValueError):
@@ -113,7 +142,7 @@ class ExtensionValidationError(Exception): pass
 
 
 def validate_server_extension(import_name):
-    """Tries to import the extension module. 
+    """Tries to import the extension module.
     Raises a validation error if module is not found.
     """
     try:
@@ -184,7 +213,7 @@ class ToggleServerExtensionApp(BaseExtensionApp):
     """A base class for enabling/disabling extensions"""
     name = "jupyter server extension enable/disable"
     description = "Enable/disable a server extension using frontend configuration files."
-    
+
     flags = flags
 
     user = Bool(False, config=True, help="Whether to do a user install")
@@ -193,7 +222,7 @@ class ToggleServerExtensionApp(BaseExtensionApp):
     _toggle_value = Bool()
     _toggle_pre_message = ''
     _toggle_post_message = ''
-    
+
     def toggle_server_extension(self, import_name):
         """Change the status of a named server extension.
 
@@ -214,9 +243,9 @@ class ToggleServerExtensionApp(BaseExtensionApp):
 
             # Toggle the server extension to active.
             toggle_server_extension_python(
-                import_name, 
-                self._toggle_value, 
-                parent=self, 
+                import_name,
+                self._toggle_value,
+                parent=self,
                 user=self.user,
                 sys_prefix=self.sys_prefix
             )
@@ -260,7 +289,7 @@ class EnableServerExtensionApp(ToggleServerExtensionApp):
     name = "jupyter server extension enable"
     description = """
     Enable a server extension in configuration.
-    
+
     Usage
         jupyter server extension enable [--system|--sys-prefix]
     """
@@ -274,7 +303,7 @@ class DisableServerExtensionApp(ToggleServerExtensionApp):
     name = "jupyter server extension disable"
     description = """
     Disable a server extension in configuration.
-    
+
     Usage
         jupyter server extension disable [--system|--sys-prefix]
     """
@@ -353,33 +382,6 @@ class ServerExtensionApp(BaseExtensionApp):
 
 main = ServerExtensionApp.launch_instance
 
-# ------------------------------------------------------------------------------
-# Private API
-# ------------------------------------------------------------------------------
-
-def _get_server_extension_metadata(module):
-    """Load server extension metadata from a module.
-
-    Returns a tuple of (
-        the package as loaded
-        a list of server extension specs: [
-            {
-                "module": "mockextension"
-            }
-        ]
-    )
-
-    Parameters
-    ----------
-
-    module : str
-        Importable Python module exposing the
-        magic-named `_jupyter_server_extension_paths` function
-    """
-    m = import_item(module)
-    if not hasattr(m, '_jupyter_server_extension_paths'):
-        raise KeyError(u'The Python module {} does not include any valid server extensions'.format(module))
-    return m, m._jupyter_server_extension_paths()
 
 if __name__ == '__main__':
     main()
