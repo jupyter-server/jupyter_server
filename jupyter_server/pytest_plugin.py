@@ -160,12 +160,12 @@ def configurable_serverapp(
 
 
 @pytest.fixture
-def serverapp(configurable_serverapp, config, argv):
+def serverapp(configurable_serverapp, config, argv, io_loop):
     app = configurable_serverapp(config=config, argv=argv)
     yield app
     app.remove_server_info_file()
     app.remove_browser_open_file()
-    app.cleanup_kernels()
+    io_loop.add_callback(app.cleanup_kernels)
 
 
 @pytest.fixture

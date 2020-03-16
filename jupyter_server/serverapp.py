@@ -37,7 +37,7 @@ from base64 import encodebytes
 from jinja2 import Environment, FileSystemLoader
 
 from jupyter_server.transutils import trans, _
-from jupyter_server.utils import secure_write, call_blocking
+from jupyter_server.utils import secure_write
 
 # Install the pyzmq ioloop. This has to be done before anything else from
 # tornado is imported.
@@ -69,7 +69,7 @@ from jupyter_server import (
 
 from .base.handlers import MainHandler, RedirectWithParams, Template404
 from .log import log_request
-from .services.kernels.kernelmanager import MappingKernelManager
+from .services.kernels.kernelmanager import AsyncMappingKernelManager
 from .services.config import ConfigManager
 from .services.contents.manager import ContentsManager
 from .services.contents.filemanager import FileContentsManager
@@ -212,7 +212,7 @@ class ServerWebApplication(web.Application):
         now = utcnow()
 
         root_dir = contents_manager.root_dir
-        home = py3compat.str_to_unicode(os.path.expanduser('~'), encoding=sys.getfilesystemencoding()) 
+        home = py3compat.str_to_unicode(os.path.expanduser('~'), encoding=sys.getfilesystemencoding())
         if root_dir.startswith(home + os.path.sep):
             # collapse $HOME to ~
             root_dir = '~' + root_dir[len(home):]
@@ -557,7 +557,7 @@ class ServerApp(JupyterApp):
     flags = flags
 
     classes = [
-        KernelManager, Session, MappingKernelManager, KernelSpecManager,
+        KernelManager, Session, AsyncMappingKernelManager, KernelSpecManager,
         ContentsManager, FileContentsManager, NotebookNotary,
         GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient,
     ]
@@ -1039,7 +1039,7 @@ class ServerApp(JupyterApp):
     )
 
     kernel_manager_class = Type(
-        default_value=MappingKernelManager,
+        default_value=AsyncMappingKernelManager,
         config=True,
         help=_('The kernel manager class to use.')
     )
@@ -1192,7 +1192,7 @@ class ServerApp(JupyterApp):
         help=("Shut down the server after N seconds with no kernels or "
               "terminals running and no activity. "
               "This can be used together with culling idle kernels "
-              "(MappingKernelManager.cull_idle_timeout) to "
+              "(AsyncMappingKernelManager.cull_idle_timeout) to "
               "shutdown the Jupyter server when it's not in use. This is not "
               "precisely timed: it may shut down up to a minute later. "
               "0 (the default) disables this automatic shutdown.")
@@ -1672,7 +1672,7 @@ class ServerApp(JupyterApp):
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
 
-    def cleanup_kernels(self):
+    async def cleanup_kernels(self):
         """Shutdown all kernels.
 
         The kernels will shutdown themselves when this process no longer exists,
@@ -1681,7 +1681,7 @@ class ServerApp(JupyterApp):
         n_kernels = len(self.kernel_manager.list_kernel_ids())
         kernel_msg = trans.ngettext('Shutting down %d kernel', 'Shutting down %d kernels', n_kernels)
         self.log.info(kernel_msg % n_kernels)
-        call_blocking(self.kernel_manager.shutdown_all())
+        await self.kernel_manager.shutdown_all()
 
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
@@ -1848,7 +1848,7 @@ class ServerApp(JupyterApp):
         finally:
             self.remove_server_info_file()
             self.remove_browser_open_file()
-            self.cleanup_kernels()
+            self.io_loop.add_callback(self.cleanup_kernels)
 
     def start(self):
         """ Start the Jupyter server app, after initialization

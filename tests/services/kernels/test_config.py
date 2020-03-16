@@ -6,7 +6,7 @@ from traitlets.config import Config
 def config():
     return Config({
         'ServerApp': {
-            'MappingKernelManager': {
+            'AsyncMappingKernelManager': {
                 'allowed_message_types': ['kernel_info_request']
             }
         }

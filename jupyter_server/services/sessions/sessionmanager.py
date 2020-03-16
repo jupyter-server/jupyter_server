@@ -22,7 +22,7 @@ from jupyter_server.utils import ensure_async
 
 class SessionManager(LoggingConfigurable):
 
-    kernel_manager = Instance('jupyter_server.services.kernels.kernelmanager.MappingKernelManager')
+    kernel_manager = Instance('jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager')
     contents_manager = Instance('jupyter_server.services.contents.manager.ContentsManager')
 
     # Session database initialized below
@@ -35,7 +35,7 @@ class SessionManager(LoggingConfigurable):
         """Start a cursor and create a database called 'session'"""
         if self._cursor is None:
             self._cursor = self.connection.cursor()
-            self._cursor.execute("""CREATE TABLE session 
+            self._cursor.execute("""CREATE TABLE session
                 (session_id, path, name, type, kernel_id)""")
         return self._cursor
 
@@ -91,7 +91,7 @@ class SessionManager(LoggingConfigurable):
         """Start a new kernel for a given session."""
         # allow contents manager to specify kernels cwd
         kernel_path = self.contents_manager.get_kernel_path(path=path)
-        kernel_id = await ensure_async(self.kernel_manager.start_kernel(path=kernel_path, kernel_name=kernel_name))
+        kernel_id = await self.kernel_manager.start_kernel(path=kernel_path, kernel_name=kernel_name)
         return kernel_id
 
     async def save_session(self, session_id, path=None, name=None, type=None, kernel_id=None):
