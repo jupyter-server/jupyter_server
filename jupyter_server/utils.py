@@ -398,3 +398,29 @@ def maybe_future(obj):
         f.set_result(obj)
         return f
 
+
+def ensure_async(obj):
+    """Convert a non-async object to a coroutine if needed.
+    """
+    if asyncio.iscoroutine(obj):
+        return obj
+    if type(obj) is asyncio.Future:
+        return obj
+
+    async def _():
+        return obj
+
+    return _()
+
+
+def call_blocking(obj):
+    """If it is async, block on the object call by running it in the event loop
+    until it is complete.
+    """
+    if asyncio.iscoroutine(obj):
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        loop.run_until_complete(obj)

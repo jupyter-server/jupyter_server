@@ -37,7 +37,7 @@ from base64 import encodebytes
 from jinja2 import Environment, FileSystemLoader
 
 from jupyter_server.transutils import trans, _
-from jupyter_server.utils import secure_write
+from jupyter_server.utils import secure_write, call_blocking
 
 # Install the pyzmq ioloop. This has to be done before anything else from
 # tornado is imported.
@@ -1102,7 +1102,7 @@ class ServerApp(JupyterApp):
     def _default_browser_open_file(self):
         basename = "jpserver-%s-open.html" % os.getpid()
         return os.path.join(self.runtime_dir, basename)
-    
+
     pylab = Unicode('disabled', config=True,
         help=_("""
         DISABLED: use %pylab or %matplotlib in the notebook to enable matplotlib.
@@ -1681,7 +1681,7 @@ class ServerApp(JupyterApp):
         n_kernels = len(self.kernel_manager.list_kernel_ids())
         kernel_msg = trans.ngettext('Shutting down %d kernel', 'Shutting down %d kernels', n_kernels)
         self.log.info(kernel_msg % n_kernels)
-        self.kernel_manager.shutdown_all()
+        call_blocking(self.kernel_manager.shutdown_all())
 
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"

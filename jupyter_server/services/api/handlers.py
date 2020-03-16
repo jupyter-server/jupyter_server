@@ -6,11 +6,10 @@
 import json
 import os
 
-from tornado import gen, web
+from tornado import web
 
 from ...base.handlers import JupyterHandler, APIHandler
 from jupyter_server._tz import utcfromtimestamp, isoformat
-from jupyter_server.utils import maybe_future
 
 
 class APISpecHandler(web.StaticFileHandler, JupyterHandler):
@@ -32,13 +31,12 @@ class APIStatusHandler(APIHandler):
     _track_activity = False
 
     @web.authenticated
-    @gen.coroutine
-    def get(self):
+    async def get(self):
         # if started was missing, use unix epoch
         started = self.settings.get('started', utcfromtimestamp(0))
         started = isoformat(started)
 
-        kernels = yield maybe_future(self.kernel_manager.list_kernels())
+        kernels = await self.kernel_manager.list_kernels()
         total_connections = sum(k['connections'] for k in kernels)
         last_activity = isoformat(self.application.last_activity())
         model = {
