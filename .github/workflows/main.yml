@@ -16,6 +16,7 @@ jobs:
         exclude:
           - os: windows-latest
             python-version: '3.5'
+          - os: windows-latest
             python-version: '3.6'
     steps:
     - name: Checkout
