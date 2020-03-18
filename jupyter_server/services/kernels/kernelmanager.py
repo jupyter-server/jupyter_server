@@ -21,6 +21,7 @@ from jupyter_client.multikernelmanager import AsyncMultiKernelManager
 from traitlets import (Any, Bool, Dict, List, Unicode, TraitError, Integer,
        Float, Instance, default, validate
 )
+from traitlets.config.configurable import Configurable
 
 from jupyter_server.utils import to_os_path, exists
 from jupyter_server._tz import utcnow, isoformat
@@ -29,7 +30,11 @@ from ipython_genutils.py3compat import getcwd
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
 
 
-class AsyncMappingKernelManager(AsyncMultiKernelManager):
+class MappingKernelManager(Configurable):
+    pass
+
+
+class AsyncMappingKernelManager(AsyncMultiKernelManager, MappingKernelManager):
     """A KernelManager that handles
      - File mapping
      - HTTP error handling
