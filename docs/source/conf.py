@@ -47,12 +47,12 @@ for item in sys.path:
 # If so, generate a config.rst file and populate it with documentation about
 # configuration options
 
-if os.environ.get('READTHEDOCS', ''):
+# if os.environ.get('READTHEDOCS', ''):
 
-    # Readthedocs doesn't run our Makefile, so we do this to force it to generate
-    # the config docs.
-    with open('../autogen_config.py') as f:
-        exec(compile(f.read(), '../autogen_config.py', 'exec'), {})
+#     # Readthedocs doesn't run our Makefile, so we do this to force it to generate
+#     # the config docs.
+#     with open('../autogen_config.py') as f:
+#         exec(compile(f.read(), '../autogen_config.py', 'exec'), {})
 
 # -- General configuration ------------------------------------------------
 
@@ -151,20 +151,20 @@ pygments_style = 'default'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-# Add custom note for each doc page
+# # Add custom note for each doc page
 
-rst_prolog = ""
+# rst_prolog = ""
 
-rst_prolog += """
-.. important::
-    This documentation covers Jupyter Server, an **early developer preview**,
-    and is not suitable for general usage yet. Features and implementation are
-    subject to change.
+# rst_prolog += """
+# .. important::
+#     This documentation covers Jupyter Server, an **early developer preview**,
+#     and is not suitable for general usage yet. Features and implementation are
+#     subject to change.
 
-    For production use cases, please use the stable notebook server in the
-    `Jupyter Notebook repo <https://github.com/jupyter/notebook>`_
-    and `Jupyter Notebook documentation <https://jupyter-notebook.readthedocs.io/en/stable/public_server.html>`_.
-"""
+#     For production use cases, please use the stable notebook server in the
+#     `Jupyter Notebook repo <https://github.com/jupyter/notebook>`_
+#     and `Jupyter Notebook documentation <https://jupyter-notebook.readthedocs.io/en/stable/public_server.html>`_.
+# """
 
 # -- Options for HTML output ----------------------------------------------
 

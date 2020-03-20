@@ -1,5 +1,5 @@
-Installation for Users
-======================
+Installation
+============
 
 Most Jupyter users will never need to install Jupyter Server manually. Most Jupyter applications will include the Server as a dependency. It's best to let those applications handle installation, because they may require a specific version of Jupyter Server.
 
