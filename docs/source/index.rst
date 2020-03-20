@@ -1,45 +1,60 @@
-==================================
-Jupyter Server (Developer Preview)
-==================================
+==============
+Jupyter Server
+==============
 
-Jupyter Server is a fork of the `Jupyter Notebook`_'s Tornado_ Server. It provides all the core services, APIs and `REST endpoints`_ from the classic Notebook Server without the Jupyter Notebook (Javascript) frontend. In fact, the Jupyter Server provides no frontend out-of-the-box; rather, it exposes `hooks <frontends.html>`_ for Jupyter frontend creators to register their frontends with the Server. 
+Jupyter Server is the backend to most Jupyter applications, providing the core services, APIs and `REST endpoints`_ for Jupyter applications. The Jupyter Server provides no frontend out-of-the-box; rather, it exposes `hooks <frontends.html>`_ to attach any number of Jupyter frontends.
 
-Before the Jupyter Server project, the `Jupyter Notebook`_ was the only first-class frontend to the Tornado Server. As a consequence, other Jupyter frontends had to include Jupyter Notebook (and all of its Javascript code) as a dependency. The Jupyter Server project views all frontends—including the `Jupyter Notebook`_—as equal and separate . 
+*A bit of history...* before the Jupyter Server project, the `Jupyter Notebook`_ was the only first-class frontend to the Tornado Server. As a consequence, other Jupyter frontends had to include Jupyter Notebook (and all of its Javascript code) as a dependency. The Jupyter Server project views all frontends—including the `Jupyter Notebook`_—as equal and separate. Now, multiple frontends can plug into the Jupyter backend at the same time by using the Jupyter Server library.
 
 .. _Tornado: https://www.tornadoweb.org/en/stable/
 .. _Jupyter Notebook: https://github.com/jupyter/notebook
 .. _REST endpoints: http://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/notebook/master/notebook/services/api/api.yaml
 
-Installation
-------------
+Documentation personas
+----------------------
 
-To install the latest release of ``jupyter_server``, use *pip*:
+The Jupyter Server is a highly technical piece of the Jupyter Stack. Most users won't interact with this library directly, so the documentation will be different for different types of personas. To help you navigate the docs, we've separated the documentation for different personas:
 
-.. code-block:: bash
+1. Users: people using Jupyter applications
+2. Operators: people deploying or serving Jupyter applications to others.
+3. Extension authors: people writing Jupyter Server extensions
+3. Contributors: people contributing directly to the Jupyter Server library.
 
-    pip install jupyter_server
+For Users
+~~~~~~~~~
 
+For most Jupyter users, Jupyter Server will go unnoticed. The server automatically installs/runs when you install/run Jupyter Notebook, Jupyterlab, Voila, etc.
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Table of Contents
+Sometimes you may need to configure the server, e.g. set the ``port`` number or some other property. We outline how to do that in the documentation below
 
-   frontends
-   changelog
+.. contents::
+   :depth: 2
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Configuration
+   users/installation
 
-   config_overview
-   config
-   migrate_from_notebook
-   public_server
-   security
-   extending/index.rst
+- Configuring a Jupyter Server
+- Launching a bare Jupyter Server
+- Getting help
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Contributor Documentation
+For Operators
+~~~~~~~~~~~~~
 
-   contributing
+- Serving a Jupyter Server with multiple frontends.
+- Managing multiple extensions.
+- Configuring multiple extensions.
+- Changelog
+
+For Extension Authors
+~~~~~~~~~~~~~~~~~~~~~
+
+- Depending on Jupyter Server
+- Migrating a Notebook server extension to Jupyter Server
+- Writing a basic server extension from scratch
+- Writing a frontend server extension from scratch
+- Changelog
+
+For Contributors
+~~~~~~~~~~~~~~~~
+
+- Monthly Meetings and Roadmap
+- Changelog
