@@ -8,7 +8,7 @@ DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")
 
 class SimpleApp1(ExtensionAppJinjaMixin, ExtensionApp):
-    
+
     # The name of the extension.
     extension_name = "simple_ext1"
 
