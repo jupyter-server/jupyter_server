@@ -35,8 +35,15 @@ Operators
 ~~~~~~~~~
 
 - Serving a Jupyter Server with multiple frontends.
+   - Running an extension from its own endpoint
+   - Running a serve with multiple frontends
+   -
 - Managing multiple extensions.
-- Configuring multiple extensions.
+   - Listing all extensions.
+   - Enabling/disabling extensions
+   - If something goes wrong.
+- Configuring extensions.
+   - Extension config directory structure
 - Changelog
 
 Extension Authors
