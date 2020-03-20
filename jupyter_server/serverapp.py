@@ -1854,7 +1854,7 @@ class ServerApp(JupyterApp):
         finally:
             self.remove_server_info_file()
             self.remove_browser_open_file()
-            self.io_loop.add_callback(self.cleanup_kernels)
+            self.cleanup_kernels()
 
     def start(self):
         """ Start the Jupyter server app, after initialization
