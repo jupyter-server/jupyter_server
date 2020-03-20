@@ -395,3 +395,29 @@ def ensure_async(obj):
         return obj
 
     return _()
+
+
+def run_sync(coro):
+    """Runs a coroutine and blocks until it has executed.
+    An event loop is created if no one already exists.
+
+    Parameters
+    ----------
+    coro : coroutine
+        The coroutine to be executed.
+
+    Returns
+    -------
+    result :
+        Whatever the coroutine returns.
+    """
+    def wrapped(self, *args, **kwargs):
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(coro(self, *args, **kwargs))
+        return result
+    wrapped.__doc__ = coro.__doc__
+    return wrapped

@@ -17,24 +17,19 @@ from tornado.concurrent import Future
 from tornado.ioloop import IOLoop, PeriodicCallback
 
 from jupyter_client.session import Session
-from jupyter_client.multikernelmanager import AsyncMultiKernelManager
+from jupyter_client.multikernelmanager import MultiKernelManager
 from traitlets import (Any, Bool, Dict, List, Unicode, TraitError, Integer,
        Float, Instance, default, validate
 )
-from traitlets.config.configurable import Configurable
 
-from jupyter_server.utils import to_os_path, exists
+from jupyter_server.utils import to_os_path, exists, ensure_async
 from jupyter_server._tz import utcnow, isoformat
 from ipython_genutils.py3compat import getcwd
 
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
 
 
-class MappingKernelManager(Configurable):
-    pass
-
-
-class AsyncMappingKernelManager(AsyncMultiKernelManager, MappingKernelManager):
+class MappingKernelManager(MultiKernelManager):
     """A KernelManager that handles
      - File mapping
      - HTTP error handling
@@ -43,7 +38,7 @@ class AsyncMappingKernelManager(AsyncMultiKernelManager, MappingKernelManager):
 
     @default('kernel_manager_class')
     def _default_kernel_manager_class(self):
-        return "jupyter_client.ioloop.AsyncIOLoopKernelManager"
+        return "jupyter_client.ioloop.IOLoopKernelManager"
 
     kernel_argv = List(Unicode())
 
@@ -112,7 +107,7 @@ class AsyncMappingKernelManager(AsyncMultiKernelManager, MappingKernelManager):
         kernel is running and responsive by sending kernel_info_requests.
         This sets the timeout in seconds for how long the kernel can take
         before being presumed dead.
-        This affects the AsyncMappingKernelManager (which handles kernel restarts)
+        This affects the MappingKernelManager (which handles kernel restarts)
         and the ZMQChannelsHandler (which handles the startup).
         """
     )
@@ -126,7 +121,7 @@ class AsyncMappingKernelManager(AsyncMultiKernelManager, MappingKernelManager):
         help="The last activity on any kernel, including shutting down a kernel")
 
     def __init__(self, **kwargs):
-        super(AsyncMappingKernelManager, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.last_kernel_activity = utcnow()
 
     allowed_message_types = List(trait=Unicode(), config=True,
@@ -172,7 +167,7 @@ class AsyncMappingKernelManager(AsyncMultiKernelManager, MappingKernelManager):
         if kernel_id is None:
             if path is not None:
                 kwargs['cwd'] = self.cwd_for_path(path)
-            kernel_id = await super(AsyncMappingKernelManager, self).start_kernel(**kwargs)
+            kernel_id = await ensure_async(super().start_kernel(**kwargs))
             self._kernel_connections[kernel_id] = 0
             self.start_watching_activity(kernel_id)
             self.log.info("Kernel started: %s" % kernel_id)
@@ -304,12 +299,12 @@ class AsyncMappingKernelManager(AsyncMultiKernelManager, MappingKernelManager):
             type=self._kernels[kernel_id].kernel_name
         ).dec()
 
-        return await super(AsyncMappingKernelManager, self).shutdown_kernel(kernel_id, now=now)
+        return await ensure_async(super().shutdown_kernel(kernel_id, now=now))
 
     async def restart_kernel(self, kernel_id):
         """Restart a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
-        await super(AsyncMappingKernelManager, self).restart_kernel(kernel_id)
+        await ensure_async(super().restart_kernel(kernel_id))
         kernel = self.get_kernel(kernel_id)
         # return a Future that will resolve when the kernel has successfully restarted
         channel = kernel.connect_shell()
@@ -377,7 +372,7 @@ class AsyncMappingKernelManager(AsyncMultiKernelManager, MappingKernelManager):
     def list_kernels(self):
         """Returns a list of kernel_id's of kernels running."""
         kernels = []
-        kernel_ids = super(AsyncMappingKernelManager, self).list_kernel_ids()
+        kernel_ids = super().list_kernel_ids()
         for kernel_id in kernel_ids:
             model = self.kernel_model(kernel_id)
             kernels.append(model)
@@ -475,3 +470,17 @@ class AsyncMappingKernelManager(AsyncMultiKernelManager, MappingKernelManager):
                 self.log.warning("Culling '%s' kernel '%s' (%s) with %d connections due to %s seconds of inactivity.",
                                  kernel.execution_state, kernel.kernel_name, kernel_id, connections, idle_duration)
                 await self.shutdown_kernel(kernel_id)
+
+
+# AsyncMappingKernelManager exists only if AsyncMultiKernelManager exists,
+# and it inherits as much as possible from MappingKernelManager, overriding
+# only what is different.
+try:
+    from jupyter_client.multikernelmanager import AsyncMultiKernelManager
+except ImportError:
+    pass
+else:
+    class AsyncMappingKernelManager(AsyncMultiKernelManager, MappingKernelManager):
+        @default('kernel_manager_class')
+        def _default_kernel_manager_class(self):
+            return "jupyter_client.ioloop.AsyncIOLoopKernelManager"

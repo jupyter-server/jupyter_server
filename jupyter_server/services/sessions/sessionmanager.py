@@ -22,7 +22,7 @@ from jupyter_server.utils import ensure_async
 
 class SessionManager(LoggingConfigurable):
 
-    kernel_manager = Instance('jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager')
+    kernel_manager = Instance('jupyter_server.services.kernels.kernelmanager.MappingKernelManager')
     contents_manager = Instance('jupyter_server.services.contents.manager.ContentsManager')
 
     # Session database initialized below

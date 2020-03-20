@@ -240,3 +240,28 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
 async def test_config2(serverapp):
     assert serverapp.kernel_manager.allowed_message_types == []
 
+
+async def test_async_kernel_manager(configurable_serverapp):
+    try:
+        from jupyter_client.multikernelmanager import AsyncMultiKernelManager
+        async_kernel_manager_available = True
+    except ImportError:
+        async_kernel_manager_available = False
+
+    if async_kernel_manager_available:
+        from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
+        argv = ['--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager']
+        app = configurable_serverapp(argv=argv)
+        assert isinstance(app.kernel_manager, AsyncMappingKernelManager)
+
+
+@pytest.fixture()
+def no_async_kernel_manager(monkeypatch):
+    """Remove jupyter_client.multikernelmanager.AsyncMultiKernelManager."""
+    monkeypatch.delattr("jupyter_client.multikernelmanager.AsyncMultiKernelManager")
+    monkeypatch.delattr("jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager")
+
+async def test_async_kernel_manager_not_available(configurable_serverapp, no_async_kernel_manager):
+    argv = ['--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager']
+    with pytest.raises(SystemExit):
+        app = configurable_serverapp(argv=argv)

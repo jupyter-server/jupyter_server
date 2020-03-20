@@ -7,6 +7,7 @@
 from __future__ import absolute_import, print_function
 
 import jupyter_server
+import asyncio
 import binascii
 import datetime
 import errno
@@ -37,7 +38,7 @@ from base64 import encodebytes
 from jinja2 import Environment, FileSystemLoader
 
 from jupyter_server.transutils import trans, _
-from jupyter_server.utils import secure_write
+from jupyter_server.utils import secure_write, ensure_async, run_sync
 
 # Install the pyzmq ioloop. This has to be done before anything else from
 # tornado is imported.
@@ -69,7 +70,7 @@ from jupyter_server import (
 
 from .base.handlers import MainHandler, RedirectWithParams, Template404
 from .log import log_request
-from .services.kernels.kernelmanager import AsyncMappingKernelManager
+from .services.kernels.kernelmanager import MappingKernelManager
 from .services.config import ConfigManager
 from .services.contents.manager import ContentsManager
 from .services.contents.filemanager import FileContentsManager
@@ -541,6 +542,17 @@ aliases.update({
     'gateway-url': 'GatewayClient.url',
 })
 
+classes = [
+        KernelManager, Session, MappingKernelManager, KernelSpecManager,
+        ContentsManager, FileContentsManager, NotebookNotary,
+        GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
+    ]
+try:
+    from .services.kernels.kernelmanager import AsyncMappingKernelManager
+    classes.append(AsyncMappingKernelManager)
+except ImportError:
+    pass
+
 #-----------------------------------------------------------------------------
 # ServerApp
 #-----------------------------------------------------------------------------
@@ -553,14 +565,8 @@ class ServerApp(JupyterApp):
 
     This launches a Tornado-based Jupyter Server.""")
     examples = _examples
-    aliases = aliases
-    flags = flags
 
-    classes = [
-        KernelManager, Session, AsyncMappingKernelManager, KernelSpecManager,
-        ContentsManager, FileContentsManager, NotebookNotary,
-        GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient,
-    ]
+    classes = classes
     flags = Dict(flags)
     aliases = Dict(aliases)
 
@@ -1039,7 +1045,7 @@ class ServerApp(JupyterApp):
     )
 
     kernel_manager_class = Type(
-        default_value=AsyncMappingKernelManager,
+        default_value=MappingKernelManager,
         config=True,
         help=_('The kernel manager class to use.')
     )
@@ -1192,7 +1198,7 @@ class ServerApp(JupyterApp):
         help=("Shut down the server after N seconds with no kernels or "
               "terminals running and no activity. "
               "This can be used together with culling idle kernels "
-              "(AsyncMappingKernelManager.cull_idle_timeout) to "
+              "(MappingKernelManager.cull_idle_timeout) to "
               "shutdown the Jupyter server when it's not in use. This is not "
               "precisely timed: it may shut down up to a minute later. "
               "0 (the default) disables this automatic shutdown.")
@@ -1672,7 +1678,7 @@ class ServerApp(JupyterApp):
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
 
-    async def cleanup_kernels(self):
+    def cleanup_kernels(self):
         """Shutdown all kernels.
 
         The kernels will shutdown themselves when this process no longer exists,
@@ -1681,7 +1687,7 @@ class ServerApp(JupyterApp):
         n_kernels = len(self.kernel_manager.list_kernel_ids())
         kernel_msg = trans.ngettext('Shutting down %d kernel', 'Shutting down %d kernels', n_kernels)
         self.log.info(kernel_msg % n_kernels)
-        await self.kernel_manager.shutdown_all()
+        run_sync(ensure_async(self.kernel_manager.shutdown_all()))
 
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"

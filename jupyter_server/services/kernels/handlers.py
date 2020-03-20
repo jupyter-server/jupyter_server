@@ -74,7 +74,7 @@ class KernelActionHandler(APIHandler):
     async def post(self, kernel_id, action):
         km = self.kernel_manager
         if action == 'interrupt':
-            await km.interrupt_kernel(kernel_id)
+            await ensure_async(km.interrupt_kernel(kernel_id))
             self.set_status(204)
         if action == 'restart':
 

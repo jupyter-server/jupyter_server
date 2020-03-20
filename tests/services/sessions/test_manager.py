@@ -3,7 +3,7 @@ import pytest
 from tornado import web
 
 from jupyter_server.services.sessions.sessionmanager import SessionManager
-from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
+from jupyter_server.services.kernels.kernelmanager import MappingKernelManager
 from jupyter_server.services.contents.manager import ContentsManager
 from jupyter_server._tz import utcnow, isoformat
 
@@ -17,8 +17,8 @@ dummy_date = utcnow()
 dummy_date_s = isoformat(dummy_date)
 
 
-class DummyMKM(AsyncMappingKernelManager):
-    """AsyncMappingKernelManager interface that doesn't start kernels, for testing"""
+class DummyMKM(MappingKernelManager):
+    """MappingKernelManager interface that doesn't start kernels, for testing"""
     def __init__(self, *args, **kwargs):
         super(DummyMKM, self).__init__(*args, **kwargs)
         self.id_letters = iter(u'ABCDEFGHIJK')
