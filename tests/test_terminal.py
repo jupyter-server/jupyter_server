@@ -19,14 +19,12 @@ async def test_terminal_create(fetch):
     await fetch(
         'api', 'terminals',
         method='POST',
-        # body=body,
         allow_nonstandard_methods=True,
     )
 
     resp_list = await fetch(
         'api', 'terminals',
         method='GET',
-        # body=body,
         allow_nonstandard_methods=True,
     )
 
@@ -35,6 +33,29 @@ async def test_terminal_create(fetch):
     assert len(data) == 1
 
 
+async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
+    resp_create = await fetch(
+        'api', 'terminals',
+        method='POST',
+        body=json.dumps({'cwd': str(terminal_path)}),
+        allow_nonstandard_methods=True,
+    )
+
+    data = json.loads(resp_create.body.decode())
+    term_name = data['name']
+
+    resp_get = await fetch(
+        'api', 'terminals', term_name,
+        method='GET',
+        allow_nonstandard_methods=True,
+    )
+
+    data = json.loads(resp_get.body.decode())
+
+    assert data['name'] == term_name
+
+
+@pytest.mark.skipif(sys.platform == 'win32', reason="Test times out on Windows.")
 async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
     resp = await fetch(
         'api', 'terminals',
@@ -50,10 +71,7 @@ async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
         'terminals', 'websocket', term_name
     )
 
-    if sys.platform == "win32":
-        ws.write_message(json.dumps(['stdin', 'echo %cd%\r\n']))
-    else:
-        ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
+    ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
 
     message_stdout = ''
     while True:
