@@ -67,6 +67,12 @@ open http://localhost:8888/simple_ext1/redirect
 open http://localhost:8888/static/simple_ext1/favicon.ico
 ```
 
+You can also start the server extension with python modules.
+
+```bash
+python -m simple_ext1
+```
+
 ## Extension 1 and Extension 2
 
 The following command starts both the `simple_ext1` and `simple_ext2` extensions.
