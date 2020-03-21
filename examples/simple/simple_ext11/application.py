@@ -56,8 +56,8 @@ class SimpleApp11(SimpleApp1):
 
     def initialize_settings(self):
         self.log.info('hello: {}'.format(self.hello))
-        if self.config['hello'] == True:
-            self.log.info("Hello Simple11 - You have provided the --hello flag or defined 'c.SimpleApp1.hello == True' in jupyter_server_config.py")
+        if self.hello == True:
+            self.log.info("Hello Simple11: You have launched with --hello flag or defined 'c.SimpleApp1.hello == True' in your config file")
         self.log.info('ignore_js: {}'.format(self.ignore_js))
         super().initialize_settings()
 

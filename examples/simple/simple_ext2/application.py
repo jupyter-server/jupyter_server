@@ -15,7 +15,7 @@ class SimpleApp2(ExtensionAppJinjaMixin, ExtensionApp):
     default_url = '/simple_ext2'
 
     # Should your extension expose other server extensions when launched directly?
-    load_other_extensions = False
+    load_other_extensions = True
 
     # Local path to static files directory.
     static_paths = [

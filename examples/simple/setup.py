@@ -23,9 +23,9 @@ def get_data_files():
     return data_files
 
 setuptools.setup(
-    name = 'jupyter_simple_ext',
+    name = 'jupyter_server_example',
     version = VERSION,
-    description = 'Jupyter Simple Extension',
+    description = 'Jupyter Server Example',
     long_description = open('README.md').read(),
     packages = find_packages(),
     python_requires = '>=3.5',

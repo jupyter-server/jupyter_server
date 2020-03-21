@@ -4,7 +4,7 @@ def _jupyter_server_extension_paths():
     return [
         {
             'module': 'simple_ext2',
-            'app': SimpleApp2,
+            'app': SimpleApp2
         },
     ]
 
