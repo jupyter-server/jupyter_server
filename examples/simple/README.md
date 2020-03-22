@@ -152,7 +152,7 @@ jupyter simple-ext11 --generate-config && vi ~/.jupyter/jupyter_config.py`.
 The generated configuration should contains the following.
 
 ```bash
-TBD
+# TODO
 ```
 
 The `hello`, `ignore_js` and `simple11_dir` are traits defined on the SimpleApp11 class.
@@ -167,6 +167,8 @@ Stop any running server and then start the simple-ext11.
 
 ```bash
 jupyter simple-ext11 --hello --simple11-dir any_folder
+# You can also launch with a module
+python -m simple_ext11 --hello
 # TODO FIX the following command, simple11 does not work launching with jpserver_extensions parameter.
 jupyter server --ServerApp.jpserver_extensions="{'simple_ext11': True}" --hello --simple11-dir any_folder
 ```
