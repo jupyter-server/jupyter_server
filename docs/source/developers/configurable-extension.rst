@@ -1,17 +1,12 @@
-Creating a Jupyter Server Frontend
-==================================
+Creating a configurable, Jupyter Server extension
+=================================================
 
-Jupyter Server does not come with a frontend out-of-the-box; instead, a frontend is installed separately and loaded as a server extension. This page demonstrates the best way to write a Jupyter Server frontend from scratch.
+Jupyter Server offers a base class, ``ExtensionApp``, for authoring configurable Jupyter Server extensions. This class handles most of the boilerplate code for setting up config, CLI, and registration with Jupyter Server.
 
-.. note::  This documentation is written for experienced developers.
+Writing an extension application
+--------------------------------
 
-
-.. _frontend:
-
-Writing a frontend application
-------------------------------
-
-Jupyter Server provides two key classes for writing a server frontend:
+Jupyter Server provides two key classes for writing a server extension:
 
     - ``ExtensionApp``
     - ``ExtensionHandlerMixin``
@@ -20,11 +15,11 @@ The ExtensionApp:
 
     - can have traits.
     - is configurable (from file or CLI)
-    - creates a namespace for the frontend's static files under ``/static/<extension_name>/``.
+    - creates a namespace for a extension's static files under ``/static/<extension_name>/``.
     - loads itself as a server extension beside other Jupyter frontends and extensions.
     - provides a command-line interface to launch the frontend extension directly (starting a server along the way).
 
-To create a new Jupyter frontend application, subclass the ``ExtensionApp`` like the example below:
+To create a new Jupyter extension application, subclass the ``ExtensionApp`` like the example below:
 
 .. code-block:: python
 
@@ -63,7 +58,7 @@ To create a new Jupyter frontend application, subclass the ``ExtensionApp`` like
             # Change the jinja templating environment
             self.settings.update({'myfrontend_jinja2_env': ...})
 
-The ``ExtensionApp`` uses the following methods and properties to connect your frontend to the Jupyter server. Overwrite these pieces to add your custom settings, handlers and templates:
+The ``ExtensionApp`` uses the following methods and properties to connect your extension to the Jupyter server. Overwrite these pieces to add your custom settings, handlers and templates:
 
 Methods
 
@@ -78,10 +73,10 @@ Properties
 * ``load_other_extensions``: should your extension expose other server extensions when launched directly?
 
 
-Writing frontend handlers
--------------------------
+Writing handlers for an extension
+---------------------------------
 
-To write handlers for an ``ExtensionApp``, use the ``ExtensionHandlerMixin`` class. This class routes Tornado's ``static_url`` attribute to the ``/static/<extension_name>/`` namespace where your frontend's static files will be served.
+To write handlers for an ``ExtensionApp``, use the ``ExtensionHandlerMixin`` and ``JupyterHandler`` classes. The former class routes Tornado's ``static_url`` attribute to the ``/static/<extension_name>/`` namespace where your extension's static files will be served. The latter class provides Jupyter Server's auth methods and other handler settings.
 
 .. code-block:: python
 

@@ -42,23 +42,30 @@ The Jupyter Server is a highly technical piece of the Jupyter Stack. Since most 
    operators/security
 
 .. toctree::
-   :caption: Extension Authors
+   :caption: Developers
    :maxdepth: 1
-   :name: extension-authors
+   :name: developers
 
-   extension-authors/dependency
-   extension-authors/frontends
+   developers/dependency
+   developers/frontends
+   developers/rest-api
+
+.. toctree::
+   :caption: Contributors
+   :maxdepth: 1
+   :name: contributors
+
+   contributors/contributing
 
 
+.. - Depending on Jupyter Server
+.. - Migrating a Notebook server extension to Jupyter Server
+.. - Writing a basic server extension from scratch
+.. - Writing a frontend server extension from scratch
 
-- Depending on Jupyter Server
-- Migrating a Notebook server extension to Jupyter Server
-- Writing a basic server extension from scratch
-- Writing a frontend server extension from scratch
 
+.. Contributors
+.. ~~~~~~~~~~~~
 
-Contributors
-~~~~~~~~~~~~
-
-- Monthly Meetings and Roadmap
-- Changelog
+.. - Monthly Meetings and Roadmap
+.. - Changelog

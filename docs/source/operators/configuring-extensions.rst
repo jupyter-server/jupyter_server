@@ -37,7 +37,7 @@ In Python config files, each trait will be prefixed with ``c.`` that links the t
     c.NotebookApp.port = 9999
 
 
-A Jupyter Server can automatically load config for multiple enabled extensions.
+A Jupyter Server will automatically load config for each enabled extension. You can config each extension by creating a jupyter config file for each extension.
 
 
 

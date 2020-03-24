@@ -1,3 +1,3 @@
 .. highlight:: sh
 
-.. include:: ../../CONTRIBUTING.rst
+.. include:: ../../../CONTRIBUTING.rst

@@ -4,17 +4,9 @@
 [![Build Status](https://github.com/jupyter/jupyter_server/workflows/CI/badge.svg)](https://github.com/jupyter/jupyter_server/actions)
 [![Documentation Status](https://readthedocs.org/projects/jupyter-server/badge/?version=latest)](http://jupyter-server.readthedocs.io/en/latest/?badge=latest)
 
-The Jupyter Server provides the backend for Jupyter web applications such as
-the Jupyter notebook and JupyterLab.
+The Jupyter Server provides the backend for Jupyter web applications like Jupyter notebook, JupyterLab, and Voila.
 
-**jupyter_server is an early developer preview, and is not suitable for general
-usage yet. Features and implementation are subject to change. Please use the
-stable [notebook server](https://github.com/jupyter/notebook) for production
-usecases.**
-
-Read more on the Jupyter Server [roadmap](https://github.com/jupyter/jupyter_server/issues/127).
-
-## Installation
+## Installation and Basic usage
 
 You can find the installation documentation for the
 [Jupyter platform, on ReadTheDocs](https://jupyter.readthedocs.io/en/latest/install.html).
@@ -53,14 +45,6 @@ To install the latest patch of a given version:
 Launch with:
 
     $ jupyter server
-
-### Running in a remote installation
-
-You need some configuration before starting Jupyter server remotely. See [Running a Jupyter server](http://jupyter-server.readthedocs.io/en/stable/public_server.html).
-
-## Development Installation
-
-See [`CONTRIBUTING.rst`](CONTRIBUTING.rst) for how to set up a local development installation.
 
 ## Contributing
 
