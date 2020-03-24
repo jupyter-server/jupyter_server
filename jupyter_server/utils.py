@@ -383,16 +383,21 @@ else:
     check_pid = _check_pid_posix
 
 
-def ensure_async(obj):
-    """Convert a non-async object to a coroutine if needed.
+async def ensure_async(obj):
+    """Convert a non-awaitable object to a coroutine if needed,
+    and await it if it was not already awaited.
     """
-    if asyncio.iscoroutine(obj):
-        return obj
-    if asyncio.isfuture(obj):
-        return obj
-    async def wrapped():
-        return obj
-    return wrapped()
+    if inspect.isawaitable(obj):
+        try:
+            result = await obj
+        except RuntimeError as e:
+            if str(e) == 'cannot reuse already awaited coroutine':
+                # obj is already the coroutine's result
+                return obj
+            raise
+        return result
+    # obj doesn't need to be awaited
+    return obj
 
 
 def run_sync(maybe_async):
@@ -411,11 +416,7 @@ def run_sync(maybe_async):
     result :
         Whatever the async object returns, or the object itself.
     """
-    if asyncio.iscoroutine(maybe_async):
-        pass
-    elif asyncio.isfuture(maybe_async):
-        pass
-    else:
+    if not inspect.isawaitable(maybe_async):
         # that was not something async, just return it
         return maybe_async
     # it is async, we need to run it in an event loop

@@ -38,7 +38,7 @@ from base64 import encodebytes
 from jinja2 import Environment, FileSystemLoader
 
 from jupyter_server.transutils import trans, _
-from jupyter_server.utils import secure_write, ensure_async, run_sync
+from jupyter_server.utils import secure_write, run_sync
 
 # Install the pyzmq ioloop. This has to be done before anything else from
 # tornado is imported.
