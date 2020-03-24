@@ -61,8 +61,8 @@ To run the Python tests, use::
 
     pytest
 
-Building the Documentation
-==========================
+Building the Docs
+=================
 
 To build the documentation you'll need `Sphinx <http://www.sphinx-doc.org/en/master/>`_,
 `pandoc <https://pandoc.org/>`_ and a few other packages.

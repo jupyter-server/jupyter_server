@@ -3,7 +3,7 @@ Configuring a Jupyter Server
 
 By default, Jupyter Server looks for server-specific configuration in a ``jupyter_server_config.py|json`` file located on a Jupyter path. To list the possible paths, run:
 
-.. code-block:: bash
+.. code-block:: console
 
     > jupyter --paths
 
