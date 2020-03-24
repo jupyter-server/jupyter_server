@@ -13,6 +13,11 @@ from ...utils import expected_http_error
 j = lambda r: json.loads(r.body.decode())
 
 
+@pytest.fixture(params=["MappingKernelManager", "AsyncMappingKernelManager"])
+def argv(request):
+    return ["--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager." + request.param]
+
+
 class SessionClient:
 
     def __init__(self, fetch_callable):

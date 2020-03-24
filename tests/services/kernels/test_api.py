@@ -15,6 +15,11 @@ from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelMana
 from ...utils import expected_http_error
 
 
+@pytest.fixture(params=["MappingKernelManager", "AsyncMappingKernelManager"])
+def argv(request):
+    return ["--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager." + request.param]
+
+
 async def test_no_kernels(fetch):
     r = await fetch(
         'api', 'kernels',
