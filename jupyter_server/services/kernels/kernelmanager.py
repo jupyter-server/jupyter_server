@@ -121,7 +121,8 @@ class MappingKernelManager(MultiKernelManager):
         help="The last activity on any kernel, including shutting down a kernel")
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        self.super = MultiKernelManager
+        self.super.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
 
     allowed_message_types = List(trait=Unicode(), config=True,
@@ -167,7 +168,7 @@ class MappingKernelManager(MultiKernelManager):
         if kernel_id is None:
             if path is not None:
                 kwargs['cwd'] = self.cwd_for_path(path)
-            kernel_id = await ensure_async(super().start_kernel(**kwargs))
+            kernel_id = await ensure_async(self.super.start_kernel(self, **kwargs))
             self._kernel_connections[kernel_id] = 0
             self.start_watching_activity(kernel_id)
             self.log.info("Kernel started: %s" % kernel_id)
@@ -299,12 +300,12 @@ class MappingKernelManager(MultiKernelManager):
             type=self._kernels[kernel_id].kernel_name
         ).dec()
 
-        return run_sync(super().shutdown_kernel(kernel_id, now=now))
+        return run_sync(self.super.shutdown_kernel(self, kernel_id, now=now))
 
     async def restart_kernel(self, kernel_id):
         """Restart a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
-        await ensure_async(super().restart_kernel(kernel_id))
+        await ensure_async(self.super.restart_kernel(self, kernel_id))
         kernel = self.get_kernel(kernel_id)
         # return a Future that will resolve when the kernel has successfully restarted
         channel = kernel.connect_shell()
@@ -372,7 +373,7 @@ class MappingKernelManager(MultiKernelManager):
     def list_kernels(self):
         """Returns a list of kernel_id's of kernels running."""
         kernels = []
-        kernel_ids = super().list_kernel_ids()
+        kernel_ids = self.super.list_kernel_ids(self)
         for kernel_id in kernel_ids:
             model = self.kernel_model(kernel_id)
             kernels.append(model)
@@ -475,6 +476,12 @@ class MappingKernelManager(MultiKernelManager):
 # AsyncMappingKernelManager inherits as much as possible from MappingKernelManager,
 # overriding only what is different.
 class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
+
     @default('kernel_manager_class')
     def _default_kernel_manager_class(self):
         return "jupyter_client.ioloop.AsyncIOLoopKernelManager"
+
+    def __init__(self, **kwargs):
+        self.super = AsyncMultiKernelManager
+        self.super.__init__(self, **kwargs)
+        self.last_kernel_activity = utcnow()

@@ -431,6 +431,11 @@ def run_sync(maybe_async):
         if create_new_event_loop:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(maybe_async)
+        try:
+            result = loop.run_until_complete(maybe_async)
+        except RuntimeError as e:
+            if str(e) == 'This event loop is already running':
+                # just return a Future, hoping that it will be awaited
+                result = asyncio.ensure_future(maybe_async)
         return result
     return wrapped()
