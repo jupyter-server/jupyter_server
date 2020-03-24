@@ -70,7 +70,7 @@ from jupyter_server import (
 
 from .base.handlers import MainHandler, RedirectWithParams, Template404
 from .log import log_request
-from .services.kernels.kernelmanager import MappingKernelManager
+from .services.kernels.kernelmanager import MappingKernelManager, AsyncMappingKernelManager
 from .services.config import ConfigManager
 from .services.contents.manager import ContentsManager
 from .services.contents.filemanager import FileContentsManager
@@ -542,17 +542,6 @@ aliases.update({
     'gateway-url': 'GatewayClient.url',
 })
 
-classes = [
-        KernelManager, Session, MappingKernelManager, KernelSpecManager,
-        ContentsManager, FileContentsManager, NotebookNotary,
-        GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
-    ]
-try:
-    from .services.kernels.kernelmanager import AsyncMappingKernelManager
-    classes.append(AsyncMappingKernelManager)
-except ImportError:
-    pass
-
 #-----------------------------------------------------------------------------
 # ServerApp
 #-----------------------------------------------------------------------------
@@ -566,9 +555,13 @@ class ServerApp(JupyterApp):
     This launches a Tornado-based Jupyter Server.""")
     examples = _examples
 
-    classes = classes
     flags = Dict(flags)
     aliases = Dict(aliases)
+    classes = [
+            KernelManager, Session, MappingKernelManager, AsyncMappingKernelManager, KernelSpecManager,
+            ContentsManager, FileContentsManager, NotebookNotary,
+            GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
+        ]
 
     subcommands = dict(
         list=(JupyterServerListApp, JupyterServerListApp.description.splitlines()[0]),
@@ -1687,7 +1680,7 @@ class ServerApp(JupyterApp):
         n_kernels = len(self.kernel_manager.list_kernel_ids())
         kernel_msg = trans.ngettext('Shutting down %d kernel', 'Shutting down %d kernels', n_kernels)
         self.log.info(kernel_msg % n_kernels)
-        run_sync(ensure_async(self.kernel_manager.shutdown_all()))
+        run_sync(self.kernel_manager.shutdown_all())
 
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"

@@ -12,7 +12,7 @@ from tornado import web
 
 from ...base.handlers import APIHandler
 from jupyter_client.jsonutil import date_default
-from jupyter_server.utils import url_path_join
+from jupyter_server.utils import url_path_join, ensure_async
 from jupyter_client.kernelspec import NoSuchKernel
 
 
@@ -139,7 +139,7 @@ class SessionHandler(APIHandler):
         if model['kernel']['id'] != before['kernel']['id']:
             # kernel_id changed because we got a new kernel
             # shutdown the old one
-            await km.shutdown_kernel(before['kernel']['id'])
+            await ensure_async(km.shutdown_kernel(before['kernel']['id']))
         self.finish(json.dumps(model, default=date_default))
 
     @web.authenticated

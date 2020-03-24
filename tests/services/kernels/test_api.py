@@ -8,8 +8,10 @@ import urllib.parse
 from tornado.escape import url_escape
 
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
+from jupyter_client.multikernelmanager import AsyncMultiKernelManager
 
 from jupyter_server.utils import url_path_join
+from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
 from ...utils import expected_http_error
 
 
@@ -242,17 +244,9 @@ async def test_config2(serverapp):
 
 
 async def test_async_kernel_manager(configurable_serverapp):
-    try:
-        from jupyter_client.multikernelmanager import AsyncMultiKernelManager
-        async_kernel_manager_available = True
-    except ImportError:
-        async_kernel_manager_available = False
-
-    if async_kernel_manager_available:
-        from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
-        argv = ['--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager']
-        app = configurable_serverapp(argv=argv)
-        assert isinstance(app.kernel_manager, AsyncMappingKernelManager)
+    argv = ['--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager']
+    app = configurable_serverapp(argv=argv)
+    assert isinstance(app.kernel_manager, AsyncMappingKernelManager)
 
 
 @pytest.fixture()

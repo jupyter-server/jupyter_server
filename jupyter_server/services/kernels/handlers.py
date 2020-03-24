@@ -63,7 +63,7 @@ class KernelHandler(APIHandler):
     @web.authenticated
     async def delete(self, kernel_id):
         km = self.kernel_manager
-        await km.shutdown_kernel(kernel_id)
+        await ensure_async(km.shutdown_kernel(kernel_id))
         self.set_status(204)
         self.finish()
 

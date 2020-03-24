@@ -17,12 +17,12 @@ from tornado.concurrent import Future
 from tornado.ioloop import IOLoop, PeriodicCallback
 
 from jupyter_client.session import Session
-from jupyter_client.multikernelmanager import MultiKernelManager
+from jupyter_client.multikernelmanager import MultiKernelManager, AsyncMultiKernelManager
 from traitlets import (Any, Bool, Dict, List, Unicode, TraitError, Integer,
        Float, Instance, default, validate
 )
 
-from jupyter_server.utils import to_os_path, exists, ensure_async
+from jupyter_server.utils import to_os_path, exists, ensure_async, run_sync
 from jupyter_server._tz import utcnow, isoformat
 from ipython_genutils.py3compat import getcwd
 
@@ -283,7 +283,7 @@ class MappingKernelManager(MultiKernelManager):
             self.log.info("Discarding %s buffered messages for %s",
                 len(msg_buffer), buffer_info['session_key'])
 
-    async def shutdown_kernel(self, kernel_id, now=False):
+    def shutdown_kernel(self, kernel_id, now=False):
         """Shutdown a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
         kernel = self._kernels[kernel_id]
@@ -299,7 +299,7 @@ class MappingKernelManager(MultiKernelManager):
             type=self._kernels[kernel_id].kernel_name
         ).dec()
 
-        return await ensure_async(super().shutdown_kernel(kernel_id, now=now))
+        return run_sync(super().shutdown_kernel(kernel_id, now=now))
 
     async def restart_kernel(self, kernel_id):
         """Restart a kernel by kernel_id"""
@@ -472,15 +472,9 @@ class MappingKernelManager(MultiKernelManager):
                 await self.shutdown_kernel(kernel_id)
 
 
-# AsyncMappingKernelManager exists only if AsyncMultiKernelManager exists,
-# and it inherits as much as possible from MappingKernelManager, overriding
-# only what is different.
-try:
-    from jupyter_client.multikernelmanager import AsyncMultiKernelManager
-except ImportError:
-    pass
-else:
-    class AsyncMappingKernelManager(AsyncMultiKernelManager, MappingKernelManager):
-        @default('kernel_manager_class')
-        def _default_kernel_manager_class(self):
-            return "jupyter_client.ioloop.AsyncIOLoopKernelManager"
+# AsyncMappingKernelManager inherits as much as possible from MappingKernelManager,
+# overriding only what is different.
+class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
+    @default('kernel_manager_class')
+    def _default_kernel_manager_class(self):
+        return "jupyter_client.ioloop.AsyncIOLoopKernelManager"

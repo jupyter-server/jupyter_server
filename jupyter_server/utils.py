@@ -388,36 +388,49 @@ def ensure_async(obj):
     """
     if asyncio.iscoroutine(obj):
         return obj
-    if type(obj) is asyncio.Future:
+    if asyncio.isfuture(obj):
         return obj
-
-    async def _():
+    async def wrapped():
         return obj
+    return wrapped()
 
-    return _()
 
-
-def run_sync(coro):
-    """Runs a coroutine and blocks until it has executed.
-    An event loop is created if no one already exists.
+def run_sync(maybe_async):
+    """If async, runs maybe_async and blocks until it has executed,
+    possibly creating an event loop.
+    If not async, just returns maybe_async as it is the result of something
+    that has already executed.
 
     Parameters
     ----------
-    coro : coroutine
-        The coroutine to be executed.
+    maybe_async : async or non-async object
+        The object to be executed, if it is async.
 
     Returns
     -------
     result :
-        Whatever the coroutine returns.
+        Whatever the async object returns, or the object itself.
     """
-    def wrapped(self, *args, **kwargs):
+    if asyncio.iscoroutine(maybe_async):
+        pass
+    elif asyncio.isfuture(maybe_async):
+        pass
+    else:
+        # that was not something async, just return it
+        return maybe_async
+    # it is async, we need to run it in an event loop
+    def wrapped():
+        create_new_event_loop = False
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError:
+            create_new_event_loop = True
+        else:
+            if loop.is_closed():
+                create_new_event_loop = True
+        if create_new_event_loop:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(coro(self, *args, **kwargs))
+        result = loop.run_until_complete(maybe_async)
         return result
-    wrapped.__doc__ = coro.__doc__
-    return wrapped
+    return wrapped()
