@@ -1,7 +1,7 @@
 .. _migrate_from_notebook:
 
-Migrate from Notebook
-=====================
+Migrating from Notebook Server
+==============================
 
 To migrate from notebook server to plain jupyter server, follow these steps:
 

@@ -2,18 +2,18 @@
 Jupyter Server
 ==============
 
-Jupyter Server is the backend—the core services, APIs, and `REST endpoints`_—to most Jupyter applications.
+Jupyter Server is the backend—the core services, APIs, and `REST endpoints`_—to Jupyter applications.
 
 .. note::
 
-   This project replaces the Tornado Server in previous versions of the `Jupyter Notebook`_ project. Before the Jupyter Server project, the `Jupyter Notebook`_ came with it's own Tornado Web Server. As a consequence, other Jupyter frontends had to depend on Jupyter Notebook (and all of its Javascript code) to get a working Jupyter Server. This project provides Jupyter Server without a default frontend and views all frontends—including the `Jupyter Notebook`_—as equal and separate.
+   This project replaces the Tornado Web Server in the `Jupyter Notebook`_. Previously, Jupyter applications depended on Jupyter Notebook's server (and thus, got all of its Javascript code). Jupyter Server comes without a default frontend and views all frontends—including the `Jupyter Notebook`_—as equal and separate. For help on migrating from Notebook Server to Jupyter Server, see `this page <operators/migrate-from-nbserver>`_.
 
 .. _Tornado: https://www.tornadoweb.org/en/stable/
 .. _Jupyter Notebook: https://github.com/jupyter/notebook
 .. _REST endpoints: http://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/notebook/master/notebook/services/api/api.yaml
 
 
-The Jupyter Server is a highly technical piece of the Jupyter Stack. Most users won't touch this library directly, so the documentation will be different for different types of personas. To help you navigate the docs, we've separated the documentation for different personas:
+The Jupyter Server is a highly technical piece of the Jupyter Stack. Since most users won't import this library directly, we broke the documentation into separate personas:
 
 1. :ref:`Users <users>`: people using Jupyter applications
 2. Operators: people deploying or serving Jupyter applications to others.
@@ -22,38 +22,40 @@ The Jupyter Server is a highly technical piece of the Jupyter Stack. Most users 
 
 .. toctree::
    :caption: Users
-   :maxdepth: 2
+   :maxdepth: 1
    :name: users
-   :titlesonly:
 
    users/installation
    users/configuration
    users/launching
    users/help
 
-Operators
-~~~~~~~~~
+.. toctree::
+   :caption: Operators
+   :maxdepth: 1
+   :name: operators
 
-- Serving a Jupyter Server with multiple frontends.
-   - Running an extension from its own endpoint
-   - Running a serve with multiple frontends
-   -
-- Managing multiple extensions.
-   - Listing all extensions.
-   - Enabling/disabling extensions
-   - If something goes wrong.
-- Configuring extensions.
-   - Extension config directory structure
-- Changelog
+   operators/multiple-frontends
+   operators/configuring-extensions
+   operators/migrate-from-nbserver
+   operators/public-server
+   operators/security
 
-Extension Authors
-~~~~~~~~~~~~~~~~~
+.. toctree::
+   :caption: Extension Authors
+   :maxdepth: 1
+   :name: extension-authors
+
+   extension-authors/dependency
+   extension-authors/frontends
+
+
 
 - Depending on Jupyter Server
 - Migrating a Notebook server extension to Jupyter Server
 - Writing a basic server extension from scratch
 - Writing a frontend server extension from scratch
-- Changelog
+
 
 Contributors
 ~~~~~~~~~~~~

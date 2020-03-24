@@ -1,7 +1,7 @@
 .. _working_remotely:
 
-Running a Jupyter server
-========================
+Running a public Jupyter Server
+===============================
 
 
 The Jupyter Server's web application is based on a
