@@ -29,22 +29,17 @@ def _get_server_extension_metadata(module):
         the package as loaded
         a list of server extension specs: [
             {
-                "module": "mockextension"
+                "module": "import.path.to.extension"
             }
         ]
     )
 
     Parameters
     ----------
-
     module : str
         Importable Python module exposing the
         magic-named `_jupyter_server_extension_paths` function
     """
-
-
-
-
     m = import_item(module)
     if not hasattr(m, '_jupyter_server_extension_paths'):
         raise KeyError(u'The Python module {} does not include any valid server extensions'.format(module))
@@ -102,6 +97,7 @@ class BaseExtensionApp(JupyterApp):
         """A default format for messages"""
         return "%(message)s"
 
+
 def _get_config_dir(user=False, sys_prefix=False):
     """Get the location of config files for the current context
 
@@ -141,21 +137,48 @@ RED_X = '\033[31m X\033[0m' if os.name != 'nt' else ' X'
 class ExtensionValidationError(Exception): pass
 
 
-def validate_server_extension(import_name):
-    """Tries to import the extension module.
-    Raises a validation error if module is not found.
+def validate_server_extension(extension_name):
+    """Validates that you can import the extension module,
+    gather all extension metadata, and find `load_jupyter_server_extension`
+    functions for each extension.
+
+    Raises a validation error if extensions cannot be found.
+
+    Parameter
+    ---------
+    extension_module: module
+        The extension module (first value) returned by _get_server_extension_metadata
+
+    extension_metadata : list
+        The list (second value) returned by _get_server_extension_metadata
+
+    Returns
+    -------
+    version : str
+        Extension version.
     """
-    try:
-        mod = importlib.import_module(import_name)
-        func = getattr(mod, 'load_jupyter_server_extension')
-        version = getattr(mod, '__version__', '')
-        return mod, func, version
     # If the extension does not exist, raise an exception
+    try:
+        mod, metadata = _get_server_extension_metadata(extension_name)
+        version = getattr(mod, '__version__', '')
     except ImportError:
-        raise ExtensionValidationError('{} is not importable.'.format(import_name))
+        raise ExtensionValidationError('{} is not importable.'.format(extension_name))
+
+    try:
+        for item in metadata:
+            extapp = item.get('app', None)
+            extloc = item.get('module', None)
+            if extapp and extloc:
+                func = extapp.load_jupyter_server_extension
+            elif extloc:
+                extmod = importlib.import_module(extloc)
+                func = extmod.load_jupyter_server_extension
+            else:
+                raise AttributeError
     # If the extension does not have a `load_jupyter_server_extension` function, raise exception.
     except AttributeError:
-        raise ExtensionValidationError('Found module "{}" but cannot load it.'.format(import_name))
+        raise ExtensionValidationError('Found "{}" module but cannot load it.'.format(extension_name))
+    return version
 
 
 def toggle_server_extension_python(import_name, enabled=None, parent=None, user=False, sys_prefix=True):
@@ -239,7 +262,7 @@ class ToggleServerExtensionApp(BaseExtensionApp):
             self.log.info("{}: {}".format(self._toggle_pre_message.capitalize(), import_name))
             # Validate the server extension.
             self.log.info("    - Validating {}...".format(import_name))
-            _, __, version = validate_server_extension(import_name)
+            version = validate_server_extension(import_name)
 
             # Toggle the server extension to active.
             toggle_server_extension_python(
@@ -249,7 +272,7 @@ class ToggleServerExtensionApp(BaseExtensionApp):
                 user=self.user,
                 sys_prefix=self.sys_prefix
             )
-            self.log.info("      {} {} {}".format(import_item, version, GREEN_OK))
+            self.log.info("      {} {} {}".format(import_name, version, GREEN_OK))
 
             # If successful, let's log.
             self.log.info("    - Extension successfully {}.".format(self._toggle_post_message))
@@ -324,6 +347,8 @@ class ListServerExtensionsApp(BaseExtensionApp):
         Enabled extensions are validated, potentially generating warnings.
         """
         config_dirs = jupyter_config_path()
+
+        # Iterate over all locations where extensions might be named.
         for config_dir in config_dirs:
             cm = BaseJSONConfigManager(parent=self, config_dir=config_dir)
             data = cm.get("jupyter_server_config")
@@ -333,14 +358,18 @@ class ListServerExtensionsApp(BaseExtensionApp):
             )
             if server_extensions:
                 self.log.info(u'config dir: {}'.format(config_dir))
-            for import_name, enabled in server_extensions.items():
+
+            # Iterate over packages listed in jpserver_extensions.
+            for pkg_name,  enabled in server_extensions.items():
+                # Attempt to get extension metadata
+                _, __ = _get_server_extension_metadata(pkg_name)
                 self.log.info(u'    {} {}'.format(
-                              import_name,
+                              pkg_name,
                               GREEN_ENABLED if enabled else RED_DISABLED))
                 try:
-                    self.log.info("    - Validating {}...".format(import_name))
-                    _, __, version = validate_server_extension(import_name)
-                    self.log.info("      {} {} {}".format(import_name, version, GREEN_OK))
+                    self.log.info("    - Validating {}...".format(pkg_name))
+                    version = validate_server_extension(pkg_name)
+                    self.log.info("      {} {} {}".format(pkg_name, version, GREEN_OK))
 
                 except ExtensionValidationError as err:
                     self.log.warn("      {} {}".format(RED_X, err))
