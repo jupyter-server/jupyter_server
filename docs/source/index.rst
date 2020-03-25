@@ -2,7 +2,7 @@
 Jupyter Server
 ==============
 
-Jupyter Server is the backend—the core services, APIs, and `REST endpoints`_—to Jupyter applications.
+Jupyter Server is the backend—the core services, APIs, and `REST endpoints`_—to Jupyter web applications.
 
 .. note::
 
