@@ -1,4 +1,4 @@
-Authoring a configurable, server extension application
+Authoring a configurable extension application
 ======================================================
 
 Jupyter Server offers a base class, ``ExtensionApp``, for authoring configurable Jupyter Server extensions. This class handles most of the boilerplate code for setting up config, CLI, and registration with Jupyter Server.
