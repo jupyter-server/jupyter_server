@@ -284,7 +284,7 @@ class MappingKernelManager(MultiKernelManager):
             self.log.info("Discarding %s buffered messages for %s",
                 len(msg_buffer), buffer_info['session_key'])
 
-    def shutdown_kernel(self, kernel_id, now=False):
+    def shutdown_kernel(self, kernel_id, now=False, restart=False):
         """Shutdown a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
         kernel = self._kernels[kernel_id]
@@ -300,7 +300,7 @@ class MappingKernelManager(MultiKernelManager):
             type=self._kernels[kernel_id].kernel_name
         ).dec()
 
-        return self.super.shutdown_kernel(self, kernel_id, now=now)
+        return self.super.shutdown_kernel(self, kernel_id, now=now, restart=restart)
 
     async def restart_kernel(self, kernel_id):
         """Restart a kernel by kernel_id"""
