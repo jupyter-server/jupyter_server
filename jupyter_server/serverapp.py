@@ -70,7 +70,7 @@ from jupyter_server import (
 
 from .base.handlers import MainHandler, RedirectWithParams, Template404
 from .log import log_request
-from .services.kernels.kernelmanager import MappingKernelManager, AsyncMappingKernelManager
+from .services.kernels.kernelmanager import MappingKernelManager
 from .services.config import ConfigManager
 from .services.contents.manager import ContentsManager
 from .services.contents.filemanager import FileContentsManager
@@ -558,7 +558,7 @@ class ServerApp(JupyterApp):
     flags = Dict(flags)
     aliases = Dict(aliases)
     classes = [
-            KernelManager, Session, MappingKernelManager, AsyncMappingKernelManager, KernelSpecManager,
+            KernelManager, Session, MappingKernelManager, KernelSpecManager,
             ContentsManager, FileContentsManager, NotebookNotary,
             GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
         ]

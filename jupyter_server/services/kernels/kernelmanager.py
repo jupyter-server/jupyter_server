@@ -300,7 +300,7 @@ class MappingKernelManager(MultiKernelManager):
             type=self._kernels[kernel_id].kernel_name
         ).dec()
 
-        return run_sync(self.super.shutdown_kernel(self, kernel_id, now=now))
+        return self.super.shutdown_kernel(self, kernel_id, now=now)
 
     async def restart_kernel(self, kernel_id):
         """Restart a kernel by kernel_id"""
@@ -485,3 +485,21 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
         self.super = AsyncMultiKernelManager
         self.super.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
+
+    async def shutdown_kernel(self, kernel_id, now=False, restart=False):
+        """Shutdown a kernel by kernel_id"""
+        self._check_kernel_id(kernel_id)
+        kernel = self._kernels[kernel_id]
+        if kernel._activity_stream:
+            kernel._activity_stream.close()
+            kernel._activity_stream = None
+        self.stop_buffering(kernel_id)
+        self._kernel_connections.pop(kernel_id, None)
+
+        # Decrease the metric of number of kernels
+        # running for the relevant kernel type by 1
+        KERNEL_CURRENTLY_RUNNING_TOTAL.labels(
+            type=self._kernels[kernel_id].kernel_name
+        ).dec()
+
+        return await self.super.shutdown_kernel(self, kernel_id, now=now, restart=restart)
