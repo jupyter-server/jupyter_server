@@ -124,6 +124,7 @@ class MappingKernelManager(MultiKernelManager):
         self.super = MultiKernelManager
         self.super.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
+        self.log.info("Kernel manager started")
 
     allowed_message_types = List(trait=Unicode(), config=True,
         help="""White list of allowed kernel message types.
@@ -485,6 +486,7 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
         self.super = AsyncMultiKernelManager
         self.super.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
+        self.log.info("Async kernel manager started")
 
     async def shutdown_kernel(self, kernel_id, now=False, restart=False):
         """Shutdown a kernel by kernel_id"""
