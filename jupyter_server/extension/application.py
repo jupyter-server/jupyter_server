@@ -181,8 +181,8 @@ class ExtensionApp(JupyterApp):
         ServerApp,
     ]
 
-    # aliases = aliases
-    # flags = flags
+    aliases = aliases
+    flags = flags
 
     subcommands = {}
 
@@ -349,14 +349,21 @@ class ExtensionApp(JupyterApp):
 
     @classmethod
     def initialize_server(cls, argv=[], load_other_extensions=True, **kwargs):
-        """Get an instance of the Jupyter Server."""
-        # Get a jupyter server instance
-        serverapp = ServerApp.instance(**kwargs)
-        # Add extension to jpserver_extensions trait in server.
-        serverapp.jpserver_extensions.update({cls.extension_name: True})
-        # Initialize ServerApp config.
-        # Parses the command line looking for
-        # ServerApp configuration.
+        """Creates an instance of ServerApp where this extension is enabled
+        (superceding disabling found in other config from files).
+
+        This is necessary when launching the ExtensionApp directly from
+        the `launch_instance` classmethod.
+        """
+        # The ExtensionApp needs to add itself as enabled extension
+        # to the jpserver_extensions trait, so that the ServerApp
+        # initializes it.
+        config = Config({
+            "ServerApp": {
+                "jpserver_extensions": {cls.extension_name: True}
+            }
+        })
+        serverapp = ServerApp.instance(**kwargs, argv=[], config=config)
         serverapp.initialize(argv=argv, load_extensions=load_other_extensions)
         return serverapp
 
@@ -415,7 +422,7 @@ class ExtensionApp(JupyterApp):
         settings and handlers to the server's web application.
         """
         # Get loaded extension from serverapp.
-        extension = serverapp.enabled_extensions[cls.extension_name]
+        extension = serverapp._enabled_extensions[cls.extension_name]
         extension.initialize(serverapp=serverapp)
         return extension
 
