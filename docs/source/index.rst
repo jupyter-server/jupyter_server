@@ -15,7 +15,7 @@ Jupyter Server is the backend—the core services, APIs, and `REST endpoints`_�
 
 .. note::
 
-   This project replaces the Tornado Web Server in the `Jupyter Notebook`_. Previously, Jupyter applications depended on Jupyter Notebook's server (and thus, got all of its Javascript code). Jupyter Server comes without a default frontend and views all frontends—including the `Jupyter Notebook`_—as equal and separate. For help on migrating from Notebook Server to Jupyter Server, see `this page <operators/migrate-from-nbserver>`_.
+   Jupyter Server is a replacement for the Tornado Web Server in `Jupyter Notebook`_. Jupyter web applications should move to using Jupyter Server. For help, see `this page <operators/migrate-from-nbserver>`_.
 
 .. _Tornado: https://www.tornadoweb.org/en/stable/
 .. _Jupyter Notebook: https://github.com/jupyter/notebook
@@ -26,13 +26,12 @@ Who's this for?
 
 The Jupyter Server is a highly technical piece of the Jupyter Stack, so we've separated documentation to help specific personas:
 
-1. :ref:`Users <users>`: people using Jupyter applications
-2. :ref:`Operators <operators>`: people deploying or serving Jupyter applications to others.
-3. :ref:`Developers <developers>`: people writing Jupyter Server extensions
+1. :ref:`Users <users>`: people using Jupyter web applications
+2. :ref:`Operators <operators>`: people deploying or serving Jupyter web applications to others.
+3. :ref:`Developers <developers>`: people writing Jupyter Server extensions and web applications
 4. :ref:`Contributors <contributors>`: people contributing directly to the Jupyter Server library.
 
 If you finds gaps in our documentation, please open an issue (or better, a pull request) on the Jupyter Server `Github repo <https://github.com/jupyter/jupyter_server>`_.
-
 
 Table of Contents
 -----------------

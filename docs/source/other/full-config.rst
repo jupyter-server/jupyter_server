@@ -897,7 +897,7 @@ FileContentsManager.root_dir : Unicode
 
     No description
 
-NotebookNotary.algorithm : 'md5'|'sha256'|'blake2s'|'sha3_512'|'sha384'|'sha512'|'blake2b'|'sha1'|'sha224'|'sha3_224'|'sha3_256'|'sha3_384'
+NotebookNotary.algorithm : 'blake2b'|'md5'|'sha3_384'|'sha512'|'sha3_224'|'sha3_512'|'sha3_256'|'blake2s'|'sha256'|'sha384'|'sha1'|'sha224'
     Default: ``'sha256'``
 
     The hashing algorithm used to sign notebooks.
