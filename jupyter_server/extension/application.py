@@ -121,13 +121,11 @@ class ExtensionAppJinjaMixin:
         )
 
 #-----------------------------------------------------------------------------
-# Aliases and Flags
+# ExtensionApp
 #-----------------------------------------------------------------------------
 
-flags['no-browser']=(
-    {'ExtensionApp' : {'open_browser' : True}},
-    _("Prevent the opening of the default url in the browser.")
-)
+class JupyterServerExtensionException(Exception):
+    """Exception class for raising for Server extensions errors."""
 
 #-----------------------------------------------------------------------------
 # ExtensionApp
@@ -181,11 +179,6 @@ class ExtensionApp(JupyterApp):
         ServerApp,
     ]
 
-    aliases = aliases
-    flags = flags
-
-    subcommands = {}
-
     @property
     def static_url_prefix(self):
         return "/static/{extension_name}/".format(
@@ -219,46 +212,43 @@ class ExtensionApp(JupyterApp):
             return ''
         return 'jupyter_{}_config'.format(self.extension_name.replace('-','_'))
 
-    default_url = Unicode('/', config=True,
-        help=_("The default URL to redirect to from `/`")
-    )
+    extension_url = "/"
 
-    open_browser = Bool(
-        True,
-        help=_("Should the extension open a browser window?")
-    )
+    # default_url = Unicode('/', config=True,
+    #     help=_("The default URL to redirect to from `/`")
+    # )
 
-    custom_display_url = Unicode(u'', config=True,
-        help=_("""Override URL shown to users.
+    # custom_display_url = Unicode(u'', config=True,
+    #     help=_("""Override URL shown to users.
 
-        Replace actual URL, including protocol, address, port and base URL,
-        with the given value when displaying URL to the users. Do not change
-        the actual connection URL. If authentication token is enabled, the
-        token is added to the custom URL automatically.
+    #     Replace actual URL, including protocol, address, port and base URL,
+    #     with the given value when displaying URL to the users. Do not change
+    #     the actual connection URL. If authentication token is enabled, the
+    #     token is added to the custom URL automatically.
 
-        This option is intended to be used when the URL to display to the user
-        cannot be determined reliably by the Jupyter server (proxified
-        or containerized setups for example).""")
-    )
+    #     This option is intended to be used when the URL to display to the user
+    #     cannot be determined reliably by the Jupyter server (proxified
+    #     or containerized setups for example).""")
+    # )
 
-    @default('custom_display_url')
-    def _default_custom_display_url(self):
-        """URL to display to the user."""
-        # Get url from server.
-        url = url_path_join(self.serverapp.base_url, self.default_url)
-        return self.serverapp.get_url(self.serverapp.ip, url)
+    # @default('custom_display_url')
+    # def _default_custom_display_url(self):
+    #     """URL to display to the user."""
+    #     # Get url from server.
+    #     url = url_path_join(self.serverapp.base_url, self.default_url)
+    #     return self.serverapp.get_url(self.serverapp.ip, url)
 
-    def _write_browser_open_file(self, url, fh):
-        """Use to hijacks the server's browser-open file and open at
-        the extension's homepage.
-        """
-        # Ignore server's url
-        del url
-        path = url_path_join(self.serverapp.base_url, self.default_url)
-        url = self.serverapp.get_url(path=path, token=self.serverapp.token)
-        jinja2_env = self.serverapp.web_app.settings['jinja2_env']
-        template = jinja2_env.get_template('browser-open.html')
-        fh.write(template.render(open_url=url))
+    # def _write_browser_open_file(self, url, fh):
+    #     """Use to hijacks the server's browser-open file and open at
+    #     the extension's homepage.
+    #     """
+    #     # Ignore server's url
+    #     del url
+    #     path = url_path_join(self.serverapp.base_url, self.default_url)
+    #     url = self.serverapp.get_url(path=path, token=self.serverapp.token)
+    #     jinja2_env = self.serverapp.web_app.settings['jinja2_env']
+    #     template = jinja2_env.get_template('browser-open.html')
+    #     fh.write(template.render(open_url=url))
 
     def initialize_settings(self):
         """Override this method to add handling of settings."""
@@ -276,6 +266,8 @@ class ExtensionApp(JupyterApp):
         """Builds a Config object from the extension's traits and passes
         the object to the webapp's settings as `<extension_name>_config`.
         """
+        # Make sure the ServerApp receives any config.
+        self.serverapp.update_config(self.config)
         # Verify all traits are up-to-date with config
         self.update_config(self.config)
         traits = self.class_own_traits().keys()
@@ -360,34 +352,58 @@ class ExtensionApp(JupyterApp):
         # initializes it.
         config = Config({
             "ServerApp": {
-                "jpserver_extensions": {cls.extension_name: True}
+                "jpserver_extensions": {cls.extension_name: True},
+                "open_browser": True,
+                "default_url": cls.extension_url
             }
         })
         serverapp = ServerApp.instance(**kwargs, argv=[], config=config)
         serverapp.initialize(argv=argv, load_extensions=load_other_extensions)
         return serverapp
 
-    def initialize(self, serverapp, argv=None):
-        """Initialize the extension app.
+    def link_to_serverapp(self, serverapp):
+        """Link the ExtensionApp to an initialized ServerApp.
 
-        This method:
-        - Loads the extension's config from file
-        - Updates the extension's config from argv
-        - Initializes templates environment
-        - Passes settings to webapp
-        - Appends handlers to webapp.
+        This adds a serverapp.
         """
-        # Initialize ServerApp.
         self.serverapp = serverapp
-
-        # If argv is given, parse and update config.
-        if argv:
-            self.parse_command_line(argv)
-
-        # Load config from file.
+        # ServerApp's config might have picked up
+        # CLI config for the ExtensionApp. We call
+        # update_config to update ExtensionApp's
+        # traits with these values found in ServerApp's
+        # config.
+        # ServerApp config ---> ExtensionApp traits
+        self.update_config(self.serverapp.config)
+        # Use ExtensionApp's CLI parser to find any extra
+        # args that passed through ServerApp and
+        # now belong to ExtensionApp.
+        self.parse_command_line(self.serverapp.extra_args)
+        # Load config from an ExtensionApp's config files.
+        # If any config should be passed upstream to the
+        # ServerApp, do it here.
         self.load_config_file()
+        # i.e. ServerApp traits <--- ExtensionApp config
+        self.serverapp.update_config(self.config)
 
-        # Initialize config, settings, templates, and handlers.
+    def initialize(self):
+        """Initialize the extension app. The
+        corresponding server app and webapp should already
+        be initialized by this step.
+
+        1) Appends Handlers to the ServerApp,
+        2) Passes config and settings from ExtensionApp
+        to the Tornado web application
+        3) Points Tornado Webapp to templates and
+        static assets.
+        """
+        if not hasattr(self, 'serverapp'):
+            msg = (
+                "This extension has no attribute `serverapp`. "
+                "Try calling `.link_to_serverapp()` before calling "
+                "`.initialize()`."
+            )
+            raise JupyterServerExtensionException(msg)
+
         self._prepare_config()
         self._prepare_templates()
         self._prepare_settings()
@@ -399,14 +415,6 @@ class ExtensionApp(JupyterApp):
         Server should be started after extension is initialized.
         """
         super(ExtensionApp, self).start()
-        # Override the browser open file to
-        # Override the server's display url to show extension's display URL.
-        self.serverapp.custom_display_url = self.custom_display_url
-        # Override the server's default option and open a broswer window.
-        self.serverapp.open_browser = self.open_browser
-        # Hijack the server's browser-open file to land on
-        # the extensions home page.
-        self.serverapp._write_browser_open_file = self._write_browser_open_file
         # Start the server.
         self.serverapp.start()
 
@@ -421,9 +429,13 @@ class ExtensionApp(JupyterApp):
         """Initialize and configure this extension, then add the extension's
         settings and handlers to the server's web application.
         """
-        # Get loaded extension from serverapp.
-        extension = serverapp._enabled_extensions[cls.extension_name]
-        extension.initialize(serverapp=serverapp)
+        try:
+            # Get loaded extension from serverapp.
+            extension = serverapp._enabled_extensions[cls.extension_name]
+        except KeyError:
+            extension = cls()
+            extension.link_to_serverapp(serverapp)
+        extension.initialize()
         return extension
 
     @classmethod
@@ -457,7 +469,4 @@ class ExtensionApp(JupyterApp):
                     "{ext_name} is running without loading "
                     "other extensions.".format(ext_name=cls.extension_name)
                 )
-
-            extension = cls.load_jupyter_server_extension(serverapp, **kwargs)
-            # Start the ioloop.
-            extension.start()
+            serverapp.start()

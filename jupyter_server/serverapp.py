@@ -1373,7 +1373,7 @@ class ServerApp(JupyterApp):
     @property
     def connection_url(self):
         ip = self.ip if self.ip else 'localhost'
-        return self.get_url(ip=ip)
+        return self.get_url(ip=ip, path=self.base_url)
 
     def get_url(self, ip=None, path=None, token=None):
         """Build a url for the application with reasonable defaults."""
@@ -1529,11 +1529,8 @@ class ServerApp(JupyterApp):
                     for metadata in metadata_list:
                         # Is this extension point an ExtensionApp?
                         # If "app" is not None, then the extension should be an ExtensionApp
-                        # If "app" is None, then the extension must be a module
-                        # where we'll find a `_load_jupyter_server_extension` function.
-                        #  If so, create
-                        # an instance of the App and load its config into the
-                        # ServerApp parent.
+                        # Otherwise use the 'module' key to locate the
+                        #`_load_jupyter_server_extension` function.
                         extapp = metadata.get('app', None)
                         extloc = metadata.get('module', None)
                         if extapp and extloc:
@@ -1541,22 +1538,11 @@ class ServerApp(JupyterApp):
                             from .extension.application import ExtensionApp
                             if not issubclass(extapp, ExtensionApp):
                                 raise TypeError(extapp.__name__ + " must be a subclass of ExtensionApp.")
-                            # ServerApp needs to create an instance of the
-                            # ExtensionApp here and pass ServerApp as the
-                            # parent class, so that the instance shares
-                            # ServerApp's config.
-                            app = extapp(parent=self)
-                            # Update the app's config so that any command
-                            # line config parsed by ServerApp is passed
-                            # to the ExtensionApp
-                            app.update_config(app.config)
-                            # Load any config from an extension's
-                            # config file and update the
-                            # app's config again.
-                            app.load_config_file()
-                            # Pass any relevant config to the
-                            # serverapp's (parent) config.
-                            self.update_config(app.config)
+                            # ServerApp creates an instance of the
+                            # ExtensionApp here to load any ServerApp configuration
+                            # that might live in the Extension's config file.
+                            app = extapp()
+                            app.link_to_serverapp(self)
                             # Build a new list where we
                             self._enabled_extensions[app.extension_name] = app
                         elif extloc:
@@ -1763,9 +1749,7 @@ class ServerApp(JupyterApp):
         self._init_asyncio_patch()
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
-        print(f"During serverapp.initialize: {self.jpserver_extensions}")
         super(ServerApp, self).initialize(argv)
-        print(f"after serverapp.initialize super: {self.jpserver_extensions}")
 
         # Then, use extensions' config loading mechanism to
         # update config. ServerApp config takes precedence.
