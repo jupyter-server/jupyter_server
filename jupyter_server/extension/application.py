@@ -174,6 +174,9 @@ class ExtensionApp(JupyterApp):
             return value
         raise ValueError("Extension name must be a string, found {type}.".format(type=type(value)))
 
+    # Extension URL sets the default landing page for this extension.
+    extension_url = "/"
+
     # Extension can configure the ServerApp from the command-line
     classes = [
         ServerApp,
@@ -212,43 +215,6 @@ class ExtensionApp(JupyterApp):
             return ''
         return 'jupyter_{}_config'.format(self.extension_name.replace('-','_'))
 
-    extension_url = "/"
-
-    # default_url = Unicode('/', config=True,
-    #     help=_("The default URL to redirect to from `/`")
-    # )
-
-    # custom_display_url = Unicode(u'', config=True,
-    #     help=_("""Override URL shown to users.
-
-    #     Replace actual URL, including protocol, address, port and base URL,
-    #     with the given value when displaying URL to the users. Do not change
-    #     the actual connection URL. If authentication token is enabled, the
-    #     token is added to the custom URL automatically.
-
-    #     This option is intended to be used when the URL to display to the user
-    #     cannot be determined reliably by the Jupyter server (proxified
-    #     or containerized setups for example).""")
-    # )
-
-    # @default('custom_display_url')
-    # def _default_custom_display_url(self):
-    #     """URL to display to the user."""
-    #     # Get url from server.
-    #     url = url_path_join(self.serverapp.base_url, self.default_url)
-    #     return self.serverapp.get_url(self.serverapp.ip, url)
-
-    # def _write_browser_open_file(self, url, fh):
-    #     """Use to hijacks the server's browser-open file and open at
-    #     the extension's homepage.
-    #     """
-    #     # Ignore server's url
-    #     del url
-    #     path = url_path_join(self.serverapp.base_url, self.default_url)
-    #     url = self.serverapp.get_url(path=path, token=self.serverapp.token)
-    #     jinja2_env = self.serverapp.web_app.settings['jinja2_env']
-    #     template = jinja2_env.get_template('browser-open.html')
-    #     fh.write(template.render(open_url=url))
 
     def initialize_settings(self):
         """Override this method to add handling of settings."""
@@ -364,7 +330,11 @@ class ExtensionApp(JupyterApp):
     def link_to_serverapp(self, serverapp):
         """Link the ExtensionApp to an initialized ServerApp.
 
-        This adds a serverapp.
+        The ServerApp is stored as an attribute and config
+        is exchanged between ServerApp and `self` in case
+        the command line contains traits for the ExtensionApp
+        or the ExtensionApp's config files have server
+        settings.
         """
         self.serverapp = serverapp
         # ServerApp's config might have picked up
