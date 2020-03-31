@@ -121,8 +121,8 @@ class MappingKernelManager(MultiKernelManager):
         help="The last activity on any kernel, including shutting down a kernel")
 
     def __init__(self, **kwargs):
-        self.super = MultiKernelManager
-        self.super.__init__(self, **kwargs)
+        self.pinned_superclass = MultiKernelManager
+        self.pinned_superclass.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
         self.log.info("Kernel manager started")
 
@@ -169,7 +169,7 @@ class MappingKernelManager(MultiKernelManager):
         if kernel_id is None:
             if path is not None:
                 kwargs['cwd'] = self.cwd_for_path(path)
-            kernel_id = await ensure_async(self.super.start_kernel(self, **kwargs))
+            kernel_id = await ensure_async(self.pinned_superclass.start_kernel(self, **kwargs))
             self._kernel_connections[kernel_id] = 0
             self.start_watching_activity(kernel_id)
             self.log.info("Kernel started: %s" % kernel_id)
@@ -301,12 +301,12 @@ class MappingKernelManager(MultiKernelManager):
             type=self._kernels[kernel_id].kernel_name
         ).dec()
 
-        return self.super.shutdown_kernel(self, kernel_id, now=now, restart=restart)
+        return self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
 
     async def restart_kernel(self, kernel_id):
         """Restart a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
-        await ensure_async(self.super.restart_kernel(self, kernel_id))
+        await ensure_async(self.pinned_superclass.restart_kernel(self, kernel_id))
         kernel = self.get_kernel(kernel_id)
         # return a Future that will resolve when the kernel has successfully restarted
         channel = kernel.connect_shell()
@@ -374,7 +374,7 @@ class MappingKernelManager(MultiKernelManager):
     def list_kernels(self):
         """Returns a list of kernel_id's of kernels running."""
         kernels = []
-        kernel_ids = self.super.list_kernel_ids(self)
+        kernel_ids = self.pinned_superclass.list_kernel_ids(self)
         for kernel_id in kernel_ids:
             model = self.kernel_model(kernel_id)
             kernels.append(model)
