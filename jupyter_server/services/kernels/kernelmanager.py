@@ -483,8 +483,8 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
         return "jupyter_client.ioloop.AsyncIOLoopKernelManager"
 
     def __init__(self, **kwargs):
-        self.super = AsyncMultiKernelManager
-        self.super.__init__(self, **kwargs)
+        self.pinned_superclass = AsyncMultiKernelManager
+        self.pinned_superclass.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
         self.log.info("Async kernel manager started")
 
@@ -504,4 +504,4 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
             type=self._kernels[kernel_id].kernel_name
         ).dec()
 
-        return await self.super.shutdown_kernel(self, kernel_id, now=now, restart=restart)
+        return await self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
