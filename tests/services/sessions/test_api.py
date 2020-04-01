@@ -213,11 +213,11 @@ async def test_create_with_kernel_id(session_client, fetch):
 
     resp = await session_client.create('foo/nb1.ipynb', kernel_id=kernel['id'])
     assert resp.code == 201
-    newsession = j(resp)
-    assert 'id' in newsession
-    assert newsession['path'] == 'foo/nb1.ipynb'
-    assert newsession['kernel']['id'] == kernel['id']
-    assert resp.headers['Location'] == '/api/sessions/{0}'.format(newsession['id'])
+    new_session = j(resp)
+    assert 'id' in new_session
+    assert new_session['path'] == 'foo/nb1.ipynb'
+    assert new_session['kernel']['id'] == kernel['id']
+    assert resp.headers['Location'] == '/api/sessions/{0}'.format(new_session['id'])
 
     resp = await session_client.list()
     sessions = j(resp)
@@ -225,7 +225,7 @@ async def test_create_with_kernel_id(session_client, fetch):
     assert_session_equality(sessions[0], new_session)
 
     # Retrieve it
-    sid = newsession['id']
+    sid = new_session['id']
     resp = await session_client.get(sid)
     got = j(resp)
     assert_session_equality(got, new_session)
