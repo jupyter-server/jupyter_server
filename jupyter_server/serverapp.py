@@ -1248,7 +1248,7 @@ class ServerApp(JupyterApp):
             connection_dir=self.runtime_dir,
             kernel_spec_manager=self.kernel_spec_manager,
         )
-        #  Ensure the appropriate jupyter_client is in place
+        # Async randomly hangs on Python 3.5, prevent using it
         if isinstance(self.kernel_manager, AsyncMappingKernelManager):
             if sys.version_info <= (3, 5):
                 raise ValueError("You are using `AsyncMappingKernelManager` in Python 3.5 (or lower),"
