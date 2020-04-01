@@ -70,7 +70,7 @@ from jupyter_server import (
 
 from .base.handlers import MainHandler, RedirectWithParams, Template404
 from .log import log_request
-from .services.kernels.kernelmanager import MappingKernelManager
+from .services.kernels.kernelmanager import MappingKernelManager, AsyncMappingKernelManager
 from .services.config import ConfigManager
 from .services.contents.manager import ContentsManager
 from .services.contents.filemanager import FileContentsManager
@@ -1248,6 +1248,14 @@ class ServerApp(JupyterApp):
             connection_dir=self.runtime_dir,
             kernel_spec_manager=self.kernel_spec_manager,
         )
+        #  Ensure the appropriate jupyter_client is in place
+        if isinstance(self.kernel_manager, AsyncMappingKernelManager):
+            if sys.version_info <= (3, 5):
+                raise ValueError("You are using `AsyncMappingKernelManager` in Python 3.5 (or lower),"
+                                 "which is not supported. Please upgrade Python to 3.6+.")
+            else:
+                self.log.info("Asynchronous kernel management has been configured to use '{}'.".
+                              format(self.kernel_manager.__class__.__name__))
         self.contents_manager = self.contents_manager_class(
             parent=self,
             log=self.log,
