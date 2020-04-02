@@ -265,13 +265,12 @@ async def test_async_kernel_manager(configurable_serverapp):
 def no_async_kernel_manager(monkeypatch):
     """Remove jupyter_client.multikernelmanager.AsyncMultiKernelManager."""
     monkeypatch.delattr("jupyter_client.multikernelmanager.AsyncMultiKernelManager")
-    monkeypatch.delattr("jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager")
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 6),
-    reason="Kernel manager is AsyncMappingKernelManager, Python version < 3.6"
-)
 async def test_async_kernel_manager_not_available(configurable_serverapp, no_async_kernel_manager):
     argv = ['--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager']
-    with pytest.raises(SystemExit):
-        app = configurable_serverapp(argv=argv)
+    if sys.version_info < (3, 6):
+        with pytest.raises(ValueError):
+            app = configurable_serverapp(argv=argv)
+    else:
+        with pytest.raises(SystemExit):
+            app = configurable_serverapp(argv=argv)
