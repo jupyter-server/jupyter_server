@@ -251,6 +251,10 @@ async def test_config2(serverapp):
     assert serverapp.kernel_manager.allowed_message_types == []
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 6),
+    reason="Kernel manager is AsyncMappingKernelManager, Python version < 3.6"
+)
 async def test_async_kernel_manager(configurable_serverapp):
     argv = ['--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager']
     app = configurable_serverapp(argv=argv)
@@ -263,6 +267,10 @@ def no_async_kernel_manager(monkeypatch):
     monkeypatch.delattr("jupyter_client.multikernelmanager.AsyncMultiKernelManager")
     monkeypatch.delattr("jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager")
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 6),
+    reason="Kernel manager is AsyncMappingKernelManager, Python version < 3.6"
+)
 async def test_async_kernel_manager_not_available(configurable_serverapp, no_async_kernel_manager):
     argv = ['--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager']
     with pytest.raises(SystemExit):
