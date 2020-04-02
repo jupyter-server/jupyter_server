@@ -1,4 +1,5 @@
 """Test GatewayClient"""
+import sys
 import json
 import os
 import pytest
@@ -145,6 +146,10 @@ def init_gateway(monkeypatch):
     GatewayClient.clear_instance()
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 6),
+    reason="Kernel manager is AsyncMappingKernelManager, Python version < 3.6"
+)
 async def test_gateway_env_options(init_gateway, serverapp):
     assert serverapp.gateway_config.gateway_enabled is True
     assert serverapp.gateway_config.url == mock_gateway_url
@@ -153,6 +158,10 @@ async def test_gateway_env_options(init_gateway, serverapp):
     assert serverapp.gateway_config.connect_timeout == 44.4
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 6),
+    reason="Kernel manager is AsyncMappingKernelManager, Python version < 3.6"
+)
 async def test_gateway_cli_options(configurable_serverapp):
     argv = [
         "--gateway-url='" + mock_gateway_url + "'",
@@ -173,6 +182,10 @@ async def test_gateway_cli_options(configurable_serverapp):
     GatewayClient.clear_instance()
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 6),
+    reason="Kernel manager is AsyncMappingKernelManager, Python version < 3.6"
+)
 async def test_gateway_class_mappings(init_gateway, serverapp):
     # Ensure appropriate class mappings are in place.
     assert serverapp.kernel_manager_class.__name__ == 'GatewayKernelManager'
@@ -180,6 +193,10 @@ async def test_gateway_class_mappings(init_gateway, serverapp):
     assert serverapp.kernel_spec_manager_class.__name__ == 'GatewayKernelSpecManager'
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 6),
+    reason="Kernel manager is AsyncMappingKernelManager, Python version < 3.6"
+)
 async def test_gateway_get_kernelspecs(init_gateway, fetch):
     # Validate that kernelspecs come from gateway.
     with mocked_gateway:
@@ -194,6 +211,10 @@ async def test_gateway_get_kernelspecs(init_gateway, fetch):
         assert kspecs.get('kspec_bar').get('name') == 'kspec_bar'
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 6),
+    reason="Kernel manager is AsyncMappingKernelManager, Python version < 3.6"
+)
 async def test_gateway_get_named_kernelspec(init_gateway, fetch):
     # Validate that a specific kernelspec can be retrieved from gateway (and an invalid spec can't)
     with mocked_gateway:
@@ -213,6 +234,10 @@ async def test_gateway_get_named_kernelspec(init_gateway, fetch):
         assert expected_http_error(e, 404)
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 6),
+    reason="Kernel manager is AsyncMappingKernelManager, Python version < 3.6"
+)
 async def test_gateway_session_lifecycle(init_gateway, root_dir, fetch):
     # Validate session lifecycle functions; create and delete.
 
@@ -239,6 +264,10 @@ async def test_gateway_session_lifecycle(init_gateway, root_dir, fetch):
     assert await is_kernel_running(fetch, kernel_id) is False
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 6),
+    reason="Kernel manager is AsyncMappingKernelManager, Python version < 3.6"
+)
 async def test_gateway_kernel_lifecycle(init_gateway, fetch):
     # Validate kernel lifecycle functions; create, interrupt, restart and delete.
 
