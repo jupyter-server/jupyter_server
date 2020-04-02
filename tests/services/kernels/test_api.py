@@ -274,7 +274,8 @@ def no_async_mapping_kernel_manager(monkeypatch):
 
 
 @pytest.mark.skipif(
-    sys.version_info >= (3, 6)
+    sys.version_info >= (3, 6),
+    reason="Testing no AsyncMappingKernelManager on Python <=3.5"
 )
 async def test_async_kernel_manager_not_available_py35(configurable_serverapp, no_async_multi_kernel_manager):
     argv = ['--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager']
@@ -284,7 +285,7 @@ async def test_async_kernel_manager_not_available_py35(configurable_serverapp, n
 
 @pytest.mark.skipif(
     sys.version_info < (3, 6),
-    reason="Kernel manager is AsyncMappingKernelManager, Python version < 3.6"
+    reason="Testing no AsyncMappingKernelManager on Python >=3.6
 )
 async def test_async_kernel_manager_not_available_py36plus(configurable_serverapp, no_async_multi_kernel_manager, no_async_mapping_kernel_manager):
     argv = ['--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager']
