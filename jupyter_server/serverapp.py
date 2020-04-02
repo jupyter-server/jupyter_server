@@ -1250,7 +1250,7 @@ class ServerApp(JupyterApp):
         )
         # Async randomly hangs on Python 3.5, prevent using it
         if isinstance(self.kernel_manager, AsyncMappingKernelManager):
-            if sys.version_info <= (3, 5):
+            if sys.version_info < (3, 6):
                 raise ValueError("You are using `AsyncMappingKernelManager` in Python 3.5 (or lower),"
                                  "which is not supported. Please upgrade Python to 3.6+.")
             else:
