@@ -104,7 +104,11 @@ from jupyter_server._sysinfo import get_sys_info
 from ._tz import utcnow, utcfromtimestamp
 from .utils import url_path_join, check_pid, url_escape, urljoin, pathname2url
 
-from jupyter_server.extension.serverextension import ServerExtensionApp, _get_server_extension_metadata
+from jupyter_server.extension.serverextension import (
+    ServerExtensionApp,
+    _get_server_extension_metadata,
+    _get_load_jupyter_server_extension
+)
 
 #-----------------------------------------------------------------------------
 # Module globals
@@ -1547,16 +1551,17 @@ class ServerApp(JupyterApp):
                             self._enabled_extensions[app.extension_name] = app
                         elif extloc:
                             extmod = importlib.import_module(extloc)
-                            func = getattr(extmod, 'load_jupyter_server_extension', None)
-                            if func is None:
-                                log_msg = _(
-                                    "{module_name} is enabled but no "
-                                    "`load_jupyter_server_extension` function "
-                                    "was found.".format(module_name=module_name)
-                                )
-                                self.log.warning(log_msg)
-                            else:
-                                self._enabled_extensions[extloc] = extmod
+                            func = _get_load_jupyter_server_extension(extmod)
+                            self._enabled_extensions[extloc] = extmod
+
+                            # if func is None:
+                            #     log_msg = _(
+                            #         "{module_name} is enabled but no "
+                            #         "`load_jupyter_server_extension` function "
+                            #         "was found.".format(module_name=module_name)
+                            #     )
+                            #     self.log.warning(log_msg)
+                            # else:
                         else:
                             log_msg = _(
                                 "{module_name} is missing critical metadata. Check "
@@ -1602,9 +1607,26 @@ class ServerApp(JupyterApp):
                     "Extension {extension_name} enabled and "
                     "loaded".format(extension_name=extension.extension_name)
                 )
-            func = getattr(extension, 'load_jupyter_server_extension')
-            func(self)
-            self.log.debug(log_msg)
+            # Find the extension loading function.
+            try:
+                # This function was prefixed with an underscore in in v1.0
+                # because this shouldn't be a public API for most extensions.
+                func = getattr(extension, '_load_jupyter_server_extension')
+                func(self)
+                self.log.debug(log_msg)
+            except AttributeError:
+                # For backwards compatibility, we will still look for non
+                # underscored loading functions.
+                func = getattr(extension, 'load_jupyter_server_extension')
+                func(self)
+                self.log.debug(log_msg)
+            except:
+                warn_msg = _(
+                    "{extkey} is enabled but no "
+                    "`_load_jupyter_server_extension` function "
+                    "was found.".format(extkey=extkey)
+                )
+                self.log.warning(warn_msg)
 
     def init_mime_overrides(self):
         # On some Windows machines, an application has registered incorrect

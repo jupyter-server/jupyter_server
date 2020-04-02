@@ -111,7 +111,7 @@ def extension_environ(env_config_path, monkeypatch):
 
 @pytest.fixture
 def configurable_serverapp(
-    environ, http_port, tmp_path, home_dir, data_dir, config_dir, runtime_dir, root_dir, io_loop, server_config, **kwargs
+    environ, extension_environ, http_port, tmp_path, home_dir, data_dir, config_dir, runtime_dir, root_dir, io_loop, server_config, **kwargs
 ):
     def serverapp(
         config=server_config,

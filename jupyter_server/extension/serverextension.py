@@ -134,7 +134,24 @@ RED_X = '\033[31m X\033[0m' if os.name != 'nt' else ' X'
 # Public API
 # ------------------------------------------------------------------------------
 
+class ExtensionLoadingError(Exception): pass
+
+
 class ExtensionValidationError(Exception): pass
+
+
+
+def _get_load_jupyter_server_extension(obj):
+    """Looks for load_jupyter_server_extension as an attribute
+    of the object or module.
+    """
+    try:
+        func = getattr(obj, '_load_jupyter_server_extension')
+    except AttributeError:
+        func = getattr(obj, 'load_jupyter_server_extension')
+    except:
+        raise ExtensionLoadingError("_load_jupyter_server_extension function was not found.")
+    return func
 
 
 def validate_server_extension(extension_name):
@@ -169,10 +186,10 @@ def validate_server_extension(extension_name):
             extapp = item.get('app', None)
             extloc = item.get('module', None)
             if extapp and extloc:
-                func = extapp.load_jupyter_server_extension
+                func = _get_load_jupyter_server_extension(extapp)
             elif extloc:
                 extmod = importlib.import_module(extloc)
-                func = extmod.load_jupyter_server_extension
+                func = _get_load_jupyter_server_extension(extmod)
             else:
                 raise AttributeError
     # If the extension does not have a `load_jupyter_server_extension` function, raise exception.

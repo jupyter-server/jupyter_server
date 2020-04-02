@@ -1,10 +1,23 @@
 import pytest
 
-from jupyter_server.serverapp import ServerApp
 
-# ------------------ Start tests -------------------
+@pytest.fixture
+def server_config(template_dir):
+    return {
+        "ServerApp": {
+            "jpserver_extensions": {
+                "tests.extension.mockextensions": True
+            }
+        },
+        "MockExtensionApp": {
+            "template_paths": [
+                str(template_dir)
+            ]
+        }
+    }
 
-async def test_handler(fetch, extended_serverapp):
+
+async def test_handler(fetch):
     r = await fetch(
         'mock',
         method='GET'
@@ -13,7 +26,7 @@ async def test_handler(fetch, extended_serverapp):
     assert r.body.decode() == 'mock trait'
 
 
-async def test_handler_template(fetch, extended_serverapp):
+async def test_handler_template(fetch):
     r = await fetch(
         'mock_template',
         method='GET'
@@ -21,7 +34,7 @@ async def test_handler_template(fetch, extended_serverapp):
     assert r.code == 200
 
 
-async def test_handler_setting(fetch, serverapp, make_mock_extension_app):
+async def test_handler_setting(fetch, serverapp):
     # Configure trait in Mock Extension.
     m = make_mock_extension_app(mock_trait='test mock trait')
     m.initialize(serverapp)
