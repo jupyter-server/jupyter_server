@@ -8,7 +8,7 @@ import mimetypes
 from ..base.handlers import APIHandler, JupyterHandler
 from ..utils import url_path_join
 
-from tornado import gen, web
+from tornado import web
 from tornado.concurrent import Future
 from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado.websocket import WebSocketHandler, websocket_connect
@@ -61,11 +61,10 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
         self.session = Session(config=self.config)
         self.gateway = GatewayWebSocketClient(gateway_url=GatewayClient.instance().url)
 
-    @gen.coroutine
-    def get(self, kernel_id, *args, **kwargs):
+    async def get(self, kernel_id, *args, **kwargs):
         self.authenticate()
         self.kernel_id = cast_unicode(kernel_id, 'ascii')
-        yield super(WebSocketChannelsHandler, self).get(kernel_id=kernel_id, *args, **kwargs)
+        await super(WebSocketChannelsHandler, self).get(kernel_id=kernel_id, *args, **kwargs)
 
     def send_ping(self):
         if self.ws_connection is None and self.ping_callback is not None:
@@ -132,8 +131,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         self.ws_future = Future()
         self.disconnected = False
 
-    @gen.coroutine
-    def _connect(self, kernel_id):
+    async def _connect(self, kernel_id):
         # websocket is initialized before connection
         self.ws = None
         self.kernel_id = kernel_id
@@ -168,14 +166,13 @@ class GatewayWebSocketClient(LoggingConfigurable):
             self.ws_future.cancel()
             self.log.debug("_disconnect: future cancelled, disconnected: {}".format(self.disconnected))
 
-    @gen.coroutine
-    def _read_messages(self, callback):
+    async def _read_messages(self, callback):
         """Read messages from gateway server."""
         while self.ws is not None:
             message = None
             if not self.disconnected:
                 try:
-                    message = yield self.ws.read_message()
+                    message = await self.ws.read_message()
                 except Exception as e:
                     self.log.error("Exception reading message from websocket: {}".format(e))  # , exc_info=True)
                 if message is None:
@@ -229,10 +226,9 @@ class GatewayResourceHandler(APIHandler):
     """Retrieves resources for specific kernelspec definitions from kernel/enterprise gateway."""
 
     @web.authenticated
-    @gen.coroutine
-    def get(self, kernel_name, path, include_body=True):
+    async def get(self, kernel_name, path, include_body=True):
         ksm = self.kernel_spec_manager
-        kernel_spec_res = yield ksm.get_kernel_spec_resource(kernel_name, path)
+        kernel_spec_res = await ksm.get_kernel_spec_resource(kernel_name, path)
         if kernel_spec_res is None:
             self.log.warning("Kernelspec resource '{}' for '{}' not found.  Gateway may not support"
                              " resource serving.".format(path, kernel_name))

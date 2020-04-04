@@ -1,3 +1,4 @@
+import sys
 import time
 import json
 import shutil
@@ -11,6 +12,13 @@ from nbformat import writes
 from ...utils import expected_http_error
 
 j = lambda r: json.loads(r.body.decode())
+
+
+@pytest.fixture(params=["MappingKernelManager", "AsyncMappingKernelManager"])
+def argv(request):
+    if request.param == "AsyncMappingKernelManager" and sys.version_info < (3, 6):
+        pytest.skip("Kernel manager is AsyncMappingKernelManager, Python version < 3.6")
+    return ["--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager." + request.param]
 
 
 class SessionClient:
@@ -116,6 +124,30 @@ def session_client(root_dir, fetch):
     shutil.rmtree(str(subdir), ignore_errors=True)
 
 
+def assert_kernel_equality(actual, expected):
+    """ Compares kernel models after taking into account that execution_states
+        may differ from 'starting' to 'idle'.  The 'actual' argument is the
+        current state (which may have an 'idle' status) while the 'expected'
+        argument is the previous state (which may have a 'starting' status).
+    """
+    actual.pop('execution_state', None)
+    actual.pop('last_activity', None)
+    expected.pop('execution_state', None)
+    expected.pop('last_activity', None)
+    assert actual == expected
+
+
+def assert_session_equality(actual, expected):
+    """ Compares session models.  `actual` is the most current session,
+        while `expected` is the target of the comparison.  This order
+        matters when comparing the kernel sub-models.
+    """
+    assert actual['id'] == expected['id']
+    assert actual['path'] == expected['path']
+    assert actual['type'] == expected['type']
+    assert_kernel_equality(actual['kernel'], expected['kernel'])
+
+
 async def test_create(session_client):
     # Make sure no sessions exist.
     resp = await session_client.list()
@@ -134,13 +166,14 @@ async def test_create(session_client):
     # Check that the new session appears in list.
     resp = await session_client.list()
     sessions = j(resp)
-    assert sessions == [new_session]
+    assert len(sessions) == 1
+    assert_session_equality(sessions[0], new_session)
 
     # Retrieve that session.
     sid = new_session['id']
     resp = await session_client.get(sid)
     got = j(resp)
-    assert got == new_session
+    assert_session_equality(got, new_session)
 
     # Need to find a better solution to this.
     await session_client.cleanup()
@@ -183,21 +216,22 @@ async def test_create_with_kernel_id(session_client, fetch):
 
     resp = await session_client.create('foo/nb1.ipynb', kernel_id=kernel['id'])
     assert resp.code == 201
-    newsession = j(resp)
-    assert 'id' in newsession
-    assert newsession['path'] == 'foo/nb1.ipynb'
-    assert newsession['kernel']['id'] == kernel['id']
-    assert resp.headers['Location'] == '/api/sessions/{0}'.format(newsession['id'])
+    new_session = j(resp)
+    assert 'id' in new_session
+    assert new_session['path'] == 'foo/nb1.ipynb'
+    assert new_session['kernel']['id'] == kernel['id']
+    assert resp.headers['Location'] == '/api/sessions/{0}'.format(new_session['id'])
 
     resp = await session_client.list()
     sessions = j(resp)
-    assert sessions == [newsession]
+    assert len(sessions) == 1
+    assert_session_equality(sessions[0], new_session)
 
     # Retrieve it
-    sid = newsession['id']
+    sid = new_session['id']
     resp = await session_client.get(sid)
     got = j(resp)
-    assert got == newsession
+    assert_session_equality(got, new_session)
     # Need to find a better solution to this.
     await session_client.cleanup()
 

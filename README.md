@@ -26,6 +26,14 @@ To install the latest release locally, make sure you have
 
     $ pip install jupyter_server
 
+Jupyter Server currently supports the following Python versions:
+
+Platform | Python
+--- | ---
+Linux | >=3.5
+OSX | >=3.5
+Windows | >=3.7
+
 ### Versioning and Branches
 
 If Jupyter Server is a dependency of your project/application, it is important that you pin it to a version that works for your application. Currently, Jupyter Server only has minor and patch versions. Different minor versions likely include API-changes while patch versions do not change API.

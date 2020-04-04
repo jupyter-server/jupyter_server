@@ -10,14 +10,14 @@ import json
 import logging
 from textwrap import dedent
 
-from tornado import gen, web
+from tornado import web
 from tornado.concurrent import Future
 from tornado.ioloop import IOLoop
 
 from jupyter_client import protocol_version as client_protocol_version
 from jupyter_client.jsonutil import date_default
 from ipython_genutils.py3compat import cast_unicode
-from jupyter_server.utils import url_path_join, url_escape, maybe_future
+from jupyter_server.utils import url_path_join, url_escape, ensure_async
 
 from ...base.handlers import APIHandler
 from ...base.zmqhandlers import AuthenticatedZMQStreamHandler, deserialize_binary_message
@@ -27,15 +27,13 @@ from ...base.zmqhandlers import AuthenticatedZMQStreamHandler, deserialize_binar
 class MainKernelHandler(APIHandler):
 
     @web.authenticated
-    @gen.coroutine
-    def get(self):
+    async def get(self):
         km = self.kernel_manager
-        kernels = yield maybe_future(km.list_kernels())
+        kernels = await ensure_async(km.list_kernels())
         self.finish(json.dumps(kernels, default=date_default))
 
     @web.authenticated
-    @gen.coroutine
-    def post(self):
+    async def post(self):
         km = self.kernel_manager
         model = self.get_json_body()
         if model is None:
@@ -45,9 +43,9 @@ class MainKernelHandler(APIHandler):
         else:
             model.setdefault('name', km.default_kernel_name)
 
-        kernel_id = yield maybe_future(km.start_kernel(kernel_name=model['name'],
-                                                       path=model.get('path')))
-        model = yield maybe_future(km.kernel_model(kernel_id))
+        kernel_id = await km.start_kernel(kernel_name=model['name'],
+                                                       path=model.get('path'))
+        model = await ensure_async(km.kernel_model(kernel_id))
         location = url_path_join(self.base_url, 'api', 'kernels', url_escape(kernel_id))
         self.set_header('Location', location)
         self.set_status(201)
@@ -63,10 +61,9 @@ class KernelHandler(APIHandler):
         self.finish(json.dumps(model, default=date_default))
 
     @web.authenticated
-    @gen.coroutine
-    def delete(self, kernel_id):
+    async def delete(self, kernel_id):
         km = self.kernel_manager
-        yield maybe_future(km.shutdown_kernel(kernel_id))
+        await ensure_async(km.shutdown_kernel(kernel_id))
         self.set_status(204)
         self.finish()
 
@@ -74,21 +71,20 @@ class KernelHandler(APIHandler):
 class KernelActionHandler(APIHandler):
 
     @web.authenticated
-    @gen.coroutine
-    def post(self, kernel_id, action):
+    async def post(self, kernel_id, action):
         km = self.kernel_manager
         if action == 'interrupt':
-            km.interrupt_kernel(kernel_id)
+            await ensure_async(km.interrupt_kernel(kernel_id))
             self.set_status(204)
         if action == 'restart':
 
             try:
-                yield maybe_future(km.restart_kernel(kernel_id))
+                await km.restart_kernel(kernel_id)
             except Exception as e:
                 self.log.error("Exception restarting kernel", exc_info=True)
                 self.set_status(500)
             else:
-                model = yield maybe_future(km.kernel_model(kernel_id))
+                model = await ensure_async(km.kernel_model(kernel_id))
                 self.write(json.dumps(model, default=date_default))
         self.finish()
 
@@ -212,12 +208,11 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         # by a delta amount at some point in the future.
         self._iopub_window_byte_queue = []
 
-    @gen.coroutine
-    def pre_get(self):
+    async def pre_get(self):
         # authenticate first
         super(ZMQChannelsHandler, self).pre_get()
         # check session collision:
-        yield self._register_session()
+        await self._register_session()
         # then request kernel info, waiting up to a certain time before giving up.
         # We don't want to wait forever, because browsers don't take it well when
         # servers never respond to websocket connection requests.
@@ -234,15 +229,13 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         loop = IOLoop.current()
         loop.add_timeout(loop.time() + self.kernel_info_timeout, give_up)
         # actually wait for it
-        yield future
+        await future
 
-    @gen.coroutine
-    def get(self, kernel_id):
+    async def get(self, kernel_id):
         self.kernel_id = cast_unicode(kernel_id, 'ascii')
-        yield super(ZMQChannelsHandler, self).get(kernel_id=kernel_id)
+        await super(ZMQChannelsHandler, self).get(kernel_id=kernel_id)
 
-    @gen.coroutine
-    def _register_session(self):
+    async def _register_session(self):
         """Ensure we aren't creating a duplicate session.
 
         If a previous identical session is still open, close it to avoid collisions.
@@ -253,7 +246,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         stale_handler = self._open_sessions.get(self.session_key)
         if stale_handler:
             self.log.warning("Replacing stale connection: %s", self.session_key)
-            yield stale_handler.close()
+            await stale_handler.close()
         self._open_sessions[self.session_key] = self
 
     def open(self, kernel_id):
@@ -497,4 +490,3 @@ default_handlers = [
     (r"/api/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex), KernelActionHandler),
     (r"/api/kernels/%s/channels" % _kernel_id_regex, ZMQChannelsHandler),
 ]
-

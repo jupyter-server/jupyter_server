@@ -6,9 +6,8 @@
 import mimetypes
 import json
 from base64 import decodebytes
-from tornado import gen, web
+from tornado import web
 from jupyter_server.base.handlers import JupyterHandler
-from jupyter_server.utils import maybe_future
 
 
 class FilesHandler(JupyterHandler):
@@ -32,8 +31,7 @@ class FilesHandler(JupyterHandler):
         self.get(path, include_body=False)
 
     @web.authenticated
-    @gen.coroutine
-    def get(self, path, include_body=True):
+    async def get(self, path, include_body=True):
         cm = self.contents_manager
 
         if cm.is_hidden(path) and not cm.allow_hidden:
@@ -45,9 +43,9 @@ class FilesHandler(JupyterHandler):
             _, name = path.rsplit('/', 1)
         else:
             name = path
-        
-        model = yield maybe_future(cm.get(path, type='file', content=include_body))
-        
+
+        model = await cm.get(path, type='file', content=include_body)
+
         if self.get_argument("download", False):
             self.set_attachment_header(name)
 
@@ -78,4 +76,3 @@ class FilesHandler(JupyterHandler):
 
 
 default_handlers = []
-

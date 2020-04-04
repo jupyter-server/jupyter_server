@@ -1,5 +1,5 @@
 import json
-from tornado import web, gen
+from tornado import web
 from ..base.handlers import APIHandler
 from ..prometheus.metrics import TERMINAL_CURRENTLY_RUNNING_TOTAL
 
@@ -40,11 +40,10 @@ class TerminalHandler(APIHandler):
             raise web.HTTPError(404, "Terminal not found: %r" % name)
 
     @web.authenticated
-    @gen.coroutine
-    def delete(self, name):
+    async def delete(self, name):
         tm = self.terminal_manager
         if name in tm.terminals:
-            yield tm.terminate(name, force=True)
+            await tm.terminate(name, force=True)
             self.set_status(204)
             self.finish()
 
