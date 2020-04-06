@@ -87,11 +87,10 @@ class KernelInterface(LoggingConfigurable):
     def _close_client(self):
         if self.client is not None:
             self._client_connected_evt.clear()
-            self.client_connected.cancel()
             self.client.close()
             self.client = None
 
-    def client_ready(self):
+    async def client_ready(self):
         """Return a future which resolves when the client is ready"""
         if self.client is None:
             return self._client_connected_evt.wait()
@@ -109,7 +108,7 @@ class KernelInterface(LoggingConfigurable):
         if now or (self.client is None):
             await self.manager.kill()
         else:
-            await self.client_connected
+            await self.client_ready()
             await self.client.shutdown_or_terminate()
 
         self._close_client()
