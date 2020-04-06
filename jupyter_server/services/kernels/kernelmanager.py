@@ -53,10 +53,6 @@ class KernelInterface(LoggingConfigurable):
         self.restarter.add_callback(self._handle_kernel_restarted, 'restarted')
         self.restarter.start()
 
-        # A future that resolves when the client is connected
-        self.client_connected = self._connect_client()
-        self._client_connected_evt = Event()
-
         self.buffer_for_key = None
         # TODO: the buffer should likely be a memory bounded queue, we're starting with a list to keep it simple
         self.buffer = []
@@ -67,10 +63,19 @@ class KernelInterface(LoggingConfigurable):
 
     @classmethod
     async def launch(cls, kernel_type, kernel_finder, **kwargs):
+        """Factory pattern used to create the instance"""
         connection_info, manager = await kernel_finder.launch(kernel_type, **kwargs)
-        return cls(kernel_type, kernel_finder, connection_info, manager)
+        interface = cls(kernel_type, kernel_finder, connection_info, manager)
+
+        await interface._init_connect_client()
+        return interface
 
     client = None
+
+    async def _init_connect_client(self):
+        # A future that resolves when the client is connected
+        self._client_connected_evt = Event()
+        self.client_connected = await self._connect_client()
 
     async def _connect_client(self):
         """Connect a client and wait for it to be ready."""
@@ -110,7 +115,7 @@ class KernelInterface(LoggingConfigurable):
         self._close_client()
         await self.manager.cleanup()
 
-    asynd def interrupt(self):
+    async def interrupt(self):
         await self.manager.interrupt()
 
     async def _handle_kernel_died(self, data):
@@ -121,7 +126,7 @@ class KernelInterface(LoggingConfigurable):
         """Called when the kernel has been restarted"""
         self.manager = data['manager']
         self.connection_info = data['connection_info']
-        self.client_connected = self._connect_client()
+        self.client_connected = await self._connect_client()
         await self.client_connected
 
     async def restart(self):

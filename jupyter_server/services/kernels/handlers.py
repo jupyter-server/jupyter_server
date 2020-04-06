@@ -207,7 +207,7 @@ class ZMQChannelsHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):
         km._check_kernel_id(kernel_id)
         km.notify_connect(kernel_id)
         kernel = km.get_kernel(kernel_id)
-        yield from kernel.client_ready()
+        await kernel.client_ready()
 
         # on new connections, flush the message buffer
         buffer_key, replay_buffer = kernel.get_buffer()

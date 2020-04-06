@@ -12,7 +12,7 @@ import os
 pjoin = os.path.join
 
 from tornado import web
-from urllib.parse import unquote
+from urllib.parse import quote, unquote
 
 from ...base.handlers import APIHandler
 from ...utils import ensure_async, url_path_join, url_unescape

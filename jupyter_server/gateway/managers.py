@@ -15,7 +15,7 @@ from tornado.httpclient import HTTPClient, AsyncHTTPClient, HTTPError
 from ..services.kernels.kernelmanager import MappingKernelManager
 from ..services.sessions.sessionmanager import SessionManager
 
-from ..utils import url_path_join, maybe_future
+from ..utils import url_path_join
 from traitlets import Instance, Unicode, Float, Bool, default, validate, TraitError
 from traitlets.config import SingletonConfigurable
 
