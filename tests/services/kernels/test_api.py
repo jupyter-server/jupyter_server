@@ -118,7 +118,7 @@ async def test_main_kernel_handler(fetch):
         'api', 'kernels',
         method='POST',
                 body=json.dumps({
-            'name': NATIVE_KERNEL_NAME,
+            'name': 'pyimport/kernel',
             'path': '/foo'
         })
     )
