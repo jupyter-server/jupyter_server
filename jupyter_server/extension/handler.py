@@ -27,8 +27,7 @@ class ExtensionHandlerMixin:
 
     @property
     def extensionapp(self):
-        key = "{extension_name}".format(extension_name=self.extension_name)
-        return self.settings[key]
+        return self.settings[self.extension_name]
 
     @property
     def serverapp(self):

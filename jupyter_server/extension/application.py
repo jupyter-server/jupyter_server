@@ -228,10 +228,6 @@ class ExtensionApp(JupyterApp):
         """Builds a Config object from the extension's traits and passes
         the object to the webapp's settings as `<extension_name>_config`.
         """
-        # Make sure the ServerApp receives any config.
-        self.serverapp.update_config(self.config)
-        # Verify all traits are up-to-date with config
-        self.update_config(self.config)
         traits = self.class_own_traits().keys()
         self.extension_config = Config({t: getattr(self, t) for t in traits})
         self.settings['{}_config'.format(self.extension_name)] = self.extension_config
