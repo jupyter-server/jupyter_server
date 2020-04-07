@@ -1,4 +1,5 @@
 import pytest
+from pytest_lazyfixture import lazy_fixture
 
 
 @pytest.fixture
@@ -45,8 +46,10 @@ async def test_handler_template(fetch, mock_template):
             },
             "MockExtensionApp": {
                 "template_paths": [
-                    pytest.lazy_fixture('template_dir')
+                    lazy_fixture('template_dir')
                 ],
+                # Change a trait in the MockExtensionApp using
+                # the following config value.
                 "mock_trait": "test mock trait"
             }
         }
