@@ -564,8 +564,10 @@ class ServerApp(JupyterApp):
     # This trait is used to track _enabled_extensions. It should remain hidden
     # and not configurable.
     _enabled_extensions = {}
+
     flags = Dict(flags)
     aliases = Dict(aliases)
+
     classes = [
             KernelManager, Session, MappingKernelManager, KernelSpecManager,
             ContentsManager, FileContentsManager, NotebookNotary,

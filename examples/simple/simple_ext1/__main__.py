@@ -1,7 +1,4 @@
-from traitlets import Dict
+from .application import main
 
-from jupyter_server.serverapp import ServerApp
-
-if __name__ is '__main__':
-    ServerApp.jpserver_extensions = Dict({'simple_ext1': True})
-    ServerApp.launch_instance()
+if __name__ == "__main__":
+    main()
