@@ -1,3 +1,4 @@
+import os
 import pytest
 
 
@@ -6,7 +7,13 @@ pytestmark = pytest.mark.script_launch_mode('subprocess')
 
 
 def test_server_extension_list(environ, script_runner):
-    ret = script_runner.run('jupyter', 'server', 'extension', 'list')
+    ret = script_runner.run(
+        'jupyter',
+        'server',
+        'extension',
+        'list',
+        env=os.environ
+    )
     assert ret.success
 
 
@@ -19,7 +26,8 @@ def test_server_extension_enable(environ, script_runner):
         "server",
         "extension",
         "enable",
-        extension_name
+        extension_name,
+        env=os.environ
     )
     assert ret.success
     assert 'Enabling: {}'.format(extension_name) in ret.stderr
@@ -34,7 +42,8 @@ def test_server_extension_disable(environ, script_runner):
         'server',
         'extension',
         'disable',
-        extension_name
+        extension_name,
+        env=os.environ
     )
     assert ret.success
     assert 'Disabling: {}'.format(extension_name) in ret.stderr
