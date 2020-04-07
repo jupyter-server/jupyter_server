@@ -4,17 +4,17 @@ import pytest
 @pytest.fixture
 def server_config(template_dir):
     return {
-        "ServerApp": {
-            "jpserver_extensions": {
-                "tests.extension.mockextensions": True
+            "ServerApp": {
+                "jpserver_extensions": {
+                    "tests.extension.mockextensions": True
+                }
+            },
+            "MockExtensionApp": {
+                "template_paths": [
+                    str(template_dir)
+                ]
             }
-        },
-        "MockExtensionApp": {
-            "template_paths": [
-                str(template_dir)
-            ]
         }
-    }
 
 
 async def test_handler(fetch):
@@ -26,7 +26,7 @@ async def test_handler(fetch):
     assert r.body.decode() == 'mock trait'
 
 
-async def test_handler_template(fetch):
+async def test_handler_template(fetch, mock_template):
     r = await fetch(
         'mock_template',
         method='GET'
@@ -34,11 +34,25 @@ async def test_handler_template(fetch):
     assert r.code == 200
 
 
-async def test_handler_setting(fetch, serverapp):
-    # Configure trait in Mock Extension.
-    m = make_mock_extension_app(mock_trait='test mock trait')
-    m.initialize(serverapp)
-
+@pytest.mark.parametrize(
+    'server_config',
+    [
+        {
+            "ServerApp": {
+                "jpserver_extensions": {
+                    "tests.extension.mockextensions": True
+                }
+            },
+            "MockExtensionApp": {
+                "template_paths": [
+                    pytest.lazy_fixture('template_dir')
+                ],
+                "mock_trait": "test mock trait"
+            }
+        }
+    ]
+)
+async def test_handler_setting(fetch):
     # Test that the extension trait was picked up by the webapp.
     r = await fetch(
         'mock',
@@ -48,12 +62,10 @@ async def test_handler_setting(fetch, serverapp):
     assert r.body.decode() == 'test mock trait'
 
 
-async def test_handler_argv(fetch, serverapp, make_mock_extension_app):
-    # Configure trait in Mock Extension.
-    m = make_mock_extension_app()
-    argv = ['--MockExtensionApp.mock_trait="test mock trait"']
-    m.initialize(serverapp, argv=argv)
-
+@pytest.mark.parametrize(
+    'argv', (['--MockExtensionApp.mock_trait="test mock trait"'],)
+)
+async def test_handler_argv(fetch):
     # Test that the extension trait was picked up by the webapp.
     r = await fetch(
         'mock',

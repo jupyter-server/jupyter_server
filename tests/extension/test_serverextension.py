@@ -1,15 +1,7 @@
-import sys
 import pytest
 from collections import OrderedDict
-
-from types import SimpleNamespace
-
 from traitlets.tests.utils import check_help_all_output
 
-from ..utils import mkdir
-
-from jupyter_server.serverapp import ServerApp
-from jupyter_server.extension import serverextension
 from jupyter_server.extension.serverextension import (
     validate_server_extension,
     toggle_server_extension_python,
@@ -47,9 +39,10 @@ def test_disable():
 
 
 def test_merge_config(
-    env_config_path,
-    configurable_serverapp
-    ):
+        env_config_path,
+        configurable_serverapp,
+        extension_environ
+):
     # enabled at sys level
     validate_server_extension('tests.extension.mockextensions.mockext_sys')
     # enabled at sys, disabled at user
@@ -104,14 +97,20 @@ def test_merge_config(
     assert not extensions['tests.extension.mockextensions.mockext_both']
 
 
-def test_load_ordered(configurable_serverapp):
-    app = configurable_serverapp(
-        jpserver_extensions=OrderedDict([
-            ('tests.extension.mockextensions.mock2', True),
-            ('tests.extension.mockextensions.mock1', True)
-        ])
-    )
-    assert app.mockII is True, "Mock II should have been loaded"
-    assert app.mockI is True, "Mock I should have been loaded"
-    assert app.mock_shared == 'II', "Mock II should be loaded after Mock I"
-
+@pytest.mark.parametrize(
+    'server_config',
+    [
+        {
+            "ServerApp": {
+                "jpserver_extensions": OrderedDict([
+                    ('tests.extension.mockextensions.mock2', True),
+                    ('tests.extension.mockextensions.mock1', True)
+                ])
+            }
+        }
+    ]
+)
+def test_load_ordered(serverapp):
+    assert serverapp.mockII is True, "Mock II should have been loaded"
+    assert serverapp.mockI is True, "Mock I should have been loaded"
+    assert serverapp.mock_shared == 'II', "Mock II should be loaded after Mock I"

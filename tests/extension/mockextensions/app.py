@@ -1,8 +1,14 @@
 from traitlets import Unicode, List
 
 from jupyter_server.base.handlers import JupyterHandler
-from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
-from jupyter_server.extension.handler import ExtensionHandlerMixin, ExtensionHandlerJinjaMixin
+from jupyter_server.extension.application import (
+    ExtensionApp,
+    ExtensionAppJinjaMixin
+)
+from jupyter_server.extension.handler import (
+    ExtensionHandlerMixin,
+    ExtensionHandlerJinjaMixin
+)
 
 
 class MockExtensionHandler(ExtensionHandlerMixin, JupyterHandler):
@@ -11,7 +17,11 @@ class MockExtensionHandler(ExtensionHandlerMixin, JupyterHandler):
         self.finish(self.config.mock_trait)
 
 
-class MockExtensionTemplateHandler(ExtensionHandlerJinjaMixin, ExtensionHandlerMixin, JupyterHandler):
+class MockExtensionTemplateHandler(
+        ExtensionHandlerJinjaMixin,
+        ExtensionHandlerMixin,
+        JupyterHandler
+    ):
 
     def get(self):
         self.write(self.render_template("index.html"))

@@ -9,16 +9,16 @@ from .app import MockExtensionApp
 def _jupyter_server_extension_paths():
     return [
         {
-            'module': 'mockextension',
+            'module': 'tests.extension.mockextensions.app',
             'app': MockExtensionApp
         },
         {
-            'module': 'mock1'
+            'module': 'tests.extension.mockextensions.mock1'
         },
         {
-            'module': 'mock2'
+            'module': 'tests.extension.mockextensions.mock2'
         },
         {
-            'module': 'mock3'
+            'module': 'tests.extension.mockextensions.mock3'
         }
     ]

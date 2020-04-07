@@ -13,12 +13,12 @@ class SimpleApp11(SimpleApp1):
     aliases.update({
         'simple11-dir': 'SimpleApp11.simple11_dir',
     })
-    
+
     # The name of the extension.
     extension_name = "simple_ext11"
 
     # Te url that your extension will serve its homepage.
-    default_url = '/simple_ext11/default'
+    extension_url = '/simple_ext11/default'
 
     # Local path to static files directory.
     static_paths = [
@@ -37,12 +37,12 @@ class SimpleApp11(SimpleApp1):
 
     hello = Bool(False,
         config=True,
-        help='Say hello', 
+        help='Say hello',
     )
 
     ignore_js = Bool(False,
         config=True,
-        help='Ignore Javascript', 
+        help='Ignore Javascript',
     )
 
     @observe('ignore_js')

@@ -446,7 +446,7 @@ def shutdown_server(server_info, timeout=5, log=None):
 class JupyterServerStopApp(JupyterApp):
 
     version = __version__
-    description="Stop currently running Jupyter server for a given port"
+    description = "Stop currently running Jupyter server for a given port"
 
     port = Integer(8888, config=True,
         help="Port of the server to be killed. Default 8888")
@@ -1486,9 +1486,10 @@ class ServerApp(JupyterApp):
         metadata for all enabled extensions.
 
         If an extension's metadata includes an 'app' key,
-        the value should be a subclass of ExtensionApp and an instance
-        will be created. The config for this instance will inherit
-        the ServerApp's config object and load its own config.
+        the value must be a subclass of ExtensionApp. An instance
+        of the class will be created at this step. The config for
+        this instance will inherit the ServerApp's config object
+        and load its own config.
         """
         # Step 1: Walk through all config files looking for jpserver_extensions.
         #
@@ -1499,12 +1500,17 @@ class ServerApp(JupyterApp):
         # Load server extensions with ConfigManager.
         # This enables merging on keys, which we want for extension enabling.
         # Regular config loading only merges at the class level,
-        # so each level (user > env > system) clobbers the previous.
+        # so each level (system > env > user ... opposite of jupyter/notebook)
+        # clobbers the previous.
         config_path = jupyter_config_path()
         if self.config_dir not in config_path:
             # add self.config_dir to the front, if set manually
             config_path.insert(0, self.config_dir)
-        manager = ConfigManager(read_config_path=config_path)
+        # Flip the order of ordered_config_path to system > env > user.
+        # This is different that jupyter/notebook. See the Jupyter
+        # Enhancement Proposal 29 (Jupyter Server) for more information.
+        reversed_config_path = config_path[::-1]
+        manager = ConfigManager(read_config_path=reversed_config_path)
         section = manager.get(self.config_file_name)
         extensions = section.get('ServerApp', {}).get('jpserver_extensions', {})
 
@@ -1553,15 +1559,6 @@ class ServerApp(JupyterApp):
                             extmod = importlib.import_module(extloc)
                             func = _get_load_jupyter_server_extension(extmod)
                             self._enabled_extensions[extloc] = extmod
-
-                            # if func is None:
-                            #     log_msg = _(
-                            #         "{module_name} is enabled but no "
-                            #         "`load_jupyter_server_extension` function "
-                            #         "was found.".format(module_name=module_name)
-                            #     )
-                            #     self.log.warning(log_msg)
-                            # else:
                         else:
                             log_msg = _(
                                 "{module_name} is missing critical metadata. Check "

@@ -7,7 +7,6 @@ from traitlets import (
     Unicode,
     List,
     Dict,
-    Bool,
     default,
     validate
 )
@@ -15,21 +14,16 @@ from traitlets.config import Config
 
 from jupyter_core.application import JupyterApp
 
-from jupyter_server.serverapp import ServerApp, aliases, flags
+from jupyter_server.serverapp import ServerApp
 from jupyter_server.transutils import _
 from jupyter_server.utils import url_path_join
 from .handler import ExtensionHandlerMixin
 
-# Remove alias for nested classes in ServerApp.
-# Nested classes are not allowed in ExtensionApp.
-try:
-    aliases.pop('transport')
-except KeyError:
-    pass
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Util functions and classes.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 def _preparse_for_subcommand(Application, argv):
     """Preparse command line to look for subcommands.
@@ -120,16 +114,18 @@ class ExtensionAppJinjaMixin:
             }
         )
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # ExtensionApp
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 class JupyterServerExtensionException(Exception):
     """Exception class for raising for Server extensions errors."""
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # ExtensionApp
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 class ExtensionApp(JupyterApp):
     """Base class for configurable Jupyter Server Extension Applications.
@@ -344,14 +340,14 @@ class ExtensionApp(JupyterApp):
         # config.
         # ServerApp config ---> ExtensionApp traits
         self.update_config(self.serverapp.config)
-        # Use ExtensionApp's CLI parser to find any extra
-        # args that passed through ServerApp and
-        # now belong to ExtensionApp.
-        self.parse_command_line(self.serverapp.extra_args)
         # Load config from an ExtensionApp's config files.
         # If any config should be passed upstream to the
         # ServerApp, do it here.
         self.load_config_file()
+        # Use ExtensionApp's CLI parser to find any extra
+        # args that passed through ServerApp and
+        # now belong to ExtensionApp.
+        self.parse_command_line(self.serverapp.extra_args)
         # i.e. ServerApp traits <--- ExtensionApp config
         self.serverapp.update_config(self.config)
 

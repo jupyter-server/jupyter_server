@@ -32,3 +32,11 @@ def mock_template(template_dir):
 @pytest.fixture
 def enabled_extensions(serverapp):
     return serverapp._enabled_extensions
+
+
+@pytest.fixture
+def config_file(config_dir):
+    """"""
+    f = config_dir.joinpath("jupyter_mockextension_config.py")
+    f.write_text("c.MockExtensionApp.mock_trait ='config from file'")
+    return f
