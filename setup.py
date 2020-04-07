@@ -99,7 +99,7 @@ for more information.
     extras_require = {
         'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
                  'pytest', 'pytest-cov', 'pytest-tornasync',
-                 'pytest-console-scripts', 'pytest-lazy-fixture'],
+                 'pytest-console-scripts'],
         'test:sys_platform == "win32"': ['nose-exclude'],
     },
     python_requires = '>=3.5',
