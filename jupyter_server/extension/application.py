@@ -387,7 +387,7 @@ class ExtensionApp(JupyterApp):
         self.serverapp.clear_instance()
 
     @classmethod
-    def load_jupyter_server_extension(cls, serverapp):
+    def _load_jupyter_server_extension(cls, serverapp):
         """Initialize and configure this extension, then add the extension's
         settings and handlers to the server's web application.
         """

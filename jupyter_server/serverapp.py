@@ -1544,7 +1544,7 @@ class ServerApp(JupyterApp):
                     # _jupyter_server_extension-path.
                     log_msg = _(
                         "Error loading server extensions in "
-                        "{module_name} module. There is no `_jupyter_server_extension_path` "
+                        "{module_name} module. There is no `_jupyter_server_extension_paths` "
                         "defined at the root of the extension module. Check "
                         "with the author of the extension to ensure this function "
                         "is added.".format(module_name=module_name)
