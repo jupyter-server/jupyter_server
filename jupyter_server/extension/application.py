@@ -329,6 +329,8 @@ class ExtensionApp(JupyterApp):
         settings.
         """
         self.serverapp = serverapp
+        # Load config from an ExtensionApp's config files.
+        self.load_config_file()
         # ServerApp's config might have picked up
         # CLI config for the ExtensionApp. We call
         # update_config to update ExtensionApp's
@@ -336,14 +338,12 @@ class ExtensionApp(JupyterApp):
         # config.
         # ServerApp config ---> ExtensionApp traits
         self.update_config(self.serverapp.config)
-        # Load config from an ExtensionApp's config files.
-        # If any config should be passed upstream to the
-        # ServerApp, do it here.
-        self.load_config_file()
         # Use ExtensionApp's CLI parser to find any extra
         # args that passed through ServerApp and
         # now belong to ExtensionApp.
         self.parse_command_line(self.serverapp.extra_args)
+        # If any config should be passed upstream to the
+        # ServerApp, do it here.
         # i.e. ServerApp traits <--- ExtensionApp config
         self.serverapp.update_config(self.config)
 

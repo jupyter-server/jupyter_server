@@ -1530,13 +1530,14 @@ class ServerApp(JupyterApp):
         # after the ServerApp's Web application object is created.
         for module_name, enabled in sorted(self.jpserver_extensions.items()):
             if enabled:
+                metadata_list = []
                 try:
                     # Load the metadata for this enabled extension. This will
                     # be a list of extension points, each having their own
                     # path to a `_load_jupyter_server_extensions()`function.
                     # Important note: a single extension can have *multiple*
                     # `_load_jupyter_server_extension` functions defined, hence
-                    # _get_server_extension_metadata returns a list.
+                    # _get_server_extension_metadata returns a list of metadata.
                     mod, metadata_list = _get_server_extension_metadata(module_name)
                 except KeyError:
                     # A KeyError suggests that the module does not have a
