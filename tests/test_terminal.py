@@ -1,8 +1,14 @@
+# Only Run tests on MacOS and Linux
 import shutil
 import pytest
 import json
 import asyncio
 import sys
+
+# Skip this whole module on Windows. The terminal API leads
+# to timeouts on Windows CI.
+if sys.platform.startswith('win'):
+    pytest.skip("Terminal API tests time out on Windows.", allow_module_level=True)
 
 
 @pytest.fixture
@@ -55,7 +61,6 @@ async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
     assert data['name'] == term_name
 
 
-@pytest.mark.skipif(sys.platform == 'win32', reason="Test times out on Windows.")
 async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
     resp = await fetch(
         'api', 'terminals',
