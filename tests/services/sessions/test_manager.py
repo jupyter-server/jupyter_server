@@ -25,8 +25,8 @@ class DummyMKM(MappingKernelManager):
 
     def _new_id(self):
         return next(self.id_letters)
-    
-    def start_kernel(self, kernel_id=None, path=None, kernel_name='python', **kwargs):
+
+    async def start_kernel(self, kernel_id=None, path=None, kernel_name='python', **kwargs):
         kernel_id = kernel_id or self._new_id()
         k = self._kernels[kernel_id] = DummyKernel(kernel_name=kernel_name)
         self._kernel_connections[kernel_id] = 0
@@ -34,7 +34,7 @@ class DummyMKM(MappingKernelManager):
         k.execution_state = 'idle'
         return kernel_id
 
-    def shutdown_kernel(self, kernel_id, now=False):
+    async def shutdown_kernel(self, kernel_id, now=False):
         del self._kernels[kernel_id]
 
 
@@ -91,12 +91,12 @@ async def test_bad_get_session(session_manager):
 
 async def test_get_session_dead_kernel(session_manager):
     session = await session_manager.create_session(
-        path='/path/to/1/test1.ipynb', 
+        path='/path/to/1/test1.ipynb',
         kernel_name='python',
         type='notebook'
     )
     # Kill the kernel
-    session_manager.kernel_manager.shutdown_kernel(session['kernel']['id'])
+    await session_manager.kernel_manager.shutdown_kernel(session['kernel']['id'])
     with pytest.raises(KeyError):
         await session_manager.get_session(session_id=session['id'])
     # no session left
@@ -162,7 +162,7 @@ async def test_list_sessions_dead_kernel(session_manager):
         dict(path='/path/to/2/test2.ipynb', kernel_name='python'),
     )
     # kill one of the kernels
-    session_manager.kernel_manager.shutdown_kernel(sessions[0]['kernel']['id'])
+    await session_manager.kernel_manager.shutdown_kernel(sessions[0]['kernel']['id'])
     listed = await session_manager.list_sessions()
     expected = [
         {

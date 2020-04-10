@@ -19,10 +19,16 @@ import sys
 name = "jupyter_server"
 
 # Minimal Python version sanity check
-if sys.version_info < (3,5):
-    error = "ERROR: %s requires Python version 3.5 or above." % name
-    print(error, file=sys.stderr)
-    sys.exit(1)
+if sys.platform == 'win32':
+    if sys.version_info < (3,7):
+        error = "ERROR: %s requires Python version 3.7 or above." % name
+        print(error, file=sys.stderr)
+        sys.exit(1)
+else:
+    if sys.version_info < (3,5):
+        error = "ERROR: %s requires Python version 3.5 or above." % name
+        print(error, file=sys.stderr)
+        sys.exit(1)
 
 # At least we're on the python version we need, move on.
 
@@ -81,9 +87,9 @@ for more information.
         'ipython_genutils',
         'traitlets>=4.2.1',
         'jupyter_core>=4.4.0',
-        'jupyter_client>=5.3.1',
+        'jupyter_client>=6.1.1',
         'nbformat',
-        'nbconvert<6',
+        'nbconvert',
         'ipykernel', # bless IPython kernel for now
         'Send2Trash',
         'terminado>=0.8.3',
@@ -99,7 +105,6 @@ for more information.
     entry_points = {
         'console_scripts': [
             'jupyter-server = jupyter_server.serverapp:main',
-            'jupyter-bundlerextension = jupyter_server.bundler.bundlerextensions:main',
         ],
         'pytest11': [
             'pytest_jupyter_server = jupyter_server.pytest_plugin'

@@ -5,7 +5,7 @@ import os
 import json
 
 from socket import gaierror
-from tornado import gen, web
+from tornado import web
 from tornado.escape import json_encode, json_decode, url_escape
 from tornado.httpclient import HTTPClient, AsyncHTTPClient, HTTPError
 
@@ -269,19 +269,18 @@ class GatewayClient(SingletonConfigurable):
         return kwargs
 
 
-@gen.coroutine
-def gateway_request(endpoint, **kwargs):
+async def gateway_request(endpoint, **kwargs):
     """Make an async request to kernel gateway endpoint, returns a response """
     client = AsyncHTTPClient()
     kwargs = GatewayClient.instance().load_connection_args(**kwargs)
     try:
-        response = yield client.fetch(endpoint, **kwargs)
+        response = await client.fetch(endpoint, **kwargs)
     # Trap a set of common exceptions so that we can inform the user that their Gateway url is incorrect
     # or the server is not running.
     # NOTE: We do this here since this handler is called during the Notebook's startup and subsequent refreshes
     # of the tree view.
     except ConnectionRefusedError:
-        raise web.HTTPError(503, "Connection refused from Gateway server url '{}'.  " 
+        raise web.HTTPError(503, "Connection refused from Gateway server url '{}'.  "
               "Check to be sure the Gateway instance is running.".format(GatewayClient.instance().url))
     except HTTPError as e:
         # This can occur if the host is valid (e.g., foo.com) but there's nothing there.
@@ -293,7 +292,7 @@ def gateway_request(endpoint, **kwargs):
                        "Ensure gateway url is valid and the Gateway instance is running.".
                             format(GatewayClient.instance().url))
 
-    raise gen.Return(response)
+    return response
 
 
 class GatewayKernelManager(MappingKernelManager):
@@ -328,8 +327,7 @@ class GatewayKernelManager(MappingKernelManager):
 
         return self.base_endpoint
 
-    @gen.coroutine
-    def start_kernel(self, kernel_id=None, path=None, **kwargs):
+    async def start_kernel(self, kernel_id=None, path=None, **kwargs):
         """Start a kernel for a session and return its kernel_id.
 
         Parameters
@@ -364,21 +362,20 @@ class GatewayKernelManager(MappingKernelManager):
 
             json_body = json_encode({'name': kernel_name, 'env': kernel_env})
 
-            response = yield gateway_request(kernel_url, method='POST', body=json_body)
+            response = await gateway_request(kernel_url, method='POST', body=json_body)
             kernel = json_decode(response.body)
             kernel_id = kernel['id']
             self.log.info("Kernel started: %s" % kernel_id)
             self.log.debug("Kernel args: %r" % kwargs)
         else:
-            kernel = yield self.get_kernel(kernel_id)
+            kernel = await self.get_kernel(kernel_id)
             kernel_id = kernel['id']
             self.log.info("Using existing kernel: %s" % kernel_id)
 
         self._kernels[kernel_id] = kernel
-        raise gen.Return(kernel_id)
+        return kernel_id
 
-    @gen.coroutine
-    def get_kernel(self, kernel_id=None, **kwargs):
+    async def get_kernel(self, kernel_id=None, **kwargs):
         """Get kernel for kernel_id.
 
         Parameters
@@ -389,7 +386,7 @@ class GatewayKernelManager(MappingKernelManager):
         kernel_url = self._get_kernel_endpoint_url(kernel_id)
         self.log.debug("Request kernel at: %s" % kernel_url)
         try:
-            response = yield gateway_request(kernel_url, method='GET')
+            response = await gateway_request(kernel_url, method='GET')
         except web.HTTPError as error:
             if error.status_code == 404:
                 self.log.warn("Kernel not found at: %s" % kernel_url)
@@ -401,10 +398,9 @@ class GatewayKernelManager(MappingKernelManager):
             kernel = json_decode(response.body)
             self._kernels[kernel_id] = kernel
         self.log.debug("Kernel retrieved: %s" % kernel)
-        raise gen.Return(kernel)
+        return kernel
 
-    @gen.coroutine
-    def kernel_model(self, kernel_id):
+    async def kernel_model(self, kernel_id):
         """Return a dictionary of kernel information described in the
         JSON standard model.
 
@@ -414,21 +410,19 @@ class GatewayKernelManager(MappingKernelManager):
             The uuid of the kernel.
         """
         self.log.debug("RemoteKernelManager.kernel_model: %s", kernel_id)
-        model = yield self.get_kernel(kernel_id)
-        raise gen.Return(model)
+        model = await self.get_kernel(kernel_id)
+        return model
 
-    @gen.coroutine
-    def list_kernels(self, **kwargs):
+    async def list_kernels(self, **kwargs):
         """Get a list of kernels."""
         kernel_url = self._get_kernel_endpoint_url()
         self.log.debug("Request list kernels: %s", kernel_url)
-        response = yield gateway_request(kernel_url, method='GET')
+        response = await gateway_request(kernel_url, method='GET')
         kernels = json_decode(response.body)
         self._kernels = {x['id']: x for x in kernels}
-        raise gen.Return(kernels)
+        return kernels
 
-    @gen.coroutine
-    def shutdown_kernel(self, kernel_id, now=False, restart=False):
+    async def shutdown_kernel(self, kernel_id, now=False, restart=False):
         """Shutdown a kernel by its kernel uuid.
 
         Parameters
@@ -442,12 +436,11 @@ class GatewayKernelManager(MappingKernelManager):
         """
         kernel_url = self._get_kernel_endpoint_url(kernel_id)
         self.log.debug("Request shutdown kernel at: %s", kernel_url)
-        response = yield gateway_request(kernel_url, method='DELETE')
+        response = await gateway_request(kernel_url, method='DELETE')
         self.log.debug("Shutdown kernel response: %d %s", response.code, response.reason)
         self.remove_kernel(kernel_id)
 
-    @gen.coroutine
-    def restart_kernel(self, kernel_id, now=False, **kwargs):
+    async def restart_kernel(self, kernel_id, now=False, **kwargs):
         """Restart a kernel by its kernel uuid.
 
         Parameters
@@ -457,11 +450,10 @@ class GatewayKernelManager(MappingKernelManager):
         """
         kernel_url = self._get_kernel_endpoint_url(kernel_id) + '/restart'
         self.log.debug("Request restart kernel at: %s", kernel_url)
-        response = yield gateway_request(kernel_url, method='POST', body=json_encode({}))
+        response = await gateway_request(kernel_url, method='POST', body=json_encode({}))
         self.log.debug("Restart kernel response: %d %s", response.code, response.reason)
 
-    @gen.coroutine
-    def interrupt_kernel(self, kernel_id, **kwargs):
+    async def interrupt_kernel(self, kernel_id, **kwargs):
         """Interrupt a kernel by its kernel uuid.
 
         Parameters
@@ -471,7 +463,7 @@ class GatewayKernelManager(MappingKernelManager):
         """
         kernel_url = self._get_kernel_endpoint_url(kernel_id) + '/interrupt'
         self.log.debug("Request interrupt kernel at: %s", kernel_url)
-        response = yield gateway_request(kernel_url, method='POST', body=json_encode({}))
+        response = await gateway_request(kernel_url, method='POST', body=json_encode({}))
         self.log.debug("Interrupt kernel response: %d %s", response.code, response.reason)
 
     def shutdown_all(self, now=False):
@@ -517,9 +509,8 @@ class GatewayKernelSpecManager(KernelSpecManager):
 
         return self.base_endpoint
 
-    @gen.coroutine
-    def get_all_specs(self):
-        fetched_kspecs = yield self.list_kernel_specs()
+    async def get_all_specs(self):
+        fetched_kspecs = await self.list_kernel_specs()
 
         # get the default kernel name and compare to that of this server.
         # If different log a warning and reset the default.  However, the
@@ -535,19 +526,17 @@ class GatewayKernelSpecManager(KernelSpecManager):
             km.default_kernel_name = remote_default_kernel_name
 
         remote_kspecs = fetched_kspecs.get('kernelspecs')
-        raise gen.Return(remote_kspecs)
+        return remote_kspecs
 
-    @gen.coroutine
-    def list_kernel_specs(self):
+    async def list_kernel_specs(self):
         """Get a list of kernel specs."""
         kernel_spec_url = self._get_kernelspecs_endpoint_url()
         self.log.debug("Request list kernel specs at: %s", kernel_spec_url)
-        response = yield gateway_request(kernel_spec_url, method='GET')
+        response = await gateway_request(kernel_spec_url, method='GET')
         kernel_specs = json_decode(response.body)
-        raise gen.Return(kernel_specs)
+        return kernel_specs
 
-    @gen.coroutine
-    def get_kernel_spec(self, kernel_name, **kwargs):
+    async def get_kernel_spec(self, kernel_name, **kwargs):
         """Get kernel spec for kernel_name.
 
         Parameters
@@ -558,7 +547,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
         kernel_spec_url = self._get_kernelspecs_endpoint_url(kernel_name=str(kernel_name))
         self.log.debug("Request kernel spec at: %s" % kernel_spec_url)
         try:
-            response = yield gateway_request(kernel_spec_url, method='GET')
+            response = await gateway_request(kernel_spec_url, method='GET')
         except web.HTTPError as error:
             if error.status_code == 404:
                 # Convert not found to KeyError since that's what the Notebook handler expects
@@ -570,10 +559,9 @@ class GatewayKernelSpecManager(KernelSpecManager):
         else:
             kernel_spec = json_decode(response.body)
 
-        raise gen.Return(kernel_spec)
+        return kernel_spec
 
-    @gen.coroutine
-    def get_kernel_spec_resource(self, kernel_name, path):
+    async def get_kernel_spec_resource(self, kernel_name, path):
         """Get kernel spec for kernel_name.
 
         Parameters
@@ -586,7 +574,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
         kernel_spec_resource_url = url_path_join(self.base_resource_endpoint, str(kernel_name), str(path))
         self.log.debug("Request kernel spec resource '{}' at: {}".format(path, kernel_spec_resource_url))
         try:
-            response = yield gateway_request(kernel_spec_resource_url, method='GET')
+            response = await gateway_request(kernel_spec_resource_url, method='GET')
         except web.HTTPError as error:
             if error.status_code == 404:
                 kernel_spec_resource = None
@@ -594,14 +582,13 @@ class GatewayKernelSpecManager(KernelSpecManager):
                 raise
         else:
             kernel_spec_resource = response.body
-        raise gen.Return(kernel_spec_resource)
+        return kernel_spec_resource
 
 
 class GatewaySessionManager(SessionManager):
     kernel_manager = Instance('jupyter_server.gateway.managers.GatewayKernelManager')
 
-    @gen.coroutine
-    def kernel_culled(self, kernel_id):
+    async def kernel_culled(self, kernel_id):
         """Checks if the kernel is still considered alive and returns true if its not found. """
-        kernel = yield self.kernel_manager.get_kernel(kernel_id)
-        raise gen.Return(kernel is None)
+        kernel = await self.kernel_manager.get_kernel(kernel_id)
+        return kernel is None

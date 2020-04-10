@@ -86,20 +86,19 @@ respond in any manner. For example, it may read additional query parameters
 from the request, issue a redirect to another site, run a local process (e.g.,
 `nbconvert`), make a HTTP request to another service, etc.
 
-The caller of the `bundle` function is `@tornado.gen.coroutine` decorated and
-wraps its call with `torando.gen.maybe_future`. This behavior means you may
+The caller of the `bundle` function is `async` and wraps its call with
+`jupyter_server.utils.ensure_async`. This behavior means you may
 handle the web request synchronously, as in the example above, or
-asynchronously using `@tornado.gen.coroutine` and `yield`, as in the example
+asynchronously using `async` and `await`, as in the example
 below.
 
 .. code:: python
 
-    from tornado import gen
+    import asyncio
 
-    @gen.coroutine
-    def bundle(handler, model):
+    async def bundle(handler, model):
       # simulate a long running IO op (e.g., deploying to a remote host)
-      yield gen.sleep(10)
+      await asyncio.sleep(10)
 
       # now respond
       handler.finish('I spent 10 seconds bundling {}!'.format(model['path']))

@@ -8,9 +8,9 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-27%3A-
 
 import json
 
-from tornado import gen, web
+from tornado import web
 
-from jupyter_server.utils import url_path_join, url_escape, maybe_future
+from jupyter_server.utils import url_path_join, url_escape, ensure_async
 from jupyter_client.jsonutil import date_default
 
 from jupyter_server.base.handlers import (
@@ -88,8 +88,7 @@ class ContentsHandler(APIHandler):
         self.finish(json.dumps(model, default=date_default))
 
     @web.authenticated
-    @gen.coroutine
-    def get(self, path=''):
+    async def get(self, path=''):
         """Return a model for a file or directory.
 
         A directory model contains a list of models (without content)
@@ -107,68 +106,62 @@ class ContentsHandler(APIHandler):
         if content not in {'0', '1'}:
             raise web.HTTPError(400, u'Content %r is invalid' % content)
         content = int(content)
-        
-        model = yield maybe_future(self.contents_manager.get(
+
+        model = await ensure_async(self.contents_manager.get(
             path=path, type=type, format=format, content=content,
         ))
         validate_model(model, expect_content=content)
         self._finish_model(model, location=False)
 
     @web.authenticated
-    @gen.coroutine
-    def patch(self, path=''):
+    async def patch(self, path=''):
         """PATCH renames a file or directory without re-uploading content."""
         cm = self.contents_manager
         model = self.get_json_body()
         if model is None:
             raise web.HTTPError(400, u'JSON body missing')
-        model = yield maybe_future(cm.update(model, path))
+        model = cm.update(model, path)
         validate_model(model, expect_content=False)
         self._finish_model(model)
 
-    @gen.coroutine
-    def _copy(self, copy_from, copy_to=None):
+    async def _copy(self, copy_from, copy_to=None):
         """Copy a file, optionally specifying a target directory."""
         self.log.info(u"Copying {copy_from} to {copy_to}".format(
             copy_from=copy_from,
             copy_to=copy_to or '',
         ))
-        model = yield maybe_future(self.contents_manager.copy(copy_from, copy_to))
+        model = self.contents_manager.copy(copy_from, copy_to)
         self.set_status(201)
         validate_model(model, expect_content=False)
         self._finish_model(model)
 
-    @gen.coroutine
-    def _upload(self, model, path):
+    async def _upload(self, model, path):
         """Handle upload of a new file to path"""
         self.log.info(u"Uploading file to %s", path)
-        model = yield maybe_future(self.contents_manager.new(model, path))
+        model = self.contents_manager.new(model, path)
         self.set_status(201)
         validate_model(model, expect_content=False)
         self._finish_model(model)
 
-    @gen.coroutine
-    def _new_untitled(self, path, type='', ext=''):
+    async def _new_untitled(self, path, type='', ext=''):
         """Create a new, empty untitled entity"""
         self.log.info(u"Creating new %s in %s", type or 'file', path)
-        model = yield maybe_future(self.contents_manager.new_untitled(path=path, type=type, ext=ext))
+        model = self.contents_manager.new_untitled(path=path, type=type, ext=ext)
         self.set_status(201)
         validate_model(model, expect_content=False)
         self._finish_model(model)
 
-    @gen.coroutine
-    def _save(self, model, path):
+    async def _save(self, model, path):
         """Save an existing file."""
         chunk = model.get("chunk", None)
         if not chunk or chunk == -1:  # Avoid tedious log information
-            self.log.info(u"Saving file at %s", path)  
-        model = yield maybe_future(self.contents_manager.save(model, path))
+            self.log.info(u"Saving file at %s", path)
+        model = self.contents_manager.save(model, path)
         validate_model(model, expect_content=False)
         self._finish_model(model)
 
     @web.authenticated
-    @gen.coroutine
-    def post(self, path=''):
+    async def post(self, path=''):
         """Create a new file in the specified path.
 
         POST creates new files. The server always decides on the name.
@@ -182,11 +175,11 @@ class ContentsHandler(APIHandler):
 
         cm = self.contents_manager
 
-        file_exists = yield maybe_future(cm.file_exists(path))
+        file_exists = cm.file_exists(path)
         if file_exists:
             raise web.HTTPError(400, "Cannot POST to files, use PUT instead.")
 
-        dir_exists = yield maybe_future(cm.dir_exists(path))
+        dir_exists = cm.dir_exists(path)
         if not dir_exists:
             raise web.HTTPError(404, "No such directory: %s" % path)
 
@@ -197,15 +190,14 @@ class ContentsHandler(APIHandler):
             ext = model.get('ext', '')
             type = model.get('type', '')
             if copy_from:
-                yield self._copy(copy_from, path)
+                await self._copy(copy_from, path)
             else:
-                yield self._new_untitled(path, type=type, ext=ext)
+                await self._new_untitled(path, type=type, ext=ext)
         else:
-            yield self._new_untitled(path)
+            await self._new_untitled(path)
 
     @web.authenticated
-    @gen.coroutine
-    def put(self, path=''):
+    async def put(self, path=''):
         """Saves the file in the location specified by name and path.
 
         PUT is very similar to POST, but the requester specifies the name,
@@ -220,21 +212,20 @@ class ContentsHandler(APIHandler):
         if model:
             if model.get('copy_from'):
                 raise web.HTTPError(400, "Cannot copy with PUT, only POST")
-            exists = yield maybe_future(self.contents_manager.file_exists(path))
+            exists = self.contents_manager.file_exists(path)
             if exists:
-                yield maybe_future(self._save(model, path))
+                await self._save(model, path)
             else:
-                yield maybe_future(self._upload(model, path))
+                await self._upload(model, path)
         else:
-            yield maybe_future(self._new_untitled(path))
+            await self._new_untitled(path)
 
     @web.authenticated
-    @gen.coroutine
-    def delete(self, path=''):
+    async def delete(self, path=''):
         """delete a file in the given path"""
         cm = self.contents_manager
         self.log.warning('delete %s', path)
-        yield maybe_future(cm.delete(path))
+        cm.delete(path)
         self.set_status(204)
         self.finish()
 
@@ -242,20 +233,18 @@ class ContentsHandler(APIHandler):
 class CheckpointsHandler(APIHandler):
 
     @web.authenticated
-    @gen.coroutine
-    def get(self, path=''):
+    async def get(self, path=''):
         """get lists checkpoints for a file"""
         cm = self.contents_manager
-        checkpoints = yield maybe_future(cm.list_checkpoints(path))
+        checkpoints = cm.list_checkpoints(path)
         data = json.dumps(checkpoints, default=date_default)
         self.finish(data)
 
     @web.authenticated
-    @gen.coroutine
-    def post(self, path=''):
+    async def post(self, path=''):
         """post creates a new checkpoint"""
         cm = self.contents_manager
-        checkpoint = yield maybe_future(cm.create_checkpoint(path))
+        checkpoint = cm.create_checkpoint(path)
         data = json.dumps(checkpoint, default=date_default)
         location = url_path_join(self.base_url, 'api/contents',
             url_escape(path), 'checkpoints', url_escape(checkpoint['id']))
@@ -267,20 +256,18 @@ class CheckpointsHandler(APIHandler):
 class ModifyCheckpointsHandler(APIHandler):
 
     @web.authenticated
-    @gen.coroutine
-    def post(self, path, checkpoint_id):
+    async def post(self, path, checkpoint_id):
         """post restores a file from a checkpoint"""
         cm = self.contents_manager
-        yield maybe_future(cm.restore_checkpoint(checkpoint_id, path))
+        cm.restore_checkpoint(checkpoint_id, path)
         self.set_status(204)
         self.finish()
 
     @web.authenticated
-    @gen.coroutine
-    def delete(self, path, checkpoint_id):
+    async def delete(self, path, checkpoint_id):
         """delete clears a checkpoint for a given file"""
         cm = self.contents_manager
-        yield maybe_future(cm.delete_checkpoint(checkpoint_id, path))
+        cm.delete_checkpoint(checkpoint_id, path)
         self.set_status(204)
         self.finish()
 
@@ -304,10 +291,9 @@ class TrustNotebooksHandler(JupyterHandler):
     """ Handles trust/signing of notebooks """
 
     @web.authenticated
-    @gen.coroutine
-    def post(self,path=''):
+    async def post(self,path=''):
         cm = self.contents_manager
-        yield maybe_future(cm.trust_notebook(path))
+        await cm.trust_notebook(path)
         self.set_status(201)
         self.finish()
 #-----------------------------------------------------------------------------
@@ -325,4 +311,3 @@ default_handlers = [
     (r"/api/contents%s" % path_regex, ContentsHandler),
     (r"/api/notebooks/?(.*)", NotebooksRedirectHandler),
 ]
-

@@ -10,7 +10,7 @@ import sys
 import tornado
 
 from urllib.parse import urlparse
-from tornado import gen, ioloop, web
+from tornado import ioloop, web
 from tornado.websocket import WebSocketHandler
 
 from jupyter_client.session import Session
@@ -18,7 +18,6 @@ from jupyter_client.jsonutil import date_default, extract_dates
 from ipython_genutils.py3compat import cast_unicode
 
 from .handlers import JupyterHandler
-from jupyter_server.utils import maybe_future
 
 
 def serialize_binary_message(msg):
@@ -90,15 +89,15 @@ class WebSocketMixin(object):
     last_ping = 0
     last_pong = 0
     stream = None
-    
+
     @property
     def ping_interval(self):
         """The interval for websocket keep-alive pings.
-        
+
         Set ws_ping_interval = 0 to disable pings.
         """
         return self.settings.get('ws_ping_interval', WS_PING_INTERVAL)
-    
+
     @property
     def ping_timeout(self):
         """If no ping is received in this many milliseconds,
@@ -111,7 +110,7 @@ class WebSocketMixin(object):
 
     def check_origin(self, origin=None):
         """Check Origin == Host or Access-Control-Allow-Origin.
-        
+
         Tornado >= 4 calls this method automatically, raising 403 if it returns False.
         """
 
@@ -122,18 +121,18 @@ class WebSocketMixin(object):
         host = self.request.headers.get("Host")
         if origin is None:
             origin = self.get_origin()
-        
+
         # If no origin or host header is provided, assume from script
         if origin is None or host is None:
             return True
-        
+
         origin = origin.lower()
         origin_host = urlparse(origin).netloc
-        
+
         # OK if origin matches host
         if origin_host == host:
             return True
-        
+
         # Check CORS headers
         if self.allow_origin:
             allow = self.allow_origin == origin
@@ -190,7 +189,7 @@ class WebSocketMixin(object):
 
 
 class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
-    
+
     if tornado.version_info < (4,1):
         """Backport send_error from tornado 4.1 to 4.0"""
         def send_error(self, *args, **kwargs):
@@ -203,17 +202,17 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
                 # we can close the connection more gracefully.
                 self.stream.close()
 
-    
+
     def _reserialize_reply(self, msg_or_list, channel=None):
         """Reserialize a reply message using JSON.
 
         msg_or_list can be an already-deserialized msg dict or the zmq buffer list.
         If it is the zmq list, it will be deserialized with self.session.
-        
+
         This takes the msg list from the ZMQ socket and serializes the result for the websocket.
         This method should be used by self._on_zmq_reply to build messages that can
         be sent back to the browser.
-        
+
         """
         if isinstance(msg_or_list, dict):
             # already unpacked
@@ -271,14 +270,13 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
         else:
             self.log.warning("No session ID specified")
 
-    @gen.coroutine
-    def get(self, *args, **kwargs):
+    async def get(self, *args, **kwargs):
         # pre_get can be a coroutine in subclasses
         # assign and yield in two step to avoid tornado 3 issues
         res = self.pre_get()
-        yield maybe_future(res)
+        await res
         res = super(AuthenticatedZMQStreamHandler, self).get(*args, **kwargs)
-        yield maybe_future(res)
+        await res
 
     def initialize(self):
         self.log.debug("Initializing websocket connection %s", self.request.path)

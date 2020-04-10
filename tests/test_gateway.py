@@ -5,12 +5,12 @@ import pytest
 import tornado
 import uuid
 from datetime import datetime
-from tornado import gen
 from tornado.web import HTTPError
 from tornado.httpclient import HTTPRequest, HTTPResponse
 from ipython_genutils.py3compat import str_to_unicode
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.gateway.managers import GatewayClient
+from jupyter_server.utils import ensure_async
 
 from unittest.mock import patch
 from io import StringIO
@@ -52,7 +52,7 @@ async def mock_gateway_request(url, **kwargs):
     # Fetch all kernelspecs
     if endpoint.endswith('/api/kernelspecs') and method == 'GET':
         response_buf = StringIO(str_to_unicode(json.dumps(kernelspecs)))
-        response = await gen.maybe_future(HTTPResponse(request, 200, buffer=response_buf))
+        response = await ensure_async(HTTPResponse(request, 200, buffer=response_buf))
         return response
 
     # Fetch named kernelspec
@@ -61,7 +61,7 @@ async def mock_gateway_request(url, **kwargs):
         kspecs = kernelspecs.get('kernelspecs')
         if requested_kernelspec in kspecs:
             response_buf = StringIO(str_to_unicode(json.dumps(kspecs.get(requested_kernelspec))))
-            response = await gen.maybe_future(HTTPResponse(request, 200, buffer=response_buf))
+            response = await ensure_async(HTTPResponse(request, 200, buffer=response_buf))
             return response
         else:
             raise HTTPError(404, message='Kernelspec does not exist: %s' % requested_kernelspec)
@@ -76,7 +76,7 @@ async def mock_gateway_request(url, **kwargs):
         model = generate_model(name)
         running_kernels[model.get('id')] = model  # Register model as a running kernel
         response_buf = StringIO(str_to_unicode(json.dumps(model)))
-        response = await gen.maybe_future(HTTPResponse(request, 201, buffer=response_buf))
+        response = await ensure_async(HTTPResponse(request, 201, buffer=response_buf))
         return response
 
     # Fetch list of running kernels
@@ -86,7 +86,7 @@ async def mock_gateway_request(url, **kwargs):
             model = running_kernels.get(kernel_id)
             kernels.append(model)
         response_buf = StringIO(str_to_unicode(json.dumps(kernels)))
-        response = await gen.maybe_future(HTTPResponse(request, 200, buffer=response_buf))
+        response = await ensure_async(HTTPResponse(request, 200, buffer=response_buf))
         return response
 
     # Interrupt or restart existing kernel
@@ -95,14 +95,14 @@ async def mock_gateway_request(url, **kwargs):
 
         if action == 'interrupt':
             if requested_kernel_id in running_kernels:
-                response = await gen.maybe_future(HTTPResponse(request, 204))
+                response = await ensure_async(HTTPResponse(request, 204))
                 return response
             else:
                 raise HTTPError(404, message='Kernel does not exist: %s' % requested_kernel_id)
         elif action == 'restart':
             if requested_kernel_id in running_kernels:
                 response_buf = StringIO(str_to_unicode(json.dumps(running_kernels.get(requested_kernel_id))))
-                response = await gen.maybe_future(HTTPResponse(request, 204, buffer=response_buf))
+                response = await ensure_async(HTTPResponse(request, 204, buffer=response_buf))
                 return response
             else:
                 raise HTTPError(404, message='Kernel does not exist: %s' % requested_kernel_id)
@@ -113,7 +113,7 @@ async def mock_gateway_request(url, **kwargs):
     if endpoint.rfind('/api/kernels/') >= 0 and method == 'DELETE':
         requested_kernel_id = endpoint.rpartition('/')[2]
         running_kernels.pop(requested_kernel_id)  # Simulate shutdown by removing kernel from running set
-        response = await gen.maybe_future(HTTPResponse(request, 204))
+        response = await ensure_async(HTTPResponse(request, 204))
         return response
 
     # Fetch existing kernel
@@ -121,7 +121,7 @@ async def mock_gateway_request(url, **kwargs):
         requested_kernel_id = endpoint.rpartition('/')[2]
         if requested_kernel_id in running_kernels:
             response_buf = StringIO(str_to_unicode(json.dumps(running_kernels.get(requested_kernel_id))))
-            response = await gen.maybe_future(HTTPResponse(request, 200, buffer=response_buf))
+            response = await ensure_async(HTTPResponse(request, 200, buffer=response_buf))
             return response
         else:
             raise HTTPError(404, message='Kernel does not exist: %s' % requested_kernel_id)

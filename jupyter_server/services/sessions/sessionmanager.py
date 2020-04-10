@@ -11,31 +11,31 @@ except ImportError:
     # fallback on pysqlite2 if Python was build without sqlite
     from pysqlite2 import dbapi2 as sqlite3
 
-from tornado import gen, web
+from tornado import web
 
 from traitlets.config.configurable import LoggingConfigurable
 from ipython_genutils.py3compat import unicode_type
 from traitlets import Instance
 
-from jupyter_server.utils import maybe_future
+from jupyter_server.utils import ensure_async
 
 
 class SessionManager(LoggingConfigurable):
 
     kernel_manager = Instance('jupyter_server.services.kernels.kernelmanager.MappingKernelManager')
     contents_manager = Instance('jupyter_server.services.contents.manager.ContentsManager')
-    
+
     # Session database initialized below
     _cursor = None
     _connection = None
     _columns = {'session_id', 'path', 'name', 'type', 'kernel_id'}
-    
+
     @property
     def cursor(self):
         """Start a cursor and create a database called 'session'"""
         if self._cursor is None:
             self._cursor = self.connection.cursor()
-            self._cursor.execute("""CREATE TABLE session 
+            self._cursor.execute("""CREATE TABLE session
                 (session_id, path, name, type, kernel_id)""")
         return self._cursor
 
@@ -46,7 +46,7 @@ class SessionManager(LoggingConfigurable):
             self._connection = sqlite3.connect(':memory:')
             self._connection.row_factory = sqlite3.Row
         return self._connection
-    
+
     def close(self):
         """Close the sqlite connection"""
         if self._cursor is not None:
@@ -57,8 +57,7 @@ class SessionManager(LoggingConfigurable):
         """Close connection once SessionManager closes"""
         self.close()
 
-    @gen.coroutine
-    def session_exists(self, path):
+    async def session_exists(self, path):
         """Check to see if the session of a given name exists"""
         exists = False
         self.cursor.execute("SELECT * FROM session WHERE path=?", (path,))
@@ -69,48 +68,39 @@ class SessionManager(LoggingConfigurable):
             # row, thereby terminating the session.  This can be done via a call to
             # row_to_model that tolerates that condition.  If row_to_model returns None,
             # we'll return false, since, at that point, the session doesn't exist anyway.
-            model = yield maybe_future(self.row_to_model(row, tolerate_culled=True))
+            model = await self.row_to_model(row, tolerate_culled=True)
             if model is not None:
                 exists = True
-        raise gen.Return(exists)
+        return exists
 
     def new_session_id(self):
         "Create a uuid for a new session"
         return unicode_type(uuid.uuid4())
 
-    @gen.coroutine
-    def create_session(self, path=None, name=None, type=None, kernel_name=None, kernel_id=None):
+    async def create_session(self, path=None, name=None, type=None, kernel_name=None, kernel_id=None):
         """Creates a session and returns its model"""
         session_id = self.new_session_id()
         if kernel_id is not None and kernel_id in self.kernel_manager:
             pass
         else:
-            kernel_id = yield self.start_kernel_for_session(session_id, path, name, type, kernel_name)
-        result = yield maybe_future(
-            self.save_session(session_id, path=path, name=name, type=type, kernel_id=kernel_id)
-        )
-        # py2-compat
-        raise gen.Return(result)
+            kernel_id = await self.start_kernel_for_session(session_id, path, name, type, kernel_name)
+        result = await self.save_session(session_id, path=path, name=name, type=type, kernel_id=kernel_id)
+        return result
 
-    @gen.coroutine
-    def start_kernel_for_session(self, session_id, path, name, type, kernel_name):
+    async def start_kernel_for_session(self, session_id, path, name, type, kernel_name):
         """Start a new kernel for a given session."""
         # allow contents manager to specify kernels cwd
         kernel_path = self.contents_manager.get_kernel_path(path=path)
-        kernel_id = yield maybe_future(
-            self.kernel_manager.start_kernel(path=kernel_path, kernel_name=kernel_name)
-        )
-        # py2-compat
-        raise gen.Return(kernel_id)
+        kernel_id = await self.kernel_manager.start_kernel(path=kernel_path, kernel_name=kernel_name)
+        return kernel_id
 
-    @gen.coroutine
-    def save_session(self, session_id, path=None, name=None, type=None, kernel_id=None):
+    async def save_session(self, session_id, path=None, name=None, type=None, kernel_id=None):
         """Saves the items for the session with the given session_id
-        
+
         Given a session_id (and any other of the arguments), this method
         creates a row in the sqlite session database that holds the information
         for a session.
-        
+
         Parameters
         ----------
         session_id : str
@@ -123,7 +113,7 @@ class SessionManager(LoggingConfigurable):
             the type of the session
         kernel_id : str
             a uuid for the kernel associated with this session
-        
+
         Returns
         -------
         model : dict
@@ -132,13 +122,12 @@ class SessionManager(LoggingConfigurable):
         self.cursor.execute("INSERT INTO session VALUES (?,?,?,?,?)",
             (session_id, path, name, type, kernel_id)
         )
-        result = yield maybe_future(self.get_session(session_id=session_id))
-        raise gen.Return(result)
+        result = await self.get_session(session_id=session_id)
+        return result
 
-    @gen.coroutine
-    def get_session(self, **kwargs):
+    async def get_session(self, **kwargs):
         """Returns the model for a particular session.
-        
+
         Takes a keyword argument and searches for the value in the session
         database, then returns the rest of the session's info.
 
@@ -151,7 +140,7 @@ class SessionManager(LoggingConfigurable):
         Returns
         -------
         model : dict
-            returns a dictionary that includes all the information from the 
+            returns a dictionary that includes all the information from the
             session described by the kwarg.
         """
         if not kwargs:
@@ -179,26 +168,25 @@ class SessionManager(LoggingConfigurable):
 
             raise web.HTTPError(404, u'Session not found: %s' % (', '.join(q)))
 
-        model = yield maybe_future(self.row_to_model(row))
-        raise gen.Return(model)
+        model = await self.row_to_model(row)
+        return model
 
-    @gen.coroutine
-    def update_session(self, session_id, **kwargs):
+    async def update_session(self, session_id, **kwargs):
         """Updates the values in the session database.
-        
+
         Changes the values of the session with the given session_id
-        with the values from the keyword arguments. 
-        
+        with the values from the keyword arguments.
+
         Parameters
         ----------
         session_id : str
             a uuid that identifies a session in the sqlite3 database
         **kwargs : str
             the key must correspond to a column title in session database,
-            and the value replaces the current value in the session 
+            and the value replaces the current value in the session
             with session_id.
         """
-        yield maybe_future(self.get_session(session_id=session_id))
+        await self.get_session(session_id=session_id)
 
         if not kwargs:
             # no changes
@@ -216,10 +204,9 @@ class SessionManager(LoggingConfigurable):
         """Checks if the kernel is still considered alive and returns true if its not found. """
         return kernel_id not in self.kernel_manager
 
-    @gen.coroutine
-    def row_to_model(self, row, tolerate_culled=False):
+    async def row_to_model(self, row, tolerate_culled=False):
         """Takes sqlite database session row and turns it into a dictionary"""
-        kernel_culled = yield maybe_future(self.kernel_culled(row['kernel_id']))
+        kernel_culled = await ensure_async(self.kernel_culled(row['kernel_id']))
         if kernel_culled:
             # The kernel was culled or died without deleting the session.
             # We can't use delete_session here because that tries to find
@@ -235,10 +222,10 @@ class SessionManager(LoggingConfigurable):
                 format(kernel_id=row['kernel_id'],session_id=row['session_id'])
             if tolerate_culled:
                 self.log.warning(msg + "  Continuing...")
-                raise gen.Return(None)
+                return
             raise KeyError(msg)
 
-        kernel_model = yield maybe_future(self.kernel_manager.kernel_model(row['kernel_id']))
+        kernel_model = await ensure_async(self.kernel_manager.kernel_model(row['kernel_id']))
         model = {
             'id': row['session_id'],
             'path': row['path'],
@@ -249,10 +236,9 @@ class SessionManager(LoggingConfigurable):
         if row['type'] == 'notebook':
             # Provide the deprecated API.
             model['notebook'] = {'path': row['path'], 'name': row['name']}
-        raise gen.Return(model)
+        return model
 
-    @gen.coroutine
-    def list_sessions(self):
+    async def list_sessions(self):
         """Returns a list of dictionaries containing all the information from
         the session database"""
         c = self.cursor.execute("SELECT * FROM session")
@@ -261,15 +247,14 @@ class SessionManager(LoggingConfigurable):
         # which messes up the cursor if we're iterating over rows.
         for row in c.fetchall():
             try:
-                model = yield maybe_future(self.row_to_model(row))
+                model = await self.row_to_model(row)
                 result.append(model)
             except KeyError:
                 pass
-        raise gen.Return(result)
+        return result
 
-    @gen.coroutine
-    def delete_session(self, session_id):
+    async def delete_session(self, session_id):
         """Deletes the row in the session database with given session_id"""
-        session = yield maybe_future(self.get_session(session_id=session_id))
-        yield maybe_future(self.kernel_manager.shutdown_kernel(session['kernel']['id']))
+        session = await self.get_session(session_id=session_id)
+        await ensure_async(self.kernel_manager.shutdown_kernel(session['kernel']['id']))
         self.cursor.execute("DELETE FROM session WHERE session_id=?", (session_id,))

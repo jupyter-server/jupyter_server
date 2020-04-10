@@ -7,6 +7,7 @@
 from __future__ import absolute_import, print_function
 
 import jupyter_server
+import asyncio
 import binascii
 import datetime
 import errno
@@ -37,7 +38,7 @@ from base64 import encodebytes
 from jinja2 import Environment, FileSystemLoader
 
 from jupyter_server.transutils import trans, _
-from jupyter_server.utils import secure_write
+from jupyter_server.utils import secure_write, run_sync
 
 # Install the pyzmq ioloop. This has to be done before anything else from
 # tornado is imported.
@@ -69,7 +70,7 @@ from jupyter_server import (
 
 from .base.handlers import MainHandler, RedirectWithParams, Template404
 from .log import log_request
-from .services.kernels.kernelmanager import MappingKernelManager
+from .services.kernels.kernelmanager import MappingKernelManager, AsyncMappingKernelManager
 from .services.config import ConfigManager
 from .services.contents.manager import ContentsManager
 from .services.contents.filemanager import FileContentsManager
@@ -212,7 +213,7 @@ class ServerWebApplication(web.Application):
         now = utcnow()
 
         root_dir = contents_manager.root_dir
-        home = py3compat.str_to_unicode(os.path.expanduser('~'), encoding=sys.getfilesystemencoding()) 
+        home = py3compat.str_to_unicode(os.path.expanduser('~'), encoding=sys.getfilesystemencoding())
         if root_dir.startswith(home + os.path.sep):
             # collapse $HOME to ~
             root_dir = '~' + root_dir[len(home):]
@@ -553,16 +554,14 @@ class ServerApp(JupyterApp):
 
     This launches a Tornado-based Jupyter Server.""")
     examples = _examples
-    aliases = aliases
-    flags = flags
 
-    classes = [
-        KernelManager, Session, MappingKernelManager, KernelSpecManager,
-        ContentsManager, FileContentsManager, NotebookNotary,
-        GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient,
-    ]
     flags = Dict(flags)
     aliases = Dict(aliases)
+    classes = [
+            KernelManager, Session, MappingKernelManager, KernelSpecManager,
+            ContentsManager, FileContentsManager, NotebookNotary,
+            GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
+        ]
 
     subcommands = dict(
         list=(JupyterServerListApp, JupyterServerListApp.description.splitlines()[0]),
@@ -1102,7 +1101,7 @@ class ServerApp(JupyterApp):
     def _default_browser_open_file(self):
         basename = "jpserver-%s-open.html" % os.getpid()
         return os.path.join(self.runtime_dir, basename)
-    
+
     pylab = Unicode('disabled', config=True,
         help=_("""
         DISABLED: use %pylab or %matplotlib in the notebook to enable matplotlib.
@@ -1249,6 +1248,14 @@ class ServerApp(JupyterApp):
             connection_dir=self.runtime_dir,
             kernel_spec_manager=self.kernel_spec_manager,
         )
+        # Async randomly hangs on Python 3.5, prevent using it
+        if isinstance(self.kernel_manager, AsyncMappingKernelManager):
+            if sys.version_info < (3, 6):
+                raise ValueError("You are using `AsyncMappingKernelManager` in Python 3.5 (or lower),"
+                                 "which is not supported. Please upgrade Python to 3.6+.")
+            else:
+                self.log.info("Asynchronous kernel management has been configured to use '{}'.".
+                              format(self.kernel_manager.__class__.__name__))
         self.contents_manager = self.contents_manager_class(
             parent=self,
             log=self.log,
@@ -1681,7 +1688,7 @@ class ServerApp(JupyterApp):
         n_kernels = len(self.kernel_manager.list_kernel_ids())
         kernel_msg = trans.ngettext('Shutting down %d kernel', 'Shutting down %d kernels', n_kernels)
         self.log.info(kernel_msg % n_kernels)
-        self.kernel_manager.shutdown_all()
+        run_sync(self.kernel_manager.shutdown_all())
 
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
