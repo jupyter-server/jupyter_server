@@ -11,6 +11,14 @@ from ..base.handlers import JupyterHandler
 from ..base.zmqhandlers import WebSocketMixin
 
 
+class TerminalHandler(JupyterHandler):
+    """Render the terminal interface."""
+    @web.authenticated
+    def get(self, term_name):
+        self.write(self.render_template('terminal.html',
+                   ws_path="terminals/websocket/%s" % term_name))
+
+
 class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
 
     def origin_check(self):
@@ -26,8 +34,14 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
 
     def on_message(self, message):
         super(TermSocket, self).on_message(message)
-        self.application.settings['terminal_last_activity'] = utcnow()
+        self._update_activity()
 
     def write_message(self, message, binary=False):
         super(TermSocket, self).write_message(message, binary=binary)
+        self._update_activity()
+
+    def _update_activity(self):
         self.application.settings['terminal_last_activity'] = utcnow()
+        # terminal may not be around on deletion/cull
+        if self.term_name in self.terminal_manager.terminals:
+            self.terminal_manager.terminals[self.term_name].last_activity = utcnow()
