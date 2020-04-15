@@ -1847,6 +1847,22 @@ class ServerApp(JupyterApp):
         self.log.info(kernel_msg % n_kernels)
         run_sync(self.kernel_manager.shutdown_all())
 
+    def cleanup_terminals(self):
+        """Shutdown all terminals.
+
+        The terminals will shutdown themselves when this process no longer exists,
+        but explicit shutdown allows the TerminalManager to cleanup.
+        """
+        try:
+            terminal_manager = self.web_app.settings['terminal_manager']
+        except KeyError:
+            return  # Terminals not enabled
+
+        n_terminals = len(terminal_manager.list())
+        terminal_msg = trans.ngettext('Shutting down %d terminal', 'Shutting down %d terminals', n_terminals)
+        self.log.info(terminal_msg % n_terminals)
+        run_sync(terminal_manager.terminate_all())
+
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
         info = self.contents_manager.info_string() + "\n"
@@ -2077,6 +2093,7 @@ class ServerApp(JupyterApp):
         self.remove_server_info_file()
         self.remove_browser_open_files()
         self.cleanup_kernels()
+        self.cleanup_terminals()
 
     def start_ioloop(self):
         """Start the IO Loop."""
