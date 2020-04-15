@@ -10,6 +10,5 @@ These pages target people writing Jupyter Web applications and server extensions
 
    dependency
    basic-extension
-   configurable-extension
    rest-api
    ../other/changelog
