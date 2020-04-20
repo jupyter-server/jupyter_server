@@ -12,7 +12,7 @@ class SimpleApp1(ExtensionAppJinjaMixin, ExtensionApp):
     # The name of the extension.
     extension_name = "simple_ext1"
 
-    # Te url that your extension will serve its homepage.
+    # The url that your extension will serve its homepage.
     extension_url = '/simple_ext1/default'
 
     # Should your extension expose other server extensions when launched directly?
