@@ -1,5 +1,5 @@
 {
-  "name": "jupyter-simple-ext",
+  "name": "jupyter-server-example",
   "version": "0.0.1",
   "private": true,
   "scripts": {

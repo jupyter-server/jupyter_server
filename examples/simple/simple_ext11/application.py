@@ -13,12 +13,12 @@ class SimpleApp11(SimpleApp1):
     aliases.update({
         'simple11-dir': 'SimpleApp11.simple11_dir',
     })
-    
+
     # The name of the extension.
     extension_name = "simple_ext11"
 
     # Te url that your extension will serve its homepage.
-    default_url = '/simple_ext11/default'
+    extension_url = '/simple_ext11/default'
 
     # Local path to static files directory.
     static_paths = [
@@ -37,12 +37,12 @@ class SimpleApp11(SimpleApp1):
 
     hello = Bool(False,
         config=True,
-        help='Say hello', 
+        help='Say hello',
     )
 
     ignore_js = Bool(False,
         config=True,
-        help='Ignore Javascript', 
+        help='Ignore Javascript',
     )
 
     @observe('ignore_js')
@@ -56,8 +56,8 @@ class SimpleApp11(SimpleApp1):
 
     def initialize_settings(self):
         self.log.info('hello: {}'.format(self.hello))
-        if self.config['hello'] == True:
-            self.log.info("Hello Simple11 - You have provided the --hello flag or defined 'c.SimpleApp1.hello == True' in jupyter_server_config.py")
+        if self.hello == True:
+            self.log.info("Hello Simple11: You have launched with --hello flag or defined 'c.SimpleApp1.hello == True' in your config file")
         self.log.info('ignore_js: {}'.format(self.ignore_js))
         super().initialize_settings()
 

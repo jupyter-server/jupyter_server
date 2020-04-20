@@ -7,15 +7,15 @@ DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")
 
 class SimpleApp2(ExtensionAppJinjaMixin, ExtensionApp):
-    
+
     # The name of the extension.
     extension_name = "simple_ext2"
 
     # Te url that your extension will serve its homepage.
-    default_url = '/simple_ext2'
+    extension_url = '/simple_ext2'
 
     # Should your extension expose other server extensions when launched directly?
-    load_other_extensions = False
+    load_other_extensions = True
 
     # Local path to static files directory.
     static_paths = [

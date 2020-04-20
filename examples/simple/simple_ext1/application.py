@@ -1,19 +1,19 @@
 import os, jinja2
 from traitlets import Unicode
 from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
-from .handlers import (DefaultHandler, RedirectHandler, 
+from .handlers import (DefaultHandler, RedirectHandler,
   ParameterHandler, TemplateHandler, TypescriptHandler, ErrorHandler)
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")
 
 class SimpleApp1(ExtensionAppJinjaMixin, ExtensionApp):
-    
+
     # The name of the extension.
     extension_name = "simple_ext1"
 
-    # Te url that your extension will serve its homepage.
-    default_url = '/simple_ext1/default'
+    # The url that your extension will serve its homepage.
+    extension_url = '/simple_ext1/default'
 
     # Should your extension expose other server extensions when launched directly?
     load_other_extensions = True
