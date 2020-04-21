@@ -1,5 +1,0 @@
-sphinx>=1.3.6
-git+https://github.com/pandas-dev/pydata-sphinx-theme.git@master
-sphinxcontrib_github_alt
-sphinxcontrib-openapi
-sphinxemoji
