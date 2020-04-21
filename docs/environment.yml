@@ -2,6 +2,7 @@ name: jupyter_server_docs
 dependencies:
 - python=3.7
 - pip:
+  - sphinx
   - jinja2
   - tornado
   - jupyter_client
