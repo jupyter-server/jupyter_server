@@ -106,7 +106,7 @@ An ExtensionApp:
     - is configurable (from file or CLI)
     - has a name (see the ``extension_name`` trait).
     - has an entrypoint, ``jupyter <extension_name>``.
-    - can server static content from the ``/static/<extension_name>/`` endpoint.
+    - can serve static content from the ``/static/<extension_name>/`` endpoint.
     - can add new endpoints to the Jupyter Server.
 
 The basic structure of an ExtensionApp is shown below:
