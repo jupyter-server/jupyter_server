@@ -1,5 +1,5 @@
-Contributing to the Jupyter Server
-==================================
+General Jupyter contributor guidelines
+======================================
 
 If you're reading this section, you're probably interested in contributing to
 Jupyter.  Welcome and thanks for your interest in contributing!
@@ -8,19 +8,16 @@ Please take a look at the Contributor documentation, familiarize yourself with
 using the Jupyter Server, and introduce yourself on the mailing list and
 share what area of the project you are interested in working on.
 
-General Guidelines
-------------------
-
 For general documentation about contributing to Jupyter projects, see the
 `Project Jupyter Contributor Documentation`__.
 
 __ https://jupyter.readthedocs.io/en/latest/contributor/content-contributor.html
 
 Setting Up a Development Environment
-------------------------------------
+====================================
 
 Installing the Jupyter Server
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 Once you have installed the dependencies mentioned above, use the following
 steps::
@@ -39,7 +36,7 @@ from any directory in your system with::
     jupyter server
 
 Troubleshooting the Installation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------
 
 If you do not see that your Jupyter Server is not running on dev mode, it's possible that you are
 running other instances of Jupyter Server. You can try the following steps:
@@ -54,10 +51,7 @@ running other instances of Jupyter Server. You can try the following steps:
 5. Verify the installation with the steps in the previous section.
 
 Running Tests
--------------
-
-Python Tests
-^^^^^^^^^^^^
+=============
 
 Install dependencies::
 
@@ -67,12 +61,8 @@ To run the Python tests, use::
 
     pytest
 
-If you want coverage statistics as well, you can run::
-
-    py.test --cov notebook -v
-
-Building the Documentation
---------------------------
+Building the Docs
+=================
 
 To build the documentation you'll need `Sphinx <http://www.sphinx-doc.org/en/master/>`_,
 `pandoc <https://pandoc.org/>`_ and a few other packages.
