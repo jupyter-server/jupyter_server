@@ -1,4 +1,4 @@
-Jupyter Server's REST API
-=========================
+The REST API
+============
 
 .. openapi:: ../../../jupyter_server/services/api/api.yaml

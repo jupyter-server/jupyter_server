@@ -1,3 +1,6 @@
+
+.. _managing-multiple-extensions:
+
 Managing multiple extensions
 ----------------------------
 

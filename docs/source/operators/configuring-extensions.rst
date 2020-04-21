@@ -1,3 +1,5 @@
+.. _configure-multiple-extensions:
+
 Configuring Extensions
 ======================
 
@@ -34,14 +36,24 @@ In Python config files, each trait will be prefixed with ``c.`` that links the t
 
     # jupyter_notebook_config.py
 
-    c.NotebookApp.port = 9999
+    c.NotebookApp.mathjax_enabled = False
 
 
-A Jupyter Server will automatically load config for each enabled extension. You can config each extension by creating a jupyter config file for each extension.
-
-
+A Jupyter Server will automatically load config for each enabled extension. You can configure each extension by creating their corresponding Jupyter config file.
 
 
 Extension config on the command line
 ------------------------------------
 
+Server extension applications can also be configured from the command line, and multiple extension can be configured at the same time. Simply pass the traits (with their appropriate prefix) to the ``jupyter server`` entrypoint, e.g.:
+
+.. code-block:: console
+
+    > jupyter server --ServerApp.port=9999 --MyExtension1.trait=False --MyExtension2.trait=True
+
+
+This will also work with any extension entrypoints that allow other extensions to run side-by-side, e.g.:
+
+.. code-block:: console
+
+    > jupyter myextension --ServerApp.port=9999 --MyExtension1.trait=False --MyExtension2.trait=True

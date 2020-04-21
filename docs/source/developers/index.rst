@@ -9,6 +9,8 @@ These pages target people writing Jupyter Web applications and server extensions
    :name: developers
 
    dependency
-   basic-extension
    rest-api
+   extensions
+   savehooks
+   contents
    ../other/changelog

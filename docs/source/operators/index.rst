@@ -8,7 +8,7 @@ These pages are targeted at people using, configuring, and/or deploying multiple
    :maxdepth: 1
    :name: operators
 
-   multiple-frontends
+   multiple-extensions
    configuring-extensions
    migrate-from-nbserver
    public-server

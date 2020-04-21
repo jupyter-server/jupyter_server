@@ -26,9 +26,9 @@ Who's this for?
 
 The Jupyter Server is a highly technical piece of the Jupyter Stack, so we've separated documentation to help specific personas:
 
-1. :ref:`Users <users>`: people using Jupyter web applications
+1. :ref:`Users <users>`: people using Jupyter web applications.
 2. :ref:`Operators <operators>`: people deploying or serving Jupyter web applications to others.
-3. :ref:`Developers <developers>`: people writing Jupyter Server extensions and web applications
+3. :ref:`Developers <developers>`: people writing Jupyter Server extensions and web applications.
 4. :ref:`Contributors <contributors>`: people contributing directly to the Jupyter Server library.
 
 If you finds gaps in our documentation, please open an issue (or better, a pull request) on the Jupyter Server `Github repo <https://github.com/jupyter/jupyter_server>`_.

@@ -47,12 +47,12 @@ for item in sys.path:
 # If so, generate a config.rst file and populate it with documentation about
 # configuration options
 
-# if os.environ.get('READTHEDOCS', ''):
+if os.environ.get('READTHEDOCS', ''):
 
-#     # Readthedocs doesn't run our Makefile, so we do this to force it to generate
-#     # the config docs.
-#     with open('../autogen_config.py') as f:
-#         exec(compile(f.read(), '../autogen_config.py', 'exec'), {})
+    # Readthedocs doesn't run our Makefile, so we do this to force it to generate
+    # the config docs.
+    with open('../autogen_config.py') as f:
+        exec(compile(f.read(), '../autogen_config.py', 'exec'), {})
 
 # -- General configuration ------------------------------------------------
 
@@ -70,7 +70,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'IPython.sphinxext.ipython_console_highlighting',
     'sphinxcontrib_github_alt',
-    'sphinxcontrib.openapi'
+    'sphinxcontrib.openapi',
+    'sphinxemoji.sphinxemoji'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

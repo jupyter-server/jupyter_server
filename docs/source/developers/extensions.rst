@@ -1,6 +1,6 @@
-=========================
-Jupyter Server Extensions
-=========================
+=================
+Server Extensions
+=================
 
 A Jupyter Server extension is typically a module or package that extends to Server’s REST API/endpoints—i.e. adds extra request handlers to Server’s Tornado Web Application.
 
@@ -51,11 +51,10 @@ Then add this handler to Jupyter Server's Web Application through the ``_load_ju
         serverapp.web_app.add_handlers('.*$', handlers)
 
 
-
 Making an extension discoverable
 --------------------------------
 
-To make this extension discoverable to Jupyter Server, there are two steps. First, the extension module must define a ``_jupyter_server_extension_paths()`` function that returns some metadata about the extension entry-points in the module. This informs Jupyter Server what type of extension is being loaded and where to find the ``_load_jupyter_server_extension``.
+To make this extension discoverable to Jupyter Server, first define a ``_jupyter_server_extension_paths()`` function at the root of the module/package. This function returns metadata describing how to load the extension. Usually, this requires a ``module`` key with the import path to the extension's ``_load_jupyter_server_extension`` function.
 
 .. code-block:: python
 
@@ -70,7 +69,7 @@ To make this extension discoverable to Jupyter Server, there are two steps. Firs
             }
         ]
 
-Second, the extension must be listed in the user’s ``jpserver_extensions`` config trait. This can be manually added by users in their ``jupyter_server_config.py`` file:
+Second, add the extension to the ServerApp's ``jpserver_extensions`` trait. This can be manually added by users in their ``jupyter_server_config.py`` file,
 
 .. code-block:: python
 
@@ -78,7 +77,7 @@ Second, the extension must be listed in the user’s ``jpserver_extensions`` con
         "my_extension": True
     }
 
-Alternatively, an extension can automatically enable itself by creating the following JSON in the jupyter_server_config.d directory on installation. See XX for more details.
+or loaded from a JSON file in the ``jupyter_server_config.d`` directory under one of `Jupyter's paths`_. (See the `Distributing a server extension`_ section for details on how to automatically enabled your extension when users install it.)
 
 .. code-block:: python
 
@@ -289,6 +288,81 @@ To make your extension executable from anywhere on your system, point an entry-p
 Distributing a server extension
 ===============================
 
+Putting it all together, authors can distribute their extension following this steps:
+
+1. Add a ``_jupyter_server_extension_paths()`` function at the extension's root.
+    This function should likely live in the ``__init__.py`` found at the root of the extension package. It will look something like this:
+
+    .. code-block:: python
+
+        # Found in the __init__.py of package
+
+        def _jupyter_server_extension_paths():
+            return [
+                {
+                    "module": "myextension.app",
+                    "app": MyExtensionApp
+                }
+            ]
+
+2. Create an extension by writing a ``_load_jupyter_server_extension()`` function or subclassing ``ExtensionApp``.
+    This is where the extension logic will live (i.e. custom extension handlers, config, etc). See the sections above for more information on how to create an extension.
+
+3. Add the following JSON config file to the extension package.
+    The file should be named after the extension (e.g. ``myextension.json``) and saved in a subdirectory of the package with the prefix: ``jupyter-config/jupyter_server_config.d/``. The extension package will have a similar structure to this example:
+
+    .. code-block::
+
+        myextension
+        ├── myextension/
+        │   ├── __init__.py
+        │   └── app.py
+        ├── jupyter-config/
+        │   └── jupyter_server_config.d/
+        │       └── myextension.json
+        └── setup.py
+
+    The contents of the JSON file will tell Jupyter Server to load the extension when a user installs the package:
+
+    .. code-block:: json
+
+        {
+            "ServerApp": {
+                "jpserver_extensions": {
+                    "myextension": true
+                }
+            }
+        }
+
+    When the extension is installed, this JSON file will be copied to the ``jupyter_server_config.d`` directory found in one of `Jupyter's paths`_.
+
+    Users can toggle the enabling/disableing of extension using the command:
+
+    .. code-block:: console
+
+        jupyter server disable myextension
+
+    which will change the boolean value in the JSON file above.
+
+4. Create a ``setup.py`` that automatically enables the extension.
+    Add a few extra lines the extension package's ``setup`` function
+
+    .. code-block:: python
+
+        from setuptools import setup
+
+        setup(
+            name="myextension",
+            ...
+            include_package_data=True,
+            data_files=[
+                (
+                    "etc/jupyter/jupyter_server_config.d",
+                    ["jupyter-config/jupyter_server_config.d/myextension.json"]
+                ),
+            ]
+
+        )
 
 
 Example Server Extension
@@ -296,3 +370,9 @@ Example Server Extension
 
 You can check some simple example on the `GitHub jupyter_server repository
 <https://github.com/jupyter/jupyter_server/tree/master/examples/simple>`_.
+
+
+
+.. links
+
+.. _`Jupyter's paths`: https://jupyter.readthedocs.io/en/latest/projects/jupyter-directories.html
