@@ -30,9 +30,6 @@ When a new minor version in released on PyPI, a branch for that version will be 
 
 To see the changes between releases, checkout the [CHANGELOG](https://github.com/jupyter/jupyter_server/blob/master/CHANGELOG.md).
 
-To install the latest patch of a given version:
-
-    $ pip install jupyter_server>=0.2
 
 ## Usage - Running Jupyter Server
 
