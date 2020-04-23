@@ -15,7 +15,7 @@ Jupyter Server is the backendâ€”the core services, APIs, and `REST endpoints`_â€
 
 .. note::
 
-   Jupyter Server is a replacement for the Tornado Web Server in `Jupyter Notebook`_. Jupyter web applications should move to using Jupyter Server. For help, see `this page <operators/migrate-from-nbserver>`_.
+   Jupyter Server is a replacement for the Tornado Web Server in `Jupyter Notebook`_. Jupyter web applications should move to using Jupyter Server. For help, see `this page <operators/migrate-from-nbserver.html>`_.
 
 .. _Tornado: https://www.tornadoweb.org/en/stable/
 .. _Jupyter Notebook: https://github.com/jupyter/notebook
