@@ -148,7 +148,7 @@ The basic structure of an ExtensionApp is shown below:
             # Change the jinja templating environment
 
 
-The ``ExtensionApp`` uses the following methods and properties to connect your extension to the Jupyter server. You do no need to define a ``_load_jupyter_server_extension`` function for these apps. Instead, overwrite the pieces below to add your custom settings, handlers and templates:
+The ``ExtensionApp`` uses the following methods and properties to connect your extension to the Jupyter server. You do not need to define a ``_load_jupyter_server_extension`` function for these apps. Instead, overwrite the pieces below to add your custom settings, handlers and templates:
 
 Methods
 
