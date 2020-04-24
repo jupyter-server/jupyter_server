@@ -194,7 +194,7 @@ Jinja templating from frontend extensions
 
 Many Jupyter frontend applications use Jinja for basic HTML templating. Since this is common enough, Jupyter Server provides some extra mixin that integrate Jinja with Jupyter server extensions.
 
-Use ``ExtensionAppJinjaMixin`` to automatically add a Jinja templating environment to an ``ExtensionApp``. This adds a ``<extension_name>_jinja2_env`` setting to Tornado Web Server's settings that be be used by request handlers.
+Use ``ExtensionAppJinjaMixin`` to automatically add a Jinja templating environment to an ``ExtensionApp``. This adds a ``<extension_name>_jinja2_env`` setting to Tornado Web Server's settings that will be used by request handlers.
 
 .. code-block:: python
 
