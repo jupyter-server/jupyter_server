@@ -148,7 +148,7 @@ The basic structure of an ExtensionApp is shown below:
             # Change the jinja templating environment
 
 
-The ``ExtensionApp`` uses the following methods and properties to connect your extension to the Jupyter server. You do no need to define a ``_load_jupyter_server_extension`` function for these apps. Instead, overwrite the pieces below to add your custom settings, handlers and templates:
+The ``ExtensionApp`` uses the following methods and properties to connect your extension to the Jupyter server. You do not need to define a ``_load_jupyter_server_extension`` function for these apps. Instead, overwrite the pieces below to add your custom settings, handlers and templates:
 
 Methods
 
@@ -194,7 +194,7 @@ Jinja templating from frontend extensions
 
 Many Jupyter frontend applications use Jinja for basic HTML templating. Since this is common enough, Jupyter Server provides some extra mixin that integrate Jinja with Jupyter server extensions.
 
-Use ``ExtensionAppJinjaMixin`` to automatically add a Jinja templating environment to an ``ExtensionApp``. This adds a ``<extension_name>_jinja2_env`` setting to Tornado Web Server's settings that be be used by request handlers.
+Use ``ExtensionAppJinjaMixin`` to automatically add a Jinja templating environment to an ``ExtensionApp``. This adds a ``<extension_name>_jinja2_env`` setting to Tornado Web Server's settings that will be used by request handlers.
 
 .. code-block:: python
 
