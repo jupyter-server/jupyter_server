@@ -1605,31 +1605,34 @@ class ServerApp(JupyterApp):
                     "loaded".format(extension_name=extension.extension_name)
                 )
             # Find the extension loading function.
+            func = None
             try:
                 # This function was prefixed with an underscore in in v1.0
                 # because this shouldn't be a public API for most extensions.
                 func = getattr(extension, '_load_jupyter_server_extension')
+            except AttributeError:
+                try:
+                    # For backwards compatibility, we will still look for non
+                    # underscored loading functions.
+                    func = getattr(extension, 'load_jupyter_server_extension')
+                    warn_msg = _(
+                        "{extkey} is enabled. "
+                        "`load_jupyter_server_extension` function "
+                        "was found but `_load_jupyter_server_extension`"
+                        "is preferred.".format(extkey=extkey)
+                    )
+                    self.log.warning(warn_msg)
+                except AttributeError:
+                    warn_msg = _(
+                        "{extkey} is enabled but no "
+                        "`_load_jupyter_server_extension` function "
+                        "was found.".format(extkey=extkey)
+                    )
+                    self.log.warning(warn_msg)
+            if func:
                 func(self)
                 self.log.debug(log_msg)
-            except AttributeError:
-                # For backwards compatibility, we will still look for non
-                # underscored loading functions.
-                func = getattr(extension, 'load_jupyter_server_extension')
-                func(self)
-                warn_msg = _(
-                    "{extkey} is enabled. "
-                    "`load_jupyter_server_extension` function "
-                    "was found but `_load_jupyter_server_extension`"
-                    "is preferred.".format(extkey=extkey)
-                )
-                self.log.warning(warn_msg)
-            except AttributeError:
-                warn_msg = _(
-                    "{extkey} is enabled but no "
-                    "`_load_jupyter_server_extension` function "
-                    "was found.".format(extkey=extkey)
-                )
-                self.log.warning(warn_msg)
+
 
     def init_mime_overrides(self):
         # On some Windows machines, an application has registered incorrect
