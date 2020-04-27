@@ -1616,8 +1616,14 @@ class ServerApp(JupyterApp):
                 # underscored loading functions.
                 func = getattr(extension, 'load_jupyter_server_extension')
                 func(self)
-                self.log.debug(log_msg)
-            except:
+                warn_msg = _(
+                    "{extkey} is enabled. "
+                    "`load_jupyter_server_extension` function "
+                    "was found but `_load_jupyter_server_extension`"
+                    "is preferred.".format(extkey=extkey)
+                )
+                self.log.warning(warn_msg)
+            except AttributeError:
                 warn_msg = _(
                     "{extkey} is enabled but no "
                     "`_load_jupyter_server_extension` function "
