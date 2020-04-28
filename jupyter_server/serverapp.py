@@ -1482,18 +1482,12 @@ class ServerApp(JupyterApp):
         # TODO: this should still check, but now we use bower, not git submodule
         pass
 
-    def init_server_extensions(self):
+    def find_server_extensions(self):
         """
         Searches Jupyter paths for jpserver_extensions and captures
         metadata for all enabled extensions.
-
-        If an extension's metadata includes an 'app' key,
-        the value must be a subclass of ExtensionApp. An instance
-        of the class will be created at this step. The config for
-        this instance will inherit the ServerApp's config object
-        and load its own config.
         """
-        # Step 1: Walk through all config files looking for jpserver_extensions.
+        # Walk through all config files looking for jpserver_extensions.
         #
         # Each extension will likely have a JSON config file enabling itself in
         # the "jupyter_server_config.d" directory. Find each of these and
@@ -1521,7 +1515,15 @@ class ServerApp(JupyterApp):
                 self.config.ServerApp.jpserver_extensions.update({modulename: enabled})
                 self.jpserver_extensions.update({modulename: enabled})
 
-        # Step 2: Load extension metadata for enabled extensions, load config for
+    def init_server_extensions(self):
+        """
+        If an extension's metadata includes an 'app' key,
+        the value must be a subclass of ExtensionApp. An instance
+        of the class will be created at this step. The config for
+        this instance will inherit the ServerApp's config object
+        and load its own config.
+        """
+        # Load extension metadata for enabled extensions, load config for
         # enabled ExtensionApps, and store enabled extension metadata in the
         # _enabled_extensions attribute.
         #
@@ -1749,7 +1751,7 @@ class ServerApp(JupyterApp):
                     asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
     @catch_config_error
-    def initialize(self, argv=None, load_extensions=True, new_httpserver=True):
+    def initialize(self, argv=None, find_extensions=True, new_httpserver=True):
         """Initialize the Server application class, configurables, web application, and http server.
 
         Parameters
@@ -1757,9 +1759,10 @@ class ServerApp(JupyterApp):
         argv: list or None
             CLI arguments to parse.
 
-        load_extensions: bool
-            If True, the server will load server extensions listed in the jpserver_extension trait.
-            Otherwise, no server extensions will be loaded.
+        find_extensions: bool
+            If True, find and load extensions listed in Jupyter config paths. If False,
+            only load extensions that are passed to ServerApp directy through
+            the `argv`, `config`, or `jpserver_extensions` arguments.
 
         new_httpserver: bool
             If True, a tornado HTTPServer instance will be created and configured for the Server Web
@@ -1769,11 +1772,11 @@ class ServerApp(JupyterApp):
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
         super(ServerApp, self).initialize(argv)
-
         # Then, use extensions' config loading mechanism to
         # update config. ServerApp config takes precedence.
-        if load_extensions:
-            self.init_server_extensions()
+        if find_extensions:
+            self.find_server_extensions()
+        self.init_server_extensions()
         # Initialize all components of the ServerApp.
         self.init_logging()
         if self._dispatching:
@@ -1785,8 +1788,7 @@ class ServerApp(JupyterApp):
             self.init_httpserver()
         self.init_terminals()
         self.init_signal()
-        if load_extensions:
-            self.load_server_extensions()
+        self.load_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
 
