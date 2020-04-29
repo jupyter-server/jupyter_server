@@ -316,7 +316,7 @@ class ExtensionApp(JupyterApp):
             }
         })
         serverapp = ServerApp.instance(**kwargs, argv=[], config=config)
-        serverapp.initialize(argv=argv, load_extensions=load_other_extensions)
+        serverapp.initialize(argv=argv, find_extensions=load_other_extensions)
         return serverapp
 
     def link_to_serverapp(self, serverapp):
