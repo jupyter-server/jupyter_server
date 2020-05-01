@@ -20,7 +20,7 @@ Platform | Python
 --- | ---
 Linux | >=3.5
 OSX | >=3.5
-Windows | >=3.7
+Windows | >=3.6
 
 ### Versioning and Branches
 

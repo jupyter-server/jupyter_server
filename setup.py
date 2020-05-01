@@ -20,8 +20,8 @@ name = "jupyter_server"
 
 # Minimal Python version sanity check
 if sys.platform == 'win32':
-    if sys.version_info < (3,7):
-        error = "ERROR: %s requires Python version 3.7 or above." % name
+    if sys.version_info < (3,6):
+        error = "ERROR: %s requires Python version 3.6 or above." % name
         print(error, file=sys.stderr)
         sys.exit(1)
 else:
