@@ -311,7 +311,7 @@ class ExtensionApp(JupyterApp):
         config = Config({
             "ServerApp": {
                 "jpserver_extensions": {cls.extension_name: True},
-                "open_browser": True,
+                "open_browser": cls.open_browser,
                 "default_url": cls.extension_url
             }
         })
