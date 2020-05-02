@@ -7,6 +7,7 @@ from traitlets import (
     Unicode,
     List,
     Dict,
+    Bool,
     default,
     validate
 )
@@ -204,6 +205,14 @@ class ExtensionApp(JupyterApp):
     handlers = List(
         help=_("""Handlers appended to the server.""")
     ).tag(config=True)
+
+    open_browser = Bool(False,
+        help=_("""Whether to open in a browser after starting.
+        The specific browser used is platform dependent and
+        determined by the python standard library `webbrowser`
+        module, unless it is overridden using the --browser
+        (ServerApp.browser) configuration option.
+        """)).tag(config=True)
 
     def _config_file_name_default(self):
         """The default config file name."""
