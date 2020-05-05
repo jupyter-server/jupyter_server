@@ -39,6 +39,8 @@ The easiest way to add endpoints and handle incoming requests is to subclass the
         def post(self):
             ...
 
+.. note::
+   It is best practice to wrap each handler method with the ``authenticated`` decorator to ensure that each request is authenticated by the server.
 
 Then add this handler to Jupyter Server's Web Application through the ``_load_jupyter_server_extension`` function.
 
