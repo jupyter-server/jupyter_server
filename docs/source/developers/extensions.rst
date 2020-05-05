@@ -27,15 +27,20 @@ The easiest way to add endpoints and handle incoming requests is to subclass the
 .. code-block:: python
 
     from jupyter_server.base.handlers import JupyterHandler
+    import tornado
 
     class MyExtensionHandler(JupyterHandler):
 
+        @tornado.web.authenticated
         def get(self):
             ...
 
+        @tornado.web.authenticated
         def post(self):
             ...
 
+.. note::
+   It is best practice to wrap each handler method with the ``authenticated`` decorator to ensure that each request is authenticated by the server.
 
 Then add this handler to Jupyter Server's Web Application through the ``_load_jupyter_server_extension`` function.
 
@@ -178,13 +183,16 @@ Jupyter Server provides a convenient mixin class for adding these properties to 
 
     from jupyter_server.base.handlers import JupyterHandler
     from jupyter_server.extension.handler import ExtensionHandlerMixin
+    import tornado
 
 
     class MyExtensionHandler(ExtensionHandlerMixin, JupyterHandler):
 
+        @tornado.web.authenticated
         def get(self):
             ...
 
+        @tornado.web.authenticated
         def post(self):
             ...
 
@@ -217,6 +225,7 @@ Pair the example above with ``ExtensionHandlers`` that also inherit the ``Extens
         ExtensionHandlerMixin,
         ExtensionHandlerJinjaMixin
     )
+    import tornado
 
     class MyExtensionHandler(
         ExtensionHandlerMixin,
@@ -224,9 +233,11 @@ Pair the example above with ``ExtensionHandlers`` that also inherit the ``Extens
         JupyterHandler
     ):
 
+        @tornado.web.authenticated
         def get(self):
             ...
 
+        @tornado.web.authenticated
         def post(self):
             ...
 
