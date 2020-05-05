@@ -1,0 +1,17 @@
+{% extends "page.html" %}
+
+{% block site %}
+{% if message %}
+{% for key in message %}
+<div>
+    {{message[key]}}
+</div>
+{% endfor %}
+{% endif %}
+<form action="{{base_url}}login?next={{next}}" method="post">
+    {{ xsrf_form_html() | safe }}
+    <label for="password_input"><strong>{% trans %}Password:{% endtrans %}</strong></label>
+    <input type="password" name="password" id="password_input">
+    <button type="submit" id="login_submit">{% trans %}Log in{% endtrans %}</button>
+</form>
+{% endblock site %}

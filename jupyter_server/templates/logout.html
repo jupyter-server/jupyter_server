@@ -1,0 +1,13 @@
+{% extends "page.html" %}
+
+{% block site %}
+{% if message %}
+{% for key in message %}
+<div>
+  {{message[key]}}
+</div>
+{% endfor %}
+{% endif %}
+
+{% trans %}Proceed to the <a href="{{base_url}}login">login page{% endtrans %}</a>.
+{% endblock %}
