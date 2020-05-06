@@ -13,10 +13,11 @@ if sys.platform.startswith('win'):
 
 # Kill all running terminals after each test to avoid cross-test issues
 # with still running terminals.
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def kill_all(serverapp):
-    yield
-    serverapp.web_app.settings["terminal_manager"].kill_all()
+    async def _():
+        await serverapp.web_app.settings["terminal_manager"].kill_all()
+    return _
 
 
 @pytest.fixture
@@ -29,7 +30,7 @@ def terminal_path(tmp_path):
     shutil.rmtree(str(subdir), ignore_errors=True)
 
 
-async def test_terminal_create(fetch):
+async def test_terminal_create(fetch, kill_all):
     await fetch(
         'api', 'terminals',
         method='POST',
@@ -45,9 +46,10 @@ async def test_terminal_create(fetch):
     data = json.loads(resp_list.body.decode())
 
     assert len(data) == 1
+    await kill_all()
 
 
-async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
+async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path, kill_all):
     resp_create = await fetch(
         'api', 'terminals',
         method='POST',
@@ -67,12 +69,14 @@ async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
     data = json.loads(resp_get.body.decode())
 
     assert data['name'] == term_name
+    await kill_all()
 
 
 async def test_terminal_create_with_cwd(
     fetch,
     ws_fetch,
-    terminal_path
+    terminal_path,
+    kill_all
 ):
     resp = await fetch(
         'api', 'terminals',
@@ -102,3 +106,4 @@ async def test_terminal_create_with_cwd(
 
     ws.close()
     assert str(terminal_path) in messages
+    await kill_all()
