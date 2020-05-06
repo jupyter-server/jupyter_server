@@ -14,9 +14,9 @@ if sys.platform.startswith('win'):
 # Kill all running terminals after each test to avoid cross-test issues
 # with still running terminals.
 @pytest.fixture(autouse=True)
-async def kill_all(serverapp):
+def kill_all(serverapp):
     yield
-    await serverapp.web_app.settings["terminal_manager"].kill_all()
+    serverapp.web_app.settings["terminal_manager"].kill_all()
 
 
 @pytest.fixture
