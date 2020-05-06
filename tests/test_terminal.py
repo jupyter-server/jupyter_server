@@ -11,6 +11,15 @@ if sys.platform.startswith('win'):
     pytest.skip("Terminal API tests time out on Windows.", allow_module_level=True)
 
 
+# Kill all running terminals after each test to avoid cross-test issues
+# with still running terminals.
+@pytest.fixture
+def kill_all(serverapp):
+    async def _():
+        await serverapp.web_app.settings["terminal_manager"].kill_all()
+    return _
+
+
 @pytest.fixture
 def terminal_path(tmp_path):
     subdir = tmp_path.joinpath('terminal_path')
@@ -21,7 +30,7 @@ def terminal_path(tmp_path):
     shutil.rmtree(str(subdir), ignore_errors=True)
 
 
-async def test_terminal_create(fetch):
+async def test_terminal_create(fetch, kill_all):
     await fetch(
         'api', 'terminals',
         method='POST',
@@ -37,9 +46,10 @@ async def test_terminal_create(fetch):
     data = json.loads(resp_list.body.decode())
 
     assert len(data) == 1
+    await kill_all()
 
 
-async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
+async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path, kill_all):
     resp_create = await fetch(
         'api', 'terminals',
         method='POST',
@@ -59,9 +69,15 @@ async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
     data = json.loads(resp_get.body.decode())
 
     assert data['name'] == term_name
+    await kill_all()
 
 
-async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
+async def test_terminal_create_with_cwd(
+    fetch,
+    ws_fetch,
+    terminal_path,
+    kill_all
+):
     resp = await fetch(
         'api', 'terminals',
         method='POST',
@@ -75,21 +91,19 @@ async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
     ws = await ws_fetch(
         'terminals', 'websocket', term_name
     )
+    await ws.write_message(json.dumps(['stdin', 'pwd\r']))
 
-    ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
-
-    message_stdout = ''
+    messages = ""
     while True:
         try:
-            message = await asyncio.wait_for(ws.read_message(), timeout=1.0)
+            response = await asyncio.wait_for(ws.read_message(), timeout=1.0)
         except asyncio.TimeoutError:
-            break
+            return messages
 
-        message = json.loads(message)
-
-        if message[0] == 'stdout':
-            message_stdout += message[1]
+        response = json.loads(response)
+        if response[0] == "stdout":
+            messages += response[1]
 
     ws.close()
-
-    assert str(terminal_path) in message_stdout
+    assert str(terminal_path) in messages
+    await kill_all()
