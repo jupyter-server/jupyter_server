@@ -11,6 +11,14 @@ if sys.platform.startswith('win'):
     pytest.skip("Terminal API tests time out on Windows.", allow_module_level=True)
 
 
+# Kill all running terminals after each test to avoid cross-test issues
+# with still running terminals.
+@pytest.fixture(autouse=True)
+async def kill_all(serverapp):
+    yield
+    await serverapp.web_app.settings["terminal_manager"].kill_all()
+
+
 @pytest.fixture
 def terminal_path(tmp_path):
     subdir = tmp_path.joinpath('terminal_path')
@@ -61,7 +69,11 @@ async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path):
     assert data['name'] == term_name
 
 
-async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
+async def test_terminal_create_with_cwd(
+    fetch,
+    ws_fetch,
+    terminal_path
+):
     resp = await fetch(
         'api', 'terminals',
         method='POST',
@@ -75,21 +87,18 @@ async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
     ws = await ws_fetch(
         'terminals', 'websocket', term_name
     )
+    await ws.write_message(json.dumps(['stdin', 'pwd\r']))
 
-    ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
-
-    message_stdout = ''
+    messages = ""
     while True:
         try:
-            message = await asyncio.wait_for(ws.read_message(), timeout=1.0)
+            response = await asyncio.wait_for(ws.read_message(), timeout=1.0)
         except asyncio.TimeoutError:
-            break
+            return messages
 
-        message = json.loads(message)
-
-        if message[0] == 'stdout':
-            message_stdout += message[1]
+        response = json.loads(response)
+        if response[0] == "stdout":
+            messages += response[1]
 
     ws.close()
-
-    assert str(terminal_path) in message_stdout
+    assert str(terminal_path) in messages
