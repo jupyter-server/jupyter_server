@@ -275,6 +275,7 @@ class ServerWebApplication(web.Application):
             server_root_dir=root_dir,
             jinja2_env=env,
             terminals_available=False,  # Set later if terminals are available
+            kernel_logger=jupyter_app.kernel_logger,
             serverapp=self
         )
 
@@ -542,6 +543,7 @@ aliases.update({
     'browser': 'ServerApp.browser',
     'pylab': 'ServerApp.pylab',
     'gateway-url': 'GatewayClient.url',
+    'kernel-logger': 'ServerApp.kernel_logger',
 })
 
 #-----------------------------------------------------------------------------
@@ -1213,6 +1215,33 @@ class ServerApp(JupyterApp):
          Terminals may also be automatically disabled if the terminado package
          is not available.
          """))
+
+    kernel_logger = Unicode(u'', config=True,
+                        help="""The full path to a logging configuration file with a logger named
+                        kernel_logger. Allows the user to log all code messages to the kernel independent
+                        of the kernel type.
+                        """)
+
+    @validate('kernel_logger')
+    def _validate_kernel_logger(self, proposal):
+        import logging.config
+        from configparser import NoSectionError
+
+        value = proposal['value']
+
+        if not os.path.exists(value):
+            raise ValueError("Could not find logging configuration file {}".format(value))
+        try:
+            logging.config.fileConfig(value, disable_existing_loggers=False)
+            k_logger = logging.getLogger('kernel_logger')
+            if k_logger.handlers:
+                return value
+            else:
+                raise TraitError("Logging configuration file passed to --kernel-logger must have"
+                                 "a logger named kernel_logger.")
+        except (AttributeError, NoSectionError):
+            raise TraitError("Logging configuration file {} is not valid. Ensure that it has a kernel_logger specified"
+                             .format(value))
 
     def parse_command_line(self, argv=None):
 
