@@ -9,3 +9,4 @@ sphinxcontrib_github_alt
 sphinxcontrib-openapi
 sphinxemoji
 git+https://github.com/pandas-dev/pydata-sphinx-theme.git@master
+jupyter_telemetry_sphinxext

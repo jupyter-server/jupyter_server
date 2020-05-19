@@ -448,7 +448,7 @@ def eventlogging_schema_fqn(name):
 
     Matches convention for this particular repo
     """
-    return 'eventlogging.jupyter.org/notebook/{}'.format(name)
+    return 'eventlogging.jupyter.org/jupyter_server/{}'.format(name)
 
 
 def get_schema_files():

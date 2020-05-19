@@ -1,4 +1,5 @@
 MANIFEST
+docs/source/operators/events
 build
 dist
 _build
@@ -7,15 +8,6 @@ docs/source/api/generated
 docs/source/config.rst
 docs/gh-pages
 docs/source/events
-notebook/i18n/*/LC_MESSAGES/*.mo
-notebook/i18n/*/LC_MESSAGES/nbjs.json
-notebook/static/components
-notebook/static/style/*.min.css*
-notebook/static/*/js/built/
-notebook/static/*/built/
-notebook/static/built/
-notebook/static/*/js/main.min.js*
-notebook/static/lab/*bundle.js
 node_modules
 *.py[co]
 __pycache__

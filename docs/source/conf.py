@@ -70,7 +70,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'IPython.sphinxext.ipython_console_highlighting',
     'sphinxcontrib_github_alt',
-    'sphinx-jsonschema'
+    'jupyter_telemetry_sphinxext'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -209,9 +209,9 @@ html_static_path = ['_static']
 
 html_context = {
     'css_files': [
-        '_static/theme_overrides.css',  # override wide tables in RTD theme
+            '_static/theme_overrides.css',  # override wide tables in RTD theme
         ],
-     }
+}
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -376,3 +376,8 @@ spelling_word_list_filename='spelling_wordlist.txt'
 
 # import before any doc is built, so _ is guaranteed to be injected
 import jupyter_server.transutils
+
+# Jupyter telemetry configuration values.
+jupyter_telemetry_schema_source = "../jupyter_server/event-schemas"   # Path is relative to conf.py
+jupyter_telemetry_schema_output = "source/operators/events"           # Path is relative to conf.py
+jupyter_telemetry_index_title = "Telemetry Event Schemas"                # Title of the index page that lists all found schemas.
