@@ -96,7 +96,7 @@ for more information.
         'prometheus_client',
         "pywin32>=1.0 ; sys_platform == 'win32'",
         # Install the working branch of telemetry.
-        'git+https://github.com/Zsailer/telemetry.git@personal-data'
+        'jupyter_telemetry@git+https://github.com/Zsailer/telemetry.git@master'
     ],
     extras_require = {
         'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
