@@ -1571,7 +1571,7 @@ class ServerApp(JupyterApp):
                         app = extapp()
                         app.link_to_serverapp(self)
                         # Build a new list where we
-                        self._enabled_extensions[app.extension_name] = app
+                        self._enabled_extensions[app.name] = app
                     elif extloc:
                         extmod = importlib.import_module(extloc)
                         func = _get_load_jupyter_server_extension(extmod)
@@ -1603,8 +1603,8 @@ class ServerApp(JupyterApp):
                 )
             else:
                 log_msg = (
-                    "Extension {extension_name} enabled and "
-                    "loaded".format(extension_name=extension.extension_name)
+                    "Extension {name} enabled and "
+                    "loaded".format(name=extension.name)
                 )
             # Find the extension loading function.
             func = None

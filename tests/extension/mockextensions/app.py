@@ -18,10 +18,10 @@ class MockExtensionHandler(ExtensionHandlerMixin, JupyterHandler):
 
 
 class MockExtensionTemplateHandler(
-        ExtensionHandlerJinjaMixin,
-        ExtensionHandlerMixin,
-        JupyterHandler
-    ):
+    ExtensionHandlerJinjaMixin,
+    ExtensionHandlerMixin,
+    JupyterHandler
+):
 
     def get(self):
         self.write(self.render_template("index.html"))
@@ -29,7 +29,7 @@ class MockExtensionTemplateHandler(
 
 class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
-    extension_name = 'mockextension'
+    name = 'mockextension'
     template_paths = List().tag(config=True)
     mock_trait = Unicode('mock trait', config=True)
     loaded = False

@@ -96,7 +96,7 @@ class ExtensionAppJinjaMixin:
         # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
             self.settings.update({
-                "{}_template_paths".format(self.extension_name): self.template_paths
+                "{}_template_paths".format(self.name): self.template_paths
             })
 
         # Create a jinja environment for logging html templates.
@@ -111,7 +111,7 @@ class ExtensionAppJinjaMixin:
         # Add the jinja2 environment for this extension to the tornado settings.
         self.settings.update(
             {
-                "{}_jinja2_env".format(self.extension_name): self.jinja2_env
+                "{}_jinja2_env".format(self.name): self.jinja2_env
             }
         )
 
@@ -144,32 +144,11 @@ class ExtensionApp(JupyterApp):
     # side-by-side when launched directly.
     load_other_extensions = True
 
-    # Name of the extension
-    extension_name = Unicode(
-        help="Name of extension."
-    )
-
-    @default('extension_name')
-    def _extension_name_default(self):
-        try:
-            return self.name
-        except AttributeError:
-            raise ValueError("The extension must be given a `name`.")
-
-    INVALID_EXTENSION_NAME_CHARS = [' ', '.', '+', '/']
-
-    @validate('extension_name')
-    def _validate_extension_name(self, proposal):
-        value = proposal['value']
-        if isinstance(value, str):
-            # Validate that extension_name doesn't contain any invalid characters.
-            for c in ExtensionApp.INVALID_EXTENSION_NAME_CHARS:
-                if c in value:
-                    raise ValueError("Extension name '{name}' cannot contain any of the following characters: "
-                                     "{invalid_chars}.".
-                                     format(name=value, invalid_chars=ExtensionApp.INVALID_EXTENSION_NAME_CHARS))
-            return value
-        raise ValueError("Extension name must be a string, found {type}.".format(type=type(value)))
+    # The extension name used to name the jupyter config
+    # file, jupyter_{name}_config.
+    # This should also match the jupyter subcommand used to launch
+    # this extension from the CLI, e.g. `jupyter {name}`.
+    name = None
 
     # Extension URL sets the default landing page for this extension.
     extension_url = "/"
@@ -181,8 +160,8 @@ class ExtensionApp(JupyterApp):
 
     @property
     def static_url_prefix(self):
-        return "/static/{extension_name}/".format(
-            extension_name=self.extension_name)
+        return "/static/{name}/".format(
+            name=self.name)
 
     static_paths = List(Unicode(),
         help="""paths to search for serving static files.
@@ -216,10 +195,9 @@ class ExtensionApp(JupyterApp):
 
     def _config_file_name_default(self):
         """The default config file name."""
-        if not self.extension_name:
+        if not self.name:
             return ''
-        return 'jupyter_{}_config'.format(self.extension_name.replace('-','_'))
-
+        return 'jupyter_{}_config'.format(self.name.replace('-','_'))
 
     def initialize_settings(self):
         """Override this method to add handling of settings."""
@@ -235,11 +213,11 @@ class ExtensionApp(JupyterApp):
 
     def _prepare_config(self):
         """Builds a Config object from the extension's traits and passes
-        the object to the webapp's settings as `<extension_name>_config`.
+        the object to the webapp's settings as `<name>_config`.
         """
         traits = self.class_own_traits().keys()
         self.extension_config = Config({t: getattr(self, t) for t in traits})
-        self.settings['{}_config'.format(self.extension_name)] = self.extension_config
+        self.settings['{}_config'.format(self.name)] = self.extension_config
 
     def _prepare_settings(self):
         # Make webapp settings accessible to initialize_settings method
@@ -248,8 +226,8 @@ class ExtensionApp(JupyterApp):
 
         # Add static and template paths to settings.
         self.settings.update({
-            "{}_static_paths".format(self.extension_name): self.static_paths,
-            "{}".format(self.extension_name): self
+            "{}_static_paths".format(self.name): self.static_paths,
+            "{}".format(self.name): self
         })
 
         # Get setting defined by subclass using initialize_settings method.
@@ -274,7 +252,8 @@ class ExtensionApp(JupyterApp):
             # Get handler kwargs, if given
             kwargs = {}
             if issubclass(handler, ExtensionHandlerMixin):
-                kwargs['extension_name'] = self.extension_name
+                kwargs['name'] = self.name
+
             try:
                 kwargs.update(handler_items[2])
             except IndexError:
@@ -302,7 +281,7 @@ class ExtensionApp(JupyterApp):
         # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
             self.settings.update({
-                "{}_template_paths".format(self.extension_name): self.template_paths
+                "{}_template_paths".format(self.name): self.template_paths
             })
         self.initialize_templates()
 
@@ -319,7 +298,7 @@ class ExtensionApp(JupyterApp):
         # initializes it.
         config = Config({
             "ServerApp": {
-                "jpserver_extensions": {cls.extension_name: True},
+                "jpserver_extensions": {cls.name: True},
                 "open_browser": cls.open_browser,
                 "default_url": cls.extension_url
             }
@@ -402,7 +381,7 @@ class ExtensionApp(JupyterApp):
         """
         try:
             # Get loaded extension from serverapp.
-            extension = serverapp._enabled_extensions[cls.extension_name]
+            extension = serverapp._enabled_extensions[cls.name]
         except KeyError:
             extension = cls()
             extension.link_to_serverapp(serverapp)
@@ -438,6 +417,6 @@ class ExtensionApp(JupyterApp):
             if not cls.load_other_extensions:
                 serverapp.log.info(
                     "{ext_name} is running without loading "
-                    "other extensions.".format(ext_name=cls.extension_name)
+                    "other extensions.".format(ext_name=cls.name)
                 )
             serverapp.start()
