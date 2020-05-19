@@ -95,7 +95,8 @@ for more information.
         'terminado>=0.8.3',
         'prometheus_client',
         "pywin32>=1.0 ; sys_platform == 'win32'",
-        'jupyter_telemetry'
+        # Install teh
+        'git+https://github.com/Zsailer/telemetry.git@personal-data'
     ],
     extras_require = {
         'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
