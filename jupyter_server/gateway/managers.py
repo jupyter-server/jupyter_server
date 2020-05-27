@@ -511,8 +511,14 @@ class GatewayKernelSpecManager(KernelSpecManager):
 
         return self.base_endpoint
 
+    def _get_endpoint_for_user_filter(self, default_endpoint):
+        kernel_user = os.environ.get('KERNEL_USERNAME')
+        if kernel_user:
+            return '?user='.join([default_endpoint, kernel_user])
+        return default_endpoint
+
     async def get_all_specs(self):
-        fetched_kspecs = await self.list_kernel_specs()
+        fetched_kspecs = yield self.list_kernel_specs()
 
         # get the default kernel name and compare to that of this server.
         # If different log a warning and reset the default.  However, the
@@ -533,6 +539,9 @@ class GatewayKernelSpecManager(KernelSpecManager):
     async def list_kernel_specs(self):
         """Get a list of kernel specs."""
         kernel_spec_url = self._get_kernelspecs_endpoint_url()
+
+        kernel_spec_url = self._get_endpoint_for_user_filter(kernel_spec_url)
+
         self.log.debug("Request list kernel specs at: %s", kernel_spec_url)
         response = await gateway_request(kernel_spec_url, method='GET')
         kernel_specs = json_decode(response.body)
@@ -547,6 +556,9 @@ class GatewayKernelSpecManager(KernelSpecManager):
             The name of the kernel.
         """
         kernel_spec_url = self._get_kernelspecs_endpoint_url(kernel_name=str(kernel_name))
+
+        kernel_spec_url = self._get_endpoint_for_user_filter(kernel_spec_url)
+
         self.log.debug("Request kernel spec at: %s" % kernel_spec_url)
         try:
             response = await gateway_request(kernel_spec_url, method='GET')
@@ -576,6 +588,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
             The name of the desired resource
         """
         kernel_spec_resource_url = url_path_join(self.base_resource_endpoint, str(kernel_name), str(path))
+        kernel_spec_resource_url = self._get_endpoint_for_user_filter(kernel_spec_resource_url)
         self.log.debug("Request kernel spec resource '{}' at: {}".format(path, kernel_spec_resource_url))
         try:
             response = await gateway_request(kernel_spec_resource_url, method='GET')
