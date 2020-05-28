@@ -19,7 +19,7 @@ Jupyter Server is the backendâ€”the core services, APIs, and `REST endpoints`_â€
 
 .. _Tornado: https://www.tornadoweb.org/en/stable/
 .. _Jupyter Notebook: https://github.com/jupyter/notebook
-.. _REST endpoints: http://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/notebook/master/notebook/services/api/api.yaml
+.. _REST endpoints: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/jupyter_server/master/jupyter_server/services/api/api.yaml
 
 Who's this for?
 ---------------
