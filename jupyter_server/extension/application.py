@@ -206,13 +206,8 @@ class ExtensionApp(JupyterApp):
         help=_("""Handlers appended to the server.""")
     ).tag(config=True)
 
-    open_browser = Bool(True,
-        help=_("""Whether to open in a browser after starting.
-        The specific browser used is platform dependent and
-        determined by the python standard library `webbrowser`
-        module, unless it is overridden using the --browser
-        (ServerApp.browser) configuration option.
-        """)).tag(config=True)
+    # Whether to open in a browser after starting.
+    open_browser = True
 
     def _config_file_name_default(self):
         """The default config file name."""
