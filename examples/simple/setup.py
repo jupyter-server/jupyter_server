@@ -33,11 +33,6 @@ setuptools.setup(
         'jupyter_server',
         'jinja2',
     ],
-    tests_requires = [
-        'pytest',
-        'pytest-cov',
-        'pylint',
-    ],
     include_package_data=True,
     data_files = get_data_files(),
     entry_points = {
