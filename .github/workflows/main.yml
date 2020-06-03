@@ -31,4 +31,4 @@ jobs:
         cd examples/simple && pip install -e .
     - name: Run the tests for the examples
       run: |
-        pytest examples/simple/tests/*
+        pytest examples/simple/tests/test_handlers.py
