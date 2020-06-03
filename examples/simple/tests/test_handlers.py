@@ -19,7 +19,7 @@ async def test_handler_default(fetch):
     )
     assert r.code == 200
     print(r.body.decode())
-    assert r.body.decode() == "<h1>Hello Simple 1 - I am the default...</h1>Config in simple_ext1 Default Handler: {'configA': '', 'configB': '', 'configC': ''}"
+    assert r.body.decode().index('Hello Simple 1 - I am the default...') > -1
 
 
 async def test_handler_template(fetch):
