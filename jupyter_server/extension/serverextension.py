@@ -154,7 +154,7 @@ def _get_load_jupyter_server_extension(obj):
     return func
 
 
-def validate_server_extension(extension_name):
+def validate_server_extension(name):
     """Validates that you can import the extension module,
     gather all extension metadata, and find `load_jupyter_server_extension`
     functions for each extension.
@@ -176,10 +176,10 @@ def validate_server_extension(extension_name):
     """
     # If the extension does not exist, raise an exception
     try:
-        mod, metadata = _get_server_extension_metadata(extension_name)
+        mod, metadata = _get_server_extension_metadata(name)
         version = getattr(mod, '__version__', '')
     except ImportError:
-        raise ExtensionValidationError('{} is not importable.'.format(extension_name))
+        raise ExtensionValidationError('{} is not importable.'.format(name))
 
     try:
         for item in metadata:
@@ -194,7 +194,7 @@ def validate_server_extension(extension_name):
                 raise AttributeError
     # If the extension does not have a `load_jupyter_server_extension` function, raise exception.
     except AttributeError:
-        raise ExtensionValidationError('Found "{}" module but cannot load it.'.format(extension_name))
+        raise ExtensionValidationError('Found "{}" module but cannot load it.'.format(name))
     return version
 
 

@@ -9,7 +9,7 @@ DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates
 class SimpleApp2(ExtensionAppJinjaMixin, ExtensionApp):
 
     # The name of the extension.
-    extension_name = "simple_ext2"
+    name = "simple_ext2"
 
     # Te url that your extension will serve its homepage.
     extension_url = '/simple_ext2'

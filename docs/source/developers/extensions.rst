@@ -109,9 +109,9 @@ An ExtensionApp:
 
     - has traits.
     - is configurable (from file or CLI)
-    - has a name (see the ``extension_name`` trait).
-    - has an entrypoint, ``jupyter <extension_name>``.
-    - can serve static content from the ``/static/<extension_name>/`` endpoint.
+    - has a name (see the ``name`` trait).
+    - has an entrypoint, ``jupyter <name>``.
+    - can serve static content from the ``/static/<name>/`` endpoint.
     - can add new endpoints to the Jupyter Server.
 
 The basic structure of an ExtensionApp is shown below:
@@ -124,7 +124,7 @@ The basic structure of an ExtensionApp is shown below:
     class MyExtensionApp(ExtensionApp):
 
         # -------------- Required traits --------------
-        extension_name = "myextension"
+        name = "myextension"
         extension_url = "/myextension"
         load_other_extensions = True
 
@@ -163,7 +163,7 @@ Methods
 
 Properties
 
-* ``extension_name``: the name of the extension
+* ``name``: the name of the extension
 * ``extension_url``: the default url for this extension—i.e. the landing page for this extension when launched from the CLI.
 * ``load_other_extensions``: a boolean enabling/disabling other extensions when launching this extension directly.
 
@@ -174,8 +174,8 @@ Properties
 
 * ``config``: the ExtensionApp's config object.
 * ``server_config``: the ServerApp's config object.
-* ``extension_name``: the name of the extension to which this handler is linked.
-* ``static_url()``: a method that returns the url to static files (prefixed with ``/static/<extension_name>``).
+* ``name``: the name of the extension to which this handler is linked.
+* ``static_url()``: a method that returns the url to static files (prefixed with ``/static/<name>``).
 
 Jupyter Server provides a convenient mixin class for adding these properties to any ``JupyterHandler``. For example, the basic server extension handler in the section above becomes:
 
@@ -202,7 +202,7 @@ Jinja templating from frontend extensions
 
 Many Jupyter frontend applications use Jinja for basic HTML templating. Since this is common enough, Jupyter Server provides some extra mixin that integrate Jinja with Jupyter server extensions.
 
-Use ``ExtensionAppJinjaMixin`` to automatically add a Jinja templating environment to an ``ExtensionApp``. This adds a ``<extension_name>_jinja2_env`` setting to Tornado Web Server's settings that will be used by request handlers.
+Use ``ExtensionAppJinjaMixin`` to automatically add a Jinja templating environment to an ``ExtensionApp``. This adds a ``<name>_jinja2_env`` setting to Tornado Web Server's settings that will be used by request handlers.
 
 .. code-block:: python
 
