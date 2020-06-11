@@ -38,7 +38,7 @@ def _x():
 
 
 
-def list_extensions_from_configd(
+def list_extensions_in_configd(
     configd_prefix="jupyter_server",
     config_paths=None
 ):
@@ -60,13 +60,13 @@ def list_extensions_from_configd(
     # Leverage pathlib for path management.
     config_paths = [pathlib.Path(p) for p in config_paths]
 
-    extensions = {}
+    extensions = []
     for path in config_paths:
-        py_files = path.joinpath(configd).glob("*.py")
         json_files = path.joinpath(configd).glob("*.json")
-        if
-
-
+        for file in json_files:
+            # The extension name is the file name (minus file suffix)
+            extension_name = file.stem
+            extensions.append(extension_name)
 
     return extensions
 
