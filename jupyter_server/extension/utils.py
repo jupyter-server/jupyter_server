@@ -14,6 +14,30 @@ class JupyterServerExtensionPathsMissing(Exception):
     """"""
 
 
+
+
+def _x():
+
+    for f in py_files:
+        pyc = PyFileConfigLoader(
+            filename=str(f.name),
+            path=str(f.parent)
+        )
+        c = pyc.load_config()
+        items = c.get("ServerApp", {}).get("jpserver_extensions", {})
+        extensions.update(items)
+
+    for f in json_files:
+        jsc = JSONFileConfigLoader(
+            filename=str(f.name),
+            path=str(f.parent)
+        )
+        c = jsc.load_config()
+        items = c.get("ServerApp", {}).get("jpserver_extensions", {})
+        extensions.update(items)
+
+
+
 def list_extensions_from_configd(
     configd_prefix="jupyter_server",
     config_paths=None
@@ -40,30 +64,23 @@ def list_extensions_from_configd(
     for path in config_paths:
         py_files = path.joinpath(configd).glob("*.py")
         json_files = path.joinpath(configd).glob("*.json")
+        if
 
-        for f in py_files:
-            pyc = PyFileConfigLoader(
-                filename=str(f.name),
-                path=str(f.parent)
-            )
-            c = pyc.load_config()
-            items = c.get("ServerApp", {}).get("jpserver_extensions", {})
-            extensions.update(items)
 
-        for f in json_files:
-            jsc = JSONFileConfigLoader(
-                filename=str(f.name),
-                path=str(f.parent)
-            )
-            c = jsc.load_config()
-            items = c.get("ServerApp", {}).get("jpserver_extensions", {})
-            extensions.update(items)
 
     return extensions
 
 
-def _list_extensions_from_entrypoints():
+def list_extensions_from_entrypoints():
     pass
+
+
+def validate_extension():
+
+
+
+
+
 
 
 
