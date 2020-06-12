@@ -114,6 +114,3 @@ def test_extension_manager_api():
     assert len(manager.paths) == len(metadata_list)
     assert "mockextension" in manager.paths
     assert "tests.extension.mockextensions.mock1" in manager.paths
-
-    print(manager.paths)
-    assert False
