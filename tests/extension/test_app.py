@@ -21,8 +21,8 @@ def server_config(request, template_dir):
 
 
 @pytest.fixture
-def mock_extension(enabled_extensions):
-    return enabled_extensions["mockextension"]
+def mock_extension(extension_manager):
+    return extension_manager.paths["mockextension"].app
 
 
 def test_initialize(mock_extension, template_dir):
@@ -46,19 +46,19 @@ def test_instance_creation_with_argv(
     serverapp,
     trait_name,
     trait_value,
-    enabled_extensions
+    extension_manager
 ):
-    extension = enabled_extensions['mockextension']
+    extension = extension_manager.paths['mockextension'].app
     assert getattr(extension, trait_name) == trait_value
 
 
 def test_extensionapp_load_config_file(
     extension_environ,
     config_file,
-    enabled_extensions,
+    extension_manager,
     serverapp,
 ):
-    extension = enabled_extensions["mockextension"]
+    extension = extension_manager.paths['mockextension'].app
     # Assert default config_file_paths is the same in the app and extension.
     assert extension.config_file_paths == serverapp.config_file_paths
     assert extension.config_dir == serverapp.config_dir

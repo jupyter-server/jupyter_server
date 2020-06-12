@@ -30,8 +30,8 @@ def mock_template(template_dir):
 
 
 @pytest.fixture
-def enabled_extensions(serverapp):
-    return serverapp._enabled_extensions
+def extension_manager(serverapp):
+    return serverapp.extension_manager
 
 
 @pytest.fixture

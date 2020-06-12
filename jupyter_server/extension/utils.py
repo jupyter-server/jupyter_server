@@ -134,6 +134,9 @@ class ExtensionLoadingError(Exception):
 def get_loader(obj):
     """Looks for _load_jupyter_server_extension as an attribute
     of the object or module.
+
+    Adds backwards compatibility for old function name missing the
+    underscore prefix.
     """
     try:
         func = getattr(obj, '_load_jupyter_server_extension')
@@ -151,18 +154,37 @@ class ExtensionPath:
         self.module = importlib.import_module(self.module_name)
         self.app = metadata.get("app", None)
         if self.app:
+            self.app = self.app()
             self.name = self.app.name
-            self.load = staticmethod(get_loader(self.app))
             self.link = self.app._link_jupyter_server_extension
+            self.loader = get_loader(self.app)
         else:
             self.name = metadata.get("name", self.module_name)
-            self.load = staticmethod(get_loader(self.module))
-            self.link = lambda: None
+            self.link = getattr(
+                self.module,
+                '_link_jupyter_server_extension',
+                lambda serverapp: None
+            )
+            self.loader = get_loader(self.module)
+
+    def load(self, serverapp):
+        return self.loader(serverapp)
 
 
 def get_metadata(package_name):
+    """Find the extension metadata from an extension package.
+
+    If it doesn't exist, return a basic metadata package given
+    the module name.
+    """
     module = importlib.import_module(package_name)
-    return module._jupyter_server_extension_paths()
+    try:
+        return module._jupyter_server_extension_paths()
+    except AttributeError:
+        return [{
+            "module": package_name,
+            "name": package_name
+        }]
 
 
 class Extension:
@@ -177,7 +199,8 @@ class Extension:
 
 
 class ExtensionManager:
-
+    """
+    """
     def __init__(self, jpserver_extensions):
         self.extensions = {}
         for package_name, enabled in jpserver_extensions.items():
@@ -211,4 +234,3 @@ def validate_extension(name):
         submod = importlib.import_module(submod_path)
         # Check that extension has loading function.
         get_loader(submod)
-

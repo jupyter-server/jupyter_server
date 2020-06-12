@@ -90,7 +90,6 @@ def test_extension_api():
     # Testing the first path (which is an extension app).
     metadata_list = _jupyter_server_extension_paths()
     path1 = metadata_list[0]
-    module = path1["module"]
     app = path1["app"]
 
     e = Extension('tests.extension.mockextensions')

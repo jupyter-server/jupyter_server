@@ -385,7 +385,7 @@ class ExtensionApp(JupyterApp):
         """
         try:
             # Get loaded extension from serverapp.
-            extension = serverapp._enabled_extensions[cls.name]
+            extension = serverapp.extension_manager.paths[cls.name].app
         except KeyError:
             extension = cls()
             extension.link_to_serverapp(serverapp)
