@@ -1565,7 +1565,7 @@ class ServerApp(JupyterApp):
                         # ExtensionApp here to load any ServerApp configuration
                         # that might live in the Extension's config file.
                         app = extapp()
-                        app.link_to_serverapp(self)
+                        app._link_jupyter_server_extension(self)
                         # Build a new list where we
                         self._enabled_extensions[app.name] = app
                     elif extloc:
