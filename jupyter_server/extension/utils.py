@@ -2,10 +2,14 @@ import pathlib
 import importlib
 
 from jupyter_core.paths import jupyter_config_path
+from traitlets import (
+    HasTraits,
+    Dict,
+    Unicode,
+    validate
+)
 from traitlets.config.loader import (
-    JSONFileConfigLoader,
-    PyFileConfigLoader,
-    Config
+    JSONFileConfigLoader
 )
 
 
@@ -147,34 +151,113 @@ def get_loader(obj):
     return func
 
 
-class ExtensionPath:
+class ExtensionMetadataError(Exception):
+    pass
 
-    def __init__(self, metadata):
-        self.module_name = metadata.get("module")
-        self.module = importlib.import_module(self.module_name)
-        self.app = metadata.get("app", None)
+
+class ExtensionModuleNotFound(Exception):
+    pass
+
+
+class ExtensionPoint(HasTraits):
+    """A simple API for connecting to a Jupyter Server extension
+    point defined by metadata and importable from a Python package.
+
+    Usage:
+
+    metadata = {
+        "module": "extension_module",
+        "":
+    }
+
+    point = ExtensionPoint(metadata)
+    """
+    metadata = Dict()
+
+    @validate('metadata')
+    def _valid_metadata(self, metadata):
+        # Verify that the metadata has a "name" key.
+        try:
+            self._module_name = metadata['module']
+        except KeyError:
+            raise ExtensionMetadataError(
+                "There is no 'name' key in the extension's "
+                "metadata packet."
+            )
+
+        try:
+            self._module = importlib.import_module(self._module_name)
+        except ModuleNotFoundError:
+            raise ExtensionModuleNotFound(
+                f"The module '{self._module_name}' could not be found. Are you "
+                "sure the extension is installed?"
+            )
+        return metadata
+
+    @property
+    def app(self):
+        """If the metadata includes an `app` field"""
+        return self.metadata.get("app")
+
+    @property
+    def module_name(self):
+        """Name of the Python package module where the extension's
+        _load_jupyter_server_extension can be found.
+        """
+        return self._module_name
+
+    @property
+    def name(self):
+        """Name of the extension.
+
+        If it's not provided in the metadata, `name` is set
+        to the extensions' module name.
+        """
+        return self.metadata.get("name", self.module_name)
+
+    @property
+    def module(self):
+        """The imported module (using importlib.import_module)
+        """
+        return self._module
+
+    def link(self, serverapp):
+        """Link the extension to a Jupyter ServerApp object.
+
+        This looks for a `_link_jupyter_server_extension` function
+        in the extension's module or ExtensionApp class.
+        """
         if self.app:
-            self.app = self.app()
-            self.name = self.app.name
-            self.link = self.app._link_jupyter_server_extension
-            self.loader = get_loader(self.app)
+            linker = self.app._link_jupyter_server_extension
         else:
-            self.name = metadata.get("name", self.module_name)
-            self.link = getattr(
+            linker = getattr(
                 self.module,
+                # Search for a _link_jupyter_extension
                 '_link_jupyter_server_extension',
+                # Otherwise return a dummy function.
                 lambda serverapp: None
             )
-            self.loader = get_loader(self.module)
+        return linker(serverapp)
 
     def load(self, serverapp):
-        return self.loader(serverapp)
+        """Load the extension in a Jupyter ServerApp object.
+
+        This looks for a `_load_jupyter_server_extension` function
+        in the extension's module or ExtensionApp class.
+        """
+        # Use the ExtensionApp object to find a loading function
+        # if it exists. Otherwise, use the extension module given.
+        loc = self.app
+        if not loc:
+            loc = self.module
+        loader = get_loader(loc)
+        return loader(serverapp)
 
 
 def get_metadata(package_name):
     """Find the extension metadata from an extension package.
 
-    If it doesn't exist, return a basic metadata package given
+    If it doesn't exist, return a basic metadata packet given
     the module name.
     """
     module = importlib.import_module(package_name)
@@ -187,28 +270,51 @@ def get_metadata(package_name):
         }]
 
 
-class Extension:
+class ExtensionPackage(HasTraits):
+    """API for handling
+    """
+    name = Unicode(help="Name of the extension's Python package.")
 
-    def __init__(self, package_name):
-        self.package_name = package_name
-        self.metadata = get_metadata(self.package_name)
-        self.paths = {}
-        for path_metadata in self.metadata:
-            path = ExtensionPath(path_metadata)
-            self.paths[path.name] = path
+    @validate("name")
+    def _validate_name(self, name):
+        try:
+            self._metadata = get_metadata(name)
+        except ModuleNotFoundError:
+            raise ExtensionModuleNotFound(
+                f"The module '{self._module_name}' could not be found. Are you "
+                "sure the extension is installed?"
+            )
+        # Create extension point interfaces for each extension path.
+        for m in self._metadata:
+            point = ExtensionPoint(m)
+            self._extension_points[point.name] = point
+        return name
+
+    @property
+    def metadata(self):
+        """Extension metadata loaded from the extension package."""
+        return self._metadata
+
+    @property
+    def extension_points(self):
+        """A dictionary of extension points."""
+        return self._extension_points
 
 
 class ExtensionManager:
+    """High level interface for linking, loading, and managing
+    Jupyter Server extensions.
     """
-    """
+    jpserver_extensions = Dict()
+
     def __init__(self, jpserver_extensions):
         self.extensions = {}
         for package_name, enabled in jpserver_extensions.items():
             if enabled:
-                self.extensions[package_name] = Extension(package_name)
+                self.extensions[package_name] = ExtensionPackage(package_name)
 
     @property
-    def paths(self):
+    def extension_points(self):
         _paths = {}
         for ext in self.extensions.values():
             _paths.update(ext.paths)
@@ -225,12 +331,4 @@ def validate_extension(name):
 
     If this works, nothing should happen.
     """
-    # 1) Try importing
-    mod = importlib.import_module(name)
-    # 2) Try calling extension paths function.
-    paths = mod._jupyter_server_extension_paths()
-    for path in paths:
-        submod_path = path.get("module")
-        submod = importlib.import_module(submod_path)
-        # Check that extension has loading function.
-        get_loader(submod)
+    ExtensionPackage(name)
