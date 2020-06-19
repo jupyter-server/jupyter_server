@@ -75,7 +75,7 @@ class ExtensionHandlerMixin:
                 raise Exception(
                     "This extension doesn't have any static paths listed. Check that the "
                     "extension's `static_paths` trait is set."
-                )
+                ) from e
             else:
                 raise e
 
