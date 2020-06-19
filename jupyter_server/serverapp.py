@@ -44,12 +44,12 @@ from jupyter_server.utils import secure_write, run_sync
 # check for tornado 3.1.0
 try:
     import tornado
-except ImportError:
-    raise ImportError(_("The Jupyter Server requires tornado >= 4.0"))
+except ImportError as e:
+    raise ImportError(_("The Jupyter Server requires tornado >= 4.0")) from e
 try:
     version_info = tornado.version_info
-except AttributeError:
-    raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have < 1.1.0"))
+except AttributeError as e:
+    raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have < 1.1.0")) from e
 if version_info < (4,0):
     raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have %s") % tornado.version)
 
@@ -1681,12 +1681,12 @@ class ServerApp(JupyterApp):
         """An instance of Tornado's HTTPServer class for the Server Web Application."""
         try:
             return self._http_server
-        except AttributeError:
+        except AttributeError as e:
             raise AttributeError(
                 'An HTTPServer instance has not been created for the '
                 'Server Web Application. To create an HTTPServer for this '
                 'application, call `.init_httpserver()`.'
-                )
+                ) from e
 
     def init_httpserver(self):
         """Creates an instance of a Tornado HTTPServer for the Server Web Application
