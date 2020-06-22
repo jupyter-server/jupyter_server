@@ -8,6 +8,7 @@ from traitlets import (
     Unicode,
     validate
 )
+from traitlets.config import LoggingConfigurable
 from traitlets.config.loader import (
     JSONFileConfigLoader
 )
@@ -175,13 +176,14 @@ class ExtensionPoint(HasTraits):
     metadata = Dict()
 
     @validate('metadata')
-    def _valid_metadata(self, metadata):
+    def _valid_metadata(self, proposed):
+        metadata = proposed['value']
         # Verify that the metadata has a "name" key.
         try:
             self._module_name = metadata['module']
         except KeyError:
             raise ExtensionMetadataError(
-                "There is no 'name' key in the extension's "
+                "There is no 'module' key in the extension's "
                 "metadata packet."
             )
 
@@ -213,6 +215,8 @@ class ExtensionPoint(HasTraits):
         If it's not provided in the metadata, `name` is set
         to the extensions' module name.
         """
+        if self.app:
+            return self.app.name
         return self.metadata.get("name", self.module_name)
 
     @property
@@ -273,20 +277,22 @@ def get_metadata(package_name):
 class ExtensionPackage(HasTraits):
     """API for handling
     """
-    name = Unicode(help="Name of the extension's Python package.")
+    name = Unicode(help="Name of the an importable Python package.")
 
     @validate("name")
-    def _validate_name(self, name):
+    def _validate_name(self, proposed):
+        name = proposed['value']
+        self._extension_points = {}
         try:
             self._metadata = get_metadata(name)
         except ModuleNotFoundError:
             raise ExtensionModuleNotFound(
-                f"The module '{self._module_name}' could not be found. Are you "
+                f"The module '{name}' could not be found. Are you "
                 "sure the extension is installed?"
             )
         # Create extension point interfaces for each extension path.
         for m in self._metadata:
-            point = ExtensionPoint(m)
+            point = ExtensionPoint(metadata=m)
             self._extension_points[point.name] = point
         return name
 
@@ -301,24 +307,49 @@ class ExtensionPackage(HasTraits):
         return self._extension_points
 
 
-class ExtensionManager:
-    """High level interface for linking, loading, and managing
-    Jupyter Server extensions.
+class ExtensionManager(LoggingConfigurable):
+    """High level interface for findind, validating,
+    linking, loading, and managing Jupyter Server extensions.
+
+    Usage:
+
+    m = ExtensionManager(
+        jpserver_extensions=extensions,
+    )
+
+    m.
     """
     jpserver_extensions = Dict()
 
-    def __init__(self, jpserver_extensions):
-        self.extensions = {}
+    @validate('jpserver_extensions')
+    def _validate_jpserver_extensions(self, proposed):
+        jpserver_extensions = proposed['value']
+        self._extensions = {}
         for package_name, enabled in jpserver_extensions.items():
             if enabled:
-                self.extensions[package_name] = ExtensionPackage(package_name)
+                try:
+                    self._extensions[package_name] = ExtensionPackage(name=package_name)
+                # Raise a warning if the extension cannot be loaded.
+                except Exception as e:
+                    self.log.warning(e)
+        return jpserver_extensions
+
+    @property
+    def extensions(self):
+        """Dictionary with extension package names as keys
+        and an ExtensionPackage objects as values.
+        """
+        return self._extensions
 
     @property
     def extension_points(self):
-        _paths = {}
+        points = {}
         for ext in self.extensions.values():
-            _paths.update(ext.paths)
-        return _paths
+            points.update(ext.extension_points)
+        return points
+
+    def link_extensions(self):
+
 
 
 def validate_extension(name):
@@ -331,4 +362,4 @@ def validate_extension(name):
 
     If this works, nothing should happen.
     """
-    ExtensionPackage(name)
+    return ExtensionPackage(name)

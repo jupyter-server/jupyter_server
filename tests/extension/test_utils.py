@@ -2,8 +2,8 @@ import pytest
 from jupyter_server.extension.utils import (
     list_extensions_in_configd,
     configd_enabled,
-    ExtensionPath,
-    Extension,
+    ExtensionPoint,
+    ExtensionPackage,
     ExtensionManager
 )
 
@@ -64,18 +64,19 @@ def test_config_enabled(ext1_config):
     assert configd_enabled("ext1_config")
 
 
-def test_extension_path_api():
+def test_extension_point_api():
     # Import mock extension metadata
     from .mockextensions import _jupyter_server_extension_paths
 
     # Testing the first path (which is an extension app).
     metadata_list = _jupyter_server_extension_paths()
-    path = metadata_list[0]
+    point = metadata_list[0]
 
-    module = path["module"]
-    app = path["app"]
+    module = point["module"]
+    app = point["app"]
 
-    e = ExtensionPath(path)
+    print(point)
+    e = ExtensionPoint(metadata=point)
     assert e.module_name == module
     assert e.name == app.name
     assert app is not None
@@ -83,7 +84,7 @@ def test_extension_path_api():
     assert callable(e.link)
 
 
-def test_extension_api():
+def test_extension_package_api():
     # Import mock extension metadata
     from .mockextensions import _jupyter_server_extension_paths
 
@@ -92,10 +93,11 @@ def test_extension_api():
     path1 = metadata_list[0]
     app = path1["app"]
 
-    e = Extension('tests.extension.mockextensions')
-    assert hasattr(e, "paths")
-    assert len(e.paths) == len(metadata_list)
-    assert app.name in e.paths
+    e = ExtensionPackage(name='tests.extension.mockextensions')
+    e.extension_points
+    assert hasattr(e, "extension_points")
+    assert len(e.extension_points) == len(metadata_list)
+    assert app.name in e.extension_points
 
 
 def test_extension_manager_api():
@@ -108,8 +110,8 @@ def test_extension_manager_api():
     jpserver_extensions = {
         "tests.extension.mockextensions": True
     }
-    manager = ExtensionManager(jpserver_extensions)
+    manager = ExtensionManager(jpserver_extensions=jpserver_extensions)
     assert len(manager.extensions) == 1
-    assert len(manager.paths) == len(metadata_list)
-    assert "mockextension" in manager.paths
-    assert "tests.extension.mockextensions.mock1" in manager.paths
+    assert len(manager.extension_points) == len(metadata_list)
+    assert "mockextension" in manager.extension_points
+    assert "tests.extension.mockextensions.mock1" in manager.extension_points
