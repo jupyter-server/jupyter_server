@@ -11,9 +11,6 @@ def get_data_files():
     """
     data_files = [
         ('etc/jupyter/jupyter_server_config.d', 'etc/jupyter/jupyter_server_config.d/', '*.json'),
-        # ('etc/jupyter/jupyter_server_config.d', ['etc/jupyter/jupyter_server_config.d/simple_ext1.json']),
-        # ('etc/jupyter/jupyter_server_config.d', ['etc/jupyter/jupyter_server_config.d/simple_ext2.json']),
-        # ('etc/jupyter/jupyter_server_config.d', ['etc/jupyter/jupyter_server_config.d/simple_ext11.json']),
     ]
     def add_data_files(path):
         for (dirpath, dirnames, filenames) in os.walk(path):
