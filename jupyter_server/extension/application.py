@@ -383,9 +383,10 @@ class ExtensionApp(JupyterApp):
         """Initialize and configure this extension, then add the extension's
         settings and handlers to the server's web application.
         """
+        extension_manager = serverapp.extension_manager
         try:
             # Get loaded extension from serverapp.
-            extension = serverapp.extension_manager.paths[cls.name].app
+            extension = extension_manager.extension_points[cls.name].app
         except KeyError:
             extension = cls()
             extension.link_to_serverapp(serverapp)

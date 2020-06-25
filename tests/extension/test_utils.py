@@ -2,9 +2,7 @@ import pytest
 from jupyter_server.extension.utils import (
     list_extensions_in_configd,
     configd_enabled,
-    ExtensionPoint,
-    ExtensionPackage,
-    ExtensionManager
+    validate_extension
 )
 
 # Use ServerApps environment because it monkeypatches
@@ -64,54 +62,12 @@ def test_config_enabled(ext1_config):
     assert configd_enabled("ext1_config")
 
 
-def test_extension_point_api():
-    # Import mock extension metadata
-    from .mockextensions import _jupyter_server_extension_paths
-
-    # Testing the first path (which is an extension app).
-    metadata_list = _jupyter_server_extension_paths()
-    point = metadata_list[0]
-
-    module = point["module"]
-    app = point["app"]
-
-    print(point)
-    e = ExtensionPoint(metadata=point)
-    assert e.module_name == module
-    assert e.name == app.name
-    assert app is not None
-    assert callable(e.load)
-    assert callable(e.link)
-
-
-def test_extension_package_api():
-    # Import mock extension metadata
-    from .mockextensions import _jupyter_server_extension_paths
-
-    # Testing the first path (which is an extension app).
-    metadata_list = _jupyter_server_extension_paths()
-    path1 = metadata_list[0]
-    app = path1["app"]
-
-    e = ExtensionPackage(name='tests.extension.mockextensions')
-    e.extension_points
-    assert hasattr(e, "extension_points")
-    assert len(e.extension_points) == len(metadata_list)
-    assert app.name in e.extension_points
-
-
-def test_extension_manager_api():
-    # Import mock extension metadata
-    from .mockextensions import _jupyter_server_extension_paths
-
-    # Testing the first path (which is an extension app).
-    metadata_list = _jupyter_server_extension_paths()
-
-    jpserver_extensions = {
-        "tests.extension.mockextensions": True
-    }
-    manager = ExtensionManager(jpserver_extensions=jpserver_extensions)
-    assert len(manager.extensions) == 1
-    assert len(manager.extension_points) == len(metadata_list)
-    assert "mockextension" in manager.extension_points
-    assert "tests.extension.mockextensions.mock1" in manager.extension_points
+def test_validate_extension():
+    # enabled at sys level
+    assert validate_extension('tests.extension.mockextensions.mockext_sys')
+    # enabled at sys, disabled at user
+    assert validate_extension('tests.extension.mockextensions.mockext_both')
+    # enabled at user
+    assert validate_extension('tests.extension.mockextensions.mockext_user')
+    # enabled at Python
+    assert validate_extension('tests.extension.mockextensions.mockext_py')

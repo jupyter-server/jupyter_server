@@ -100,11 +100,8 @@ from jupyter_server._sysinfo import get_sys_info
 from ._tz import utcnow, utcfromtimestamp
 from .utils import url_path_join, check_pid, url_escape, urljoin, pathname2url
 
-from jupyter_server.extension.serverextension import (
-    ServerExtensionApp,
-    _get_server_extension_metadata,
-    _get_load_jupyter_server_extension
-)
+from jupyter_server.extension.serverextension import ServerExtensionApp
+from jupyter_server.extension.manager import ExtensionManager
 
 #-----------------------------------------------------------------------------
 # Module globals
@@ -392,6 +389,7 @@ class JupyterPasswordApp(JupyterApp):
         from .auth.security import set_password
         set_password(config_file=self.config_file)
         self.log.info("Wrote hashed password to %s" % self.config_file)
+
 
 def shutdown_server(server_info, timeout=5, log=None):
     """Shutdown a notebook server in a separate process.
@@ -1488,17 +1486,12 @@ class ServerApp(JupyterApp):
         # Load server extensions with ConfigManager.
         # This enables merging on keys, which we want for extension enabling.
         # Regular config loading only merges at the class level,
-        # so each level (system > env > user ... opposite of jupyter/notebook)
-        # clobbers the previous.
+        # so each level clobbers the previous.
         config_path = jupyter_config_path()
         if self.config_dir not in config_path:
             # add self.config_dir to the front, if set manually
             config_path.insert(0, self.config_dir)
-        # Flip the order of ordered_config_path to system > env > user.
-        # This is different that jupyter/notebook. See the Jupyter
-        # Enhancement Proposal 29 (Jupyter Server) for more information.
-        reversed_config_path = config_path[::-1]
-        manager = ConfigManager(read_config_path=reversed_config_path)
+        manager = ConfigManager(read_config_path=config_path)
         section = manager.get(self.config_file_name)
         extensions = section.get('ServerApp', {}).get('jpserver_extensions', {})
 
@@ -1515,16 +1508,13 @@ class ServerApp(JupyterApp):
         this instance will inherit the ServerApp's config object
         and load its own config.
         """
-        from jupyter_server.extension.utils import ExtensionManager
 
         # Initialize each extension
-        self.extension_manager = ExtensionManager(self.jpserver_extensions)
-
-        for path in self.extension_manager.paths.values():
-            try:
-                path.link(self)
-            except Exception as e:
-                self.log.warning(e)
+        self.extension_manager = ExtensionManager(
+            parent=self,
+            jpserver_extensions=self.jpserver_extensions
+        )
+        self.extension_manager.link_extensions()
 
     def load_server_extensions(self):
         """Load any extensions specified by config.
@@ -1534,11 +1524,7 @@ class ServerApp(JupyterApp):
 
         The extension API is experimental, and may change in future releases.
         """
-        for path in self.extension_manager.paths.values():
-            try:
-                path.load(self)
-            except Exception as e:
-                self.log.warning(e)
+        self.extension_manager.load_extensions()
 
     def init_mime_overrides(self):
         # On some Windows machines, an application has registered incorrect

@@ -3,7 +3,6 @@ from collections import OrderedDict
 from traitlets.tests.utils import check_help_all_output
 
 from jupyter_server.extension.serverextension import (
-    validate_server_extension,
     toggle_server_extension_python,
     _get_config_dir
 )
@@ -43,15 +42,6 @@ def test_merge_config(
         configurable_serverapp,
         extension_environ
 ):
-    # enabled at sys level
-    validate_server_extension('tests.extension.mockextensions.mockext_sys')
-    # enabled at sys, disabled at user
-    validate_server_extension('tests.extension.mockextensions.mockext_both')
-    # enabled at user
-    validate_server_extension('tests.extension.mockextensions.mockext_user')
-    # enabled at Python
-    validate_server_extension('tests.extension.mockextensions.mockext_py')
-
     # Toggle each extension module with a JSON config file
     # at the sys-prefix config dir.
     toggle_server_extension_python(
@@ -71,12 +61,12 @@ def test_merge_config(
     toggle_server_extension_python(
         'tests.extension.mockextensions.mockext_both',
         enabled=True,
-        user=True
+        sys_prefix=True
     )
     toggle_server_extension_python(
         'tests.extension.mockextensions.mockext_both',
         enabled=False,
-        sys_prefix=True
+        user=True
     )
 
     arg = "--ServerApp.jpserver_extensions={{'{mockext_py}': True}}".format(
@@ -88,7 +78,7 @@ def test_merge_config(
         config_dir=str(env_config_path),
         argv=[arg]
     )
-    # Verify that extensions are enabled and merged properly.
+    # Verify that extensions are enabled and merged in proper order.
     extensions = app.jpserver_extensions
     assert extensions['tests.extension.mockextensions.mockext_user']
     assert extensions['tests.extension.mockextensions.mockext_sys']

@@ -6,10 +6,8 @@
 
 import os
 import sys
-import importlib
 from tornado.log import LogFormatter
-from traitlets import Bool, Any
-from traitlets.utils.importstring import import_item
+from traitlets import Bool
 
 from jupyter_core.application import JupyterApp
 from jupyter_core.paths import (
@@ -20,30 +18,7 @@ from jupyter_core.paths import (
 )
 from jupyter_server._version import __version__
 from jupyter_server.config_manager import BaseJSONConfigManager
-
-
-def _get_server_extension_metadata(module):
-    """Load server extension metadata from a module.
-
-    Returns a tuple of (
-        the package as loaded
-        a list of server extension specs: [
-            {
-                "module": "import.path.to.extension"
-            }
-        ]
-    )
-
-    Parameters
-    ----------
-    module : str
-        Importable Python module exposing the
-        magic-named `_jupyter_server_extension_paths` function
-    """
-    m = import_item(module)
-    if not hasattr(m, '_jupyter_server_extension_paths'):
-        raise KeyError(u'The Python module {} does not include any valid server extensions'.format(module))
-    return m, m._jupyter_server_extension_paths()
+from .utils import validate_extension
 
 
 class ArgumentConflict(ValueError):
@@ -134,75 +109,14 @@ RED_X = '\033[31m X\033[0m' if os.name != 'nt' else ' X'
 # Public API
 # ------------------------------------------------------------------------------
 
-class ExtensionLoadingError(Exception): pass
 
-
-class ExtensionValidationError(Exception): pass
-
-
-
-def _get_load_jupyter_server_extension(obj):
-    """Looks for load_jupyter_server_extension as an attribute
-    of the object or module.
-    """
-    try:
-        func = getattr(obj, '_load_jupyter_server_extension')
-    except AttributeError:
-        func = getattr(obj, 'load_jupyter_server_extension')
-    except BaseException:
-        raise ExtensionLoadingError(
-            "_load_jupyter_server_extension function was not found."
-        ) from e
-    return func
-
-
-def validate_server_extension(name):
-    """Validates that you can import the extension module,
-    gather all extension metadata, and find `load_jupyter_server_extension`
-    functions for each extension.
-
-    Raises a validation error if extensions cannot be found.
-
-    Parameter
-    ---------
-    extension_module: module
-        The extension module (first value) returned by _get_server_extension_metadata
-
-    extension_metadata : list
-        The list (second value) returned by _get_server_extension_metadata
-
-    Returns
-    -------
-    version : str
-        Extension version.
-    """
-    # If the extension does not exist, raise an exception
-    try:
-        mod, metadata = _get_server_extension_metadata(name)
-        version = getattr(mod, '__version__', '')
-    except ImportError as e:
-        raise ExtensionValidationError('{} is not importable.'.format(name)) from e
-
-    try:
-        for item in metadata:
-            extapp = item.get('app', None)
-            extloc = item.get('module', None)
-            if extapp and extloc:
-                func = _get_load_jupyter_server_extension(extapp)
-            elif extloc:
-                extmod = importlib.import_module(extloc)
-                func = _get_load_jupyter_server_extension(extmod)
-            else:
-                raise AttributeError
-    # If the extension does not have a `load_jupyter_server_extension` function, raise exception.
-    except AttributeError as e:
-        raise ExtensionValidationError(
-            'Found "{}" module but cannot load it.'.format(name)
-        ) from e
-    return version
-
-
-def toggle_server_extension_python(import_name, enabled=None, parent=None, user=False, sys_prefix=True):
+def toggle_server_extension_python(
+    import_name,
+    enabled=None,
+    parent=None,
+    user=False,
+    sys_prefix=True
+):
     """Toggle the boolean setting for a given server extension
     in a Jupyter config file.
     """
@@ -283,7 +197,7 @@ class ToggleServerExtensionApp(BaseExtensionApp):
             self.log.info("{}: {}".format(self._toggle_pre_message.capitalize(), import_name))
             # Validate the server extension.
             self.log.info("    - Validating {}...".format(import_name))
-            version = validate_server_extension(import_name)
+            version = validate_extension(import_name)
 
             # Toggle the server extension to active.
             toggle_server_extension_python(
@@ -297,7 +211,7 @@ class ToggleServerExtensionApp(BaseExtensionApp):
 
             # If successful, let's log.
             self.log.info("    - Extension successfully {}.".format(self._toggle_post_message))
-        except ExtensionValidationError as err:
+        except Exception as err:
             self.log.info("     {} Validation failed: {}".format(RED_X, err))
 
     def toggle_server_extension_python(self, package):
@@ -383,16 +297,17 @@ class ListServerExtensionsApp(BaseExtensionApp):
             # Iterate over packages listed in jpserver_extensions.
             for pkg_name,  enabled in server_extensions.items():
                 # Attempt to get extension metadata
-                _, __ = _get_server_extension_metadata(pkg_name)
                 self.log.info(u'    {} {}'.format(
                               pkg_name,
                               GREEN_ENABLED if enabled else RED_DISABLED))
                 try:
                     self.log.info("    - Validating {}...".format(pkg_name))
-                    version = validate_server_extension(pkg_name)
-                    self.log.info("      {} {} {}".format(pkg_name, version, GREEN_OK))
+                    version = validate_extension(pkg_name)
+                    self.log.info(
+                        "      {} {} {}".format(pkg_name, version, GREEN_OK)
+                    )
 
-                except ExtensionValidationError as err:
+                except Exception as err:
                     self.log.warn("      {} {}".format(RED_X, err))
 
     def start(self):
