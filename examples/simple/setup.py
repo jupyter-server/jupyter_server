@@ -1,20 +1,25 @@
-import os, setuptools
-from setuptools import find_packages
+import os
+from setuptools import setup
+from jupyter_packaging import create_cmdclass
+
 
 VERSION = '0.0.1'
+
 
 def get_data_files():
     """Get the data files for the package.
     """
     data_files = [
-        ('etc/jupyter/jupyter_server_config.d', ['etc/jupyter/jupyter_server_config.d/simple_ext1.json']),
-        ('etc/jupyter/jupyter_server_config.d', ['etc/jupyter/jupyter_server_config.d/simple_ext2.json']),
-        ('etc/jupyter/jupyter_server_config.d', ['etc/jupyter/jupyter_server_config.d/simple_ext11.json']),
+        ('etc/jupyter/jupyter_server_config.d', 'etc/jupyter/jupyter_server_config.d/', '*.json'),
+        # ('etc/jupyter/jupyter_server_config.d', ['etc/jupyter/jupyter_server_config.d/simple_ext1.json']),
+        # ('etc/jupyter/jupyter_server_config.d', ['etc/jupyter/jupyter_server_config.d/simple_ext2.json']),
+        # ('etc/jupyter/jupyter_server_config.d', ['etc/jupyter/jupyter_server_config.d/simple_ext11.json']),
     ]
     def add_data_files(path):
         for (dirpath, dirnames, filenames) in os.walk(path):
             if filenames:
-                data_files.append((dirpath, [os.path.join(dirpath, filename) for filename in filenames]))
+                paths = [(dirpath, dirpath, filename) for filename in filenames]
+                data_files.extend(paths)
     # Add all static and templates folders.
     add_data_files('simple_ext1/static')
     add_data_files('simple_ext1/templates')
@@ -22,19 +27,23 @@ def get_data_files():
     add_data_files('simple_ext2/templates')
     return data_files
 
-setuptools.setup(
+
+cmdclass = create_cmdclass(
+    data_files_spec=get_data_files()
+)
+
+setup_args = dict(
     name = 'jupyter_server_example',
     version = VERSION,
     description = 'Jupyter Server Example',
     long_description = open('README.md').read(),
-    packages = find_packages(),
     python_requires = '>=3.5',
     install_requires = [
         'jupyter_server',
         'jinja2',
     ],
     include_package_data=True,
-    data_files = get_data_files(),
+    cmdclass = cmdclass,
     entry_points = {
         'console_scripts': [
              'jupyter-simple-ext1 = simple_ext1.application:main',
@@ -43,3 +52,7 @@ setuptools.setup(
         ]
     },
 )
+
+
+if __name__ == '__main__':
+    setup(**setup_args)

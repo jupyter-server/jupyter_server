@@ -49,8 +49,8 @@ class ExtensionPoint(HasTraits):
             self._module = importlib.import_module(self._module_name)
         except ModuleNotFoundError:
             raise ExtensionModuleNotFound(
-                f"The module '{self._module_name}' could not be found. Are "
-                "you sure the extension is installed?"
+                "The module '{}' could not be found. Are you "
+                "sure the extension is installed?".format(self._module_name)
             )
         # Initialize the app object if it exists.
         app = self.metadata.get("app")
@@ -138,8 +138,8 @@ class ExtensionPackage(HasTraits):
             self._metadata = get_metadata(name)
         except ModuleNotFoundError:
             raise ExtensionModuleNotFound(
-                f"The module '{name}' could not be found. Are you "
-                "sure the extension is installed?"
+                "The module '{name}' could not be found. Are you "
+                "sure the extension is installed?".format(name=name)
             )
         # Create extension point interfaces for each extension path.
         for m in self._metadata:
