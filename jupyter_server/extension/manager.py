@@ -47,7 +47,7 @@ class ExtensionPoint(HasTraits):
 
         try:
             self._module = importlib.import_module(self._module_name)
-        except ModuleNotFoundError:
+        except ImportError:
             raise ExtensionModuleNotFound(
                 "The module '{}' could not be found. Are you "
                 "sure the extension is installed?".format(self._module_name)
@@ -136,7 +136,7 @@ class ExtensionPackage(HasTraits):
         self._extension_points = {}
         try:
             self._metadata = get_metadata(name)
-        except ModuleNotFoundError:
+        except ImportError:
             raise ExtensionModuleNotFound(
                 "The module '{name}' could not be found. Are you "
                 "sure the extension is installed?".format(name=name)
