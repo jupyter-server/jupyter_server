@@ -1514,7 +1514,7 @@ class ServerApp(JupyterApp):
             logger=self.log,
             jpserver_extensions=self.jpserver_extensions
         )
-        self.extension_manager.link_extensions()
+        self.extension_manager.link_extensions(self)
 
     def load_server_extensions(self):
         """Load any extensions specified by config.
@@ -1524,7 +1524,7 @@ class ServerApp(JupyterApp):
 
         The extension API is experimental, and may change in future releases.
         """
-        self.extension_manager.load_extensions()
+        self.extension_manager.load_extensions(self)
 
     def init_mime_overrides(self):
         # On some Windows machines, an application has registered incorrect

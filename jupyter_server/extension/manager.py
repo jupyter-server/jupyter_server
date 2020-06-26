@@ -215,7 +215,7 @@ class ExtensionManager(LoggingConfigurable):
             points.update(ext.extension_points)
         return points
 
-    def link_extensions(self):
+    def link_extensions(self, serverapp):
         """Link all enabled extensions
          to an instance of ServerApp
         """
@@ -223,11 +223,11 @@ class ExtensionManager(LoggingConfigurable):
         # order.
         for name, ext in sorted(self.extension_points.items()):
             try:
-                ext.link(self.parent)
+                ext.link(serverapp)
             except Exception as e:
                 self.log.warning(e)
 
-    def load_extensions(self):
+    def load_extensions(self, serverapp):
         """Load all enabled extensions and append them to
         the parent ServerApp.
         """
@@ -235,7 +235,7 @@ class ExtensionManager(LoggingConfigurable):
         # order.
         for name, ext in sorted(self.extension_points.items()):
             try:
-                ext.load(self.parent)
+                ext.load(serverapp)
             except Exception as e:
                 self.log.warning(e)
 
