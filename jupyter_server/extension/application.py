@@ -144,8 +144,12 @@ class ExtensionApp(JupyterApp):
     # side-by-side when launched directly.
     load_other_extensions = True
 
-    # Pass se
-    server_config = {}
+    # A useful class property that subclasses can override to
+    # configure the underlying Jupyter Server when this extension
+    # is launched directly (using its `launch_instance` method).
+    serverapp_config = {
+        "open_browser": True
+    }
 
     # The extension name used to name the jupyter config
     # file, jupyter_{name}_config.
@@ -296,11 +300,10 @@ class ExtensionApp(JupyterApp):
         base_config = {
             "ServerApp": {
                 "jpserver_extensions": {cls.get_extension_package(): True},
-                "open_browser": True,
                 "default_url": cls.extension_url
             }
         }
-        base_config["ServerApp"].update(cls.server_config)
+        base_config["ServerApp"].update(cls.serverapp_config)
         return base_config
 
     def _link_jupyter_server_extension(self, serverapp):
