@@ -1511,7 +1511,7 @@ class ServerApp(JupyterApp):
 
         # Initialize each extension
         self.extension_manager = ExtensionManager(
-            parent=self,
+            logger=self.log,
             jpserver_extensions=self.jpserver_extensions
         )
         self.extension_manager.link_extensions()

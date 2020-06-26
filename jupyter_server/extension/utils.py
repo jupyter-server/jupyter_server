@@ -137,6 +137,17 @@ class ExtensionModuleNotFound(Exception):
     pass
 
 
+class NotAnExtensionApp(Exception):
+    pass
+
+
+def get_extension_app_pkg(app_cls):
+    """Get the Python package name
+    """
+    if not isinstance(app_cls, "ExtensionApp"):
+        raise NotAnExtensionApp("The ")
+
+
 def get_loader(obj):
     """Looks for _load_jupyter_server_extension as an attribute
     of the object or module.

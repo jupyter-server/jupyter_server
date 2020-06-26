@@ -49,7 +49,7 @@ class ExtensionPoint(HasTraits):
             self._module = importlib.import_module(self._module_name)
         except ImportError:
             raise ExtensionModuleNotFound(
-                "The module '{}' could not be found. Are you "
+                "The submodule '{}' could not be found. Are you "
                 "sure the extension is installed?".format(self._module_name)
             )
         # Initialize the app object if it exists.

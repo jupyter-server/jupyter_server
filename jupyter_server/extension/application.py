@@ -153,6 +153,14 @@ class ExtensionApp(JupyterApp):
     # this extension from the CLI, e.g. `jupyter {name}`.
     name = None
 
+    @classmethod
+    def get_extension_package(cls):
+        return cls.__module__.split('.')[0]
+
+    @classmethod
+    def get_extension_point(cls):
+        return cls.__module__
+
     # Extension URL sets the default landing page for this extension.
     extension_url = "/"
 
@@ -370,7 +378,7 @@ class ExtensionApp(JupyterApp):
     def _jupyter_server_config(cls):
         base_config = {
             "ServerApp": {
-                "jpserver_extensions": {cls.name: True},
+                "jpserver_extensions": {cls.get_extension_package(): True},
                 "open_browser": True,
                 "default_url": cls.extension_url
             }
@@ -389,7 +397,7 @@ class ExtensionApp(JupyterApp):
             extension = extension_manager.extension_points[cls.name].app
         except KeyError:
             extension = cls()
-            extension.link_to_serverapp(serverapp)
+            extension._link_jupyter_server_extension(serverapp)
         extension.initialize()
         return extension
 

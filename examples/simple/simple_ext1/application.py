@@ -10,10 +10,10 @@ DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates
 class SimpleApp1(ExtensionAppJinjaMixin, ExtensionApp):
 
     # The name of the extension.
-    name = "simple_ext1"
+    name = "foo"
 
     # The url that your extension will serve its homepage.
-    extension_url = '/simple_ext1/default'
+    extension_url = '/foo/default'
 
     # Should your extension expose other server extensions when launched directly?
     load_other_extensions = True
