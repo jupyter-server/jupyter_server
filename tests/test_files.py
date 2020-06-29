@@ -142,7 +142,7 @@ async def test_old_files_redirect(fetch, serverapp, root_dir):
 
 async def test_download_directory(fetch, serverapp, root_dir):
     # Create a dummy directory.
-    root_dir = pathlib.Path(root_dir)
+    root_dir = pathlib.Path(str(root_dir))
     archive_dir_path = root_dir / "download-archive-dir"
     archive_dir_path.mkdir()
     with open(archive_dir_path / "test1.txt", "w") as f:
@@ -205,7 +205,7 @@ async def test_extract_directory(fetch, serverapp, root_dir):
     for archive_format, mode in format_mode.items():
 
         # Create a dummy directory.
-        root_dir = pathlib.Path(root_dir)
+        root_dir = pathlib.Path(str(root_dir))
         archive_dir_path = root_dir / "extract-archive-dir"
         archive_dir_path.mkdir()
         with open(archive_dir_path / "extract-test1.txt", "w") as f:
