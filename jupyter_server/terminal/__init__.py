@@ -22,8 +22,13 @@ def initialize(webapp, root_dir, connection_url, settings):
     shell = settings.get('shell_command',
         [os.environ.get('SHELL') or default_shell]
     )
-    # Enable login mode - to automatically source the /etc/profile script
-    if os.name != 'nt':
+    # Enable login mode - to automatically source the /etc/profile
+    # script, but only for non-nested shells; for nested shells, it's
+    # superfluous and may even be harmful (e.g. on macOS, where login
+    # shells invoke /usr/libexec/path_helper to add entries from
+    # /etc/paths{,.d} to the PATH, reordering it in the process and
+    # potentially overriding virtualenvs and other PATH modifications)
+    if os.name != 'nt' and int(os.environ.get("SHLVL", 0)) < 1:
         shell.append('-l')
     terminal_manager = webapp.settings['terminal_manager'] = NamedTermManager(
         shell_command=shell,
