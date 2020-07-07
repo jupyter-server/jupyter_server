@@ -187,11 +187,6 @@ class DirectoryHandler(JupyterHandler):
         )
 
         self.canceled = False
-
-        # The original extension is using `ioloop.PeriodicCallback` and `ioloop.IOLoop.current().run_in_executor`
-        # but it does not seem to work here (500 internal HTTP error).
-        # This trategy is nice when compressing very large directory. Any idea how to integrate that is welcome.
-
         self.flush_cb = ioloop.PeriodicCallback(
             self.flush, ARCHIVE_DOWNLOAD_FLUSH_DELAY
         )
