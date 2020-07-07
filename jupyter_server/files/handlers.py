@@ -200,7 +200,7 @@ class DirectoryHandler(JupyterHandler):
         # self.archive_and_download(archive_path, archive_format, archive_token)
 
         args = (archive_path, archive_format, archive_token)
-        yield ioloop.IOLoop.current().run_in_executor(
+        await ioloop.IOLoop.current().run_in_executor(
             None, self.archive_and_download, *args
         )
 
@@ -235,7 +235,7 @@ class DirectoryHandler(JupyterHandler):
 
 class ExtractDirectoryHandler(JupyterHandler):
     @web.authenticated
-    def get(self, archive_path, include_body=False):
+    async def get(self, archive_path, include_body=False):
 
         # /extract-archive/ requests must originate from the same site
         self.check_xsrf_cookie()
@@ -248,10 +248,9 @@ class ExtractDirectoryHandler(JupyterHandler):
         root_dir = pathlib.Path(cm.root_dir)
         archive_path = root_dir / url2path(archive_path)
 
-        # yield ioloop.IOLoop.current().run_in_executor(
-        #     None, self.extract_archive, archive_path
-        # )
-        self.extract_archive(archive_path)
+        await ioloop.IOLoop.current().run_in_executor(
+            None, self.extract_archive, archive_path
+        )
 
         self.finish()
 
