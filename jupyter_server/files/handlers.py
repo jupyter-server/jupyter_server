@@ -192,17 +192,17 @@ class DirectoryHandler(JupyterHandler):
         # but it does not seem to work here (500 internal HTTP error).
         # This trategy is nice when compressing very large directory. Any idea how to integrate that is welcome.
 
-        # self.flush_cb = ioloop.PeriodicCallback(
-        #     self.flush, ARCHIVE_DOWNLOAD_FLUSH_DELAY
-        # )
-        # self.flush_cb.start()
+        self.flush_cb = ioloop.PeriodicCallback(
+            self.flush, ARCHIVE_DOWNLOAD_FLUSH_DELAY
+        )
+        self.flush_cb.start()
 
-        self.archive_and_download(archive_path, archive_format, archive_token)
+        # self.archive_and_download(archive_path, archive_format, archive_token)
 
-        # args = (archive_path, archive_format, archive_token)
-        # yield ioloop.IOLoop.current().run_in_executor(
-        #     None, self.archive_and_download, *args
-        # )
+        args = (archive_path, archive_format, archive_token)
+        yield ioloop.IOLoop.current().run_in_executor(
+            None, self.archive_and_download, *args
+        )
 
         if self.canceled:
             self.log.info("Download canceled.")
@@ -211,7 +211,7 @@ class DirectoryHandler(JupyterHandler):
             self.log.info("Finished downloading {}.".format(archive_filename))
 
         self.set_cookie("archiveToken", archive_token)
-        # self.flush_cb.stop()
+        self.flush_cb.stop()
         self.finish()
 
     def archive_and_download(self, archive_path, archive_format, archive_token):
@@ -230,7 +230,7 @@ class DirectoryHandler(JupyterHandler):
     def on_connection_close(self):
         super().on_connection_close()
         self.canceled = True
-        # self.flush_cb.stop()
+        self.flush_cb.stop()
 
 
 class ExtractDirectoryHandler(JupyterHandler):
