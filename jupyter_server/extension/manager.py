@@ -21,15 +21,6 @@ from .utils import (
 class ExtensionPoint(HasTraits):
     """A simple API for connecting to a Jupyter Server extension
     point defined by metadata and importable from a Python package.
-
-    Usage:
-
-    metadata = {
-        "module": "extension_module",
-        "":
-    }
-
-    point = ExtensionPoint(metadata)
     """
     metadata = Dict()
 
@@ -57,6 +48,10 @@ class ExtensionPoint(HasTraits):
         if app:
             metadata["app"] = app()
         return metadata
+
+    @property
+    def linked(self):
+        return self._linked
 
     @property
     def app(self):
@@ -103,7 +98,10 @@ class ExtensionPoint(HasTraits):
                 # Otherwise return a dummy function.
                 lambda serverapp: None
             )
-        return linker(serverapp)
+        # Capture output to return
+        out = linker(serverapp)
+        # Store that this extension has been linked
+        return out
 
     def load(self, serverapp):
         """Load the extension in a Jupyter ServerApp object.
@@ -129,6 +127,9 @@ class ExtensionPackage(HasTraits):
     extpkg = ExtensionPackage(name=ext_name)
     """
     name = Unicode(help="Name of the an importable Python package.")
+
+    # A dictionary that stores whether the extension point has been linked.
+    _linked_points = {}
 
     @validate("name")
     def _validate_name(self, proposed):
@@ -157,85 +158,96 @@ class ExtensionPackage(HasTraits):
         """A dictionary of extension points."""
         return self._extension_points
 
+    def link_point(self, point_name, serverapp):
+        linked = self._linked_points.get(point_name, False)
+        if not linked:
+            point = self.extension_points[point_name]
+            point.link(serverapp)
+
+    def load_point(self, point_name, serverapp):
+        point = self.extension_points[point_name]
+        point.load(serverapp)
+
+    def link_all_points(self, serverapp):
+        for point_name in self.extension_points:
+            self.link_point(point_name, serverapp)
+
+    def load_all_points(self, serverapp):
+        for point_name in self.extension_points:
+            self.load_point(point_name, serverapp)
+
 
 class ExtensionManager(LoggingConfigurable):
     """High level interface for findind, validating,
     linking, loading, and managing Jupyter Server extensions.
 
     Usage:
-
     m = ExtensionManager(jpserver_extensions=extensions)
     """
-    parent = Instance(
-        klass="jupyter_server.serverapp.ServerApp",
-        allow_none=True
-    )
-
-    jpserver_extensions = Dict(
-        help=(
-            "A dictionary with extension package names "
-            "as keys and booleans to enable as values."
-        )
-    )
-
-    @default('jpserver_extensions')
-    def _default_jpserver_extensions(self):
-        return self.parent.jpserver_extensions
-
-    @validate('jpserver_extensions')
-    def _validate_jpserver_extensions(self, proposed):
-        jpserver_extensions = proposed['value']
-        self._extensions = {}
-        # Iterate over dictionary items and validate that
-        # we can interface with each extension. If the extension
-        # fails to interface, throw a warning through the logger
-        # interface.
-        for package_name, enabled in jpserver_extensions.items():
-            if enabled:
-                try:
-                    self._extensions[package_name] = ExtensionPackage(
-                        name=package_name
-                    )
-                # Raise a warning if the extension cannot be loaded.
-                except Exception as e:
-                    self.log.warning(e)
-        return jpserver_extensions
+    # The `enabled_extensions` attribute provides a dictionary
+    # with extension names mapped to their ExtensionPackage interface
+    # (see above). This manager simplifies the interaction between the
+    # ServerApp and the extensions being appended.
+    _enabled_extensions = {}
+    # The `_linked_extensions` attribute tracks when each extension
+    # has been successfully linked to a ServerApp. This helps prevent
+    # extensions from being re-linked recursively unintentionally if another
+    # extension attempts to link extensions again.
+    _linked_extensions = {}
 
     @property
-    def extensions(self):
+    def enabled_extensions(self):
         """Dictionary with extension package names as keys
         and an ExtensionPackage objects as values.
         """
-        return self._extensions
+        return dict(sorted(self._enabled_extensions.items()))
 
-    @property
-    def extension_points(self):
-        points = {}
-        for ext in self.extensions.values():
-            points.update(ext.extension_points)
-        return points
+    def from_jpserver_extensions(self, jpserver_extensions):
+        """Add extensions from 'jpserver_extensions'-like dictionary."""
+        for name, enabled in jpserver_extensions.items():
+            if enabled:
+                self.add_extension(name)
 
-    def link_extensions(self, serverapp):
-        """Link all enabled extensions
-         to an instance of ServerApp
-        """
-        # Sort the extension names to enforce deterministic linking
-        # order.
-        for name, ext in sorted(self.extension_points.items()):
+    def add_extension(self, extension_name):
+        try:
+            extpkg = ExtensionPackage(name=extension_name)
+            self._enabled_extensions[extension_name] = extpkg
+            # Raise a warning if the extension cannot be loaded.
+        except Exception as e:
+            self.log.warning(e)
+
+    def link_extension(self, name, serverapp):
+        linked = self._linked_extensions.get(name, False)
+        extension = self.enabled_extensions[name]
+        if not linked:
             try:
-                ext.link(serverapp)
+                extension.link_all_points(serverapp)
+                self.log.debug("The '{}' extension was successfully linked.".format(name))
             except Exception as e:
                 self.log.warning(e)
 
-    def load_extensions(self, serverapp):
+    def load_extension(self, name, serverapp):
+        extension = self.enabled_extensions.get(name)
+        try:
+            extension.load_all_points(serverapp)
+        except Exception as e:
+            self.log.warning(e)
+
+    def link_all_extensions(self, serverapp):
+        """Link all enabled extensions
+        to an instance of ServerApp
+        """
+        # Sort the extension names to enforce deterministic linking
+        # order.
+        for name in self.enabled_extensions:
+            self.link_extension(name, serverapp)
+
+    def load_all_extensions(self, serverapp):
         """Load all enabled extensions and append them to
         the parent ServerApp.
         """
         # Sort the extension names to enforce deterministic loading
         # order.
-        for name, ext in sorted(self.extension_points.items()):
-            try:
-                ext.load(serverapp)
-            except Exception as e:
-                self.log.warning(e)
+        for name in self.enabled_extensions:
+            self.load_extension(name, serverapp)
 

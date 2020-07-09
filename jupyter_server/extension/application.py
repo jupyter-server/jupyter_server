@@ -173,6 +173,9 @@ class ExtensionApp(JupyterApp):
         ServerApp,
     ]
 
+    # A ServerApp is not defined yet, but will be initialized below.
+    serverapp = None
+
     @property
     def static_url_prefix(self):
         return "/static/{name}/".format(
@@ -361,7 +364,7 @@ class ExtensionApp(JupyterApp):
         3) Points Tornado Webapp to templates and
         static assets.
         """
-        if not hasattr(self, 'serverapp'):
+        if not self.serverapp:
             msg = (
                 "This extension has no attribute `serverapp`. "
                 "Try calling `.link_to_serverapp()` before calling "
@@ -397,7 +400,9 @@ class ExtensionApp(JupyterApp):
         extension_manager = serverapp.extension_manager
         try:
             # Get loaded extension from serverapp.
-            extension = extension_manager.extension_points[cls.name].app
+            pkg = extension_manager.enabled_extensions[cls.name]
+            point = pkg.extension_points[cls.name]
+            extension = point.app
         except KeyError:
             extension = cls()
             extension._link_jupyter_server_extension(serverapp)

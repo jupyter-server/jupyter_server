@@ -1474,9 +1474,9 @@ class ServerApp(JupyterApp):
 
     def find_server_extensions(self):
         """
-        Searches Jupyter paths for jpserver_extensions and captures
-        metadata for all enabled extensions.
+        Searches Jupyter paths for jpserver_extensions.
         """
+
         # Walk through all config files looking for jpserver_extensions.
         #
         # Each extension will likely have a JSON config file enabling itself in
@@ -1508,13 +1508,10 @@ class ServerApp(JupyterApp):
         this instance will inherit the ServerApp's config object
         and load its own config.
         """
-
-        # Initialize each extension
-        self.extension_manager = ExtensionManager(
-            logger=self.log,
-            jpserver_extensions=self.jpserver_extensions
-        )
-        self.extension_manager.link_extensions(self)
+        # Create an instance of the ExtensionManager.
+        self.extension_manager = ExtensionManager(logger=self.log)
+        self.extension_manager.from_jpserver_extensions(self.jpserver_extensions)
+        self.extension_manager.link_all_extensions(self)
 
     def load_server_extensions(self):
         """Load any extensions specified by config.
@@ -1524,7 +1521,7 @@ class ServerApp(JupyterApp):
 
         The extension API is experimental, and may change in future releases.
         """
-        self.extension_manager.load_extensions(self)
+        self.extension_manager.load_all_extensions(self)
 
     def init_mime_overrides(self):
         # On some Windows machines, an application has registered incorrect
