@@ -98,6 +98,7 @@ class ExtensionPoint(HasTraits):
                 # Otherwise return a dummy function.
                 lambda serverapp: None
             )
+
         # Capture output to return
         out = linker(serverapp)
         # Store that this extension has been linked
@@ -222,7 +223,7 @@ class ExtensionManager(LoggingConfigurable):
         if not linked:
             try:
                 extension.link_all_points(serverapp)
-                self.log.debug("The '{}' extension was successfully linked.".format(name))
+                self.log.info("{name} | extension was successfully linked.".format(name=name))
             except Exception as e:
                 self.log.warning(e)
 
@@ -230,6 +231,7 @@ class ExtensionManager(LoggingConfigurable):
         extension = self.enabled_extensions.get(name)
         try:
             extension.load_all_points(serverapp)
+            self.log.info("{name} | extension was successfully loaded.".format(name=name))
         except Exception as e:
             self.log.warning(e)
 
