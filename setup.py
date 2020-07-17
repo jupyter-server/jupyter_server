@@ -44,7 +44,6 @@ setup_args = dict(
         'jupyter_client>=6.1.1',
         'nbformat',
         'nbconvert',
-        'ipykernel', # bless IPython kernel for now
         'Send2Trash',
         'terminado>=0.8.3',
         'prometheus_client',
@@ -53,7 +52,7 @@ setup_args = dict(
     extras_require = {
         'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
                  'pytest', 'pytest-cov', 'pytest-tornasync',
-                 'pytest-console-scripts'],
+                 'pytest-console-scripts', 'ipykernel'],
         'test:sys_platform == "win32"': ['nose-exclude'],
     },
     entry_points = {
