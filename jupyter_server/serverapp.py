@@ -320,12 +320,6 @@ class ServerWebApplication(web.Application):
                         handlers[j] = (gwh[0], gwh[1])
                         break
 
-        handlers.append(
-            (r"/custom/(.*)", FileFindHandler, {
-                'path': settings['static_custom_path'],
-                'no_cache_paths': ['/'], # don't cache anything in custom
-            })
-        )
         # register base handlers last
         handlers.extend(load_handlers('jupyter_server.base.handlers'))
 
