@@ -62,18 +62,11 @@ def test_extension_package_notfound_error():
 
 
 def test_extension_manager_api():
-    # Import mock extension metadata
-    from .mockextensions import _jupyter_server_extension_paths
-
-    # Testing the first path (which is an extension app).
-    metadata_list = _jupyter_server_extension_paths()
-
     jpserver_extensions = {
         "tests.extension.mockextensions": True
     }
-    manager = ExtensionManager(jpserver_extensions=jpserver_extensions)
-    assert len(manager.extensions) == 1
-    assert len(manager.extension_points) == len(metadata_list)
-    assert "mockextension" in manager.extension_points
-    assert "tests.extension.mockextensions.mock1" in manager.extension_points
+    manager = ExtensionManager()
+    manager.from_jpserver_extensions(jpserver_extensions)
+    assert len(manager.enabled_extensions) == 1
+    assert "tests.extension.mockextensions" in manager.enabled_extensions
 

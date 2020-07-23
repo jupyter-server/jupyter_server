@@ -400,8 +400,7 @@ class ExtensionApp(JupyterApp):
         extension_manager = serverapp.extension_manager
         try:
             # Get loaded extension from serverapp.
-            pkg = extension_manager.enabled_extensions[cls.name]
-            point = pkg.extension_points[cls.name]
+            point = extension_manager.extension_points[cls.name]
             extension = point.app
         except KeyError:
             extension = cls()

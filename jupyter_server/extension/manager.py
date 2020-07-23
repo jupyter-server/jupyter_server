@@ -5,8 +5,6 @@ from traitlets import (
     HasTraits,
     Dict,
     Unicode,
-    Instance,
-    default,
     validate
 )
 
@@ -23,6 +21,7 @@ class ExtensionPoint(HasTraits):
     point defined by metadata and importable from a Python package.
     """
     metadata = Dict()
+    _app = None
 
     @validate('metadata')
     def _valid_metadata(self, proposed):
@@ -43,10 +42,11 @@ class ExtensionPoint(HasTraits):
                 "The submodule '{}' could not be found. Are you "
                 "sure the extension is installed?".format(self._module_name)
             )
-        # Initialize the app object if it exists.
-        app = self.metadata.get("app")
-        if app:
-            metadata["app"] = app()
+        # If the metadata includes an ExtensionApp, create an instance.
+        try:
+            self._app = metadata.get("app")()
+        except TypeError:
+            pass
         return metadata
 
     @property
@@ -56,7 +56,7 @@ class ExtensionPoint(HasTraits):
     @property
     def app(self):
         """If the metadata includes an `app` field"""
-        return self.metadata.get("app")
+        return self._app
 
     @property
     def module_name(self):
@@ -129,7 +129,7 @@ class ExtensionPackage(HasTraits):
     """
     name = Unicode(help="Name of the an importable Python package.")
 
-    # A dictionary that stores whether the extension point has been linked.
+    # Store extension points that have been linked.
     _linked_points = {}
 
     @validate("name")
@@ -186,7 +186,7 @@ class ExtensionManager(LoggingConfigurable):
     m = ExtensionManager(jpserver_extensions=extensions)
     """
     # The `enabled_extensions` attribute provides a dictionary
-    # with extension names mapped to their ExtensionPackage interface
+    # with extension (package) names mapped to their ExtensionPackage interface
     # (see above). This manager simplifies the interaction between the
     # ServerApp and the extensions being appended.
     _enabled_extensions = {}
@@ -202,6 +202,16 @@ class ExtensionManager(LoggingConfigurable):
         and an ExtensionPackage objects as values.
         """
         return dict(sorted(self._enabled_extensions.items()))
+
+    @property
+    def extension_points(self):
+        extensions = self.enabled_extensions
+        return {
+            name: point
+            for value in extensions.values()
+            for name, point in value.extension_points.items()
+        }
+
 
     def from_jpserver_extensions(self, jpserver_extensions):
         """Add extensions from 'jpserver_extensions'-like dictionary."""

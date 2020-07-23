@@ -38,4 +38,3 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         self.handlers.append(('/mock', MockExtensionHandler))
         self.handlers.append(('/mock_template', MockExtensionTemplateHandler))
         self.loaded = True
-
