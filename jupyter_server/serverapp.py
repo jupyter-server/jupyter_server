@@ -332,7 +332,7 @@ class ServerWebApplication(web.Application):
         # register base handlers last
         handlers.extend(load_handlers('jupyter_server.base.handlers'))
 
-        if settings['default_url'] != '/':
+        if settings['default_url'] != settings['base_url']:
             # set the URL that will be redirected from `/`
             handlers.append(
                 (r'/?', RedirectWithParams, {
