@@ -1503,7 +1503,7 @@ class ServerApp(JupyterApp):
         and load its own config.
         """
         # Create an instance of the ExtensionManager.
-        self.extension_manager = ExtensionManager(logger=self.log)
+        self.extension_manager = ExtensionManager(log=self.log)
         self.extension_manager.from_jpserver_extensions(self.jpserver_extensions)
         self.extension_manager.link_all_extensions(self)
 
@@ -1681,6 +1681,7 @@ class ServerApp(JupyterApp):
         self.load_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
+
 
     def cleanup_kernels(self):
         """Shutdown all kernels.

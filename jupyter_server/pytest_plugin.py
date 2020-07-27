@@ -111,16 +111,18 @@ def extension_environ(env_config_path, monkeypatch):
 @pytest.fixture(scope='function')
 def configurable_serverapp(
     environ,
+    server_config,
+    argv,
     http_port,
     tmp_path,
     root_dir,
     io_loop,
-    server_config,
-    **kwargs
 ):
-    def serverapp(
+    ServerApp.clear_instance()
+
+    def _configurable_serverapp(
         config=server_config,
-        argv=[],
+        argv=argv,
         environ=environ,
         http_port=http_port,
         tmp_path=tmp_path,
@@ -144,6 +146,7 @@ def configurable_serverapp(
             token=token,
             **kwargs
         )
+
         app.init_signal = lambda: None
         app.log.propagate = True
         app.log.handlers = []
@@ -155,12 +158,11 @@ def configurable_serverapp(
         app.start_app()
         return app
 
-    yield serverapp
-    ServerApp.clear_instance()
+    return _configurable_serverapp
 
 
-@pytest.fixture
-def serverapp(configurable_serverapp, server_config, argv):
+@pytest.fixture(scope="function")
+def serverapp(server_config, argv, configurable_serverapp):
     app = configurable_serverapp(config=server_config, argv=argv)
     yield app
     app.remove_server_info_file()

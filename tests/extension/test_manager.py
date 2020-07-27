@@ -7,6 +7,11 @@ from jupyter_server.extension.manager import (
     ExtensionModuleNotFound
 )
 
+# Use ServerApps environment because it monkeypatches
+# jupyter_core.paths and provides a config directory
+# that's not cross contaminating the user config directory.
+pytestmark = pytest.mark.usefixtures("environ")
+
 
 def test_extension_point_api():
     # Import mock extension metadata

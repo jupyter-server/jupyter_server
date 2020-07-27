@@ -1,5 +1,6 @@
 import pytest
 
+
 mock_html = """
 <!DOCTYPE HTML>
 <html>
@@ -21,6 +22,7 @@ mock_html = """
 </body>
 </html>
 """
+
 
 
 @pytest.fixture

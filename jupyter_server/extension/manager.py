@@ -21,7 +21,11 @@ class ExtensionPoint(HasTraits):
     point defined by metadata and importable from a Python package.
     """
     metadata = Dict()
-    _app = None
+
+    def __init__(self, *args, **kwargs):
+        # Store extension points that have been linked.
+        self._app = None
+        super().__init__(*args, **kwargs)
 
     @validate('metadata')
     def _valid_metadata(self, proposed):
@@ -43,10 +47,8 @@ class ExtensionPoint(HasTraits):
                 "sure the extension is installed?".format(self._module_name)
             )
         # If the metadata includes an ExtensionApp, create an instance.
-        try:
-            self._app = metadata.get("app")()
-        except TypeError:
-            pass
+        if 'app' in metadata:
+            self._app = metadata["app"]()
         return metadata
 
     @property
@@ -129,7 +131,11 @@ class ExtensionPackage(HasTraits):
     """
     name = Unicode(help="Name of the an importable Python package.")
 
-    # Store extension points that have been linked.
+    def __init__(self, *args, **kwargs):
+        # Store extension points that have been linked.
+        self._linked_points = {}
+        super().__init__(*args, **kwargs)
+
     _linked_points = {}
 
     @validate("name")
@@ -185,23 +191,27 @@ class ExtensionManager(LoggingConfigurable):
     Usage:
     m = ExtensionManager(jpserver_extensions=extensions)
     """
-    # The `enabled_extensions` attribute provides a dictionary
-    # with extension (package) names mapped to their ExtensionPackage interface
-    # (see above). This manager simplifies the interaction between the
-    # ServerApp and the extensions being appended.
-    _enabled_extensions = {}
-    # The `_linked_extensions` attribute tracks when each extension
-    # has been successfully linked to a ServerApp. This helps prevent
-    # extensions from being re-linked recursively unintentionally if another
-    # extension attempts to link extensions again.
-    _linked_extensions = {}
+    def __init__(self, *args, **kwargs):
+        # The `enabled_extensions` attribute provides a dictionary
+        # with extension (package) names mapped to their ExtensionPackage interface
+        # (see above). This manager simplifies the interaction between the
+        # ServerApp and the extensions being appended.
+        self._enabled_extensions = {}
+        # The `_linked_extensions` attribute tracks when each extension
+        # has been successfully linked to a ServerApp. This helps prevent
+        # extensions from being re-linked recursively unintentionally if another
+        # extension attempts to link extensions again.
+        self._linked_extensions = {}
+        super().__init__(*args, **kwargs)
 
     @property
     def enabled_extensions(self):
         """Dictionary with extension package names as keys
         and an ExtensionPackage objects as values.
         """
-        return dict(sorted(self._enabled_extensions.items()))
+        # Sort enabled extensions before returning
+        out = sorted(self._enabled_extensions.items())
+        return dict(out)
 
     @property
     def extension_points(self):
@@ -211,7 +221,6 @@ class ExtensionManager(LoggingConfigurable):
             for value in extensions.values()
             for name, point in value.extension_points.items()
         }
-
 
     def from_jpserver_extensions(self, jpserver_extensions):
         """Add extensions from 'jpserver_extensions'-like dictionary."""

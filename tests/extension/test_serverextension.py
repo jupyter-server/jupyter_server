@@ -9,6 +9,12 @@ from jupyter_server.extension.serverextension import (
 from jupyter_server.config_manager import BaseJSONConfigManager
 
 
+# Use ServerApps environment because it monkeypatches
+# jupyter_core.paths and provides a config directory
+# that's not cross contaminating the user config directory.
+pytestmark = pytest.mark.usefixtures("environ")
+
+
 def test_help_output():
     check_help_all_output('jupyter_server.extension.serverextension')
     check_help_all_output('jupyter_server.extension.serverextension', ['enable'])

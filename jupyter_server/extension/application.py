@@ -322,7 +322,7 @@ class ExtensionApp(JupyterApp):
         # Load config from an ExtensionApp's config files.
         self.load_config_file()
         # ServerApp's config might have picked up
-        # CLI config for the ExtensionApp. We call
+        # config for the ExtensionApp. We call
         # update_config to update ExtensionApp's
         # traits with these values found in ServerApp's
         # config.

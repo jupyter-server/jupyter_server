@@ -1,14 +1,9 @@
 import pytest
 from jupyter_server.serverapp import ServerApp
 
-# Use ServerApps environment because it monkeypatches
-# jupyter_core.paths and provides a config directory
-# that's not cross contaminating the user config directory.
-pytestmark = pytest.mark.usefixtures("environ")
-
 
 @pytest.fixture
-def server_config(request, template_dir):
+def server_config(template_dir):
     config = {
         "ServerApp": {
             "jpserver_extensions": {
@@ -26,7 +21,7 @@ def server_config(request, template_dir):
 
 
 @pytest.fixture
-def mock_extension(serverapp, extension_manager):
+def mock_extension(extension_manager):
     name = "tests.extension.mockextensions"
     pkg = extension_manager.enabled_extensions[name]
     point = pkg.extension_points["mockextension"]
@@ -34,7 +29,7 @@ def mock_extension(serverapp, extension_manager):
     return app
 
 
-def test_initialize(serverapp, mock_extension, template_dir):
+def test_initialize(serverapp, template_dir, mock_extension):
     # Check that settings and handlers were added to the mock extension.
     assert isinstance(mock_extension.serverapp, ServerApp)
     assert len(mock_extension.handlers) > 0
@@ -53,7 +48,6 @@ def test_initialize(serverapp, mock_extension, template_dir):
     )
 )
 def test_instance_creation_with_argv(
-    serverapp,
     trait_name,
     trait_value,
     mock_extension,
@@ -62,10 +56,9 @@ def test_instance_creation_with_argv(
 
 
 def test_extensionapp_load_config_file(
-    extension_environ,
     config_file,
-    mock_extension,
     serverapp,
+    mock_extension,
 ):
     # Assert default config_file_paths is the same in the app and extension.
     assert mock_extension.config_file_paths == serverapp.config_file_paths
