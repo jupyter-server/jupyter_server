@@ -15,10 +15,10 @@ pytestmark = pytest.mark.usefixtures("environ")
 
 def test_extension_point_api():
     # Import mock extension metadata
-    from .mockextensions import _jupyter_server_extension_paths
+    from .mockextensions import _jupyter_server_extension_points
 
     # Testing the first path (which is an extension app).
-    metadata_list = _jupyter_server_extension_paths()
+    metadata_list = _jupyter_server_extension_points()
     point = metadata_list[0]
 
     module = point["module"]
@@ -47,10 +47,10 @@ def test_extension_point_notfound_error():
 
 def test_extension_package_api():
     # Import mock extension metadata
-    from .mockextensions import _jupyter_server_extension_paths
+    from .mockextensions import _jupyter_server_extension_points
 
     # Testing the first path (which is an extension app).
-    metadata_list = _jupyter_server_extension_paths()
+    metadata_list = _jupyter_server_extension_points()
     path1 = metadata_list[0]
     app = path1["app"]
 

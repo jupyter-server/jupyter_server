@@ -6,7 +6,7 @@ from .app import MockExtensionApp
 
 # Function that makes these extensions discoverable
 # by the test functions.
-def _jupyter_server_extension_paths():
+def _jupyter_server_extension_points():
     return [
         {
             'module': 'tests.extension.mockextensions.app',

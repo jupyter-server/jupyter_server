@@ -35,7 +35,6 @@ def get_loader(obj, logger=None):
         func = getattr(obj, '_load_jupyter_server_extension')
     except AttributeError:
         func = getattr(obj, 'load_jupyter_server_extension')
-
     except Exception:
         raise ExtensionLoadingError("_load_jupyter_server_extension function was not found.")
     return func
@@ -54,7 +53,7 @@ def get_metadata(package_name, logger=None):
     module = importlib.import_module(package_name)
 
     try:
-        return module._jupyter_server_extension_points
+        return module._jupyter_server_extension_points()
     except AttributeError:
         pass
 
@@ -62,7 +61,7 @@ def get_metadata(package_name, logger=None):
     # _jupyter_server_extension_paths. We will remove in
     # a later release of Jupyter Server.
     try:
-        return module._jupyter_server_extension_paths
+        return module._jupyter_server_extension_paths()
     except AttributeError:
         if logger:
             logger.debug(
