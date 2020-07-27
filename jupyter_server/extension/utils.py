@@ -24,7 +24,7 @@ def get_extension_app_pkg(app_cls):
         raise NotAnExtensionApp("The ")
 
 
-def get_loader(obj):
+def get_loader(obj, logger=None):
     """Looks for _load_jupyter_server_extension as an attribute
     of the object or module.
 
@@ -35,25 +35,58 @@ def get_loader(obj):
         func = getattr(obj, '_load_jupyter_server_extension')
     except AttributeError:
         func = getattr(obj, 'load_jupyter_server_extension')
+
     except Exception:
         raise ExtensionLoadingError("_load_jupyter_server_extension function was not found.")
     return func
 
 
-def get_metadata(package_name):
+def get_metadata(package_name, logger=None):
     """Find the extension metadata from an extension package.
+
+    This looks for a `_jupyter_server_extension_points` function
+    that returns metadata about all extension points within a Jupyter
+    Server Extension pacakge.
 
     If it doesn't exist, return a basic metadata packet given
     the module name.
     """
     module = importlib.import_module(package_name)
+
     try:
-        return module._jupyter_server_extension_paths()
+        return module._jupyter_server_extension_points
     except AttributeError:
-        return [{
-            "module": package_name,
-            "name": package_name
-        }]
+        pass
+
+    # For backwards compatibility, we temporarily allow
+    # _jupyter_server_extension_paths. We will remove in
+    # a later release of Jupyter Server.
+    try:
+        return module._jupyter_server_extension_paths
+    except AttributeError:
+        if logger:
+            logger.debug(
+                "A `_jupyter_server_extension_points` function was not "
+                "found in {name}. Instead, a `_jupyter_server_extension_paths` "
+                "function was found and will be used for now. This function "
+                "name will be deprecated in future releases "
+                "of Jupyter Server.".format(name=package_name)
+            )
+        pass
+
+    # Dynamically create metadata if the package doesn't
+    # provide it.
+    if logger:
+        logger.debug(
+            "A `_jupyter_server_extension_points` function was "
+            "not found in {name}, so Jupyter Server will look "
+            "for extension points in the extension pacakge's "
+            "root.".format(name=package_name)
+        )
+    return [{
+        "module": package_name,
+        "name": package_name
+    }]
 
 
 def validate_extension(name):
