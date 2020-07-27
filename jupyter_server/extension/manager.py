@@ -209,9 +209,8 @@ class ExtensionManager(LoggingConfigurable):
         """Dictionary with extension package names as keys
         and an ExtensionPackage objects as values.
         """
-        # Sort enabled extensions before returning
-        out = sorted(self._enabled_extensions.items())
-        return dict(out)
+        # Sort enabled extensions before
+        return self._enabled_extensions
 
     @property
     def extension_points(self):
@@ -260,7 +259,7 @@ class ExtensionManager(LoggingConfigurable):
         """
         # Sort the extension names to enforce deterministic linking
         # order.
-        for name in self.enabled_extensions:
+        for name in sorted(self.enabled_extensions.keys()):
             self.link_extension(name, serverapp)
 
     def load_all_extensions(self, serverapp):
@@ -269,6 +268,6 @@ class ExtensionManager(LoggingConfigurable):
         """
         # Sort the extension names to enforce deterministic loading
         # order.
-        for name in self.enabled_extensions:
+        for name in sorted(self.enabled_extensions.keys()):
             self.load_extension(name, serverapp)
 
