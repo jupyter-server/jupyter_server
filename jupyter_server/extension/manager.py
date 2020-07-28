@@ -84,12 +84,7 @@ class ExtensionPoint(HasTraits):
         """
         return self._module
 
-    def link(self, serverapp):
-        """Link the extension to a Jupyter ServerApp object.
-
-        This looks for a `_link_jupyter_server_extension` function
-        in the extension's module or ExtensionApp class.
-        """
+    def _get_linker(self):
         if self.app:
             linker = self.app._link_jupyter_server_extension
         else:
@@ -100,11 +95,31 @@ class ExtensionPoint(HasTraits):
                 # Otherwise return a dummy function.
                 lambda serverapp: None
             )
+        return linker
 
-        # Capture output to return
-        out = linker(serverapp)
-        # Store that this extension has been linked
-        return out
+    def _get_loader(self):
+        loc = self.app
+        if not loc:
+            loc = self.module
+        loader = get_loader(loc)
+        return loader
+
+    def validate(self):
+        """Check that both a linker and loader exists."""
+        try:
+            self.get_linker()
+            self.get_loader()
+        except Exception:
+            return False
+
+    def link(self, serverapp):
+        """Link the extension to a Jupyter ServerApp object.
+
+        This looks for a `_link_jupyter_server_extension` function
+        in the extension's module or ExtensionApp class.
+        """
+        linker = self.get_linker()
+        return linker(serverapp)
 
     def load(self, serverapp):
         """Load the extension in a Jupyter ServerApp object.
@@ -112,12 +127,7 @@ class ExtensionPoint(HasTraits):
         This looks for a `_load_jupyter_server_extension` function
         in the extension's module or ExtensionApp class.
         """
-        # Use the ExtensionApp object to find a loading function
-        # if it exists. Otherwise, use the extension module given.
-        loc = self.app
-        if not loc:
-            loc = self.module
-        loader = get_loader(loc)
+        loader = self.get_loader()
         return loader(serverapp)
 
 
@@ -143,7 +153,7 @@ class ExtensionPackage(HasTraits):
         name = proposed['value']
         self._extension_points = {}
         try:
-            self._metadata = get_metadata(name)
+            self._module, self._metadata = get_metadata(name)
         except ImportError:
             raise ExtensionModuleNotFound(
                 "The module '{name}' could not be found. Are you "
@@ -156,6 +166,16 @@ class ExtensionPackage(HasTraits):
         return name
 
     @property
+    def module(self):
+        """Extension metadata loaded from the extension package."""
+        return self._module
+
+    @property
+    def version(self):
+        """Get the version of this package, if it's given. Otherwise, return an empty string"""
+        return getattr(self._module, "__version__", "")
+
+    @property
     def metadata(self):
         """Extension metadata loaded from the extension package."""
         return self._metadata
@@ -164,6 +184,13 @@ class ExtensionPackage(HasTraits):
     def extension_points(self):
         """A dictionary of extension points."""
         return self._extension_points
+
+    def validate(self):
+        """Validate all extension points in this package."""
+        for extension in self.extensions_points:
+            if not extension.validate():
+                return False
+        return True
 
     def link_point(self, point_name, serverapp):
         linked = self._linked_points.get(point_name, False)
@@ -191,7 +218,8 @@ class ExtensionManager(LoggingConfigurable):
     Usage:
     m = ExtensionManager(jpserver_extensions=extensions)
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, config_manager=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         # The `enabled_extensions` attribute provides a dictionary
         # with extension (package) names mapped to their ExtensionPackage interface
         # (see above). This manager simplifies the interaction between the
@@ -202,7 +230,9 @@ class ExtensionManager(LoggingConfigurable):
         # extensions from being re-linked recursively unintentionally if another
         # extension attempts to link extensions again.
         self._linked_extensions = {}
-        super().__init__(*args, **kwargs)
+        self._config_manager = config_manager
+        if self._config_manager:
+            self.from_config_manager
 
     @property
     def enabled_extensions(self):
@@ -220,6 +250,12 @@ class ExtensionManager(LoggingConfigurable):
             for value in extensions.values()
             for name, point in value.extension_points.items()
         }
+
+    def from_config_manager(self, config_manager):
+        """Add extensions found by an ExtensionConfigManager"""
+        self._config_manager = config_manager
+        jpserver_extensions = self._config_manager.get_jpserver_extensions()
+        self.from_jpserver_extensions(jpserver_extensions)
 
     def from_jpserver_extensions(self, jpserver_extensions):
         """Add extensions from 'jpserver_extensions'-like dictionary."""

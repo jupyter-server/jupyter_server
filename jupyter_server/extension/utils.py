@@ -17,13 +17,6 @@ class NotAnExtensionApp(Exception):
     pass
 
 
-def get_extension_app_pkg(app_cls):
-    """Get the Python package name
-    """
-    if not isinstance(app_cls, "ExtensionApp"):
-        raise NotAnExtensionApp("The ")
-
-
 def get_loader(obj, logger=None):
     """Looks for _load_jupyter_server_extension as an attribute
     of the object or module.
@@ -61,7 +54,7 @@ def get_metadata(package_name, logger=None):
     # _jupyter_server_extension_paths. We will remove in
     # a later release of Jupyter Server.
     try:
-        return module._jupyter_server_extension_paths()
+        return module, module._jupyter_server_extension_paths()
     except AttributeError:
         if logger:
             logger.debug(
@@ -82,7 +75,7 @@ def get_metadata(package_name, logger=None):
             "for extension points in the extension pacakge's "
             "root.".format(name=package_name)
         )
-    return [{
+    return module, [{
         "module": package_name,
         "name": package_name
     }]

@@ -102,6 +102,7 @@ from .utils import url_path_join, check_pid, url_escape, urljoin, pathname2url
 
 from jupyter_server.extension.serverextension import ServerExtensionApp
 from jupyter_server.extension.manager import ExtensionManager
+from jupyter_server.extension.config import ExtensionConfigManager
 
 #-----------------------------------------------------------------------------
 # Module globals
@@ -1481,13 +1482,12 @@ class ServerApp(JupyterApp):
         # This enables merging on keys, which we want for extension enabling.
         # Regular config loading only merges at the class level,
         # so each level clobbers the previous.
-        config_path = jupyter_config_path()
-        if self.config_dir not in config_path:
+        config_paths = jupyter_config_path()
+        if self.config_dir not in config_paths:
             # add self.config_dir to the front, if set manually
-            config_path.insert(0, self.config_dir)
-        manager = ConfigManager(read_config_path=config_path)
-        section = manager.get(self.config_file_name)
-        extensions = section.get('ServerApp', {}).get('jpserver_extensions', {})
+            config_paths.insert(0, self.config_dir)
+        manager = ExtensionConfigManager(config_paths=config_paths)
+        extensions = manager.get_jpserver_extensions()
 
         for modulename, enabled in sorted(extensions.items()):
             if modulename not in self.jpserver_extensions:

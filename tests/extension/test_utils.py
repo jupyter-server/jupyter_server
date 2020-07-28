@@ -8,7 +8,6 @@ from jupyter_server.extension.utils import validate_extension
 pytestmark = pytest.mark.usefixtures("environ")
 
 
-
 def test_validate_extension():
     # enabled at sys level
     assert validate_extension('tests.extension.mockextensions.mockext_sys')
