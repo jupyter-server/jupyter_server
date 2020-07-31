@@ -9,6 +9,7 @@ import os
 from tornado import web
 
 from ...base.handlers import JupyterHandler, APIHandler
+from jupyter_server.utils import ensure_async
 from jupyter_server._tz import utcfromtimestamp, isoformat
 
 
@@ -36,7 +37,7 @@ class APIStatusHandler(APIHandler):
         started = self.settings.get('started', utcfromtimestamp(0))
         started = isoformat(started)
 
-        kernels = await self.kernel_manager.list_kernels()
+        kernels = await ensure_async(self.kernel_manager.list_kernels())
         total_connections = sum(k['connections'] for k in kernels)
         last_activity = isoformat(self.application.last_activity())
         model = {
