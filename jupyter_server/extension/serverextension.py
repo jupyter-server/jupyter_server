@@ -292,9 +292,9 @@ class ListServerExtensionsApp(BaseExtensionApp):
         Enabled extensions are validated, potentially generating warnings.
         """
         configurations = (
-            {"user":True, "sys_prefix": False},
-            {"user":False, "sys_prefix": True},
-            {"user":False, "sys_prefix": False}
+            {"user": True, "sys_prefix": False},
+            {"user": False, "sys_prefix": True},
+            {"user": False, "sys_prefix": False}
         )
         for option in configurations:
             config_dir, ext_manager = _get_extmanager_for_context(**option)
