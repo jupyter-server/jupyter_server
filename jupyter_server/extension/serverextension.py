@@ -12,14 +12,12 @@ from traitlets import Bool
 from jupyter_core.application import JupyterApp
 from jupyter_core.paths import (
     jupyter_config_dir,
-    jupyter_config_path,
     ENV_CONFIG_PATH,
     SYSTEM_CONFIG_PATH
 )
 from jupyter_server._version import __version__
 from jupyter_server.extension.config import ExtensionConfigManager
 from jupyter_server.extension.manager import ExtensionManager
-from .utils import validate_extension
 
 
 def _get_config_dir(user=False, sys_prefix=False):
