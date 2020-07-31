@@ -47,6 +47,30 @@ def _get_config_dir(user=False, sys_prefix=False):
     return extdir
 
 
+def _get_extmanager_for_context(user=False, sys_prefix=False):
+    """Get an extension manager pointing at the current context
+
+    Returns the path to the current context and an ExtensionManager object.
+
+    Parameters
+    ----------
+
+    user : bool [default: False]
+        Get the user's .jupyter config directory
+    sys_prefix : bool [default: False]
+        Get sys.prefix, i.e. ~/.envs/my-env/etc/jupyter
+    """
+    config_dir = _get_config_dir(user=user, sys_prefix=sys_prefix)
+    config_manager = ExtensionConfigManager(
+        read_config_path=[config_dir],
+        write_config_dir=os.path.join(config_dir, "jupyter_server_config.d"),
+    )
+    extension_manager = ExtensionManager(
+        config_manager=config_manager,
+    )
+    return config_dir, extension_manager
+
+
 class ArgumentConflict(ValueError):
     pass
 
@@ -101,19 +125,6 @@ class BaseExtensionApp(JupyterApp):
     @property
     def config_dir(self):
         return _get_config_dir(user=self.user, sys_prefix=self.sys_prefix)
-
-    def initialize(self, *args, **kwargs):
-        # Locate Server extension config in Jupyter Server's config.d
-        self.config_manager = ExtensionConfigManager(
-            read_config_path=[self.config_dir],
-            write_config_dir=os.path.join(self.config_dir, "jupyter_server_config.d"),
-            log=self.log
-        )
-        self.extension_manager = ExtensionManager(
-            config_manager=self.config_manager,
-            log=self.log
-        )
-        super().initialize(*args, **kwargs)
 
 
 # Constants for pretty print extension listing function.
@@ -206,12 +217,17 @@ class ToggleServerExtensionApp(BaseExtensionApp):
             Importable Python module (dotted-notation) exposing the magic-named
             `load_jupyter_server_extension` function
         """
+        # Create an extension manager for this instance.
+        ext_manager, extension_manager = _get_extmanager_for_context(
+            user=self.user,
+            sys_prefix=self.sys_prefix
+        )
         try:
             self.log.info("{}: {}".format(self._toggle_pre_message.capitalize(), import_name))
-            self.log.info("- Writing config: {}".format(self.config_dir))
+            self.log.info("- Writing config: {}".format(ext_manager))
             # Validate the server extension.
             self.log.info("    - Validating {}...".format(import_name))
-            extension = self.extension_manager.extensions[import_name]
+            extension = extension_manager.extensions[import_name]
             extension.validate()
             version = extension.version
             self.log.info("      {} {} {}".format(import_name, version, GREEN_OK))
@@ -275,22 +291,31 @@ class ListServerExtensionsApp(BaseExtensionApp):
 
         Enabled extensions are validated, potentially generating warnings.
         """
-        self.log.info("Config dir: {}".format(self.config_dir))
-        for name, extension in self.extension_manager.extensions.items():
-            enabled = extension.enabled
-            # Attempt to get extension metadata
-            self.log.info(u'    {} {}'.format(
-                            name,
-                            GREEN_ENABLED if enabled else RED_DISABLED))
-            try:
-                self.log.info("    - Validating {}...".format(name))
-                extension.validate()
-                version = extension.version
-                self.log.info(
-                    "      {} {} {}".format(name, version, GREEN_OK)
-                )
-            except Exception as err:
-                self.log.warn("      {} {}".format(RED_X, err))
+        configurations = (
+            {"user":True, "sys_prefix": False},
+            {"user":False, "sys_prefix": True},
+            {"user":False, "sys_prefix": False}
+        )
+        for option in configurations:
+            config_dir, ext_manager = _get_extmanager_for_context(**option)
+            self.log.info("Config dir: {}".format(config_dir))
+            for name, extension in ext_manager.extensions.items():
+                enabled = extension.enabled
+                # Attempt to get extension metadata
+                self.log.info(u'    {} {}'.format(
+                                name,
+                                GREEN_ENABLED if enabled else RED_DISABLED))
+                try:
+                    self.log.info("    - Validating {}...".format(name))
+                    extension.validate()
+                    version = extension.version
+                    self.log.info(
+                        "      {} {} {}".format(name, version, GREEN_OK)
+                    )
+                except Exception as err:
+                    self.log.warn("      {} {}".format(RED_X, err))
+            # Add a blank line between paths.
+            self.log.info("")
 
     def start(self):
         """Perform the App's actions as configured"""
