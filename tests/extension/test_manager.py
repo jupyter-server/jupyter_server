@@ -72,6 +72,6 @@ def test_extension_manager_api():
     }
     manager = ExtensionManager()
     manager.from_jpserver_extensions(jpserver_extensions)
-    assert len(manager.enabled_extensions) == 1
-    assert "tests.extension.mockextensions" in manager.enabled_extensions
+    assert len(manager.extensions) == 1
+    assert "tests.extension.mockextensions" in manager.extensions
 

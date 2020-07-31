@@ -29,13 +29,13 @@ def get_config(sys_prefix=True):
     return data.get("ServerApp", {}).get("jpserver_extensions", {})
 
 
-def test_enable():
+def test_enable(env_config_path, extension_environ):
     toggle_server_extension_python('mock1', True)
     config = get_config()
     assert config['mock1']
 
 
-def test_disable():
+def test_disable(env_config_path, extension_environ):
     toggle_server_extension_python('mock1', True)
     toggle_server_extension_python('mock1', False)
 

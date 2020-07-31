@@ -46,7 +46,7 @@ def get_metadata(package_name, logger=None):
     module = importlib.import_module(package_name)
 
     try:
-        return module._jupyter_server_extension_points()
+        return module, module._jupyter_server_extension_points()
     except AttributeError:
         pass
 

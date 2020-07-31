@@ -36,11 +36,7 @@ class ExtensionConfigManager(ConfigManager):
         except KeyError:
             return False
 
-    def enable(
-        self,
-        name,
-        section_name=DEFAULT_SECTION_NAME,
-    ):
+    def enable(self, name):
         data = {
             "ServerApp": {
                 "jpserver_extensions": {
@@ -48,13 +44,9 @@ class ExtensionConfigManager(ConfigManager):
                 }
             }
         }
-        self.update(section_name, data)
+        self.update(name, data)
 
-    def disable(
-        self,
-        name,
-        section_name=DEFAULT_SECTION_NAME
-    ):
+    def disable(self, name):
         data = {
             "ServerApp": {
                 "jpserver_extensions": {
@@ -62,4 +54,4 @@ class ExtensionConfigManager(ConfigManager):
                 }
             }
         }
-        self.update(section_name, data)
+        self.update(name, data)

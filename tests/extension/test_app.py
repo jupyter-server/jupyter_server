@@ -23,7 +23,7 @@ def server_config(template_dir):
 @pytest.fixture
 def mock_extension(extension_manager):
     name = "tests.extension.mockextensions"
-    pkg = extension_manager.enabled_extensions[name]
+    pkg = extension_manager.extensions[name]
     point = pkg.extension_points["mockextension"]
     app = point.app
     return app

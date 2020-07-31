@@ -1486,7 +1486,7 @@ class ServerApp(JupyterApp):
         if self.config_dir not in config_paths:
             # add self.config_dir to the front, if set manually
             config_paths.insert(0, self.config_dir)
-        manager = ExtensionConfigManager(config_paths=config_paths)
+        manager = ExtensionConfigManager(read_config_path=config_paths)
         extensions = manager.get_jpserver_extensions()
 
         for modulename, enabled in sorted(extensions.items()):
@@ -1662,15 +1662,15 @@ class ServerApp(JupyterApp):
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
         super(ServerApp, self).initialize(argv)
+        # Initialize all components of the ServerApp.
+        if self._dispatching:
+            return
         # Then, use extensions' config loading mechanism to
         # update config. ServerApp config takes precedence.
         if find_extensions:
             self.find_server_extensions()
-        self.init_server_extensions()
-        # Initialize all components of the ServerApp.
         self.init_logging()
-        if self._dispatching:
-            return
+        self.init_server_extensions()
         self.init_configurables()
         self.init_components()
         self.init_webapp()
@@ -1681,7 +1681,6 @@ class ServerApp(JupyterApp):
         self.load_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
-
 
     def cleanup_kernels(self):
         """Shutdown all kernels.

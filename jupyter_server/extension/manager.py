@@ -5,6 +5,7 @@ from traitlets import (
     HasTraits,
     Dict,
     Unicode,
+    Bool,
     validate
 )
 
@@ -107,8 +108,8 @@ class ExtensionPoint(HasTraits):
     def validate(self):
         """Check that both a linker and loader exists."""
         try:
-            self.get_linker()
-            self.get_loader()
+            self._get_linker()
+            self._get_loader()
         except Exception:
             return False
 
@@ -118,7 +119,7 @@ class ExtensionPoint(HasTraits):
         This looks for a `_link_jupyter_server_extension` function
         in the extension's module or ExtensionApp class.
         """
-        linker = self.get_linker()
+        linker = self._get_linker()
         return linker(serverapp)
 
     def load(self, serverapp):
@@ -127,7 +128,7 @@ class ExtensionPoint(HasTraits):
         This looks for a `_load_jupyter_server_extension` function
         in the extension's module or ExtensionApp class.
         """
-        loader = self.get_loader()
+        loader = self._get_loader()
         return loader(serverapp)
 
 
@@ -140,6 +141,7 @@ class ExtensionPackage(HasTraits):
     extpkg = ExtensionPackage(name=ext_name)
     """
     name = Unicode(help="Name of the an importable Python package.")
+    enabled = Bool(False).tag(config=True)
 
     def __init__(self, *args, **kwargs):
         # Store extension points that have been linked.
@@ -187,7 +189,7 @@ class ExtensionPackage(HasTraits):
 
     def validate(self):
         """Validate all extension points in this package."""
-        for extension in self.extensions_points:
+        for extension in self.extension_points.values():
             if not extension.validate():
                 return False
         return True
@@ -224,7 +226,7 @@ class ExtensionManager(LoggingConfigurable):
         # with extension (package) names mapped to their ExtensionPackage interface
         # (see above). This manager simplifies the interaction between the
         # ServerApp and the extensions being appended.
-        self._enabled_extensions = {}
+        self._extensions = {}
         # The `_linked_extensions` attribute tracks when each extension
         # has been successfully linked to a ServerApp. This helps prevent
         # extensions from being re-linked recursively unintentionally if another
@@ -232,19 +234,19 @@ class ExtensionManager(LoggingConfigurable):
         self._linked_extensions = {}
         self._config_manager = config_manager
         if self._config_manager:
-            self.from_config_manager
+            self.from_config_manager(self._config_manager)
 
     @property
-    def enabled_extensions(self):
+    def extensions(self):
         """Dictionary with extension package names as keys
         and an ExtensionPackage objects as values.
         """
         # Sort enabled extensions before
-        return self._enabled_extensions
+        return self._extensions
 
     @property
     def extension_points(self):
-        extensions = self.enabled_extensions
+        extensions = self.extensions
         return {
             name: point
             for value in extensions.values()
@@ -260,21 +262,20 @@ class ExtensionManager(LoggingConfigurable):
     def from_jpserver_extensions(self, jpserver_extensions):
         """Add extensions from 'jpserver_extensions'-like dictionary."""
         for name, enabled in jpserver_extensions.items():
-            if enabled:
-                self.add_extension(name)
+            self.add_extension(name, enabled=enabled)
 
-    def add_extension(self, extension_name):
+    def add_extension(self, extension_name, enabled=False):
         try:
-            extpkg = ExtensionPackage(name=extension_name)
-            self._enabled_extensions[extension_name] = extpkg
-            # Raise a warning if the extension cannot be loaded.
+            extpkg = ExtensionPackage(name=extension_name, enabled=enabled)
+            self._extensions[extension_name] = extpkg
+        # Raise a warning if the extension cannot be loaded.
         except Exception as e:
             self.log.warning(e)
 
     def link_extension(self, name, serverapp):
         linked = self._linked_extensions.get(name, False)
-        extension = self.enabled_extensions[name]
-        if not linked:
+        extension = self.extensions[name]
+        if not linked and extension.enabled:
             try:
                 extension.link_all_points(serverapp)
                 self.log.info("{name} | extension was successfully linked.".format(name=name))
@@ -282,12 +283,13 @@ class ExtensionManager(LoggingConfigurable):
                 self.log.warning(e)
 
     def load_extension(self, name, serverapp):
-        extension = self.enabled_extensions.get(name)
-        try:
-            extension.load_all_points(serverapp)
-            self.log.info("{name} | extension was successfully loaded.".format(name=name))
-        except Exception as e:
-            self.log.warning(e)
+        extension = self.extensions.get(name)
+        if extension.enabled:
+            try:
+                extension.load_all_points(serverapp)
+                self.log.info("{name} | extension was successfully loaded.".format(name=name))
+            except Exception as e:
+                self.log.warning(e)
 
     def link_all_extensions(self, serverapp):
         """Link all enabled extensions
@@ -295,7 +297,7 @@ class ExtensionManager(LoggingConfigurable):
         """
         # Sort the extension names to enforce deterministic linking
         # order.
-        for name in sorted(self.enabled_extensions.keys()):
+        for name in sorted(self.extensions.keys()):
             self.link_extension(name, serverapp)
 
     def load_all_extensions(self, serverapp):
@@ -304,6 +306,6 @@ class ExtensionManager(LoggingConfigurable):
         """
         # Sort the extension names to enforce deterministic loading
         # order.
-        for name in sorted(self.enabled_extensions.keys()):
+        for name in sorted(self.extensions.keys()):
             self.load_extension(name, serverapp)
 
