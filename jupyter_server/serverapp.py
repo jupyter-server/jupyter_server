@@ -100,11 +100,9 @@ from jupyter_server._sysinfo import get_sys_info
 from ._tz import utcnow, utcfromtimestamp
 from .utils import url_path_join, check_pid, url_escape, urljoin, pathname2url
 
-from jupyter_server.extension.serverextension import (
-    ServerExtensionApp,
-    _get_server_extension_metadata,
-    _get_load_jupyter_server_extension
-)
+from jupyter_server.extension.serverextension import ServerExtensionApp
+from jupyter_server.extension.manager import ExtensionManager
+from jupyter_server.extension.config import ExtensionConfigManager
 
 #-----------------------------------------------------------------------------
 # Module globals
@@ -323,12 +321,6 @@ class ServerWebApplication(web.Application):
                         handlers[j] = (gwh[0], gwh[1])
                         break
 
-        handlers.append(
-            (r"/custom/(.*)", FileFindHandler, {
-                'path': settings['static_custom_path'],
-                'no_cache_paths': ['/'], # don't cache anything in custom
-            })
-        )
         # register base handlers last
         handlers.extend(load_handlers('jupyter_server.base.handlers'))
 
@@ -392,6 +384,7 @@ class JupyterPasswordApp(JupyterApp):
         from .auth.security import set_password
         set_password(config_file=self.config_file)
         self.log.info("Wrote hashed password to %s" % self.config_file)
+
 
 def shutdown_server(server_info, timeout=5, log=None):
     """Shutdown a notebook server in a separate process.
@@ -556,10 +549,6 @@ class ServerApp(JupyterApp):
 
     This launches a Tornado-based Jupyter Server.""")
     examples = _examples
-
-    # This trait is used to track _enabled_extensions. It should remain hidden
-    # and not configurable.
-    _enabled_extensions = {}
 
     flags = Dict(flags)
     aliases = Dict(aliases)
@@ -1480,9 +1469,9 @@ class ServerApp(JupyterApp):
 
     def find_server_extensions(self):
         """
-        Searches Jupyter paths for jpserver_extensions and captures
-        metadata for all enabled extensions.
+        Searches Jupyter paths for jpserver_extensions.
         """
+
         # Walk through all config files looking for jpserver_extensions.
         #
         # Each extension will likely have a JSON config file enabling itself in
@@ -1492,19 +1481,13 @@ class ServerApp(JupyterApp):
         # Load server extensions with ConfigManager.
         # This enables merging on keys, which we want for extension enabling.
         # Regular config loading only merges at the class level,
-        # so each level (system > env > user ... opposite of jupyter/notebook)
-        # clobbers the previous.
-        config_path = jupyter_config_path()
-        if self.config_dir not in config_path:
+        # so each level clobbers the previous.
+        config_paths = jupyter_config_path()
+        if self.config_dir not in config_paths:
             # add self.config_dir to the front, if set manually
-            config_path.insert(0, self.config_dir)
-        # Flip the order of ordered_config_path to system > env > user.
-        # This is different that jupyter/notebook. See the Jupyter
-        # Enhancement Proposal 29 (Jupyter Server) for more information.
-        reversed_config_path = config_path[::-1]
-        manager = ConfigManager(read_config_path=reversed_config_path)
-        section = manager.get(self.config_file_name)
-        extensions = section.get('ServerApp', {}).get('jpserver_extensions', {})
+            config_paths.insert(0, self.config_dir)
+        manager = ExtensionConfigManager(read_config_path=config_paths)
+        extensions = manager.get_jpserver_extensions()
 
         for modulename, enabled in sorted(extensions.items()):
             if modulename not in self.jpserver_extensions:
@@ -1519,67 +1502,10 @@ class ServerApp(JupyterApp):
         this instance will inherit the ServerApp's config object
         and load its own config.
         """
-        # Load extension metadata for enabled extensions, load config for
-        # enabled ExtensionApps, and store enabled extension metadata in the
-        # _enabled_extensions attribute.
-        #
-        # The _enabled_extensions trait will be used by `load_server_extensions`
-        # to call each extensions `_load_jupyter_server_extension` method
-        # after the ServerApp's Web application object is created.
-        for module_name, enabled in sorted(self.jpserver_extensions.items()):
-            if enabled:
-                metadata_list = []
-                try:
-                    # Load the metadata for this enabled extension. This will
-                    # be a list of extension points, each having their own
-                    # path to a `_load_jupyter_server_extensions()`function.
-                    # Important note: a single extension can have *multiple*
-                    # `_load_jupyter_server_extension` functions defined, hence
-                    # _get_server_extension_metadata returns a list of metadata.
-                    mod, metadata_list = _get_server_extension_metadata(module_name)
-                except KeyError:
-                    # A KeyError suggests that the module does not have a
-                    # _jupyter_server_extension-path.
-                    log_msg = _(
-                        "Error loading server extensions in "
-                        "{module_name} module. There is no `_jupyter_server_extension_paths` "
-                        "defined at the root of the extension module. Check "
-                        "with the author of the extension to ensure this function "
-                        "is added.".format(module_name=module_name)
-                    )
-                    self.log.warning(log_msg)
-
-                for metadata in metadata_list:
-                        # Is this extension point an ExtensionApp?
-                    # If "app" is not None, then the extension should be an ExtensionApp
-                    # Otherwise use the 'module' key to locate the
-                    #`_load_jupyter_server_extension` function.
-                    extapp = metadata.get('app', None)
-                    extloc = metadata.get('module', None)
-                    if extapp and extloc:
-                        # Verify that object found is a subclass of ExtensionApp.
-                        from .extension.application import ExtensionApp
-                        if not issubclass(extapp, ExtensionApp):
-                            raise TypeError(extapp.__name__ + " must be a subclass of ExtensionApp.")
-                        # ServerApp creates an instance of the
-                        # ExtensionApp here to load any ServerApp configuration
-                        # that might live in the Extension's config file.
-                        app = extapp()
-                        app.link_to_serverapp(self)
-                        # Build a new list where we
-                        self._enabled_extensions[app.name] = app
-                    elif extloc:
-                        extmod = importlib.import_module(extloc)
-                        func = _get_load_jupyter_server_extension(extmod)
-                        self._enabled_extensions[extloc] = extmod
-                    else:
-                        log_msg = _(
-                            "{module_name} is missing critical metadata. Check "
-                            "that _jupyter_server_extension_paths returns `app` "
-                            "and/or `module` as keys".format(module_name=module_name)
-                        )
-                        self.log.warn(log_msg)
-
+        # Create an instance of the ExtensionManager.
+        self.extension_manager = ExtensionManager(log=self.log)
+        self.extension_manager.from_jpserver_extensions(self.jpserver_extensions)
+        self.extension_manager.link_all_extensions(self)
 
     def load_server_extensions(self):
         """Load any extensions specified by config.
@@ -1589,48 +1515,7 @@ class ServerApp(JupyterApp):
 
         The extension API is experimental, and may change in future releases.
         """
-
-        # Load all enabled extensions.
-        for extkey, extension in sorted(self._enabled_extensions.items()):
-            if isinstance(extension, ModuleType):
-                log_msg = (
-                    "Extension from {extloc} module enabled and "
-                    "loaded".format(extloc=extkey)
-                )
-            else:
-                log_msg = (
-                    "Extension {name} enabled and "
-                    "loaded".format(name=extension.name)
-                )
-            # Find the extension loading function.
-            func = None
-            try:
-                # This function was prefixed with an underscore in in v1.0
-                # because this shouldn't be a public API for most extensions.
-                func = getattr(extension, '_load_jupyter_server_extension')
-            except AttributeError:
-                try:
-                    # For backwards compatibility, we will still look for non
-                    # underscored loading functions.
-                    func = getattr(extension, 'load_jupyter_server_extension')
-                    warn_msg = _(
-                        "{extkey} is enabled. "
-                        "`load_jupyter_server_extension` function "
-                        "was found but `_load_jupyter_server_extension`"
-                        "is preferred.".format(extkey=extkey)
-                    )
-                    self.log.warning(warn_msg)
-                except AttributeError:
-                    warn_msg = _(
-                        "{extkey} is enabled but no "
-                        "`_load_jupyter_server_extension` function "
-                        "was found.".format(extkey=extkey)
-                    )
-                    self.log.warning(warn_msg)
-            if func:
-                func(self)
-                self.log.debug(log_msg)
-
+        self.extension_manager.load_all_extensions(self)
 
     def init_mime_overrides(self):
         # On some Windows machines, an application has registered incorrect
@@ -1777,15 +1662,15 @@ class ServerApp(JupyterApp):
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
         super(ServerApp, self).initialize(argv)
+        # Initialize all components of the ServerApp.
+        if self._dispatching:
+            return
         # Then, use extensions' config loading mechanism to
         # update config. ServerApp config takes precedence.
         if find_extensions:
             self.find_server_extensions()
-        self.init_server_extensions()
-        # Initialize all components of the ServerApp.
         self.init_logging()
-        if self._dispatching:
-            return
+        self.init_server_extensions()
         self.init_configurables()
         self.init_components()
         self.init_webapp()

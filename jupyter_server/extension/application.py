@@ -144,11 +144,26 @@ class ExtensionApp(JupyterApp):
     # side-by-side when launched directly.
     load_other_extensions = True
 
+    # A useful class property that subclasses can override to
+    # configure the underlying Jupyter Server when this extension
+    # is launched directly (using its `launch_instance` method).
+    serverapp_config = {
+        "open_browser": True
+    }
+
     # The extension name used to name the jupyter config
     # file, jupyter_{name}_config.
     # This should also match the jupyter subcommand used to launch
     # this extension from the CLI, e.g. `jupyter {name}`.
     name = None
+
+    @classmethod
+    def get_extension_package(cls):
+        return cls.__module__.split('.')[0]
+
+    @classmethod
+    def get_extension_point(cls):
+        return cls.__module__
 
     # Extension URL sets the default landing page for this extension.
     extension_url = "/"
@@ -157,6 +172,9 @@ class ExtensionApp(JupyterApp):
     classes = [
         ServerApp,
     ]
+
+    # A ServerApp is not defined yet, but will be initialized below.
+    serverapp = None
 
     @property
     def static_url_prefix(self):
@@ -281,28 +299,17 @@ class ExtensionApp(JupyterApp):
         self.initialize_templates()
 
     @classmethod
-    def initialize_server(cls, argv=[], load_other_extensions=True, **kwargs):
-        """Creates an instance of ServerApp where this extension is enabled
-        (superceding disabling found in other config from files).
-
-        This is necessary when launching the ExtensionApp directly from
-        the `launch_instance` classmethod.
-        """
-        # The ExtensionApp needs to add itself as enabled extension
-        # to the jpserver_extensions trait, so that the ServerApp
-        # initializes it.
-        config = Config({
+    def _jupyter_server_config(cls):
+        base_config = {
             "ServerApp": {
-                "jpserver_extensions": {cls.name: True},
-                "open_browser": cls.open_browser,
+                "jpserver_extensions": {cls.get_extension_package(): True},
                 "default_url": cls.extension_url
             }
-        })
-        serverapp = ServerApp.instance(**kwargs, argv=[], config=config)
-        serverapp.initialize(argv=argv, find_extensions=load_other_extensions)
-        return serverapp
+        }
+        base_config["ServerApp"].update(cls.serverapp_config)
+        return base_config
 
-    def link_to_serverapp(self, serverapp):
+    def _link_jupyter_server_extension(self, serverapp):
         """Link the ExtensionApp to an initialized ServerApp.
 
         The ServerApp is stored as an attribute and config
@@ -315,7 +322,7 @@ class ExtensionApp(JupyterApp):
         # Load config from an ExtensionApp's config files.
         self.load_config_file()
         # ServerApp's config might have picked up
-        # CLI config for the ExtensionApp. We call
+        # config for the ExtensionApp. We call
         # update_config to update ExtensionApp's
         # traits with these values found in ServerApp's
         # config.
@@ -330,6 +337,22 @@ class ExtensionApp(JupyterApp):
         # i.e. ServerApp traits <--- ExtensionApp config
         self.serverapp.update_config(self.config)
 
+    @classmethod
+    def initialize_server(cls, argv=[], load_other_extensions=True, **kwargs):
+        """Creates an instance of ServerApp where this extension is enabled
+        (superceding disabling found in other config from files).
+
+        This is necessary when launching the ExtensionApp directly from
+        the `launch_instance` classmethod.
+        """
+        # The ExtensionApp needs to add itself as enabled extension
+        # to the jpserver_extensions trait, so that the ServerApp
+        # initializes it.
+        config = Config(cls._jupyter_server_config())
+        serverapp = ServerApp.instance(**kwargs, argv=[], config=config)
+        serverapp.initialize(argv=argv, find_extensions=load_other_extensions)
+        return serverapp
+
     def initialize(self):
         """Initialize the extension app. The
         corresponding server app and webapp should already
@@ -341,7 +364,7 @@ class ExtensionApp(JupyterApp):
         3) Points Tornado Webapp to templates and
         static assets.
         """
-        if not hasattr(self, 'serverapp'):
+        if not self.serverapp:
             msg = (
                 "This extension has no attribute `serverapp`. "
                 "Try calling `.link_to_serverapp()` before calling "
@@ -374,12 +397,14 @@ class ExtensionApp(JupyterApp):
         """Initialize and configure this extension, then add the extension's
         settings and handlers to the server's web application.
         """
+        extension_manager = serverapp.extension_manager
         try:
             # Get loaded extension from serverapp.
-            extension = serverapp._enabled_extensions[cls.name]
+            point = extension_manager.extension_points[cls.name]
+            extension = point.app
         except KeyError:
             extension = cls()
-            extension.link_to_serverapp(serverapp)
+            extension._link_jupyter_server_extension(serverapp)
         extension.initialize()
         return extension
 

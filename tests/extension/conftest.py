@@ -1,5 +1,6 @@
 import pytest
 
+
 mock_html = """
 <!DOCTYPE HTML>
 <html>
@@ -23,6 +24,7 @@ mock_html = """
 """
 
 
+
 @pytest.fixture
 def mock_template(template_dir):
     index = template_dir.joinpath('index.html')
@@ -30,8 +32,8 @@ def mock_template(template_dir):
 
 
 @pytest.fixture
-def enabled_extensions(serverapp):
-    return serverapp._enabled_extensions
+def extension_manager(serverapp):
+    return serverapp.extension_manager
 
 
 @pytest.fixture

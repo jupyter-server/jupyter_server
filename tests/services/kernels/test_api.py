@@ -12,7 +12,6 @@ from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 from jupyter_client.multikernelmanager import AsyncMultiKernelManager
 
 from jupyter_server.utils import url_path_join
-from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
 from ...utils import expected_http_error
 
 
@@ -246,26 +245,3 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
     model = json.loads(r.body.decode())
     assert model['connections'] == 0
 
-
-async def test_config2(serverapp):
-    assert serverapp.kernel_manager.allowed_message_types == []
-
-
-@pytest.mark.skipif(
-    sys.version_info < (3, 6),
-    reason="Kernel manager is AsyncMappingKernelManager, Python version < 3.6"
-)
-async def test_async_kernel_manager(configurable_serverapp):
-    argv = ['--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager']
-    app = configurable_serverapp(argv=argv)
-    assert isinstance(app.kernel_manager, AsyncMappingKernelManager)
-
-
-@pytest.mark.skipif(
-    sys.version_info >= (3, 6),
-    reason="Testing AsyncMappingKernelManager on Python <=3.5"
-)
-async def test_async_kernel_manager_not_available_py35(configurable_serverapp):
-    argv = ['--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager']
-    with pytest.raises(ValueError):
-        app = configurable_serverapp(argv=argv)
