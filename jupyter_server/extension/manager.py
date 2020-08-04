@@ -237,6 +237,10 @@ class ExtensionManager(LoggingConfigurable):
             self.from_config_manager(self._config_manager)
 
     @property
+    def config_manager(self):
+        return self._config_manager
+
+    @property
     def extensions(self):
         """Dictionary with extension package names as keys
         and an ExtensionPackage objects as values.
