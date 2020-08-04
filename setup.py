@@ -1,9 +1,8 @@
 import pathlib
-from setuptools import setup, find_packages
+from setuptools import setup
 from setupbase import (
-    get_version
+    get_version, find_packages
 )
-
 
 here = pathlib.Path('.')
 version_path = here.joinpath('jupyter_server', '_version.py')
@@ -18,6 +17,11 @@ setup_args = dict(
     long_description = README,
     version          = VERSION,
     packages         = find_packages('.'),
+    package_data     = {
+        'notebook' : ['templates/*'],
+        'notebook.i18n': ['*/LC_MESSAGES/*.*'],
+        'notebook.services.api': ['api.yaml'],
+    },
     author           = 'Jupyter Development Team',
     author_email     = 'jupyter@googlegroups.com',
     url              = 'http://jupyter.org',

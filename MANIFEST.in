@@ -2,8 +2,6 @@ include COPYING.md
 include CONTRIBUTING.rst
 include README.md
 include setupbase.py
-include Dockerfile
-graft tools
 
 # Documentation
 graft docs
