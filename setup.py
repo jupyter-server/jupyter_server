@@ -1,6 +1,6 @@
 import pathlib
-from setuptools import setup
-from jupyter_packaging import (
+from setuptools import setup, find_packages
+from setupbase import (
     get_version
 )
 
@@ -17,6 +17,7 @@ setup_args = dict(
     description      = 'The backend—i.e. core services, APIs, and REST endpoints—to Jupyter web applications.',
     long_description = README,
     version          = VERSION,
+    packages         = find_packages('.'),
     author           = 'Jupyter Development Team',
     author_email     = 'jupyter@googlegroups.com',
     url              = 'http://jupyter.org',
