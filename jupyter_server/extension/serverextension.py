@@ -17,7 +17,7 @@ from jupyter_core.paths import (
 )
 from jupyter_server._version import __version__
 from jupyter_server.extension.config import ExtensionConfigManager
-from jupyter_server.extension.manager import ExtensionManager
+from jupyter_server.extension.manager import ExtensionManager, ExtensionPackage
 
 
 def _get_config_dir(user=False, sys_prefix=False):
@@ -216,22 +216,23 @@ class ToggleServerExtensionApp(BaseExtensionApp):
             `load_jupyter_server_extension` function
         """
         # Create an extension manager for this instance.
-        ext_manager, extension_manager = _get_extmanager_for_context(
+        config_dir, extension_manager = _get_extmanager_for_context(
             user=self.user,
             sys_prefix=self.sys_prefix
         )
         try:
             self.log.info("{}: {}".format(self._toggle_pre_message.capitalize(), import_name))
-            self.log.info("- Writing config: {}".format(ext_manager))
+            self.log.info("- Writing config: {}".format(config_dir))
             # Validate the server extension.
             self.log.info("    - Validating {}...".format(import_name))
-            extension = extension_manager.extensions[import_name]
-            extension.validate()
-            version = extension.version
+            # Interface with the Extension Package and validate.
+            extpkg = ExtensionPackage(name=import_name)
+            extpkg.validate()
+            version = extpkg.version
             self.log.info("      {} {} {}".format(import_name, version, GREEN_OK))
 
             # Toggle extension config.
-            config = self.config_manager
+            config = extension_manager.config_manager
             if self._toggle_value is True:
                 config.enable(import_name)
             else:
