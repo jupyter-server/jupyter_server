@@ -18,9 +18,9 @@ setup_args = dict(
     version          = VERSION,
     packages         = find_packages('.'),
     package_data     = {
-        'notebook' : ['templates/*'],
-        'notebook.i18n': ['*/LC_MESSAGES/*.*'],
-        'notebook.services.api': ['api.yaml'],
+        'jupyter_server' : ['templates/*'],
+        'jupyter_server.i18n': ['*/LC_MESSAGES/*.*'],
+        'jupyter_server.services.api': ['api.yaml'],
     },
     author           = 'Jupyter Development Team',
     author_email     = 'jupyter@googlegroups.com',
