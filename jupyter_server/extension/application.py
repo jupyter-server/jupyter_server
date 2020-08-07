@@ -203,9 +203,6 @@ class ExtensionApp(JupyterApp):
         help=_("""Handlers appended to the server.""")
     ).tag(config=True)
 
-    # Whether to open in a browser after starting.
-    open_browser = True
-
     def _config_file_name_default(self):
         """The default config file name."""
         if not self.name:
