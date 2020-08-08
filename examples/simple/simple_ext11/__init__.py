@@ -1,8 +1,10 @@
-from .application import SimpleApp1
+from .application import SimpleApp11
+
 
 def _jupyter_server_extension_paths():
     return [
-        {'module': 'simple_ext1'}
+        {
+            'module': 'simple_ext11.application',
+            'app': SimpleApp11
+        }
     ]
-
-load_jupyter_server_extension = SimpleApp1.load_jupyter_server_extension

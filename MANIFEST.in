@@ -1,9 +1,11 @@
 include COPYING.md
 include CONTRIBUTING.rst
 include README.md
+include RELEASE.md
+include CHANGELOG.md
 include setupbase.py
-include Dockerfile
-graft tools
+include jupyter_server/i18n/*
+include jupyter_server/static/*
 
 # Documentation
 graft docs

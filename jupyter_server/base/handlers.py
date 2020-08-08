@@ -154,7 +154,7 @@ class AuthenticatedHandler(web.RequestHandler):
             self.request.host
         ))
         return self.settings.get('cookie_name', default_cookie_name)
-    
+
     @property
     def logged_in(self):
         """Is a user currently logged in?"""
@@ -203,23 +203,23 @@ class JupyterHandler(AuthenticatedHandler):
     def jinja_template_vars(self):
         """User-supplied values to supply to jinja templates."""
         return self.settings.get('jinja_template_vars', {})
-    
+
     #---------------------------------------------------------------
     # URLs
     #---------------------------------------------------------------
-    
+
     @property
     def version_hash(self):
         """The version hash to use for cache hints for static files"""
         return self.settings.get('version_hash', '')
-    
+
     @property
     def mathjax_url(self):
         url = self.settings.get('mathjax_url', '')
         if not url or url_is_absolute(url):
             return url
         return url_path_join(self.base_url, url)
-    
+
     @property
     def mathjax_config(self):
         return self.settings.get('mathjax_config', 'TeX-AMS-MML_HTMLorMML-full,Safe')
@@ -241,7 +241,7 @@ class JupyterHandler(AuthenticatedHandler):
         self.log.debug("Using contents: %s", self.settings.get('contents_js_source',
             'services/contents'))
         return self.settings.get('contents_js_source', 'services/contents')
-    
+
     #---------------------------------------------------------------
     # Manager objects
     #---------------------------------------------------------------
@@ -257,11 +257,11 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def contents_manager(self):
         return self.settings['contents_manager']
-    
+
     @property
     def session_manager(self):
         return self.settings['session_manager']
-    
+
     @property
     def terminal_manager(self):
         return self.settings['terminal_manager']
@@ -273,7 +273,7 @@ class JupyterHandler(AuthenticatedHandler):
     #---------------------------------------------------------------
     # CORS
     #---------------------------------------------------------------
-    
+
     @property
     def allow_origin(self):
         """Normal Access-Control-Allow-Origin"""
@@ -310,7 +310,7 @@ class JupyterHandler(AuthenticatedHandler):
 
         if self.allow_credentials:
             self.set_header("Access-Control-Allow-Credentials", 'true')
-    
+
     def set_attachment_header(self, filename):
         """Set Content-Disposition: attachment header
 
@@ -470,10 +470,10 @@ class JupyterHandler(AuthenticatedHandler):
         body = self.request.body.strip().decode(u'utf-8')
         try:
             model = json.loads(body)
-        except Exception:
+        except Exception as e:
             self.log.debug("Bad JSON: %r", body)
             self.log.error("Couldn't parse JSON", exc_info=True)
-            raise web.HTTPError(400, u'Invalid JSON in body of request')
+            raise web.HTTPError(400, u'Invalid JSON in body of request') from e
         return model
 
     def write_error(self, status_code, **kwargs):

@@ -1,22 +1,21 @@
 .. _working_remotely:
 
-Running a Jupyter server
-========================
+Running a public Jupyter Server
+===============================
 
 
-The Jupyter Server's web application is based on a
-server-client structure.  The notebook server uses a :ref:`two-process kernel
+The Jupyter Server uses a :ref:`two-process kernel
 architecture <ipython:ipythonzmq>` based on ZeroMQ_, as well as Tornado_ for
 serving HTTP requests.
 
 .. note::
-   By default, a notebook server runs locally at 127.0.0.1:8888
+   By default, Jupyter Server runs locally at 127.0.0.1:8888
    and is accessible only from `localhost`. You may access the
-   notebook server from the browser using `http://127.0.0.1:8888`.
+   server from the browser using `http://127.0.0.1:8888`.
 
 This document describes how you can
-:ref:`secure a notebook server <notebook_server_security>` and how to
-:ref:`run it on a public interface <notebook_public_server>`.
+:ref:`secure a Jupyter server <Jupyter_server_security>` and how to
+:ref:`run it on a public interface <jupyter_public_server>`.
 
 .. important::
 
@@ -25,7 +24,7 @@ This document describes how you can
     only be done by someone who wants remote access to their personal machine.
     Even so, doing this requires a thorough understanding of the set-ups
     limitations and security implications. If you allow multiple users to
-    access a notebook server as it is described in this document, their
+    access a Jupyter server as it is described in this document, their
     commands may collide, clobber and overwrite each other.
 
     If you want a multi-user server, the official solution is  JupyterHub_.
@@ -42,7 +41,7 @@ This document describes how you can
 
 .. _JupyterHub: https://jupyterhub.readthedocs.io/en/latest/
 
-.. _notebook_server_security:
+.. _Jupyter_server_security:
 
 Securing a Jupyter server
 -------------------------
@@ -184,7 +183,7 @@ public server.
 .. _OWASP: https://www.owasp.org/index.php/Main_Page
 .. _tutorial: https://arstechnica.com/information-technology/2009/12/how-to-get-set-with-a-secure-sertificate-for-free/
 
-.. _notebook_public_server:
+.. _jupyter_public_server:
 
 Running a public notebook server
 --------------------------------
@@ -193,10 +192,10 @@ If you want to access your notebook server remotely via a web browser,
 you can do so by running a public notebook server. For optimal security
 when running a public notebook server, you should first secure the
 server with a password and SSL/HTTPS as described in
-:ref:`notebook_server_security`.
+:ref:`jupyter_server_security`.
 
 Start by creating a certificate file and a hashed password, as explained in
-:ref:`notebook_server_security`.
+:ref:`jupyter_server_security`.
 
 If you don't already have one, create a
 config file for the notebook using the following command line::
@@ -230,7 +229,7 @@ Using Let's Encrypt
 `Let's Encrypt`_ provides free SSL/TLS certificates. You can also set up a
 public server using a `Let's Encrypt`_ certificate.
 
-:ref:`notebook_public_server` will be similar when using a Let's Encrypt
+:ref:`jupyter_public_server` will be similar when using a Let's Encrypt
 certificate with a few configuration changes. Here are the steps:
 
 1. Create a `Let's Encrypt certificate <https://letsencrypt.org/getting-started/>`_.

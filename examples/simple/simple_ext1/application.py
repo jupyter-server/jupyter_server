@@ -1,19 +1,19 @@
 import os, jinja2
 from traitlets import Unicode
 from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
-from .handlers import (DefaultHandler, RedirectHandler, 
+from .handlers import (DefaultHandler, RedirectHandler,
   ParameterHandler, TemplateHandler, TypescriptHandler, ErrorHandler)
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")
 
 class SimpleApp1(ExtensionAppJinjaMixin, ExtensionApp):
-    
-    # The name of the extension.
-    extension_name = "simple_ext1"
 
-    # Te url that your extension will serve its homepage.
-    default_url = '/simple_ext1/default'
+    # The name of the extension.
+    name = "simple_ext1"
+
+    # The url that your extension will serve its homepage.
+    extension_url = '/simple_ext1/default'
 
     # Should your extension expose other server extensions when launched directly?
     load_other_extensions = True
@@ -45,11 +45,11 @@ class SimpleApp1(ExtensionAppJinjaMixin, ExtensionApp):
 
     def initialize_handlers(self):
         self.handlers.extend([
-            (r'/{}/default'.format(self.extension_name), DefaultHandler),
-            (r'/{}/params/(.+)$'.format(self.extension_name), ParameterHandler),
-            (r'/{}/template1/(.*)$'.format(self.extension_name), TemplateHandler),
-            (r'/{}/redirect'.format(self.extension_name), RedirectHandler),
-            (r'/{}/typescript/?'.format(self.extension_name), TypescriptHandler),
+            (r'/{}/default'.format(self.name), DefaultHandler),
+            (r'/{}/params/(.+)$'.format(self.name), ParameterHandler),
+            (r'/{}/template1/(.*)$'.format(self.name), TemplateHandler),
+            (r'/{}/redirect'.format(self.name), RedirectHandler),
+            (r'/{}/typescript/?'.format(self.name), TypescriptHandler),
             (r'/{}/(.*)', ErrorHandler)
         ])
 

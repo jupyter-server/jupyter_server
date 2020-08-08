@@ -67,6 +67,12 @@ open http://localhost:8888/simple_ext1/redirect
 open http://localhost:8888/static/simple_ext1/favicon.ico
 ```
 
+You can also start the server extension with python modules.
+
+```bash
+python -m simple_ext1
+```
+
 ## Extension 1 and Extension 2
 
 The following command starts both the `simple_ext1` and `simple_ext2` extensions.
@@ -90,9 +96,12 @@ open http://localhost:8888/simple_ext2/params/test?var1=foo
 Optionally, you can copy `simple_ext1.json` and `simple_ext2.json` configuration to your env `etc` folder and start only Extension 1, which will also start Extension 2.
 
 ```bash
-pip uninstall -y jupyter_simple_ext && \
+pip uninstall -y jupyter_server_example && \
   python setup.py install && \
   cp -r ./etc $(dirname $(which jupyter))/..
+```
+
+```bash
 # Start the jupyter server extension simple_ext1, it will also load simple_ext2 because of load_other_extensions = True..
 # When you invoke with the entrypoint, the default url will be opened in your browser.
 jupyter simple-ext1
@@ -102,18 +111,20 @@ jupyter simple-ext1
 
 Stop any running server (with `CTRL+C`) and start with additional configuration on the command line.
 
-The provided settings via CLI will override the configuration that reside in the files (`jupyter_simple_ext1_config.py`...)
+The provided settings via CLI will override the configuration that reside in the files (`jupyter_server_example1_config.py`...)
 
 ```bash
 jupyter simple-ext1 --SimpleApp1.configA="ConfigA from command line"
 ```
 
-Check the log, it should return on startup something like the following base on the trait you have defined in the CLI and in the `jupyter_simple_ext1_config.py`.
+Check the log, it should return on startup print the Config object.
+
+The content of the Config is based on the trait you have defined via the `CLI` and in the `jupyter_server_example1_config.py`.
 
 ```
 [SimpleApp1] Config {'SimpleApp1': {'configA': 'ConfigA from file', 'configB': 'ConfigB from file', 'configC': 'ConfigC from file'}}
 [SimpleApp1] Config {'SimpleApp1': {'configA': 'ConfigA from file', 'configB': 'ConfigB from file', 'configC': 'ConfigC from file'}}
-[SimpleApp2] WARNING | Config option `configD` not recognized by `SimpleApp2`.  Did you mean `config_file`?
+[SimpleApp2] WARNING | Config option `configD` not recognized by `SimpleApp2`.  Did you mean one of: `configA, configB, configC`?
 [SimpleApp2] Config {'SimpleApp2': {'configD': 'ConfigD from file'}}
 [SimpleApp1] Config {'SimpleApp1': {'configA': 'ConfigA from command line', 'configB': 'ConfigB from file', 'configC': 'ConfigC from file'}}
 ```
@@ -133,27 +144,31 @@ Try with the above links to check that only Extension 2 is responding (Extension
 
 `Extension 11` extends `Extension 1` and brings a few more configs.
 
-Run `jupyter simple-ext11 --generate-config && vi ~/.jupyter/jupyter_config.py`.
-
-> TODO `--generate-config` returns an exception `"The ExtensionApp has not ServerApp "`
+```bash
+# TODO `--generate-config` returns an exception `"The ExtensionApp has not ServerApp "`
+jupyter simple-ext11 --generate-config && vi ~/.jupyter/jupyter_config.py`.
+```
 
 The generated configuration should contains the following.
 
 ```bash
-TBD
+# TODO
 ```
 
 The `hello`, `ignore_js` and `simple11_dir` are traits defined on the SimpleApp11 class.
 
 It also implements additional flags and aliases for these traits.
 
-+ The `--hello` flag will log on startup `Hello Simple11 - You have provided the --hello flag or defined a c.SimpleApp1.hello == True`.
-+ The `--simple11-dir` alias will set `SimpleExt11.simple11_dir` settings.
+- The `--hello` flag will log on startup `Hello Simple11 - You have provided the --hello flag or defined a c.SimpleApp1.hello == True`
+- The `ignore_js` flag
+- The `--simple11-dir` alias will set `SimpleExt11.simple11_dir` settings
 
 Stop any running server and then start the simple-ext11.
 
 ```bash
 jupyter simple-ext11 --hello --simple11-dir any_folder
+# You can also launch with a module
+python -m simple_ext11 --hello
 # TODO FIX the following command, simple11 does not work launching with jpserver_extensions parameter.
 jupyter server --ServerApp.jpserver_extensions="{'simple_ext11': True}" --hello --simple11-dir any_folder
 ```

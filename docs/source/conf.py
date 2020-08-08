@@ -70,6 +70,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'IPython.sphinxext.ipython_console_highlighting',
     'sphinxcontrib_github_alt',
+    'sphinxcontrib.openapi',
+    'sphinxemoji.sphinxemoji'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -88,7 +90,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Jupyter Server'
-copyright = '2015, Jupyter Team, https://jupyter.org'
+copyright = '2020, Jupyter Team, https://jupyter.org'
 author = 'The Jupyter Team'
 
 # ghissue config
@@ -151,26 +153,28 @@ pygments_style = 'default'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-# Add custom note for each doc page
+# # Add custom note for each doc page
 
-rst_prolog = ""
+# rst_prolog = ""
 
-rst_prolog += """
-.. important::
-    This documentation covers Jupyter Server, an **early developer preview**,
-    and is not suitable for general usage yet. Features and implementation are
-    subject to change.
+# rst_prolog += """
+# .. important::
+#     This documentation covers Jupyter Server, an **early developer preview**,
+#     and is not suitable for general usage yet. Features and implementation are
+#     subject to change.
 
-    For production use cases, please use the stable notebook server in the
-    `Jupyter Notebook repo <https://github.com/jupyter/notebook>`_
-    and `Jupyter Notebook documentation <https://jupyter-notebook.readthedocs.io/en/stable/public_server.html>`_.
-"""
+#     For production use cases, please use the stable notebook server in the
+#     `Jupyter Notebook repo <https://github.com/jupyter/notebook>`_
+#     and `Jupyter Notebook documentation <https://jupyter-notebook.readthedocs.io/en/stable/public_server.html>`_.
+# """
 
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx_rtd_theme'
+#html_theme = 'sphinx_rtd_theme'
+html_theme = "pydata_sphinx_theme"
+html_logo = "_static/jupyter_server_logo.svg"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -359,7 +363,7 @@ intersphinx_mapping = {
     'ipython': ('https://ipython.readthedocs.io/en/stable/', None),
     'nbconvert': ('https://nbconvert.readthedocs.io/en/latest/', None),
     'nbformat': ('https://nbformat.readthedocs.io/en/latest/', None),
-    'jupyter': ('https://jupyter.readthedocs.io/en/latest/', None),
+    'jupyter': ('https://jupyter.readthedocs.io/en/latest/', None)
 }
 
 spelling_lang='en_US'

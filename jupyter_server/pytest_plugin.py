@@ -47,7 +47,7 @@ def mkdir(tmp_path, *parts):
     return path
 
 
-config = pytest.fixture(lambda: {})
+server_config = pytest.fixture(lambda: {})
 home_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "home"))
 data_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "data"))
 config_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "config"))
@@ -67,7 +67,7 @@ env_config_path = pytest.fixture(
 some_resource = u"The very model of a modern major general"
 sample_kernel_json = {
     'argv':['cat', '{connection_file}'],
-    'display_name':'Test kernel',
+    'display_name': 'Test kernel',
 }
 argv = pytest.fixture(lambda: [])
 
@@ -88,7 +88,7 @@ def environ(
 ):
     monkeypatch.setenv("HOME", str(home_dir))
     monkeypatch.setenv("PYTHONPATH", os.pathsep.join(sys.path))
-    monkeypatch.setenv("JUPYTER_NO_CONFIG", "1")
+    # monkeypatch.setenv("JUPYTER_NO_CONFIG", "1")
     monkeypatch.setenv("JUPYTER_CONFIG_DIR", str(config_dir))
     monkeypatch.setenv("JUPYTER_DATA_DIR", str(data_dir))
     monkeypatch.setenv("JUPYTER_RUNTIME_DIR", str(runtime_dir))
@@ -106,23 +106,26 @@ def environ(
 def extension_environ(env_config_path, monkeypatch):
     """Monkeypatch a Jupyter Extension's config path into each test's environment variable"""
     monkeypatch.setattr(serverextension, "ENV_CONFIG_PATH", [str(env_config_path)])
-    monkeypatch.setattr(serverextension, "ENV_CONFIG_PATH", [str(env_config_path)])
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 def configurable_serverapp(
-    environ, http_port, tmp_path, home_dir, data_dir, config_dir, runtime_dir, root_dir, io_loop
+    environ,
+    server_config,
+    argv,
+    http_port,
+    tmp_path,
+    root_dir,
+    io_loop,
 ):
-    def serverapp(
-        config={},
-        argv=[],
+    ServerApp.clear_instance()
+
+    def _configurable_serverapp(
+        config=server_config,
+        argv=argv,
         environ=environ,
         http_port=http_port,
         tmp_path=tmp_path,
-        home_dir=home_dir,
-        data_dir=data_dir,
-        config_dir=config_dir,
-        runtime_dir=runtime_dir,
         root_dir=root_dir,
         **kwargs
     ):
@@ -131,12 +134,11 @@ def configurable_serverapp(
         token = hexlify(os.urandom(4)).decode("ascii")
         url_prefix = "/"
         app = ServerApp.instance(
+            # Set the log level to debug for testing purposes
+            log_level='DEBUG',
             port=http_port,
             port_retries=0,
             open_browser=False,
-            config_dir=str(config_dir),
-            data_dir=str(data_dir),
-            runtime_dir=str(runtime_dir),
             root_dir=str(root_dir),
             base_url=url_prefix,
             config=c,
@@ -144,6 +146,7 @@ def configurable_serverapp(
             token=token,
             **kwargs
         )
+
         app.init_signal = lambda: None
         app.log.propagate = True
         app.log.handlers = []
@@ -155,13 +158,12 @@ def configurable_serverapp(
         app.start_app()
         return app
 
-    yield serverapp
-    ServerApp.clear_instance()
+    return _configurable_serverapp
 
 
-@pytest.fixture
-def serverapp(configurable_serverapp, config, argv):
-    app = configurable_serverapp(config=config, argv=argv)
+@pytest.fixture(scope="function")
+def serverapp(server_config, argv, configurable_serverapp):
+    app = configurable_serverapp(config=server_config, argv=argv)
     yield app
     app.remove_server_info_file()
     app.remove_browser_open_file()

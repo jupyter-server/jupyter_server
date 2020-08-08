@@ -34,30 +34,27 @@ import warnings
 import webbrowser
 import urllib
 
+from types import ModuleType
 from base64 import encodebytes
 from jinja2 import Environment, FileSystemLoader
 
 from jupyter_server.transutils import trans, _
 from jupyter_server.utils import secure_write
 
-# Install the pyzmq ioloop. This has to be done before anything else from
-# tornado is imported.
-from zmq.eventloop import ioloop
-ioloop.install()
-
 # check for tornado 3.1.0
 try:
     import tornado
-except ImportError:
-    raise ImportError(_("The Jupyter Server requires tornado >= 4.0"))
+except ImportError as e:
+    raise ImportError(_("The Jupyter Server requires tornado >= 4.0")) from e
 try:
     version_info = tornado.version_info
-except AttributeError:
-    raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have < 1.1.0"))
+except AttributeError as e:
+    raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have < 1.1.0")) from e
 if version_info < (4,0):
     raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have %s") % tornado.version)
 
 from tornado import httpserver
+from tornado import ioloop
 from tornado import web
 from tornado.httputil import url_concat
 from tornado.log import LogFormatter, app_log, access_log, gen_log
@@ -102,6 +99,8 @@ from ._tz import utcnow, utcfromtimestamp
 from .utils import url_path_join, check_pid, url_escape, urljoin, pathname2url
 
 from jupyter_server.extension.serverextension import ServerExtensionApp
+from jupyter_server.extension.manager import ExtensionManager
+from jupyter_server.extension.config import ExtensionConfigManager
 
 #-----------------------------------------------------------------------------
 # Module globals
@@ -272,6 +271,7 @@ class ServerWebApplication(web.Application):
             server_root_dir=root_dir,
             jinja2_env=env,
             terminals_available=False,  # Set later if terminals are available
+            serverapp=self
         )
 
         # allow custom overrides for the tornado web app.
@@ -319,16 +319,10 @@ class ServerWebApplication(web.Application):
                         handlers[j] = (gwh[0], gwh[1])
                         break
 
-        handlers.append(
-            (r"/custom/(.*)", FileFindHandler, {
-                'path': settings['static_custom_path'],
-                'no_cache_paths': ['/'], # don't cache anything in custom
-            })
-        )
         # register base handlers last
         handlers.extend(load_handlers('jupyter_server.base.handlers'))
 
-        if settings['default_url'] != '/':
+        if settings['default_url'] != settings['base_url']:
             # set the URL that will be redirected from `/`
             handlers.append(
                 (r'/?', RedirectWithParams, {
@@ -389,6 +383,7 @@ class JupyterPasswordApp(JupyterApp):
         set_password(config_file=self.config_file)
         self.log.info("Wrote hashed password to %s" % self.config_file)
 
+
 def shutdown_server(server_info, timeout=5, log=None):
     """Shutdown a notebook server in a separate process.
 
@@ -438,7 +433,7 @@ def shutdown_server(server_info, timeout=5, log=None):
 class JupyterServerStopApp(JupyterApp):
 
     version = __version__
-    description="Stop currently running Jupyter server for a given port"
+    description = "Stop currently running Jupyter server for a given port"
 
     port = Integer(8888, config=True,
         help="Port of the server to be killed. Default 8888")
@@ -554,6 +549,7 @@ class ServerApp(JupyterApp):
 
     flags = Dict(flags)
     aliases = Dict(aliases)
+
     classes = [
         MappingKernelManager, ContentsManager, FileContentsManager, NotebookNotary, GatewayClient,
     ]
@@ -1317,6 +1313,7 @@ class ServerApp(JupyterApp):
             )
             if self.ssl_options.get('ca_certs', False):
                 self.ssl_options.setdefault('cert_reqs', ssl.CERT_REQUIRED)
+            ssl_options = self.ssl_options
 
         self.login_handler_class.validate_security(self, ssl_options=self.ssl_options)
 
@@ -1348,7 +1345,7 @@ class ServerApp(JupyterApp):
     @property
     def connection_url(self):
         ip = self.ip if self.ip else 'localhost'
-        return self.get_url(ip=ip)
+        return self.get_url(ip=ip, path=self.base_url)
 
     def get_url(self, ip=None, path=None, token=None):
         """Build a url for the application with reasonable defaults."""
@@ -1451,24 +1448,27 @@ class ServerApp(JupyterApp):
         # TODO: this should still check, but now we use bower, not git submodule
         pass
 
-    def init_server_extension_config(self):
-        """Consolidate server extensions specified by all configs.
-
-        The resulting list is stored on self.jpserver_extensions and updates config object.
-
-        The extension API is experimental, and may change in future releases.
+    def find_server_extensions(self):
         """
+        Searches Jupyter paths for jpserver_extensions.
+        """
+
+        # Walk through all config files looking for jpserver_extensions.
+        #
+        # Each extension will likely have a JSON config file enabling itself in
+        # the "jupyter_server_config.d" directory. Find each of these and
+        # merge there results in order of precedence.
+        #
         # Load server extensions with ConfigManager.
         # This enables merging on keys, which we want for extension enabling.
         # Regular config loading only merges at the class level,
-        # so each level (user > env > system) clobbers the previous.
-        config_path = jupyter_config_path()
-        if self.config_dir not in config_path:
+        # so each level clobbers the previous.
+        config_paths = jupyter_config_path()
+        if self.config_dir not in config_paths:
             # add self.config_dir to the front, if set manually
-            config_path.insert(0, self.config_dir)
-        manager = ConfigManager(read_config_path=config_path)
-        section = manager.get(self.config_file_name)
-        extensions = section.get('ServerApp', {}).get('jpserver_extensions', {})
+            config_paths.insert(0, self.config_dir)
+        manager = ExtensionConfigManager(read_config_path=config_paths)
+        extensions = manager.get_jpserver_extensions()
 
         for modulename, enabled in sorted(extensions.items()):
             if modulename not in self.jpserver_extensions:
@@ -1476,6 +1476,19 @@ class ServerApp(JupyterApp):
                 self.jpserver_extensions.update({modulename: enabled})
 
     def init_server_extensions(self):
+        """
+        If an extension's metadata includes an 'app' key,
+        the value must be a subclass of ExtensionApp. An instance
+        of the class will be created at this step. The config for
+        this instance will inherit the ServerApp's config object
+        and load its own config.
+        """
+        # Create an instance of the ExtensionManager.
+        self.extension_manager = ExtensionManager(log=self.log)
+        self.extension_manager.from_jpserver_extensions(self.jpserver_extensions)
+        self.extension_manager.link_all_extensions(self)
+
+    def load_server_extensions(self):
         """Load any extensions specified by config.
 
         Import the module, then call the load_jupyter_server_extension function,
@@ -1483,23 +1496,7 @@ class ServerApp(JupyterApp):
 
         The extension API is experimental, and may change in future releases.
         """
-        # Initialize extensions
-        for modulename, enabled in sorted(self.jpserver_extensions.items()):
-            if enabled:
-                try:
-                    mod = importlib.import_module(modulename)
-                    func = getattr(mod, 'load_jupyter_server_extension', None)
-                    if func is not None:
-                        func(self)
-                        # Add debug log for loaded extensions.
-                        self.log.debug("%s is enabled and loaded." % modulename)
-                    else:
-                        self.log.warning("%s is enabled but no `load_jupyter_server_extension` function was found" % modulename)
-                except Exception:
-                    if self.reraise_server_extension_failures:
-                        raise
-                    self.log.warning(_("Error loading server extension %s"), modulename,
-                                  exc_info=True)
+        self.extension_manager.load_all_extensions(self)
 
     def init_mime_overrides(self):
         # On some Windows machines, an application has registered incorrect
@@ -1550,12 +1547,12 @@ class ServerApp(JupyterApp):
         """An instance of Tornado's HTTPServer class for the Server Web Application."""
         try:
             return self._http_server
-        except AttributeError:
+        except AttributeError as e:
             raise AttributeError(
                 'An HTTPServer instance has not been created for the '
                 'Server Web Application. To create an HTTPServer for this '
                 'application, call `.init_httpserver()`.'
-                )
+                ) from e
 
     def init_httpserver(self):
         """Creates an instance of a Tornado HTTPServer for the Server Web Application
@@ -1625,7 +1622,7 @@ class ServerApp(JupyterApp):
                     asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
     @catch_config_error
-    def initialize(self, argv=None, load_extensions=True, new_httpserver=True):
+    def initialize(self, argv=None, find_extensions=True, new_httpserver=True):
         """Initialize the Server application class, configurables, web application, and http server.
 
         Parameters
@@ -1633,30 +1630,36 @@ class ServerApp(JupyterApp):
         argv: list or None
             CLI arguments to parse.
 
-        load_extensions: bool
-            If True, the server will load server extensions listed in the jpserver_extension trait.
-            Otherwise, no server extensions will be loaded.
+        find_extensions: bool
+            If True, find and load extensions listed in Jupyter config paths. If False,
+            only load extensions that are passed to ServerApp directy through
+            the `argv`, `config`, or `jpserver_extensions` arguments.
 
         new_httpserver: bool
             If True, a tornado HTTPServer instance will be created and configured for the Server Web
             Application. This will set the http_server attribute of this class.
         """
         self._init_asyncio_patch()
+        # Parse command line, load ServerApp config files,
+        # and update ServerApp config.
         super(ServerApp, self).initialize(argv)
-        self.init_logging()
+        # Initialize all components of the ServerApp.
         if self._dispatching:
             return
+        # Then, use extensions' config loading mechanism to
+        # update config. ServerApp config takes precedence.
+        if find_extensions:
+            self.find_server_extensions()
+        self.init_logging()
+        self.init_server_extensions()
         self.init_configurables()
-        if load_extensions:
-            self.init_server_extension_config()
         self.init_components()
         self.init_webapp()
         if new_httpserver:
             self.init_httpserver()
         self.init_terminals()
         self.init_signal()
-        if load_extensions:
-            self.init_server_extensions()
+        self.load_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
 
