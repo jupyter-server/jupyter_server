@@ -1,5 +1,4 @@
 from jupyter_server.base.handlers import FileFindHandler
-from traitlets import Unicode, default
 
 
 class ExtensionHandlerJinjaMixin:
@@ -33,6 +32,14 @@ class ExtensionHandlerMixin:
     def serverapp(self):
         key = "serverapp"
         return self.settings[key]
+
+    @property
+    def log(self):
+        # Attempt to pull the ExtensionApp's log, otherwise fall back to ServerApp.
+        try:
+            return self.extensionapp.log
+        except AttributeError:
+            return self.serverapp.log
 
     @property
     def config(self):

@@ -1,5 +1,6 @@
 import sys
 import re
+import logging
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -12,6 +13,7 @@ from traitlets import (
     validate
 )
 from traitlets.config import Config
+from tornado.log import LogFormatter
 
 from jupyter_core.application import JupyterApp
 
@@ -176,6 +178,17 @@ class ExtensionApp(JupyterApp):
     # A ServerApp is not defined yet, but will be initialized below.
     serverapp = None
 
+    _log_formatter_cls = LogFormatter
+
+    @default('log_level')
+    def _default_log_level(self):
+        return logging.INFO
+
+    @default('log_format')
+    def _default_log_format(self):
+        """override default log format to include date & time"""
+        return u"%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
+
     @property
     def static_url_prefix(self):
         return "/static/{name}/".format(
@@ -237,7 +250,7 @@ class ExtensionApp(JupyterApp):
         # Add static and template paths to settings.
         self.settings.update({
             "{}_static_paths".format(self.name): self.static_paths,
-            "{}".format(self.name): self
+            "{}".format(self.name): self,
         })
 
         # Get setting defined by subclass using initialize_settings method.

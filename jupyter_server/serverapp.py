@@ -273,7 +273,7 @@ class ServerWebApplication(web.Application):
             server_root_dir=root_dir,
             jinja2_env=env,
             terminals_available=False,  # Set later if terminals are available
-            serverapp=self
+            serverapp=jupyter_app
         )
 
         # allow custom overrides for the tornado web app.
