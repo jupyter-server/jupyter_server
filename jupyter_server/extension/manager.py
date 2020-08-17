@@ -257,6 +257,12 @@ class ExtensionManager(LoggingConfigurable):
             for name, point in value.extension_points.items()
         }
 
+    @property
+    def linked_extensions(self):
+        """Dictionary with extension names as keys; values are
+        True if the extension is linked, False if not."""
+        return self._linked_extensions
+
     def from_config_manager(self, config_manager):
         """Add extensions found by an ExtensionConfigManager"""
         self._config_manager = config_manager
@@ -281,7 +287,9 @@ class ExtensionManager(LoggingConfigurable):
         extension = self.extensions[name]
         if not linked and extension.enabled:
             try:
+                # Link extension and store links
                 extension.link_all_points(serverapp)
+                self._linked_extensions[name] = True
                 self.log.info("{name} | extension was successfully linked.".format(name=name))
             except Exception as e:
                 self.log.warning(e)
