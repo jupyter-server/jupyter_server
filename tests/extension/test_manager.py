@@ -75,3 +75,10 @@ def test_extension_manager_api():
     assert len(manager.extensions) == 1
     assert "tests.extension.mockextensions" in manager.extensions
 
+
+def test_extension_manager_linked_extensions(serverapp):
+    name = "tests.extension.mockextensions"
+    manager = ExtensionManager()
+    manager.add_extension(name, enabled=True)
+    manager.link_extension(name, serverapp)
+    assert name in manager.linked_extensions
