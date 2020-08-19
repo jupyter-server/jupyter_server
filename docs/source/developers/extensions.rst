@@ -59,11 +59,11 @@ Then add this handler to Jupyter Server's Web Application through the ``_load_ju
 Making an extension discoverable
 --------------------------------
 
-To make this extension discoverable to Jupyter Server, first define a ``_jupyter_server_extension_paths()`` function at the root of the module/package. This function returns metadata describing how to load the extension. Usually, this requires a ``module`` key with the import path to the extension's ``_load_jupyter_server_extension`` function.
+To make this extension discoverable to Jupyter Server, first define a ``_jupyter_server_extension_points()`` function at the root of the module/package. This function returns metadata describing how to load the extension. Usually, this requires a ``module`` key with the import path to the extension's ``_load_jupyter_server_extension`` function.
 
 .. code-block:: python
 
-    def _jupyter_server_extension_paths():
+    def _jupyter_server_extension_points():
         """
         Returns a list of dictionaries with metadata describing
         where to find the `_load_jupyter_server_extension` function.
@@ -255,7 +255,7 @@ To make an ``ExtensionApp`` discoverable by Jupyter Server, add the ``app`` key+
     from myextension import MyExtensionApp
 
 
-    def _jupyter_server_extension_paths():
+    def _jupyter_server_extension_points():
         """
         Returns a list of dictionaries with metadata describing
         where to find the `_load_jupyter_server_extension` function.
@@ -301,14 +301,14 @@ Distributing a server extension
 
 Putting it all together, authors can distribute their extension following this steps:
 
-1. Add a ``_jupyter_server_extension_paths()`` function at the extension's root.
+1. Add a ``_jupyter_server_extension_points()`` function at the extension's root.
     This function should likely live in the ``__init__.py`` found at the root of the extension package. It will look something like this:
 
     .. code-block:: python
 
         # Found in the __init__.py of package
 
-        def _jupyter_server_extension_paths():
+        def _jupyter_server_extension_points():
             return [
                 {
                     "module": "myextension.app",
