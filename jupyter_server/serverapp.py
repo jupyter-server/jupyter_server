@@ -1371,7 +1371,7 @@ class ServerApp(JupyterApp):
         if not ip:
             ip = self.ip if self.ip else 'localhost'
         if not path:
-            path = url_path_join(self.base_url, self.default_url)
+            path = self.default_url
         # Build query string.
         if token:
             token = urllib.parse.urlencode({'token': token})
