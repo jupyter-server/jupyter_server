@@ -289,7 +289,6 @@ class ExtensionApp(JupyterApp):
         # Add static endpoint for this extension, if static paths are given.
         if len(self.static_paths) > 0:
             # Append the extension's static directory to server handlers.
-            print(self.static_url_prefix)
             static_url = url_path_join(self.static_url_prefix, "(.*)")
 
             # Construct handler.

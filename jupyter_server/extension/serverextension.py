@@ -295,7 +295,6 @@ class ListServerExtensionsApp(BaseExtensionApp):
             {"user": False, "sys_prefix": True},
             {"user": False, "sys_prefix": False}
         )
-        self.log.info
 
         for option in configurations:
             config_dir, ext_manager = _get_extmanager_for_context(**option)
