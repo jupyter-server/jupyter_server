@@ -1,3 +1,4 @@
+from urllib.parse import urljoin
 from jupyter_server.base.handlers import FileFindHandler
 
 
@@ -55,10 +56,10 @@ class ExtensionHandlerMixin:
 
     @property
     def static_url_prefix(self):
-        return "{base_url}/static/{name}/".format(
-            name=self.name,
-            base_url=self.base_url
+        static_url = "static/{name}".format(
+            name=self.name
         )
+        return urljoin(self.serverapp.base_url, static_url)
 
     @property
     def static_path(self):

@@ -1,6 +1,7 @@
 import sys
 import re
 import logging
+from urllib.parse import urljoin
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -8,9 +9,7 @@ from traitlets import (
     Unicode,
     List,
     Dict,
-    Bool,
-    default,
-    validate
+    default
 )
 from traitlets.config import Config
 from tornado.log import LogFormatter
@@ -191,8 +190,10 @@ class ExtensionApp(JupyterApp):
 
     @property
     def static_url_prefix(self):
-        return "/static/{name}/".format(
-            name=self.name)
+        static_url = "static/{name}".format(
+            name=self.name
+        )
+        return urljoin(self.serverapp.base_url, static_url)
 
     static_paths = List(Unicode(),
         help="""paths to search for serving static files.
@@ -288,6 +289,7 @@ class ExtensionApp(JupyterApp):
         # Add static endpoint for this extension, if static paths are given.
         if len(self.static_paths) > 0:
             # Append the extension's static directory to server handlers.
+            print(self.static_url_prefix)
             static_url = url_path_join(self.static_url_prefix, "(.*)")
 
             # Construct handler.
