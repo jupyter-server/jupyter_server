@@ -9,5 +9,5 @@ store the current version info of the server.
 
 # Next beta/alpha/rc release: The version number for beta is X.Y.ZbN **without dots**.
 
-version_info = (1, 0, 0, 'rc6')
+version_info = (1, 0, 0, 'rc7')
 __version__ = '.'.join(map(str, version_info[:3])) + ''.join(version_info[3:])
