@@ -45,7 +45,7 @@ def _get_config_dir(user=False, sys_prefix=False):
     return extdir
 
 
-def _get_extmanager_for_context(user=False, sys_prefix=False):
+def _get_extmanager_for_context(write_dir="jupyter_server_config.d", user=False, sys_prefix=False):
     """Get an extension manager pointing at the current context
 
     Returns the path to the current context and an ExtensionManager object.
@@ -295,6 +295,7 @@ class ListServerExtensionsApp(BaseExtensionApp):
             {"user": False, "sys_prefix": True},
             {"user": False, "sys_prefix": False}
         )
+
         for option in configurations:
             config_dir, ext_manager = _get_extmanager_for_context(**option)
             self.log.info("Config dir: {}".format(config_dir))

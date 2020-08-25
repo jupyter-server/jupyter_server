@@ -72,3 +72,42 @@ async def test_handler_argv(fetch):
     )
     assert r.code == 200
     assert r.body.decode() == 'test mock trait'
+
+
+@pytest.mark.parametrize(
+    'server_config',
+    [
+        {
+            "ServerApp": {
+                "jpserver_extensions": {
+                    "tests.extension.mockextensions": True
+                },
+                # Move extension handlers behind a url prefix
+                "base_url": "test_prefix"
+            },
+            "MockExtensionApp": {
+                # Change a trait in the MockExtensionApp using
+                # the following config value.
+                "mock_trait": "test mock trait"
+            }
+        }
+    ]
+)
+async def test_base_url(fetch):
+    # Test that the extension's handlers were properly prefixed
+    r = await fetch(
+        'test_prefix', 'mock',
+        method='GET'
+    )
+    assert r.code == 200
+    assert r.body.decode() == 'test mock trait'
+
+    # Test that the static namespace was prefixed by base_url
+    r = await fetch(
+        'test_prefix',
+        'static', 'mockextension', 'mock.txt',
+        method='GET'
+    )
+    assert r.code == 200
+    body = r.body.decode()
+    assert "mock static content" in body

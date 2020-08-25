@@ -1,3 +1,4 @@
+from urllib.parse import urljoin
 from jupyter_server.base.handlers import FileFindHandler
 
 
@@ -15,7 +16,7 @@ class ExtensionHandlerMixin:
     """Base class for Jupyter server extension handlers.
 
     Subclasses can serve static files behind a namespaced
-    endpoint: "/static/<name>/"
+    endpoint: "<base_url>/static/<name>/"
 
     This allows multiple extensions to serve static files under
     their own namespace and avoid intercepting requests for
@@ -50,8 +51,15 @@ class ExtensionHandlerMixin:
         return self.settings["config"]
 
     @property
+    def base_url(self):
+        return self.settings.get('base_url', '/')
+
+    @property
     def static_url_prefix(self):
-        return "/static/{name}/".format(name=self.name)
+        static_url = "static/{name}".format(
+            name=self.name
+        )
+        return urljoin(self.serverapp.base_url, static_url)
 
     @property
     def static_path(self):
