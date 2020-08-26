@@ -73,6 +73,12 @@ You can also start the server extension with python modules.
 python -m simple_ext1
 ```
 
+To live reload the server as you change the extension, you can also enable [the `debug` mode for Tornado](https://www.tornadoweb.org/en/stable/guide/running.html#debug-mode-and-automatic-reloading):
+
+```bash
+jupyter server --ServerApp.jpserver_extensions="{'simple_ext1': True}" --ServerApp.tornado_settings="{'debug': True}"
+```
+
 ## Extension 1 and Extension 2
 
 The following command starts both the `simple_ext1` and `simple_ext2` extensions.
