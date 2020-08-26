@@ -188,7 +188,9 @@ class ExtensionApp(JupyterApp):
         """override default log format to include date & time"""
         return u"%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
 
-    static_url_prefix = Unicode().tag(config=True)
+    static_url_prefix = Unicode(
+        help="""Url where the static assets for the extension are served."""
+    ).tag(config=True)
 
     @default('static_url_prefix')
     def _default_static_url_prefix(self):
