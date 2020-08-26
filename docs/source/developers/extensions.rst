@@ -12,7 +12,7 @@ The simplest way to write a Jupyter Server extension is to write an extension mo
 
 .. code-block:: python
 
-    def _load_jupyter_server_extension(serverapp):
+    def _load_jupyter_server_extension(serverapp: jupyter_server.serverapp.ServerApp):
         """
         This function is called when the extension is loaded.
         """
@@ -46,7 +46,7 @@ Then add this handler to Jupyter Server's Web Application through the ``_load_ju
 
 .. code-block:: python
 
-    def _load_jupyter_server_extension(serverapp):
+    def _load_jupyter_server_extension(serverapp: jupyter_server.serverapp.ServerApp):
         """
         This function is called when the extension is loaded.
         """
