@@ -56,10 +56,7 @@ class ExtensionHandlerMixin:
 
     @property
     def static_url_prefix(self):
-        static_url = "static/{name}".format(
-            name=self.name
-        )
-        return urljoin(self.serverapp.base_url, static_url)
+        return self.extensionapp.static_url_prefix
 
     @property
     def static_path(self):

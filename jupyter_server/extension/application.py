@@ -188,9 +188,13 @@ class ExtensionApp(JupyterApp):
         """override default log format to include date & time"""
         return u"%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
 
-    @property
-    def static_url_prefix(self):
-        static_url = "static/{name}".format(
+    static_url_prefix = Unicode(
+        help="""Url where the static assets for the extension are served."""
+    ).tag(config=True)
+
+    @default('static_url_prefix')
+    def _default_static_url_prefix(self):
+        static_url = "static/{name}/".format(
             name=self.name
         )
         return urljoin(self.serverapp.base_url, static_url)
@@ -429,7 +433,7 @@ class ExtensionApp(JupyterApp):
         if argv is None:
             args = sys.argv[1:]  # slice out extension config.
         else:
-            args = []
+            args = argv
         # Check for subcommands
         subapp = _preparse_for_subcommand(cls, args)
         if subapp:
