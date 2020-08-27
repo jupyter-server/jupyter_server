@@ -17,11 +17,7 @@ setup_args = dict(
     long_description = README,
     version          = VERSION,
     packages         = find_packages('.'),
-    package_data     = {
-        'jupyter_server' : ['templates/*'],
-        'jupyter_server.i18n': ['*/LC_MESSAGES/*.*'],
-        'jupyter_server.services.api': ['api.yaml'],
-    },
+    include_package_data = True,
     author           = 'Jupyter Development Team',
     author_email     = 'jupyter@googlegroups.com',
     url              = 'http://jupyter.org',
