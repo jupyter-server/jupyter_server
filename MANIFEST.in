@@ -6,6 +6,7 @@ include CHANGELOG.md
 include setupbase.py
 include jupyter_server/i18n/*
 include jupyter_server/static/*
+include jupyter_server/static/*/*
 
 # Documentation
 graft docs
