@@ -29,10 +29,6 @@ async def test_async_kernel_manager(configurable_serverapp):
     assert isinstance(app.kernel_manager, AsyncMappingKernelManager)
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 6),
-    reason="Testing AsyncMappingKernelManager on Python <=3.5"
-)
 @pytest.mark.parametrize(
     "args",
     [['--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager']]
