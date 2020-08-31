@@ -40,7 +40,7 @@ setup_args = dict(
         'tornado>=5.0',
         'pyzmq>=17',
         'ipython_genutils',
-        'traitlets>=4.2.1',
+        'traitlets>=4.2.1,<5.0.0',
         'jupyter_core>=4.4.0',
         'jupyter_client>=6.1.1',
         'nbformat',
