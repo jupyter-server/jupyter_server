@@ -6,6 +6,7 @@ from urllib.parse import urljoin
 from jinja2 import Environment, FileSystemLoader
 
 from traitlets import (
+    HasTraits,
     Unicode,
     List,
     Dict,
@@ -82,7 +83,7 @@ def _preparse_for_stopping_flags(Application, argv):
         app.exit(0)
 
 
-class ExtensionAppJinjaMixin:
+class ExtensionAppJinjaMixin(HasTraits):
     """Use Jinja templates for HTML templates on top of an ExtensionApp."""
 
     jinja2_options = Dict(
@@ -93,7 +94,6 @@ class ExtensionAppJinjaMixin:
     def _prepare_templates(self):
         # Get templates defined in a subclass.
         self.initialize_templates()
-
         # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
             self.settings.update({
