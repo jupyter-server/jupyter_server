@@ -86,6 +86,8 @@ class FilesHandler(JupyterHandler):
 # The delay in ms at which we send the chunk of data
 # to the client.
 ARCHIVE_DOWNLOAD_FLUSH_DELAY = 100
+
+# Supported archive format
 SUPPORTED_FORMAT = [
     "zip",
     "tgz",
@@ -97,6 +99,10 @@ SUPPORTED_FORMAT = [
     "txz",
     "tar.xz",
 ]
+
+
+DEFAULT_DIRECTORY_SIZE_LIMIT = 1073741824  # 1GB
+DEFAULT_ARCHIVE_FORMAT = "zip"
 
 
 class ArchiveStream:
@@ -145,6 +151,13 @@ def make_writer(handler, archive_format="zip"):
     return archive_file
 
 
+def get_folder_size(dir_path):
+    """Return the size in bytes of a given directory.
+    """
+    dir_path = pathlib.Path(dir_path)
+    return sum(f.stat().st_size for f in dir_path.glob("**/*") if f.is_file())
+
+
 def make_reader(archive_path):
     """Return the appropriate archive file instance given
     the extension's path of `archive_path`.
@@ -183,14 +196,39 @@ class DirectoryHandler(JupyterHandler):
             raise web.HTTPError(404)
 
         archive_token = self.get_argument("archiveToken")
-        archive_format = self.get_argument("archiveFormat", "zip")
+        archive_format = self.get_argument("archiveFormat", DEFAULT_ARCHIVE_FORMAT)
+        folder_size_limit = self.get_argument("folderSizeLimit", None)
+
+        # Check whether the specified archive format is supported.
         if archive_format not in SUPPORTED_FORMAT:
             self.log.error("Unsupported format {}.".format(archive_format))
             raise web.HTTPError(404)
 
+        # If the folder size limit is not specified in the request, a
+        # default size limit is used.
+        try:
+            folder_size_limit_num = int(folder_size_limit)
+
+        except (ValueError, TypeError):
+            self.log.warning(
+                "folderSizeLimit is a not a valid number: {}.".format(folder_size_limit)
+            )
+            folder_size_limit_num = DEFAULT_DIRECTORY_SIZE_LIMIT
+
         root_dir = pathlib.Path(cm.root_dir)
         archive_path = root_dir / url2path(archive_path)
         archive_filename = archive_path.with_suffix(".{}".format(archive_format)).name
+
+        # Check whether the archive folder is not larger than the size limit.
+        folder_size = get_folder_size(archive_path)
+        print(folder_size)
+        if folder_size > folder_size_limit_num:
+            self.log.error(
+                "Archive folder size is larger than the size limit: {} bytes with a size limit of {}.".format(
+                    folder_size, folder_size_limit_num
+                )
+            )
+            raise web.HTTPError(413)
 
         self.log.info(
             "Prepare {} for archiving and downloading.".format(archive_filename)

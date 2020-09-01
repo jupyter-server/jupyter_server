@@ -140,7 +140,7 @@ async def test_old_files_redirect(fetch, serverapp, root_dir):
     #     self.assertIn("filename*=utf-8''test.txt", disposition)
 
 
-async def test_download_directory(fetch, serverapp, root_dir):
+def make_fake_folder(root_dir):
     # Create a dummy directory.
     root_dir = pathlib.Path(str(root_dir))
     archive_dir_path = root_dir / "download-archive-dir"
@@ -159,6 +159,14 @@ async def test_download_directory(fetch, serverapp, root_dir):
         "download-archive-dir/test3.md",
     }
 
+    dir_path = str(archive_dir_path.relative_to(root_dir))
+
+    return dir_path, file_lists
+
+
+async def test_download_directory(fetch, serverapp, root_dir):
+    dir_path, file_lists = make_fake_folder(root_dir)
+
     archive_formats = {
         "zip": "r",
         "tgz": "r|gz",
@@ -175,8 +183,8 @@ async def test_download_directory(fetch, serverapp, root_dir):
 
     for archive_format, mode in archive_formats.items():
         params = dict(archiveToken=archive_token, archiveFormat=archive_format)
-        dir_path = str(archive_dir_path.relative_to(root_dir))
         r = await fetch("directories", dir_path, method="GET", params=params)
+
         assert r.code == 200
         assert r.headers.get("content-type") == "application/octet-stream"
         assert r.headers.get("cache-control") == "no-cache"
@@ -187,6 +195,43 @@ async def test_download_directory(fetch, serverapp, root_dir):
             with tarfile.open(fileobj=io.BytesIO(r.body), mode=mode) as tf:
                 assert set(map(lambda m: m.name, tf.getmembers())) == file_lists
 
+
+async def test_download_directory_size_limit(fetch, serverapp, root_dir):
+
+    dir_path, file_lists = make_fake_folder(root_dir)
+    archive_token = 59487596
+    archive_format = "zip"
+    mode = "r"
+
+    # The above fake folder has a size of 18
+    folder_size_limit = 10
+
+    params = dict(
+        archiveToken=archive_token,
+        archiveFormat=archive_format,
+        folderSizeLimit=folder_size_limit,
+    )
+
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await fetch("directories", dir_path, method="GET", params=params)
+    assert expected_http_error(e, 413)
+
+async def test_download_wrong_archive_format(fetch, serverapp, root_dir):
+
+    dir_path, file_lists = make_fake_folder(root_dir)
+    archive_token = 59487596
+    archive_format = "a_format_that_does_not_exist"
+    mode = "r"
+
+
+    params = dict(
+        archiveToken=archive_token,
+        archiveFormat=archive_format,
+    )
+
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await fetch("directories", dir_path, method="GET", params=params)
+    assert expected_http_error(e, 404)
 
 async def test_extract_directory(fetch, serverapp, root_dir):
 
