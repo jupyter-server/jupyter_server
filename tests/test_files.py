@@ -216,6 +216,7 @@ async def test_download_directory_size_limit(fetch, serverapp, root_dir):
         await fetch("directories", dir_path, method="GET", params=params)
     assert expected_http_error(e, 413)
 
+
 async def test_download_wrong_archive_format(fetch, serverapp, root_dir):
 
     dir_path, file_lists = make_fake_folder(root_dir)
@@ -223,15 +224,12 @@ async def test_download_wrong_archive_format(fetch, serverapp, root_dir):
     archive_format = "a_format_that_does_not_exist"
     mode = "r"
 
-
-    params = dict(
-        archiveToken=archive_token,
-        archiveFormat=archive_format,
-    )
+    params = dict(archiveToken=archive_token, archiveFormat=archive_format)
 
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await fetch("directories", dir_path, method="GET", params=params)
     assert expected_http_error(e, 404)
+
 
 async def test_extract_directory(fetch, serverapp, root_dir):
 
