@@ -1244,14 +1244,6 @@ class ServerApp(JupyterApp):
             connection_dir=self.runtime_dir,
             kernel_spec_manager=self.kernel_spec_manager,
         )
-        # Async randomly hangs on Python 3.5, prevent using it
-        if isinstance(self.kernel_manager, AsyncMappingKernelManager):
-            if sys.version_info < (3, 6):
-                raise ValueError("You are using `AsyncMappingKernelManager` in Python 3.5 (or lower),"
-                                 "which is not supported. Please upgrade Python to 3.6+.")
-            else:
-                self.log.info("Asynchronous kernel management has been configured to use '{}'.".
-                              format(self.kernel_manager.__class__.__name__))
         self.contents_manager = self.contents_manager_class(
             parent=self,
             log=self.log,
@@ -1325,7 +1317,6 @@ class ServerApp(JupyterApp):
             import ssl
             # PROTOCOL_TLS selects the highest ssl/tls protocol version that both the client and
             # server support. When PROTOCOL_TLS is not available use PROTOCOL_SSLv23.
-            # PROTOCOL_TLS is new in version 2.7.13, 3.5.3 and 3.6
             self.ssl_options.setdefault(
                 'ssl_version',
                 getattr(ssl, 'PROTOCOL_TLS', ssl.PROTOCOL_SSLv23)
