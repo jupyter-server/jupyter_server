@@ -100,6 +100,10 @@ SUPPORTED_FORMAT = [
 
 
 class ArchiveStream:
+    """ArchiveStream is an abstraction layer to a Python archive allowing
+    to stream archive files.
+    """
+
     def __init__(self, handler):
         self.handler = handler
         self.position = 0
@@ -120,6 +124,9 @@ class ArchiveStream:
 
 
 def make_writer(handler, archive_format="zip"):
+    """Given an handler object, create an `ArchiveStream` instance
+    and setup an archive file object using the specified archive format.
+    """
     fileobj = ArchiveStream(handler)
 
     if archive_format == "zip":
@@ -139,6 +146,9 @@ def make_writer(handler, archive_format="zip"):
 
 
 def make_reader(archive_path):
+    """Return the appropriate archive file instance given
+    the extension's path of `archive_path`.
+    """
 
     archive_format = "".join(archive_path.suffixes)[1:]
 
@@ -156,6 +166,11 @@ def make_reader(archive_path):
 
 
 class DirectoryHandler(JupyterHandler):
+    """Download a directory. Since a folder can't be directly downloaded,
+    it is first archived with or without compression before being downloaded from the client.
+    The archive format (zip, tar.gz, etc) can be configured within the request.
+    """
+
     @web.authenticated
     async def get(self, archive_path, include_body=False):
 
@@ -192,8 +207,6 @@ class DirectoryHandler(JupyterHandler):
         )
         self.flush_cb.start()
 
-        # self.archive_and_download(archive_path, archive_format, archive_token)
-
         args = (archive_path, archive_format, archive_token)
         await ioloop.IOLoop.current().run_in_executor(
             None, self.archive_and_download, *args
@@ -229,6 +242,11 @@ class DirectoryHandler(JupyterHandler):
 
 
 class ExtractDirectoryHandler(JupyterHandler):
+    """Extract the content of an archive on the server side. Given an archive on
+    the server side, this class allows to request extracting the content of the archive.
+    The archive format is detected from the extension of the archive.
+    """
+
     @web.authenticated
     async def get(self, archive_path, include_body=False):
 

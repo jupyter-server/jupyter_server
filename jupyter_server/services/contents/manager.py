@@ -178,11 +178,12 @@ class ContentsManager(LoggingConfigurable):
         klass=RequestHandler,
         allow_none=True,
         config=True,
-        help="""handler class to use when serving raw directory requests.
+        help="""Handler class to use when serving raw directory requests.
 
-        TODO: complete
+        This handler allows to archive a folder on the server side before
+        downloading it from the client.
 
-        Access to these files should be Authenticated.
+        Access to these directories should be Authenticated.
         """,
     )
 
@@ -197,11 +198,11 @@ class ContentsManager(LoggingConfigurable):
         klass=RequestHandler,
         allow_none=True,
         config=True,
-        help="""handler class to use when serving raw directory requests.
+        help=""""Handler class to use when serving raw directory requests.
 
-        TODO: complete
+        This handler allows to extract the content of a folder on the server side.
 
-        Access to these files should be Authenticated.
+        Access to these directories should be Authenticated.
         """,
     )
 
