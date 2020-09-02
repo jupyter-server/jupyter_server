@@ -221,7 +221,6 @@ class DirectoryHandler(JupyterHandler):
 
         # Check whether the archive folder is not larger than the size limit.
         folder_size = get_folder_size(archive_path)
-        print(folder_size)
         if folder_size > folder_size_limit_num:
             self.log.error(
                 "Archive folder size is larger than the size limit: {} bytes with a size limit of {}.".format(
