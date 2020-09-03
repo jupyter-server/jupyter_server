@@ -21,6 +21,17 @@ We strongly recommend that you upgrade to version 9+ of pip before upgrading ``j
     Use ``pip install pip --upgrade`` to upgrade pip. Check pip version with
     ``pip --version``.
 
+.. _release-1.0.0:
+
+1.0.0
+-----
+
+- Extension discovery
+- Classic server extension discovery and support
+- Bug fixes
+- Ready for users
+- JupyterLab is the first servver running on top of Jupyter Server
+
 .. _release-0.0.2:
 
 0.0.2

@@ -18,4 +18,4 @@ To pin your jupyter_server install to a specific version:
 
 .. code-block:: console
 
-    > pip install jupyter_server==1.0
+    > pip install jupyter_server==1.0.0

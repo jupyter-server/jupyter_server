@@ -669,7 +669,7 @@ Session.unpacker : DottedObjectName
     Only used with custom functions for `packer`.
 
 Session.username : Unicode
-    Default: ``'zsailer'``
+    Default: ``'echar4'``
 
     Username for the Session. Default is your system username.
 
@@ -684,6 +684,11 @@ MultiKernelManager.kernel_manager_class : DottedObjectName
     The kernel manager class.  This is configurable to allow
     subclassing of the KernelManager for customized behavior.
 
+
+MultiKernelManager.shared_context : Bool
+    Default: ``True``
+
+    Share a single zmq.Context to talk to all my kernels
 
 MappingKernelManager.allowed_message_types : List
     Default: ``[]``
@@ -897,7 +902,7 @@ FileContentsManager.root_dir : Unicode
 
     No description
 
-NotebookNotary.algorithm : 'md5'|'sha3_384'|'sha3_512'|'sha256'|'sha1'|'blake2s'|'sha3_256'|'sha3_224'|'sha384'|'sha512'|'blake2b'|'sha224'
+NotebookNotary.algorithm : 'md5'|'sha3_512'|'blake2b'|'sha3_384'|'sha3_256'|'sha224'|'sha3_224'|'sha384'|'sha512'|'blake2s'|'sha1'|'sha256'
     Default: ``'sha256'``
 
     The hashing algorithm used to sign notebooks.
