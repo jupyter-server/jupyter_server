@@ -1,5 +1,6 @@
 from urllib.parse import urljoin
 from jupyter_server.base.handlers import FileFindHandler
+from jinja2.exceptions import TemplateNotFound
 
 
 class ExtensionHandlerJinjaMixin:
@@ -8,8 +9,11 @@ class ExtensionHandlerJinjaMixin:
     """
     def get_template(self, name):
         """Return the jinja template object for a given name"""
-        env = '{}_jinja2_env'.format(self.name)
-        return self.settings[env].get_template(name)
+        try:
+            env = '{}_jinja2_env'.format(self.name)
+            return self.settings[env].get_template(name)
+        except TemplateNotFound:
+            return super().get_template(name)
 
 
 class ExtensionHandlerMixin:
@@ -36,6 +40,8 @@ class ExtensionHandlerMixin:
 
     @property
     def log(self):
+        if not hasattr(self, 'name'):
+            return super().log
         # Attempt to pull the ExtensionApp's log, otherwise fall back to ServerApp.
         try:
             return self.extensionapp.log
