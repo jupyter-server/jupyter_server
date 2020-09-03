@@ -285,7 +285,7 @@ class ExtractDirectoryHandler(JupyterHandler):
     """
 
     @web.authenticated
-    async def get(self, archive_path, include_body=False):
+    async def put(self, archive_path, include_body=False):
 
         # /extract-archive/ requests must originate from the same site
         self.check_xsrf_cookie()
