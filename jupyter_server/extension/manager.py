@@ -275,12 +275,17 @@ class ExtensionManager(LoggingConfigurable):
             self.add_extension(name, enabled=enabled)
 
     def add_extension(self, extension_name, enabled=False):
+        """Try to add extension to manager, return True is successful.
+        Otherwise, return False.
+        """
         try:
             extpkg = ExtensionPackage(name=extension_name, enabled=enabled)
             self._extensions[extension_name] = extpkg
+            return True
         # Raise a warning if the extension cannot be loaded.
         except Exception as e:
             self.log.warning(e)
+        return False
 
     def link_extension(self, name, serverapp):
         linked = self._linked_extensions.get(name, False)
