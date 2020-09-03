@@ -39,6 +39,7 @@ RUN cd && \
 #   pip install -e .
 RUN pip install --pre jupyterlab
 
+RUN pip install --ignore-installed -U terminado
 RUN cd && \
   git clone https://github.com/datalayer-contrib/jupyter_server --branch jupyter-kernel-mgmt-master && \
   cd jupyter_server && \

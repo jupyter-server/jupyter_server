@@ -15,4 +15,4 @@ jlab:
 	# kubectl exec jupyterlab-d5587599b-9tmlj -n jupyterlab -i -t -- jupyter notebook list
 
 rm:
-	kubectl delete -f jupyterlab.yaml
+	kubectl delete -f jlab.yaml
