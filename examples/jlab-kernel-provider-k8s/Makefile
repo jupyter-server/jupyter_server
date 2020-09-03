@@ -12,6 +12,7 @@ install:
 jlab:
 	minikube service jupyterlab --url -n jupyterlab
 	# Get the token via the pod...
+	# k get pods -n jupyterlab
 	# kubectl exec jupyterlab-d5587599b-9tmlj -n jupyterlab -i -t -- jupyter notebook list
 
 rm:
