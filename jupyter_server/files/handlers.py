@@ -195,6 +195,10 @@ class DirectoryHandler(JupyterHandler):
             self.log.info("Refusing to serve hidden file, via 404 Error")
             raise web.HTTPError(404)
 
+        if not hasattr(cm, "directory_handler_class"):
+            self.log.info("Method not allowed")
+            raise web.HTTPError(405)
+
         archive_token = self.get_argument("archiveToken")
         archive_format = self.get_argument("archiveFormat", DEFAULT_ARCHIVE_FORMAT)
         folder_size_limit = self.get_argument("folderSizeLimit", None)

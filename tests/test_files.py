@@ -277,7 +277,7 @@ async def test_extract_directory(fetch, serverapp, root_dir):
         # REST call to extract the archive
         relative_archive_path = str(archive_path.relative_to(root_dir))
         print(archive_path)
-        r = await fetch("extract-directories", relative_archive_path, method="GET")
+        r = await fetch("extract-directories", relative_archive_path, method="PUT")
 
         assert r.code == 200
         assert archive_dir_path.is_dir()
