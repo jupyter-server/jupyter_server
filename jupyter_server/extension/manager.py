@@ -275,7 +275,7 @@ class ExtensionManager(LoggingConfigurable):
             self.add_extension(name, enabled=enabled)
 
     def add_extension(self, extension_name, enabled=False):
-        """Try to add extension to manager, return True is successful.
+        """Try to add extension to manager, return True if successful.
         Otherwise, return False.
         """
         try:
@@ -325,4 +325,3 @@ class ExtensionManager(LoggingConfigurable):
         # order.
         for name in sorted(self.extensions.keys()):
             self.load_extension(name, serverapp)
-
