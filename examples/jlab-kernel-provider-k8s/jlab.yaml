@@ -37,7 +37,7 @@ metadata:
   # Referenced by EG_KERNEL_CLUSTER_ROLE below
   name: kernel-controller
   labels:
-    app: enterprise-gateway
+    app: k8s-kernel-provider
     component: kernel
 rules:
   - apiGroups: [""]
@@ -107,41 +107,39 @@ spec:
       serviceAccountName: jupyterlab-sa
       containers:
       - env:
+        # EG_PORT won't be picked up.
+        # I believe we exposed the notebook port via an env within the last year (JUPYTER_PORT).
+        # Not sure if that was ported to server, but needs to b
         - name: EG_PORT
           value: "8888"
-
-          # Created above.
+        - name: JUPYTER_PORT
+          value: "8888"
         - name: EG_NAMESPACE
           value: "jupyterlab"
-
-          # Created above.  Used if no KERNEL_NAMESPACE is provided by client.
+        # Used if no KERNEL_NAMESPACE is provided by client.
         - name: EG_KERNEL_CLUSTER_ROLE
           value: "kernel-controller"
-
-          # All kernels reside in the EG namespace if True, otherwise KERNEL_NAMESPACE
-          # must be provided or one will be created for each kernel.
+        # All kernels reside in the EG namespace if True, otherwise KERNEL_NAMESPACE
+        # must be provided or one will be created for each kernel.
         - name: EG_SHARED_NAMESPACE
-          value: "False"
-
-          # NOTE: This requires appropriate volume mounts to make notebook dir accessible
+          value: "True"
+        # NOTE: This requires appropriate volume mounts to make notebook dir accessible
         - name: EG_MIRROR_WORKING_DIRS
           value: "False"
-
-          # Current idle timeout is 1 hour.
+        # Current idle timeout is 1 hour.
         - name: EG_CULL_IDLE_TIMEOUT
           value: "3600"
-
         - name: EG_LOG_LEVEL
           value: "DEBUG"
-
         - name: EG_KERNEL_LAUNCH_TIMEOUT
           value: "60"
-
+        # Generally speaking, all of the EG_-prefixed envs will change.
+        # Looking at the code, many are still in use. There are a few, like log level, cull idle timeout that apply to the server (jupyter_server) 
+        # and kernel-whitelist currently has no equivalent in provider-land at the moment.        
         - name: EG_KERNEL_WHITELIST
           value: "['r_kubernetes','python_kubernetes','python_tf_kubernetes','python_tf_gpu_kubernetes','scala_kubernetes','spark_r_kubernetes','spark_python_kubernetes','spark_scala_kubernetes']"
-
         # Ensure the following VERSION tag is updated to the version of Enterprise Gateway you wish to run
-        image: jupyter-server/k8-provider-example:0.0.1
+        image: jupyter/jlab-k8s-provider-example:0.0.1
         # Use IfNotPresent policy so that dev-based systems don't automatically
         # update. This provides more control.  Since formal tags will be release-specific
         # this policy should be sufficient for them as well.
@@ -177,7 +175,7 @@ spec:
     spec:
       containers:
       - name: kernel-image-puller
-        image: elyra/kernel-image-puller:dev
+        image: elyra/kernel-image-puller:2.2.0rc2
         env:
           - name: KIP_GATEWAY_HOST
             value: "http://jupyterlab.jupyterlab:8888"
