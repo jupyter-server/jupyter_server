@@ -1,7 +1,6 @@
 import sys
 import re
 import logging
-from urllib.parse import urljoin
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -197,7 +196,7 @@ class ExtensionApp(JupyterApp):
         static_url = "static/{name}/".format(
             name=self.name
         )
-        return urljoin(self.serverapp.base_url, static_url)
+        return url_path_join(self.serverapp.base_url, static_url)
 
     static_paths = List(Unicode(),
         help="""paths to search for serving static files.

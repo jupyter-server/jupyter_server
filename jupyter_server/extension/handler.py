@@ -1,4 +1,3 @@
-from urllib.parse import urljoin
 from jupyter_server.base.handlers import FileFindHandler
 from jinja2.exceptions import TemplateNotFound
 
