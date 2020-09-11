@@ -7,14 +7,12 @@
 from __future__ import absolute_import, print_function
 
 import jupyter_server
-import asyncio
 import binascii
 import datetime
 import errno
 import gettext
 import hashlib
 import hmac
-import importlib
 import io
 import ipaddress
 import json
@@ -30,11 +28,9 @@ import sys
 import tempfile
 import threading
 import time
-import warnings
 import webbrowser
 import urllib
 
-from types import ModuleType
 from base64 import encodebytes
 from jinja2 import Environment, FileSystemLoader
 
@@ -50,7 +46,7 @@ try:
     version_info = tornado.version_info
 except AttributeError as e:
     raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have < 1.1.0")) from e
-if version_info < (4,0):
+if version_info < (4, 0):
     raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have %s") % tornado.version)
 
 from tornado import httpserver
@@ -90,7 +86,7 @@ from jupyter_client.kernelspec import KernelSpecManager, NoSuchKernel, NATIVE_KE
 from jupyter_client.session import Session
 from nbformat.sign import NotebookNotary
 from traitlets import (
-    Any, Dict, Unicode, Integer, List, Bool, Bytes, Instance,
+    Any, Dict, CUnicode, Integer, List, Bool, Bytes, Instance,
     TraitError, Type, Float, observe, default, validate
 )
 from ipython_genutils import py3compat
@@ -597,11 +593,11 @@ class ServerApp(JupyterApp):
         return u"%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
 
     # file to be opened in the Jupyter server
-    file_to_run = Unicode('', config=True)
+    file_to_run = CUnicode('', config=True)
 
     # Network related information
 
-    allow_origin = Unicode('', config=True,
+    allow_origin = CUnicode('', config=True,
         help="""Set the Access-Control-Allow-Origin header
 
         Use '*' to allow any origin to access your server.
@@ -610,7 +606,7 @@ class ServerApp(JupyterApp):
         """
     )
 
-    allow_origin_pat = Unicode('', config=True,
+    allow_origin_pat = CUnicode('', config=True,
         help="""Use a regular expression for the Access-Control-Allow-Origin header
 
         Requests from an origin matching the expression will get replies with:
@@ -631,11 +627,11 @@ class ServerApp(JupyterApp):
         help=_("Whether to allow the user to run the server as root.")
     )
 
-    default_url = Unicode('/', config=True,
+    default_url = CUnicode('/', config=True,
         help=_("The default URL to redirect to from `/`")
     )
 
-    ip = Unicode('localhost', config=True,
+    ip = CUnicode('localhost', config=True,
         help=_("The IP address the Jupyter server will listen on.")
     )
 
@@ -662,7 +658,7 @@ class ServerApp(JupyterApp):
             value = u''
         return value
 
-    custom_display_url = Unicode(u'', config=True,
+    custom_display_url = CUnicode(u'', config=True,
         help=_("""Override URL shown to users.
 
         Replace actual URL, including protocol, address, port and base URL,
@@ -683,19 +679,19 @@ class ServerApp(JupyterApp):
         help=_("The number of additional ports to try if the specified port is not available.")
     )
 
-    certfile = Unicode(u'', config=True,
+    certfile = CUnicode(u'', config=True,
         help=_("""The full path to an SSL/TLS certificate file.""")
     )
 
-    keyfile = Unicode(u'', config=True,
+    keyfile = CUnicode(u'', config=True,
         help=_("""The full path to a private key file for usage with SSL/TLS.""")
     )
 
-    client_ca = Unicode(u'', config=True,
+    client_ca = CUnicode(u'', config=True,
         help=_("""The full path to a certificate authority certificate for SSL/TLS client authentication.""")
     )
 
-    cookie_secret_file = Unicode(config=True,
+    cookie_secret_file = CUnicode(config=True,
         help=_("""The file where the cookie secret is stored.""")
     )
 
@@ -735,7 +731,7 @@ class ServerApp(JupyterApp):
             self.log.error(_("Failed to write cookie secret to %s: %s"),
                            self.cookie_secret_file, e)
 
-    token = Unicode('<generated>',
+    token = CUnicode('<generated>',
         help=_("""Token used for authenticating first-time connections to the server.
 
         When no password is enabled,
@@ -782,7 +778,7 @@ class ServerApp(JupyterApp):
     def _token_changed(self, change):
         self._token_generated = False
 
-    password = Unicode(u'', config=True,
+    password = CUnicode(u'', config=True,
                       help="""Hashed password to use for web authentication.
 
                       To generate, type in a python/IPython shell:
@@ -881,7 +877,7 @@ class ServerApp(JupyterApp):
         else:
             return not addr.is_loopback
 
-    local_hostnames = List(Unicode(), ['localhost'], config=True,
+    local_hostnames = List(CUnicode(), ['localhost'], config=True,
        help="""Hostnames to allow as local when allow_remote_access is False.
 
        Local IP addresses (such as 127.0.0.1 and ::1) are automatically accepted
@@ -897,7 +893,7 @@ class ServerApp(JupyterApp):
                         (ServerApp.browser) configuration option.
                         """)
 
-    browser = Unicode(u'', config=True,
+    browser = CUnicode(u'', config=True,
                       help="""Specify what command to use to invoke a web
                       browser when starting the server. If not specified, the
                       default browser will be determined by the `webbrowser`
@@ -958,7 +954,7 @@ class ServerApp(JupyterApp):
         help=_("Extra variables to supply to jinja templates when rendering."),
     )
 
-    base_url = Unicode('/', config=True,
+    base_url = CUnicode('/', config=True,
                        help='''The base URL for the Jupyter server.
 
                        Leading and trailing slashes can be omitted,
@@ -974,7 +970,7 @@ class ServerApp(JupyterApp):
             value = value + '/'
         return value
 
-    extra_static_paths = List(Unicode(), config=True,
+    extra_static_paths = List(CUnicode(), config=True,
         help="""Extra paths to search for serving static files.
 
         This allows adding javascript/css to be available from the Jupyter server machine,
@@ -986,7 +982,7 @@ class ServerApp(JupyterApp):
         """return extra paths + the default location"""
         return self.extra_static_paths + [DEFAULT_STATIC_FILES_PATH]
 
-    static_custom_path = List(Unicode(),
+    static_custom_path = List(CUnicode(),
         help=_("""Path to search for custom.js, css""")
     )
 
@@ -998,7 +994,7 @@ class ServerApp(JupyterApp):
                 DEFAULT_STATIC_FILES_PATH)
         ]
 
-    extra_template_paths = List(Unicode(), config=True,
+    extra_template_paths = List(CUnicode(), config=True,
         help=_("""Extra paths to search for serving jinja templates.
 
         Can be used to override templates from jupyter_server.templates.""")
@@ -1009,11 +1005,11 @@ class ServerApp(JupyterApp):
         """return extra paths + the default locations"""
         return self.extra_template_paths + DEFAULT_TEMPLATE_PATH_LIST
 
-    extra_services = List(Unicode(), config=True,
+    extra_services = List(CUnicode(), config=True,
         help=_("""handlers that should be loaded at higher priority than the default services""")
     )
 
-    websocket_url = Unicode("", config=True,
+    websocket_url = CUnicode("", config=True,
         help="""The base URL for websockets,
         if it differs from the HTTP server (hint: it almost certainly doesn't).
 
@@ -1084,21 +1080,21 @@ class ServerApp(JupyterApp):
               "sent by the upstream reverse proxy. Necessary if the proxy handles SSL"))
     )
 
-    info_file = Unicode()
+    info_file = CUnicode()
 
     @default('info_file')
     def _default_info_file(self):
         info_file = "jpserver-%s.json" % os.getpid()
         return os.path.join(self.runtime_dir, info_file)
 
-    browser_open_file = Unicode()
+    browser_open_file = CUnicode()
 
     @default('browser_open_file')
     def _default_browser_open_file(self):
         basename = "jpserver-%s-open.html" % os.getpid()
         return os.path.join(self.runtime_dir, basename)
 
-    pylab = Unicode('disabled', config=True,
+    pylab = CUnicode('disabled', config=True,
         help=_("""
         DISABLED: use %pylab or %matplotlib in the notebook to enable matplotlib.
         """)
@@ -1117,7 +1113,7 @@ class ServerApp(JupyterApp):
         )
         self.exit(1)
 
-    notebook_dir = Unicode(
+    notebook_dir = CUnicode(
         config=True,
         help=_("DEPRECATED, use root_dir.")
     )
@@ -1127,7 +1123,7 @@ class ServerApp(JupyterApp):
         self.log.warning(_("notebook_dir is deprecated, use root_dir"))
         self.root_dir = change['new']
 
-    root_dir = Unicode(config=True,
+    root_dir = CUnicode(config=True,
         help=_("The directory to use for notebooks and kernels.")
     )
 
