@@ -658,7 +658,7 @@ class ServerApp(JupyterApp):
             value = u''
         return value
 
-    custom_display_url = CUnicode(u'', config=True,
+    custom_display_url = CUnicode('', config=True,
         help=_("""Override URL shown to users.
 
         Replace actual URL, including protocol, address, port and base URL,
@@ -679,15 +679,15 @@ class ServerApp(JupyterApp):
         help=_("The number of additional ports to try if the specified port is not available.")
     )
 
-    certfile = CUnicode(u'', config=True,
+    certfile = CUnicode('', config=True,
         help=_("""The full path to an SSL/TLS certificate file.""")
     )
 
-    keyfile = CUnicode(u'', config=True,
+    keyfile = CUnicode('', config=True,
         help=_("""The full path to a private key file for usage with SSL/TLS.""")
     )
 
-    client_ca = CUnicode(u'', config=True,
+    client_ca = CUnicode('', config=True,
         help=_("""The full path to a certificate authority certificate for SSL/TLS client authentication.""")
     )
 
@@ -778,7 +778,7 @@ class ServerApp(JupyterApp):
     def _token_changed(self, change):
         self._token_generated = False
 
-    password = CUnicode(u'', config=True,
+    password = CUnicode('', config=True,
                       help="""Hashed password to use for web authentication.
 
                       To generate, type in a python/IPython shell:
@@ -893,7 +893,7 @@ class ServerApp(JupyterApp):
                         (ServerApp.browser) configuration option.
                         """)
 
-    browser = CUnicode(u'', config=True,
+    browser = CUnicode('', config=True,
                       help="""Specify what command to use to invoke a web
                       browser when starting the server. If not specified, the
                       default browser will be determined by the `webbrowser`
