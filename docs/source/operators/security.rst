@@ -217,5 +217,4 @@ To share a signatures database among users, you can configure:
     c.NotebookNotary.data_dir = "/path/to/signature_dir"
 
 to specify a non-default path to the SQLite database (of notebook hashes,
-essentially). We are aware that SQLite doesn't work well on NFS and we are
-`working out better ways to do this <https://github.com/jupyter/notebook/issues/1782>`_.
+essentially).

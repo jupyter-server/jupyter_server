@@ -30,7 +30,7 @@ We strongly recommend that you upgrade to version 9+ of pip before upgrading ``j
 - Classic server extension discovery and support
 - Bug fixes
 - Ready for users
-- JupyterLab is the first servver running on top of Jupyter Server
+- JupyterLab is the first server running on top of Jupyter Server
 
 .. _release-0.0.2:
 
