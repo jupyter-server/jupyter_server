@@ -15,6 +15,7 @@ setup_args = dict(
     name             = 'jupyter_server',
     description      = 'The backend—i.e. core services, APIs, and REST endpoints—to Jupyter web applications.',
     long_description = README,
+    long_description_content_type='text/markdown',
     version          = VERSION,
     packages         = find_packages('.'),
     include_package_data = True,
