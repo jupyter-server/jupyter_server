@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import shutil
 import pytest
 import asyncio
 from binascii import hexlify
@@ -71,7 +72,6 @@ sample_kernel_json = {
 }
 argv = pytest.fixture(lambda: [])
 
-
 @pytest.fixture
 def environ(
     monkeypatch,
@@ -88,6 +88,18 @@ def environ(
 ):
     monkeypatch.setenv("HOME", str(home_dir))
     monkeypatch.setenv("PYTHONPATH", os.pathsep.join(sys.path))
+
+    # Get path to nbconvert template directory *before*
+    # monkeypatching the paths env variable.
+    possible_paths = jupyter_core.paths.jupyter_path('nbconvert', 'templates')
+    nbconvert_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            nbconvert_path = path
+            break
+
+    nbconvert_target = data_dir / 'nbconvert' / 'templates'
+
     # monkeypatch.setenv("JUPYTER_NO_CONFIG", "1")
     monkeypatch.setenv("JUPYTER_CONFIG_DIR", str(config_dir))
     monkeypatch.setenv("JUPYTER_DATA_DIR", str(data_dir))
@@ -100,6 +112,10 @@ def environ(
         jupyter_core.paths, "SYSTEM_CONFIG_PATH", [str(system_config_path)]
     )
     monkeypatch.setattr(jupyter_core.paths, "ENV_CONFIG_PATH", [str(env_config_path)])
+
+    # copy nbconvert templates to new tmp data_dir.
+    if nbconvert_path:
+        shutil.copytree(nbconvert_path, str(nbconvert_target))
 
 
 @pytest.fixture
