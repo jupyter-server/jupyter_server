@@ -3,9 +3,9 @@ Welcome!
 
 You've landed on the documentation pages for the **Jupyter Server** Project. Some other pages you may have been looking for:
 
-* `Jupyter Server Github Repo <https://github.com/jupyter/jupyter_server>`_
-* `JupyterLab Github Repo <https://github.com/jupyterlab/jupyterlab>`_
-* `Jupyter Notebook Github Repo <https://github.com/jupyter/notebook>`_
+* `Jupyter Server Github Repo <https://github.com/jupyter/jupyter_server>`_, the source code we describe in this code.
+* `Jupyter Notebook Github Repo <https://github.com/jupyter/notebook>`_ , the source code for the classic Notebook.
+* `JupyterLab Github Repo <https://github.com/jupyterlab/jupyterlab>`_, the JupyterLab server wich runs on the Jupyter Server.
 
 
 Introduction
@@ -15,7 +15,7 @@ Jupyter Server is the backendâ€”the core services, APIs, and `REST endpoints`_â€
 
 .. note::
 
-   Jupyter Server is a replacement for the Tornado Web Server in `Jupyter Notebook`_. Jupyter web applications should move to using Jupyter Server. For help, see `this page <operators/migrate-from-nbserver>`_.
+   Jupyter Server is a replacement for the Tornado Web Server in `Jupyter Notebook`_. Jupyter web applications should move to using Jupyter Server. For help, see the :ref:`migrate_from_notebook` page.
 
 .. _Tornado: https://www.tornadoweb.org/en/stable/
 .. _Jupyter Notebook: https://github.com/jupyter/notebook
