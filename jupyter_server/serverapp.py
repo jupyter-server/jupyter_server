@@ -119,7 +119,6 @@ JUPYTER_SERVICE_HANDLERS = dict(
     api=['jupyter_server.services.api.handlers'],
     config=['jupyter_server.services.config.handlers'],
     contents=['jupyter_server.services.contents.handlers'],
-    edit=['jupyter_server.edit.handlers'],
     files=['jupyter_server.files.handlers'],
     kernels=['jupyter_server.services.kernels.handlers'],
     kernelspecs=[
@@ -574,7 +573,6 @@ class ServerApp(JupyterApp):
         'auth',
         'config',
         'contents',
-        'edit',
         'files',
         'kernels',
         'kernelspecs',
