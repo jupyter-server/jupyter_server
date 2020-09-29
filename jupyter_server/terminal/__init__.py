@@ -10,8 +10,8 @@ from ipython_genutils.py3compat import which
 from terminado import NamedTermManager
 from tornado.log import app_log
 from jupyter_server.utils import url_path_join as ujoin
-from .handlers import TerminalHandler, TermSocket
 from . import api_handlers
+
 
 def initialize(webapp, root_dir, connection_url, settings):
     if os.name == 'nt':
@@ -33,9 +33,6 @@ def initialize(webapp, root_dir, connection_url, settings):
     terminal_manager.log = app_log
     base_url = webapp.settings['base_url']
     handlers = [
-        (ujoin(base_url, r"/terminals/(\w+)"), TerminalHandler),
-        (ujoin(base_url, r"/terminals/websocket/(\w+)"), TermSocket,
-             {'term_manager': terminal_manager}),
         (ujoin(base_url, r"/api/terminals"), api_handlers.TerminalRootHandler),
         (ujoin(base_url, r"/api/terminals/(\w+)"), api_handlers.TerminalHandler),
     ]
