@@ -70,3 +70,37 @@ async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path, kill_
 
     assert data['name'] == term_name
     await kill_all()
+
+
+async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
+    resp = await fetch(
+        'api', 'terminals',
+        method='POST',
+        body=json.dumps({'cwd': str(terminal_path)}),
+        allow_nonstandard_methods=True,
+    )
+
+    data = json.loads(resp.body.decode())
+    term_name = data['name']
+
+    ws = await ws_fetch(
+        'terminals', 'websocket', term_name
+    )
+
+    ws.write_message(json.dumps(['stdin', 'pwd\r\n']))
+
+    message_stdout = ''
+    while True:
+        try:
+            message = await asyncio.wait_for(ws.read_message(), timeout=1.0)
+        except asyncio.TimeoutError:
+            break
+
+        message = json.loads(message)
+
+        if message[0] == 'stdout':
+            message_stdout += message[1]
+
+    ws.close()
+
+    assert str(terminal_path) in message_stdout

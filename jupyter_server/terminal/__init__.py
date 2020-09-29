@@ -11,6 +11,7 @@ from terminado import NamedTermManager
 from tornado.log import app_log
 from jupyter_server.utils import url_path_join as ujoin
 from . import api_handlers
+from .handlers import TermSocket
 
 
 def initialize(webapp, root_dir, connection_url, settings):
@@ -33,6 +34,8 @@ def initialize(webapp, root_dir, connection_url, settings):
     terminal_manager.log = app_log
     base_url = webapp.settings['base_url']
     handlers = [
+        (ujoin(base_url, r"/terminals/websocket/(\w+)"), TermSocket,
+             {'term_manager': terminal_manager}),
         (ujoin(base_url, r"/api/terminals"), api_handlers.TerminalRootHandler),
         (ujoin(base_url, r"/api/terminals/(\w+)"), api_handlers.TerminalHandler),
     ]
