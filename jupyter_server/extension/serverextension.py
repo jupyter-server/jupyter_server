@@ -33,9 +33,8 @@ def _get_config_dir(user=False, sys_prefix=False):
     sys_prefix : bool [default: False]
         Get sys.prefix, i.e. ~/.envs/my-env/etc/jupyter
     """
-    user = False if sys_prefix else user
     if user and sys_prefix:
-        raise ArgumentConflict("Cannot specify more than one of user or sys_prefix")
+        sys_prefix = False
     if user:
         extdir = jupyter_config_dir()
     elif sys_prefix:
