@@ -13,6 +13,7 @@ from traitlets import (
 )
 from traitlets.config import Config
 from tornado.log import LogFormatter
+from tornado.web import RedirectHandler
 
 from jupyter_core.application import JupyterApp
 
@@ -20,7 +21,6 @@ from jupyter_server.serverapp import ServerApp
 from jupyter_server.transutils import _
 from jupyter_server.utils import url_path_join
 from .handler import ExtensionHandlerMixin
-
 
 # -----------------------------------------------------------------------------
 # Util functions and classes.
@@ -421,6 +421,36 @@ class ExtensionApp(JupyterApp):
             extension._link_jupyter_server_extension(serverapp)
         extension.initialize()
         return extension
+
+    @classmethod
+    def load_classic_server_extension(cls, serverapp):
+        """Enables extension to be loaded as classic Notebook (jupyter/notebook) extension.
+        """
+        extension = cls()
+        extension.serverapp = serverapp
+        extension.load_config_file()
+        extension.update_config(serverapp.config)
+        extension.parse_command_line(serverapp.extra_args)
+        # Add redirects to get favicons from old locations in the classic notebook server
+        extension.handlers.extend([
+            (r"/static/favicons/favicon.ico", RedirectHandler,
+                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon.ico")}),
+            (r"/static/favicons/favicon-busy-1.ico", RedirectHandler,
+                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-1.ico")}),
+            (r"/static/favicons/favicon-busy-2.ico", RedirectHandler,
+                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-2.ico")}),
+            (r"/static/favicons/favicon-busy-3.ico", RedirectHandler,
+                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-3.ico")}),
+            (r"/static/favicons/favicon-file.ico", RedirectHandler,
+                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-file.ico")}),
+            (r"/static/favicons/favicon-notebook.ico", RedirectHandler,
+                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-notebook.ico")}),
+            (r"/static/favicons/favicon-terminal.ico", RedirectHandler,
+                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-terminal.ico")}),
+            (r"/static/logo/logo.png", RedirectHandler,
+                {"url": url_path_join(serverapp.base_url, "static/base/images/logo.png")}),
+        ])
+        extension.initialize()
 
     @classmethod
     def launch_instance(cls, argv=None, **kwargs):
