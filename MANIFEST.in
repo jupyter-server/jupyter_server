@@ -4,10 +4,9 @@ include README.md
 include RELEASE.md
 include CHANGELOG.md
 include setupbase.py
-include jupyter_server/i18n/*
-include jupyter_server/static/*
-include jupyter_server/static/*/*
-include jupyter_server/templates/*
+
+# include everything in package_data
+include jupyter_server/**/*
 
 # Documentation
 graft docs
