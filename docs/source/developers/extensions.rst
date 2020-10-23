@@ -299,6 +299,23 @@ To make your extension executable from anywhere on your system, point an entry-p
         }
     )
 
+``ExtensionApp`` as a classic Notebook server extension
+-------------------------------------------------------
+
+An extension that extends ``ExtensionApp`` should still work with the old Tornado server from the classic Jupyter Notebook. The ``ExtensionApp`` class 
+provides a method, ``load_classic_server_extension``, that handles the extension initialization. Simply  define a ``load_jupyter_server_extension`` reference
+pointing at the ``load_classic_server_extension`` method: 
+
+.. code-block:: python
+
+    # This is typically defined in the root `__init__.py` 
+    # file of the extension package.
+    load_jupyter_server_extension = MyExtensionApp.load_classic_server_extension
+
+
+If the extension is enabled, the extension will be loaded when the server starts.
+
+
 Distributing a server extension
 ===============================
 
