@@ -140,3 +140,54 @@ class GenericCheckpointsMixin(object):
         }
         """
         raise NotImplementedError("must be implemented in a subclass")
+
+
+class AsyncCheckpoints(Checkpoints):
+    """
+    Base class for managing checkpoints for a ContentsManager asynchronously.
+    """
+
+    async def rename_all_checkpoints(self, old_path, new_path):
+        """Rename all checkpoints for old_path to new_path."""
+        for cp in (await self.list_checkpoints(old_path)):
+            await self.rename_checkpoint(cp['id'], old_path, new_path)
+
+    async def delete_all_checkpoints(self, path):
+        """Delete all checkpoints for the given path."""
+        for checkpoint in (await self.list_checkpoints(path)):
+            await self.delete_checkpoint(checkpoint['id'], path)
+
+
+class AsyncGenericCheckpointsMixin(GenericCheckpointsMixin):
+    """
+    Helper for creating Asynchronous Checkpoints subclasses that can be used with any
+    ContentsManager.
+    """
+
+    async def create_checkpoint(self, contents_mgr, path):
+        model = await contents_mgr.get(path, content=True)
+        type = model['type']
+        if type == 'notebook':
+            return await self.create_notebook_checkpoint(
+                model['content'],
+                path,
+            )
+        elif type == 'file':
+            return await self.create_file_checkpoint(
+                model['content'],
+                model['format'],
+                path,
+            )
+        else:
+            raise HTTPError(500, u'Unexpected type %s' % type)
+
+    async def restore_checkpoint(self, contents_mgr, checkpoint_id, path):
+        """Restore a checkpoint."""
+        type = await contents_mgr.get(path, content=False)['type']
+        if type == 'notebook':
+            model = await self.get_notebook_checkpoint(checkpoint_id, path)
+        elif type == 'file':
+            model = await self.get_file_checkpoint(checkpoint_id, path)
+        else:
+            raise HTTPError(500, u'Unexpected type %s' % type)
+        await contents_mgr.save(model, path)

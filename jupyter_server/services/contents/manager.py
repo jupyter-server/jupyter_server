@@ -12,7 +12,7 @@ import re
 from tornado.web import HTTPError, RequestHandler
 
 from ...files.handlers import FilesHandler
-from .checkpoints import Checkpoints
+from .checkpoints import Checkpoints, AsyncCheckpoints
 from traitlets.config.configurable import LoggingConfigurable
 from nbformat import sign, validate as validate_nb, ValidationError
 from nbformat.v4 import new_notebook
@@ -334,7 +334,7 @@ class ContentsManager(LoggingConfigurable):
         basename, dot, ext = filename.rpartition('.')
         if ext != 'ipynb':
                 basename, dot, ext = filename.partition('.')
-                
+
         suffix = dot + ext
 
         for i in itertools.count():
@@ -357,29 +357,29 @@ class ContentsManager(LoggingConfigurable):
                 e.message, json.dumps(e.instance, indent=1, default=lambda obj: '<UNKNOWN>'),
             )
         return model
-    
+
     def new_untitled(self, path='', type='', ext=''):
         """Create a new untitled file or directory in path
-        
+
         path must be a directory
-        
+
         File extension can be specified.
-        
+
         Use `new` to create files with a fully specified path (including filename).
         """
         path = path.strip('/')
         if not self.dir_exists(path):
             raise HTTPError(404, 'No such directory: %s' % path)
-        
+
         model = {}
         if type:
             model['type'] = type
-        
+
         if ext == '.ipynb':
             model.setdefault('type', 'notebook')
         else:
             model.setdefault('type', 'file')
-        
+
         insert = ''
         if model['type'] == 'directory':
             untitled = self.untitled_directory
@@ -391,25 +391,25 @@ class ContentsManager(LoggingConfigurable):
             untitled = self.untitled_file
         else:
             raise HTTPError(400, "Unexpected model type: %r" % model['type'])
-        
+
         name = self.increment_filename(untitled + ext, path, insert=insert)
         path = u'{0}/{1}'.format(path, name)
         return self.new(model, path)
-    
+
     def new(self, model=None, path=''):
         """Create a new file or directory and return its model with no content.
-        
+
         To create a new untitled entity in a directory, use `new_untitled`.
         """
         path = path.strip('/')
         if model is None:
             model = {}
-        
+
         if path.endswith('.ipynb'):
             model.setdefault('type', 'notebook')
         else:
             model.setdefault('type', 'file')
-        
+
         # no content, not a directory, so fill out new-file model
         if 'content' not in model and model['type'] != 'directory':
             if model['type'] == 'notebook':
@@ -419,7 +419,7 @@ class ContentsManager(LoggingConfigurable):
                 model['content'] = ''
                 model['type'] = 'file'
                 model['format'] = 'text'
-        
+
         model = self.save(model, path)
         return model
 
@@ -429,7 +429,7 @@ class ContentsManager(LoggingConfigurable):
         If to_path not specified, it will be the parent directory of from_path.
         If to_path is a directory, filename will increment `from_path-Copy#.ext`.
         Considering multi-part extensions, the Copy# part will be placed before the first dot for all the extensions except `ipynb`.
-        For easier manual searching in case of notebooks, the Copy# part will be placed before the last dot. 
+        For easier manual searching in case of notebooks, the Copy# part will be placed before the last dot.
 
         from_path must be a full path to a file.
         """
@@ -442,20 +442,20 @@ class ContentsManager(LoggingConfigurable):
         else:
             from_dir = ''
             from_name = path
-        
+
         model = self.get(path)
         model.pop('path', None)
         model.pop('name', None)
         if model['type'] == 'directory':
             raise HTTPError(400, "Can't copy directories")
-        
+
         if to_path is None:
             to_path = from_dir
         if self.dir_exists(to_path):
             name = copy_pat.sub(u'.', from_name)
             to_name = self.increment_filename(name, to_path, insert='-Copy')
             to_path = u'{0}/{1}'.format(to_path, to_name)
-        
+
         model = self.save(model, to_path)
         return model
 
@@ -530,3 +530,268 @@ class ContentsManager(LoggingConfigurable):
 
     def delete_checkpoint(self, checkpoint_id, path):
         return self.checkpoints.delete_checkpoint(checkpoint_id, path)
+
+
+class AsyncContentsManager(ContentsManager):
+    """Base class for serving files and directories asynchronously."""
+
+    checkpoints_class = Type(AsyncCheckpoints, config=True)
+    checkpoints = Instance(AsyncCheckpoints, config=True)
+
+    # ContentsManager API part 1: methods that must be
+    # implemented in subclasses.
+
+    async def dir_exists(self, path):
+        """Does a directory exist at the given path?
+
+        Like os.path.isdir
+
+        Override this method in subclasses.
+
+        Parameters
+        ----------
+        path : string
+            The path to check
+
+        Returns
+        -------
+        exists : bool
+            Whether the path does indeed exist.
+        """
+        raise NotImplementedError
+
+    async def is_hidden(self, path):
+        """Is path a hidden directory or file?
+
+        Parameters
+        ----------
+        path : string
+            The path to check. This is an API path (`/` separated,
+            relative to root dir).
+
+        Returns
+        -------
+        hidden : bool
+            Whether the path is hidden.
+
+        """
+        raise NotImplementedError
+
+    async def file_exists(self, path=''):
+        """Does a file exist at the given path?
+
+        Like os.path.isfile
+
+        Override this method in subclasses.
+
+        Parameters
+        ----------
+        path : string
+            The API path of a file to check for.
+
+        Returns
+        -------
+        exists : bool
+            Whether the file exists.
+        """
+        raise NotImplementedError('must be implemented in a subclass')
+
+    async def exists(self, path):
+        """Does a file or directory exist at the given path?
+
+        Like os.path.exists
+
+        Parameters
+        ----------
+        path : string
+            The API path of a file or directory to check for.
+
+        Returns
+        -------
+        exists : bool
+            Whether the target exists.
+        """
+        return await (self.file_exists(path) or self.dir_exists(path))
+
+    async def get(self, path, content=True, type=None, format=None):
+        """Get a file or directory model."""
+        raise NotImplementedError('must be implemented in a subclass')
+
+    async def save(self, model, path):
+        """
+        Save a file or directory model to path.
+
+        Should return the saved model with no content.  Save implementations
+        should call self.run_pre_save_hook(model=model, path=path) prior to
+        writing any data.
+        """
+        raise NotImplementedError('must be implemented in a subclass')
+
+    async def delete_file(self, path):
+        """Delete the file or directory at path."""
+        raise NotImplementedError('must be implemented in a subclass')
+
+    async def rename_file(self, old_path, new_path):
+        """Rename a file or directory."""
+        raise NotImplementedError('must be implemented in a subclass')
+
+    # ContentsManager API part 2: methods that have useable default
+    # implementations, but can be overridden in subclasses.
+
+    async def delete(self, path):
+        """Delete a file/directory and any associated checkpoints."""
+        path = path.strip('/')
+        if not path:
+            raise HTTPError(400, "Can't delete root")
+
+        await self.delete_file(path)
+        await self.checkpoints.delete_all_checkpoints(path)
+
+    async def rename(self, old_path, new_path):
+        """Rename a file and any checkpoints associated with that file."""
+        await self.rename_file(old_path, new_path)
+        await self.checkpoints.rename_all_checkpoints(old_path, new_path)
+
+    async def update(self, model, path):
+        """Update the file's path
+
+        For use in PATCH requests, to enable renaming a file without
+        re-uploading its contents. Only used for renaming at the moment.
+        """
+        path = path.strip('/')
+        new_path = await model.get('path', path).strip('/')
+        if path != new_path:
+            await self.rename(path, new_path)
+        model = await self.get(new_path, content=False)
+        return model
+
+    async def new_untitled(self, path='', type='', ext=''):
+        """Create a new untitled file or directory in path
+
+        path must be a directory
+
+        File extension can be specified.
+
+        Use `new` to create files with a fully specified path (including filename).
+        """
+        path = path.strip('/')
+        if not (await self.dir_exists(path)):
+            raise HTTPError(404, 'No such directory: %s' % path)
+
+        model = {}
+        if type:
+            model['type'] = type
+
+        if ext == '.ipynb':
+            model.setdefault('type', 'notebook')
+        else:
+            model.setdefault('type', 'file')
+
+        insert = ''
+        if model['type'] == 'directory':
+            untitled = self.untitled_directory
+            insert = ' '
+        elif model['type'] == 'notebook':
+            untitled = self.untitled_notebook
+            ext = '.ipynb'
+        elif model['type'] == 'file':
+            untitled = self.untitled_file
+        else:
+            raise HTTPError(400, "Unexpected model type: %r" % model['type'])
+
+        name = self.increment_filename(untitled + ext, path, insert=insert)
+        path = u'{0}/{1}'.format(path, name)
+        return await self.new(model, path)
+
+    async def new(self, model=None, path=''):
+        """Create a new file or directory and return its model with no content.
+
+        To create a new untitled entity in a directory, use `new_untitled`.
+        """
+        path = path.strip('/')
+        if model is None:
+            model = {}
+
+        if path.endswith('.ipynb'):
+            model.setdefault('type', 'notebook')
+        else:
+            model.setdefault('type', 'file')
+
+        # no content, not a directory, so fill out new-file model
+        if 'content' not in model and model['type'] != 'directory':
+            if model['type'] == 'notebook':
+                model['content'] = new_notebook()
+                model['format'] = 'json'
+            else:
+                model['content'] = ''
+                model['type'] = 'file'
+                model['format'] = 'text'
+
+        model = await self.save(model, path)
+        return model
+
+    async def copy(self, from_path, to_path=None):
+        """Copy an existing file and return its new model.
+
+        If to_path not specified, it will be the parent directory of from_path.
+        If to_path is a directory, filename will increment `from_path-Copy#.ext`.
+        Considering multi-part extensions, the Copy# part will be placed before the first dot for all the extensions except `ipynb`.
+        For easier manual searching in case of notebooks, the Copy# part will be placed before the last dot.
+
+        from_path must be a full path to a file.
+        """
+        path = from_path.strip('/')
+        if to_path is not None:
+            to_path = to_path.strip('/')
+
+        if '/' in path:
+            from_dir, from_name = path.rsplit('/', 1)
+        else:
+            from_dir = ''
+            from_name = path
+
+        model = await self.get(path)
+        model.pop('path', None)
+        model.pop('name', None)
+        if model['type'] == 'directory':
+            raise HTTPError(400, "Can't copy directories")
+        if to_path is None:
+            to_path = from_dir
+        if (await self.dir_exists(to_path)) :
+            name = copy_pat.sub(u'.', from_name)
+            to_name = self.increment_filename(name, to_path, insert='-Copy')
+            to_path = u'{0}/{1}'.format(to_path, to_name)
+
+        model = await self.save(model, to_path)
+        return model
+
+    async def trust_notebook(self, path):
+        """Explicitly trust a notebook
+
+        Parameters
+        ----------
+        path : string
+            The path of a notebook
+        """
+        model = await self.get(path)
+        nb = model['content']
+        self.log.warning("Trusting notebook %s", path)
+        self.notary.mark_cells(nb, True)
+        self.check_and_sign(nb, path)
+
+    # Part 3: Checkpoints API
+    async def create_checkpoint(self, path):
+        """Create a checkpoint."""
+        return await self.checkpoints.create_checkpoint(self, path)
+
+    async def restore_checkpoint(self, checkpoint_id, path):
+        """
+        Restore a checkpoint.
+        """
+        await self.checkpoints.restore_checkpoint(self, checkpoint_id, path)
+
+    async def list_checkpoints(self, path):
+        return await self.checkpoints.list_checkpoints(path)
+
+    async def delete_checkpoint(self, checkpoint_id, path):
+        return await self.checkpoints.delete_checkpoint(checkpoint_id, path)
