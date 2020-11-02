@@ -6,8 +6,6 @@ import pytest
 from traitlets.tests.utils import check_help_all_output
 from jupyter_server.utils import url_escape, url_unescape, is_hidden, is_file_hidden, secure_write
 from ipython_genutils.py3compat import cast_unicode
-from ipython_genutils.tempdir import TemporaryDirectory
-from ipython_genutils.testing.decorators import skip_if_not_win32, skip_win32
 
 
 def test_help_output():
