@@ -408,14 +408,14 @@ Migrating an extension to use Jupyter Server
 
 If you're a developer of a `classic Notebook Server`_ extension, your extension should be able to work with *both* the classic notebook server and ``jupyter_server``.
 
-There are two key steps to make this happen:
+There are a few key steps to make this happen:
 
 1. Point Jupyter Server to the ``load_jupyter_server_extension`` function with a new reference name.
     The ``load_jupyter_server_extension`` function was the key to loading a server extension in the classic Notebook Server. Jupyter Server expects the name of this function to be prefixed with an underscore—i.e. ``_load_jupyter_server_extension``. You can easily achieve this by adding a reference to the old function name with the new name in the same module.
 
     .. code-block:: python
 
-        def load_jupyter_server_extension(nbapp):
+        def load_jupyter_server_extension(nb_server_app):
             ...
 
         # Reference the old function name with the new function name.
@@ -475,7 +475,72 @@ There are two key steps to make this happen:
 
         )
 
+3. (Optional) Point extension at the new favicon location.
+    The favicons in the Jupyter Notebook have been moved to a new location in Jupyter Server. If your extension is using one of these icons, you'll want to add a set of redirect handlers this. (In ``ExtensionApp``, this is handled automatically).
 
+    This usually means adding a chunk to your ``load_jupyter_server_extension`` function similar to this:
+
+    .. code-block:: python
+
+        def load_jupyter_server_extension(nb_server_app):
+            
+            web_app = nb_server_app.web_app
+            host_pattern = '.*$'
+            base_url = web_app.settings['base_url']
+
+            # Add custom extensions handler.
+            custom_handlers = [
+                ...
+            ]
+
+            # Favicon redirects.
+            favicon_redirects = [
+                (   
+                    url_path_join(base_url, "/static/favicons/favicon.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon.ico")
+                ),
+                (
+                    url_path_join(base_url, "/static/favicons/favicon-busy-1.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-1.ico")}
+                ),
+                (
+                    url_path_join(base_url, "/static/favicons/favicon-busy-2.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-2.ico")}
+                ),
+                (
+                    url_path_join(base_url, "/static/favicons/favicon-busy-3.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-3.ico")}
+                ),
+                (
+                    url_path_join(base_url, "/static/favicons/favicon-file.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-file.ico")}
+                ),
+                (
+                    url_path_join(base_url, "/static/favicons/favicon-notebook.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-notebook.ico")}
+                ),
+                (
+                    url_path_join(base_url, "/static/favicons/favicon-terminal.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-terminal.ico")}
+                ),
+                (
+                    url_path_join(base_url, "/static/logo/logo.png"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/logo.png")}
+                ),
+            ]
+
+            web_app.add_handlers(
+                host_pattern, 
+                custom_handlers + favicon_redirects
+            )
 
 
 .. _`classic Notebook Server`: https://jupyter-notebook.readthedocs.io/en/stable/extending/handlers.html
