@@ -1,21 +1,15 @@
-
 import os
 import getpass
-import pathlib
 import pytest
 import logging
-
 from unittest.mock import patch
-
 
 from traitlets import TraitError
 from traitlets.tests.utils import check_help_all_output
-
 from jupyter_core.application import NoStart
 
-
 from jupyter_server.serverapp import (
-    ServerApp, 
+    ServerApp,
     list_running_servers,
     JupyterPasswordApp,
     JupyterServerStopApp
@@ -35,12 +29,12 @@ def test_server_info_file(tmp_path, configurable_serverapp):
     servers = list(list_running_servers(app.runtime_dir))
 
     assert len(servers) == 1
-    sinfo = servers[0]    
-    
+    sinfo = servers[0]
+
     assert sinfo['port'] == app.port
     assert sinfo['url'] == app.connection_url
     assert sinfo['version'] == app.version
-    
+
     app.remove_server_info_file()
 
     assert list(list_running_servers(app.runtime_dir)) == []
@@ -62,7 +56,7 @@ def test_root_dir(tmp_path, configurable_serverapp):
 )
 def invalid_root_dir(tmp_path, request):
     path = tmp_path.joinpath(*request.param)
-    # If the path is a file, create it. 
+    # If the path is a file, create it.
     if os.path.splitext(str(path))[1] != '':
         path.write_text('')
     return str(path)
@@ -90,10 +84,10 @@ def valid_root_dir(tmp_path, request):
 def test_valid_root_dir(valid_root_dir, configurable_serverapp):
     app = configurable_serverapp(root_dir=valid_root_dir)
     root_dir = valid_root_dir
-    # If nested path, the last slash should 
+    # If nested path, the last slash should
     # be stripped by the root_dir trait.
     if root_dir != '/':
-        root_dir = valid_root_dir.rstrip('/') 
+        root_dir = valid_root_dir.rstrip('/')
     assert app.root_dir == root_dir
 
 
