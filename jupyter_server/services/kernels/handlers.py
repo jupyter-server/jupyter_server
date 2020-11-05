@@ -323,6 +323,10 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         channel = getattr(stream, 'channel', None)
         msg_type = msg['header']['msg_type']
 
+        if channel == 'iopub' and msg_type == 'error':
+            self._on_error(msg)
+
+
         if channel == 'iopub' and msg_type == 'status' and msg['content'].get('execution_state') == 'idle':
             # reset rate limit counter on status=idle,
             # to avoid 'Run All' hitting limits prematurely.
@@ -475,6 +479,12 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         logging.error("kernel %s restarted failed!", self.kernel_id)
         self._send_status_message('dead')
 
+    def _on_error(self, msg):
+        if self.kernel_manager.allow_tracebacks:
+            return
+        msg['content']['ename'] = 'ExecutionError'
+        msg['content']['evalue'] = 'Execution error'
+        msg['content']['traceback'] = [self.kernel_manager.traceback_replacement_message]
 
 #-----------------------------------------------------------------------------
 # URL to handler mappings
