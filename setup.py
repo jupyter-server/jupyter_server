@@ -52,7 +52,7 @@ setup_args = dict(
     ],
     extras_require = {
         'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
-                 'pytest', 'pytest-cov', 'pytest-tornasync',
+                 'pytest', 'pytest-cov', 'pytest-jupyter', 'pytest-tornasync',
                  'pytest-console-scripts', 'ipykernel'],
         'test:sys_platform == "win32"': ['nose-exclude'],
     },

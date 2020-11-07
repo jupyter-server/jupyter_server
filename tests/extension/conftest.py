@@ -26,19 +26,19 @@ mock_html = """
 
 
 @pytest.fixture
-def mock_template(template_dir):
-    index = template_dir.joinpath('index.html')
+def mock_template(jp_template_dir):
+    index = jp_template_dir.joinpath('index.html')
     index.write_text(mock_html)
 
 
 @pytest.fixture
-def extension_manager(serverapp):
-    return serverapp.extension_manager
+def extension_manager(jp_serverapp):
+    return jp_serverapp.extension_manager
 
 
 @pytest.fixture
-def config_file(config_dir):
+def config_file(jp_config_dir):
     """"""
-    f = config_dir.joinpath("jupyter_mockextension_config.py")
+    f = jp_config_dir.joinpath("jupyter_mockextension_config.py")
     f.write_text("c.MockExtensionApp.mock_trait ='config from file'")
     return f

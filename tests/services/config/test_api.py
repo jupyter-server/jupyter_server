@@ -4,16 +4,16 @@ import pytest
 from jupyter_server.utils import url_path_join
 
 
-async def test_create_retrieve_config(fetch):
+async def test_create_retrieve_config(jp_fetch):
     sample = {'foo': 'bar', 'baz': 73}
-    response = await fetch(
+    response = await jp_fetch(
         'api', 'config', 'example',
         method='PUT',
         body=json.dumps(sample)
     )
     assert response.code == 204
 
-    response2 = await fetch(
+    response2 = await jp_fetch(
         'api', 'config', 'example',
         method='GET',
     )
@@ -21,7 +21,7 @@ async def test_create_retrieve_config(fetch):
     assert json.loads(response2.body.decode()) == sample
 
 
-async def test_modify(fetch):
+async def test_modify(jp_fetch):
     sample = {
         'foo': 'bar', 
         'baz': 73,
@@ -43,13 +43,13 @@ async def test_modify(fetch):
         'sub': {'a': 8, 'd': 9}
     }
 
-    await fetch(
+    await jp_fetch(
         'api', 'config', 'example',
         method='PUT',
         body=json.dumps(sample)
     )
 
-    response2 = await fetch(
+    response2 = await jp_fetch(
         'api', 'config', 'example',
         method='PATCH',
         body=json.dumps(modified_sample)
@@ -59,8 +59,8 @@ async def test_modify(fetch):
     assert json.loads(response2.body.decode()) == diff
     
 
-async def test_get_unknown(fetch):
-    response = await fetch(
+async def test_get_unknown(jp_fetch):
+    response = await jp_fetch(
         'api', 'config', 'nonexistant',
         method='GET',
     )

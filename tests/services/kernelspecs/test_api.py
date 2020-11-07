@@ -3,20 +3,20 @@ import json
 
 import tornado
 
-from jupyter_server.pytest_plugin import some_resource
+from pytest_jupyter.jupyter_server import some_resource
 
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 
 from ...utils import expected_http_error
 
 
-async def test_list_kernelspecs_bad(fetch, kernelspecs, data_dir):
-    bad_kernel_dir = data_dir.joinpath(data_dir, 'kernels', 'bad')
+async def test_list_kernelspecs_bad(jp_fetch, jp_kernelspecs, jp_data_dir):
+    bad_kernel_dir = jp_data_dir.joinpath(jp_data_dir, 'kernels', 'bad')
     bad_kernel_dir.mkdir(parents=True)
     bad_kernel_json = bad_kernel_dir.joinpath('kernel.json')
     bad_kernel_json.write_text('garbage')
 
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernelspecs',
         method='GET'
     )
@@ -28,8 +28,8 @@ async def test_list_kernelspecs_bad(fetch, kernelspecs, data_dir):
     assert len(specs) > 2
 
 
-async def test_list_kernelspecs(fetch, kernelspecs):
-    r = await fetch(
+async def test_list_kernelspecs(jp_fetch, jp_kernelspecs):
+    r = await jp_fetch(
         'api', 'kernelspecs',
         method='GET'
     )
@@ -50,8 +50,8 @@ async def test_list_kernelspecs(fetch, kernelspecs):
     assert any(is_default_kernelspec(s) for s in specs.values()), specs
 
 
-async def test_get_kernelspecs(fetch, kernelspecs):
-    r = await fetch(
+async def test_get_kernelspecs(jp_fetch, jp_kernelspecs):
+    r = await jp_fetch(
         'api', 'kernelspecs', 'Sample',
         method='GET'
     )
@@ -62,8 +62,8 @@ async def test_get_kernelspecs(fetch, kernelspecs):
     assert isinstance(model['resources'], dict)
 
 
-async def test_get_kernelspec_spaces(fetch, kernelspecs):
-    r = await fetch(
+async def test_get_kernelspec_spaces(jp_fetch, jp_kernelspecs):
+    r = await jp_fetch(
         'api', 'kernelspecs', 'sample%202',
         method='GET'
     )
@@ -71,17 +71,17 @@ async def test_get_kernelspec_spaces(fetch, kernelspecs):
     assert model['name'].lower() == 'sample 2'
 
 
-async def test_get_nonexistant_kernelspec(fetch, kernelspecs):
+async def test_get_nonexistant_kernelspec(jp_fetch, jp_kernelspecs):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await fetch(
+        await jp_fetch(
             'api', 'kernelspecs', 'nonexistant',
             method='GET'
         )
     assert expected_http_error(e, 404)
 
 
-async def test_get_kernel_resource_file(fetch, kernelspecs):
-    r = await fetch(
+async def test_get_kernel_resource_file(jp_fetch, jp_kernelspecs):
+    r = await jp_fetch(
         'kernelspecs', 'sAmple', 'resource.txt',
         method='GET'
     )
@@ -89,16 +89,16 @@ async def test_get_kernel_resource_file(fetch, kernelspecs):
     assert res == some_resource
 
 
-async def test_get_nonexistant_resource(fetch, kernelspecs):
+async def test_get_nonexistant_resource(jp_fetch, jp_kernelspecs):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await fetch(
+        await jp_fetch(
             'kernelspecs', 'nonexistant', 'resource.txt',
             method='GET'
         )
     assert expected_http_error(e, 404)
 
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await fetch(
+        await jp_fetch(
             'kernelspecs', 'sample', 'nonexistant.txt',
             method='GET'
         )

@@ -14,9 +14,9 @@ if sys.platform.startswith('win'):
 # Kill all running terminals after each test to avoid cross-test issues
 # with still running terminals.
 @pytest.fixture
-def kill_all(serverapp):
+def kill_all(jp_serverapp):
     async def _():
-        await serverapp.web_app.settings["terminal_manager"].kill_all()
+        await jp_serverapp.web_app.settings["terminal_manager"].kill_all()
     return _
 
 
@@ -30,14 +30,14 @@ def terminal_path(tmp_path):
     shutil.rmtree(str(subdir), ignore_errors=True)
 
 
-async def test_terminal_create(fetch, kill_all):
-    await fetch(
+async def test_terminal_create(jp_fetch, kill_all):
+    await jp_fetch(
         'api', 'terminals',
         method='POST',
         allow_nonstandard_methods=True,
     )
 
-    resp_list = await fetch(
+    resp_list = await jp_fetch(
         'api', 'terminals',
         method='GET',
         allow_nonstandard_methods=True,
@@ -49,8 +49,8 @@ async def test_terminal_create(fetch, kill_all):
     await kill_all()
 
 
-async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path, kill_all):
-    resp_create = await fetch(
+async def test_terminal_create_with_kwargs(jp_fetch, jp_ws_fetch, terminal_path, kill_all):
+    resp_create = await jp_fetch(
         'api', 'terminals',
         method='POST',
         body=json.dumps({'cwd': str(terminal_path)}),
@@ -60,7 +60,7 @@ async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path, kill_
     data = json.loads(resp_create.body.decode())
     term_name = data['name']
 
-    resp_get = await fetch(
+    resp_get = await jp_fetch(
         'api', 'terminals', term_name,
         method='GET',
         allow_nonstandard_methods=True,
@@ -72,8 +72,8 @@ async def test_terminal_create_with_kwargs(fetch, ws_fetch, terminal_path, kill_
     await kill_all()
 
 
-async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
-    resp = await fetch(
+async def test_terminal_create_with_cwd(jp_fetch, jp_ws_fetch, terminal_path):
+    resp = await jp_fetch(
         'api', 'terminals',
         method='POST',
         body=json.dumps({'cwd': str(terminal_path)}),
@@ -83,7 +83,7 @@ async def test_terminal_create_with_cwd(fetch, ws_fetch, terminal_path):
     data = json.loads(resp.body.decode())
     term_name = data['name']
 
-    ws = await ws_fetch(
+    ws = await jp_ws_fetch(
         'terminals', 'websocket', term_name
     )
 

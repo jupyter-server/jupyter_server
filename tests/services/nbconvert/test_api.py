@@ -1,8 +1,8 @@
 import json
 import pytest
 
-async def test_list_formats(fetch):
-    r = await fetch(
+async def test_list_formats(jp_fetch):
+    r = await jp_fetch(
         'api', 'nbconvert',
         method='GET'
     )

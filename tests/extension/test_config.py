@@ -8,13 +8,13 @@ from jupyter_server.extension.config import (
 # Use ServerApps environment because it monkeypatches
 # jupyter_core.paths and provides a config directory
 # that's not cross contaminating the user config directory.
-pytestmark = pytest.mark.usefixtures("environ")
+pytestmark = pytest.mark.usefixtures("jp_environ")
 
 
 @pytest.fixture
-def configd(env_config_path):
+def configd(jp_env_config_path):
     """A pathlib.Path object that acts like a jupyter_server_config.d folder."""
-    configd = env_config_path.joinpath('jupyter_server_config.d')
+    configd = jp_env_config_path.joinpath('jupyter_server_config.d')
     configd.mkdir()
     return configd
 
