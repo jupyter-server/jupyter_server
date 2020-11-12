@@ -408,8 +408,7 @@ ServerApp.pylab : Unicode
 ServerApp.quit_button : Bool
     Default: ``True``
 
-    If True, display a button in the dashboard to quit
-    (shutdown the Jupyter server).
+    If True, display controls to shut down the Jupyter server, such as menu items or buttons.
 
 ServerApp.rate_limit_window : Float
     Default: ``3``
