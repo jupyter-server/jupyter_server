@@ -1020,8 +1020,7 @@ class ServerApp(JupyterApp):
     )
 
     quit_button = Bool(True, config=True,
-        help="""If True, display a button in the dashboard to quit
-        (shutdown the Jupyter server)."""
+        help="""If True, display controls to shut down the Jupyter server, such as menu items or buttons."""
     )
 
     contents_manager_class = Type(
