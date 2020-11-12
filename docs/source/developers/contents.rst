@@ -192,19 +192,19 @@ methods:
    ContentsManager.is_hidden
 
 You may be required to specify a Checkpoints object, as the default one,
-``FileCheckpoints``, could be incompatible with your custom 
+``FileCheckpoints``, could be incompatible with your custom
 ContentsManager.
 
 Customizing Checkpoints
 -----------------------
 .. currentmodule:: jupyter_server.services.contents.checkpoints
 
-Customized Checkpoint definitions allows behavior to be 
+Customized Checkpoint definitions allows behavior to be
 altered and extended.
 
 The ``Checkpoints`` and ``GenericCheckpointsMixin`` classes
 (from :mod:`jupyter_server.services.contents.checkpoints`)
-have reusable code and are intended to be used together, 
+have reusable code and are intended to be used together,
 but require the following methods to be implemented.
 
 .. autosummary::
@@ -220,7 +220,7 @@ No-op example
 ~~~~~~~~~~~~~
 
 Here is an example of a no-op checkpoints object - note the mixin
-comes first. The docstrings indicate what each method should do or 
+comes first. The docstrings indicate what each method should do or
 return for a more complete implementation.
 
 .. code-block:: python
@@ -238,7 +238,7 @@ return for a more complete implementation.
         def delete_checkpoint(self, checkpoint_id, path):
             """deletes a checkpoint for a file"""
         def list_checkpoints(self, path):
-            """returns a list of checkpoint models for a given file, 
+            """returns a list of checkpoint models for a given file,
             default just does one per file
             """
             return []
@@ -267,3 +267,13 @@ ContentsManager.
 .. _NBFormat: https://nbformat.readthedocs.io/en/latest/index.html
 .. _PGContents: https://github.com/quantopian/pgcontents
 .. _PostgreSQL: https://www.postgresql.org/
+
+Asynchronous Support
+~~~~~~~~~~~~~~~~~~~~
+
+To execute file operations asynchronously in a virtual filesystem, the following classes are available.
+
+- :class:`~manager.AsyncContentsManager`
+- :class:`~filemanager.AsyncFileContentsManager`
+- :class:`~checkpoints.AsyncCheckpoints`
+
