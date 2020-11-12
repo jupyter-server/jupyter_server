@@ -68,8 +68,8 @@ from .base.handlers import MainHandler, RedirectWithParams, Template404
 from .log import log_request
 from .services.kernels.kernelmanager import MappingKernelManager, AsyncMappingKernelManager
 from .services.config import ConfigManager
-from .services.contents.manager import ContentsManager
-from .services.contents.filemanager import FileContentsManager
+from .services.contents.manager import AsyncContentsManager, ContentsManager
+from .services.contents.filemanager import AsyncFileContentsManager, FileContentsManager
 from .services.contents.largefilemanager import LargeFileManager
 from .services.sessions.sessionmanager import SessionManager
 from .gateway.managers import GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient

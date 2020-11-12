@@ -32,6 +32,7 @@ from traitlets import (
 from ipython_genutils.py3compat import string_types
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.transutils import _
+from jupyter_server.utils import ensure_async
 
 
 copy_pat = re.compile(r'\-Copy\d*\.')
@@ -537,6 +538,18 @@ class AsyncContentsManager(ContentsManager):
 
     checkpoints_class = Type(AsyncCheckpoints, config=True)
     checkpoints = Instance(AsyncCheckpoints, config=True)
+    checkpoints_kwargs = Dict(config=True)
+
+    @default('checkpoints')
+    def _default_checkpoints(self):
+        return self.checkpoints_class(**self.checkpoints_kwargs)
+
+    @default('checkpoints_kwargs')
+    def _default_checkpoints_kwargs(self):
+        return dict(
+            parent=self,
+            log=self.log,
+        )
 
     # ContentsManager API part 1: methods that must be
     # implemented in subclasses.
@@ -659,11 +672,48 @@ class AsyncContentsManager(ContentsManager):
         re-uploading its contents. Only used for renaming at the moment.
         """
         path = path.strip('/')
-        new_path = await model.get('path', path).strip('/')
+        new_path = model.get('path', path).strip('/')
         if path != new_path:
             await self.rename(path, new_path)
         model = await self.get(new_path, content=False)
         return model
+
+    async def increment_filename(self, filename, path='', insert=''):
+        """Increment a filename until it is unique.
+
+        Parameters
+        ----------
+        filename : unicode
+            The name of a file, including extension
+        path : unicode
+            The API path of the target's directory
+        insert: unicode
+            The characters to insert after the base filename
+
+        Returns
+        -------
+        name : unicode
+            A filename that is unique, based on the input filename.
+        """
+        # Extract the full suffix from the filename (e.g. .tar.gz)
+        path = path.strip('/')
+        basename, dot, ext = filename.rpartition('.')
+        if ext != 'ipynb':
+                basename, dot, ext = filename.partition('.')
+
+        suffix = dot + ext
+
+        for i in itertools.count():
+            if i:
+                insert_i = '{}{}'.format(insert, i)
+            else:
+                insert_i = ''
+            name = u'{basename}{insert}{suffix}'.format(basename=basename,
+                insert=insert_i, suffix=suffix)
+            file_exists = await ensure_async(self.exists(u'{}/{}'.format(path, name)))
+            if not file_exists:
+                break
+        return name
 
     async def new_untitled(self, path='', type='', ext=''):
         """Create a new untitled file or directory in path
@@ -675,7 +725,8 @@ class AsyncContentsManager(ContentsManager):
         Use `new` to create files with a fully specified path (including filename).
         """
         path = path.strip('/')
-        if not (await self.dir_exists(path)):
+        dir_exists = await ensure_async(self.dir_exists(path))
+        if not dir_exists:
             raise HTTPError(404, 'No such directory: %s' % path)
 
         model = {}
@@ -699,7 +750,7 @@ class AsyncContentsManager(ContentsManager):
         else:
             raise HTTPError(400, "Unexpected model type: %r" % model['type'])
 
-        name = self.increment_filename(untitled + ext, path, insert=insert)
+        name = await self.increment_filename(untitled + ext, path, insert=insert)
         path = u'{0}/{1}'.format(path, name)
         return await self.new(model, path)
 
@@ -757,9 +808,9 @@ class AsyncContentsManager(ContentsManager):
             raise HTTPError(400, "Can't copy directories")
         if to_path is None:
             to_path = from_dir
-        if (await self.dir_exists(to_path)) :
+        if self.dir_exists(to_path):
             name = copy_pat.sub(u'.', from_name)
-            to_name = self.increment_filename(name, to_path, insert='-Copy')
+            to_name = await self.increment_filename(name, to_path, insert='-Copy')
             to_path = u'{0}/{1}'.format(to_path, to_name)
 
         model = await self.save(model, to_path)

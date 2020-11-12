@@ -7,10 +7,12 @@ Utilities for file-based Contents/Checkpoints managers.
 
 from contextlib import contextmanager
 import errno
+from functools import partial
 import io
 import os
 import shutil
 
+from anyio import open_file, run_sync_in_worker_thread
 from tornado.web import HTTPError
 
 from jupyter_server.utils import (
@@ -32,6 +34,11 @@ def replace_file(src, dst):
     """
     os.replace(src, dst)
 
+async def async_replace_file(src, dst):
+    """ replace dst with src asynchronously
+    """
+    await run_sync_in_worker_thread(os.replace, src, dst)
+
 def copy2_safe(src, dst, log=None):
     """copy src to dst
 
@@ -40,6 +47,18 @@ def copy2_safe(src, dst, log=None):
     shutil.copyfile(src, dst)
     try:
         shutil.copystat(src, dst)
+    except OSError:
+        if log:
+            log.debug("copystat on %s failed", dst, exc_info=True)
+
+async def async_copy2_safe(src, dst, log=None):
+    """copy src to dst asynchronously
+
+    like shutil.copy2, but log errors in copystat instead of raising
+    """
+    await run_sync_in_worker_thread(shutil.copyfile, src, dst)
+    try:
+        await run_sync_in_worker_thread(shutil.copystat, src, dst)
     except OSError:
         if log:
             log.debug("copystat on %s failed", dst, exc_info=True)
@@ -116,11 +135,10 @@ def atomic_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
         os.remove(tmp_path)
 
 
-
 @contextmanager
 def _simple_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
     """Context manager to write file without doing atomic writing
-    ( for weird filesystem eg: nfs).
+    (for weird filesystem eg: nfs).
 
     Parameters
     ----------
@@ -159,8 +177,6 @@ def _simple_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
     fileobj.close()
 
 
-
-
 class FileManagerMixin(Configurable):
     """
     Mixin for ContentsAPI classes that interact with the filesystem.
@@ -186,7 +202,7 @@ class FileManagerMixin(Configurable):
 
     @contextmanager
     def open(self, os_path, *args, **kwargs):
-        """wrapper around io.open that turns permission errors into 403"""
+        """wrapper around open that turns permission errors into 403"""
         with self.perm_to_403(os_path):
             with io.open(os_path, *args, **kwargs) as f:
                 yield f
@@ -330,3 +346,94 @@ class FileManagerMixin(Configurable):
 
         with self.atomic_writing(os_path, text=False) as f:
             f.write(bcontent)
+
+class AsyncFileManagerMixin(FileManagerMixin):
+    """
+    Mixin for ContentsAPI classes that interact with the filesystem asynchronously.
+    """
+    async def _copy(self, src, dest):
+        """copy src to dest
+
+        like shutil.copy2, but log errors in copystat
+        """
+        await async_copy2_safe(src, dest, log=self.log)
+
+    async def _read_notebook(self, os_path, as_version=4):
+        """Read a notebook from an os path."""
+        with self.open(os_path, 'r', encoding='utf-8') as f:
+            try:
+                return await run_sync_in_worker_thread(partial(nbformat.read, as_version=as_version), f)
+            except Exception as e:
+                e_orig = e
+
+            # If use_atomic_writing is enabled, we'll guess that it was also
+            # enabled when this notebook was written and look for a valid
+            # atomic intermediate.
+            tmp_path = path_to_intermediate(os_path)
+
+            if not self.use_atomic_writing or not os.path.exists(tmp_path):
+                raise HTTPError(
+                    400,
+                    u"Unreadable Notebook: %s %r" % (os_path, e_orig),
+                )
+
+            # Move the bad file aside, restore the intermediate, and try again.
+            invalid_file = path_to_invalid(os_path)
+            async_replace_file(os_path, invalid_file)
+            async_replace_file(tmp_path, os_path)
+            return await self._read_notebook(os_path, as_version)
+
+    async def _save_notebook(self, os_path, nb):
+        """Save a notebook to an os_path."""
+        with self.atomic_writing(os_path, encoding='utf-8') as f:
+            await run_sync_in_worker_thread(partial(nbformat.write, version=nbformat.NO_CONVERT), nb, f)
+
+    async def _read_file(self, os_path, format):
+        """Read a non-notebook file.
+
+        os_path: The path to be read.
+        format:
+          If 'text', the contents will be decoded as UTF-8.
+          If 'base64', the raw bytes contents will be encoded as base64.
+          If not specified, try to decode as UTF-8, and fall back to base64
+        """
+        if not os.path.isfile(os_path):
+            raise HTTPError(400, "Cannot read non-file %s" % os_path)
+
+        with self.open(os_path, 'rb') as f:
+            bcontent = await run_sync_in_worker_thread(f.read)
+
+        if format is None or format == 'text':
+            # Try to interpret as unicode if format is unknown or if unicode
+            # was explicitly requested.
+            try:
+                return bcontent.decode('utf8'), 'text'
+            except UnicodeError as e:
+                if format == 'text':
+                    raise HTTPError(
+                        400,
+                        "%s is not UTF-8 encoded" % os_path,
+                        reason='bad format',
+                    ) from e
+        return encodebytes(bcontent).decode('ascii'), 'base64'
+
+    async def _save_file(self, os_path, content, format):
+        """Save content of a generic file."""
+        if format not in {'text', 'base64'}:
+            raise HTTPError(
+                400,
+                "Must specify format of file contents as 'text' or 'base64'",
+            )
+        try:
+            if format == 'text':
+                bcontent = content.encode('utf8')
+            else:
+                b64_bytes = content.encode('ascii')
+                bcontent = decodebytes(b64_bytes)
+        except Exception as e:
+            raise HTTPError(
+                400, u'Encoding error saving %s: %s' % (os_path, e)
+            ) from e
+
+        with self.atomic_writing(os_path, text=False) as f:
+            await run_sync_in_worker_thread(f.write, bcontent)
