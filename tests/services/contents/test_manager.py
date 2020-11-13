@@ -15,24 +15,24 @@ from ...utils import expected_http_error
 
 # -------------- Functions ----------------------------
 
-def _make_dir(contents_manager, api_path):
+def _make_dir(jp_contents_manager, api_path):
     """
     Make a directory.
     """
-    os_path = contents_manager._get_os_path(api_path)
+    os_path = jp_contents_manager._get_os_path(api_path)
     try:
         os.makedirs(os_path)
     except OSError:
         print("Directory already exists: %r" % os_path)
 
 
-def symlink(contents_manager, src, dst):
+def symlink(jp_contents_manager, src, dst):
     """Make a symlink to src from dst
 
     src and dst are api_paths
     """
-    src_os_path = contents_manager._get_os_path(src)
-    dst_os_path = contents_manager._get_os_path(dst)
+    src_os_path = jp_contents_manager._get_os_path(src)
+    dst_os_path = jp_contents_manager._get_os_path(dst)
     print(src_os_path, dst_os_path, os.path.isfile(src_os_path))
     os.symlink(src_os_path, dst_os_path)
 
@@ -43,8 +43,8 @@ def add_code_cell(notebook):
     notebook.cells.append(cell)
 
 
-def new_notebook(contents_manager):
-    cm = contents_manager
+def new_notebook(jp_contents_manager):
+    cm = jp_contents_manager
     model = cm.new_untitled(type='notebook')
     name = model['name']
     path = model['path']
@@ -58,15 +58,15 @@ def new_notebook(contents_manager):
     return nb, name, path
 
 
-def make_populated_dir(contents_manager, api_path):
-    cm = contents_manager
+def make_populated_dir(jp_contents_manager, api_path):
+    cm = jp_contents_manager
     _make_dir(cm, api_path)
     cm.new(path="/".join([api_path, "nb.ipynb"]))
     cm.new(path="/".join([api_path, "file.txt"]))
 
 
-def check_populated_dir_files(contents_manager, api_path):
-    dir_model = contents_manager.get(api_path)
+def check_populated_dir_files(jp_contents_manager, api_path):
+    dir_model = jp_contents_manager.get(api_path)
 
     assert dir_model['path'] == api_path
     assert dir_model['type'] == "directory"
@@ -231,8 +231,8 @@ def test_escape_root(tmp_path):
     expected_http_error(e, 404)
 
 
-def test_new_untitled(contents_manager):
-    cm = contents_manager
+def test_new_untitled(jp_contents_manager):
+    cm = jp_contents_manager
     # Test in root directory
     model = cm.new_untitled(type='notebook')
     assert isinstance(model, dict)
@@ -270,8 +270,8 @@ def test_new_untitled(contents_manager):
     assert model['name'] == 'untitled1.foo.bar'
 
 
-def test_modified_date(contents_manager):
-    cm = contents_manager
+def test_modified_date(jp_contents_manager):
+    cm = jp_contents_manager
     # Create a new notebook.
     nb, name, path = new_notebook(cm)
     model = cm.get(path)
@@ -293,8 +293,8 @@ def test_modified_date(contents_manager):
     assert renamed['last_modified'] >= saved['last_modified']
 
 
-def test_get(contents_manager):
-    cm = contents_manager
+def test_get(jp_contents_manager):
+    cm = jp_contents_manager
     # Create a notebook
     model = cm.new_untitled(type='notebook')
     name = model['name']
@@ -382,8 +382,8 @@ def test_get(contents_manager):
         cm.get('foo', type='file')
 
 
-def test_update(contents_manager):
-    cm = contents_manager
+def test_update(jp_contents_manager):
+    cm = jp_contents_manager
     # Create a notebook.
     model = cm.new_untitled(type='notebook')
     name = model['name']
@@ -423,8 +423,8 @@ def test_update(contents_manager):
         cm.get(path)
 
 
-def test_save(contents_manager):
-    cm = contents_manager
+def test_save(jp_contents_manager):
+    cm = jp_contents_manager
     # Create a notebook
     model = cm.new_untitled(type='notebook')
     name = model['name']
@@ -459,8 +459,8 @@ def test_save(contents_manager):
     assert model['path'] == 'foo/Untitled.ipynb'
 
 
-def test_delete(contents_manager):
-    cm = contents_manager
+def test_delete(jp_contents_manager):
+    cm = jp_contents_manager
     # Create a notebook
     nb, name, path = new_notebook(cm)
 
@@ -476,8 +476,8 @@ def test_delete(contents_manager):
         cm.get(path)
 
 
-def test_rename(contents_manager):
-    cm = contents_manager
+def test_rename(jp_contents_manager):
+    cm = jp_contents_manager
     # Create a new notebook
     nb, name, path = new_notebook(cm)
 
@@ -528,15 +528,15 @@ def test_rename(contents_manager):
     cm.new_untitled("foo/bar_diff", ext=".ipynb")
 
 
-def test_delete_root(contents_manager):
-    cm = contents_manager
+def test_delete_root(jp_contents_manager):
+    cm = jp_contents_manager
     with pytest.raises(HTTPError) as e:
         cm.delete('')
     assert expected_http_error(e, 400)
 
 
-def test_copy(contents_manager):
-    cm = contents_manager
+def test_copy(jp_contents_manager):
+    cm = jp_contents_manager
     parent = u'å b'
     name = u'nb √.ipynb'
     path = u'{0}/{1}'.format(parent, name)
@@ -557,8 +557,8 @@ def test_copy(contents_manager):
     assert copy2['path'] == name
 
 
-def test_mark_trusted_cells(contents_manager):
-    cm = contents_manager
+def test_mark_trusted_cells(jp_contents_manager):
+    cm = jp_contents_manager
     nb, name, path = new_notebook(cm)
 
     cm.mark_trusted_cells(nb, path)
@@ -573,8 +573,8 @@ def test_mark_trusted_cells(contents_manager):
             assert cell.metadata.trusted
 
 
-def test_check_and_sign(contents_manager):
-    cm = contents_manager
+def test_check_and_sign(jp_contents_manager):
+    cm = jp_contents_manager
     nb, name, path = new_notebook(cm)
 
     cm.mark_trusted_cells(nb, path)

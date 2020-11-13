@@ -1,14 +1,11 @@
 import pytest
 import tornado
 
-from jupyter_server.services.contents.largefilemanager import LargeFileManager
 from ...utils import expected_http_error
 
-contents_manager = pytest.fixture(lambda tmp_path: LargeFileManager(root_dir=str(tmp_path)))
 
-
-def test_save(contents_manager):
-    cm = contents_manager
+def test_save(jp_large_contents_manager):
+    cm = jp_large_contents_manager
     model = cm.new_untitled(type='notebook')
     name = model['name']
     path = model['path']
@@ -46,14 +43,14 @@ def test_save(contents_manager):
         )
     ]
 )
-def test_bad_save(contents_manager, model, err_message):
+def test_bad_save(jp_large_contents_manager, model, err_message):
     with pytest.raises(tornado.web.HTTPError) as e:
-        contents_manager.save(model, model['path'])
+        jp_large_contents_manager.save(model, model['path'])
     assert expected_http_error(e, 400, expected_message=err_message)
 
 
-def test_saving_different_chunks(contents_manager):
-    cm = contents_manager
+def test_saving_different_chunks(jp_large_contents_manager):
+    cm = jp_large_contents_manager
     model = {'name': 'test', 'path': 'test', 'type': 'file',
                 'content': u'test==', 'format': 'text'}
     name = model['name']
@@ -74,8 +71,8 @@ def test_saving_different_chunks(contents_manager):
             assert model_res['path'] == path
 
 
-def test_save_in_subdirectory(contents_manager, tmp_path):
-    cm = contents_manager
+def test_save_in_subdirectory(jp_large_contents_manager, tmp_path):
+    cm = jp_large_contents_manager
     sub_dir = tmp_path / 'foo'
     sub_dir.mkdir()
     model = cm.new_untitled(path='/foo/', type='notebook')

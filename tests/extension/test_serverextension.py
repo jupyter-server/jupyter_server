@@ -12,7 +12,7 @@ from jupyter_server.config_manager import BaseJSONConfigManager
 # Use ServerApps environment because it monkeypatches
 # jupyter_core.paths and provides a config directory
 # that's not cross contaminating the user config directory.
-pytestmark = pytest.mark.usefixtures("environ")
+pytestmark = pytest.mark.usefixtures("jp_environ")
 
 
 def test_help_output():
@@ -29,13 +29,13 @@ def get_config(sys_prefix=True):
     return data.get("ServerApp", {}).get("jpserver_extensions", {})
 
 
-def test_enable(env_config_path, extension_environ):
+def test_enable(jp_env_config_path, jp_extension_environ):
     toggle_server_extension_python('mock1', True)
     config = get_config()
     assert config['mock1']
 
 
-def test_disable(env_config_path, extension_environ):
+def test_disable(jp_env_config_path, jp_extension_environ):
     toggle_server_extension_python('mock1', True)
     toggle_server_extension_python('mock1', False)
 
@@ -44,9 +44,9 @@ def test_disable(env_config_path, extension_environ):
 
 
 def test_merge_config(
-        env_config_path,
-        configurable_serverapp,
-        extension_environ
+        jp_env_config_path,
+        jp_configurable_serverapp,
+        jp_extension_environ
 ):
     # Toggle each extension module with a JSON config file
     # at the sys-prefix config dir.
@@ -80,8 +80,8 @@ def test_merge_config(
     )
 
     # Enable the last extension, mockext_py, using the CLI interface.
-    app = configurable_serverapp(
-        config_dir=str(env_config_path),
+    app = jp_configurable_serverapp(
+        config_dir=str(jp_env_config_path),
         argv=[arg]
     )
     # Verify that extensions are enabled and merged in proper order.
@@ -94,7 +94,7 @@ def test_merge_config(
 
 
 @pytest.mark.parametrize(
-    'server_config',
+    'jp_server_config',
     [
         {
             "ServerApp": {
@@ -106,7 +106,7 @@ def test_merge_config(
         }
     ]
 )
-def test_load_ordered(serverapp):
-    assert serverapp.mockII is True, "Mock II should have been loaded"
-    assert serverapp.mockI is True, "Mock I should have been loaded"
-    assert serverapp.mock_shared == 'II', "Mock II should be loaded after Mock I"
+def test_load_ordered(jp_serverapp):
+    assert jp_serverapp.mockII is True, "Mock II should have been loaded"
+    assert jp_serverapp.mockI is True, "Mock I should have been loaded"
+    assert jp_serverapp.mock_shared == 'II', "Mock II should be loaded after Mock I"

@@ -51,10 +51,9 @@ setup_args = dict(
         "pywin32>=1.0 ; sys_platform == 'win32'"
     ],
     extras_require = {
-        'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
-                 'pytest', 'pytest-cov', 'pytest-tornasync',
+        'test': ['coverage', 'requests',
+                 'pytest', 'pytest-cov', 'pytest-jupyter',
                  'pytest-console-scripts', 'ipykernel'],
-        'test:sys_platform == "win32"': ['nose-exclude'],
     },
     python_requires = '>=3.6',
     entry_points = {

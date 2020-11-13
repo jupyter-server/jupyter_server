@@ -10,7 +10,7 @@ from jupyter_server.extension.manager import (
 # Use ServerApps environment because it monkeypatches
 # jupyter_core.paths and provides a config directory
 # that's not cross contaminating the user config directory.
-pytestmark = pytest.mark.usefixtures("environ")
+pytestmark = pytest.mark.usefixtures("jp_environ")
 
 
 def test_extension_point_api():
@@ -76,9 +76,9 @@ def test_extension_manager_api():
     assert "tests.extension.mockextensions" in manager.extensions
 
 
-def test_extension_manager_linked_extensions(serverapp):
+def test_extension_manager_linked_extensions(jp_serverapp):
     name = "tests.extension.mockextensions"
     manager = ExtensionManager()
     manager.add_extension(name, enabled=True)
-    manager.link_extension(name, serverapp)
+    manager.link_extension(name, jp_serverapp)
     assert name in manager.linked_extensions

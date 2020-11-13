@@ -1,9 +1,5 @@
 # coding: utf-8
-import io
 import json
-import os
-from os.path import join as pjoin
-import shutil
 
 import tornado
 
@@ -12,7 +8,8 @@ from nbformat.v4 import (
     new_notebook, new_markdown_cell, new_code_cell, new_output,
 )
 
-from ipython_genutils.testing.decorators import onlyif_cmds_exist
+from ipython_genutils.py3compat import which
+
 
 from base64 import encodebytes
 
@@ -28,10 +25,10 @@ b'\x08\xd7c\x90\xfb\xcf\x00\x00\x02\\\x01\x1e.~d\x87\x00\x00\x00\x00IEND\xaeB`\x
 
 
 @pytest.fixture
-def notebook(root_dir):
+def notebook(jp_root_dir):
     # Build sub directory.
-    if not root_dir.joinpath('foo').is_dir():
-        subdir = root_dir / 'foo'
+    subdir = jp_root_dir / 'foo'
+    if not jp_root_dir.joinpath('foo').is_dir():
         subdir.mkdir()
 
     # Build a notebook programmatically.
@@ -50,9 +47,11 @@ def notebook(root_dir):
     nbfile.write_text(writes(nb, version=4), encoding='utf-8')
 
 
-@onlyif_cmds_exist('pandoc')
-async def test_from_file(fetch, notebook):
-    r = await fetch(
+pytestmark = pytest.mark.skipif(not which('pandoc'), reason="Command 'pandoc' is not available")
+
+
+async def test_from_file(jp_fetch, notebook):
+    r = await jp_fetch(
         'nbconvert', 'html', 'foo', 'testnb.ipynb',
         method='GET',
         params={'download': False}
@@ -63,7 +62,7 @@ async def test_from_file(fetch, notebook):
     assert 'Created by test' in r.body.decode()
     assert 'print' in r.body.decode()
 
-    r = await fetch(
+    r = await jp_fetch(
         'nbconvert', 'python', 'foo', 'testnb.ipynb',
         method='GET',
         params={'download': False}
@@ -74,10 +73,9 @@ async def test_from_file(fetch, notebook):
     assert 'print(2*6)' in r.body.decode()
 
 
-@onlyif_cmds_exist('pandoc')
-async def test_from_file_404(fetch, notebook):
+async def test_from_file_404(jp_fetch, notebook):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await fetch(
+        await jp_fetch(
             'nbconvert', 'html', 'foo', 'thisdoesntexist.ipynb',
             method='GET',
             params={'download': False}
@@ -85,9 +83,8 @@ async def test_from_file_404(fetch, notebook):
     assert expected_http_error(e, 404)
 
 
-@onlyif_cmds_exist('pandoc')
-async def test_from_file_download(fetch, notebook):
-    r = await fetch(
+async def test_from_file_download(jp_fetch, notebook):
+    r = await jp_fetch(
         'nbconvert', 'python', 'foo', 'testnb.ipynb',
         method='GET',
         params={'download': True}
@@ -97,9 +94,8 @@ async def test_from_file_download(fetch, notebook):
     assert 'testnb.py' in content_disposition
 
 
-@onlyif_cmds_exist('pandoc')
-async def test_from_file_zip(fetch, notebook):
-    r = await fetch(
+async def test_from_file_zip(jp_fetch, notebook):
+    r = await jp_fetch(
         'nbconvert', 'latex', 'foo', 'testnb.ipynb',
         method='GET',
         params={'download': True}
@@ -108,15 +104,14 @@ async def test_from_file_zip(fetch, notebook):
     assert '.zip' in r.headers['Content-Disposition']
 
 
-@onlyif_cmds_exist('pandoc')
-async def test_from_post(fetch, notebook):
-    r = await fetch(
+async def test_from_post(jp_fetch, notebook):
+    r = await jp_fetch(
         'api/contents/foo/testnb.ipynb',
         method='GET',
     )
     nbmodel = json.loads(r.body.decode())
 
-    r = await fetch(
+    r = await jp_fetch(
         'nbconvert', 'html',
         method='POST',
         body=json.dumps(nbmodel)
@@ -126,7 +121,7 @@ async def test_from_post(fetch, notebook):
     assert 'Created by test' in r.body.decode()
     assert 'print' in r.body.decode()
 
-    r = await fetch(
+    r = await jp_fetch(
         'nbconvert', 'python',
         method='POST',
         body=json.dumps(nbmodel)
@@ -136,15 +131,14 @@ async def test_from_post(fetch, notebook):
     assert 'print(2*6)'in r.body.decode()
 
 
-@onlyif_cmds_exist('pandoc')
-async def test_from_post_zip(fetch, notebook):
-    r = await fetch(
+async def test_from_post_zip(jp_fetch, notebook):
+    r = await jp_fetch(
         'api/contents/foo/testnb.ipynb',
         method='GET',
     )
     nbmodel = json.loads(r.body.decode())
 
-    r = await fetch(
+    r = await jp_fetch(
         'nbconvert', 'latex',
         method='POST',
         body=json.dumps(nbmodel)
