@@ -1,13 +1,13 @@
 import json
 
 
-async def test_get_spec(fetch):
-    response = await fetch("api", "spec.yaml", method="GET")
+async def test_get_spec(jp_fetch):
+    response = await jp_fetch("api", "spec.yaml", method="GET")
     assert response.code == 200
 
 
-async def test_get_status(fetch):
-    response = await fetch("api", "status", method="GET")
+async def test_get_status(jp_fetch):
+    response = await jp_fetch("api", "status", method="GET")
     assert response.code == 200
     assert response.headers.get("Content-Type") == "application/json"
     status = json.loads(response.body.decode("utf8"))

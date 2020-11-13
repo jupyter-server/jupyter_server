@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.fixture
-def server_config(template_dir):
+def jp_server_config(jp_template_dir):
     return {
             "ServerApp": {
                 "jpserver_extensions": {
@@ -11,14 +11,14 @@ def server_config(template_dir):
             },
             "MockExtensionApp": {
                 "template_paths": [
-                    str(template_dir)
+                    str(jp_template_dir)
                 ]
             }
         }
 
 
-async def test_handler(fetch):
-    r = await fetch(
+async def test_handler(jp_fetch):
+    r = await jp_fetch(
         'mock',
         method='GET'
     )
@@ -26,8 +26,8 @@ async def test_handler(fetch):
     assert r.body.decode() == 'mock trait'
 
 
-async def test_handler_template(fetch, mock_template):
-    r = await fetch(
+async def test_handler_template(jp_fetch, mock_template):
+    r = await jp_fetch(
         'mock_template',
         method='GET'
     )
@@ -35,7 +35,7 @@ async def test_handler_template(fetch, mock_template):
 
 
 @pytest.mark.parametrize(
-    'server_config',
+    'jp_server_config',
     [
         {
             "ServerApp": {
@@ -51,9 +51,9 @@ async def test_handler_template(fetch, mock_template):
         }
     ]
 )
-async def test_handler_setting(fetch):
+async def test_handler_setting(jp_fetch):
     # Test that the extension trait was picked up by the webapp.
-    r = await fetch(
+    r = await jp_fetch(
         'mock',
         method='GET'
     )
@@ -62,11 +62,11 @@ async def test_handler_setting(fetch):
 
 
 @pytest.mark.parametrize(
-    'argv', (['--MockExtensionApp.mock_trait="test mock trait"'],)
+    'jp_argv', (['--MockExtensionApp.mock_trait=test mock trait'],)
 )
-async def test_handler_argv(fetch):
+async def test_handler_argv(jp_fetch):
     # Test that the extension trait was picked up by the webapp.
-    r = await fetch(
+    r = await jp_fetch(
         'mock',
         method='GET'
     )
@@ -75,7 +75,7 @@ async def test_handler_argv(fetch):
 
 
 @pytest.mark.parametrize(
-    'server_config',
+    'jp_server_config',
     [
         {
             "ServerApp": {
@@ -93,9 +93,9 @@ async def test_handler_argv(fetch):
         }
     ]
 )
-async def test_base_url(fetch):
+async def test_base_url(jp_fetch):
     # Test that the extension's handlers were properly prefixed
-    r = await fetch(
+    r = await jp_fetch(
         'test_prefix', 'mock',
         method='GET'
     )
@@ -103,7 +103,7 @@ async def test_base_url(fetch):
     assert r.body.decode() == 'test mock trait'
 
     # Test that the static namespace was prefixed by base_url
-    r = await fetch(
+    r = await jp_fetch(
         'test_prefix',
         'static', 'mockextension', 'mock.txt',
         method='GET'

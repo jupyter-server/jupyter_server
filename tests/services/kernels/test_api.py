@@ -22,8 +22,8 @@ def argv(request):
     return ["--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager." + request.param]
 
 
-async def test_no_kernels(fetch):
-    r = await fetch(
+async def test_no_kernels(jp_fetch):
+    r = await jp_fetch(
         'api', 'kernels',
         method='GET'
     )
@@ -31,8 +31,8 @@ async def test_no_kernels(fetch):
     assert kernels == []
 
 
-async def test_default_kernels(fetch):
-    r = await fetch(
+async def test_default_kernels(jp_fetch):
+    r = await jp_fetch(
         'api', 'kernels',
         method='POST',
         allow_nonstandard_methods=True
@@ -51,9 +51,9 @@ async def test_default_kernels(fetch):
     assert r.headers['Content-Security-Policy'] == expected_csp
 
 
-async def test_main_kernel_handler(fetch):
+async def test_main_kernel_handler(jp_fetch):
     # Start the first kernel
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels',
         method='POST',
         body=json.dumps({
@@ -74,7 +74,7 @@ async def test_main_kernel_handler(fetch):
     assert r.headers['Content-Security-Policy'] == expected_csp
 
     # Check that the kernel is found in the kernel list
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels',
         method='GET'
     )
@@ -85,7 +85,7 @@ async def test_main_kernel_handler(fetch):
     assert kernel_list[0]['name'] == kernel1['name']
 
     # Start a second kernel
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels',
         method='POST',
         body=json.dumps({
@@ -96,7 +96,7 @@ async def test_main_kernel_handler(fetch):
     assert isinstance(kernel2, dict)
 
     # Get kernel list again
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels',
         method='GET'
     )
@@ -106,7 +106,7 @@ async def test_main_kernel_handler(fetch):
     assert len(kernel_list) == 2
 
     # Interrupt a kernel
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels', kernel2['id'], 'interrupt',
         method='POST',
         allow_nonstandard_methods=True
@@ -114,7 +114,7 @@ async def test_main_kernel_handler(fetch):
     assert r.code == 204
 
     # Restart a kernel
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels', kernel2['id'], 'restart',
         method='POST',
         allow_nonstandard_methods=True
@@ -124,7 +124,7 @@ async def test_main_kernel_handler(fetch):
     assert restarted_kernel['name'] == kernel2['name']
 
     # Start a kernel with a path
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels',
         method='POST',
                 body=json.dumps({
@@ -136,9 +136,9 @@ async def test_main_kernel_handler(fetch):
     assert isinstance(kernel3, dict)
 
 
-async def test_kernel_handler(fetch):
+async def test_kernel_handler(jp_fetch):
     # Create a kernel
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels',
         method='POST',
         body=json.dumps({
@@ -146,7 +146,7 @@ async def test_kernel_handler(fetch):
         })
     )
     kernel_id = json.loads(r.body.decode())['id']
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels', kernel_id,
         method='GET'
     )
@@ -159,21 +159,21 @@ async def test_kernel_handler(fetch):
     # Requests a bad kernel id.
     bad_id = '111-111-111-111-111'
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        r = await fetch(
+        await jp_fetch(
             'api', 'kernels', bad_id,
             method='GET'
         )
     assert expected_http_error(e, 404)
 
     # Delete kernel with id.
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels', kernel_id,
         method='DELETE',
     )
     assert r.code == 204
 
     # Get list of kernels
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels',
         method='GET'
     )
@@ -183,17 +183,17 @@ async def test_kernel_handler(fetch):
     # Request to delete a non-existent kernel id
     bad_id = '111-111-111-111-111'
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        r = await fetch(
+        await jp_fetch(
             'api', 'kernels', bad_id,
             method='DELETE'
         )
     assert expected_http_error(e, 404, 'Kernel does not exist: ' + bad_id)
 
 
-async def test_connection(fetch, ws_fetch, http_port, auth_header):
+async def test_connection(jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header):
     print('hello')
     # Create kernel
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels',
         method='POST',
         body=json.dumps({
@@ -203,7 +203,7 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
     kid = json.loads(r.body.decode())['id']
 
     # Get kernel info
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels', kid,
         method='GET'
     )
@@ -212,12 +212,12 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
 
     time.sleep(1)
     # Open a websocket connection.
-    ws = await ws_fetch(
+    ws = await jp_ws_fetch(
         'api', 'kernels', kid, 'channels'
     )
 
     # Test that it was opened.
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels', kid,
         method='GET'
     )
@@ -228,7 +228,7 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
     ws.close()
     # give it some time to close on the other side:
     for i in range(10):
-        r = await fetch(
+        r = await jp_fetch(
             'api', 'kernels', kid,
             method='GET'
         )
@@ -238,7 +238,7 @@ async def test_connection(fetch, ws_fetch, http_port, auth_header):
         else:
             break
 
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'kernels', kid,
         method='GET'
     )
