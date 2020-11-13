@@ -4,7 +4,7 @@ import pytest
 from jupyter_server import __version__
 
 
-pep440re = re.compile('^(\d+)\.(\d+)\.(\d+((a|b|rc)\d+)?)(\.post\d+)?(\.dev\d*)?$')
+pep440re = re.compile(r'^(\d+)\.(\d+)\.(\d+((a|b|rc)\d+)?)(\.post\d+)?(\.dev\d*)?$')
 
 def raise_on_bad_version(version):
     if not pep440re.match(version):
@@ -43,6 +43,3 @@ def test_valid_pep440_versions(version):
 # --------- Test current version --------------
 def test_current_version():
     raise_on_bad_version(__version__)
-
-
-
