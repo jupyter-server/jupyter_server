@@ -1,9 +1,5 @@
 # coding: utf-8
-import io
 import json
-import os
-from os.path import join as pjoin
-import shutil
 
 import tornado
 
@@ -12,7 +8,8 @@ from nbformat.v4 import (
     new_notebook, new_markdown_cell, new_code_cell, new_output,
 )
 
-from ipython_genutils.testing.decorators import onlyif_cmds_exist
+from ipython_genutils.py3compat import which
+
 
 from base64 import encodebytes
 
@@ -50,7 +47,9 @@ def notebook(jp_root_dir):
     nbfile.write_text(writes(nb, version=4), encoding='utf-8')
 
 
-@onlyif_cmds_exist('pandoc')
+pytestmark = pytest.mark.skipif(not which('pandoc'), reason="Command 'pandoc' is not available")
+
+
 async def test_from_file(jp_fetch, notebook):
     r = await jp_fetch(
         'nbconvert', 'html', 'foo', 'testnb.ipynb',
@@ -74,7 +73,6 @@ async def test_from_file(jp_fetch, notebook):
     assert 'print(2*6)' in r.body.decode()
 
 
-@onlyif_cmds_exist('pandoc')
 async def test_from_file_404(jp_fetch, notebook):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch(
@@ -85,7 +83,6 @@ async def test_from_file_404(jp_fetch, notebook):
     assert expected_http_error(e, 404)
 
 
-@onlyif_cmds_exist('pandoc')
 async def test_from_file_download(jp_fetch, notebook):
     r = await jp_fetch(
         'nbconvert', 'python', 'foo', 'testnb.ipynb',
@@ -97,7 +94,6 @@ async def test_from_file_download(jp_fetch, notebook):
     assert 'testnb.py' in content_disposition
 
 
-@onlyif_cmds_exist('pandoc')
 async def test_from_file_zip(jp_fetch, notebook):
     r = await jp_fetch(
         'nbconvert', 'latex', 'foo', 'testnb.ipynb',
@@ -108,7 +104,6 @@ async def test_from_file_zip(jp_fetch, notebook):
     assert '.zip' in r.headers['Content-Disposition']
 
 
-@onlyif_cmds_exist('pandoc')
 async def test_from_post(jp_fetch, notebook):
     r = await jp_fetch(
         'api/contents/foo/testnb.ipynb',
@@ -136,7 +131,6 @@ async def test_from_post(jp_fetch, notebook):
     assert 'print(2*6)'in r.body.decode()
 
 
-@onlyif_cmds_exist('pandoc')
 async def test_from_post_zip(jp_fetch, notebook):
     r = await jp_fetch(
         'api/contents/foo/testnb.ipynb',
