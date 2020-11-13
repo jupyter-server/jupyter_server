@@ -22,7 +22,10 @@ jobs:
         architecture: 'x64'
     - name: Install the Python dependencies
       run: |
-        pip install -e ./pytest_plugin -e .[test]
+        cd pytest_plugin
+        pip install -e
+        cd ..
+        pip install -e .[test] --ignore-installed
     - name: Run the tests
       run: |
         pytest
