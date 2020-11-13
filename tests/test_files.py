@@ -35,7 +35,7 @@ async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir):
         assert r.body.decode() == 'foo'
 
         with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-            r = await jp_fetch(
+            await jp_fetch(
                 'files', d, '.foo',
                 method='GET'
             )
@@ -44,7 +44,7 @@ async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir):
     for d in hidden:
         for foo in ('foo', '.foo'):
             with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-                r = await jp_fetch(
+                await jp_fetch(
                     'files', d, foo,
                     method='GET'
                 )
@@ -75,7 +75,7 @@ async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir):
 
 
 async def test_contents_manager(jp_fetch, jp_serverapp, jp_root_dir):
-    "make sure ContentsManager returns right files (ipynb, bin, txt)."
+    """make sure ContentsManager returns right files (ipynb, bin, txt)."""
     nb = new_notebook(
         cells=[
             new_markdown_cell(u'Created by test ³'),
@@ -138,7 +138,6 @@ async def test_old_files_redirect(jp_fetch, jp_serverapp, jp_root_dir):
     """pre-2.0 'files/' prefixed links are properly redirected"""
     jp_root_dir.joinpath('files').mkdir(parents=True, exist_ok=True)
     jp_root_dir.joinpath('sub', 'files').mkdir(parents=True, exist_ok=True)
-
 
     for prefix in ('', 'sub'):
         jp_root_dir.joinpath(prefix, 'files', 'f1.txt').write_text(prefix + '/files/f1')

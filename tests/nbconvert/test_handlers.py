@@ -27,8 +27,8 @@ b'\x08\xd7c\x90\xfb\xcf\x00\x00\x02\\\x01\x1e.~d\x87\x00\x00\x00\x00IEND\xaeB`\x
 @pytest.fixture
 def notebook(jp_root_dir):
     # Build sub directory.
+    subdir = jp_root_dir / 'foo'
     if not jp_root_dir.joinpath('foo').is_dir():
-        subdir = jp_root_dir / 'foo'
         subdir.mkdir()
 
     # Build a notebook programmatically.

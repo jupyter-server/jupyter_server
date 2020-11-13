@@ -100,7 +100,7 @@ async def test_get_dir_no_contents(jp_fetch, contents, path, name):
     assert model['path'] == path
     assert model['type'] == 'directory'
     assert 'content' in model
-    assert model['content'] == None
+    assert model['content'] is None
 
 
 async def test_list_nonexistant_dir(jp_fetch, contents):
@@ -144,7 +144,7 @@ async def test_get_nb_no_contents(jp_fetch, contents, path, name):
     assert model['path'] == nbpath
     assert model['type'] == 'notebook'
     assert 'content' in model
-    assert model['content'] == None
+    assert model['content'] is None
 
 
 async def test_get_nb_invalid(contents_dir, jp_fetch, contents):
@@ -623,7 +623,7 @@ async def test_checkpoints_follow_file(jp_fetch, contents):
     hcell = new_markdown_cell('Created by test')
     nb.cells.append(hcell)
     nbmodel = {'content': nb, 'type': 'notebook'}
-    r = await jp_fetch(
+    await jp_fetch(
         'api', 'contents', path, name,
         method='PUT',
         body=json.dumps(nbmodel)
@@ -653,7 +653,7 @@ async def test_rename_existing(jp_fetch, contents):
         name = 'a.ipynb'
         new_name = 'b.ipynb'
         # Rename the file
-        r = await jp_fetch(
+        await jp_fetch(
             'api', 'contents', path, name,
             method='PATCH',
             body=json.dumps({'path': path+'/'+new_name})
@@ -671,7 +671,7 @@ async def test_save(jp_fetch, contents):
     nb = from_dict(nbmodel)
     nb.cells.append(new_markdown_cell('Created by test ³'))
     nbmodel = {'content': nb, 'type': 'notebook'}
-    r = await jp_fetch(
+    await jp_fetch(
         'api', 'contents', 'foo/a.ipynb',
         method='PUT',
         body=json.dumps(nbmodel)
@@ -711,7 +711,7 @@ async def test_checkpoints(jp_fetch, contents):
 
     # Save it.
     nbmodel = {'content': nb, 'type': 'notebook'}
-    resp = await jp_fetch(
+    await jp_fetch(
         'api', 'contents', path,
         method='PUT',
         body=json.dumps(nbmodel)
@@ -790,7 +790,7 @@ async def test_file_checkpoints(jp_fetch, contents):
     }
 
     # Save it.
-    resp = await jp_fetch(
+    await jp_fetch(
         'api', 'contents', path,
         method='PUT',
         body=json.dumps(model)
