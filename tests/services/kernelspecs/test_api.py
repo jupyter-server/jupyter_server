@@ -3,7 +3,7 @@ import json
 
 import tornado
 
-from jupyter_server.pytest_plugin import some_resource
+from pytest_jupyter_server import some_resource
 
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 

@@ -1,3 +1,5 @@
+"""pytest fixtures for testing jupyter_server and extensions"""
+
 import os
 import sys
 import json
@@ -20,8 +22,7 @@ from jupyter_server.services.contents.filemanager import FileContentsManager
 
 import nbformat
 
-# This shouldn't be needed anymore, since pytest_tornasync is found in entrypoints
-pytest_plugins = "pytest_tornasync"
+__version__ = "0.1.0"
 
 # NOTE: This is a temporary fix for Windows 3.8
 # We have to override the io_loop fixture with an

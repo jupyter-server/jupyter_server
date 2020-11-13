@@ -52,7 +52,7 @@ setup_args = dict(
     ],
     extras_require = {
         'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
-                 'pytest', 'pytest-cov', 'pytest-tornasync',
+                 'pytest', 'pytest-cov', 'pytest_jupyter_server',
                  'pytest-console-scripts', 'ipykernel'],
         'test:sys_platform == "win32"': ['nose-exclude'],
     },
@@ -60,9 +60,6 @@ setup_args = dict(
     entry_points = {
         'console_scripts': [
             'jupyter-server = jupyter_server.serverapp:main',
-        ],
-        'pytest11': [
-            'pytest_jupyter_server = jupyter_server.pytest_plugin'
         ]
     },
 )

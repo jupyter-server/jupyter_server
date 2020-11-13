@@ -55,7 +55,7 @@ Running Tests
 
 Install dependencies::
 
-    pip install -e .[test]
+    pip install -e .[test] ./pytest_plugin
 
 To run the Python tests, use::
 
