@@ -34,11 +34,14 @@ setup_args = dict(
     version = VERSION,
     description = 'Jupyter Server Example',
     long_description = open('README.md').read(),
-    python_requires = '>=3.5',
+    python_requires = '>=3.6',
     install_requires = [
         'jupyter_server',
         'jinja2',
     ],
+    extras_require = {
+        'test': ['pytest-jupyter'],
+    },
     include_package_data=True,
     cmdclass = cmdclass,
     entry_points = {
