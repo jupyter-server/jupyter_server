@@ -60,9 +60,6 @@ setup_args = dict(
     entry_points = {
         'console_scripts': [
             'jupyter-server = jupyter_server.serverapp:main',
-        ],
-        'pytest11': [
-            'pytest_jupyter_server = jupyter_server.pytest_plugin'
         ]
     },
 )
