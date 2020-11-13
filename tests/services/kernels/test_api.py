@@ -183,7 +183,7 @@ async def test_kernel_handler(jp_fetch):
     # Request to delete a non-existent kernel id
     bad_id = '111-111-111-111-111'
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        r = await jp_fetch(
+        await jp_fetch(
             'api', 'kernels', bad_id,
             method='DELETE'
         )

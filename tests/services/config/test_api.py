@@ -1,7 +1,4 @@
 import json
-import pytest
-
-from jupyter_server.utils import url_path_join
 
 
 async def test_create_retrieve_config(jp_fetch):

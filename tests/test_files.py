@@ -22,15 +22,12 @@ async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir):
     dirs = not_hidden + hidden
 
     for d in dirs:
-        path  = jp_root_dir / d.replace('/', os.sep)
+        path = jp_root_dir / d.replace('/', os.sep)
         path.mkdir(parents=True, exist_ok=True)
         path.joinpath('foo').write_text('foo')
         path.joinpath('.foo').write_text('.foo')
 
-
     for d in not_hidden:
-        path = jp_root_dir / d.replace('/', os.sep)
-
         r = await jp_fetch(
             'files', d, 'foo',
             method='GET'
@@ -44,9 +41,7 @@ async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir):
             )
         assert expected_http_error(e, 404)
 
-
     for d in hidden:
-        path = jp_root_dir / d.replace('/', os.sep)
         for foo in ('foo', '.foo'):
             with pytest.raises(tornado.httpclient.HTTPClientError) as e:
                 r = await jp_fetch(
@@ -58,8 +53,6 @@ async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir):
     jp_serverapp.contents_manager.allow_hidden = True
 
     for d in not_hidden:
-        path = jp_root_dir / d.replace('/', os.sep)
-
         r = await jp_fetch(
             'files', d, 'foo',
             method='GET'
@@ -72,15 +65,13 @@ async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir):
         )
         assert r.body.decode() == '.foo'
 
-        for d in hidden:
-            path = jp_root_dir / d.replace('/', os.sep)
-
-            for foo in ('foo', '.foo'):
-                r = await jp_fetch(
-                    'files', d, foo,
-                    method='GET'
-                )
-                assert r.body.decode() == foo
+    for d in hidden:
+        for foo in ('foo', '.foo'):
+            r = await jp_fetch(
+                'files', d, foo,
+                method='GET'
+            )
+            assert r.body.decode() == foo
 
 
 async def test_contents_manager(jp_fetch, jp_serverapp, jp_root_dir):
