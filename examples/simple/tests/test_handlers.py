@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.fixture
-def server_config(template_dir):
+def server_config(jp_template_dir):
     return {
             "ServerApp": {
                 "jpserver_extensions": {
@@ -12,7 +12,7 @@ def server_config(template_dir):
         }
 
 
-async def test_handler_default(fetch):
+async def test_handler_default(jp_fetch):
     r = await fetch(
         'simple_ext1/default',
         method='GET'
@@ -22,7 +22,7 @@ async def test_handler_default(fetch):
     assert r.body.decode().index('Hello Simple 1 - I am the default...') > -1
 
 
-async def test_handler_template(fetch):
+async def test_handler_template(jp_fetch):
     r = await fetch(
         'simple_ext1/template1/test',
         method='GET'
