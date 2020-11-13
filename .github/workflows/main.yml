@@ -23,7 +23,7 @@ jobs:
     - name: Install the Python dependencies
       run: |
         cd pytest_plugin
-        pip install -e
+        pip install -e .
         cd ..
         pip install -e .[test] --ignore-installed
     - name: Run the tests
