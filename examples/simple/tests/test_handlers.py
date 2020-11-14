@@ -13,7 +13,7 @@ def server_config(jp_template_dir):
 
 
 async def test_handler_default(jp_fetch):
-    r = await fetch(
+    r = await jp_fetch(
         'simple_ext1/default',
         method='GET'
     )
@@ -23,7 +23,7 @@ async def test_handler_default(jp_fetch):
 
 
 async def test_handler_template(jp_fetch):
-    r = await fetch(
+    r = await jp_fetch(
         'simple_ext1/template1/test',
         method='GET'
     )
