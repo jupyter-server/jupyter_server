@@ -10,22 +10,25 @@ from nbformat.v4 import (new_notebook,
                          new_output)
 
 
-async def test_hidden_files(fetch, serverapp, root_dir):
-    not_hidden = [
-        u'å b',
-        u'å b/ç. d',
-    ]
-    hidden = [
-        u'.å b',
-        u'å b/.ç d',
-    ]
-    dirs = not_hidden + hidden
+@pytest.fixture(params=[
+    [False, ['å b']],
+    [False, ['å b', 'ç. d']],
+    [True, ['.å b']],
+    [True, ['å b', '.ç d']]
+])
+def maybe_hidden(request):
+    return request.param
 
-    for d in dirs:
-        path  = root_dir / d.replace('/', os.sep)
-        path.mkdir(parents=True, exist_ok=True)
-        path.joinpath('foo').write_text('foo')
-        path.joinpath('.foo').write_text('.foo')
+
+async def fetch_expect_200(fetch, *path_parts):
+    r = await fetch('files', *path_parts, method='GET')
+    assert (r.body.decode() == path_parts[-1]), (path_parts, r.body)
+
+
+async def fetch_expect_404(fetch, *path_parts):
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        r = await fetch('files', *path_parts, method='GET')
+    assert expected_http_error(e, 404), [path_parts, e]
 
 
     for d in not_hidden:
