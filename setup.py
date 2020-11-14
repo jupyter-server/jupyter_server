@@ -50,7 +50,7 @@ setup_args = dict(
         'prometheus_client',
         "pywin32>=1.0 ; sys_platform == 'win32'",
         # TODO: terminado needs to add this?
-        "pywinpt>=0.5 ; sys_platform == 'win32'"
+        "pywinpty>=0.5 ; sys_platform == 'win32'"
     ],
     extras_require = {
         'test': ['coverage', 'requests',
