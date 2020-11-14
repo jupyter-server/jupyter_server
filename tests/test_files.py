@@ -25,9 +25,27 @@ def maybe_hidden(request):
 TIMEOUTS = dict(
     # default is 20.0
     connect_timeout=0.0,
-    # already set upstream?
-    # request_timeout=40.0
+    # needs patch below
+    request_timeout=0.0
 )
+
+# shouldn't be overloading this
+@pytest.fixture
+def jp_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_base_url):
+    def client_fetch(*parts, headers={}, params={}, **kwargs):
+        # Handle URL strings
+        path_url = url_escape(url_path_join(jp_base_url, *parts), plus=False)
+        params_url = urllib.parse.urlencode(params)
+        url = path_url + "?" + params_url
+        # Add auth keys to header
+        headers.update(jp_auth_header)
+        # Make request.
+        kwargs.setdefault("request_timeout", 20.0)
+        return http_server_client.fetch(
+            url, headers=headers, **kwargs
+        )
+    return client_fetch
+
 
 async def fetch_expect_200(jp_fetch, *path_parts):
     r = await jp_fetch('files', *path_parts, method='GET', **TIMEOUTS)
