@@ -1,5 +1,6 @@
 import os
 import pytest
+from pathlib import Path
 import tornado
 
 from .utils import expected_http_error
@@ -10,68 +11,47 @@ from nbformat.v4 import (new_notebook,
                          new_output)
 
 
-async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir):
-    not_hidden = [
-        u'å b',
-        u'å b/ç. d',
-    ]
-    hidden = [
-        u'.å b',
-        u'å b/.ç d',
-    ]
-    dirs = not_hidden + hidden
+@pytest.fixture(params=[
+    [False, ['å b']],
+    [False, ['å b', 'ç. d']],
+    [True, ['.å b']],
+    [True, ['å b', '.ç d']]
+])
+def maybe_hidden(request):
+    return request.param
 
-    for d in dirs:
-        path = jp_root_dir / d.replace('/', os.sep)
-        path.mkdir(parents=True, exist_ok=True)
-        path.joinpath('foo').write_text('foo')
-        path.joinpath('.foo').write_text('.foo')
 
-    for d in not_hidden:
-        r = await jp_fetch(
-            'files', d, 'foo',
-            method='GET'
-        )
-        assert r.body.decode() == 'foo'
+async def fetch_expect_200(jp_fetch, *path_parts):
+    r = await jp_fetch('files', *path_parts, method='GET')
+    assert (r.body.decode() == path_parts[-1]), path_parts
 
-        with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-            await jp_fetch(
-                'files', d, '.foo',
-                method='GET'
-            )
-        assert expected_http_error(e, 404)
 
-    for d in hidden:
-        for foo in ('foo', '.foo'):
-            with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-                await jp_fetch(
-                    'files', d, foo,
-                    method='GET'
-                )
-            assert expected_http_error(e, 404)
+async def fetch_expect_404(jp_fetch, *path_parts):
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch('files', *path_parts, method='GET')
+    assert expected_http_error(e, 404), path_parts
+
+
+async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir, maybe_hidden):
+    is_hidden, path_parts = maybe_hidden
+    path = Path(jp_root_dir, *path_parts)
+    path.mkdir(parents=True, exist_ok=True)
+
+    foos = ['foo', '.foo']
+    for foo in foos:
+        (path / foo).write_text(foo)
+
+    if is_hidden:
+        for foo in foos:
+            await fetch_expect_404(jp_fetch, *path_parts, foo)
+    else:
+        await fetch_expect_404(jp_fetch, *path_parts, '.foo')
+        await fetch_expect_200(jp_fetch, *path_parts, 'foo')
 
     jp_serverapp.contents_manager.allow_hidden = True
 
-    for d in not_hidden:
-        r = await jp_fetch(
-            'files', d, 'foo',
-            method='GET'
-        )
-        assert r.body.decode() == 'foo'
-
-        r = await jp_fetch(
-            'files', d, '.foo',
-            method='GET'
-        )
-        assert r.body.decode() == '.foo'
-
-    for d in hidden:
-        for foo in ('foo', '.foo'):
-            r = await jp_fetch(
-                'files', d, foo,
-                method='GET'
-            )
-            assert r.body.decode() == foo
+    for foo in foos:
+        await fetch_expect_200(jp_fetch, *path_parts, foo)
 
 
 async def test_contents_manager(jp_fetch, jp_serverapp, jp_root_dir):

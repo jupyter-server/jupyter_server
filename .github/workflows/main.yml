@@ -47,7 +47,7 @@ jobs:
         pip check
     - name: Run the tests
       run: |
-        pytest -vv --cov=nbformat
+        pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered
     - name: Install the Python dependencies for the examples
       run: |
         cd examples/simple && pip install -e .
