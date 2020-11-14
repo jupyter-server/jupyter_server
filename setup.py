@@ -48,7 +48,9 @@ setup_args = dict(
         'Send2Trash',
         'terminado>=0.8.3',
         'prometheus_client',
-        "pywin32>=1.0 ; sys_platform == 'win32'"
+        "pywin32>=1.0 ; sys_platform == 'win32'",
+        # TODO: terminado needs to add this?
+        "pywinpt>=0.5 ; sys_platform == 'win32'"
     ],
     extras_require = {
         'test': ['coverage', 'requests',
