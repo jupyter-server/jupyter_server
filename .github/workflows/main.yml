@@ -12,6 +12,9 @@ jobs:
       matrix:
         os: [ubuntu, macos, windows]
         python-version: [ '3.6', '3.7', '3.8', '3.9', 'pypy3' ]
+        exclude:
+        - os: windows
+          PYTHON_VERSION: pypy3
     steps:
     - name: Checkout
       uses: actions/checkout@v1

@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.fixture
-def server_config(jp_template_dir):
+def jp_server_config(jp_template_dir):
     return {
             "ServerApp": {
                 "jpserver_extensions": {

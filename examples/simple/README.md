@@ -12,7 +12,7 @@ git clone https://github.com/jupyter/jupyter_server && \
   cd examples/simple && \
   conda create -y -n jupyter-server-example python=3.7 && \
   conda activate jupyter-server-example && \
-  pip install -e .
+  pip install -e .[test]
 ```
 
 **OPTIONAL** If you want to build the Typescript code, you need [npm](https://www.npmjs.com) on your local environement. Compiled javascript is provided as artifact in this repository, so this Typescript build step is optional. The Typescript source and configuration have been taken from https://github.com/markellekelly/jupyter-server-example.
