@@ -29,7 +29,12 @@ TIMEOUTS = dict(
     request_timeout=0.0
 )
 
-# shouldn't be overloading this
+# HACK: shouldn't be overloading this
+
+from jupyter_server.utils import url_path_join
+import urllib.parse
+from tornado.escape import url_escape
+
 @pytest.fixture
 def jp_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_base_url):
     def client_fetch(*parts, headers={}, params={}, **kwargs):
@@ -46,6 +51,7 @@ def jp_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_base_url):
         )
     return client_fetch
 
+# /HACK
 
 async def fetch_expect_200(jp_fetch, *path_parts):
     r = await jp_fetch('files', *path_parts, method='GET', **TIMEOUTS)
