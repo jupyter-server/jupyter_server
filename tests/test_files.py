@@ -21,14 +21,21 @@ def maybe_hidden(request):
     return request.param
 
 
+
+# double the defaults
+TIMEOUTS = dict(
+    connect_timeout=40.0,
+    request_timeout=40.0
+)
+
 async def fetch_expect_200(jp_fetch, *path_parts):
-    r = await jp_fetch('files', *path_parts, method='GET')
+    r = await jp_fetch('files', *path_parts, method='GET', **TIMEOUTS)
     assert (r.body.decode() == path_parts[-1]), (path_parts, r.body)
 
 
 async def fetch_expect_404(jp_fetch, *path_parts):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        r = await jp_fetch('files', *path_parts, method='GET')
+        r = await jp_fetch('files', *path_parts, method='GET', **TIMEOUTS)
         print(r.body)
     assert expected_http_error(e, 404), [path_parts, e]
 
