@@ -47,7 +47,7 @@ jobs:
         pip check
     - name: Run the tests
       run: |
-        pytest
+        pytest -vv --cov=nbformat
     - name: Install the Python dependencies for the examples
       run: |
         cd examples/simple && pip install -e .
