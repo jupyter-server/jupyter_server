@@ -21,47 +21,14 @@ def maybe_hidden(request):
     return request.param
 
 
-
-TIMEOUTS = dict(
-    # default is 20.0
-    connect_timeout=0.0,
-    # needs patch below
-    request_timeout=0.0
-)
-
-# HACK: shouldn't be overloading this
-
-from jupyter_server.utils import url_path_join
-import urllib.parse
-from tornado.escape import url_escape
-
-@pytest.fixture
-def jp_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_base_url):
-    def client_fetch(*parts, headers={}, params={}, **kwargs):
-        # Handle URL strings
-        path_url = url_escape(url_path_join(jp_base_url, *parts), plus=False)
-        params_url = urllib.parse.urlencode(params)
-        url = path_url + "?" + params_url
-        # Add auth keys to header
-        headers.update(jp_auth_header)
-        # Make request.
-        kwargs.setdefault("request_timeout", 20.0)
-        return http_server_client.fetch(
-            url, headers=headers, **kwargs
-        )
-    return client_fetch
-
-# /HACK
-
 async def fetch_expect_200(jp_fetch, *path_parts):
-    r = await jp_fetch('files', *path_parts, method='GET', **TIMEOUTS)
+    r = await jp_fetch('files', *path_parts, method='GET')
     assert (r.body.decode() == path_parts[-1]), (path_parts, r.body)
 
 
 async def fetch_expect_404(jp_fetch, *path_parts):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        r = await jp_fetch('files', *path_parts, method='GET', **TIMEOUTS)
-        print(r.body)
+        r = await jp_fetch('files', *path_parts, method='GET')
     assert expected_http_error(e, 404), [path_parts, e]
 
 
