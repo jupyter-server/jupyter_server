@@ -22,9 +22,9 @@ def maybe_hidden(request):
 
 
 
-# double the defaults
 TIMEOUTS = dict(
-    connect_timeout=40.0,
+    # default is 20.0
+    connect_timeout=0.0,
     # already set upstream?
     # request_timeout=40.0
 )
