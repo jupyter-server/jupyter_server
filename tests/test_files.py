@@ -23,13 +23,14 @@ def maybe_hidden(request):
 
 async def fetch_expect_200(jp_fetch, *path_parts):
     r = await jp_fetch('files', *path_parts, method='GET')
-    assert (r.body.decode() == path_parts[-1]), path_parts
+    assert (r.body.decode() == path_parts[-1]), (path_parts, r.body)
 
 
 async def fetch_expect_404(jp_fetch, *path_parts):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await jp_fetch('files', *path_parts, method='GET')
-    assert expected_http_error(e, 404), path_parts
+        r = await jp_fetch('files', *path_parts, method='GET')
+        print(r.body)
+    assert expected_http_error(e, 404), [path_parts, e]
 
 
 async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir, maybe_hidden):
