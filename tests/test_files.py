@@ -25,7 +25,8 @@ def maybe_hidden(request):
 # double the defaults
 TIMEOUTS = dict(
     connect_timeout=40.0,
-    request_timeout=40.0
+    # already set upstream?
+    # request_timeout=40.0
 )
 
 async def fetch_expect_200(jp_fetch, *path_parts):
