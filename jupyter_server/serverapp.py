@@ -41,17 +41,16 @@ from jinja2 import Environment, FileSystemLoader
 from jupyter_server.transutils import trans, _
 from jupyter_server.utils import secure_write, run_sync
 
-# check for tornado 3.1.0
+# the minimum viable tornado version: needs to be kept in sync with setup.py
+MIN_TORNADO = (6, 1)
+
 try:
     import tornado
-except ImportError as e:
-    raise ImportError(_("The Jupyter Server requires tornado >= 4.0")) from e
-try:
-    version_info = tornado.version_info
-except AttributeError as e:
-    raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have < 1.1.0")) from e
-if version_info < (4,0):
-    raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have %s") % tornado.version)
+    assert tornado.version_info >= MIN_TORNADO
+except (ImportError, AttributeError, AssertionError) as e:  # pragma: no cover
+    raise ImportError(
+        _("The Jupyter Server requires tornado >=%s", ".".join(MIN_TORNADO))
+    ) from e
 
 from tornado import httpserver
 from tornado import ioloop

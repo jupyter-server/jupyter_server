@@ -27,7 +27,7 @@ async def fetch_expect_200(fetch, *path_parts):
 
 async def fetch_expect_404(fetch, *path_parts):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        r = await fetch('files', *path_parts, method='GET')
+        await fetch('files', *path_parts, method='GET')
     assert expected_http_error(e, 404), [path_parts, e]
 
 
