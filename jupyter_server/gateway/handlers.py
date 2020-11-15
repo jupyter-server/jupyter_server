@@ -32,6 +32,9 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
     kernel_id = None
     ping_callback = None
 
+    def check_origin(self, origin=None):
+        return JupyterHandler.check_origin(self, origin)
+
     def set_default_headers(self):
         """Undo the set_default_headers in IPythonHandler which doesn't make sense for websockets"""
         pass
