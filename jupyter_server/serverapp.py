@@ -49,7 +49,7 @@ try:
     assert tornado.version_info >= MIN_TORNADO
 except (ImportError, AttributeError, AssertionError) as e:  # pragma: no cover
     raise ImportError(
-        _("The Jupyter Server requires tornado >=%s.%s.%s", *MIN_TORNADO)
+        _("The Jupyter Server requires tornado >=%s.%s.%s") % MIN_TORNADO
     ) from e
 
 from tornado import httpserver
