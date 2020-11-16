@@ -42,14 +42,14 @@ from jupyter_server.transutils import trans, _
 from jupyter_server.utils import secure_write, run_sync
 
 # the minimum viable tornado version: needs to be kept in sync with setup.py
-MIN_TORNADO = (6, 1)
+MIN_TORNADO = (6, 1, 0)
 
 try:
     import tornado
     assert tornado.version_info >= MIN_TORNADO
 except (ImportError, AttributeError, AssertionError) as e:  # pragma: no cover
     raise ImportError(
-        _("The Jupyter Server requires tornado >=%s", ".".join(MIN_TORNADO))
+        _("The Jupyter Server requires tornado >=%s.%s.%s", *MIN_TORNADO)
     ) from e
 
 from tornado import httpserver
