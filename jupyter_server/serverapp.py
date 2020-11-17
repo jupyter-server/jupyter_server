@@ -553,8 +553,8 @@ class ServerApp(JupyterApp):
     aliases = Dict(aliases)
 
     classes = [
-            KernelManager, Session, MappingKernelManager, KernelSpecManager,
-            ContentsManager, FileContentsManager, NotebookNotary,
+            KernelManager, Session, MappingKernelManager, KernelSpecManager, AsyncMappingKernelManager,
+            ContentsManager, FileContentsManager, AsyncContentsManager, AsyncFileContentsManager, NotebookNotary,
             GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
         ]
 
