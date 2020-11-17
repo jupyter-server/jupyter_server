@@ -11,8 +11,22 @@ from itertools import combinations
 from nbformat import v4 as nbformat
 
 from jupyter_server.services.contents.filecheckpoints import AsyncFileCheckpoints, FileCheckpoints
+from jupyter_server.services.contents.filemanager import AsyncFileContentsManager, FileContentsManager
 from jupyter_server.utils import ensure_async
 from ...utils import expected_http_error
+
+@pytest.fixture(params=[(FileContentsManager, True),
+                        (FileContentsManager, False),
+                        (AsyncFileContentsManager, True),
+                        (AsyncFileContentsManager, False)])
+def jp_contents_manager(request, tmp_path):
+    contents_manager, use_atomic_writing = request.param
+    return contents_manager(root_dir=str(tmp_path), use_atomic_writing=use_atomic_writing)
+
+
+@pytest.fixture(params=[FileContentsManager, AsyncFileContentsManager])
+def file_contents_manager_class(request, tmp_path):
+    return request.param
 
 # -------------- Functions ----------------------------
 
