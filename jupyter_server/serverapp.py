@@ -41,17 +41,16 @@ from jinja2 import Environment, FileSystemLoader
 from jupyter_server.transutils import trans, _
 from jupyter_server.utils import secure_write, run_sync
 
-# check for tornado 3.1.0
+# the minimum viable tornado version: needs to be kept in sync with setup.py
+MIN_TORNADO = (6, 1, 0)
+
 try:
     import tornado
-except ImportError as e:
-    raise ImportError(_("The Jupyter Server requires tornado >= 4.0")) from e
-try:
-    version_info = tornado.version_info
-except AttributeError as e:
-    raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have < 1.1.0")) from e
-if version_info < (4,0):
-    raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have %s") % tornado.version)
+    assert tornado.version_info >= MIN_TORNADO
+except (ImportError, AttributeError, AssertionError) as e:  # pragma: no cover
+    raise ImportError(
+        _("The Jupyter Server requires tornado >=%s.%s.%s") % MIN_TORNADO
+    ) from e
 
 from tornado import httpserver
 from tornado import ioloop
@@ -1604,31 +1603,12 @@ class ServerApp(JupyterApp):
 
     @staticmethod
     def _init_asyncio_patch():
-        """set default asyncio policy to be compatible with tornado
-        Tornado 6 (at least) is not compatible with the default
-        asyncio implementation on Windows
-        Pick the older SelectorEventLoopPolicy on Windows
-        if the known-incompatible default policy is in use.
-        do this as early as possible to make it a low priority and overrideable
-        ref: https://github.com/tornadoweb/tornado/issues/2608
-        FIXME: if/when tornado supports the defaults in asyncio,
-               remove and bump tornado requirement for py38
-        """
-        if sys.platform.startswith("win") and sys.version_info >= (3, 8):
-            import asyncio
-            try:
-                from asyncio import (
-                    WindowsProactorEventLoopPolicy,
-                    WindowsSelectorEventLoopPolicy,
-                )
-            except ImportError:
-                pass
-                # not affected
-            else:
-                if type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy:
-                    # WindowsProactorEventLoopPolicy is not compatible with tornado 6
-                    # fallback to the pre-3.8 default of Selector
-                    asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
+        """no longer needed with tornado 6.1"""
+        warnings.warn(
+            """ServerApp._init_asyncio_patch called, and is longer needed for """
+            """tornado 6.1+, and will be removed in a future release.""",
+            DeprecationWarning
+        )
 
     @catch_config_error
     def initialize(self, argv=None, find_extensions=True, new_httpserver=True):
@@ -1648,7 +1628,6 @@ class ServerApp(JupyterApp):
             If True, a tornado HTTPServer instance will be created and configured for the Server Web
             Application. This will set the http_server attribute of this class.
         """
-        self._init_asyncio_patch()
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
         super(ServerApp, self).initialize(argv)

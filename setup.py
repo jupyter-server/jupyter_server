@@ -37,7 +37,7 @@ setup_args = dict(
     ],
     install_requires = [
         'jinja2',
-        'tornado>=5.0',
+        'tornado>=6.1.0',
         'pyzmq>=17',
         'ipython_genutils',
         'traitlets>=4.2.1',
@@ -48,7 +48,7 @@ setup_args = dict(
         'Send2Trash',
         'terminado>=0.8.3',
         'prometheus_client',
-        "pywin32>=1.0 ; sys_platform == 'win32'"
+        "pywin32>=1.0 ; sys_platform == 'win32'",
     ],
     extras_require = {
         'test': ['coverage', 'requests',
@@ -59,9 +59,6 @@ setup_args = dict(
     entry_points = {
         'console_scripts': [
             'jupyter-server = jupyter_server.serverapp:main',
-        ],
-        'pytest11': [
-            'pytest_jupyter_server = jupyter_server.pytest_plugin'
         ]
     },
 )
