@@ -18,8 +18,6 @@ j = lambda r: json.loads(r.body.decode())
 
 @pytest.fixture(params=["MappingKernelManager", "AsyncMappingKernelManager"])
 def argv(request):
-    if request.param == "AsyncMappingKernelManager" and sys.version_info < (3, 6):
-        pytest.skip("Kernel manager is AsyncMappingKernelManager, Python version < 3.6")
     return ["--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager." + request.param]
 
 

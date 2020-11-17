@@ -44,8 +44,6 @@ dirs = [
 
 @pytest.fixture(params=["FileContentsManager", "AsyncFileContentsManager"])
 def argv(request):
-    if request.param == "AsyncFileContentsManager" and sys.version_info < (3, 6):
-        pytest.skip("Kernel manager is AsyncFileContentsManager, Python version < 3.6")
     return ["--ServerApp.contents_manager_class=jupyter_server.services.contents.filemanager." + request.param]
 
 
