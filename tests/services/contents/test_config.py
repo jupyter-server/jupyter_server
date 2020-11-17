@@ -1,6 +1,5 @@
 import pytest
 
-from traitlets.config import Config
 from jupyter_server.services.contents.checkpoints import AsyncCheckpoints
 from jupyter_server.services.contents.filecheckpoints import GenericFileCheckpoints
 from jupyter_server.services.contents.manager import AsyncContentsManager

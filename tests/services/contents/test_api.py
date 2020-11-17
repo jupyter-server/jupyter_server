@@ -12,7 +12,6 @@ from nbformat.v4 import (
 )
 
 from jupyter_server.utils import url_path_join
-from jupyter_server.services.contents.filecheckpoints import AsyncFileCheckpoints, FileCheckpoints
 
 from base64 import encodebytes, decodebytes
 

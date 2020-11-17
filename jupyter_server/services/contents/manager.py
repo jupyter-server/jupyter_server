@@ -30,7 +30,6 @@ from traitlets import (
     default,
 )
 from ipython_genutils.py3compat import string_types
-from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.transutils import _
 from jupyter_server.utils import ensure_async
 

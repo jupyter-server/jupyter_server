@@ -12,7 +12,7 @@ import io
 import os
 import shutil
 
-from anyio import open_file, run_sync_in_worker_thread
+from anyio import run_sync_in_worker_thread
 from tornado.web import HTTPError
 
 from jupyter_server.utils import (

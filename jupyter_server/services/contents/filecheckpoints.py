@@ -15,7 +15,6 @@ from .fileio import AsyncFileManagerMixin, FileManagerMixin
 
 from anyio import run_sync_in_worker_thread
 from jupyter_core.utils import ensure_dir_exists
-from jupyter_server.utils import ensure_async
 from ipython_genutils.py3compat import getcwd
 from traitlets import Unicode
 

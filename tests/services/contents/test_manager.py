@@ -10,7 +10,6 @@ from itertools import combinations
 
 from nbformat import v4 as nbformat
 
-from jupyter_server.services.contents.filecheckpoints import AsyncFileCheckpoints, FileCheckpoints
 from jupyter_server.services.contents.filemanager import AsyncFileContentsManager, FileContentsManager
 from jupyter_server.utils import ensure_async
 from ...utils import expected_http_error
@@ -335,7 +334,7 @@ async def test_get(jp_contents_manager):
     # Test in sub-directory
     sub_dir = '/foo/'
     _make_dir(cm, 'foo')
-    model = await ensure_async(cm.new_untitled(path=sub_dir, ext='.ipynb'))
+    await ensure_async(cm.new_untitled(path=sub_dir, ext='.ipynb'))
     model2 = await ensure_async(cm.get(sub_dir + name))
     assert isinstance(model2, dict)
     assert 'name' in model2
@@ -461,7 +460,6 @@ async def test_save(jp_contents_manager):
     sub_dir = '/foo/'
     _make_dir(cm, 'foo')
     model = await ensure_async(cm.new_untitled(path=sub_dir, type='notebook'))
-    name = model['name']
     path = model['path']
     model = await ensure_async(cm.get(path))
 
