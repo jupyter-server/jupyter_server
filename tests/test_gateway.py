@@ -152,15 +152,17 @@ async def test_gateway_env_options(init_gateway, jp_serverapp):
     assert jp_serverapp.gateway_config.connect_timeout == jp_serverapp.gateway_config.request_timeout
     assert jp_serverapp.gateway_config.connect_timeout == 44.4
 
+    GatewayClient.instance().init_static_args()
+    assert GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == int(jp_serverapp.gateway_config.request_timeout)
+
 
 async def test_gateway_cli_options(jp_configurable_serverapp):
     argv = [
         '--gateway-url=' + mock_gateway_url,
         '--GatewayClient.http_user=' + mock_http_user,
         '--GatewayClient.connect_timeout=44.4',
-        '--GatewayClient.request_timeout=44.4'
+        '--GatewayClient.request_timeout=96.0'
     ]
-
 
     GatewayClient.clear_instance()
     app = jp_configurable_serverapp(argv=argv)
@@ -168,8 +170,10 @@ async def test_gateway_cli_options(jp_configurable_serverapp):
     assert app.gateway_config.gateway_enabled is True
     assert app.gateway_config.url == mock_gateway_url
     assert app.gateway_config.http_user == mock_http_user
-    assert app.gateway_config.connect_timeout == app.gateway_config.request_timeout
     assert app.gateway_config.connect_timeout == 44.4
+    assert app.gateway_config.request_timeout == 96.0
+    GatewayClient.instance().init_static_args()
+    assert GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == 96  # Ensure KLT gets set from request-timeout
     GatewayClient.clear_instance()
 
 

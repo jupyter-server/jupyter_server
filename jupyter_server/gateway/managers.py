@@ -102,7 +102,7 @@ class GatewayClient(SingletonConfigurable):
     def _kernelspecs_resource_endpoint_default(self):
         return os.environ.get(self.kernelspecs_resource_endpoint_env, self.kernelspecs_resource_endpoint_default_value)
 
-    connect_timeout_default_value = 60.0
+    connect_timeout_default_value = 40.0
     connect_timeout_env = 'JUPYTER_GATEWAY_CONNECT_TIMEOUT'
     connect_timeout = Float(default_value=connect_timeout_default_value, config=True,
         help="""The time allowed for HTTP connection establishment with the Gateway server.
@@ -112,7 +112,7 @@ class GatewayClient(SingletonConfigurable):
     def connect_timeout_default(self):
         return float(os.environ.get('JUPYTER_GATEWAY_CONNECT_TIMEOUT', self.connect_timeout_default_value))
 
-    request_timeout_default_value = 60.0
+    request_timeout_default_value = 40.0
     request_timeout_env = 'JUPYTER_GATEWAY_REQUEST_TIMEOUT'
     request_timeout = Float(default_value=request_timeout_default_value, config=True,
         help="""The time allowed for HTTP request completion. (JUPYTER_GATEWAY_REQUEST_TIMEOUT env var)""")
@@ -226,18 +226,20 @@ class GatewayClient(SingletonConfigurable):
 
     # Ensure KERNEL_LAUNCH_TIMEOUT has a default value.
     KERNEL_LAUNCH_TIMEOUT = int(os.environ.get('KERNEL_LAUNCH_TIMEOUT', 40))
-    os.environ['KERNEL_LAUNCH_TIMEOUT'] = str(KERNEL_LAUNCH_TIMEOUT)
-
-    LAUNCH_TIMEOUT_PAD = int(os.environ.get('LAUNCH_TIMEOUT_PAD', 2))
 
     def init_static_args(self):
         """Initialize arguments used on every request.  Since these are static values, we'll
         perform this operation once.
 
         """
-        # Ensure that request timeout is at least "pad" greater than launch timeout.
-        if self.request_timeout < float(GatewayClient.KERNEL_LAUNCH_TIMEOUT + GatewayClient.LAUNCH_TIMEOUT_PAD):
-            self.request_timeout = float(GatewayClient.KERNEL_LAUNCH_TIMEOUT + GatewayClient.LAUNCH_TIMEOUT_PAD)
+        # Ensure that request timeout and KERNEL_LAUNCH_TIMEOUT are the same, taking the
+        #  greater value of the two.
+        if self.request_timeout < float(GatewayClient.KERNEL_LAUNCH_TIMEOUT):
+            self.request_timeout = float(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
+        elif self.request_timeout > float(GatewayClient.KERNEL_LAUNCH_TIMEOUT):
+            GatewayClient.KERNEL_LAUNCH_TIMEOUT = int(self.request_timeout)
+        # Ensure any adjustments are reflected in env.
+        os.environ['KERNEL_LAUNCH_TIMEOUT'] = str(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
 
         self._static_args['headers'] = json.loads(self.headers)
         if 'Authorization' not in self._static_args['headers'].keys():
@@ -492,10 +494,19 @@ class GatewayKernelSpecManager(KernelSpecManager):
 
     def __init__(self, **kwargs):
         super(GatewayKernelSpecManager, self).__init__(**kwargs)
-        self.base_endpoint = url_path_join(GatewayClient.instance().url,
-                                           GatewayClient.instance().kernelspecs_endpoint)
+        base_endpoint = url_path_join(GatewayClient.instance().url,
+                                      GatewayClient.instance().kernelspecs_endpoint)
+
+        self.base_endpoint = GatewayKernelSpecManager._get_endpoint_for_user_filter(base_endpoint)
         self.base_resource_endpoint = url_path_join(GatewayClient.instance().url,
                                                     GatewayClient.instance().kernelspecs_resource_endpoint)
+
+    @staticmethod
+    def _get_endpoint_for_user_filter(default_endpoint):
+        kernel_user = os.environ.get('KERNEL_USERNAME')
+        if kernel_user:
+            return '?user='.join([default_endpoint, kernel_user])
+        return default_endpoint
 
     def _get_kernelspecs_endpoint_url(self, kernel_name=None):
         """Builds a url for the kernels endpoint
