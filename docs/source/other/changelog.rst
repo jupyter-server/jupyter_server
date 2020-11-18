@@ -21,6 +21,15 @@ We strongly recommend that you upgrade to version 9+ of pip before upgrading ``j
     Use ``pip install pip --upgrade`` to upgrade pip. Check pip version with
     ``pip --version``.
 
+.. _release-1.0.6:
+
+1.0.6
+-----
+
+1.0.6 is a security release, fixing one vulnerability:
+
+- Fix open redirect vulnerability GHSA-grfj-wjv9-4f9v (CVE-2020-26232)
+
 .. _release-1.0.0:
 
 1.0.0
