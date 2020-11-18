@@ -55,4 +55,3 @@ async def test_trailing_slash(uri, expected, http_server_client, auth_header, ba
     assert response.code == 302
     assert "Location" in response.headers
     assert response.headers["Location"] == expected
-    assert False
