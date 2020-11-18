@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.6] - 2020-11-18
+
+1.0.6 is a security release, fixing one vulnerability:
+
+### Changed
+
+- Fix open redirect vulnerability GHSA-grfj-wjv9-4f9v (CVE-2020-26232)
+
+
 ## [1.0] - 2020-9-18
 
 ### Added.

@@ -776,9 +776,12 @@ class TrailingSlashHandler(web.RequestHandler):
     """
 
     def get(self):
-        uri = self.request.path.rstrip("/")
-        if uri:
-            self.redirect('?'.join((uri, self.request.query)))
+        path, *rest = self.request.uri.partition("?")
+        # trim trailing *and* leading /
+        # to avoid misinterpreting repeated '//'
+        path = "/" + path.strip("/")
+        new_uri = "".join([path, *rest])
+        self.redirect(new_uri)
 
     post = put = get
 
