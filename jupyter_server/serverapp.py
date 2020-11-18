@@ -246,6 +246,7 @@ class ServerWebApplication(web.Application):
             disable_check_xsrf=jupyter_app.disable_check_xsrf,
             allow_remote_access=jupyter_app.allow_remote_access,
             local_hostnames=jupyter_app.local_hostnames,
+            authenticate_prometheus=jupyter_app.authenticate_prometheus,
 
             # managers
             kernel_manager=kernel_manager,
@@ -1198,6 +1199,14 @@ class ServerApp(JupyterApp):
          Terminals may also be automatically disabled if the terminado package
          is not available.
          """))
+
+    authenticate_prometheus = Bool(
+        True,
+        help=""""
+        Require authentication to access prometheus metrics.
+        """,
+        config=True
+    )
 
     def parse_command_line(self, argv=None):
 
