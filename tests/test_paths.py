@@ -41,12 +41,12 @@ def test_path_regex_bad():
         ("/has/param/?hasparam=true", "/has/param?hasparam=true"),
     ]
 )
-async def test_trailing_slash(uri, expected, http_server_client, auth_header, base_url):
+async def test_trailing_slash(jp_ensure_app_fixture, uri, expected, http_server_client, jp_auth_header, jp_base_url):
     # http_server_client raises an exception when follow_redirects=False
     with pytest.raises(tornado.httpclient.HTTPClientError) as err:
         await http_server_client.fetch(
             uri,
-            headers=auth_header,
+            headers=jp_auth_header,
             request_timeout=20,
             follow_redirects=False
         )
