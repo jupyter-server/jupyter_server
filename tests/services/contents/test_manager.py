@@ -192,12 +192,14 @@ async def test_good_symlink(file_contents_manager_class, tmp_path):
     assert sorted(dir_model['content'], key=lambda x: x['name']) == [symlink_model, file_model]
 
 
+@pytest.mark.skipif(
+    sys.platform.startswith('win'),
+    reason="Can't test permissions on Windows"
+)
 async def test_403(file_contents_manager_class, tmp_path):
     if hasattr(os, 'getuid'):
         if os.getuid() == 0:
             raise pytest.skip("Can't test permissions as root")
-    if sys.platform.startswith('win'):
-        raise pytest.skip("Can't test permissions on Windows")
 
     td = str(tmp_path)
     cm = file_contents_manager_class(root_dir=td)
