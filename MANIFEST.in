@@ -6,7 +6,7 @@ include CHANGELOG.md
 include setupbase.py
 
 # include everything in package_data
-include jupyter_server/**/*
+recursive-include jupyter_server *
 
 # Documentation
 graft docs
@@ -26,3 +26,5 @@ global-exclude *.pyc
 global-exclude *.pyo
 global-exclude .git
 global-exclude .ipynb_checkpoints
+global-exclude .pytest_cache
+global-exclude .coverage
