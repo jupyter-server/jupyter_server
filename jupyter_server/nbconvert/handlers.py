@@ -14,6 +14,7 @@ from ..base.handlers import (
     JupyterHandler, FilesRedirectHandler,
     path_regex,
 )
+from jupyter_server.utils import ensure_async
 from nbformat import from_dict
 
 from ipython_genutils.py3compat import cast_bytes
@@ -80,7 +81,7 @@ class NbconvertFileHandler(JupyterHandler):
     SUPPORTED_METHODS = ('GET',)
 
     @web.authenticated
-    def get(self, format, path):
+    async def get(self, format, path):
 
         exporter = get_exporter(format, config=self.config, log=self.log)
 
@@ -93,7 +94,7 @@ class NbconvertFileHandler(JupyterHandler):
         else:
             ext_resources_dir = None
 
-        model = self.contents_manager.get(path=path)
+        model = await ensure_async(self.contents_manager.get(path=path))
         name = model['name']
         if model['type'] != 'notebook':
             # not a notebook, redirect to files

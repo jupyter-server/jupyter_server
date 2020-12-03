@@ -8,7 +8,7 @@ import json
 from base64 import decodebytes
 from tornado import web
 from jupyter_server.base.handlers import JupyterHandler
-
+from jupyter_server.utils import ensure_async
 
 class FilesHandler(JupyterHandler):
     """serve files via ContentsManager
@@ -34,7 +34,7 @@ class FilesHandler(JupyterHandler):
     async def get(self, path, include_body=True):
         cm = self.contents_manager
 
-        if cm.is_hidden(path) and not cm.allow_hidden:
+        if await ensure_async(cm.is_hidden(path)) and not cm.allow_hidden:
             self.log.info("Refusing to serve hidden file, via 404 Error")
             raise web.HTTPError(404)
 
@@ -44,7 +44,7 @@ class FilesHandler(JupyterHandler):
         else:
             name = path
 
-        model = await cm.get(path, type='file', content=include_body)
+        model = await ensure_async(cm.get(path, type='file', content=include_body))
 
         if self.get_argument("download", False):
             self.set_attachment_header(name)

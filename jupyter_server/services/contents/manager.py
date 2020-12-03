@@ -623,7 +623,7 @@ class AsyncContentsManager(ContentsManager):
         exists : bool
             Whether the target exists.
         """
-        return await (self.file_exists(path) or self.dir_exists(path))
+        return await (ensure_async(self.file_exists(path)) or ensure_async(self.dir_exists(path)))
 
     async def get(self, path, content=True, type=None, format=None):
         """Get a file or directory model."""
@@ -807,7 +807,7 @@ class AsyncContentsManager(ContentsManager):
             raise HTTPError(400, "Can't copy directories")
         if to_path is None:
             to_path = from_dir
-        if self.dir_exists(to_path):
+        if await ensure_async(self.dir_exists(to_path)):
             name = copy_pat.sub(u'.', from_name)
             to_name = await self.increment_filename(name, to_path, insert='-Copy')
             to_path = u'{0}/{1}'.format(to_path, to_name)

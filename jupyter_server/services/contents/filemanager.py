@@ -5,7 +5,6 @@
 
 from datetime import datetime
 import errno
-import io
 import os
 import shutil
 import stat

@@ -1,7 +1,5 @@
 from anyio import run_sync_in_worker_thread
-from contextlib import contextmanager
 from tornado import web
-import nbformat
 import base64
 import os, io
 
@@ -138,4 +136,5 @@ class AsyncLargeFileManager(AsyncFileContentsManager):
                 os_path = os.path.join(os.path.dirname(os_path), os.readlink(os_path))
             with io.open(os_path, 'ab') as f:
                 await run_sync_in_worker_thread(f.write, bcontent)
+
 

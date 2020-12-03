@@ -176,7 +176,7 @@ class ContentsHandler(APIHandler):
 
         cm = self.contents_manager
 
-        file_exists = cm.file_exists(path)
+        file_exists = await ensure_async(cm.file_exists(path))
         if file_exists:
             raise web.HTTPError(400, "Cannot POST to files, use PUT instead.")
 
@@ -213,7 +213,7 @@ class ContentsHandler(APIHandler):
         if model:
             if model.get('copy_from'):
                 raise web.HTTPError(400, "Cannot copy with PUT, only POST")
-            exists = self.contents_manager.file_exists(path)
+            exists = await ensure_async(self.contents_manager.file_exists(path))
             if exists:
                 await self._save(model, path)
             else:
