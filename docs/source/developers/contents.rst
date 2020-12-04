@@ -269,11 +269,22 @@ ContentsManager.
 .. _PostgreSQL: https://www.postgresql.org/
 
 Asynchronous Support
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
-To execute file operations asynchronously in a virtual filesystem, the following classes are available.
+An asynchronous version of the Contents API is available to run slow IO processes concurrently.
 
 - :class:`~manager.AsyncContentsManager`
 - :class:`~filemanager.AsyncFileContentsManager`
+- :class:`~largefilemanager.AsyncLargeFileManager`
 - :class:`~checkpoints.AsyncCheckpoints`
+- :class:`~checkpoints.AsyncGenericCheckpointsMixin`
+
+.. note::
+
+   .. _contentfree:
+
+   In most cases, the non-asynchronous Contents API is performant for local filesystems.
+   However, if the Jupyter Notebook web application is interacting with a high-latent virtual filesystem, you may see performance gains by using the asynchronous version.
+   For example, if you're experiencing terminal lag in the web application due to the slow and blocking file operations, the asynchronous version may be a good option.
+   Before opting in, comparing both non-async and async options' performances is recommended.
 

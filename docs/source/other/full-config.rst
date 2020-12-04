@@ -41,10 +41,20 @@ Application.log_format : Unicode
 
     The Logging format template
 
-Application.log_level : 0|10|20|30|40|50|'DEBUG'|'INFO'|'WARN'|'ERROR'|'CRITICAL'
+Application.log_level : any of ``0``|``10``|``20``|``30``|``40``|``50``|``'DEBUG'``|``'INFO'``|``'WARN'``|``'ERROR'``|``'CRITICAL'``
     Default: ``30``
 
     Set the log level by value or name.
+
+Application.show_config : Bool
+    Default: ``False``
+
+    Instead of starting the Application, dump configuration to stdout
+
+Application.show_config_json : Bool
+    Default: ``False``
+
+    Instead of starting the Application, dump configuration to stdout (as JSON)
 
 JupyterApp.answer_yes : Bool
     Default: ``False``
@@ -65,6 +75,31 @@ JupyterApp.generate_config : Bool
     Default: ``False``
 
     Generate default config file.
+
+JupyterApp.log_datefmt : Unicode
+    Default: ``'%Y-%m-%d %H:%M:%S'``
+
+    The date format used by logging formatters for %(asctime)s
+
+JupyterApp.log_format : Unicode
+    Default: ``'[%(name)s]%(highlevel)s %(message)s'``
+
+    The Logging format template
+
+JupyterApp.log_level : any of ``0``|``10``|``20``|``30``|``40``|``50``|``'DEBUG'``|``'INFO'``|``'WARN'``|``'ERROR'``|``'CRITICAL'``
+    Default: ``30``
+
+    Set the log level by value or name.
+
+JupyterApp.show_config : Bool
+    Default: ``False``
+
+    Instead of starting the Application, dump configuration to stdout
+
+JupyterApp.show_config_json : Bool
+    Default: ``False``
+
+    Instead of starting the Application, dump configuration to stdout (as JSON)
 
 ServerApp.allow_credentials : Bool
     Default: ``False``
@@ -129,6 +164,11 @@ ServerApp.allow_root : Bool
 
     Whether to allow the user to run the server as root.
 
+ServerApp.answer_yes : Bool
+    Default: ``False``
+
+    Answer yes to any prompts.
+
 ServerApp.base_url : Unicode
     Default: ``'/'``
 
@@ -157,6 +197,16 @@ ServerApp.client_ca : Unicode
     Default: ``''``
 
     The full path to a certificate authority certificate for SSL/TLS client authentication.
+
+ServerApp.config_file : Unicode
+    Default: ``''``
+
+    Full path of a config file.
+
+ServerApp.config_file_name : Unicode
+    Default: ``''``
+
+    Specify a config file to load.
 
 ServerApp.config_manager_class : Type
     Default: ``'jupyter_server.services.config.manager.ConfigManager'``
@@ -250,6 +300,11 @@ ServerApp.file_to_run : Unicode
 
     No description
 
+ServerApp.generate_config : Bool
+    Default: ``False``
+
+    Generate default config file.
+
 ServerApp.get_secure_cookie_kwargs : Dict
     Default: ``{}``
 
@@ -318,6 +373,21 @@ ServerApp.local_hostnames : List
     Local IP addresses (such as 127.0.0.1 and ::1) are automatically accepted
     as local as well.
 
+
+ServerApp.log_datefmt : Unicode
+    Default: ``'%Y-%m-%d %H:%M:%S'``
+
+    The date format used by logging formatters for %(asctime)s
+
+ServerApp.log_format : Unicode
+    Default: ``'[%(name)s]%(highlevel)s %(message)s'``
+
+    The Logging format template
+
+ServerApp.log_level : any of ``0``|``10``|``20``|``30``|``40``|``50``|``'DEBUG'``|``'INFO'``|``'WARN'``|``'ERROR'``|``'CRITICAL'``
+    Default: ``30``
+
+    Set the log level by value or name.
 
 ServerApp.login_handler_class : Type
     Default: ``'jupyter_server.auth.login.LoginHandler'``
@@ -430,6 +500,16 @@ ServerApp.session_manager_class : Type
     Default: ``'jupyter_server.services.sessions.sessionmanager.SessionManager'``
 
     The session manager class to use.
+
+ServerApp.show_config : Bool
+    Default: ``False``
+
+    Instead of starting the Application, dump configuration to stdout
+
+ServerApp.show_config_json : Bool
+    Default: ``False``
+
+    Instead of starting the Application, dump configuration to stdout (as JSON)
 
 ServerApp.shutdown_no_activity_timeout : Int
     Default: ``0``
@@ -560,7 +640,7 @@ ConnectionFileMixin.stdin_port : Int
 
     set the stdin (ROUTER) port [default: random]
 
-ConnectionFileMixin.transport : 'tcp'|'ipc'
+ConnectionFileMixin.transport : any of ``'tcp'``|``'ipc'`` (case-insensitive)
     Default: ``'tcp'``
 
     No description
@@ -569,6 +649,39 @@ KernelManager.autorestart : Bool
     Default: ``True``
 
     Should we autorestart the kernel if it dies.
+
+KernelManager.connection_file : Unicode
+    Default: ``''``
+
+    JSON file in which to store connection info [default: kernel-<pid>.json]
+    
+    This file will contain the IP, ports, and authentication key needed to connect
+    clients to this kernel. By default, this file will be created in the security dir
+    of the current profile, but can be specified by absolute path.
+
+
+KernelManager.control_port : Int
+    Default: ``0``
+
+    set the control (ROUTER) port [default: random]
+
+KernelManager.hb_port : Int
+    Default: ``0``
+
+    set the heartbeat port [default: random]
+
+KernelManager.iopub_port : Int
+    Default: ``0``
+
+    set the iopub (PUB) port [default: random]
+
+KernelManager.ip : Unicode
+    Default: ``''``
+
+    Set the kernel's IP address [default localhost].
+    If the IP address is something other than localhost, then
+    Consoles on other machines will be able to connect
+    to the Kernel, so be careful!
 
 KernelManager.kernel_cmd : List
     Default: ``[]``
@@ -585,10 +698,25 @@ KernelManager.kernel_cmd : List
     option --debug if it given on the Jupyter command line.
 
 
+KernelManager.shell_port : Int
+    Default: ``0``
+
+    set the shell (ROUTER) port [default: random]
+
 KernelManager.shutdown_wait_time : Float
     Default: ``5.0``
 
     Time to wait for a kernel to terminate before killing it, in seconds.
+
+KernelManager.stdin_port : Int
+    Default: ``0``
+
+    set the stdin (ROUTER) port [default: random]
+
+KernelManager.transport : any of ``'tcp'``|``'ipc'`` (case-insensitive)
+    Default: ``'tcp'``
+
+    No description
 
 Session.buffer_threshold : Int
     Default: ``1024``
@@ -668,7 +796,7 @@ Session.unpacker : DottedObjectName
     Only used with custom functions for `packer`.
 
 Session.username : Unicode
-    Default: ``'echar4'``
+    Default: ``'mwakabayashi'``
 
     Username for the Session. Default is your system username.
 
@@ -688,6 +816,11 @@ MultiKernelManager.shared_context : Bool
     Default: ``True``
 
     Share a single zmq.Context to talk to all my kernels
+
+MappingKernelManager.allow_tracebacks : Bool
+    Default: ``True``
+
+    Whether to send tracebacks to clients on exceptions.
 
 MappingKernelManager.allowed_message_types : List
     Default: ``[]``
@@ -732,6 +865,11 @@ MappingKernelManager.cull_interval : Int
 
     The interval (in seconds) on which to check for idle kernels exceeding the cull timeout value.
 
+MappingKernelManager.default_kernel_name : Unicode
+    Default: ``'python3'``
+
+    The name of the default kernel to start
+
 MappingKernelManager.kernel_info_timeout : Float
     Default: ``60``
 
@@ -745,10 +883,27 @@ MappingKernelManager.kernel_info_timeout : Float
     and the ZMQChannelsHandler (which handles the startup).
 
 
+MappingKernelManager.kernel_manager_class : DottedObjectName
+    Default: ``'jupyter_client.ioloop.IOLoopKernelManager'``
+
+    The kernel manager class.  This is configurable to allow
+    subclassing of the KernelManager for customized behavior.
+
+
 MappingKernelManager.root_dir : Unicode
     Default: ``''``
 
     No description
+
+MappingKernelManager.shared_context : Bool
+    Default: ``True``
+
+    Share a single zmq.Context to talk to all my kernels
+
+MappingKernelManager.traceback_replacement_message : Unicode
+    Default: ``'An exception occurred at runtime, which is not shown due to ...``
+
+    Message to print when allow_tracebacks is False, and an exception occurs
 
 KernelSpecManager.ensure_native_kernel : Bool
     Default: ``True``
@@ -870,12 +1025,62 @@ FileManagerMixin.use_atomic_writing : Bool
     This procedure, namely 'atomic_writing', causes some bugs on file system whitout operation order enforcement (like some networked fs).
     If set to False, the new notebook is written directly on the old one which could fail (eg: full filesystem or quota )
 
+FileContentsManager.allow_hidden : Bool
+    Default: ``False``
+
+    Allow access to hidden files
+
+FileContentsManager.checkpoints : Instance
+    Default: ``None``
+
+    No description
+
+FileContentsManager.checkpoints_class : Type
+    Default: ``'jupyter_server.services.contents.checkpoints.Checkpoints'``
+
+    No description
+
+FileContentsManager.checkpoints_kwargs : Dict
+    Default: ``{}``
+
+    No description
+
 FileContentsManager.delete_to_trash : Bool
     Default: ``True``
 
     If True (default), deleting files will send them to the
     platform's trash/recycle bin, where they can be recovered. If False,
     deleting files really deletes them.
+
+FileContentsManager.files_handler_class : Type
+    Default: ``'jupyter_server.files.handlers.FilesHandler'``
+
+    handler class to use when serving raw file requests.
+    
+    Default is a fallback that talks to the ContentsManager API,
+    which may be inefficient, especially for large files.
+    
+    Local files-based ContentsManagers can use a StaticFileHandler subclass,
+    which will be much more efficient.
+    
+    Access to these files should be Authenticated.
+
+
+FileContentsManager.files_handler_params : Dict
+    Default: ``{}``
+
+    Extra parameters to pass to files_handler_class.
+    
+    For example, StaticFileHandlers generally expect a `path` argument
+    specifying the root directory from which to serve files.
+
+
+FileContentsManager.hide_globs : List
+    Default: ``['__pycache__', '*.pyc', '*.pyo', '.DS_Store', '*.so', '*.dyl...``
+
+    
+    Glob patterns to hide in file and directory listings.
+
 
 FileContentsManager.post_save_hook : Any
     Default: ``None``
@@ -896,12 +1101,55 @@ FileContentsManager.post_save_hook : Any
     - contents_manager: this ContentsManager instance
 
 
+FileContentsManager.pre_save_hook : Any
+    Default: ``None``
+
+    Python callable or importstring thereof
+    
+    To be called on a contents model prior to save.
+    
+    This can be used to process the structure,
+    such as removing notebook outputs or other side effects that
+    should not be saved.
+    
+    It will be called as (all arguments passed by keyword)::
+    
+        hook(path=path, model=model, contents_manager=self)
+    
+    - model: the model to be saved. Includes file contents.
+      Modifying this dict will affect the file that is stored.
+    - path: the API path of the save destination
+    - contents_manager: this ContentsManager instance
+
+
 FileContentsManager.root_dir : Unicode
     Default: ``''``
 
     No description
 
-NotebookNotary.algorithm : 'md5'|'sha3_512'|'blake2b'|'sha3_384'|'sha3_256'|'sha224'|'sha3_224'|'sha384'|'sha512'|'blake2s'|'sha1'|'sha256'
+FileContentsManager.untitled_directory : Unicode
+    Default: ``'Untitled Folder'``
+
+    The base name used when creating untitled directories.
+
+FileContentsManager.untitled_file : Unicode
+    Default: ``'untitled'``
+
+    The base name used when creating untitled files.
+
+FileContentsManager.untitled_notebook : Unicode
+    Default: ``'Untitled'``
+
+    The base name used when creating untitled notebooks.
+
+FileContentsManager.use_atomic_writing : Bool
+    Default: ``True``
+
+    By default notebooks are saved on disk on a temporary file and then if succefully written, it replaces the old ones.
+    This procedure, namely 'atomic_writing', causes some bugs on file system whitout operation order enforcement (like some networked fs).
+    If set to False, the new notebook is written directly on the old one which could fail (eg: full filesystem or quota )
+
+NotebookNotary.algorithm : any of ``'blake2s'``|``'sha512'``|``'md5'``|``'sha3_512'``|``'sha3_224'``|``'blake2b'``|``'sha384'``|``'sha1'``|``'sha3_256'``|``'sha256'``|``'sha224'``|``'sha3_384'``
     Default: ``'sha256'``
 
     The hashing algorithm used to sign notebooks.
@@ -930,6 +1178,114 @@ NotebookNotary.store_factory : Callable
     A callable returning the storage backend for notebook signatures.
     The default uses an SQLite database.
 
+GatewayKernelManager.allow_tracebacks : Bool
+    Default: ``True``
+
+    Whether to send tracebacks to clients on exceptions.
+
+GatewayKernelManager.allowed_message_types : List
+    Default: ``[]``
+
+    White list of allowed kernel message types.
+    When the list is empty, all message types are allowed.
+
+
+GatewayKernelManager.buffer_offline_messages : Bool
+    Default: ``True``
+
+    Whether messages from kernels whose frontends have disconnected should be buffered in-memory.
+    
+    When True (default), messages are buffered and replayed on reconnect,
+    avoiding lost messages due to interrupted connectivity.
+    
+    Disable if long-running kernels will produce too much output while
+    no frontends are connected.
+
+
+GatewayKernelManager.cull_busy : Bool
+    Default: ``False``
+
+    Whether to consider culling kernels which are busy.
+    Only effective if cull_idle_timeout > 0.
+
+GatewayKernelManager.cull_connected : Bool
+    Default: ``False``
+
+    Whether to consider culling kernels which have one or more connections.
+    Only effective if cull_idle_timeout > 0.
+
+GatewayKernelManager.cull_idle_timeout : Int
+    Default: ``0``
+
+    Timeout (in seconds) after which a kernel is considered idle and ready to be culled.
+    Values of 0 or lower disable culling. Very short timeouts may result in kernels being culled
+    for users with poor network connections.
+
+GatewayKernelManager.cull_interval : Int
+    Default: ``300``
+
+    The interval (in seconds) on which to check for idle kernels exceeding the cull timeout value.
+
+GatewayKernelManager.default_kernel_name : Unicode
+    Default: ``'python3'``
+
+    The name of the default kernel to start
+
+GatewayKernelManager.kernel_info_timeout : Float
+    Default: ``60``
+
+    Timeout for giving up on a kernel (in seconds).
+    
+    On starting and restarting kernels, we check whether the
+    kernel is running and responsive by sending kernel_info_requests.
+    This sets the timeout in seconds for how long the kernel can take
+    before being presumed dead.
+    This affects the MappingKernelManager (which handles kernel restarts)
+    and the ZMQChannelsHandler (which handles the startup).
+
+
+GatewayKernelManager.kernel_manager_class : DottedObjectName
+    Default: ``'jupyter_client.ioloop.IOLoopKernelManager'``
+
+    The kernel manager class.  This is configurable to allow
+    subclassing of the KernelManager for customized behavior.
+
+
+GatewayKernelManager.root_dir : Unicode
+    Default: ``''``
+
+    No description
+
+GatewayKernelManager.shared_context : Bool
+    Default: ``True``
+
+    Share a single zmq.Context to talk to all my kernels
+
+GatewayKernelManager.traceback_replacement_message : Unicode
+    Default: ``'An exception occurred at runtime, which is not shown due to ...``
+
+    Message to print when allow_tracebacks is False, and an exception occurs
+
+GatewayKernelSpecManager.ensure_native_kernel : Bool
+    Default: ``True``
+
+    If there is no Python kernelspec registered and the IPython
+    kernel is available, ensure it is added to the spec list.
+
+
+GatewayKernelSpecManager.kernel_spec_class : Type
+    Default: ``'jupyter_client.kernelspec.KernelSpec'``
+
+    The kernel spec class.  This is configurable to allow
+    subclassing of the KernelSpecManager for customized behavior.
+
+
+GatewayKernelSpecManager.whitelist : Set
+    Default: ``set()``
+
+    Whitelist of allowed kernel names.
+    
+    By default, all installed kernels are allowed.
 
 
 
