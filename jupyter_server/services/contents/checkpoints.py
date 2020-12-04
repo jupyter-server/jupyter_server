@@ -146,6 +146,25 @@ class AsyncCheckpoints(Checkpoints):
     """
     Base class for managing checkpoints for a ContentsManager asynchronously.
     """
+    async def create_checkpoint(self, contents_mgr, path):
+        """Create a checkpoint."""
+        raise NotImplementedError("must be implemented in a subclass")
+
+    async def restore_checkpoint(self, contents_mgr, checkpoint_id, path):
+        """Restore a checkpoint"""
+        raise NotImplementedError("must be implemented in a subclass")
+
+    async def rename_checkpoint(self, checkpoint_id, old_path, new_path):
+        """Rename a single checkpoint from old_path to new_path."""
+        raise NotImplementedError("must be implemented in a subclass")
+
+    async def delete_checkpoint(self, checkpoint_id, path):
+        """delete a checkpoint for a file"""
+        raise NotImplementedError("must be implemented in a subclass")
+
+    async def list_checkpoints(self, path):
+        """Return a list of checkpoints for a given file"""
+        raise NotImplementedError("must be implemented in a subclass")
 
     async def rename_all_checkpoints(self, old_path, new_path):
         """Rename all checkpoints for old_path to new_path."""
@@ -191,3 +210,41 @@ class AsyncGenericCheckpointsMixin(GenericCheckpointsMixin):
         else:
             raise HTTPError(500, u'Unexpected type %s' % type)
         await contents_mgr.save(model, path)
+
+    # Required Methods
+    async def create_file_checkpoint(self, content, format, path):
+        """Create a checkpoint of the current state of a file
+
+        Returns a checkpoint model for the new checkpoint.
+        """
+        raise NotImplementedError("must be implemented in a subclass")
+
+    async def create_notebook_checkpoint(self, nb, path):
+        """Create a checkpoint of the current state of a file
+
+        Returns a checkpoint model for the new checkpoint.
+        """
+        raise NotImplementedError("must be implemented in a subclass")
+
+    async def get_file_checkpoint(self, checkpoint_id, path):
+        """Get the content of a checkpoint for a non-notebook file.
+
+         Returns a dict of the form:
+         {
+             'type': 'file',
+             'content': <str>,
+             'format': {'text','base64'},
+         }
+        """
+        raise NotImplementedError("must be implemented in a subclass")
+
+    async def get_notebook_checkpoint(self, checkpoint_id, path):
+        """Get the content of a checkpoint for a notebook.
+
+        Returns a dict of the form:
+        {
+            'type': 'notebook',
+            'content': <output of nbformat.read>,
+        }
+        """
+        raise NotImplementedError("must be implemented in a subclass")
