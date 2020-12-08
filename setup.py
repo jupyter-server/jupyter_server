@@ -1,8 +1,6 @@
 import pathlib
-from setuptools import setup
-from setupbase import (
-    get_version, find_packages
-)
+from setuptools import setup, find_packages
+from setupbase import get_version
 
 here = pathlib.Path('.')
 version_path = here.joinpath('jupyter_server', '_version.py')
@@ -17,7 +15,7 @@ setup_args = dict(
     long_description = README,
     long_description_content_type='text/markdown',
     version          = VERSION,
-    packages         = find_packages('.'),
+    packages         = find_packages('.', exclude=["tests*"]),
     include_package_data = True,
     author           = 'Jupyter Development Team',
     author_email     = 'jupyter@googlegroups.com',
