@@ -36,14 +36,19 @@ class LoginHandler(JupyterHandler):
         """
         if default is None:
             default = self.base_url
-        if not url.startswith(self.base_url):
+        # protect chrome users from mishandling unescaped backslashes.
+        # \ is not valid in urls, but some browsers treat it as /
+        # instead of %5C, causing `\\` to behave as `//`
+        url = url.replace("\\", "%5C")
+        parsed = urlparse(url)
+        if parsed.netloc or not (parsed.path + "/").startswith(self.base_url):
             # require that next_url be absolute path within our path
             allow = False
             # OR pass our cross-origin check
-            if '://' in url:
+            if parsed.netloc:
                 # if full URL, run our cross-origin check:
-                parsed = urlparse(url.lower())
                 origin = '%s://%s' % (parsed.scheme, parsed.netloc)
+                origin = origin.lower()
                 if self.allow_origin:
                     allow = self.allow_origin == origin
                 elif self.allow_origin_pat:
@@ -77,9 +82,11 @@ class LoginHandler(JupyterHandler):
                 self.set_login_cookie(self, uuid.uuid4().hex)
             elif self.token and self.token == typed_password:
                 self.set_login_cookie(self, uuid.uuid4().hex)
-                if new_password and self.settings.get('allow_password_change'):
-                    config_dir = self.settings.get('config_dir')
-                    config_file = os.path.join(config_dir, 'jupyter_server_config.json')
+                if new_password and self.settings.get("allow_password_change"):
+                    config_dir = self.settings.get("config_dir")
+                    config_file = os.path.join(
+                        config_dir, "jupyter_notebook_config.json"
+                    )
                     set_password(new_password, config_file=config_file)
                     self.log.info("Wrote hashed password to %s" % config_file)
             else:
