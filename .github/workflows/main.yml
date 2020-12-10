@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: '*'
 
-defaults:
-  timeout-minutes: 30
-
 jobs:
   build:
     runs-on: ${{ matrix.os }}-latest
@@ -51,6 +48,7 @@ jobs:
         pip freeze
         pip check
     - name: Run the tests
+      timeout-minutes: 30
       run: |
         pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --durations=0
     - name: Install the Python dependencies for the examples
