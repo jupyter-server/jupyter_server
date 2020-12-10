@@ -19,7 +19,6 @@ from traitlets.config import Config
 from jupyter_server.extension import serverextension
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.utils import url_path_join
-<<<<<<< HEAD
 from jupyter_server.services.contents.filemanager import FileContentsManager
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
 
@@ -45,8 +44,6 @@ def mkdir(tmp_path, *parts):
 def jp_home_dir(tmp_path):
     """Provides a temporary HOME directory value."""
     return mkdir(tmp_path, "home")
-=======
->>>>>>> Use jp prefix for fixtures
 
 
 @pytest.fixture

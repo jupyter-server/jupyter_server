@@ -202,7 +202,7 @@ class FileManagerMixin(Configurable):
 
     @contextmanager
     def open(self, os_path, *args, **kwargs):
-        """wrapper around open that turns permission errors into 403"""
+        """wrapper around io.open that turns permission errors into 403"""
         with self.perm_to_403(os_path):
             with io.open(os_path, *args, **kwargs) as f:
                 yield f
