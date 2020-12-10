@@ -38,8 +38,10 @@ from types import ModuleType
 from base64 import encodebytes
 from jinja2 import Environment, FileSystemLoader
 
+from jupyter_core.paths import secure_write
+
 from jupyter_server.transutils import trans, _
-from jupyter_server.utils import secure_write, run_sync
+from jupyter_server.utils import run_sync
 
 # the minimum viable tornado version: needs to be kept in sync with setup.py
 MIN_TORNADO = (6, 1, 0)

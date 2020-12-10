@@ -3,9 +3,14 @@ import sys
 import ctypes
 import pytest
 
-from traitlets.tests.utils import check_help_all_output
-from jupyter_server.utils import url_escape, url_unescape, is_hidden, is_file_hidden, secure_write
 from ipython_genutils.py3compat import cast_unicode
+
+from traitlets.tests.utils import check_help_all_output
+
+from jupyter_server.utils import url_escape, url_unescape
+
+# these imports (and tests that use them) will be removed in a future release
+from jupyter_server.utils import is_hidden, is_file_hidden, secure_write
 
 
 def test_help_output():
@@ -17,7 +22,7 @@ def test_help_output():
     'unescaped,escaped',
     [
         (
-            '/this is a test/for spaces/', 
+            '/this is a test/for spaces/',
             '/this%20is%20a%20test/for%20spaces/'
         ),
         (

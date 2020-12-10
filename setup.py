@@ -39,14 +39,13 @@ setup_args = dict(
         'pyzmq>=17',
         'ipython_genutils',
         'traitlets>=4.2.1',
-        'jupyter_core>=4.4.0',
+        'jupyter_core>=4.6.1',
         'jupyter_client>=6.1.1',
         'nbformat',
         'nbconvert',
         'Send2Trash',
         'terminado>=0.8.3',
-        'prometheus_client',
-        "pywin32>=1.0 ; sys_platform == 'win32'"
+        'prometheus_client'
     ],
     extras_require = {
         'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
