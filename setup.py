@@ -55,6 +55,8 @@ setup_args = dict(
             'pytest-cov',
             'pytest-tornasync',
             'pytest',
+            # test dep of ipython_genutils
+            'nose'
         ],
     },
     python_requires = '>=3.6',
