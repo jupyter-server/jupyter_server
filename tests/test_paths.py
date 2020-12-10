@@ -2,7 +2,7 @@ import re
 import pytest
 import tornado
 from jupyter_server.base.handlers import path_regex
-
+from jupyter_server.utils import url_path_join
 
 # build regexps that tornado uses:
 path_pat = re.compile('^' + '/x%s' % path_regex + '$')
@@ -45,7 +45,7 @@ async def test_trailing_slash(jp_ensure_app_fixture, uri, expected, http_server_
     # http_server_client raises an exception when follow_redirects=False
     with pytest.raises(tornado.httpclient.HTTPClientError) as err:
         await http_server_client.fetch(
-            uri,
+            url_path_join(jp_base_url, uri),
             headers=jp_auth_header,
             request_timeout=20,
             follow_redirects=False
@@ -54,4 +54,4 @@ async def test_trailing_slash(jp_ensure_app_fixture, uri, expected, http_server_
     response = err.value.response
     assert response.code == 302
     assert "Location" in response.headers
-    assert response.headers["Location"] == expected
+    assert response.headers["Location"] == url_path_join(jp_base_url, expected)

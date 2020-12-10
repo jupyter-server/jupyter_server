@@ -264,24 +264,25 @@ async def test_get_bad_type(jp_fetch, contents):
         )
     assert expected_http_error(e, 400, '%s is not a directory' % path)
 
+@pytest.fixture
+def _check_created(jp_base_url):
+    def _inner(r, contents_dir, path, name, type='notebook'):
+        fpath = path+'/'+name
+        assert r.code == 201
+        location = jp_base_url + 'api/contents/' + tornado.escape.url_escape(fpath, plus=False)
+        assert r.headers['Location'] == location
+        model = json.loads(r.body.decode())
+        assert model['name'] == name
+        assert model['path'] == fpath
+        assert model['type'] == type
+        path = contents_dir + '/' + fpath
+        if type == 'directory':
+            assert pathlib.Path(path).is_dir()
+        else:
+            assert pathlib.Path(path).is_file()
+    return _inner
 
-def _check_created(r, contents_dir, path, name, type='notebook'):
-    fpath = path+'/'+name
-    assert r.code == 201
-    location = '/api/contents/' + tornado.escape.url_escape(fpath, plus=False)
-    assert r.headers['Location'] == location
-    model = json.loads(r.body.decode())
-    assert model['name'] == name
-    assert model['path'] == fpath
-    assert model['type'] == type
-    path = contents_dir + '/' + fpath
-    if type == 'directory':
-        assert pathlib.Path(path).is_dir()
-    else:
-        assert pathlib.Path(path).is_file()
-
-
-async def test_create_untitled(jp_fetch, contents, contents_dir):
+async def test_create_untitled(jp_fetch, contents, contents_dir, _check_created):
     path = 'å b'
     name = 'Untitled.ipynb'
     r = await jp_fetch(
@@ -309,7 +310,7 @@ async def test_create_untitled(jp_fetch, contents, contents_dir):
     _check_created(r, str(contents_dir), path, name, type='notebook')
 
 
-async def test_create_untitled_txt(jp_fetch, contents, contents_dir):
+async def test_create_untitled_txt(jp_fetch, contents, contents_dir, _check_created):
     name = 'untitled.txt'
     path = 'foo/bar'
     r = await jp_fetch(
@@ -329,7 +330,7 @@ async def test_create_untitled_txt(jp_fetch, contents, contents_dir):
     assert model['content'] == ''
 
 
-async def test_upload(jp_fetch, contents, contents_dir):
+async def test_upload(jp_fetch, contents, contents_dir, _check_created):
     nb = new_notebook()
     nbmodel = {'content': nb, 'type': 'notebook'}
     path = 'å b'
@@ -342,7 +343,7 @@ async def test_upload(jp_fetch, contents, contents_dir):
     _check_created(r, str(contents_dir), path, name)
 
 
-async def test_mkdir_untitled(jp_fetch, contents, contents_dir):
+async def test_mkdir_untitled(jp_fetch, contents, contents_dir, _check_created):
     name = 'Untitled Folder'
     path = 'å b'
     r = await jp_fetch(
@@ -370,7 +371,7 @@ async def test_mkdir_untitled(jp_fetch, contents, contents_dir):
     _check_created(r, str(contents_dir), path, name, type='directory')
 
 
-async def test_mkdir(jp_fetch, contents, contents_dir):
+async def test_mkdir(jp_fetch, contents, contents_dir, _check_created):
     name = 'New ∂ir'
     path = 'å b'
     r = await jp_fetch(
@@ -391,7 +392,7 @@ async def test_mkdir_hidden_400(jp_fetch):
     assert expected_http_error(e, 400)
 
 
-async def test_upload_txt(jp_fetch, contents, contents_dir):
+async def test_upload_txt(jp_fetch, contents, contents_dir, _check_created):
     body = 'ünicode téxt'
     model = {
         'content' : body,
@@ -418,7 +419,7 @@ async def test_upload_txt(jp_fetch, contents, contents_dir):
     assert model['content'] == body
 
 
-async def test_upload_b64(jp_fetch, contents, contents_dir):
+async def test_upload_b64(jp_fetch, contents, contents_dir, _check_created):
     body = b'\xFFblob'
     b64body = encodebytes(body).decode('ascii')
     model = {
@@ -446,7 +447,7 @@ async def test_upload_b64(jp_fetch, contents, contents_dir):
     assert decoded == body
 
 
-async def test_copy(jp_fetch, contents, contents_dir):
+async def test_copy(jp_fetch, contents, contents_dir, _check_created):
     path = 'å b'
     name = 'ç d.ipynb'
     copy = 'ç d-Copy1.ipynb'
@@ -476,7 +477,7 @@ async def test_copy(jp_fetch, contents, contents_dir):
     _check_created(r, str(contents_dir), path, copy3, type='notebook')
 
 
-async def test_copy_path(jp_fetch, contents, contents_dir):
+async def test_copy_path(jp_fetch, contents, contents_dir, _check_created):
     path1 = 'foo'
     path2 = 'å b'
     name = 'a.ipynb'
@@ -496,7 +497,7 @@ async def test_copy_path(jp_fetch, contents, contents_dir):
     _check_created(r, str(contents_dir), path2, copy, type='notebook')
 
 
-async def test_copy_put_400(jp_fetch, contents, contents_dir):
+async def test_copy_put_400(jp_fetch, contents, contents_dir, _check_created):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch(
             'api', 'contents', 'å b/cøpy.ipynb',
@@ -506,7 +507,7 @@ async def test_copy_put_400(jp_fetch, contents, contents_dir):
     assert expected_http_error(e, 400)
 
 
-async def test_copy_dir_400(jp_fetch, contents, contents_dir):
+async def test_copy_dir_400(jp_fetch, contents, contents_dir, _check_created):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch(
             'api', 'contents', 'foo',
@@ -517,7 +518,7 @@ async def test_copy_dir_400(jp_fetch, contents, contents_dir):
 
 
 @pytest.mark.parametrize('path,name', dirs)
-async def test_delete(jp_fetch, contents, contents_dir, path, name):
+async def test_delete(jp_fetch, contents, contents_dir, path, name, _check_created):
     nbname = name+'.ipynb'
     nbpath = (path + '/' + nbname).lstrip('/')
     r = await jp_fetch(
@@ -567,7 +568,7 @@ async def test_delete_non_empty_dir(jp_fetch, contents):
     assert expected_http_error(e, 404)
 
 
-async def test_rename(jp_fetch, contents, contents_dir):
+async def test_rename(jp_fetch, jp_base_url, contents, contents_dir):
     path = 'foo'
     name = 'a.ipynb'
     new_name = 'z.ipynb'
@@ -579,7 +580,7 @@ async def test_rename(jp_fetch, contents, contents_dir):
     )
     fpath = path+'/'+new_name
     assert r.code == 200
-    location = '/api/contents/' + fpath
+    location = url_path_join(jp_base_url, 'api/contents/', fpath)
     assert r.headers['Location'] == location
     model = json.loads(r.body.decode())
     assert model['name'] == new_name

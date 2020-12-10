@@ -40,7 +40,7 @@ setup_args = dict(
         'jinja2',
     ],
     extras_require = {
-        'test': ['pytest-jupyter'],
+        'test': ['pytest'],
     },
     include_package_data=True,
     cmdclass = cmdclass,

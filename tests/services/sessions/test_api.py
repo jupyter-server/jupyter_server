@@ -10,6 +10,8 @@ from nbformat.v4 import new_notebook
 from nbformat import writes
 
 from ...utils import expected_http_error
+from jupyter_server.utils import url_path_join
+
 
 j = lambda r: json.loads(r.body.decode())
 
@@ -148,7 +150,7 @@ def assert_session_equality(actual, expected):
     assert_kernel_equality(actual['kernel'], expected['kernel'])
 
 
-async def test_create(session_client):
+async def test_create(session_client, jp_base_url):
     # Make sure no sessions exist.
     resp = await session_client.list()
     sessions = j(resp)
@@ -161,7 +163,7 @@ async def test_create(session_client):
     assert 'id' in new_session
     assert new_session['path'] == 'foo/nb1.ipynb'
     assert new_session['type'] == 'notebook'
-    assert resp.headers['Location'] == '/api/sessions/' + new_session['id']
+    assert resp.headers['Location'] == url_path_join(jp_base_url, '/api/sessions/', new_session['id'])
 
     # Check that the new session appears in list.
     resp = await session_client.list()
@@ -209,7 +211,7 @@ async def test_create_deprecated(session_client):
     await session_client.cleanup()
 
 
-async def test_create_with_kernel_id(session_client, jp_fetch):
+async def test_create_with_kernel_id(session_client, jp_fetch, jp_base_url):
     # create a new kernel
     resp = await jp_fetch('api/kernels', method='POST', allow_nonstandard_methods=True)
     kernel = j(resp)
@@ -220,7 +222,7 @@ async def test_create_with_kernel_id(session_client, jp_fetch):
     assert 'id' in new_session
     assert new_session['path'] == 'foo/nb1.ipynb'
     assert new_session['kernel']['id'] == kernel['id']
-    assert resp.headers['Location'] == '/api/sessions/{0}'.format(new_session['id'])
+    assert resp.headers['Location'] == url_path_join(jp_base_url, '/api/sessions/{0}'.format(new_session['id']))
 
     resp = await session_client.list()
     sessions = j(resp)
