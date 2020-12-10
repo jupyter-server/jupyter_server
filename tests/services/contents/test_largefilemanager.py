@@ -1,19 +1,28 @@
 import pytest
 import tornado
 
+from jupyter_server.services.contents.largefilemanager import AsyncLargeFileManager, LargeFileManager
+from jupyter_server.utils import ensure_async
 from ...utils import expected_http_error
 
 
-def test_save(jp_large_contents_manager):
+@pytest.fixture(params=[LargeFileManager, AsyncLargeFileManager])
+def jp_large_contents_manager(request, tmp_path):
+    """Returns a LargeFileManager instance."""
+    file_manager = request.param
+    return file_manager(root_dir=str(tmp_path))
+
+
+async def test_save(jp_large_contents_manager):
     cm = jp_large_contents_manager
-    model = cm.new_untitled(type='notebook')
+    model = await ensure_async(cm.new_untitled(type='notebook'))
     name = model['name']
     path = model['path']
 
     # Get the model with 'content'
-    full_model = cm.get(path)
+    full_model = await ensure_async(cm.get(path))
     # Save the notebook
-    model = cm.save(full_model, path)
+    model = await ensure_async(cm.save(full_model, path))
     assert isinstance(model, dict)
     assert 'name' in model
     assert 'path' in model
@@ -43,26 +52,26 @@ def test_save(jp_large_contents_manager):
         )
     ]
 )
-def test_bad_save(jp_large_contents_manager, model, err_message):
+async def test_bad_save(jp_large_contents_manager, model, err_message):
     with pytest.raises(tornado.web.HTTPError) as e:
-        jp_large_contents_manager.save(model, model['path'])
+        await ensure_async(jp_large_contents_manager.save(model, model['path']))
     assert expected_http_error(e, 400, expected_message=err_message)
 
 
-def test_saving_different_chunks(jp_large_contents_manager):
+async def test_saving_different_chunks(jp_large_contents_manager):
     cm = jp_large_contents_manager
     model = {'name': 'test', 'path': 'test', 'type': 'file',
                 'content': u'test==', 'format': 'text'}
     name = model['name']
     path = model['path']
-    cm.save(model, path)
+    await ensure_async(cm.save(model, path))
 
     for chunk in (1, 2, -1):
         for fm in ('text', 'base64'):
-            full_model = cm.get(path)
+            full_model = await ensure_async(cm.get(path))
             full_model['chunk'] = chunk
             full_model['format'] = fm
-            model_res = cm.save(full_model, path)
+            model_res = await ensure_async(cm.save(full_model, path))
             assert isinstance(model_res, dict)
             assert 'name' in model_res
             assert 'path' in model_res
@@ -71,16 +80,16 @@ def test_saving_different_chunks(jp_large_contents_manager):
             assert model_res['path'] == path
 
 
-def test_save_in_subdirectory(jp_large_contents_manager, tmp_path):
+async def test_save_in_subdirectory(jp_large_contents_manager, tmp_path):
     cm = jp_large_contents_manager
     sub_dir = tmp_path / 'foo'
     sub_dir.mkdir()
-    model = cm.new_untitled(path='/foo/', type='notebook')
+    model = await ensure_async(cm.new_untitled(path='/foo/', type='notebook'))
     path = model['path']
-    model = cm.get(path)
+    model = await ensure_async(cm.get(path))
 
     # Change the name in the model for rename
-    model = cm.save(model, path)
+    model = await ensure_async(cm.save(model, path))
     assert isinstance(model, dict)
     assert 'name' in model
     assert 'path' in model

@@ -5,21 +5,20 @@
 
 from datetime import datetime
 import errno
-import io
 import os
 import shutil
 import stat
 import sys
-import warnings
 import mimetypes
 import nbformat
 
+from anyio import run_sync_in_worker_thread
 from send2trash import send2trash
 from tornado import web
 
-from .filecheckpoints import FileCheckpoints
-from .fileio import FileManagerMixin
-from .manager import ContentsManager
+from .filecheckpoints import AsyncFileCheckpoints, FileCheckpoints
+from .fileio import AsyncFileManagerMixin, FileManagerMixin
+from .manager import AsyncContentsManager, ContentsManager
 from ...utils import exists
 
 from ipython_genutils.importstring import import_item
@@ -548,3 +547,301 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             parent_dir = ''
         return parent_dir
 
+class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, AsyncContentsManager):
+    @default('checkpoints_class')
+    def _checkpoints_class_default(self):
+        return AsyncFileCheckpoints
+
+    async def _dir_model(self, path, content=True):
+        """Build a model for a directory
+
+        if content is requested, will include a listing of the directory
+        """
+        os_path = self._get_os_path(path)
+
+        four_o_four = u'directory does not exist: %r' % path
+
+        if not os.path.isdir(os_path):
+            raise web.HTTPError(404, four_o_four)
+        elif is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+            self.log.info("Refusing to serve hidden directory %r, via 404 Error",
+                os_path
+            )
+            raise web.HTTPError(404, four_o_four)
+
+        model = self._base_model(path)
+        model['type'] = 'directory'
+        model['size'] = None
+        if content:
+            model['content'] = contents = []
+            os_dir = self._get_os_path(path)
+            dir_contents = await run_sync_in_worker_thread(os.listdir, os_dir)
+            for name in dir_contents:
+                try:
+                    os_path = os.path.join(os_dir, name)
+                except UnicodeDecodeError as e:
+                    self.log.warning(
+                        "failed to decode filename '%s': %s", name, e)
+                    continue
+
+                try:
+                    st = await run_sync_in_worker_thread(os.lstat, os_path)
+                except OSError as e:
+                    # skip over broken symlinks in listing
+                    if e.errno == errno.ENOENT:
+                        self.log.warning("%s doesn't exist", os_path)
+                    else:
+                        self.log.warning("Error stat-ing %s: %s", os_path, e)
+                    continue
+
+                if (not stat.S_ISLNK(st.st_mode)
+                        and not stat.S_ISREG(st.st_mode)
+                        and not stat.S_ISDIR(st.st_mode)):
+                    self.log.debug("%s not a regular file", os_path)
+                    continue
+
+                if self.should_list(name):
+                    if self.allow_hidden or not is_file_hidden(os_path, stat_res=st):
+                        contents.append(
+                                await self.get(path='%s/%s' % (path, name), content=False)
+                        )
+
+            model['format'] = 'json'
+
+        return model
+
+    async def _file_model(self, path, content=True, format=None):
+        """Build a model for a file
+
+        if content is requested, include the file contents.
+
+        format:
+          If 'text', the contents will be decoded as UTF-8.
+          If 'base64', the raw bytes contents will be encoded as base64.
+          If not specified, try to decode as UTF-8, and fall back to base64
+        """
+        model = self._base_model(path)
+        model['type'] = 'file'
+
+        os_path = self._get_os_path(path)
+        model['mimetype'] = mimetypes.guess_type(os_path)[0]
+
+        if content:
+            content, format = await self._read_file(os_path, format)
+            if model['mimetype'] is None:
+                default_mime = {
+                    'text': 'text/plain',
+                    'base64': 'application/octet-stream'
+                }[format]
+                model['mimetype'] = default_mime
+
+            model.update(
+                content=content,
+                format=format,
+            )
+
+        return model
+
+    async def _notebook_model(self, path, content=True):
+        """Build a notebook model
+
+        if content is requested, the notebook content will be populated
+        as a JSON structure (not double-serialized)
+        """
+        model = self._base_model(path)
+        model['type'] = 'notebook'
+        os_path = self._get_os_path(path)
+
+        if content:
+            nb = await self._read_notebook(os_path, as_version=4)
+            self.mark_trusted_cells(nb, path)
+            model['content'] = nb
+            model['format'] = 'json'
+            self.validate_notebook_model(model)
+
+        return model
+
+    async def get(self, path, content=True, type=None, format=None):
+        """ Takes a path for an entity and returns its model
+
+        Parameters
+        ----------
+        path : str
+            the API path that describes the relative path for the target
+        content : bool
+            Whether to include the contents in the reply
+        type : str, optional
+            The requested type - 'file', 'notebook', or 'directory'.
+            Will raise HTTPError 400 if the content doesn't match.
+        format : str, optional
+            The requested format for file contents. 'text' or 'base64'.
+            Ignored if this returns a notebook or directory model.
+
+        Returns
+        -------
+        model : dict
+            the contents model. If content=True, returns the contents
+            of the file or directory as well.
+        """
+        path = path.strip('/')
+
+        if not self.exists(path):
+            raise web.HTTPError(404, u'No such file or directory: %s' % path)
+
+        os_path = self._get_os_path(path)
+        if os.path.isdir(os_path):
+            if type not in (None, 'directory'):
+                raise web.HTTPError(400,
+                                u'%s is a directory, not a %s' % (path, type), reason='bad type')
+            model = await self._dir_model(path, content=content)
+        elif type == 'notebook' or (type is None and path.endswith('.ipynb')):
+            model = await self._notebook_model(path, content=content)
+        else:
+            if type == 'directory':
+                raise web.HTTPError(400,
+                                u'%s is not a directory' % path, reason='bad type')
+            model = await self._file_model(path, content=content, format=format)
+        return model
+
+    async def _save_directory(self, os_path, model, path=''):
+        """create a directory"""
+        if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+            raise web.HTTPError(400, u'Cannot create hidden directory %r' % os_path)
+        if not os.path.exists(os_path):
+            with self.perm_to_403():
+                await run_sync_in_worker_thread(os.mkdir, os_path)
+        elif not os.path.isdir(os_path):
+            raise web.HTTPError(400, u'Not a directory: %s' % (os_path))
+        else:
+            self.log.debug("Directory %r already exists", os_path)
+
+    async def save(self, model, path=''):
+        """Save the file model and return the model with no content."""
+        path = path.strip('/')
+
+        if 'type' not in model:
+            raise web.HTTPError(400, u'No file type provided')
+        if 'content' not in model and model['type'] != 'directory':
+            raise web.HTTPError(400, u'No file content provided')
+
+        os_path = self._get_os_path(path)
+        self.log.debug("Saving %s", os_path)
+
+        self.run_pre_save_hook(model=model, path=path)
+
+        try:
+            if model['type'] == 'notebook':
+                nb = nbformat.from_dict(model['content'])
+                self.check_and_sign(nb, path)
+                await self._save_notebook(os_path, nb)
+                # One checkpoint should always exist for notebooks.
+                if not (await self.checkpoints.list_checkpoints(path)):
+                    await self.create_checkpoint(path)
+            elif model['type'] == 'file':
+                # Missing format will be handled internally by _save_file.
+                await self._save_file(os_path, model['content'], model.get('format'))
+            elif model['type'] == 'directory':
+                await self._save_directory(os_path, model, path)
+            else:
+                raise web.HTTPError(400, "Unhandled contents type: %s" % model['type'])
+        except web.HTTPError:
+            raise
+        except Exception as e:
+            self.log.error(u'Error while saving file: %s %s', path, e, exc_info=True)
+            raise web.HTTPError(500, u'Unexpected error while saving file: %s %s'
+                                % (path, e)) from e
+
+        validation_message = None
+        if model['type'] == 'notebook':
+            self.validate_notebook_model(model)
+            validation_message = model.get('message', None)
+
+        model = await self.get(path, content=False)
+        if validation_message:
+            model['message'] = validation_message
+
+        self.run_post_save_hook(model=model, os_path=os_path)
+
+        return model
+
+    async def delete_file(self, path):
+        """Delete file at path."""
+        path = path.strip('/')
+        os_path = self._get_os_path(path)
+        rm = os.unlink
+        if not os.path.exists(os_path):
+            raise web.HTTPError(404, u'File or directory does not exist: %s' % os_path)
+
+        async def _check_trash(os_path):
+            if sys.platform in {'win32', 'darwin'}:
+                return True
+
+            # It's a bit more nuanced than this, but until we can better
+            # distinguish errors from send2trash, assume that we can only trash
+            # files on the same partition as the home directory.
+            file_dev = (await run_sync_in_worker_thread(os.stat, os_path)).st_dev
+            home_dev = (await run_sync_in_worker_thread(os.stat, os.path.expanduser('~'))).st_dev
+            return file_dev == home_dev
+
+        async def is_non_empty_dir(os_path):
+            if os.path.isdir(os_path):
+                # A directory containing only leftover checkpoints is
+                # considered empty.
+                cp_dir = getattr(self.checkpoints, 'checkpoint_dir', None)
+                dir_contents = set(await run_sync_in_worker_thread(os.listdir, os_path))
+                if dir_contents - {cp_dir}:
+                    return True
+
+            return False
+
+        if self.delete_to_trash:
+            if sys.platform == 'win32' and await is_non_empty_dir(os_path):
+                # send2trash can really delete files on Windows, so disallow
+                # deleting non-empty files. See Github issue 3631.
+                raise web.HTTPError(400, u'Directory %s not empty' % os_path)
+            if await _check_trash(os_path):
+                self.log.debug("Sending %s to trash", os_path)
+                # Looking at the code in send2trash, I don't think the errors it
+                # raises let us distinguish permission errors from other errors in
+                # code. So for now, just let them all get logged as server errors.
+                send2trash(os_path)
+                return
+            else:
+                self.log.warning("Skipping trash for %s, on different device "
+                                 "to home directory", os_path)
+
+        if os.path.isdir(os_path):
+            # Don't permanently delete non-empty directories.
+            if await is_non_empty_dir(os_path):
+                raise web.HTTPError(400, u'Directory %s not empty' % os_path)
+            self.log.debug("Removing directory %s", os_path)
+            with self.perm_to_403():
+                await run_sync_in_worker_thread(shutil.rmtree, os_path)
+        else:
+            self.log.debug("Unlinking file %s", os_path)
+            with self.perm_to_403():
+                await run_sync_in_worker_thread(rm, os_path)
+
+    async def rename_file(self, old_path, new_path):
+        """Rename a file."""
+        old_path = old_path.strip('/')
+        new_path = new_path.strip('/')
+        if new_path == old_path:
+            return
+
+        new_os_path = self._get_os_path(new_path)
+        old_os_path = self._get_os_path(old_path)
+
+        # Should we proceed with the move?
+        if os.path.exists(new_os_path) and not samefile(old_os_path, new_os_path):
+            raise web.HTTPError(409, u'File already exists: %s' % new_path)
+
+        # Move the file
+        try:
+            with self.perm_to_403():
+                await run_sync_in_worker_thread(shutil.move, old_os_path, new_os_path)
+        except web.HTTPError:
+            raise
+        except Exception as e:
+            raise web.HTTPError(500, u'Unknown error renaming file: %s %s' %
+                                (old_path, e)) from e

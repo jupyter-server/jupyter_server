@@ -41,6 +41,11 @@ dirs = [
 ]
 
 
+@pytest.fixture(params=["FileContentsManager", "AsyncFileContentsManager"])
+def argv(request):
+    return ["--ServerApp.contents_manager_class=jupyter_server.services.contents.filemanager." + request.param]
+
+
 @pytest.fixture
 def contents_dir(tmp_path, jp_serverapp):
     return tmp_path / jp_serverapp.root_dir
