@@ -23,17 +23,8 @@ import nbformat
 # This shouldn't be needed anymore, since pytest_tornasync is found in entrypoints
 pytest_plugins = "pytest_tornasync"
 
-# NOTE: This is a temporary fix for Windows 3.8
-# We have to override the io_loop fixture with an
-# asyncio patch. This will probably be removed in
-# the future.
-
 @pytest.fixture
-def asyncio_patch():
-    ServerApp()._init_asyncio_patch()
-
-@pytest.fixture
-def io_loop(asyncio_patch):
+def io_loop():
     loop = tornado.ioloop.IOLoop()
     loop.make_current()
     yield loop
