@@ -48,10 +48,14 @@ setup_args = dict(
         'prometheus_client'
     ],
     extras_require = {
-        'test': ['nose', 'coverage', 'requests', 'nose_warnings_filters',
-                 'pytest', 'pytest-cov', 'pytest-tornasync',
-                 'pytest-console-scripts', 'ipykernel'],
-        'test:sys_platform == "win32"': ['nose-exclude'],
+        'test': [
+            'coverage',
+            'ipykernel',
+            'pytest-console-scripts',
+            'pytest-cov',
+            'pytest-tornasync',
+            'pytest',
+        ],
     },
     python_requires = '>=3.6',
     entry_points = {
