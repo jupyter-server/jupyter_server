@@ -106,7 +106,7 @@ def test_merge_config(
         }
     ]
 )
-def test_load_ordered(jp_serverapp):
+def test_load_ordered(jp_serverapp, jp_server_config):
     assert jp_serverapp.mockII is True, "Mock II should have been loaded"
     assert jp_serverapp.mockI is True, "Mock I should have been loaded"
     assert jp_serverapp.mock_shared == 'II', "Mock II should be loaded after Mock I"

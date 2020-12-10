@@ -31,18 +31,18 @@ async def test_no_kernels(jp_fetch):
     assert kernels == []
 
 
-async def test_default_kernels(jp_fetch):
+async def test_default_kernels(jp_fetch, jp_base_url):
     r = await jp_fetch(
         'api', 'kernels',
         method='POST',
         allow_nonstandard_methods=True
     )
     kernel = json.loads(r.body.decode())
-    assert r.headers['location'] == '/api/kernels/' + kernel['id']
+    assert r.headers['location'] == url_path_join(jp_base_url, '/api/kernels/', kernel['id'])
     assert r.code == 201
     assert isinstance(kernel, dict)
 
-    report_uri = '/api/security/csp-report'
+    report_uri = url_path_join(jp_base_url, '/api/security/csp-report')
     expected_csp = '; '.join([
         "frame-ancestors 'self'",
         'report-uri ' + report_uri,
@@ -51,7 +51,7 @@ async def test_default_kernels(jp_fetch):
     assert r.headers['Content-Security-Policy'] == expected_csp
 
 
-async def test_main_kernel_handler(jp_fetch):
+async def test_main_kernel_handler(jp_fetch, jp_base_url):
     # Start the first kernel
     r = await jp_fetch(
         'api', 'kernels',
@@ -61,11 +61,11 @@ async def test_main_kernel_handler(jp_fetch):
         })
     )
     kernel1 = json.loads(r.body.decode())
-    assert r.headers['location'] == '/api/kernels/' + kernel1['id']
+    assert r.headers['location'] == url_path_join(jp_base_url, '/api/kernels/', kernel1['id'])
     assert r.code == 201
     assert isinstance(kernel1, dict)
 
-    report_uri = '/api/security/csp-report'
+    report_uri = url_path_join(jp_base_url, '/api/security/csp-report')
     expected_csp = '; '.join([
         "frame-ancestors 'self'",
         'report-uri ' + report_uri,

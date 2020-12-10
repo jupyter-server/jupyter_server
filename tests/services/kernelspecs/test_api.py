@@ -3,11 +3,8 @@ import json
 
 import tornado
 
-from pytest_jupyter.jupyter_server import some_resource
-
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
-
-from ...utils import expected_http_error
+from ...utils import expected_http_error, some_resource
 
 
 async def test_list_kernelspecs_bad(jp_fetch, jp_kernelspecs, jp_data_dir):

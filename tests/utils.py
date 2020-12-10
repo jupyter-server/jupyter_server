@@ -1,6 +1,13 @@
 import json
 import tornado
 
+some_resource = u"The very model of a modern major general"
+
+sample_kernel_json = {
+    'argv':['cat', '{connection_file}'],
+    'display_name': 'Test kernel',
+}
+
 
 def mkdir(tmp_path, *parts):
     path = tmp_path.joinpath(*parts)
