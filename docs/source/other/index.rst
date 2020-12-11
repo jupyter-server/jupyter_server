@@ -6,5 +6,4 @@ Other helpful documentation
 
    links
    faq
-   changelog
    full-config

@@ -13,4 +13,3 @@ These pages target people writing Jupyter Web applications and server extensions
    extensions
    savehooks
    contents
-   ../other/changelog
