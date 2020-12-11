@@ -11,5 +11,5 @@ store the current version info of the server.
 # However, be sure to INCLUDE a dot prefix when adding the dev release: X.Y.Z.devN
 # See: https://www.python.org/dev/peps/pep-0440/#public-version-identifiers
 
-version_info = (1, 1, 0, '')
+version_info = (1, 2, 0, '.dev0')
 __version__ = '.'.join(map(str, version_info[:3])) + ''.join(version_info[3:])
