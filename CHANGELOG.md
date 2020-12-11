@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2020-12-11
 
-[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.0.10...HEAD)
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.0.10...1.1.0)
 
 **Merged pull requests:**
 
