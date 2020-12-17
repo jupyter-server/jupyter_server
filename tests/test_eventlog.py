@@ -11,24 +11,24 @@ from .services.contents.test_api import contents, contents_dir, dirs
 
 
 @pytest.fixture
-def eventlog_sink(configurable_serverapp):
+def eventlog_sink(jp_configurable_serverapp):
     """Return eventlog and sink objects"""
     sink = io.StringIO()
     handler = logging.StreamHandler(sink)
 
     cfg = Config()
     cfg.EventLog.handlers = [handler]
-    serverapp = configurable_serverapp(config=cfg)
+    serverapp = jp_configurable_serverapp(config=cfg)
     yield serverapp, sink
 
 
 @pytest.mark.parametrize('path, name', dirs)
-async def test_eventlog_list_notebooks(eventlog_sink, fetch, contents, path, name):
+async def test_eventlog_list_notebooks(eventlog_sink, jp_fetch, contents, path, name):
     schema, version = (eventlogging_schema_fqn('contentsmanager-actions'), 1)
     serverapp, sink = eventlog_sink
     serverapp.eventlog.allowed_schemas = [schema]
 
-    r = await fetch(
+    r = await jp_fetch(
         'api',
         'contents',
         path,
