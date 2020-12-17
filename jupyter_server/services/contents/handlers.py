@@ -129,7 +129,6 @@ class ContentsHandler(APIHandler):
         model = self.get_json_body()
         if model is None:
             raise web.HTTPError(400, u'JSON body missing')
-        self.log.info(model)
         model = await ensure_async(cm.update(model, path))
         validate_model(model, expect_content=False)
         self.eventlog.record_event(
@@ -150,7 +149,7 @@ class ContentsHandler(APIHandler):
             copy_from=copy_from,
             copy_to=copy_to or '',
         ))
-        model = self.contents_manager.copy(copy_from, copy_to)
+        model = await ensure_async(self.contents_manager.copy(copy_from, copy_to))
         self.set_status(201)
         validate_model(model, expect_content=False)
         self.eventlog.record_event(
@@ -167,7 +166,7 @@ class ContentsHandler(APIHandler):
     async def _upload(self, model, path):
         """Handle upload of a new file to path"""
         self.log.info(u"Uploading file to %s", path)
-        model = self.contents_manager.new(model, path)
+        model = await ensure_async(self.contents_manager.new(model, path))
         self.set_status(201)
         validate_model(model, expect_content=False)
         self.eventlog.record_event(
@@ -180,7 +179,8 @@ class ContentsHandler(APIHandler):
     async def _new_untitled(self, path, type='', ext=''):
         """Create a new, empty untitled entity"""
         self.log.info(u"Creating new %s in %s", type or 'file', path)
-        model = self.contents_manager.new_untitled(path=path, type=type, ext=ext)
+        model = await ensure_async(self.contents_manager.new_untitled(
+            path=path, type=type, ext=ext))
         self.set_status(201)
         validate_model(model, expect_content=False)
         self.eventlog.record_event(
@@ -195,7 +195,7 @@ class ContentsHandler(APIHandler):
         chunk = model.get("chunk", None)
         if not chunk or chunk == -1:  # Avoid tedious log information
             self.log.info(u"Saving file at %s", path)
-        model = self.contents_manager.save(model, path)
+        model = await ensure_async(self.contents_manager.save(model, path))
         validate_model(model, expect_content=False)
         self.eventlog.record_event(
             eventlogging_schema_fqn('contentsmanager-actions'),
@@ -219,11 +219,11 @@ class ContentsHandler(APIHandler):
 
         cm = self.contents_manager
 
-        file_exists = cm.file_exists(path)
+        file_exists = await ensure_async(cm.file_exists(path))
         if file_exists:
             raise web.HTTPError(400, "Cannot POST to files, use PUT instead.")
 
-        dir_exists = cm.dir_exists(path)
+        dir_exists = await ensure_async(cm.dir_exists(path))
         if not dir_exists:
             raise web.HTTPError(404, "No such directory: %s" % path)
 
@@ -256,7 +256,7 @@ class ContentsHandler(APIHandler):
         if model:
             if model.get('copy_from'):
                 raise web.HTTPError(400, "Cannot copy with PUT, only POST")
-            exists = self.contents_manager.file_exists(path)
+            exists = await ensure_async(self.contents_manager.file_exists(path))
             if exists:
                 await self._save(model, path)
             else:
@@ -269,7 +269,7 @@ class ContentsHandler(APIHandler):
         """delete a file in the given path"""
         cm = self.contents_manager
         self.log.warning('delete %s', path)
-        cm.delete(path)
+        await ensure_async(cm.delete(path))
         self.set_status(204)
         self.eventlog.record_event(
             eventlogging_schema_fqn('contentsmanager-actions'), 1,
@@ -283,7 +283,7 @@ class CheckpointsHandler(APIHandler):
     async def get(self, path=''):
         """get lists checkpoints for a file"""
         cm = self.contents_manager
-        checkpoints = cm.list_checkpoints(path)
+        checkpoints = await ensure_async(cm.list_checkpoints(path))
         data = json.dumps(checkpoints, default=date_default)
         self.finish(data)
 
@@ -291,7 +291,7 @@ class CheckpointsHandler(APIHandler):
     async def post(self, path=''):
         """post creates a new checkpoint"""
         cm = self.contents_manager
-        checkpoint = cm.create_checkpoint(path)
+        checkpoint = await ensure_async(cm.create_checkpoint(path))
         data = json.dumps(checkpoint, default=date_default)
         location = url_path_join(self.base_url, 'api/contents',
             url_escape(path), 'checkpoints', url_escape(checkpoint['id']))
@@ -306,7 +306,7 @@ class ModifyCheckpointsHandler(APIHandler):
     async def post(self, path, checkpoint_id):
         """post restores a file from a checkpoint"""
         cm = self.contents_manager
-        cm.restore_checkpoint(checkpoint_id, path)
+        await ensure_async(cm.restore_checkpoint(checkpoint_id, path))
         self.set_status(204)
         self.finish()
 
@@ -314,7 +314,7 @@ class ModifyCheckpointsHandler(APIHandler):
     async def delete(self, path, checkpoint_id):
         """delete clears a checkpoint for a given file"""
         cm = self.contents_manager
-        cm.delete_checkpoint(checkpoint_id, path)
+        await ensure_async(cm.delete_checkpoint(checkpoint_id, path))
         self.set_status(204)
         self.finish()
 

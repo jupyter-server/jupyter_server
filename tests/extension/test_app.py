@@ -3,7 +3,7 @@ from jupyter_server.serverapp import ServerApp
 
 
 @pytest.fixture
-def server_config(request, template_dir):
+def jp_server_config(jp_template_dir):
     config = {
         "ServerApp": {
             "jpserver_extensions": {
@@ -12,7 +12,7 @@ def server_config(request, template_dir):
         },
         "MockExtensionApp": {
             "template_paths": [
-                str(template_dir)
+                str(jp_template_dir)
             ],
             "log_level": 'DEBUG'
         }
@@ -21,47 +21,49 @@ def server_config(request, template_dir):
 
 
 @pytest.fixture
-def mock_extension(enabled_extensions):
-    return enabled_extensions["mockextension"]
+def mock_extension(extension_manager):
+    name = "tests.extension.mockextensions"
+    pkg = extension_manager.extensions[name]
+    point = pkg.extension_points["mockextension"]
+    app = point.app
+    return app
 
 
-def test_initialize(mock_extension, template_dir):
+def test_initialize(jp_serverapp, jp_template_dir, mock_extension):
     # Check that settings and handlers were added to the mock extension.
     assert isinstance(mock_extension.serverapp, ServerApp)
     assert len(mock_extension.handlers) > 0
-    assert mock_extension.template_paths == [str(template_dir)]
+    assert mock_extension.loaded
+    assert mock_extension.template_paths == [str(jp_template_dir)]
 
 
 @pytest.mark.parametrize(
-    'trait_name, trait_value, argv',
+    'trait_name, trait_value, jp_argv',
     (
         [
             'mock_trait',
             'test mock trait',
-            ['--MockExtensionApp.mock_trait="test mock trait"']
+            ['--MockExtensionApp.mock_trait=test mock trait']
         ],
     )
 )
 def test_instance_creation_with_argv(
-    serverapp,
     trait_name,
     trait_value,
-    enabled_extensions
+    jp_argv,
+    mock_extension,
 ):
-    extension = enabled_extensions['mockextension']
-    assert getattr(extension, trait_name) == trait_value
+    assert getattr(mock_extension, trait_name) == trait_value
 
 
 def test_extensionapp_load_config_file(
-    extension_environ,
     config_file,
-    enabled_extensions,
-    serverapp,
+    jp_serverapp,
+    mock_extension,
 ):
-    extension = enabled_extensions["mockextension"]
     # Assert default config_file_paths is the same in the app and extension.
-    assert extension.config_file_paths == serverapp.config_file_paths
-    assert extension.config_dir == serverapp.config_dir
-    assert extension.config_file_name == 'jupyter_mockextension_config'
+    assert mock_extension.config_file_paths == jp_serverapp.config_file_paths
+    assert mock_extension.config_dir == jp_serverapp.config_dir
+    assert mock_extension.config_file_name == 'jupyter_mockextension_config'
     # Assert that the trait is updated by config file
-    assert extension.mock_trait == 'config from file'
+    assert mock_extension.mock_trait == 'config from file'

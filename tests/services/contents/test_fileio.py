@@ -2,12 +2,10 @@ import io
 import os
 import stat
 import functools
-import decorator 
-
+import decorator
 import pytest
-
+import sys
 from ipython_genutils.testing.decorators import skip_win32 as _skip_win32
-from ipython_genutils.testing.decorators import skip_if_not_win32 as _skip_if_not_win32
 
 from jupyter_server.services.contents.fileio import atomic_writing
 
@@ -81,7 +79,7 @@ def handle_umask():
     os.umask(umask)
 
 
-@skip_win32
+@pytest.mark.skipif(sys.platform.startswith('win'), reason="Windows")
 def test_atomic_writing_umask(handle_umask, tmp_path):
 
     os.umask(0o022)

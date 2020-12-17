@@ -14,6 +14,7 @@ from ..base.handlers import (
     JupyterHandler, FilesRedirectHandler,
     path_regex,
 )
+from jupyter_server.utils import ensure_async
 from nbformat import from_dict
 
 from ipython_genutils.py3compat import cast_bytes
@@ -60,19 +61,19 @@ def get_exporter(format, **kwargs):
     try:
         from nbconvert.exporters.base import get_exporter
     except ImportError as e:
-        raise web.HTTPError(500, "Could not import nbconvert: %s" % e)
+        raise web.HTTPError(500, "Could not import nbconvert: %s" % e) from e
 
     try:
         Exporter = get_exporter(format)
-    except KeyError:
+    except KeyError as e:
         # should this be 400?
-        raise web.HTTPError(404, u"No exporter for format: %s" % format)
+        raise web.HTTPError(404, u"No exporter for format: %s" % format) from e
 
     try:
         return Exporter(**kwargs)
     except Exception as e:
         app_log.exception("Could not construct Exporter: %s", Exporter)
-        raise web.HTTPError(500, "Could not construct Exporter: %s" % e)
+        raise web.HTTPError(500, "Could not construct Exporter: %s" % e) from e
 
 
 class NbconvertFileHandler(JupyterHandler):
@@ -80,7 +81,7 @@ class NbconvertFileHandler(JupyterHandler):
     SUPPORTED_METHODS = ('GET',)
 
     @web.authenticated
-    def get(self, format, path):
+    async def get(self, format, path):
 
         exporter = get_exporter(format, config=self.config, log=self.log)
 
@@ -93,7 +94,7 @@ class NbconvertFileHandler(JupyterHandler):
         else:
             ext_resources_dir = None
 
-        model = self.contents_manager.get(path=path)
+        model = await ensure_async(self.contents_manager.get(path=path))
         name = model['name']
         if model['type'] != 'notebook':
             # not a notebook, redirect to files
@@ -125,7 +126,7 @@ class NbconvertFileHandler(JupyterHandler):
             )
         except Exception as e:
             self.log.exception("nbconvert failed: %s", e)
-            raise web.HTTPError(500, "nbconvert failed: %s" % e)
+            raise web.HTTPError(500, "nbconvert failed: %s" % e) from e
 
         if respond_zip(self, name, output, resources):
             return
@@ -162,7 +163,7 @@ class NbconvertPostHandler(JupyterHandler):
                 "config_dir": self.application.settings['config_dir'],
             })
         except Exception as e:
-            raise web.HTTPError(500, "nbconvert failed: %s" % e)
+            raise web.HTTPError(500, "nbconvert failed: %s" % e) from e
 
         if respond_zip(self, name, output, resources):
             return

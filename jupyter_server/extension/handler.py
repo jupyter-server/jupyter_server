@@ -1,5 +1,5 @@
 from jupyter_server.base.handlers import FileFindHandler
-from traitlets import Unicode, default
+from jinja2.exceptions import TemplateNotFound
 
 
 class ExtensionHandlerJinjaMixin:
@@ -8,26 +8,29 @@ class ExtensionHandlerJinjaMixin:
     """
     def get_template(self, name):
         """Return the jinja template object for a given name"""
-        env = '{}_jinja2_env'.format(self.extension_name)
-        return self.settings[env].get_template(name)
+        try:
+            env = '{}_jinja2_env'.format(self.name)
+            return self.settings[env].get_template(name)
+        except TemplateNotFound:
+            return super().get_template(name)
 
 
 class ExtensionHandlerMixin:
     """Base class for Jupyter server extension handlers.
 
     Subclasses can serve static files behind a namespaced
-    endpoint: "/static/<extension_name>/"
+    endpoint: "<base_url>/static/<name>/"
 
     This allows multiple extensions to serve static files under
     their own namespace and avoid intercepting requests for
     other extensions.
     """
-    def initialize(self, extension_name):
-        self.extension_name = extension_name
+    def initialize(self, name):
+        self.name = name
 
     @property
     def extensionapp(self):
-        return self.settings[self.extension_name]
+        return self.settings[self.name]
 
     @property
     def serverapp(self):
@@ -35,25 +38,38 @@ class ExtensionHandlerMixin:
         return self.settings[key]
 
     @property
+    def log(self):
+        if not hasattr(self, 'name'):
+            return super().log
+        # Attempt to pull the ExtensionApp's log, otherwise fall back to ServerApp.
+        try:
+            return self.extensionapp.log
+        except AttributeError:
+            return self.serverapp.log
+
+    @property
     def config(self):
-        return self.settings["{}_config".format(self.extension_name)]
+        return self.settings["{}_config".format(self.name)]
 
     @property
     def server_config(self):
         return self.settings["config"]
 
     @property
+    def base_url(self):
+        return self.settings.get('base_url', '/')
+
+    @property
     def static_url_prefix(self):
-        return "/static/{extension_name}/".format(
-            extension_name=self.extension_name)
+        return self.extensionapp.static_url_prefix
 
     @property
     def static_path(self):
-        return self.settings['{}_static_paths'.format(self.extension_name)]
+        return self.settings['{}_static_paths'.format(self.name)]
 
     def static_url(self, path, include_host=None, **kwargs):
         """Returns a static URL for the given relative static file path.
-        This method requires you set the ``{extension_name}_static_path``
+        This method requires you set the ``{name}_static_path``
         setting in your extension (which specifies the root directory
         of your static files).
         This method returns a versioned url (by default appending
@@ -68,7 +84,7 @@ class ExtensionHandlerMixin:
         that value will be used as the default for all `static_url`
         calls that do not pass ``include_host`` as a keyword argument.
         """
-        key = "{}_static_paths".format(self.extension_name)
+        key = "{}_static_paths".format(self.name)
         try:
             self.require_setting(key, "static_url")
         except Exception as e:
@@ -76,7 +92,7 @@ class ExtensionHandlerMixin:
                 raise Exception(
                     "This extension doesn't have any static paths listed. Check that the "
                     "extension's `static_paths` trait is set."
-                )
+                ) from e
             else:
                 raise e
 

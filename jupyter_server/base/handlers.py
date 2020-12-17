@@ -31,7 +31,7 @@ from ipython_genutils.py3compat import string_types
 import jupyter_server
 from jupyter_server._tz import utcnow
 from jupyter_server.i18n import combine_translations
-from jupyter_server.utils import is_hidden, url_path_join, url_is_absolute, url_escape
+from jupyter_server.utils import ensure_async, is_hidden, url_path_join, url_is_absolute, url_escape
 from jupyter_server.services.security import csp_report_uri
 
 #-----------------------------------------------------------------------------
@@ -474,10 +474,10 @@ class JupyterHandler(AuthenticatedHandler):
         body = self.request.body.strip().decode(u'utf-8')
         try:
             model = json.loads(body)
-        except Exception:
+        except Exception as e:
             self.log.debug("Bad JSON: %r", body)
             self.log.error("Couldn't parse JSON", exc_info=True)
-            raise web.HTTPError(400, u'Invalid JSON in body of request')
+            raise web.HTTPError(400, u'Invalid JSON in body of request') from e
         return model
 
     def write_error(self, status_code, **kwargs):
@@ -780,9 +780,12 @@ class TrailingSlashHandler(web.RequestHandler):
     """
 
     def get(self):
-        uri = self.request.path.rstrip("/")
-        if uri:
-            self.redirect('?'.join((uri, self.request.query)))
+        path, *rest = self.request.uri.partition("?")
+        # trim trailing *and* leading /
+        # to avoid misinterpreting repeated '//'
+        path = "/" + path.strip("/")
+        new_uri = "".join([path, *rest])
+        self.redirect(new_uri)
 
     post = put = get
 
@@ -801,13 +804,13 @@ class FilesRedirectHandler(JupyterHandler):
     """Handler for redirecting relative URLs to the /files/ handler"""
 
     @staticmethod
-    def redirect_to_files(self, path):
+    async def redirect_to_files(self, path):
         """make redirect logic a reusable static method
 
         so it can be called from other handlers.
         """
         cm = self.contents_manager
-        if cm.dir_exists(path):
+        if await ensure_async(cm.dir_exists(path)):
             # it's a *directory*, redirect to /tree
             url = url_path_join(self.base_url, 'tree', url_escape(path))
         else:
@@ -815,14 +818,14 @@ class FilesRedirectHandler(JupyterHandler):
             # otherwise, redirect to /files
             parts = path.split('/')
 
-            if not cm.file_exists(path=path) and 'files' in parts:
+            if not await ensure_async(cm.file_exists(path=path)) and 'files' in parts:
                 # redirect without files/ iff it would 404
                 # this preserves pre-2.0-style 'files/' links
                 self.log.warning("Deprecated files/ URL: %s", orig_path)
                 parts.remove('files')
                 path = '/'.join(parts)
 
-            if not cm.file_exists(path=path):
+            if not await ensure_async(cm.file_exists(path=path)):
                 raise web.HTTPError(404)
 
             url = url_path_join(self.base_url, 'files', url_escape(path))
@@ -846,10 +849,12 @@ class RedirectWithParams(web.RequestHandler):
 
 class PrometheusMetricsHandler(JupyterHandler):
     """
-    Return prometheus metrics for this Jupyter server
+    Return prometheus metrics for this notebook server
     """
-    @web.authenticated
     def get(self):
+        if self.settings['authenticate_prometheus'] and not self.logged_in:
+            raise web.HTTPError(403)
+
         self.set_header('Content-Type', prometheus_client.CONTENT_TYPE_LATEST)
         self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
 

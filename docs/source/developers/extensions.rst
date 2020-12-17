@@ -4,6 +4,9 @@ Server Extensions
 
 A Jupyter Server extension is typically a module or package that extends to Server’s REST API/endpoints—i.e. adds extra request handlers to Server’s Tornado Web Application.
 
+You can check some simple examples on the `examples folder
+<https://github.com/jupyter/jupyter_server/tree/master/examples/simple>`_ in the GitHub jupyter_server repository.
+
 Authoring a basic server extension
 ==================================
 
@@ -12,7 +15,7 @@ The simplest way to write a Jupyter Server extension is to write an extension mo
 
 .. code-block:: python
 
-    def _load_jupyter_server_extension(serverapp):
+    def _load_jupyter_server_extension(serverapp: jupyter_server.serverapp.ServerApp):
         """
         This function is called when the extension is loaded.
         """
@@ -46,7 +49,7 @@ Then add this handler to Jupyter Server's Web Application through the ``_load_ju
 
 .. code-block:: python
 
-    def _load_jupyter_server_extension(serverapp):
+    def _load_jupyter_server_extension(serverapp: jupyter_server.serverapp.ServerApp):
         """
         This function is called when the extension is loaded.
         """
@@ -59,11 +62,11 @@ Then add this handler to Jupyter Server's Web Application through the ``_load_ju
 Making an extension discoverable
 --------------------------------
 
-To make this extension discoverable to Jupyter Server, first define a ``_jupyter_server_extension_paths()`` function at the root of the module/package. This function returns metadata describing how to load the extension. Usually, this requires a ``module`` key with the import path to the extension's ``_load_jupyter_server_extension`` function.
+To make this extension discoverable to Jupyter Server, first define a ``_jupyter_server_extension_points()`` function at the root of the module/package. This function returns metadata describing how to load the extension. Usually, this requires a ``module`` key with the import path to the extension's ``_load_jupyter_server_extension`` function.
 
 .. code-block:: python
 
-    def _jupyter_server_extension_paths():
+    def _jupyter_server_extension_points():
         """
         Returns a list of dictionaries with metadata describing
         where to find the `_load_jupyter_server_extension` function.
@@ -109,9 +112,9 @@ An ExtensionApp:
 
     - has traits.
     - is configurable (from file or CLI)
-    - has a name (see the ``extension_name`` trait).
-    - has an entrypoint, ``jupyter <extension_name>``.
-    - can serve static content from the ``/static/<extension_name>/`` endpoint.
+    - has a name (see the ``name`` trait).
+    - has an entrypoint, ``jupyter <name>``.
+    - can serve static content from the ``/static/<name>/`` endpoint.
     - can add new endpoints to the Jupyter Server.
 
 The basic structure of an ExtensionApp is shown below:
@@ -124,7 +127,7 @@ The basic structure of an ExtensionApp is shown below:
     class MyExtensionApp(ExtensionApp):
 
         # -------------- Required traits --------------
-        extension_name = "myextension"
+        name = "myextension"
         extension_url = "/myextension"
         load_other_extensions = True
 
@@ -163,7 +166,7 @@ Methods
 
 Properties
 
-* ``extension_name``: the name of the extension
+* ``name``: the name of the extension
 * ``extension_url``: the default url for this extension—i.e. the landing page for this extension when launched from the CLI.
 * ``load_other_extensions``: a boolean enabling/disabling other extensions when launching this extension directly.
 
@@ -174,8 +177,8 @@ Properties
 
 * ``config``: the ExtensionApp's config object.
 * ``server_config``: the ServerApp's config object.
-* ``extension_name``: the name of the extension to which this handler is linked.
-* ``static_url()``: a method that returns the url to static files (prefixed with ``/static/<extension_name>``).
+* ``name``: the name of the extension to which this handler is linked.
+* ``static_url()``: a method that returns the url to static files (prefixed with ``/static/<name>``).
 
 Jupyter Server provides a convenient mixin class for adding these properties to any ``JupyterHandler``. For example, the basic server extension handler in the section above becomes:
 
@@ -202,7 +205,7 @@ Jinja templating from frontend extensions
 
 Many Jupyter frontend applications use Jinja for basic HTML templating. Since this is common enough, Jupyter Server provides some extra mixin that integrate Jinja with Jupyter server extensions.
 
-Use ``ExtensionAppJinjaMixin`` to automatically add a Jinja templating environment to an ``ExtensionApp``. This adds a ``<extension_name>_jinja2_env`` setting to Tornado Web Server's settings that will be used by request handlers.
+Use ``ExtensionAppJinjaMixin`` to automatically add a Jinja templating environment to an ``ExtensionApp``. This adds a ``<name>_jinja2_env`` setting to Tornado Web Server's settings that will be used by request handlers.
 
 .. code-block:: python
 
@@ -255,7 +258,7 @@ To make an ``ExtensionApp`` discoverable by Jupyter Server, add the ``app`` key+
     from myextension import MyExtensionApp
 
 
-    def _jupyter_server_extension_paths():
+    def _jupyter_server_extension_points():
         """
         Returns a list of dictionaries with metadata describing
         where to find the `_load_jupyter_server_extension` function.
@@ -296,19 +299,36 @@ To make your extension executable from anywhere on your system, point an entry-p
         }
     )
 
+``ExtensionApp`` as a classic Notebook server extension
+-------------------------------------------------------
+
+An extension that extends ``ExtensionApp`` should still work with the old Tornado server from the classic Jupyter Notebook. The ``ExtensionApp`` class 
+provides a method, ``load_classic_server_extension``, that handles the extension initialization. Simply  define a ``load_jupyter_server_extension`` reference
+pointing at the ``load_classic_server_extension`` method: 
+
+.. code-block:: python
+
+    # This is typically defined in the root `__init__.py` 
+    # file of the extension package.
+    load_jupyter_server_extension = MyExtensionApp.load_classic_server_extension
+
+
+If the extension is enabled, the extension will be loaded when the server starts.
+
+
 Distributing a server extension
 ===============================
 
 Putting it all together, authors can distribute their extension following this steps:
 
-1. Add a ``_jupyter_server_extension_paths()`` function at the extension's root.
+1. Add a ``_jupyter_server_extension_points()`` function at the extension's root.
     This function should likely live in the ``__init__.py`` found at the root of the extension package. It will look something like this:
 
     .. code-block:: python
 
         # Found in the __init__.py of package
 
-        def _jupyter_server_extension_paths():
+        def _jupyter_server_extension_points():
             return [
                 {
                     "module": "myextension.app",
@@ -376,14 +396,151 @@ Putting it all together, authors can distribute their extension following this s
         )
 
 
-Example Server Extension
-========================
-
-You can check some simple example on the `GitHub jupyter_server repository
-<https://github.com/jupyter/jupyter_server/tree/master/examples/simple>`_.
-
 
 
 .. links
 
 .. _`Jupyter's paths`: https://jupyter.readthedocs.io/en/latest/projects/jupyter-directories.html
+
+
+Migrating an extension to use Jupyter Server
+============================================
+
+If you're a developer of a `classic Notebook Server`_ extension, your extension should be able to work with *both* the classic notebook server and ``jupyter_server``.
+
+There are a few key steps to make this happen:
+
+1. Point Jupyter Server to the ``load_jupyter_server_extension`` function with a new reference name.
+    The ``load_jupyter_server_extension`` function was the key to loading a server extension in the classic Notebook Server. Jupyter Server expects the name of this function to be prefixed with an underscore—i.e. ``_load_jupyter_server_extension``. You can easily achieve this by adding a reference to the old function name with the new name in the same module.
+
+    .. code-block:: python
+
+        def load_jupyter_server_extension(nb_server_app):
+            ...
+
+        # Reference the old function name with the new function name.
+
+        _load_jupyter_server_extension = load_jupyter_server_extension
+
+2. Add new data files to your extension package that enable it with Jupyter Server.
+    This new file can go next to your classic notebook server data files. Create a new sub-directory, ``jupyter_server_config.d``, and add a new ``.json`` file there:
+
+    .. raw:: html
+
+        <pre>
+        myextension
+        ├── myextension/
+        │   ├── __init__.py
+        │   └── app.py
+        ├── jupyter-config/
+        │   └── jupyter_notebook_config.d/
+        │       └── myextension.json
+        │   <b>└── jupyter_server_config.d/</b>
+        │       <b>└── myextension.json</b>
+        └── setup.py
+        </pre>
+
+    The new ``.json`` file should look something like this (you'll notice the changes in the configured class and trait names):
+
+    .. code-block:: json
+
+        {
+            "ServerApp": {
+                "jpserver_extensions": {
+                    "myextension": true
+                }
+            }
+        }
+
+    Update your extension package's ``setup.py`` so that the data-files are moved into the jupyter configuration directories when users download the package.
+
+    .. code-block:: python
+
+        from setuptools import setup
+
+        setup(
+            name="myextension",
+            ...
+            include_package_data=True,
+            data_files=[
+                (
+                    "etc/jupyter/jupyter_server_config.d",
+                    ["jupyter-config/jupyter_server_config.d/myextension.json"]
+                ),
+                (
+                    "etc/jupyter/jupyter_notebook_config.d",
+                    ["jupyter-config/jupyter_notebook_config.d/myextension.json"]
+                ),
+            ]
+
+        )
+
+3. (Optional) Point extension at the new favicon location.
+    The favicons in the Jupyter Notebook have been moved to a new location in Jupyter Server. If your extension is using one of these icons, you'll want to add a set of redirect handlers this. (In ``ExtensionApp``, this is handled automatically).
+
+    This usually means adding a chunk to your ``load_jupyter_server_extension`` function similar to this:
+
+    .. code-block:: python
+
+        def load_jupyter_server_extension(nb_server_app):
+            
+            web_app = nb_server_app.web_app
+            host_pattern = '.*$'
+            base_url = web_app.settings['base_url']
+
+            # Add custom extensions handler.
+            custom_handlers = [
+                ...
+            ]
+
+            # Favicon redirects.
+            favicon_redirects = [
+                (   
+                    url_path_join(base_url, "/static/favicons/favicon.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon.ico")
+                ),
+                (
+                    url_path_join(base_url, "/static/favicons/favicon-busy-1.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-1.ico")}
+                ),
+                (
+                    url_path_join(base_url, "/static/favicons/favicon-busy-2.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-2.ico")}
+                ),
+                (
+                    url_path_join(base_url, "/static/favicons/favicon-busy-3.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-3.ico")}
+                ),
+                (
+                    url_path_join(base_url, "/static/favicons/favicon-file.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-file.ico")}
+                ),
+                (
+                    url_path_join(base_url, "/static/favicons/favicon-notebook.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-notebook.ico")}
+                ),
+                (
+                    url_path_join(base_url, "/static/favicons/favicon-terminal.ico"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-terminal.ico")}
+                ),
+                (
+                    url_path_join(base_url, "/static/logo/logo.png"), 
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/logo.png")}
+                ),
+            ]
+
+            web_app.add_handlers(
+                host_pattern, 
+                custom_handlers + favicon_redirects
+            )
+
+
+.. _`classic Notebook Server`: https://jupyter-notebook.readthedocs.io/en/stable/extending/handlers.html

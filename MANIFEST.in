@@ -1,9 +1,12 @@
 include COPYING.md
 include CONTRIBUTING.rst
 include README.md
+include RELEASE.md
+include CHANGELOG.md
 include setupbase.py
-include Dockerfile
-graft tools
+
+# include everything in package_data
+recursive-include jupyter_server *
 
 # Event Schemas
 graft jupyter_server/event-schemas
@@ -26,3 +29,5 @@ global-exclude *.pyc
 global-exclude *.pyo
 global-exclude .git
 global-exclude .ipynb_checkpoints
+global-exclude .pytest_cache
+global-exclude .coverage

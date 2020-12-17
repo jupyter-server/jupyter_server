@@ -12,7 +12,7 @@ git clone https://github.com/jupyter/jupyter_server && \
   cd examples/simple && \
   conda create -y -n jupyter-server-example python=3.7 && \
   conda activate jupyter-server-example && \
-  pip install -e .
+  pip install -e .[test]
 ```
 
 **OPTIONAL** If you want to build the Typescript code, you need [npm](https://www.npmjs.com) on your local environement. Compiled javascript is provided as artifact in this repository, so this Typescript build step is optional. The Typescript source and configuration have been taken from https://github.com/markellekelly/jupyter-server-example.
@@ -71,6 +71,12 @@ You can also start the server extension with python modules.
 
 ```bash
 python -m simple_ext1
+```
+
+To live reload the server as you change the extension, you can also enable [the `debug` mode for Tornado](https://www.tornadoweb.org/en/stable/guide/running.html#debug-mode-and-automatic-reloading):
+
+```bash
+jupyter server --ServerApp.jpserver_extensions="{'simple_ext1': True}" --ServerApp.tornado_settings="{'debug': True}"
 ```
 
 ## Extension 1 and Extension 2

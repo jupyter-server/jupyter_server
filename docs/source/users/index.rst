@@ -5,6 +5,7 @@ The Jupyter Server is a highly technical piece of the Jupyter Stack, so users pr
 
 
 .. toctree::
+   :caption: Users
    :maxdepth: 1
    :name: users
 

@@ -1,3 +1,4 @@
+import os
 from traitlets import Unicode, List
 
 from jupyter_server.base.handlers import JupyterHandler
@@ -10,6 +11,8 @@ from jupyter_server.extension.handler import (
     ExtensionHandlerJinjaMixin
 )
 
+STATIC_PATH = os.path.join(os.path.dirname(__file__), "static")
+
 
 class MockExtensionHandler(ExtensionHandlerMixin, JupyterHandler):
 
@@ -18,10 +21,10 @@ class MockExtensionHandler(ExtensionHandlerMixin, JupyterHandler):
 
 
 class MockExtensionTemplateHandler(
-        ExtensionHandlerJinjaMixin,
-        ExtensionHandlerMixin,
-        JupyterHandler
-    ):
+    ExtensionHandlerJinjaMixin,
+    ExtensionHandlerMixin,
+    JupyterHandler
+):
 
     def get(self):
         self.write(self.render_template("index.html"))
@@ -29,8 +32,9 @@ class MockExtensionTemplateHandler(
 
 class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
-    extension_name = 'mockextension'
+    name = 'mockextension'
     template_paths = List().tag(config=True)
+    static_paths = [STATIC_PATH]
     mock_trait = Unicode('mock trait', config=True)
     loaded = False
 
@@ -38,4 +42,3 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         self.handlers.append(('/mock', MockExtensionHandler))
         self.handlers.append(('/mock_template', MockExtensionTemplateHandler))
         self.loaded = True
-

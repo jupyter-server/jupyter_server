@@ -85,8 +85,8 @@ class KernelSpecHandler(APIHandler):
         kernel_name = url_unescape(kernel_name)
         try:
             spec = await ensure_async(ksm.get_kernel_spec(kernel_name))
-        except KeyError:
-            raise web.HTTPError(404, u'Kernel spec %s not found' % kernel_name)
+        except KeyError as e:
+            raise web.HTTPError(404, u'Kernel spec %s not found' % kernel_name) from e
         if is_kernelspec_model(spec):
             model = spec
         else:

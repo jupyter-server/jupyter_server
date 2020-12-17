@@ -32,6 +32,9 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
     kernel_id = None
     ping_callback = None
 
+    def check_origin(self, origin=None):
+        return JupyterHandler.check_origin(self, origin)
+
     def set_default_headers(self):
         """Undo the set_default_headers in IPythonHandler which doesn't make sense for websockets"""
         pass
@@ -131,7 +134,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         self.ws_future = Future()
         self.disconnected = False
 
-    async def _connect(self, kernel_id):
+    async def _connect(self, kernel_id, message_callback):
         # websocket is initialized before connection
         self.ws = None
         self.kernel_id = kernel_id
@@ -146,6 +149,12 @@ class GatewayWebSocketClient(LoggingConfigurable):
         request = HTTPRequest(ws_url, **kwargs)
         self.ws_future = websocket_connect(request)
         self.ws_future.add_done_callback(self._connection_done)
+
+        loop = IOLoop.current()
+        loop.add_future(
+            self.ws_future,
+            lambda future: self._read_messages(message_callback)
+        )
 
     def _connection_done(self, fut):
         if not self.disconnected and fut.exception() is None:  # prevent concurrent.futures._base.CancelledError
@@ -185,18 +194,13 @@ class GatewayWebSocketClient(LoggingConfigurable):
 
         if not self.disconnected: # if websocket is not disconnected by client, attept to reconnect to Gateway
             self.log.info("Attempting to re-establish the connection to Gateway: {}".format(self.kernel_id))
-            self._connect(self.kernel_id)
             loop = IOLoop.current()
-            loop.add_future(self.ws_future, lambda future: self._read_messages(callback))
+            loop.spawn_callback(self._connect, self.kernel_id, callback)
 
     def on_open(self, kernel_id, message_callback, **kwargs):
         """Web socket connection open against gateway server."""
-        self._connect(kernel_id)
         loop = IOLoop.current()
-        loop.add_future(
-            self.ws_future,
-            lambda future: self._read_messages(message_callback)
-        )
+        loop.spawn_callback(self._connect, kernel_id, message_callback)
 
     def on_message(self, message):
         """Send message to gateway server."""

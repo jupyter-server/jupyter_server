@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
-  title: Jupyter Notebook API
-  description: Notebook API
+  title: Jupyter Server API
+  description: Server API
   version: "5"
   contact:
     name: Jupyter Project

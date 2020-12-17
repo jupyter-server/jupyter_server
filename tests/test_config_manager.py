@@ -1,7 +1,5 @@
 import json
 import os
-import shutil
-import tempfile
 
 from jupyter_server.config_manager import BaseJSONConfigManager
 

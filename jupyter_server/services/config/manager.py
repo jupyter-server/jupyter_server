@@ -14,6 +14,11 @@ from traitlets.config import LoggingConfigurable
 class ConfigManager(LoggingConfigurable):
     """Config Manager used for storing frontend config"""
 
+    config_dir_name = Unicode(
+        default="serverconfig",
+        help="""Name of the config directory."""
+    ).tag(config=True)
+
     # Public API
 
     def get(self, section_name):
@@ -39,13 +44,13 @@ class ConfigManager(LoggingConfigurable):
 
     @default('read_config_path')
     def _default_read_config_path(self):
-        return [os.path.join(p, 'serverconfig') for p in jupyter_config_path()]
+        return [os.path.join(p, self.config_dir_name) for p in jupyter_config_path()]
 
     write_config_dir = Unicode()
 
     @default('write_config_dir')
     def _default_write_config_dir(self):
-        return os.path.join(jupyter_config_dir(), 'serverconfig')
+        return os.path.join(jupyter_config_dir(), self.config_dir_name)
 
     write_config_manager = Instance(BaseJSONConfigManager)
 

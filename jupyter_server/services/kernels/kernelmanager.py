@@ -131,6 +131,18 @@ class MappingKernelManager(MultiKernelManager):
         """
     )
 
+    allow_tracebacks = Bool(True, config=True, help=(
+        'Whether to send tracebacks to clients on exceptions.'
+    ))
+
+    traceback_replacement_message = Unicode(
+        'An exception occurred at runtime, which is not shown due to security reasons.',
+        config=True,
+        help=(
+            'Message to print when allow_tracebacks is False, and an exception occurs'
+        )
+    )
+
     #-------------------------------------------------------------------------
     # Methods for managing kernels and sessions
     #-------------------------------------------------------------------------

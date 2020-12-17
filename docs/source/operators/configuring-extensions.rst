@@ -26,7 +26,7 @@ Jupyter Server looks for an extension's config file in a set of specific paths. 
 Extension config from file
 --------------------------
 
-Jupyter Server expects the file to be named after the extension's name like so: ``jupyter_{extension_name}_config``. For example, the Jupyter Notebook's config file is ``jupyter_notebook_config``.
+Jupyter Server expects the file to be named after the extension's name like so: ``jupyter_{name}_config``. For example, the Jupyter Notebook's config file is ``jupyter_notebook_config``.
 
 Configuration files can be Python or JSON files.
 

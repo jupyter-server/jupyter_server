@@ -10,27 +10,27 @@ from nbformat.v4 import new_notebook
 from nbformat import writes
 
 from ...utils import expected_http_error
+from jupyter_server.utils import url_path_join
+
 
 j = lambda r: json.loads(r.body.decode())
 
 
 @pytest.fixture(params=["MappingKernelManager", "AsyncMappingKernelManager"])
 def argv(request):
-    if request.param == "AsyncMappingKernelManager" and sys.version_info < (3, 6):
-        pytest.skip("Kernel manager is AsyncMappingKernelManager, Python version < 3.6")
     return ["--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager." + request.param]
 
 
 class SessionClient:
 
     def __init__(self, fetch_callable):
-        self.fetch = fetch_callable
+        self.jp_fetch = fetch_callable
 
     async def _req(self, *args, method, body=None):
         if body is not None:
             body = json.dumps(body)
 
-        r = await self.fetch(
+        r = await self.jp_fetch(
             'api', 'sessions', *args,
             method=method,
             body=body,
@@ -106,8 +106,8 @@ class SessionClient:
 
 
 @pytest.fixture
-def session_client(root_dir, fetch):
-    subdir = root_dir.joinpath('foo')
+def session_client(jp_root_dir, jp_fetch):
+    subdir = jp_root_dir.joinpath('foo')
     subdir.mkdir()
 
     # Write a notebook to subdir.
@@ -117,7 +117,7 @@ def session_client(root_dir, fetch):
     nbpath.write_text(nb_str, encoding='utf-8')
 
     # Yield a session client
-    client = SessionClient(fetch)
+    client = SessionClient(jp_fetch)
     yield client
 
     # Remove subdir
@@ -148,7 +148,7 @@ def assert_session_equality(actual, expected):
     assert_kernel_equality(actual['kernel'], expected['kernel'])
 
 
-async def test_create(session_client):
+async def test_create(session_client, jp_base_url):
     # Make sure no sessions exist.
     resp = await session_client.list()
     sessions = j(resp)
@@ -161,7 +161,7 @@ async def test_create(session_client):
     assert 'id' in new_session
     assert new_session['path'] == 'foo/nb1.ipynb'
     assert new_session['type'] == 'notebook'
-    assert resp.headers['Location'] == '/api/sessions/' + new_session['id']
+    assert resp.headers['Location'] == url_path_join(jp_base_url, '/api/sessions/', new_session['id'])
 
     # Check that the new session appears in list.
     resp = await session_client.list()
@@ -209,9 +209,9 @@ async def test_create_deprecated(session_client):
     await session_client.cleanup()
 
 
-async def test_create_with_kernel_id(session_client, fetch):
+async def test_create_with_kernel_id(session_client, jp_fetch, jp_base_url):
     # create a new kernel
-    resp = await fetch('api/kernels', method='POST', allow_nonstandard_methods=True)
+    resp = await jp_fetch('api/kernels', method='POST', allow_nonstandard_methods=True)
     kernel = j(resp)
 
     resp = await session_client.create('foo/nb1.ipynb', kernel_id=kernel['id'])
@@ -220,7 +220,7 @@ async def test_create_with_kernel_id(session_client, fetch):
     assert 'id' in new_session
     assert new_session['path'] == 'foo/nb1.ipynb'
     assert new_session['kernel']['id'] == kernel['id']
-    assert resp.headers['Location'] == '/api/sessions/{0}'.format(new_session['id'])
+    assert resp.headers['Location'] == url_path_join(jp_base_url, '/api/sessions/{0}'.format(new_session['id']))
 
     resp = await session_client.list()
     sessions = j(resp)
@@ -289,7 +289,7 @@ async def test_modify_type(session_client):
     # Need to find a better solution to this.
     await session_client.cleanup()
 
-async def test_modify_kernel_name(session_client, fetch):
+async def test_modify_kernel_name(session_client, jp_fetch):
     resp = await session_client.create('foo/nb1.ipynb')
     before = j(resp)
     sid = before['id']
@@ -302,7 +302,7 @@ async def test_modify_kernel_name(session_client, fetch):
     assert after['kernel']['id'] != before['kernel']['id']
 
     # check kernel list, to be sure previous kernel was cleaned up
-    resp = await fetch('api/kernels', method='GET')
+    resp = await jp_fetch('api/kernels', method='GET')
     kernel_list = j(resp)
     after['kernel'].pop('last_activity')
     [ k.pop('last_activity') for k in kernel_list ]
@@ -311,13 +311,13 @@ async def test_modify_kernel_name(session_client, fetch):
     await session_client.cleanup()
 
 
-async def test_modify_kernel_id(session_client, fetch):
+async def test_modify_kernel_id(session_client, jp_fetch):
     resp = await session_client.create('foo/nb1.ipynb')
     before = j(resp)
     sid = before['id']
 
     # create a new kernel
-    resp = await fetch('api/kernels', method='POST', allow_nonstandard_methods=True)
+    resp = await jp_fetch('api/kernels', method='POST', allow_nonstandard_methods=True)
     kernel = j(resp)
 
     # Attach our session to the existing kernel
@@ -330,7 +330,7 @@ async def test_modify_kernel_id(session_client, fetch):
     assert after['kernel']['id'] == kernel['id']
 
     # check kernel list, to be sure previous kernel was cleaned up
-    resp = await fetch('api/kernels', method='GET')
+    resp = await jp_fetch('api/kernels', method='GET')
     kernel_list = j(resp)
 
     kernel.pop('last_activity')

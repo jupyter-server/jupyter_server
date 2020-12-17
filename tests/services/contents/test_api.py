@@ -41,9 +41,14 @@ dirs = [
 ]
 
 
+@pytest.fixture(params=["FileContentsManager", "AsyncFileContentsManager"])
+def argv(request):
+    return ["--ServerApp.contents_manager_class=jupyter_server.services.contents.filemanager." + request.param]
+
+
 @pytest.fixture
-def contents_dir(tmp_path, serverapp):
-    return tmp_path / serverapp.root_dir
+def contents_dir(tmp_path, jp_serverapp):
+    return tmp_path / jp_serverapp.root_dir
 
 
 @pytest.fixture
@@ -75,8 +80,8 @@ def folders():
 
 
 @pytest.mark.parametrize('path,name', dirs)
-async def test_list_notebooks(fetch, contents, path, name):
-    response = await fetch(
+async def test_list_notebooks(jp_fetch, contents, path, name):
+    response = await jp_fetch(
         'api', 'contents', path,
         method='GET',
     )
@@ -88,8 +93,8 @@ async def test_list_notebooks(fetch, contents, path, name):
 
 
 @pytest.mark.parametrize('path,name', dirs)
-async def test_get_dir_no_contents(fetch, contents, path, name):
-    response = await fetch(
+async def test_get_dir_no_contents(jp_fetch, contents, path, name):
+    response = await jp_fetch(
         'api', 'contents', path,
         method='GET',
         params=dict(
@@ -100,22 +105,22 @@ async def test_get_dir_no_contents(fetch, contents, path, name):
     assert model['path'] == path
     assert model['type'] == 'directory'
     assert 'content' in model
-    assert model['content'] == None
+    assert model['content'] is None
 
 
-async def test_list_nonexistant_dir(fetch, contents):
+async def test_list_nonexistant_dir(jp_fetch, contents):
     with pytest.raises(tornado.httpclient.HTTPClientError):
-        await fetch(
+        await jp_fetch(
             'api', 'contents', 'nonexistant',
             method='GET',
         )
 
 
 @pytest.mark.parametrize('path,name', dirs)
-async def test_get_nb_contents(fetch, contents, path, name):
+async def test_get_nb_contents(jp_fetch, contents, path, name):
     nbname = name+'.ipynb'
     nbpath = (path + '/' + nbname).lstrip('/')
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', nbpath,
         method='GET',
         params=dict(content='1')
@@ -131,10 +136,10 @@ async def test_get_nb_contents(fetch, contents, path, name):
 
 
 @pytest.mark.parametrize('path,name', dirs)
-async def test_get_nb_no_contents(fetch, contents, path, name):
+async def test_get_nb_no_contents(jp_fetch, contents, path, name):
     nbname = name+'.ipynb'
     nbpath = (path + '/' + nbname).lstrip('/')
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', nbpath,
         method='GET',
         params=dict(content='0')
@@ -144,10 +149,10 @@ async def test_get_nb_no_contents(fetch, contents, path, name):
     assert model['path'] == nbpath
     assert model['type'] == 'notebook'
     assert 'content' in model
-    assert model['content'] == None
+    assert model['content'] is None
 
 
-async def test_get_nb_invalid(contents_dir, fetch, contents):
+async def test_get_nb_invalid(contents_dir, jp_fetch, contents):
     nb = {
         'nbformat': 4,
         'metadata': {},
@@ -158,7 +163,7 @@ async def test_get_nb_invalid(contents_dir, fetch, contents):
     }
     nbpath = u'å b/Validate tést.ipynb'
     (contents_dir / nbpath).write_text(json.dumps(nb))
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', nbpath,
         method='GET',
     )
@@ -170,9 +175,9 @@ async def test_get_nb_invalid(contents_dir, fetch, contents):
     assert 'validation failed' in model['message'].lower()
 
 
-async def test_get_contents_no_such_file(fetch):
+async def test_get_contents_no_such_file(jp_fetch):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await fetch(
+        await jp_fetch(
             'api', 'contents', 'foo/q.ipynb',
             method='GET',
         )
@@ -180,10 +185,10 @@ async def test_get_contents_no_such_file(fetch):
 
 
 @pytest.mark.parametrize('path,name', dirs)
-async def test_get_text_file_contents(fetch, contents, path, name):
+async def test_get_text_file_contents(jp_fetch, contents, path, name):
     txtname = name+'.txt'
     txtpath = (path + '/' + txtname).lstrip('/')
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', txtpath,
         method='GET',
         params=dict(content='1')
@@ -197,14 +202,14 @@ async def test_get_text_file_contents(fetch, contents, path, name):
     assert model['content'] == '{} text file'.format(name)
 
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await fetch(
+        await jp_fetch(
             'api', 'contents', 'foo/q.txt',
             method='GET',
         )
     assert expected_http_error(e, 404)
 
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await fetch(
+        await jp_fetch(
             'api', 'contents', 'foo/bar/baz.blob',
             method='GET',
             params=dict(
@@ -217,10 +222,10 @@ async def test_get_text_file_contents(fetch, contents, path, name):
 
 
 @pytest.mark.parametrize('path,name', dirs)
-async def test_get_binary_file_contents(fetch, contents, path, name):
+async def test_get_binary_file_contents(jp_fetch, contents, path, name):
     blobname = name+'.blob'
     blobpath = (path + '/' + blobname).lstrip('/')
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', blobpath,
         method='GET',
         params=dict(content='1')
@@ -236,18 +241,18 @@ async def test_get_binary_file_contents(fetch, contents, path, name):
     assert data_in == data_out
 
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await fetch(
+        await jp_fetch(
             'api', 'contents', 'foo/q.txt',
             method='GET',
         )
     assert expected_http_error(e, 404)
 
 
-async def test_get_bad_type(fetch, contents):
+async def test_get_bad_type(jp_fetch, contents):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         path = 'unicodé'
         type = 'file'
-        await fetch(
+        await jp_fetch(
             'api', 'contents', path,
             method='GET',
             params=dict(type=type) # This should be a directory, and thus throw and error
@@ -257,34 +262,35 @@ async def test_get_bad_type(fetch, contents):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         path = 'unicodé/innonascii.ipynb'
         type = 'directory'
-        await fetch(
+        await jp_fetch(
             'api', 'contents', path,
             method='GET',
             params=dict(type=type) # This should be a file, and thus throw and error
         )
     assert expected_http_error(e, 400, '%s is not a directory' % path)
 
+@pytest.fixture
+def _check_created(jp_base_url):
+    def _inner(r, contents_dir, path, name, type='notebook'):
+        fpath = path+'/'+name
+        assert r.code == 201
+        location = jp_base_url + 'api/contents/' + tornado.escape.url_escape(fpath, plus=False)
+        assert r.headers['Location'] == location
+        model = json.loads(r.body.decode())
+        assert model['name'] == name
+        assert model['path'] == fpath
+        assert model['type'] == type
+        path = contents_dir + '/' + fpath
+        if type == 'directory':
+            assert pathlib.Path(path).is_dir()
+        else:
+            assert pathlib.Path(path).is_file()
+    return _inner
 
-def _check_created(r, contents_dir, path, name, type='notebook'):
-    fpath = path+'/'+name
-    assert r.code == 201
-    location = '/api/contents/' + tornado.escape.url_escape(fpath, plus=False)
-    assert r.headers['Location'] == location
-    model = json.loads(r.body.decode())
-    assert model['name'] == name
-    assert model['path'] == fpath
-    assert model['type'] == type
-    path = contents_dir + '/' + fpath
-    if type == 'directory':
-        assert pathlib.Path(path).is_dir()
-    else:
-        assert pathlib.Path(path).is_file()
-
-
-async def test_create_untitled(fetch, contents, contents_dir):
+async def test_create_untitled(jp_fetch, contents, contents_dir, _check_created):
     path = 'å b'
     name = 'Untitled.ipynb'
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='POST',
         body=json.dumps({'ext': '.ipynb'})
@@ -292,7 +298,7 @@ async def test_create_untitled(fetch, contents, contents_dir):
     _check_created(r, str(contents_dir), path, name, type='notebook')
 
     name = 'Untitled1.ipynb'
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='POST',
         body=json.dumps({'ext': '.ipynb'})
@@ -301,7 +307,7 @@ async def test_create_untitled(fetch, contents, contents_dir):
 
     path = 'foo/bar'
     name = 'Untitled.ipynb'
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='POST',
         body=json.dumps({'ext': '.ipynb'})
@@ -309,17 +315,17 @@ async def test_create_untitled(fetch, contents, contents_dir):
     _check_created(r, str(contents_dir), path, name, type='notebook')
 
 
-async def test_create_untitled_txt(fetch, contents, contents_dir):
+async def test_create_untitled_txt(jp_fetch, contents, contents_dir, _check_created):
     name = 'untitled.txt'
     path = 'foo/bar'
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='POST',
         body=json.dumps({'ext': '.txt'})
     )
     _check_created(r, str(contents_dir), path, name, type='file')
 
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, name,
         method='GET'
     )
@@ -329,12 +335,12 @@ async def test_create_untitled_txt(fetch, contents, contents_dir):
     assert model['content'] == ''
 
 
-async def test_upload(fetch, contents, contents_dir):
+async def test_upload(jp_fetch, contents, contents_dir, _check_created):
     nb = new_notebook()
     nbmodel = {'content': nb, 'type': 'notebook'}
     path = 'å b'
     name = 'Upload tést.ipynb'
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, name,
         method='PUT',
         body=json.dumps(nbmodel)
@@ -342,10 +348,10 @@ async def test_upload(fetch, contents, contents_dir):
     _check_created(r, str(contents_dir), path, name)
 
 
-async def test_mkdir_untitled(fetch, contents, contents_dir):
+async def test_mkdir_untitled(jp_fetch, contents, contents_dir, _check_created):
     name = 'Untitled Folder'
     path = 'å b'
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='POST',
         body=json.dumps({'type': 'directory'})
@@ -353,7 +359,7 @@ async def test_mkdir_untitled(fetch, contents, contents_dir):
     _check_created(r, str(contents_dir), path, name, type='directory')
 
     name = 'Untitled Folder 1'
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='POST',
         body=json.dumps({'type': 'directory'})
@@ -362,7 +368,7 @@ async def test_mkdir_untitled(fetch, contents, contents_dir):
 
     name = 'Untitled Folder'
     path = 'foo/bar'
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='POST',
         body=json.dumps({'type': 'directory'})
@@ -370,10 +376,10 @@ async def test_mkdir_untitled(fetch, contents, contents_dir):
     _check_created(r, str(contents_dir), path, name, type='directory')
 
 
-async def test_mkdir(fetch, contents, contents_dir):
+async def test_mkdir(jp_fetch, contents, contents_dir, _check_created):
     name = 'New ∂ir'
     path = 'å b'
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, name,
         method='PUT',
         body=json.dumps({'type': 'directory'})
@@ -381,9 +387,9 @@ async def test_mkdir(fetch, contents, contents_dir):
     _check_created(r, str(contents_dir), path, name, type='directory')
 
 
-async def test_mkdir_hidden_400(fetch):
+async def test_mkdir_hidden_400(jp_fetch):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await fetch(
+        await jp_fetch(
             'api', 'contents', 'å b/.hidden',
             method='PUT',
             body=json.dumps({'type': 'directory'})
@@ -391,7 +397,7 @@ async def test_mkdir_hidden_400(fetch):
     assert expected_http_error(e, 400)
 
 
-async def test_upload_txt(fetch, contents, contents_dir):
+async def test_upload_txt(jp_fetch, contents, contents_dir, _check_created):
     body = 'ünicode téxt'
     model = {
         'content' : body,
@@ -400,14 +406,14 @@ async def test_upload_txt(fetch, contents, contents_dir):
     }
     path = 'å b'
     name = 'Upload tést.txt'
-    await fetch(
+    await jp_fetch(
         'api', 'contents', path, name,
         method='PUT',
         body=json.dumps(model)
     )
 
     # check roundtrip
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, name,
         method='GET'
     )
@@ -418,7 +424,7 @@ async def test_upload_txt(fetch, contents, contents_dir):
     assert model['content'] == body
 
 
-async def test_upload_b64(fetch, contents, contents_dir):
+async def test_upload_b64(jp_fetch, contents, contents_dir, _check_created):
     body = b'\xFFblob'
     b64body = encodebytes(body).decode('ascii')
     model = {
@@ -428,13 +434,13 @@ async def test_upload_b64(fetch, contents, contents_dir):
     }
     path = 'å b'
     name = 'Upload tést.blob'
-    await fetch(
+    await jp_fetch(
         'api', 'contents', path, name,
         method='PUT',
         body=json.dumps(model)
     )
     # check roundtrip
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, name,
         method='GET'
     )
@@ -446,11 +452,11 @@ async def test_upload_b64(fetch, contents, contents_dir):
     assert decoded == body
 
 
-async def test_copy(fetch, contents, contents_dir):
+async def test_copy(jp_fetch, contents, contents_dir, _check_created):
     path = 'å b'
     name = 'ç d.ipynb'
     copy = 'ç d-Copy1.ipynb'
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='POST',
         body=json.dumps({'copy_from': path+'/'+name})
@@ -459,7 +465,7 @@ async def test_copy(fetch, contents, contents_dir):
 
     # Copy the same file name
     copy2 = 'ç d-Copy2.ipynb'
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='POST',
         body=json.dumps({'copy_from': path+'/'+name})
@@ -468,7 +474,7 @@ async def test_copy(fetch, contents, contents_dir):
 
     # copy a copy.
     copy3 = 'ç d-Copy3.ipynb'
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='POST',
         body=json.dumps({'copy_from': path+'/'+copy2})
@@ -476,19 +482,19 @@ async def test_copy(fetch, contents, contents_dir):
     _check_created(r, str(contents_dir), path, copy3, type='notebook')
 
 
-async def test_copy_path(fetch, contents, contents_dir):
+async def test_copy_path(jp_fetch, contents, contents_dir, _check_created):
     path1 = 'foo'
     path2 = 'å b'
     name = 'a.ipynb'
     copy = 'a-Copy1.ipynb'
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path2,
         method='POST',
         body=json.dumps({'copy_from': path1+'/'+name})
     )
     _check_created(r, str(contents_dir), path2, name, type='notebook')
 
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path2,
         method='POST',
         body=json.dumps({'copy_from': path1+'/'+name})
@@ -496,9 +502,9 @@ async def test_copy_path(fetch, contents, contents_dir):
     _check_created(r, str(contents_dir), path2, copy, type='notebook')
 
 
-async def test_copy_put_400(fetch, contents, contents_dir):
+async def test_copy_put_400(jp_fetch, contents, contents_dir, _check_created):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await fetch(
+        await jp_fetch(
             'api', 'contents', 'å b/cøpy.ipynb',
             method='PUT',
             body=json.dumps({'copy_from': 'å b/ç d.ipynb'})
@@ -506,9 +512,9 @@ async def test_copy_put_400(fetch, contents, contents_dir):
     assert expected_http_error(e, 400)
 
 
-async def test_copy_dir_400(fetch, contents, contents_dir):
+async def test_copy_dir_400(jp_fetch, contents, contents_dir, _check_created):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await fetch(
+        await jp_fetch(
             'api', 'contents', 'foo',
             method='POST',
             body=json.dumps({'copy_from': 'å b'})
@@ -517,20 +523,20 @@ async def test_copy_dir_400(fetch, contents, contents_dir):
 
 
 @pytest.mark.parametrize('path,name', dirs)
-async def test_delete(fetch, contents, contents_dir, path, name):
+async def test_delete(jp_fetch, contents, contents_dir, path, name, _check_created):
     nbname = name+'.ipynb'
     nbpath = (path + '/' + nbname).lstrip('/')
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', nbpath,
         method='DELETE',
     )
     assert r.code == 204
 
 
-async def test_delete_dirs(fetch, contents, folders):
+async def test_delete_dirs(jp_fetch, contents, folders):
     # Iterate over folders
     for name in sorted(folders + ['/'], key=len, reverse=True):
-        r = await fetch(
+        r = await jp_fetch(
             'api', 'contents', name,
             method='GET'
         )
@@ -538,12 +544,12 @@ async def test_delete_dirs(fetch, contents, folders):
         listing = json.loads(r.body.decode())['content']
         # Delete all content
         for model in listing:
-            await fetch(
+            await jp_fetch(
                 'api', 'contents', model['path'],
                 method='DELETE'
             )
     # Make sure all content has been deleted.
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents',
         method='GET'
     )
@@ -552,34 +558,34 @@ async def test_delete_dirs(fetch, contents, folders):
 
 
 @pytest.mark.skipif(sys.platform == 'win32', reason="Disabled deleting non-empty dirs on Windows")
-async def test_delete_non_empty_dir(fetch, contents):
+async def test_delete_non_empty_dir(jp_fetch, contents):
     # Delete a folder
-    await fetch(
+    await jp_fetch(
         'api', 'contents', 'å b',
         method='DELETE'
     )
     # Check that the folder was been deleted.
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await fetch(
+        await jp_fetch(
             'api', 'contents', 'å b',
             method='GET'
         )
     assert expected_http_error(e, 404)
 
 
-async def test_rename(fetch, contents, contents_dir):
+async def test_rename(jp_fetch, jp_base_url, contents, contents_dir):
     path = 'foo'
     name = 'a.ipynb'
     new_name = 'z.ipynb'
     # Rename the file
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, name,
         method='PATCH',
         body=json.dumps({'path': path+'/'+new_name})
     )
     fpath = path+'/'+new_name
     assert r.code == 200
-    location = '/api/contents/' + fpath
+    location = url_path_join(jp_base_url, 'api/contents/', fpath)
     assert r.headers['Location'] == location
     model = json.loads(r.body.decode())
     assert model['name'] == new_name
@@ -588,7 +594,7 @@ async def test_rename(fetch, contents, contents_dir):
     assert pathlib.Path(fpath).is_file()
 
     # Check that the files have changed
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='GET'
     )
@@ -598,19 +604,19 @@ async def test_rename(fetch, contents, contents_dir):
     assert 'a.ipynb' not in nbnames
 
 
-async def test_checkpoints_follow_file(fetch, contents):
+async def test_checkpoints_follow_file(jp_fetch, contents):
     path = 'foo'
     name = 'a.ipynb'
 
     # Read initial file.
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, name,
         method='GET'
     )
     model = json.loads(r.body.decode())
 
     # Create a checkpoint of initial state
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, name, 'checkpoints',
         method='POST',
         allow_nonstandard_methods=True
@@ -623,21 +629,21 @@ async def test_checkpoints_follow_file(fetch, contents):
     hcell = new_markdown_cell('Created by test')
     nb.cells.append(hcell)
     nbmodel = {'content': nb, 'type': 'notebook'}
-    r = await fetch(
+    await jp_fetch(
         'api', 'contents', path, name,
         method='PUT',
         body=json.dumps(nbmodel)
     )
 
     # List checkpoints
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, name, 'checkpoints',
         method='GET',
     )
     cps = json.loads(r.body.decode())
     assert cps == [cp1]
 
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, name,
         method='GET'
     )
@@ -647,13 +653,13 @@ async def test_checkpoints_follow_file(fetch, contents):
     assert nb.cells[0].source == "Created by test"
 
 
-async def test_rename_existing(fetch, contents):
+async def test_rename_existing(jp_fetch, contents):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         path = 'foo'
         name = 'a.ipynb'
         new_name = 'b.ipynb'
         # Rename the file
-        r = await fetch(
+        await jp_fetch(
             'api', 'contents', path, name,
             method='PATCH',
             body=json.dumps({'path': path+'/'+new_name})
@@ -661,8 +667,8 @@ async def test_rename_existing(fetch, contents):
     assert expected_http_error(e, 409)
 
 
-async def test_save(fetch, contents):
-    r = await fetch(
+async def test_save(jp_fetch, contents):
+    r = await jp_fetch(
         'api', 'contents', 'foo/a.ipynb',
         method='GET'
     )
@@ -671,13 +677,13 @@ async def test_save(fetch, contents):
     nb = from_dict(nbmodel)
     nb.cells.append(new_markdown_cell('Created by test ³'))
     nbmodel = {'content': nb, 'type': 'notebook'}
-    r = await fetch(
+    await jp_fetch(
         'api', 'contents', 'foo/a.ipynb',
         method='PUT',
         body=json.dumps(nbmodel)
     )
     # Round trip.
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', 'foo/a.ipynb',
         method='GET'
     )
@@ -686,14 +692,14 @@ async def test_save(fetch, contents):
     assert newnb.cells[0].source == 'Created by test ³'
 
 
-async def test_checkpoints(fetch, contents):
+async def test_checkpoints(jp_fetch, contents):
     path = 'foo/a.ipynb'
-    resp = await fetch(
+    resp = await jp_fetch(
         'api', 'contents', path,
         method='GET'
     )
     model = json.loads(resp.body.decode())
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, 'checkpoints',
         method='POST',
         allow_nonstandard_methods=True
@@ -711,21 +717,21 @@ async def test_checkpoints(fetch, contents):
 
     # Save it.
     nbmodel = {'content': nb, 'type': 'notebook'}
-    resp = await fetch(
+    await jp_fetch(
         'api', 'contents', path,
         method='PUT',
         body=json.dumps(nbmodel)
     )
 
     # List checkpoints
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, 'checkpoints',
         method='GET'
     )
     cps = json.loads(r.body.decode())
     assert cps == [cp1]
 
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='GET'
     )
@@ -734,14 +740,14 @@ async def test_checkpoints(fetch, contents):
     assert nb.cells[0].source == 'Created by test'
 
     # Restore Checkpoint cp1
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, 'checkpoints', cp1['id'],
         method='POST',
         allow_nonstandard_methods=True
     )
     assert r.code == 204
 
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='GET'
     )
@@ -750,13 +756,13 @@ async def test_checkpoints(fetch, contents):
     assert nb.cells == []
 
     # Delete cp1
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, 'checkpoints', cp1['id'],
         method='DELETE'
     )
     assert r.code == 204
 
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, 'checkpoints',
         method='GET'
     )
@@ -764,14 +770,14 @@ async def test_checkpoints(fetch, contents):
     assert cps == []
 
 
-async def test_file_checkpoints(fetch, contents):
+async def test_file_checkpoints(jp_fetch, contents):
     path = 'foo/a.txt'
-    resp = await fetch(
+    resp = await jp_fetch(
         'api', 'contents', path,
         method='GET'
     )
     orig_content = json.loads(resp.body.decode())['content']
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, 'checkpoints',
         method='POST',
         allow_nonstandard_methods=True
@@ -790,21 +796,21 @@ async def test_file_checkpoints(fetch, contents):
     }
 
     # Save it.
-    resp = await fetch(
+    await jp_fetch(
         'api', 'contents', path,
         method='PUT',
         body=json.dumps(model)
     )
 
     # List checkpoints
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, 'checkpoints',
         method='GET'
     )
     cps = json.loads(r.body.decode())
     assert cps == [cp1]
 
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='GET'
     )
@@ -812,14 +818,14 @@ async def test_file_checkpoints(fetch, contents):
     assert content == new_content
 
     # Restore Checkpoint cp1
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, 'checkpoints', cp1['id'],
         method='POST',
         allow_nonstandard_methods=True
     )
     assert r.code == 204
 
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path,
         method='GET'
     )
@@ -827,13 +833,13 @@ async def test_file_checkpoints(fetch, contents):
     assert restored_content == orig_content
 
     # Delete cp1
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, 'checkpoints', cp1['id'],
         method='DELETE'
     )
     assert r.code == 204
 
-    r = await fetch(
+    r = await jp_fetch(
         'api', 'contents', path, 'checkpoints',
         method='GET'
     )

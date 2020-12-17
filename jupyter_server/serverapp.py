@@ -43,24 +43,19 @@ from jinja2 import Environment, FileSystemLoader
 from jupyter_server.transutils import trans, _
 from jupyter_server.utils import secure_write, run_sync
 
-# Install the pyzmq ioloop. This has to be done before anything else from
-# tornado is imported.
-from zmq.eventloop import ioloop
-ioloop.install()
+# the minimum viable tornado version: needs to be kept in sync with setup.py
+MIN_TORNADO = (6, 1, 0)
 
-# check for tornado 3.1.0
 try:
     import tornado
-except ImportError:
-    raise ImportError(_("The Jupyter Server requires tornado >= 4.0"))
-try:
-    version_info = tornado.version_info
-except AttributeError:
-    raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have < 1.1.0"))
-if version_info < (4,0):
-    raise ImportError(_("The Jupyter Server requires tornado >= 4.0, but you have %s") % tornado.version)
+    assert tornado.version_info >= MIN_TORNADO
+except (ImportError, AttributeError, AssertionError) as e:  # pragma: no cover
+    raise ImportError(
+        _("The Jupyter Server requires tornado >=%s.%s.%s") % MIN_TORNADO
+    ) from e
 
 from tornado import httpserver
+from tornado import ioloop
 from tornado import web
 from tornado.httputil import url_concat
 from tornado.log import LogFormatter, app_log, access_log, gen_log
@@ -75,8 +70,8 @@ from .base.handlers import MainHandler, RedirectWithParams, Template404
 from .log import log_request
 from .services.kernels.kernelmanager import MappingKernelManager, AsyncMappingKernelManager
 from .services.config import ConfigManager
-from .services.contents.manager import ContentsManager
-from .services.contents.filemanager import FileContentsManager
+from .services.contents.manager import AsyncContentsManager, ContentsManager
+from .services.contents.filemanager import AsyncFileContentsManager, FileContentsManager
 from .services.contents.largefilemanager import LargeFileManager
 from .services.sessions.sessionmanager import SessionManager
 from .gateway.managers import GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
@@ -107,19 +102,17 @@ from jupyter_server._sysinfo import get_sys_info
 
 from ._tz import utcnow, utcfromtimestamp
 from .utils import (
-    url_path_join, 
-    check_pid, 
-    url_escape, 
-    urljoin, 
-    pathname2url, 
+    url_path_join,
+    check_pid,
+    url_escape,
+    urljoin,
+    pathname2url,
     get_schema_files
 )
 
-from jupyter_server.extension.serverextension import (
-    ServerExtensionApp,
-    _get_server_extension_metadata,
-    _get_load_jupyter_server_extension
-)
+from jupyter_server.extension.serverextension import ServerExtensionApp
+from jupyter_server.extension.manager import ExtensionManager
+from jupyter_server.extension.config import ExtensionConfigManager
 
 #-----------------------------------------------------------------------------
 # Module globals
@@ -136,7 +129,6 @@ JUPYTER_SERVICE_HANDLERS = dict(
     api=['jupyter_server.services.api.handlers'],
     config=['jupyter_server.services.config.handlers'],
     contents=['jupyter_server.services.contents.handlers'],
-    edit=['jupyter_server.edit.handlers'],
     files=['jupyter_server.files.handlers'],
     kernels=['jupyter_server.services.kernels.handlers'],
     kernelspecs=[
@@ -265,6 +257,7 @@ class ServerWebApplication(web.Application):
             disable_check_xsrf=jupyter_app.disable_check_xsrf,
             allow_remote_access=jupyter_app.allow_remote_access,
             local_hostnames=jupyter_app.local_hostnames,
+            authenticate_prometheus=jupyter_app.authenticate_prometheus,
 
             # managers
             kernel_manager=kernel_manager,
@@ -290,8 +283,8 @@ class ServerWebApplication(web.Application):
             server_root_dir=root_dir,
             jinja2_env=env,
             terminals_available=False,  # Set later if terminals are available
-            serverapp=self,
-            eventlog=jupyter_app.eventlog
+            eventlog=jupyter_app.eventlog,
+            serverapp=jupyter_app
         )
 
         # allow custom overrides for the tornado web app.
@@ -339,16 +332,10 @@ class ServerWebApplication(web.Application):
                         handlers[j] = (gwh[0], gwh[1])
                         break
 
-        handlers.append(
-            (r"/custom/(.*)", FileFindHandler, {
-                'path': settings['static_custom_path'],
-                'no_cache_paths': ['/'], # don't cache anything in custom
-            })
-        )
         # register base handlers last
         handlers.extend(load_handlers('jupyter_server.base.handlers'))
 
-        if settings['default_url'] != '/':
+        if settings['default_url'] != settings['base_url']:
             # set the URL that will be redirected from `/`
             handlers.append(
                 (r'/?', RedirectWithParams, {
@@ -408,6 +395,7 @@ class JupyterPasswordApp(JupyterApp):
         from .auth.security import set_password
         set_password(config_file=self.config_file)
         self.log.info("Wrote hashed password to %s" % self.config_file)
+
 
 def shutdown_server(server_info, timeout=5, log=None):
     """Shutdown a notebook server in a separate process.
@@ -573,16 +561,12 @@ class ServerApp(JupyterApp):
     This launches a Tornado-based Jupyter Server.""")
     examples = _examples
 
-    # This trait is used to track _enabled_extensions. It should remain hidden
-    # and not configurable.
-    _enabled_extensions = {}
-
     flags = Dict(flags)
     aliases = Dict(aliases)
 
     classes = [
-            KernelManager, Session, MappingKernelManager, KernelSpecManager,
-            ContentsManager, FileContentsManager, NotebookNotary,
+            KernelManager, Session, MappingKernelManager, KernelSpecManager, AsyncMappingKernelManager,
+            ContentsManager, FileContentsManager, AsyncContentsManager, AsyncFileContentsManager, NotebookNotary,
             GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
         ]
 
@@ -601,7 +585,6 @@ class ServerApp(JupyterApp):
         'auth',
         'config',
         'contents',
-        'edit',
         'files',
         'kernels',
         'kernelspecs',
@@ -1049,8 +1032,7 @@ class ServerApp(JupyterApp):
     )
 
     quit_button = Bool(True, config=True,
-        help="""If True, display a button in the dashboard to quit
-        (shutdown the Jupyter server)."""
+        help="""If True, display controls to shut down the Jupyter server, such as menu items or buttons."""
     )
 
     contents_manager_class = Type(
@@ -1230,6 +1212,14 @@ class ServerApp(JupyterApp):
          is not available.
          """))
 
+    authenticate_prometheus = Bool(
+        True,
+        help=""""
+        Require authentication to access prometheus metrics.
+        """,
+        config=True
+    )
+
     def parse_command_line(self, argv=None):
 
         super(ServerApp, self).parse_command_line(argv)
@@ -1271,14 +1261,6 @@ class ServerApp(JupyterApp):
             connection_dir=self.runtime_dir,
             kernel_spec_manager=self.kernel_spec_manager,
         )
-        # Async randomly hangs on Python 3.5, prevent using it
-        if isinstance(self.kernel_manager, AsyncMappingKernelManager):
-            if sys.version_info < (3, 6):
-                raise ValueError("You are using `AsyncMappingKernelManager` in Python 3.5 (or lower),"
-                                 "which is not supported. Please upgrade Python to 3.6+.")
-            else:
-                self.log.info("Asynchronous kernel management has been configured to use '{}'.".
-                              format(self.kernel_manager.__class__.__name__))
         self.contents_manager = self.contents_manager_class(
             parent=self,
             log=self.log,
@@ -1352,7 +1334,6 @@ class ServerApp(JupyterApp):
             import ssl
             # PROTOCOL_TLS selects the highest ssl/tls protocol version that both the client and
             # server support. When PROTOCOL_TLS is not available use PROTOCOL_SSLv23.
-            # PROTOCOL_TLS is new in version 2.7.13, 3.5.3 and 3.6
             self.ssl_options.setdefault(
                 'ssl_version',
                 getattr(ssl, 'PROTOCOL_TLS', ssl.PROTOCOL_SSLv23)
@@ -1398,7 +1379,7 @@ class ServerApp(JupyterApp):
         if not ip:
             ip = self.ip if self.ip else 'localhost'
         if not path:
-            path = url_path_join(self.base_url, self.default_url)
+            path = self.default_url
         # Build query string.
         if token:
             token = urllib.parse.urlencode({'token': token})
@@ -1496,9 +1477,9 @@ class ServerApp(JupyterApp):
 
     def find_server_extensions(self):
         """
-        Searches Jupyter paths for jpserver_extensions and captures
-        metadata for all enabled extensions.
+        Searches Jupyter paths for jpserver_extensions.
         """
+
         # Walk through all config files looking for jpserver_extensions.
         #
         # Each extension will likely have a JSON config file enabling itself in
@@ -1508,19 +1489,13 @@ class ServerApp(JupyterApp):
         # Load server extensions with ConfigManager.
         # This enables merging on keys, which we want for extension enabling.
         # Regular config loading only merges at the class level,
-        # so each level (system > env > user ... opposite of jupyter/notebook)
-        # clobbers the previous.
-        config_path = jupyter_config_path()
-        if self.config_dir not in config_path:
+        # so each level clobbers the previous.
+        config_paths = jupyter_config_path()
+        if self.config_dir not in config_paths:
             # add self.config_dir to the front, if set manually
-            config_path.insert(0, self.config_dir)
-        # Flip the order of ordered_config_path to system > env > user.
-        # This is different that jupyter/notebook. See the Jupyter
-        # Enhancement Proposal 29 (Jupyter Server) for more information.
-        reversed_config_path = config_path[::-1]
-        manager = ConfigManager(read_config_path=reversed_config_path)
-        section = manager.get(self.config_file_name)
-        extensions = section.get('ServerApp', {}).get('jpserver_extensions', {})
+            config_paths.insert(0, self.config_dir)
+        manager = ExtensionConfigManager(read_config_path=config_paths)
+        extensions = manager.get_jpserver_extensions()
 
         for modulename, enabled in sorted(extensions.items()):
             if modulename not in self.jpserver_extensions:
@@ -1535,67 +1510,10 @@ class ServerApp(JupyterApp):
         this instance will inherit the ServerApp's config object
         and load its own config.
         """
-        # Load extension metadata for enabled extensions, load config for
-        # enabled ExtensionApps, and store enabled extension metadata in the
-        # _enabled_extensions attribute.
-        #
-        # The _enabled_extensions trait will be used by `load_server_extensions`
-        # to call each extensions `_load_jupyter_server_extension` method
-        # after the ServerApp's Web application object is created.
-        for module_name, enabled in sorted(self.jpserver_extensions.items()):
-            if enabled:
-                metadata_list = []
-                try:
-                    # Load the metadata for this enabled extension. This will
-                    # be a list of extension points, each having their own
-                    # path to a `_load_jupyter_server_extensions()`function.
-                    # Important note: a single extension can have *multiple*
-                    # `_load_jupyter_server_extension` functions defined, hence
-                    # _get_server_extension_metadata returns a list of metadata.
-                    mod, metadata_list = _get_server_extension_metadata(module_name)
-                except KeyError:
-                    # A KeyError suggests that the module does not have a
-                    # _jupyter_server_extension-path.
-                    log_msg = _(
-                        "Error loading server extensions in "
-                        "{module_name} module. There is no `_jupyter_server_extension_paths` "
-                        "defined at the root of the extension module. Check "
-                        "with the author of the extension to ensure this function "
-                        "is added.".format(module_name=module_name)
-                    )
-                    self.log.warning(log_msg)
-
-                for metadata in metadata_list:
-                        # Is this extension point an ExtensionApp?
-                    # If "app" is not None, then the extension should be an ExtensionApp
-                    # Otherwise use the 'module' key to locate the
-                    #`_load_jupyter_server_extension` function.
-                    extapp = metadata.get('app', None)
-                    extloc = metadata.get('module', None)
-                    if extapp and extloc:
-                        # Verify that object found is a subclass of ExtensionApp.
-                        from .extension.application import ExtensionApp
-                        if not issubclass(extapp, ExtensionApp):
-                            raise TypeError(extapp.__name__ + " must be a subclass of ExtensionApp.")
-                        # ServerApp creates an instance of the
-                        # ExtensionApp here to load any ServerApp configuration
-                        # that might live in the Extension's config file.
-                        app = extapp()
-                        app.link_to_serverapp(self)
-                        # Build a new list where we
-                        self._enabled_extensions[app.extension_name] = app
-                    elif extloc:
-                        extmod = importlib.import_module(extloc)
-                        func = _get_load_jupyter_server_extension(extmod)
-                        self._enabled_extensions[extloc] = extmod
-                    else:
-                        log_msg = _(
-                            "{module_name} is missing critical metadata. Check "
-                            "that _jupyter_server_extension_paths returns `app` "
-                            "and/or `module` as keys".format(module_name=module_name)
-                        )
-                        self.log.warn(log_msg)
-
+        # Create an instance of the ExtensionManager.
+        self.extension_manager = ExtensionManager(log=self.log)
+        self.extension_manager.from_jpserver_extensions(self.jpserver_extensions)
+        self.extension_manager.link_all_extensions(self)
 
     def load_server_extensions(self):
         """Load any extensions specified by config.
@@ -1605,48 +1523,7 @@ class ServerApp(JupyterApp):
 
         The extension API is experimental, and may change in future releases.
         """
-
-        # Load all enabled extensions.
-        for extkey, extension in sorted(self._enabled_extensions.items()):
-            if isinstance(extension, ModuleType):
-                log_msg = (
-                    "Extension from {extloc} module enabled and "
-                    "loaded".format(extloc=extkey)
-                )
-            else:
-                log_msg = (
-                    "Extension {extension_name} enabled and "
-                    "loaded".format(extension_name=extension.extension_name)
-                )
-            # Find the extension loading function.
-            func = None
-            try:
-                # This function was prefixed with an underscore in in v1.0
-                # because this shouldn't be a public API for most extensions.
-                func = getattr(extension, '_load_jupyter_server_extension')
-            except AttributeError:
-                try:
-                    # For backwards compatibility, we will still look for non
-                    # underscored loading functions.
-                    func = getattr(extension, 'load_jupyter_server_extension')
-                    warn_msg = _(
-                        "{extkey} is enabled. "
-                        "`load_jupyter_server_extension` function "
-                        "was found but `_load_jupyter_server_extension`"
-                        "is preferred.".format(extkey=extkey)
-                    )
-                    self.log.warning(warn_msg)
-                except AttributeError:
-                    warn_msg = _(
-                        "{extkey} is enabled but no "
-                        "`_load_jupyter_server_extension` function "
-                        "was found.".format(extkey=extkey)
-                    )
-                    self.log.warning(warn_msg)
-            if func:
-                func(self)
-                self.log.debug(log_msg)
-
+        self.extension_manager.load_all_extensions(self)
 
     def init_mime_overrides(self):
         # On some Windows machines, an application has registered incorrect
@@ -1661,6 +1538,8 @@ class ServerApp(JupyterApp):
         # ensure css, js are correct, which are required for pages to function
         mimetypes.add_type('text/css', '.css')
         mimetypes.add_type('application/javascript', '.js')
+        # for python <3.8
+        mimetypes.add_type('application/wasm', '.wasm')
 
     def shutdown_no_activity(self):
         """Shutdown server on timeout when there are no kernels or terminals."""
@@ -1697,12 +1576,12 @@ class ServerApp(JupyterApp):
         """An instance of Tornado's HTTPServer class for the Server Web Application."""
         try:
             return self._http_server
-        except AttributeError:
+        except AttributeError as e:
             raise AttributeError(
                 'An HTTPServer instance has not been created for the '
                 'Server Web Application. To create an HTTPServer for this '
                 'application, call `.init_httpserver()`.'
-                )
+                ) from e
 
     def init_httpserver(self):
         """Creates an instance of a Tornado HTTPServer for the Server Web Application
@@ -1745,31 +1624,13 @@ class ServerApp(JupyterApp):
 
     @staticmethod
     def _init_asyncio_patch():
-        """set default asyncio policy to be compatible with tornado
-        Tornado 6 (at least) is not compatible with the default
-        asyncio implementation on Windows
-        Pick the older SelectorEventLoopPolicy on Windows
-        if the known-incompatible default policy is in use.
-        do this as early as possible to make it a low priority and overrideable
-        ref: https://github.com/tornadoweb/tornado/issues/2608
-        FIXME: if/when tornado supports the defaults in asyncio,
-               remove and bump tornado requirement for py38
-        """
-        if sys.platform.startswith("win") and sys.version_info >= (3, 8):
-            import asyncio
-            try:
-                from asyncio import (
-                    WindowsProactorEventLoopPolicy,
-                    WindowsSelectorEventLoopPolicy,
-                )
-            except ImportError:
-                pass
-                # not affected
-            else:
-                if type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy:
-                    # WindowsProactorEventLoopPolicy is not compatible with tornado 6
-                    # fallback to the pre-3.8 default of Selector
-                    asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
+        """no longer needed with tornado 6.1"""
+        warnings.warn(
+            """ServerApp._init_asyncio_patch called, and is longer needed for """
+            """tornado 6.1+, and will be removed in a future release.""",
+            DeprecationWarning
+        )
+
     def init_eventlog(self):
         self.eventlog = EventLog(parent=self)
         # Register schemas for notebook services.
@@ -1794,20 +1655,19 @@ class ServerApp(JupyterApp):
             If True, a tornado HTTPServer instance will be created and configured for the Server Web
             Application. This will set the http_server attribute of this class.
         """
-        self._init_asyncio_patch()
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
         super(ServerApp, self).initialize(argv)
+        # Initialize all components of the ServerApp.
+        if self._dispatching:
+            return
         # Then, use extensions' config loading mechanism to
         # update config. ServerApp config takes precedence.
         if find_extensions:
             self.find_server_extensions()
-        self.init_server_extensions()
-        # Initialize all components of the ServerApp.
         self.init_logging()
         self.init_eventlog()
-        if self._dispatching:
-            return
+        self.init_server_extensions()
         self.init_configurables()
         self.init_components()
         self.init_eventlog()
