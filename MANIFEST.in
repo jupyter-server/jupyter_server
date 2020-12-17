@@ -11,6 +11,9 @@ recursive-include jupyter_server *
 # Event Schemas
 graft jupyter_server/event-schemas
 
+# Event Schemas
+graft jupyter_server/event-schemas
+
 # Documentation
 graft docs
 exclude docs/\#*

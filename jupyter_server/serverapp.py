@@ -102,12 +102,21 @@ from jupyter_server._sysinfo import get_sys_info
 
 from ._tz import utcnow, utcfromtimestamp
 from .utils import (
-    url_path_join, 
-    check_pid, 
-    url_escape, 
-    urljoin, 
-    pathname2url, 
+    url_path_join,
+    check_pid,
+    url_escape,
+    urljoin,
+    pathname2url,
     get_schema_files
+<<<<<<< HEAD
+=======
+)
+
+from jupyter_server.extension.serverextension import (
+    ServerExtensionApp,
+    _get_server_extension_metadata,
+    _get_load_jupyter_server_extension
+>>>>>>> b06f7d6f324ea8a29b2a351c631d3109be0a8971
 )
 
 from jupyter_server.extension.serverextension import ServerExtensionApp
@@ -283,8 +292,13 @@ class ServerWebApplication(web.Application):
             server_root_dir=root_dir,
             jinja2_env=env,
             terminals_available=False,  # Set later if terminals are available
+<<<<<<< HEAD
             eventlog=jupyter_app.eventlog,
             serverapp=jupyter_app
+=======
+            serverapp=self,
+            eventlog=jupyter_app.eventlog
+>>>>>>> b06f7d6f324ea8a29b2a351c631d3109be0a8971
         )
 
         # allow custom overrides for the tornado web app.
