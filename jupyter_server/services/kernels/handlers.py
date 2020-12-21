@@ -159,7 +159,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         iopub_future = Future()
         both_done = gen.multi([info_future, iopub_future])
 
-        def finish(f=None):
+        def finish(_=None):
             """Ensure all futures are resolved
             which in turn triggers cleanup
             """
@@ -167,7 +167,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 if not f.done():
                     f.set_result(None)
 
-        def cleanup(f=None):
+        def cleanup(_=None):
             """Common cleanup"""
             loop.remove_timeout(nudge_handle)
             iopub_channel.stop_on_recv()
@@ -360,7 +360,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             await stale_handler.close()
         self._open_sessions[self.session_key] = self
 
-    async def open(self, kernel_id):
+    def open(self, kernel_id):
         super(ZMQChannelsHandler, self).open()
         km = self.kernel_manager
         km.notify_connect(kernel_id)
