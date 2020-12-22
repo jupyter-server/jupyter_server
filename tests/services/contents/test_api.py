@@ -42,7 +42,7 @@ dirs = [
 
 
 @pytest.fixture(params=["FileContentsManager", "AsyncFileContentsManager"])
-def argv(request):
+def jp_argv(request):
     return ["--ServerApp.contents_manager_class=jupyter_server.services.contents.filemanager." + request.param]
 
 
