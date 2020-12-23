@@ -17,7 +17,7 @@ from ...utils import expected_http_error
 
 
 @pytest.fixture(params=["MappingKernelManager", "AsyncMappingKernelManager"])
-def argv(request):
+def jp_argv(request):
     return ["--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager." + request.param]
 
 
@@ -209,7 +209,6 @@ async def test_connection(jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header):
     model = json.loads(r.body.decode())
     assert model['connections'] == 0
 
-    time.sleep(1)
     # Open a websocket connection.
     ws = await jp_ws_fetch(
         'api', 'kernels', kid, 'channels'

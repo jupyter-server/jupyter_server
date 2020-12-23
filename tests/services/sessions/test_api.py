@@ -17,7 +17,7 @@ j = lambda r: json.loads(r.body.decode())
 
 
 @pytest.fixture(params=["MappingKernelManager", "AsyncMappingKernelManager"])
-def argv(request):
+def jp_argv(request):
     return ["--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager." + request.param]
 
 
