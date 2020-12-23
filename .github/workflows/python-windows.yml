@@ -1,4 +1,4 @@
-name: Jupyter Server Tests
+name: Jupyter Server Tests [Windows]
 on:
   push:
     branches: '*'
@@ -10,11 +10,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, macos, windows]
-        python-version: [ '3.6', '3.7', '3.8', '3.9', 'pypy3' ]
-        exclude:
-        - os: windows
-          python-version: pypy3
+        os: [windows]
+        python-version: [ '3.6', '3.7', '3.8', '3.9' ]
     steps:
     - name: Checkout
       uses: actions/checkout@v1
@@ -47,13 +44,10 @@ jobs:
         pip check
     - name: Run the tests
       run: |
-        pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered
+        pytest -vv
     - name: Install the Python dependencies for the examples
       run: |
         cd examples/simple && pip install -e .
     - name: Run the tests for the examples
       run: |
         pytest examples/simple/tests/test_handlers.py
-    - name: Coverage
-      run: |
-        codecov

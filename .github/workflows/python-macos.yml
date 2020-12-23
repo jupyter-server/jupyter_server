@@ -1,0 +1,56 @@
+name: Jupyter Server Tests [Mac OS]
+on:
+  push:
+    branches: '*'
+  pull_request:
+    branches: '*'
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos]
+        python-version: [ '3.6', '3.7', '3.8', '3.9', 'pypy3' ]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+    - name: Install Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: 'x64'
+    - name: Upgrade packaging dependencies
+      run: |
+        pip install --upgrade pip setuptools wheel --user
+    - name: Get pip cache dir
+      id: pip-cache
+      run: |
+        echo "::set-output name=dir::$(pip cache dir)"
+    - name: Cache pip
+      uses: actions/cache@v1
+      with:
+        path: ${{ steps.pip-cache.outputs.dir }}
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+    - name: Install the Python dependencies
+      run: |
+        pip install -e .[test] codecov
+    - name: List installed packages
+      run: |
+        pip freeze
+        pip check
+    - name: Run the tests
+      run: |
+        pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered
+    - name: Install the Python dependencies for the examples
+      run: |
+        cd examples/simple && pip install -e .
+    - name: Run the tests for the examples
+      run: |
+        pytest examples/simple/tests/test_handlers.py
+    - name: Coverage
+      run: |
+        codecov
