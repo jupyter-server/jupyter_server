@@ -699,7 +699,7 @@ class ServerApp(JupyterApp):
 
     @default('cookie_secret_file')
     def _default_cookie_secret_file(self):
-        return os.path.join(self.runtime_dir, 'jupytr_cookie_secret')
+        return os.path.join(self.runtime_dir, 'jupyter_cookie_secret')
 
     cookie_secret = Bytes(b'', config=True,
         help="""The random bytes used to secure cookies.
