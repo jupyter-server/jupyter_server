@@ -400,7 +400,7 @@ Putting it all together, authors can distribute their extension following this s
 
 .. links
 
-.. _`Jupyter's paths`: https://jupyter.readthedocs.io/en/latest/projects/jupyter-directories.html
+.. _`Jupyter's paths`: https://jupyter.readthedocs.io/en/latest/use/jupyter-directories.html
 
 
 Migrating an extension to use Jupyter Server
