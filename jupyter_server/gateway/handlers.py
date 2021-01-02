@@ -36,7 +36,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
         return JupyterHandler.check_origin(self, origin)
 
     def set_default_headers(self):
-        """Undo the set_default_headers in IPythonHandler which doesn't make sense for websockets"""
+        """Undo the set_default_headers in JupyterHandler which doesn't make sense for websockets"""
         pass
 
     def get_compression_options(self):
