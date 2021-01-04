@@ -95,19 +95,6 @@ def ensure_python(specs):
     raise ValueError('Python version %s unsupported' % part)
 
 
-def find_packages(top):
-    """
-    Find all of the packages.
-    """
-    import warnings
-    warnings.warn(
-        'Deprecated, please use setuptools.find_packages',
-        category=DeprecationWarning
-    )
-    from setuptools import find_packages as fp
-    return fp(top)
-
-
 def update_package_data(distribution):
     """update build_py options to get package_data changes"""
     build_py = distribution.get_command_obj('build_py')
