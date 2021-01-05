@@ -22,8 +22,8 @@ def test_help_output():
     check_help_all_output('jupyter_server')
 
 
-def test_server_info_file(tmp_path, configurable_serverapp):
-    app = configurable_serverapp(log=logging.getLogger())
+def test_server_info_file(tmp_path, jp_configurable_serverapp):
+    app = jp_configurable_serverapp(log=logging.getLogger())
 
     app.write_server_info_file()
     servers = list(list_running_servers(app.runtime_dir))
@@ -41,8 +41,8 @@ def test_server_info_file(tmp_path, configurable_serverapp):
     app.remove_server_info_file
 
 
-def test_root_dir(tmp_path, configurable_serverapp):
-    app = configurable_serverapp(root_dir=str(tmp_path))
+def test_root_dir(tmp_path, jp_configurable_serverapp):
+    app = jp_configurable_serverapp(root_dir=str(tmp_path))
     assert app.root_dir == str(tmp_path)
 
 
@@ -62,8 +62,8 @@ def invalid_root_dir(tmp_path, request):
     return str(path)
 
 
-def test_invalid_root_dir(invalid_root_dir, configurable_serverapp):
-    app = configurable_serverapp()
+def test_invalid_root_dir(invalid_root_dir, jp_configurable_serverapp):
+    app = jp_configurable_serverapp()
     with pytest.raises(TraitError):
         app.root_dir = invalid_root_dir
 
@@ -81,8 +81,8 @@ def valid_root_dir(tmp_path, request):
         path.mkdir(parents=True)
     return str(path)
 
-def test_valid_root_dir(valid_root_dir, configurable_serverapp):
-    app = configurable_serverapp(root_dir=valid_root_dir)
+def test_valid_root_dir(valid_root_dir, jp_configurable_serverapp):
+    app = jp_configurable_serverapp(root_dir=valid_root_dir)
     root_dir = valid_root_dir
     # If nested path, the last slash should
     # be stripped by the root_dir trait.
@@ -91,15 +91,15 @@ def test_valid_root_dir(valid_root_dir, configurable_serverapp):
     assert app.root_dir == root_dir
 
 
-def test_generate_config(tmp_path, configurable_serverapp):
-    app = configurable_serverapp(config_dir=str(tmp_path))
+def test_generate_config(tmp_path, jp_configurable_serverapp):
+    app = jp_configurable_serverapp(config_dir=str(tmp_path))
     app.initialize(['--generate-config', '--allow-root'])
     with pytest.raises(NoStart):
         app.start()
     assert tmp_path.joinpath('jupyter_server_config.py').exists()
 
 
-def test_server_password(tmp_path, configurable_serverapp):
+def test_server_password(tmp_path, jp_configurable_serverapp):
     password = 'secret'
     with patch.dict(
         'os.environ', {'JUPYTER_CONFIG_DIR': str(tmp_path)}
@@ -107,13 +107,13 @@ def test_server_password(tmp_path, configurable_serverapp):
         app = JupyterPasswordApp(log_level=logging.ERROR)
         app.initialize([])
         app.start()
-        sv = configurable_serverapp()
+        sv = jp_configurable_serverapp()
         sv.load_config_file()
         assert sv.password != ''
         passwd_check(sv.password, password)
 
 
-def test_list_running_servers(serverapp, app):
-    servers = list(list_running_servers(serverapp.runtime_dir))
+def test_list_running_servers(jp_serverapp, jp_web_app):
+    servers = list(list_running_servers(jp_serverapp.runtime_dir))
     assert len(servers) >= 1
 

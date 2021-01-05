@@ -1,4 +1,5 @@
 import os
+import sys
 
 import terminado
 from ..utils import check_version
@@ -19,11 +20,18 @@ def initialize(webapp, root_dir, connection_url, settings):
         default_shell = 'powershell.exe'
     else:
         default_shell = which('sh')
-    shell = settings.get('shell_command',
+    shell_override = settings.get('shell_command')
+    shell = (
         [os.environ.get('SHELL') or default_shell]
+        if shell_override is None
+        else shell_override
     )
-    # Enable login mode - to automatically source the /etc/profile script
-    if os.name != 'nt':
+    # When the notebook server is not running in a terminal (e.g. when
+    # it's launched by a JupyterHub spawner), it's likely that the user
+    # environment hasn't been fully set up. In that case, run a login
+    # shell to automatically source /etc/profile and the like, unless
+    # the user has specifically set a preferred shell command.
+    if os.name != 'nt' and shell_override is None and not sys.stdout.isatty():
         shell.append('-l')
     terminal_manager = webapp.settings['terminal_manager'] = NamedTermManager(
         shell_command=shell,

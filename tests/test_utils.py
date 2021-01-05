@@ -10,7 +10,7 @@ from traitlets.tests.utils import check_help_all_output
 from jupyter_server.utils import url_escape, url_unescape
 
 # these imports (and tests that use them) will be removed in a future release
-from jupyter_server.utils import is_hidden, is_file_hidden, secure_write
+from jupyter_core.paths import is_hidden, is_file_hidden, secure_write
 
 
 def test_help_output():

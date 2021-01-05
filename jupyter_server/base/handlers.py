@@ -33,7 +33,7 @@ from jupyter_core.paths import is_hidden
 import jupyter_server
 from jupyter_server._tz import utcnow
 from jupyter_server.i18n import combine_translations
-from jupyter_server.utils import url_path_join, url_is_absolute, url_escape
+from jupyter_server.utils import ensure_async, url_path_join, url_is_absolute, url_escape
 from jupyter_server.services.security import csp_report_uri
 
 #-----------------------------------------------------------------------------
@@ -802,13 +802,13 @@ class FilesRedirectHandler(JupyterHandler):
     """Handler for redirecting relative URLs to the /files/ handler"""
 
     @staticmethod
-    def redirect_to_files(self, path):
+    async def redirect_to_files(self, path):
         """make redirect logic a reusable static method
 
         so it can be called from other handlers.
         """
         cm = self.contents_manager
-        if cm.dir_exists(path):
+        if await ensure_async(cm.dir_exists(path)):
             # it's a *directory*, redirect to /tree
             url = url_path_join(self.base_url, 'tree', url_escape(path))
         else:
@@ -816,14 +816,14 @@ class FilesRedirectHandler(JupyterHandler):
             # otherwise, redirect to /files
             parts = path.split('/')
 
-            if not cm.file_exists(path=path) and 'files' in parts:
+            if not await ensure_async(cm.file_exists(path=path)) and 'files' in parts:
                 # redirect without files/ iff it would 404
                 # this preserves pre-2.0-style 'files/' links
                 self.log.warning("Deprecated files/ URL: %s", orig_path)
                 parts.remove('files')
                 path = '/'.join(parts)
 
-            if not cm.file_exists(path=path):
+            if not await ensure_async(cm.file_exists(path=path)):
                 raise web.HTTPError(404)
 
             url = url_path_join(self.base_url, 'files', url_escape(path))
@@ -847,10 +847,12 @@ class RedirectWithParams(web.RequestHandler):
 
 class PrometheusMetricsHandler(JupyterHandler):
     """
-    Return prometheus metrics for this Jupyter server
+    Return prometheus metrics for this notebook server
     """
-    @web.authenticated
     def get(self):
+        if self.settings['authenticate_prometheus'] and not self.logged_in:
+            raise web.HTTPError(403)
+
         self.set_header('Content-Type', prometheus_client.CONTENT_TYPE_LATEST)
         self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
 

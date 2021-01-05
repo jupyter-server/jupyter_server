@@ -17,6 +17,3 @@ You upgrade or downgrade to a specific version of Jupyter Server by adding an op
 .. code-block:: bash
 
     pip install jupyter_server==1.0
-
-
-To see what each version has to offer, checkout our :ref:`changelog`.

@@ -70,8 +70,8 @@ from .base.handlers import MainHandler, RedirectWithParams, Template404
 from .log import log_request
 from .services.kernels.kernelmanager import MappingKernelManager, AsyncMappingKernelManager
 from .services.config import ConfigManager
-from .services.contents.manager import ContentsManager
-from .services.contents.filemanager import FileContentsManager
+from .services.contents.manager import AsyncContentsManager, ContentsManager
+from .services.contents.filemanager import AsyncFileContentsManager, FileContentsManager
 from .services.contents.largefilemanager import LargeFileManager
 from .services.sessions.sessionmanager import SessionManager
 from .gateway.managers import GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
@@ -248,6 +248,7 @@ class ServerWebApplication(web.Application):
             disable_check_xsrf=jupyter_app.disable_check_xsrf,
             allow_remote_access=jupyter_app.allow_remote_access,
             local_hostnames=jupyter_app.local_hostnames,
+            authenticate_prometheus=jupyter_app.authenticate_prometheus,
 
             # managers
             kernel_manager=kernel_manager,
@@ -554,8 +555,8 @@ class ServerApp(JupyterApp):
     aliases = Dict(aliases)
 
     classes = [
-            KernelManager, Session, MappingKernelManager, KernelSpecManager,
-            ContentsManager, FileContentsManager, NotebookNotary,
+            KernelManager, Session, MappingKernelManager, KernelSpecManager, AsyncMappingKernelManager,
+            ContentsManager, FileContentsManager, AsyncContentsManager, AsyncFileContentsManager, NotebookNotary,
             GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
         ]
 
@@ -700,7 +701,7 @@ class ServerApp(JupyterApp):
 
     @default('cookie_secret_file')
     def _default_cookie_secret_file(self):
-        return os.path.join(self.runtime_dir, 'jupytr_cookie_secret')
+        return os.path.join(self.runtime_dir, 'jupyter_cookie_secret')
 
     cookie_secret = Bytes(b'', config=True,
         help="""The random bytes used to secure cookies.
@@ -1200,6 +1201,14 @@ class ServerApp(JupyterApp):
          Terminals may also be automatically disabled if the terminado package
          is not available.
          """))
+
+    authenticate_prometheus = Bool(
+        True,
+        help=""""
+        Require authentication to access prometheus metrics.
+        """,
+        config=True
+    )
 
     def parse_command_line(self, argv=None):
 

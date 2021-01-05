@@ -1,6 +1,11 @@
 import pathlib
-from setuptools import setup, find_packages
-from setupbase import get_version
+from setuptools import (
+    find_packages,
+    setup,
+)
+from setupbase import (
+    get_version,
+)
 
 here = pathlib.Path('.')
 version_path = here.joinpath('jupyter_server', '_version.py')
@@ -15,7 +20,7 @@ setup_args = dict(
     long_description = README,
     long_description_content_type='text/markdown',
     version          = VERSION,
-    packages         = find_packages('.', exclude=["tests*"]),
+    packages         = find_packages('.', exclude=['tests*', 'docs*', 'examples*']),
     include_package_data = True,
     author           = 'Jupyter Development Team',
     author_email     = 'jupyter@googlegroups.com',
@@ -45,27 +50,19 @@ setup_args = dict(
         'nbconvert',
         'Send2Trash',
         'terminado>=0.8.3',
-        'prometheus_client'
+        'prometheus_client',
+        "anyio>=2.0.2",
     ],
     extras_require = {
-        'test': [
-            'coverage',
-            'ipykernel',
-            'pytest-console-scripts',
-            'pytest-cov',
-            'pytest-tornasync',
-            'pytest',
-            # test dep of ipython_genutils
-            'nose'
-        ],
+        'test': ['coverage', 'requests',
+                 'pytest', 'pytest-cov',
+                 'pytest-tornasync',
+                 'pytest-console-scripts', 'ipykernel'],
     },
     python_requires = '>=3.6',
     entry_points = {
         'console_scripts': [
             'jupyter-server = jupyter_server.serverapp:main',
-        ],
-        'pytest11': [
-            'pytest_jupyter_server = jupyter_server.pytest_plugin'
         ]
     },
 )
