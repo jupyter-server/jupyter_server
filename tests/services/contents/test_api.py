@@ -54,6 +54,11 @@ def contents_dir(tmp_path, jp_serverapp):
 @pytest.fixture
 def contents(contents_dir):
     # Create files in temporary directory
+    paths = {
+        'notebooks': [],
+        'textfiles': [],
+        'blobs': [],
+    }
     for d, name in dirs:
         p = contents_dir / d
         p.mkdir(parents=True, exist_ok=True)
@@ -62,16 +67,21 @@ def contents(contents_dir):
         nb = writes(new_notebook(), version=4)
         nbname = p.joinpath('{}.ipynb'.format(name))
         nbname.write_text(nb, encoding='utf-8')
+        paths['notebooks'].append(nbname)
 
         # Create a text file
         txt = '{} text file'.format(name)
         txtname = p.joinpath('{}.txt'.format(name))
         txtname.write_text(txt, encoding='utf-8')
+        paths['textfiles'].append(txtname)
 
         # Create a random blob
         blob = name.encode('utf-8') + b'\xFF'
         blobname = p.joinpath('{}.blob'.format(name))
         blobname.write_bytes(blob)
+        paths['blobs'].append(blobname)
+    paths['all'] = list(paths.values())
+    return paths
 
 
 @pytest.fixture
@@ -845,3 +855,14 @@ async def test_file_checkpoints(jp_fetch, contents):
     )
     cps = json.loads(r.body.decode())
     assert cps == []
+
+
+async def test_trust(jp_fetch, contents):
+    # It should be able to trust a notebook that exists
+    for path in contents['notebooks']:
+        r = await jp_fetch(
+            'api', 'contents', str(path), 'trust',
+            method='POST',
+            allow_nonstandard_methods=True
+        )
+        assert r.code == 201
