@@ -67,19 +67,19 @@ def contents(contents_dir):
         nb = writes(new_notebook(), version=4)
         nbname = p.joinpath('{}.ipynb'.format(name))
         nbname.write_text(nb, encoding='utf-8')
-        paths['notebooks'].append(nbname)
+        paths['notebooks'].append(nbname.relative_to(contents_dir))
 
         # Create a text file
         txt = '{} text file'.format(name)
         txtname = p.joinpath('{}.txt'.format(name))
         txtname.write_text(txt, encoding='utf-8')
-        paths['textfiles'].append(txtname)
+        paths['textfiles'].append(txtname.relative_to(contents_dir))
 
         # Create a random blob
         blob = name.encode('utf-8') + b'\xFF'
         blobname = p.joinpath('{}.blob'.format(name))
         blobname.write_bytes(blob)
-        paths['blobs'].append(blobname)
+        paths['blobs'].append(blobname.relative_to(contents_dir))
     paths['all'] = list(paths.values())
     return paths
 
