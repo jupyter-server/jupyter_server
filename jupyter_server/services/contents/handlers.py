@@ -294,7 +294,7 @@ class TrustNotebooksHandler(JupyterHandler):
     @web.authenticated
     async def post(self,path=''):
         cm = self.contents_manager
-        await cm.trust_notebook(path)
+        await ensure_async(cm.trust_notebook(path))
         self.set_status(201)
         self.finish()
 #-----------------------------------------------------------------------------
