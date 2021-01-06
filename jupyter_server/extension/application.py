@@ -9,6 +9,7 @@ from traitlets import (
     Unicode,
     List,
     Dict,
+    Bool,
     default
 )
 from traitlets.config import Config
@@ -147,9 +148,20 @@ class ExtensionApp(JupyterApp):
     # A useful class property that subclasses can override to
     # configure the underlying Jupyter Server when this extension
     # is launched directly (using its `launch_instance` method).
-    serverapp_config = {
-        "open_browser": True
-    }
+    serverapp_config = {}
+
+    # Some subclasses will likely ovrride this trait to flip
+    # the default value to True if they offer a browser
+    # based frontend.
+    open_browser = Bool(
+        False,
+        help="""Whether to open in a browser after starting.
+        The specific browser used is platform dependent and
+        determined by the python standard library `webbrowser`
+        module, unless it is overridden using the --browser
+        (ServerApp.browser) configuration option.
+        """
+    ).tag(config=True)
 
     # The extension name used to name the jupyter config
     # file, jupyter_{name}_config.
@@ -365,6 +377,8 @@ class ExtensionApp(JupyterApp):
         config = Config(cls._jupyter_server_config())
         serverapp = ServerApp.instance(**kwargs, argv=[], config=config)
         serverapp.initialize(argv=argv, find_extensions=load_other_extensions)
+        # Inform the serverapp that this extension app started the app.
+        serverapp._starter_app_name = cls.name
         return serverapp
 
     def initialize(self):
