@@ -903,6 +903,28 @@ class ServerApp(JupyterApp):
        """
     )
 
+    # The name of the app that started this server (if not started directly).
+    # It is sometimes important to know if + which another app (say a server extension)
+    # started the serverapp to properly configure some traits.
+    # This trait should not be configured by users. It will likely be set by ExtensionApp.
+    _starter_app_name = Unicode(None, allow_none=True)
+
+    @validate('_starter_app_name')
+    def _validate_starter_app(self, proposal):
+        # Check that a previous server extension isn't named yet
+        value = proposal["value"]
+        if self._starter_app_name != None:
+            raise TraitError("Another extension was already named as the starter_server_extension.")
+        return value
+
+    @property
+    def starter_app(self):
+        """Get the Extension that started this server."""
+        name = self._starter_app_name
+        if name is None:
+            return
+        return self.extension_manager.extension_points.get(name, None).app
+
     open_browser = Bool(False, config=True,
                         help="""Whether to open in a browser after starting.
                         The specific browser used is platform dependent and
@@ -910,6 +932,31 @@ class ServerApp(JupyterApp):
                         module, unless it is overridden using the --browser
                         (ServerApp.browser) configuration option.
                         """)
+
+
+    def _handle_browser_opening(self):
+        """This method handles whether a browser should be opened.
+        By default, Jupyter Server doesn't try to open an browser. However,
+        it's many server extensions might want to open the browser by default.
+        This essentially toggles the default value for open_browser.
+
+        From a UX perspective, this needs to be surfaced to the user. The default
+        behavior of Jupyter Server switches, which can be confusing.
+        """
+        # If the server was started by another application, use that applications
+        # trait for the open_browser trait. If that trait is not given, ignore
+        if self.starter_app:
+            try:
+                if self.starter_app.open_browser:
+                    self.launch_browser()
+            # If the starter_app doesn't have an open_browser trait, ignore
+            # move on and don't start a browser.
+            except AttributeError:
+                pass
+        else:
+            if self.open_browser:
+                self.launch_browser()
+
 
     browser = Unicode(u'', config=True,
                       help="""Specify what command to use to invoke a web
@@ -1832,8 +1879,8 @@ class ServerApp(JupyterApp):
         self.write_server_info_file()
         self.write_browser_open_file()
 
-        if self.open_browser:
-            self.launch_browser()
+        # Handle the browser opening.
+        self._handle_browser_opening()
 
         if self.token and self._token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
