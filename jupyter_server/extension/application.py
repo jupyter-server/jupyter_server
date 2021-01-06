@@ -150,11 +150,11 @@ class ExtensionApp(JupyterApp):
     # is launched directly (using its `launch_instance` method).
     serverapp_config = {}
 
-    # Some subclasses will likely ovrride this trait to flip
-    # the default value to True if they offer a browser
+    # Some subclasses will likely override this trait to flip
+    # the default value to False if they don't offer a browser
     # based frontend.
     open_browser = Bool(
-        False,
+        True,
         help="""Whether to open in a browser after starting.
         The specific browser used is platform dependent and
         determined by the python standard library `webbrowser`
