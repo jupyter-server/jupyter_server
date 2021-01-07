@@ -36,6 +36,12 @@ import urllib
 
 from types import ModuleType
 from base64 import encodebytes
+try:
+    import resource
+except ImportError:
+    # Windows
+    resource = None
+
 from jinja2 import Environment, FileSystemLoader
 
 from jupyter_server.transutils import trans, _
@@ -758,6 +764,30 @@ class ServerApp(JupyterApp):
             self._token_generated = True
             return binascii.hexlify(os.urandom(24)).decode('ascii')
 
+    min_open_files_limit = Integer(config=True,
+        help="""
+        Gets or sets a lower bound on the open file handles process resource
+        limit. This may need to be increased if you run into an
+        OSError: [Errno 24] Too many open files.
+        This is not applicable when running on Windows.
+        """)
+
+    @default('min_open_files_limit')
+    def _default_min_open_files_limit(self):
+        if resource is None:
+            # Ignoring min_open_files_limit because the limit cannot be adjusted (for example, on Windows)
+            return None
+
+        soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+
+        DEFAULT_SOFT = 4096
+        if hard >= DEFAULT_SOFT:
+            return DEFAULT_SOFT
+
+        self.log.debug("Default value for min_open_files_limit is ignored (hard=%r, soft=%r)", hard, soft)
+
+        return soft
+
     max_body_size = Integer(512 * 1024 * 1024, config=True,
         help="""
         Sets the maximum allowed size of the client request body, specified in
@@ -1395,6 +1425,23 @@ class ServerApp(JupyterApp):
 
         self.login_handler_class.validate_security(self, ssl_options=self.ssl_options)
 
+    def init_resources(self):
+        """initialize system resources"""
+        if resource is None:
+            self.log.debug('Ignoring min_open_files_limit because the limit cannot be adjusted (for example, on Windows)')
+            return
+
+        old_soft, old_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+        soft = self.min_open_files_limit
+        hard = old_hard
+        if old_soft < soft:
+            if hard < soft:
+                hard = soft
+            self.log.debug(
+                'Raising open file limit: soft {}->{}; hard {}->{}'.format(old_soft, soft, old_hard, hard)
+            )
+            resource.setrlimit(resource.RLIMIT_NOFILE, (soft, hard))
+
     @property
     def display_url(self):
         if self.custom_display_url:
@@ -1712,6 +1759,7 @@ class ServerApp(JupyterApp):
             self.find_server_extensions()
         self.init_logging()
         self.init_server_extensions()
+        self.init_resources()
         self.init_configurables()
         self.init_components()
         self.init_webapp()
