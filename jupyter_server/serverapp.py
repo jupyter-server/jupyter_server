@@ -517,10 +517,19 @@ flags['allow-root']=(
     _("Allow the server to be run from root user.")
 )
 flags["no-browser"] = (
-    {"ServerApp": {"open_browser": False}},
+    {
+        "ServerApp": {"open_browser": False},
+        "ExtensionApp": {"open_browser": False}
+    },
     _("Prevent the opening of the default url in the browser."),
 )
-
+flags["debug"] = (
+    {
+        'ServerApp': {'log_level': 'DEBUG'},
+        'ExtensionApp': {'log_level': 'DEBUG'}
+    },
+    _("Set debug level for the extension and underlying server applications.")
+)
 # Add notebook manager flags
 flags.update(boolean_flag('script', 'FileContentsManager.save_script',
                'DEPRECATED, IGNORED',
@@ -937,23 +946,20 @@ class ServerApp(JupyterApp):
     # It is sometimes important to know if + which another app (say a server extension)
     # started the serverapp to properly configure some traits.
     # This trait should not be configured by users. It will likely be set by ExtensionApp.
-    _starter_app_name = Unicode(None, allow_none=True)
+    _starter_app = Instance(JupyterApp, allow_none=True)
 
-    @validate('_starter_app_name')
+    @validate('_starter_app')
     def _validate_starter_app(self, proposal):
         # Check that a previous server extension isn't named yet
         value = proposal["value"]
-        if self._starter_app_name != None:
+        if self._starter_app != None:
             raise TraitError("Another extension was already named as the starter_server_extension.")
         return value
 
     @property
     def starter_app(self):
         """Get the Extension that started this server."""
-        name = self._starter_app_name
-        if name is None:
-            return
-        return self.extension_manager.extension_points.get(name, None).app
+        return self._starter_app
 
     open_browser = Bool(False, config=True,
                         help="""Whether to open in a browser after starting.
