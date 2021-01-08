@@ -190,6 +190,9 @@ class ExtensionApp(JupyterApp):
 
     _log_formatter_cls = LogFormatter
 
+    # Whether this app is the starter app
+    _is_starter_app = False
+
     @default('log_level')
     def _default_log_level(self):
         return logging.INFO
@@ -376,9 +379,8 @@ class ExtensionApp(JupyterApp):
         # initializes it.
         config = Config(cls._jupyter_server_config())
         serverapp = ServerApp.instance(**kwargs, argv=[], config=config)
+        cls._is_starter_app = True
         serverapp.initialize(argv=argv, find_extensions=load_other_extensions)
-        # Inform the serverapp that this extension app started the app.
-        serverapp._starter_app_name = cls.name
         return serverapp
 
     def initialize(self):
@@ -433,6 +435,8 @@ class ExtensionApp(JupyterApp):
         except KeyError:
             extension = cls()
             extension._link_jupyter_server_extension(serverapp)
+        if cls._is_starter_app:
+            serverapp._starter_app = extension
         extension.initialize()
         return extension
 
