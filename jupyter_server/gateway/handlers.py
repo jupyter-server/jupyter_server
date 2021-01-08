@@ -4,6 +4,8 @@
 import os
 import logging
 import mimetypes
+import random
+import asyncio
 
 from ..base.handlers import APIHandler, JupyterHandler
 from ..utils import url_path_join
@@ -133,6 +135,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         self.ws = None
         self.ws_future = Future()
         self.disconnected = False
+        self.retry = 0
 
     async def _connect(self, kernel_id, message_callback):
         # websocket is initialized before connection
@@ -159,6 +162,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
     def _connection_done(self, fut):
         if not self.disconnected and fut.exception() is None:  # prevent concurrent.futures._base.CancelledError
             self.ws = fut.result()
+            self.retry = 0
             self.log.debug("Connection is ready: ws: {}".format(self.ws))
         else:
             self.log.warning("Websocket connection has been closed via client disconnect or due to error.  "
@@ -192,8 +196,15 @@ class GatewayWebSocketClient(LoggingConfigurable):
             else:  # ws cancelled - stop reading
                 break
 
-        if not self.disconnected: # if websocket is not disconnected by client, attept to reconnect to Gateway
-            self.log.info("Attempting to re-establish the connection to Gateway: {}".format(self.kernel_id))
+        # NOTE(esevan): if websocket is not disconnected by client, try to reconnect.
+        if not self.disconnected and self.retry < GatewayClient.instance().gateway_retry_max:
+            jitter = random.randint(10, 100) * 0.01
+            retry_interval = min(GatewayClient.instance().gateway_retry_interval * (2 ** self.retry),
+                                 GatewayClient.instance().gateway_retry_interval_max) + jitter
+            self.retry += 1
+            self.log.info("Attempting to re-establish the connection to Gateway in %s secs (%s/%s): %s",
+                          retry_interval, self.retry, GatewayClient.instance().gateway_retry_max, self.kernel_id)
+            await asyncio.sleep(retry_interval)
             loop = IOLoop.current()
             loop.spawn_callback(self._connect, self.kernel_id, callback)
 
