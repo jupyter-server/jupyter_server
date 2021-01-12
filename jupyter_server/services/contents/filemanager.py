@@ -19,17 +19,13 @@ from tornado import web
 from .filecheckpoints import AsyncFileCheckpoints, FileCheckpoints
 from .fileio import AsyncFileManagerMixin, FileManagerMixin
 from .manager import AsyncContentsManager, ContentsManager
-from ...utils import exists
 
 from ipython_genutils.importstring import import_item
 from traitlets import Any, Unicode, Bool, TraitError, observe, default, validate
 from ipython_genutils.py3compat import getcwd, string_types
 
+from jupyter_core.paths import exists, is_hidden, is_file_hidden
 from jupyter_server import _tz as tz
-from jupyter_server.utils import (
-    is_hidden, is_file_hidden,
-    to_api_path,
-)
 from jupyter_server.base.handlers import AuthenticatedFileHandler
 from jupyter_server.transutils import _
 

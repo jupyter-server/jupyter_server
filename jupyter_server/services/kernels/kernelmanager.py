@@ -18,11 +18,12 @@ from tornado.ioloop import IOLoop, PeriodicCallback
 
 from jupyter_client.session import Session
 from jupyter_client.multikernelmanager import MultiKernelManager, AsyncMultiKernelManager
+from jupyter_core.paths import exists
 from traitlets import (Any, Bool, Dict, List, Unicode, TraitError, Integer,
        Float, Instance, default, validate
 )
 
-from jupyter_server.utils import to_os_path, exists, ensure_async, run_sync
+from jupyter_server.utils import to_os_path, ensure_async
 from jupyter_server._tz import utcnow, isoformat
 from ipython_genutils.py3compat import getcwd
 
