@@ -28,10 +28,11 @@ from traitlets.config import Application
 from ipython_genutils.path import filefind
 from ipython_genutils.py3compat import string_types
 
+from jupyter_core.paths import is_hidden
 import jupyter_server
 from jupyter_server._tz import utcnow
 from jupyter_server.i18n import combine_translations
-from jupyter_server.utils import ensure_async, is_hidden, url_path_join, url_is_absolute, url_escape
+from jupyter_server.utils import ensure_async, url_path_join, url_is_absolute, url_escape
 from jupyter_server.services.security import csp_report_uri
 
 #-----------------------------------------------------------------------------

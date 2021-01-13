@@ -7,14 +7,12 @@
 from __future__ import absolute_import, print_function
 
 import jupyter_server
-import asyncio
 import binascii
 import datetime
 import errno
 import gettext
 import hashlib
 import hmac
-import importlib
 import io
 import ipaddress
 import json
@@ -34,7 +32,6 @@ import warnings
 import webbrowser
 import urllib
 
-from types import ModuleType
 from base64 import encodebytes
 try:
     import resource
@@ -44,8 +41,9 @@ except ImportError:
 
 from jinja2 import Environment, FileSystemLoader
 
+from jupyter_core.paths import secure_write
 from jupyter_server.transutils import trans, _
-from jupyter_server.utils import secure_write, run_sync
+from jupyter_server.utils import run_sync
 
 # the minimum viable tornado version: needs to be kept in sync with setup.py
 MIN_TORNADO = (6, 1, 0)
