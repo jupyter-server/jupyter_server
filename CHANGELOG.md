@@ -7,7 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.0] - 2020-12-11
+**Merged pull requests:**
+
+- Replace secure\_write, is\_hidden, exists with jupyter\_core's [\#382](https://github.com/jupyter-server/jupyter_server/pull/382) ([kevin-bates](https://github.com/kevin-bates))
+- Add --autoreload flag [\#380](https://github.com/jupyter-server/jupyter_server/pull/380) ([afshin](https://github.com/afshin))
+
+## [1.2.1](https://github.com/jupyter-server/jupyter_server/tree/1.2.1) (2021-01-08)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.2.0...1.2.1)
+
+**Merged pull requests:**
+
+- Enable extensions to set debug and open-browser flags [\#379](https://github.com/jupyter-server/jupyter_server/pull/379) ([afshin](https://github.com/afshin))
+- Add reconnection to Gateway [\#378](https://github.com/jupyter-server/jupyter_server/pull/378) ([oyvsyo](https://github.com/oyvsyo))
+
+## [1.2.0](https://github.com/jupyter-server/jupyter_server/tree/1.2.0) (2021-01-07)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.1.4...1.2.0)
+
+**Merged pull requests:**
+
+- Flip default value for open\_browser in extensions [\#377](https://github.com/jupyter-server/jupyter_server/pull/377) ([ajbozarth](https://github.com/ajbozarth))
+- Improve Handling of the soft limit on open file handles [\#376](https://github.com/jupyter-server/jupyter_server/pull/376) ([afshin](https://github.com/afshin))
+- Handle open\_browser trait in ServerApp and ExtensionApp differently [\#375](https://github.com/jupyter-server/jupyter_server/pull/375) ([afshin](https://github.com/afshin))
+- Add setting to disable redirect file browser launch [\#374](https://github.com/jupyter-server/jupyter_server/pull/374) ([afshin](https://github.com/afshin))
+- Make trust handle use ensure\_async [\#373](https://github.com/jupyter-server/jupyter_server/pull/373) ([vidartf](https://github.com/vidartf))
+
+## [1.1.4](https://github.com/jupyter-server/jupyter_server/tree/1.1.4) (2021-01-04)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.1.3...1.1.4)
+
+**Merged pull requests:**
+
+- Update the link to paths documentation [\#371](https://github.com/jupyter-server/jupyter_server/pull/371) ([krassowski](https://github.com/krassowski))
+- IPythonHandler -\> JupyterHandler [\#370](https://github.com/jupyter-server/jupyter_server/pull/370) ([krassowski](https://github.com/krassowski))
+- use setuptools find\_packages, exclude tests, docs and examples from dist [\#368](https://github.com/jupyter-server/jupyter_server/pull/368) ([bollwyvl](https://github.com/bollwyvl))
+- Update serverapp.py [\#367](https://github.com/jupyter-server/jupyter_server/pull/367) ([michaelaye](https://github.com/michaelaye))
+
+## [1.1.3](https://github.com/jupyter-server/jupyter_server/tree/1.1.3) (2020-12-23)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.1.2...1.1.3)
+
+**Merged pull requests:**
+
+- Culling: ensure last\_activity attr exists before use [\#365](https://github.com/jupyter-server/jupyter_server/pull/365) ([afshin](https://github.com/afshin))
+
+## [1.1.2](https://github.com/jupyter-server/jupyter_server/tree/1.1.2) (2020-12-21)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.0.11...1.1.2)
+
+**Merged pull requests:**
+
+- Nudge kernel with info request until we receive IOPub messages [\#361](https://github.com/jupyter-server/jupyter_server/pull/361) ([SylvainCorlay](https://github.com/SylvainCorlay))
+
+
+## [1.1.1](https://github.com/jupyter-server/jupyter_server/tree/1.1.1) (2020-12-16)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.1.0...1.1.1)
+
+**Merged pull requests:**
+
+- Fix: await possible async dir\_exists method [\#363](https://github.com/jupyter-server/jupyter_server/pull/363) ([mwakaba2](https://github.com/mwakaba2))
+
+
+## 1.1.0 (2020-12-11)
 
 [Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.0.10...1.1.0)
 
@@ -29,8 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Asynchronous Contents API [\#324](https://github.com/jupyter-server/jupyter_server/pull/324) ([mwakaba2](https://github.com/mwakaba2))
 
 
-
-## [1.0.6] - 2020-11-18
+## 1.0.6 (2020-11-18)
 
 1.0.6 is a security release, fixing one vulnerability:
 
@@ -39,7 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix open redirect vulnerability GHSA-grfj-wjv9-4f9v (CVE-2020-26232)
 
 
-## [1.0] - 2020-9-18
+## 1.0 (2020-9-18)
 
 ### Added.
 
