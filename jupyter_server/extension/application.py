@@ -16,7 +16,7 @@ from traitlets.config import Config
 from tornado.log import LogFormatter
 from tornado.web import RedirectHandler
 
-from jupyter_core.application import JupyterApp
+from jupyter_core.application import JupyterApp, NoStart
 
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.transutils import _
@@ -501,4 +501,7 @@ class ExtensionApp(JupyterApp):
                     "{ext_name} is running without loading "
                     "other extensions.".format(ext_name=cls.name)
                 )
-            serverapp.start()
+            try:
+                serverapp.start()
+            except NoStart:
+                pass
