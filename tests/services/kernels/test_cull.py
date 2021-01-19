@@ -13,7 +13,9 @@ def jp_argv(request):
     return ["--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager." + request.param]
 
 
-CULL_TIMEOUT = 10 if platform.python_implementation() == 'PyPy' else 2
+CULL_TIMEOUT = 10 if platform.python_implementation() == 'PyPy' else 5
+CULL_INTERVAL = 1
+
 
 @pytest.fixture
 def jp_server_config():
@@ -21,7 +23,7 @@ def jp_server_config():
         'ServerApp': {
             'MappingKernelManager': {
                 'cull_idle_timeout': CULL_TIMEOUT,
-                'cull_interval': 1,
+                'cull_interval': CULL_INTERVAL,
                 'cull_connected': False
             }
         }
@@ -56,18 +58,19 @@ async def test_culling(jp_fetch, jp_ws_fetch):
 
 
 async def get_cull_status(kid, jp_fetch):
+    frequency = 0.5
     culled = False
-    for i in range(20):  # Need max of 2x culling PERIOD ensure culling timeout exceeded
+    for _ in range(int((CULL_TIMEOUT + CULL_INTERVAL)/frequency)):  # Timeout + Interval will ensure cull
         try:
             r = await jp_fetch(
                 'api', 'kernels', kid,
                 method='GET'
             )
-            kernel = json.loads(r.body.decode())
+            json.loads(r.body.decode())
         except HTTPClientError as e:
             assert e.code == 404
             culled = True
             break
         else:
-            await asyncio.sleep(CULL_TIMEOUT / 10.)
+            await asyncio.sleep(frequency)
     return culled
