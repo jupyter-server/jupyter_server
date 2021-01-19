@@ -85,7 +85,7 @@ class LoginHandler(JupyterHandler):
                 if new_password and self.settings.get("allow_password_change"):
                     config_dir = self.settings.get("config_dir")
                     config_file = os.path.join(
-                        config_dir, "jupyter_notebook_config.json"
+                        config_dir, "jupyter_server_config.json"
                     )
                     set_password(new_password, config_file=config_file)
                     self.log.info("Wrote hashed password to %s" % config_file)
