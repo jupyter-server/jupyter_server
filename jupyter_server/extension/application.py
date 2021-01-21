@@ -180,6 +180,12 @@ class ExtensionApp(JupyterApp):
     # Extension URL sets the default landing page for this extension.
     extension_url = "/"
 
+    default_url = Unicode().tag(config=True)
+
+    @default('default_url')
+    def _default_url(self):
+        return self.extension_url
+
     # Extension can configure the ServerApp from the command-line
     classes = [
         ServerApp,
@@ -332,7 +338,6 @@ class ExtensionApp(JupyterApp):
         base_config = {
             "ServerApp": {
                 "jpserver_extensions": {cls.get_extension_package(): True},
-                "default_url": cls.extension_url
             }
         }
         base_config["ServerApp"].update(cls.serverapp_config)
@@ -438,6 +443,9 @@ class ExtensionApp(JupyterApp):
         if cls._is_starter_app:
             serverapp._starter_app = extension
         extension.initialize()
+        # Set the serverapp's default url to the extension's url.
+        if cls._is_starter_app:
+            serverapp.default_url = extension.default_url
         return extension
 
     @classmethod
