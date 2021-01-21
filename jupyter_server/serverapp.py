@@ -31,6 +31,7 @@ import time
 import warnings
 import webbrowser
 import urllib
+import inspect
 
 from base64 import encodebytes
 try:
@@ -106,6 +107,7 @@ from .utils import url_path_join, check_pid, url_escape, urljoin, pathname2url
 from jupyter_server.extension.serverextension import ServerExtensionApp
 from jupyter_server.extension.manager import ExtensionManager
 from jupyter_server.extension.config import ExtensionConfigManager
+from jupyter_server.traittypes import TypeFromClasses
 
 #-----------------------------------------------------------------------------
 # Module globals
@@ -1134,12 +1136,42 @@ class ServerApp(JupyterApp):
         help="""If True, display controls to shut down the Jupyter server, such as menu items or buttons."""
     )
 
-    contents_manager_class = Type(
+    # REMOVE in VERSION 2.0
+    # Temporarily allow content managers to inherit from the 'notebook'
+    # package. We will deprecate this in the next major release.
+    contents_manager_class = TypeFromClasses(
         default_value=LargeFileManager,
-        klass=ContentsManager,
+        klasses=[
+            'jupyter_server.services.contents.manager.ContentsManager',
+            'notebook.services.contents.manager.ContentsManager'
+        ],
         config=True,
         help=_('The content manager class to use.')
     )
+
+    # Throws a deprecation warning to notebook based contents managers.
+    @observe('contents_manager_class')
+    def _observe_contents_manager_class(self, change):
+        new = change['new']
+        # If 'new' is a class, get a string representing the import
+        # module path.
+        if inspect.isclass(new):
+            new = new.__module__
+
+        if new.startswith('notebook'):
+            self.log.warn(
+                "The specified 'contents_manager_class' class inherits a manager from the "
+                "'notebook' package. This is not guaranteed to work in future "
+                "releases of Jupyter Server. Instead, consider switching the "
+                "manager to inherit from the 'jupyter_server' managers. "
+                "Jupyter Server will temporarily allow 'notebook' managers "
+                "until its next major release (2.x)."
+            )
+
+    @observe('notebook_dir')
+    def _update_notebook_dir(self, change):
+        self.log.warning(_("notebook_dir is deprecated, use root_dir"))
+        self.root_dir = change['new']
 
     kernel_manager_class = Type(
         default_value=MappingKernelManager,
