@@ -1159,7 +1159,7 @@ class ServerApp(JupyterApp):
             new = new.__module__
 
         if new.startswith('notebook'):
-            self.log.warn(
+            self.log.warning(
                 "The specified 'contents_manager_class' class inherits a manager from the "
                 "'notebook' package. This is not guaranteed to work in future "
                 "releases of Jupyter Server. Instead, consider switching the "
