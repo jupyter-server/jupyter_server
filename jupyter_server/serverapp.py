@@ -298,8 +298,15 @@ class ServerWebApplication(web.Application):
             allow_password_change=jupyter_app.allow_password_change,
             server_root_dir=root_dir,
             jinja2_env=env,
-            terminals_available=terminado_available and jupyter_app.terminals_enabled,
-            serverapp=jupyter_app
+            terminals_available=False,  # Set later if terminals are available
+            serverapp=jupyter_app,
+            session_settings = dict(
+                driver='memory',
+                driver_settings={'host': self},
+                force_persistence=True,
+                sid_name='torndsessionID',
+                session_lifetime=1800
+            ),
         )
 
         # allow custom overrides for the tornado web app.
