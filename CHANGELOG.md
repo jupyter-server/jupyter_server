@@ -2,10 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.2.3](https://github.com/jupyter-server/jupyter_server/tree/1.2.3) (2021-01-29)
 
-## [Unreleased]
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.2.2...HEAD)
+
+**Merged pull requests:**
+
+- Re-enable default\_url in ExtensionApp [\#393](https://github.com/jupyter-server/jupyter_server/pull/393) ([afshin](https://github.com/afshin))
+- Enable notebook ContentsManager in jupyter\_server [\#392](https://github.com/jupyter-server/jupyter_server/pull/392) ([afshin](https://github.com/afshin))
+- Use jupyter\_server\_config.json as config file in the update password api [\#390](https://github.com/jupyter-server/jupyter_server/pull/390) ([echarles](https://github.com/echarles))
+- Increase culling test idle timeout [\#388](https://github.com/jupyter-server/jupyter_server/pull/388) ([kevin-bates](https://github.com/kevin-bates))
+- update changelog for 1.2.2 [\#387](https://github.com/jupyter-server/jupyter_server/pull/387) ([Zsailer](https://github.com/Zsailer))
 
 
 ## [1.2.2](https://github.com/jupyter-server/jupyter_server/tree/1.2.2) (2021-01-14)
