@@ -44,7 +44,12 @@ jobs:
         pip check
     - name: Run the tests
       run: |
-        pytest -vv
+        # Disable capturing (-s) output from Pytest on Windows.
+        # For an unknown reason, capturing output interferes with
+        # the file descriptions opened by the asyncio IOLoop.
+        # This leads to a nasty, flaky race condition that we haven't
+        # been able to solve.
+        pytest -vv -s
     - name: Install the Python dependencies for the examples
       run: |
         cd examples/simple && pip install -e .

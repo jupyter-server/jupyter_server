@@ -228,11 +228,12 @@ class TypeFromClasses(ClassBasedTraitType):
         self.importable_klasses = []
         for klass in self.klasses:
             if isinstance(klass, str):
+                # Try importing the classes to compare. Silently, ignore if not importable.
                 try:
                     klass = self._resolve_string(klass)
                     self.importable_klasses.append(klass)
                 except:
-                    warn(f"{klass} is not importable. Is it installed?", ImportWarning)
+                    pass
             else:
                 self.importable_klasses.append(klass)
 
@@ -328,11 +329,12 @@ class InstanceFromClasses(ClassBasedTraitType):
         self.importable_klasses = []
         for klass in self.klasses:
             if isinstance(klass, str):
+                # Try importing the classes to compare. Silently, ignore if not importable.
                 try:
                     klass = self._resolve_string(klass)
                     self.importable_klasses.append(klass)
                 except:
-                    warn(f"{klass} is not importable. Is it installed?", ImportWarning)
+                    pass
             else:
                 self.importable_klasses.append(klass)
 
