@@ -306,7 +306,7 @@ class ExtensionManager(LoggingConfigurable):
                 extension.load_all_points(serverapp)
                 self.log.info("{name} | extension was successfully loaded.".format(name=name))
             except Exception as e:
-                self.log.warning(e)
+                self.log.warning("{name} | extension failed loading with message: {error}".format(name=name,error=str(e)))
 
     def link_all_extensions(self, serverapp):
         """Link all enabled extensions
