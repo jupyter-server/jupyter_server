@@ -1174,7 +1174,8 @@ class ServerApp(JupyterApp):
         self.root_dir = change['new']
 
     kernel_manager_class = Type(
-        default_value=MappingKernelManager,
+        default_value=AsyncMappingKernelManager,
+        klass=MappingKernelManager,
         config=True,
         help=_('The kernel manager class to use.')
     )
