@@ -110,9 +110,9 @@ ServerApp.allow_origin : Unicode
     Default: ``''``
 
     Set the Access-Control-Allow-Origin header
-    
+
     Use '*' to allow any origin to access your server.
-    
+
     Takes precedence over allow_origin_pat.
 
 
@@ -120,13 +120,13 @@ ServerApp.allow_origin_pat : Unicode
     Default: ``''``
 
     Use a regular expression for the Access-Control-Allow-Origin header
-    
+
     Requests from an origin matching the expression will get replies with:
-    
+
         Access-Control-Allow-Origin: origin
-    
+
     where `origin` is the origin of the request.
-    
+
     Ignored if allow_origin is set.
 
 
@@ -134,11 +134,11 @@ ServerApp.allow_password_change : Bool
     Default: ``True``
 
     Allow password to be changed at login for the Jupyter server.
-    
+
     While loggin in with a token, the Jupyter server UI will give the opportunity to
     the user to enter a new password at the same time that will replace
     the token login mechanism.
-    
+
     This can be set to false to prevent changing password from the UI/API.
 
 
@@ -146,15 +146,15 @@ ServerApp.allow_remote_access : Bool
     Default: ``False``
 
     Allow requests where the Host header doesn't point to a local server
-    
+
     By default, requests get a 403 forbidden response if the 'Host' header
     shows that the browser thinks it's on a non-local domain.
     Setting this option to True disables this check.
-    
+
     This protects against 'DNS rebinding' attacks, where a remote web server
     serves you a page and then changes its DNS to send later requests to a
     local IP, bypassing same-origin checks.
-    
+
     Local IP addresses (such as 127.0.0.1 and ::1) are allowed as local,
     along with hostnames configured in local_hostnames.
 
@@ -173,7 +173,7 @@ ServerApp.base_url : Unicode
     Default: ``'/'``
 
     The base URL for the Jupyter server.
-    
+
     Leading and trailing slashes can be omitted,
     and will automatically be added.
 
@@ -229,7 +229,7 @@ ServerApp.cookie_secret : Bytes
     The random bytes used to secure cookies.
     By default this is a new random number every time you start the server.
     Set it to a value in a config file to enable logins to persist across server sessions.
-    
+
     Note: Cookie secrets should be kept private, do not share config files with
     cookie_secret stored in plaintext (you can read the value from a file).
 
@@ -243,12 +243,12 @@ ServerApp.custom_display_url : Unicode
     Default: ``''``
 
     Override URL shown to users.
-    
+
     Replace actual URL, including protocol, address, port and base URL,
     with the given value when displaying URL to the users. Do not change
     the actual connection URL. If authentication token is enabled, the
     token is added to the custom URL automatically.
-    
+
     This option is intended to be used when the URL to display to the user
     cannot be determined reliably by the Jupyter server (proxified
     or containerized setups for example).
@@ -262,13 +262,13 @@ ServerApp.disable_check_xsrf : Bool
     Default: ``False``
 
     Disable cross-site-request-forgery protection
-    
+
     Jupyter notebook 4.3.1 introduces protection from cross-site request forgeries,
     requiring API requests to either:
-    
+
     - originate from pages served by this server (validated with XSRF cookie and token), or
     - authenticate with a token
-    
+
     Some anonymous compute resources still desire the ability to run code,
     completely without authentication.
     These services can disable all authentication and security checks,
@@ -284,7 +284,7 @@ ServerApp.extra_static_paths : List
     Default: ``[]``
 
     Extra paths to search for serving static files.
-    
+
     This allows adding javascript/css to be available from the Jupyter server machine,
     or overriding individual files in the IPython
 
@@ -292,7 +292,7 @@ ServerApp.extra_template_paths : List
     Default: ``[]``
 
     Extra paths to search for serving jinja templates.
-    
+
     Can be used to override templates from jupyter_server.templates.
 
 ServerApp.file_to_run : Unicode
@@ -352,10 +352,10 @@ ServerApp.kernel_manager_class : Type
 ServerApp.kernel_spec_manager_class : Type
     Default: ``'jupyter_client.kernelspec.KernelSpecManager'``
 
-    
+
     The kernel spec manager class to use. Should be a subclass
     of `jupyter_client.kernelspec.KernelSpecManager`.
-    
+
     The Api of KernelSpecManager is provisional and might change
     without warning between this version of Jupyter and the next stable one.
 
@@ -369,7 +369,7 @@ ServerApp.local_hostnames : List
     Default: ``['localhost']``
 
     Hostnames to allow as local when allow_remote_access is False.
-    
+
     Local IP addresses (such as 127.0.0.1 and ::1) are automatically accepted
     as local as well.
 
@@ -402,19 +402,19 @@ ServerApp.logout_handler_class : Type
 ServerApp.max_body_size : Int
     Default: ``536870912``
 
-    
+
     Sets the maximum allowed size of the client request body, specified in
     the Content-Length request header field. If the size in a request
     exceeds the configured value, a malformed HTTP message is returned to
     the client.
-    
+
     Note: max_body_size is applied even in streaming mode.
 
 
 ServerApp.max_buffer_size : Int
     Default: ``536870912``
 
-    
+
     Gets or sets the maximum amount of memory, in bytes, that is allocated
     for use by the buffer manager.
 
@@ -438,11 +438,11 @@ ServerApp.password : Unicode
     Default: ``''``
 
     Hashed password to use for web authentication.
-    
+
     To generate, type in a python/IPython shell:
-    
+
       from jupyter_server.auth import passwd; passwd()
-    
+
     The string should be of the form type:salt:hashed-password.
 
 
@@ -452,10 +452,10 @@ ServerApp.password_required : Bool
     Forces users to use a password for the Jupyter server.
     This is useful in a multi user environment, for instance when
     everybody in the LAN can access each other's machine through ssh.
-    
+
     In such a case, serving on localhost is not secure since
     any user can connect to the Jupyter server via ssh.
-    
+
 
 
 ServerApp.port : Int
@@ -471,7 +471,7 @@ ServerApp.port_retries : Int
 ServerApp.pylab : Unicode
     Default: ``'disabled'``
 
-    
+
     DISABLED: use %pylab or %matplotlib in the notebook to enable matplotlib.
 
 
@@ -531,10 +531,10 @@ ServerApp.terminals_enabled : Bool
     Default: ``True``
 
     Set to False to disable terminals.
-    
+
     This does *not* make the server more secure by itself.
     Anything the user can in a terminal, they can also do in a notebook.
-    
+
     Terminals may also be automatically disabled if the terminado package
     is not available.
 
@@ -543,10 +543,10 @@ ServerApp.token : Unicode
     Default: ``'<generated>'``
 
     Token used for authenticating first-time connections to the server.
-    
+
     When no password is enabled,
     the default is to generate a new, random token.
-    
+
     Setting to an empty string disables authentication altogether, which is NOT RECOMMENDED.
 
 
@@ -567,24 +567,24 @@ ServerApp.webbrowser_open_new : Int
     `new` argument passed to the standard library method `webbrowser.open`.
     The behaviour is not guaranteed, but depends on browser support. Valid
     values are:
-    
+
      - 2 opens a new tab,
      - 1 opens a new window,
      - 0 opens in an existing window.
-    
+
     See the `webbrowser.open` documentation for details.
 
 
 ServerApp.websocket_compression_options : Any
     Default: ``None``
 
-    
+
     Set the tornado compression options for websocket connections.
-    
+
     This value will be returned from :meth:`WebSocketHandler.get_compression_options`.
     None (default) will disable compression.
     A dict (even an empty one) will enable compression.
-    
+
     See the tornado docs for WebSocketHandler.get_compression_options for details.
 
 
@@ -593,7 +593,7 @@ ServerApp.websocket_url : Unicode
 
     The base URL for websockets,
     if it differs from the HTTP server (hint: it almost certainly doesn't).
-    
+
     Should be in the form of an HTTP origin: ws[s]://hostname[:port]
 
 
@@ -601,7 +601,7 @@ ConnectionFileMixin.connection_file : Unicode
     Default: ``''``
 
     JSON file in which to store connection info [default: kernel-<pid>.json]
-    
+
     This file will contain the IP, ports, and authentication key needed to connect
     clients to this kernel. By default, this file will be created in the security dir
     of the current profile, but can be specified by absolute path.
@@ -654,7 +654,7 @@ KernelManager.connection_file : Unicode
     Default: ``''``
 
     JSON file in which to store connection info [default: kernel-<pid>.json]
-    
+
     This file will contain the IP, ports, and authentication key needed to connect
     clients to this kernel. By default, this file will be created in the security dir
     of the current profile, but can be specified by absolute path.
@@ -687,7 +687,7 @@ KernelManager.kernel_cmd : List
     Default: ``[]``
 
     DEPRECATED: Use kernel_name instead.
-    
+
     The Popen Command to launch the kernel.
     Override this if you have a custom kernel.
     If kernel_cmd is specified in a configuration file,
@@ -727,7 +727,7 @@ Session.check_pid : Bool
     Default: ``True``
 
     Whether to check PID to protect against calls after fork.
-    
+
     This check can be disabled if fork-safety is handled elsewhere.
 
 
@@ -745,7 +745,7 @@ Session.digest_history_size : Int
     Default: ``65536``
 
     The maximum number of digests to remember.
-    
+
     The digest history will be culled when it exceeds this value.
 
 
@@ -796,7 +796,7 @@ Session.unpacker : DottedObjectName
     Only used with custom functions for `packer`.
 
 Session.username : Unicode
-    Default: ``'mwakabayashi'``
+    Default: ``'echar4'``
 
     Username for the Session. Default is your system username.
 
@@ -833,10 +833,10 @@ MappingKernelManager.buffer_offline_messages : Bool
     Default: ``True``
 
     Whether messages from kernels whose frontends have disconnected should be buffered in-memory.
-    
+
     When True (default), messages are buffered and replayed on reconnect,
     avoiding lost messages due to interrupted connectivity.
-    
+
     Disable if long-running kernels will produce too much output while
     no frontends are connected.
 
@@ -874,7 +874,7 @@ MappingKernelManager.kernel_info_timeout : Float
     Default: ``60``
 
     Timeout for giving up on a kernel (in seconds).
-    
+
     On starting and restarting kernels, we check whether the
     kernel is running and responsive by sending kernel_info_requests.
     This sets the timeout in seconds for how long the kernel can take
@@ -923,7 +923,7 @@ KernelSpecManager.whitelist : Set
     Default: ``set()``
 
     Whitelist of allowed kernel names.
-    
+
     By default, all installed kernels are allowed.
 
 
@@ -951,13 +951,13 @@ ContentsManager.files_handler_class : Type
     Default: ``'jupyter_server.files.handlers.FilesHandler'``
 
     handler class to use when serving raw file requests.
-    
+
     Default is a fallback that talks to the ContentsManager API,
     which may be inefficient, especially for large files.
-    
+
     Local files-based ContentsManagers can use a StaticFileHandler subclass,
     which will be much more efficient.
-    
+
     Access to these files should be Authenticated.
 
 
@@ -965,7 +965,7 @@ ContentsManager.files_handler_params : Dict
     Default: ``{}``
 
     Extra parameters to pass to files_handler_class.
-    
+
     For example, StaticFileHandlers generally expect a `path` argument
     specifying the root directory from which to serve files.
 
@@ -973,7 +973,7 @@ ContentsManager.files_handler_params : Dict
 ContentsManager.hide_globs : List
     Default: ``['__pycache__', '*.pyc', '*.pyo', '.DS_Store', '*.so', '*.dyl...``
 
-    
+
     Glob patterns to hide in file and directory listings.
 
 
@@ -981,17 +981,17 @@ ContentsManager.pre_save_hook : Any
     Default: ``None``
 
     Python callable or importstring thereof
-    
+
     To be called on a contents model prior to save.
-    
+
     This can be used to process the structure,
     such as removing notebook outputs or other side effects that
     should not be saved.
-    
+
     It will be called as (all arguments passed by keyword)::
-    
+
         hook(path=path, model=model, contents_manager=self)
-    
+
     - model: the model to be saved. Includes file contents.
       Modifying this dict will affect the file that is stored.
     - path: the API path of the save destination
@@ -1056,13 +1056,13 @@ FileContentsManager.files_handler_class : Type
     Default: ``'jupyter_server.files.handlers.FilesHandler'``
 
     handler class to use when serving raw file requests.
-    
+
     Default is a fallback that talks to the ContentsManager API,
     which may be inefficient, especially for large files.
-    
+
     Local files-based ContentsManagers can use a StaticFileHandler subclass,
     which will be much more efficient.
-    
+
     Access to these files should be Authenticated.
 
 
@@ -1070,7 +1070,7 @@ FileContentsManager.files_handler_params : Dict
     Default: ``{}``
 
     Extra parameters to pass to files_handler_class.
-    
+
     For example, StaticFileHandlers generally expect a `path` argument
     specifying the root directory from which to serve files.
 
@@ -1078,7 +1078,7 @@ FileContentsManager.files_handler_params : Dict
 FileContentsManager.hide_globs : List
     Default: ``['__pycache__', '*.pyc', '*.pyo', '.DS_Store', '*.so', '*.dyl...``
 
-    
+
     Glob patterns to hide in file and directory listings.
 
 
@@ -1086,16 +1086,16 @@ FileContentsManager.post_save_hook : Any
     Default: ``None``
 
     Python callable or importstring thereof
-    
+
     to be called on the path of a file just saved.
-    
+
     This can be used to process the file on disk,
     such as converting the notebook to a script or HTML via nbconvert.
-    
+
     It will be called as (all arguments passed by keyword)::
-    
+
         hook(os_path=os_path, model=model, contents_manager=instance)
-    
+
     - path: the filesystem path to the file just written
     - model: the model representing the file
     - contents_manager: this ContentsManager instance
@@ -1105,17 +1105,17 @@ FileContentsManager.pre_save_hook : Any
     Default: ``None``
 
     Python callable or importstring thereof
-    
+
     To be called on a contents model prior to save.
-    
+
     This can be used to process the structure,
     such as removing notebook outputs or other side effects that
     should not be saved.
-    
+
     It will be called as (all arguments passed by keyword)::
-    
+
         hook(path=path, model=model, contents_manager=self)
-    
+
     - model: the model to be saved. Includes file contents.
       Modifying this dict will affect the file that is stored.
     - path: the API path of the save destination
@@ -1194,10 +1194,10 @@ GatewayKernelManager.buffer_offline_messages : Bool
     Default: ``True``
 
     Whether messages from kernels whose frontends have disconnected should be buffered in-memory.
-    
+
     When True (default), messages are buffered and replayed on reconnect,
     avoiding lost messages due to interrupted connectivity.
-    
+
     Disable if long-running kernels will produce too much output while
     no frontends are connected.
 
@@ -1235,7 +1235,7 @@ GatewayKernelManager.kernel_info_timeout : Float
     Default: ``60``
 
     Timeout for giving up on a kernel (in seconds).
-    
+
     On starting and restarting kernels, we check whether the
     kernel is running and responsive by sending kernel_info_requests.
     This sets the timeout in seconds for how long the kernel can take
@@ -1284,7 +1284,7 @@ GatewayKernelSpecManager.whitelist : Set
     Default: ``set()``
 
     Whitelist of allowed kernel names.
-    
+
     By default, all installed kernels are allowed.
 
 
