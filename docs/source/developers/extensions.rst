@@ -128,7 +128,7 @@ The basic structure of an ExtensionApp is shown below:
 
         # -------------- Required traits --------------
         name = "myextension"
-        extension_url = "/myextension"
+        default_url = "/myextension"
         load_other_extensions = True
 
         # --- ExtensionApp traits you can configure ---
@@ -167,7 +167,7 @@ Methods
 Properties
 
 * ``name``: the name of the extension
-* ``extension_url``: the default url for this extension—i.e. the landing page for this extension when launched from the CLI.
+* ``default_url``: the default url for this extension—i.e. the landing page for this extension when launched from the CLI.
 * ``load_other_extensions``: a boolean enabling/disabling other extensions when launching this extension directly.
 
 ``ExtensionApp`` request handlers
@@ -302,13 +302,13 @@ To make your extension executable from anywhere on your system, point an entry-p
 ``ExtensionApp`` as a classic Notebook server extension
 -------------------------------------------------------
 
-An extension that extends ``ExtensionApp`` should still work with the old Tornado server from the classic Jupyter Notebook. The ``ExtensionApp`` class 
+An extension that extends ``ExtensionApp`` should still work with the old Tornado server from the classic Jupyter Notebook. The ``ExtensionApp`` class
 provides a method, ``load_classic_server_extension``, that handles the extension initialization. Simply  define a ``load_jupyter_server_extension`` reference
-pointing at the ``load_classic_server_extension`` method: 
+pointing at the ``load_classic_server_extension`` method:
 
 .. code-block:: python
 
-    # This is typically defined in the root `__init__.py` 
+    # This is typically defined in the root `__init__.py`
     # file of the extension package.
     load_jupyter_server_extension = MyExtensionApp.load_classic_server_extension
 
@@ -483,7 +483,7 @@ There are a few key steps to make this happen:
     .. code-block:: python
 
         def load_jupyter_server_extension(nb_server_app):
-            
+
             web_app = nb_server_app.web_app
             host_pattern = '.*$'
             base_url = web_app.settings['base_url']
@@ -495,50 +495,50 @@ There are a few key steps to make this happen:
 
             # Favicon redirects.
             favicon_redirects = [
-                (   
-                    url_path_join(base_url, "/static/favicons/favicon.ico"), 
+                (
+                    url_path_join(base_url, "/static/favicons/favicon.ico"),
                     RedirectHandler,
                     {"url": url_path_join(serverapp.base_url, "static/base/images/favicon.ico")
                 ),
                 (
-                    url_path_join(base_url, "/static/favicons/favicon-busy-1.ico"), 
+                    url_path_join(base_url, "/static/favicons/favicon-busy-1.ico"),
                     RedirectHandler,
                     {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-1.ico")}
                 ),
                 (
-                    url_path_join(base_url, "/static/favicons/favicon-busy-2.ico"), 
+                    url_path_join(base_url, "/static/favicons/favicon-busy-2.ico"),
                     RedirectHandler,
                     {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-2.ico")}
                 ),
                 (
-                    url_path_join(base_url, "/static/favicons/favicon-busy-3.ico"), 
+                    url_path_join(base_url, "/static/favicons/favicon-busy-3.ico"),
                     RedirectHandler,
                     {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-3.ico")}
                 ),
                 (
-                    url_path_join(base_url, "/static/favicons/favicon-file.ico"), 
+                    url_path_join(base_url, "/static/favicons/favicon-file.ico"),
                     RedirectHandler,
                     {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-file.ico")}
                 ),
                 (
-                    url_path_join(base_url, "/static/favicons/favicon-notebook.ico"), 
+                    url_path_join(base_url, "/static/favicons/favicon-notebook.ico"),
                     RedirectHandler,
                     {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-notebook.ico")}
                 ),
                 (
-                    url_path_join(base_url, "/static/favicons/favicon-terminal.ico"), 
+                    url_path_join(base_url, "/static/favicons/favicon-terminal.ico"),
                     RedirectHandler,
                     {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-terminal.ico")}
                 ),
                 (
-                    url_path_join(base_url, "/static/logo/logo.png"), 
+                    url_path_join(base_url, "/static/logo/logo.png"),
                     RedirectHandler,
                     {"url": url_path_join(serverapp.base_url, "static/base/images/logo.png")}
                 ),
             ]
 
             web_app.add_handlers(
-                host_pattern, 
+                host_pattern,
                 custom_handlers + favicon_redirects
             )
 

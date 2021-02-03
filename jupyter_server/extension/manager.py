@@ -1,11 +1,13 @@
 import importlib
 
-from traitlets.config import LoggingConfigurable
+from traitlets.config import LoggingConfigurable, Config
+
 from traitlets import (
     HasTraits,
     Dict,
     Unicode,
     Bool,
+    Any,
     validate
 )
 
@@ -21,12 +23,10 @@ class ExtensionPoint(HasTraits):
     """A simple API for connecting to a Jupyter Server extension
     point defined by metadata and importable from a Python package.
     """
-    metadata = Dict()
+    _linked = Bool(False)
+    _app = Any(None, allow_none=True)
 
-    def __init__(self, *args, **kwargs):
-        # Store extension points that have been linked.
-        self._app = None
-        super().__init__(*args, **kwargs)
+    metadata = Dict()
 
     @validate('metadata')
     def _valid_metadata(self, proposed):
@@ -54,12 +54,29 @@ class ExtensionPoint(HasTraits):
 
     @property
     def linked(self):
+        """Has this extension point been linked to the server.
+
+        Will pull from ExtensionApp's trait, if this point
+        is an instance of ExtensionApp.
+        """
+        if self.app:
+            return self.app._linked
         return self._linked
 
     @property
     def app(self):
         """If the metadata includes an `app` field"""
         return self._app
+
+    @property
+    def config(self):
+        """Return any configuration provided by this extension point."""
+        if self.app:
+            return self.app._jupyter_server_config()
+        # At some point, we might want to add logic to load config from
+        # disk when extensions don't use ExtensionApp.
+        else:
+            return {}
 
     @property
     def module_name(self):
@@ -119,8 +136,11 @@ class ExtensionPoint(HasTraits):
         This looks for a `_link_jupyter_server_extension` function
         in the extension's module or ExtensionApp class.
         """
-        linker = self._get_linker()
-        return linker(serverapp)
+        if not self.linked:
+            linker = self._get_linker()
+            linker(serverapp)
+            # Store this extension as already linked.
+            self._linked = True
 
     def load(self, serverapp):
         """Load the extension in a Jupyter ServerApp object.
