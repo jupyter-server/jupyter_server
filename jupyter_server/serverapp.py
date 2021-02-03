@@ -956,25 +956,6 @@ class ServerApp(JupyterApp):
        """
     )
 
-    # The name of the app that started this server (if not started directly).
-    # It is sometimes important to know if + which another app (say a server extension)
-    # started the serverapp to properly configure some traits.
-    # This trait should not be configured by users. It will likely be set by ExtensionApp.
-    _starter_app = Instance(JupyterApp, allow_none=True)
-
-    @validate('_starter_app')
-    def _validate_starter_app(self, proposal):
-        # Check that a previous server extension isn't named yet
-        value = proposal["value"]
-        if self._starter_app != None:
-            raise TraitError("Another extension was already named as the starter_server_extension.")
-        return value
-
-    @property
-    def starter_app(self):
-        """Get the Extension that started this server."""
-        return self._starter_app
-
     open_browser = Bool(False, config=True,
                         help="""Whether to open in a browser after starting.
                         The specific browser used is platform dependent and
@@ -982,31 +963,6 @@ class ServerApp(JupyterApp):
                         module, unless it is overridden using the --browser
                         (ServerApp.browser) configuration option.
                         """)
-
-
-    def _handle_browser_opening(self):
-        """This method handles whether a browser should be opened.
-        By default, Jupyter Server doesn't try to open an browser. However,
-        it's many server extensions might want to open the browser by default.
-        This essentially toggles the default value for open_browser.
-
-        From a UX perspective, this needs to be surfaced to the user. The default
-        behavior of Jupyter Server switches, which can be confusing.
-        """
-        # If the server was started by another application, use that applications
-        # trait for the open_browser trait. If that trait is not given, ignore
-        if self.starter_app:
-            try:
-                if self.starter_app.open_browser:
-                    self.launch_browser()
-            # If the starter_app doesn't have an open_browser trait, ignore
-            # move on and don't start a browser.
-            except AttributeError:
-                pass
-        else:
-            if self.open_browser:
-                self.launch_browser()
-
 
     browser = Unicode(u'', config=True,
                       help="""Specify what command to use to invoke a web
@@ -1350,6 +1306,17 @@ class ServerApp(JupyterApp):
         """,
         config=True
     )
+
+    _starter_app = Instance(
+        default_value=None,
+        allow_none=True,
+        klass='jupyter_server.extension.application.ExtensionApp'
+    )
+
+    @property
+    def starter_app(self):
+        """Get the Extension that started this server."""
+        return self._starter_app
 
     def parse_command_line(self, argv=None):
 
@@ -1781,7 +1748,7 @@ class ServerApp(JupyterApp):
         )
 
     @catch_config_error
-    def initialize(self, argv=None, find_extensions=True, new_httpserver=True):
+    def initialize(self, argv=None, find_extensions=True, new_httpserver=True, starter_extension=None):
         """Initialize the Server application class, configurables, web application, and http server.
 
         Parameters
@@ -1797,11 +1764,14 @@ class ServerApp(JupyterApp):
         new_httpserver: bool
             If True, a tornado HTTPServer instance will be created and configured for the Server Web
             Application. This will set the http_server attribute of this class.
+
+        starter_extension: str
+            If given, it references the name of an extension point that started the Server.
+            We will try to load configuration from extension point
         """
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
-        super(ServerApp, self).initialize(argv)
-        # Initialize all components of the ServerApp.
+        super(ServerApp, self).initialize(argv=argv)
         if self._dispatching:
             return
         # Then, use extensions' config loading mechanism to
@@ -1810,6 +1780,19 @@ class ServerApp(JupyterApp):
             self.find_server_extensions()
         self.init_logging()
         self.init_server_extensions()
+
+        # Special case the starter extension and load
+        # any server configuration is provides.
+        if starter_extension:
+            # Configure ServerApp based on named extension.
+            point = self.extension_manager.extension_points[starter_extension]
+            # Set starter_app property.
+            if point.app:
+                self._starter_app = point.app
+            # Load any configuration that comes from the Extension point.
+            self.update_config(Config(point.config))
+
+        # Initialize other pieces of the server.
         self.init_resources()
         self.init_configurables()
         self.init_components()
@@ -1979,7 +1962,8 @@ class ServerApp(JupyterApp):
         self.write_browser_open_file()
 
         # Handle the browser opening.
-        self._handle_browser_opening()
+        if self.open_browser:
+            self.launch_browser()
 
         if self.token and self._token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
