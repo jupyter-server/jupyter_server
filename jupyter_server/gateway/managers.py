@@ -9,7 +9,7 @@ from tornado import web
 from tornado.escape import json_encode, json_decode, url_escape
 from tornado.httpclient import HTTPClient, AsyncHTTPClient, HTTPError
 
-from ..services.kernels.kernelmanager import MappingKernelManager
+from ..services.kernels.kernelmanager import AsyncMappingKernelManager
 from ..services.sessions.sessionmanager import SessionManager
 
 from jupyter_client.kernelspec import KernelSpecManager
@@ -329,7 +329,7 @@ async def gateway_request(endpoint, **kwargs):
     return response
 
 
-class GatewayKernelManager(MappingKernelManager):
+class GatewayKernelManager(AsyncMappingKernelManager):
     """Kernel manager that supports remote kernels hosted by Jupyter Kernel or Enterprise Gateway."""
 
     # We'll maintain our own set of kernel ids
