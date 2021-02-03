@@ -1232,16 +1232,22 @@ class ServerApp(JupyterApp):
 
     @observe('notebook_dir')
     def _update_notebook_dir(self, change):
+        if self._root_dir_set:
+            # only use deprecated config if new config is not set
+            return
         self.log.warning(_("notebook_dir is deprecated, use root_dir"))
         self.root_dir = change['new']
 
-    root_dir = Unicode(config=True,
+    root_dir = Unicode(
+        config=True,
         help=_("The directory to use for notebooks and kernels.")
     )
+    _root_dir_set = False
 
     @default('root_dir')
     def _default_root_dir(self):
         if self.file_to_run:
+            self._root_dir_set = True
             return os.path.dirname(os.path.abspath(self.file_to_run))
         else:
             return py3compat.getcwd()
@@ -1261,6 +1267,10 @@ class ServerApp(JupyterApp):
         if not os.path.isdir(value):
             raise TraitError(trans.gettext("No such notebook dir: '%r'") % value)
         return value
+
+    @observe('root_dir')
+    def _root_dir_changed(self, change):
+        self._root_dir_set = True
 
     @observe('server_extensions')
     def _update_server_extensions(self, change):
