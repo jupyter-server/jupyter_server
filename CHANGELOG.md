@@ -2,7 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0](https://github.com/jupyter-server/jupyter_server/tree/1.3.0) (2021-02-4)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.2.3...HEAD)
+
+**Merged pull requests:**
+
+- Special case ExtensionApp that starts the ServerApp [\#401](https://github.com/jupyter-server/jupyter_server/pull/401) ([afshin](https://github.com/afshin))
+- only use deprecated notebook\_dir config if root\_dir is not set [\#400](https://github.com/jupyter-server/jupyter_server/pull/400) ([minrk](https://github.com/minrk))
+- Use async kernel manager by default [\#399](https://github.com/jupyter-server/jupyter_server/pull/399) ([kevin-bates](https://github.com/kevin-bates))
+- Revert Session.username default value change [\#398](https://github.com/jupyter-server/jupyter_server/pull/398) ([mwakaba2](https://github.com/mwakaba2))
+
+
 ## [1.2.3](https://github.com/jupyter-server/jupyter_server/tree/1.2.3) (2021-01-29)
+
+This was a broken release and was yanked from PyPI.
 
 [Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.2.2...HEAD)
 
