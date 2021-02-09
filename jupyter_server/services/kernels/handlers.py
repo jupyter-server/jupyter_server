@@ -55,9 +55,9 @@ class MainKernelHandler(APIHandler):
 class KernelHandler(APIHandler):
 
     @web.authenticated
-    def get(self, kernel_id):
+    async def get(self, kernel_id):
         km = self.kernel_manager
-        model = km.kernel_model(kernel_id)
+        model = await ensure_async(km.kernel_model(kernel_id))
         self.finish(json.dumps(model, default=date_default))
 
     @web.authenticated
