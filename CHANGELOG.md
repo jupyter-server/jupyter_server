@@ -2,17 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.3.0](https://github.com/jupyter-server/jupyter_server/tree/1.3.0) (2021-02-4)
+## [1.3.0](https://github.com/jupyter-server/jupyter_server/tree/1.3.0) (2021-02-04)
 
-[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.2.3...HEAD)
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.2.2...HEAD)
 
-**Merged pull requests:**
+**Merged pull requests (includes those from broken 1.2.3 release):**
 
 - Special case ExtensionApp that starts the ServerApp [\#401](https://github.com/jupyter-server/jupyter_server/pull/401) ([afshin](https://github.com/afshin))
 - only use deprecated notebook\_dir config if root\_dir is not set [\#400](https://github.com/jupyter-server/jupyter_server/pull/400) ([minrk](https://github.com/minrk))
 - Use async kernel manager by default [\#399](https://github.com/jupyter-server/jupyter_server/pull/399) ([kevin-bates](https://github.com/kevin-bates))
 - Revert Session.username default value change [\#398](https://github.com/jupyter-server/jupyter_server/pull/398) ([mwakaba2](https://github.com/mwakaba2))
-
+- Re-enable default\_url in ExtensionApp [\#393](https://github.com/jupyter-server/jupyter_server/pull/393) ([afshin](https://github.com/afshin))
+- Enable notebook ContentsManager in jupyter\_server [\#392](https://github.com/jupyter-server/jupyter_server/pull/392) ([afshin](https://github.com/afshin))
+- Use jupyter\_server\_config.json as config file in the update password api [\#390](https://github.com/jupyter-server/jupyter_server/pull/390) ([echarles](https://github.com/echarles))
+- Increase culling test idle timeout [\#388](https://github.com/jupyter-server/jupyter_server/pull/388) ([kevin-bates](https://github.com/kevin-bates))
+- update changelog for 1.2.2 [\#387](https://github.com/jupyter-server/jupyter_server/pull/387) ([Zsailer](https://github.com/Zsailer))
 
 ## [1.2.3](https://github.com/jupyter-server/jupyter_server/tree/1.2.3) (2021-01-29)
 
