@@ -120,26 +120,6 @@ def jp_environ(
 
 # ================= End: Move to Jupyter core ================
 
-# NOTE: This is a temporary fix for Windows 3.8
-# We have to override the io_loop fixture with an
-# asyncio patch. This will probably be removed in
-# the future.
-@pytest.fixture
-def jp_asyncio_patch():
-    """Appropriately configures the event loop policy if running on Windows w/ Python >= 3.8."""
-    ServerApp()._init_asyncio_patch()
-
-
-@pytest.fixture
-def io_loop(jp_asyncio_patch):
-    """Returns an ioloop instance that includes the asyncio patch for Windows 3.8 platforms."""
-    loop = tornado.ioloop.IOLoop()
-    loop.make_current()
-    yield loop
-    loop.clear_current()
-    loop.close(all_fds=True)
-
-
 @pytest.fixture
 def jp_server_config():
     """Allows tests to setup their specific configuration values. """
