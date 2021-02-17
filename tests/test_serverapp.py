@@ -1,5 +1,6 @@
 import os
 import getpass
+import pathlib
 import pytest
 import logging
 from unittest.mock import patch
@@ -117,3 +118,93 @@ def test_list_running_servers(jp_serverapp, jp_web_app):
     servers = list(list_running_servers(jp_serverapp.runtime_dir))
     assert len(servers) >= 1
 
+
+@pytest.fixture
+def prefix_path(jp_root_dir, tmp_path):
+    """If a given path is prefixed with the literal
+    strings `/jp_root_dir` or `/tmp_path`, replace those
+    strings with these fixtures.
+
+    Returns a pathlib Path object.
+    """
+    def _inner(rawpath):
+        path = pathlib.PurePosixPath(rawpath)
+        if rawpath.startswith('/jp_root_dir'):
+            path = jp_root_dir.joinpath(*path.parts[2:])
+        elif rawpath.startswith('/tmp_path'):
+            path = tmp_path.joinpath(*path.parts[2:])
+        return pathlib.Path(path)
+    return _inner
+
+
+@pytest.mark.parametrize(
+    "root_dir,file_to_run,expected_output",
+    [
+        (
+            None,
+            'notebook.ipynb',
+            'notebook.ipynb'
+        ),
+        (
+            None,
+            '/tmp_path/path/to/notebook.ipynb',
+            'notebook.ipynb'
+        ),
+        (
+            '/jp_root_dir',
+            '/tmp_path/path/to/notebook.ipynb',
+            SystemExit
+        ),
+        (
+            '/tmp_path',
+            '/tmp_path/path/to/notebook.ipynb',
+            'path/to/notebook.ipynb'
+        ),
+        (
+            '/jp_root_dir',
+            'notebook.ipynb',
+            'notebook.ipynb'
+        ),
+        (
+            '/jp_root_dir',
+            'path/to/notebook.ipynb',
+            'path/to/notebook.ipynb'
+        ),
+    ]
+)
+def test_resolve_file_to_run_and_root_dir(
+    prefix_path,
+    root_dir,
+    file_to_run,
+    expected_output
+):
+    # Verify that the Singleton instance is cleared before the test runs.
+    ServerApp.clear_instance()
+
+    # Setup the file_to_run path, in case the server checks
+    # if the directory exists before initializing the server.
+    file_to_run = prefix_path(file_to_run)
+    if file_to_run.is_absolute():
+        file_to_run.parent.mkdir(parents=True, exist_ok=True)
+    kwargs = {"file_to_run": str(file_to_run)}
+
+    # Setup the root_dir path, in case the server checks
+    # if the directory exists before initializing the server.
+    if root_dir:
+        root_dir = prefix_path(root_dir)
+        if root_dir.is_absolute():
+            root_dir.parent.mkdir(parents=True, exist_ok=True)
+        kwargs["root_dir"] = str(root_dir)
+
+    # Create the notebook in the given location
+    serverapp = ServerApp.instance(**kwargs)
+
+    if expected_output is SystemExit:
+        with pytest.raises(SystemExit):
+            serverapp._resolve_file_to_run_and_root_dir()
+    else:
+        relpath = serverapp._resolve_file_to_run_and_root_dir()
+        assert relpath == str(pathlib.Path(expected_output))
+
+    # Clear the singleton instance after each run.
+    ServerApp.clear_instance()
