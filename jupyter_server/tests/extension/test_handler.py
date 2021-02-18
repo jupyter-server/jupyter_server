@@ -6,7 +6,7 @@ def jp_server_config(jp_template_dir):
     return {
             "ServerApp": {
                 "jpserver_extensions": {
-                    "tests.extension.mockextensions": True
+                    "jupyter_server.tests.extension.mockextensions": True
                 }
             },
             "MockExtensionApp": {
@@ -40,7 +40,7 @@ async def test_handler_template(jp_fetch, mock_template):
         {
             "ServerApp": {
                 "jpserver_extensions": {
-                    "tests.extension.mockextensions": True
+                    "jupyter_server.tests.extension.mockextensions": True
                 }
             },
             "MockExtensionApp": {
@@ -81,7 +81,7 @@ async def test_handler_argv(jp_fetch, jp_argv):
             {
                 "ServerApp": {
                     "jpserver_extensions": {
-                        "tests.extension.mockextensions": True
+                        "jupyter_server.tests.extension.mockextensions": True
                     },
                     # Move extension handlers behind a url prefix
                     "base_url": "test_prefix"

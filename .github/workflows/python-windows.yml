@@ -37,7 +37,7 @@ jobs:
           ${{ runner.os }}-pip-
     - name: Install the Python dependencies
       run: |
-        pip install -e .[test] codecov
+        pip install -e .[test]
     - name: List installed packages
       run: |
         pip freeze
