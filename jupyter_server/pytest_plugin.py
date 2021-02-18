@@ -278,9 +278,7 @@ def jp_serverapp(
     """Starts a Jupyter Server instance based on the established configuration values."""
     app = jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
     yield app
-    app.remove_server_info_file()
-    app.remove_browser_open_file()
-    app.cleanup_kernels()
+    app._cleanup()
 
 
 @pytest.fixture
