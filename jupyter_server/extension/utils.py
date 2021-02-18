@@ -1,4 +1,5 @@
 import importlib
+import warnings
 
 
 class ExtensionLoadingError(Exception):
@@ -28,6 +29,11 @@ def get_loader(obj, logger=None):
         func = getattr(obj, '_load_jupyter_server_extension')
     except AttributeError:
         func = getattr(obj, 'load_jupyter_server_extension')
+        warnings.warn("A `_load_jupyter_server_extension` function was not "
+                "found in {name!s}. Instead, a `load_jupyter_server_extension` "
+                "function was found and will be used for now. This function "
+                "name will be deprecated in future releases "
+                "of Jupyter Server.".format(name=obj), DeprecationWarning)
     except Exception:
         raise ExtensionLoadingError("_load_jupyter_server_extension function was not found.")
     return func
