@@ -61,7 +61,7 @@ def launch_instance(request, port, token):
             f'--port={port}',
             '--ip=127.0.0.1',
             '--no-browser',
-            f'--ServerApp.token={token}',
+            f'--ServerApp.token="{token}"',
             *argv,
         ], cwd=HERE)
 

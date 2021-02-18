@@ -54,7 +54,7 @@ def test_extension_package_api():
     path1 = metadata_list[0]
     app = path1["app"]
 
-    e = ExtensionPackage(name='tests.extension.mockextensions')
+    e = ExtensionPackage(name='jupyter_server.tests.extension.mockextensions')
     e.extension_points
     assert hasattr(e, "extension_points")
     assert len(e.extension_points) == len(metadata_list)
@@ -68,16 +68,16 @@ def test_extension_package_notfound_error():
 
 def test_extension_manager_api():
     jpserver_extensions = {
-        "tests.extension.mockextensions": True
+        "jupyter_server.tests.extension.mockextensions": True
     }
     manager = ExtensionManager()
     manager.from_jpserver_extensions(jpserver_extensions)
     assert len(manager.extensions) == 1
-    assert "tests.extension.mockextensions" in manager.extensions
+    assert "jupyter_server.tests.extension.mockextensions" in manager.extensions
 
 
 def test_extension_manager_linked_extensions(jp_serverapp):
-    name = "tests.extension.mockextensions"
+    name = "jupyter_server.tests.extension.mockextensions"
     manager = ExtensionManager()
     manager.add_extension(name, enabled=True)
     manager.link_extension(name, jp_serverapp)

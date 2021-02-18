@@ -7,7 +7,7 @@
 def _jupyter_server_extension_paths():
     return [
         {
-            'module': 'tests.extension.mockextensions.mockext_py'
+            'module': 'jupyter_server.tests.extension.mockextensions.mockext_py'
         }
     ]
 

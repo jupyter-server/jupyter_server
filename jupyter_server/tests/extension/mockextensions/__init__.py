@@ -9,16 +9,16 @@ from .app import MockExtensionApp
 def _jupyter_server_extension_points():
     return [
         {
-            'module': 'tests.extension.mockextensions.app',
+            'module': 'jupyter_server.tests.extension.mockextensions.app',
             'app': MockExtensionApp
         },
         {
-            'module': 'tests.extension.mockextensions.mock1'
+            'module': 'jupyter_server.tests.extension.mockextensions.mock1'
         },
         {
-            'module': 'tests.extension.mockextensions.mock2'
+            'module': 'jupyter_server.tests.extension.mockextensions.mock2'
         },
         {
-            'module': 'tests.extension.mockextensions.mock3'
+            'module': 'jupyter_server.tests.extension.mockextensions.mock3'
         }
     ]

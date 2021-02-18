@@ -7,7 +7,7 @@ def jp_server_config(jp_template_dir):
     config = {
         "ServerApp": {
             "jpserver_extensions": {
-                "tests.extension.mockextensions": True
+                "jupyter_server.tests.extension.mockextensions": True
             },
         },
         "MockExtensionApp": {
@@ -22,7 +22,7 @@ def jp_server_config(jp_template_dir):
 
 @pytest.fixture
 def mock_extension(extension_manager):
-    name = "tests.extension.mockextensions"
+    name = "jupyter_server.tests.extension.mockextensions"
     pkg = extension_manager.extensions[name]
     point = pkg.extension_points["mockextension"]
     app = point.app

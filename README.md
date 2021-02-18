@@ -14,7 +14,7 @@ To install the latest release locally, make sure you have
 
     $ pip install jupyter_server
 
-Jupyter Server currently supports Python>=3.5 on Linux, OSX and Windows.
+Jupyter Server currently supports Python>=3.6 on Linux, OSX and Windows.
 
 ### Versioning and Branches
 
@@ -32,6 +32,13 @@ To see the changes between releases, checkout the [CHANGELOG](https://github.com
 Launch with:
 
     $ jupyter server
+
+### Testing
+
+To test an installed `jupyter_server`, run the following:
+
+    $ pip install jupyter_server[test]
+    $ pytest --pyargs jupyter_server
 
 ## Contributing
 

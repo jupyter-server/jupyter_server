@@ -1,4 +1,4 @@
-"""A mock extension named `mockext_py` for testing purposes.
+"""A mock extension named `mockext_user` for testing purposes.
 """
 
 
@@ -7,7 +7,7 @@
 def _jupyter_server_extension_paths():
     return [
         {
-            'module': 'tests.extension.mockextensions.mockext_sys'
+            'module': 'jupyter_server.tests.extension.mockextensions.mockext_user'
         }
     ]
 
