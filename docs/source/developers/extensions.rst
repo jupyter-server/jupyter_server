@@ -130,6 +130,7 @@ The basic structure of an ExtensionApp is shown below:
         name = "myextension"
         default_url = "/myextension"
         load_other_extensions = True
+        file_url_prefix = "/render"
 
         # --- ExtensionApp traits you can configure ---
         static_paths = [...]
@@ -167,8 +168,9 @@ Methods
 Properties
 
 * ``name``: the name of the extension
-* ``default_url``: the default url for this extension—i.e. the landing page for this extension when launched from the CLI.
+* ``default_url``: the default URL for this extension—i.e. the landing page for this extension when launched from the CLI.
 * ``load_other_extensions``: a boolean enabling/disabling other extensions when launching this extension directly.
+* ``file_url_prefix``: the prefix URL added when opening a document directly from the command line. For example, classic Notebook uses ``/notebooks`` to open a document at http://localhost:8888/notebooks/path/to/notebook.ipynb.
 
 ``ExtensionApp`` request handlers
 ---------------------------------
