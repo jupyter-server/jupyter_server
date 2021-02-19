@@ -251,7 +251,7 @@ Pair the example above with ``ExtensionHandlers`` that also inherit the ``Extens
 Making an ``ExtensionApp`` discoverable
 ---------------------------------------
 
-To make an ``ExtensionApp`` discoverable by Jupyter Server, add the ``app`` key+value pair to the ``_jupyter_server_extension_paths()`` function example above:
+To make an ``ExtensionApp`` discoverable by Jupyter Server, add the ``app`` key+value pair to the ``_jupyter_server_extension_points()`` function example above:
 
 .. code-block:: python
 
