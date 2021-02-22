@@ -1001,6 +1001,9 @@ class ServerApp(JupyterApp):
             help=_("Supply overrides for the tornado.web.Application that the "
                  "Jupyter server uses."))
 
+    websocket_enable_token_auth = Bool(config=True,
+                                       help="Enable token auth for websocket connections")
+    
     websocket_compression_options = Any(None, config=True,
         help=_("""
         Set the tornado compression options for websocket connections.

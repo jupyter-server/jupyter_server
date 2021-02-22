@@ -549,6 +549,10 @@ ServerApp.token : Unicode
 
     Setting to an empty string disables authentication altogether, which is NOT RECOMMENDED.
 
+ServerApp.enable_wss_token_auth: Bool
+    Default: ``False``
+
+    Enable token auth for websocket connection
 
 ServerApp.tornado_settings : Dict
     Default: ``{}``
