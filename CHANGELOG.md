@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0](https://github.com/jupyter-server/jupyter_server/tree/1.5.0) (2021-02-22)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.4.0...bc252d33de2f647f98d048dc32888f0a83f005ac)
+
+**Merged pull requests:**
+
+* Update README.md [#425](https://github.com/jupyter-server/jupyter_server/pull/425) ([@BobinMathew](https://github.com/BobinMathew))
+* Solve UnboundLocalError in launch_browser() [#421](https://github.com/jupyter-server/jupyter_server/pull/421) ([@jamesmishra](https://github.com/jamesmishra))
+* Add file_to_run to server extension docs [#420](https://github.com/jupyter-server/jupyter_server/pull/420) ([@Zsailer](https://github.com/Zsailer))
+* Remove outdated reference to _jupyter_server_extension_paths in docs [#419](https://github.com/jupyter-server/jupyter_server/pull/419) ([@Zsailer](https://github.com/Zsailer))
+
+**Contributors to this release:**
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-02-18&to=2021-02-22&type=c))
+
+[@jamesmishra](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajamesmishra+updated%3A2021-02-18..2021-02-22&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-02-18..2021-02-22&type=Issues)
+
+
 ## [1.4.0](https://github.com/jupyter-server/jupyter_server/tree/1.4.0) (2021-02-18)
 
 
