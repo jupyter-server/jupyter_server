@@ -2023,7 +2023,7 @@ class ServerApp(JupyterApp):
         if not browser:
             return
 
-        assembled_url, _ = self._prepare_browser_open()
+        assembled_url, __ = self._prepare_browser_open()
 
         b = lambda: browser.open(assembled_url, new=self.webbrowser_open_new)
         threading.Thread(target=b).start()
