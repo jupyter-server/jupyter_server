@@ -230,7 +230,7 @@ class ExtensionApp(JupyterApp):
     ).tag(config=True)
 
     template_paths = List(Unicode(),
-        help=_i18n("""Paths to search for serving jinja templates.
+        help="""Paths to search for serving jinja templates.
 
         Can be used to override templates from notebook.templates.""")
     ).tag(config=True)
@@ -247,7 +247,7 @@ class ExtensionApp(JupyterApp):
         """The default config file name."""
         if not self.name:
             return ''
-        return 'jupyter_{}_config'.format(self.name.replace('-','_'))
+        return 'jupyter_{}_config'.format(self.name.replace('-', '_'))
 
     def initialize_settings(self):
         """Override this method to add handling of settings."""
