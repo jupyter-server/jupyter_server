@@ -1714,17 +1714,17 @@ class ServerApp(JupyterApp):
 
         seconds_since_active = \
             (utcnow() - self.web_app.last_activity()).total_seconds()
-        self.log.debug(_i18n("No activity for %d seconds.",
-                       seconds_since_active))
+        self.log.debug("No activity for %d seconds.",
+                       seconds_since_active)
         if seconds_since_active > self.shutdown_no_activity_timeout:
-            self.log.info(_i18n("No kernels or terminals for %d seconds; shutting down.",
-                          seconds_since_active))
+            self.log.info("No kernels or terminals for %d seconds; shutting down.",
+                          seconds_since_active)
             self.stop()
 
     def init_shutdown_no_activity(self):
         if self.shutdown_no_activity_timeout > 0:
-            self.log.info(_i18n("Will shut down after %d seconds with no kernels or terminals.",
-                          self.shutdown_no_activity_timeout))
+            self.log.info("Will shut down after %d seconds with no kernels or terminals.",
+                          self.shutdown_no_activity_timeout)
             pc = ioloop.PeriodicCallback(self.shutdown_no_activity, 60000)
             pc.start()
 
