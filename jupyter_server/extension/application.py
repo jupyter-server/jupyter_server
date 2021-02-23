@@ -222,7 +222,7 @@ class ExtensionApp(JupyterApp):
         return url_path_join(self.serverapp.base_url, static_url)
 
     static_paths = List(Unicode(),
-        help=_i18n("""paths to search for serving static files.
+        help="""paths to search for serving static files.
 
         This allows adding javascript/css to be available from the notebook server machine,
         or overriding individual files in the IPython
@@ -230,7 +230,7 @@ class ExtensionApp(JupyterApp):
     ).tag(config=True)
 
     template_paths = List(Unicode(),
-        help="""Paths to search for serving jinja templates.
+        help=_i18n("""Paths to search for serving jinja templates.
 
         Can be used to override templates from notebook.templates.""")
     ).tag(config=True)
