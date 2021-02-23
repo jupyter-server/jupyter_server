@@ -30,7 +30,7 @@ from traitlets import (
     default,
 )
 from ipython_genutils.py3compat import string_types
-from jupyter_server.transutils import _
+from jupyter_server.transutils import _i18n
 from jupyter_server.utils import ensure_async
 
 
@@ -71,7 +71,7 @@ class ContentsManager(LoggingConfigurable):
         Glob patterns to hide in file and directory listings.
     """)
 
-    untitled_notebook = Unicode(_("Untitled"), config=True,
+    untitled_notebook = Unicode(_i18n("Untitled"), config=True,
         help="The base name used when creating untitled notebooks."
     )
 

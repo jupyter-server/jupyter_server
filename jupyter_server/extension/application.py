@@ -19,7 +19,7 @@ from tornado.web import RedirectHandler
 from jupyter_core.application import JupyterApp, NoStart
 
 from jupyter_server.serverapp import ServerApp
-from jupyter_server.transutils import _
+from jupyter_server.transutils import _i18n
 from jupyter_server.utils import url_path_join
 from .handler import ExtensionHandlerMixin
 
@@ -87,7 +87,7 @@ class ExtensionAppJinjaMixin(HasTraits):
     """Use Jinja templates for HTML templates on top of an ExtensionApp."""
 
     jinja2_options = Dict(
-        help=_("""Options to pass to the jinja2 environment for this
+        help=_i18n("""Options to pass to the jinja2 environment for this
         """)
     ).tag(config=True)
 
@@ -222,7 +222,7 @@ class ExtensionApp(JupyterApp):
         return url_path_join(self.serverapp.base_url, static_url)
 
     static_paths = List(Unicode(),
-        help="""paths to search for serving static files.
+        help=_i18n("""paths to search for serving static files.
 
         This allows adding javascript/css to be available from the notebook server machine,
         or overriding individual files in the IPython
@@ -230,17 +230,17 @@ class ExtensionApp(JupyterApp):
     ).tag(config=True)
 
     template_paths = List(Unicode(),
-        help=_("""Paths to search for serving jinja templates.
+        help=_i18n("""Paths to search for serving jinja templates.
 
         Can be used to override templates from notebook.templates.""")
     ).tag(config=True)
 
     settings = Dict(
-        help=_("""Settings that will passed to the server.""")
+        help=_i18n("""Settings that will passed to the server.""")
     ).tag(config=True)
 
     handlers = List(
-        help=_("""Handlers appended to the server.""")
+        help=_i18n("""Handlers appended to the server.""")
     ).tag(config=True)
 
     def _config_file_name_default(self):
