@@ -145,7 +145,6 @@ JUPYTER_SERVICE_HANDLERS = dict(
     view=['jupyter_server.view.handlers']
 )
 
-
 #-----------------------------------------------------------------------------
 # Helper functions
 #-----------------------------------------------------------------------------
@@ -161,12 +160,10 @@ def random_ports(port, n):
     for i in range(n-5):
         yield max(1, port + random.randint(-2*n, 2*n))
 
-
 def load_handlers(name):
     """Load the (URL pattern, handler) tuples for each component."""
     mod = __import__(name, fromlist=['default_handlers'])
     return mod.default_handlers
-
 
 #-----------------------------------------------------------------------------
 # The Tornado web application
@@ -239,9 +236,9 @@ class ServerWebApplication(web.Application):
             template_path=template_path,
             static_path=jupyter_app.static_file_path,
             static_custom_path=jupyter_app.static_custom_path,
-            static_handler_class=FileFindHandler,
-            static_url_prefix=url_path_join(base_url, '/static/'),
-            static_handler_args={
+            static_handler_class = FileFindHandler,
+            static_url_prefix = url_path_join(base_url, '/static/'),
+            static_handler_args = {
                 # don't cache custom.js
                 'no_cache_paths': [url_path_join(base_url, 'static', 'custom')],
             },
@@ -343,8 +340,8 @@ class ServerWebApplication(web.Application):
             # set the URL that will be redirected from `/`
             handlers.append(
                 (r'/?', RedirectWithParams, {
-                    'url': settings['default_url'],
-                    'permanent': False,  # want 302, not 301
+                    'url' : settings['default_url'],
+                    'permanent': False, # want 302, not 301
                 })
             )
         else:
@@ -398,7 +395,7 @@ class JupyterPasswordApp(JupyterApp):
     def start(self):
         from .auth.security import set_password
         set_password(config_file=self.config_file)
-        self.log.info(_i18n("Wrote hashed password to %s" % self.config_file))
+        self.log.info("Wrote hashed password to %s" % self.config_file)
 
 
 def shutdown_server(server_info, timeout=5, log=None):
@@ -450,15 +447,15 @@ def shutdown_server(server_info, timeout=5, log=None):
 class JupyterServerStopApp(JupyterApp):
 
     version = __version__
-    description = _i18n("Stop currently running Jupyter server for a given port")
+    description = "Stop currently running Jupyter server for a given port"
 
     port = Integer(8888, config=True,
-                   help=_i18n("Port of the server to be killed. Default 8888"))
+        help="Port of the server to be killed. Default 8888")
 
     def parse_command_line(self, argv=None):
         super(JupyterServerStopApp, self).parse_command_line(argv)
         if self.extra_args:
-            self.port = int(self.extra_args[0])
+            self.port=int(self.extra_args[0])
 
     def shutdown_server(self, server):
         return shutdown_server(server, log=self.log)
@@ -483,7 +480,7 @@ class JupyterServerStopApp(JupyterApp):
 
 class JupyterServerListApp(JupyterApp):
     version = __version__
-    description = _i18n("List currently running notebook servers.")
+    description=_i18n("List currently running notebook servers.")
 
     flags = dict(
         jsonlist=({'JupyterServerListApp': {'jsonlist': True}},
@@ -493,7 +490,7 @@ class JupyterServerListApp(JupyterApp):
     )
 
     jsonlist = Bool(False, config=True,
-            help=_i18n("If True, the output will be a JSON list of objects, one per "
+          help=_i18n("If True, the output will be a JSON list of objects, one per "
                  "active notebook server, each with the details from the "
                  "relevant server info file."))
     json = Bool(False, config=True,
@@ -515,7 +512,6 @@ class JupyterServerListApp(JupyterApp):
                 if serverinfo.get('token'):
                     url = url + '?token=%s' % serverinfo['token']
                 print(url, "::", serverinfo['root_dir'])
-
 
 #-----------------------------------------------------------------------------
 # Aliases and Flags
@@ -543,11 +539,11 @@ flags["debug"] = (
 )
 flags['autoreload'] = (
     {'ServerApp': {'autoreload': True}},
-    _i18n("""Autoreload the webapp
+    """Autoreload the webapp
     Enable reloading of the tornado webapp and all imported Python packages
     when any changes are made to any Python src files in server or
     extensions.
-    """)
+    """
 )
 
 
@@ -571,7 +567,6 @@ aliases.update({
     'pylab': 'ServerApp.pylab',
     'gateway-url': 'GatewayClient.url',
 })
-
 
 #-----------------------------------------------------------------------------
 # ServerApp
@@ -633,25 +628,25 @@ class ServerApp(JupyterApp):
 
     # file to be opened in the Jupyter server
     file_to_run = Unicode('',
-        help=_i18n("Open the named file when the application is launched.")
+        help="Open the named file when the application is launched."
     ).tag(config=True)
 
     file_url_prefix = Unicode('notebooks',
-        help=_i18n("The URL prefix where files are opened directly.")
+        help="The URL prefix where files are opened directly."
     ).tag(config=True)
 
     # Network related information
     allow_origin = Unicode('', config=True,
-        help=_i18n("""Set the Access-Control-Allow-Origin header
+        help="""Set the Access-Control-Allow-Origin header
 
         Use '*' to allow any origin to access your server.
 
         Takes precedence over allow_origin_pat.
-        """)
+        """
     )
 
     allow_origin_pat = Unicode('', config=True,
-        help=_i18n("""Use a regular expression for the Access-Control-Allow-Origin header
+        help="""Use a regular expression for the Access-Control-Allow-Origin header
 
         Requests from an origin matching the expression will get replies with:
 
@@ -660,7 +655,7 @@ class ServerApp(JupyterApp):
         where `origin` is the origin of the request.
 
         Ignored if allow_origin is set.
-        """)
+        """
     )
 
     allow_credentials = Bool(False, config=True,
@@ -748,13 +743,13 @@ class ServerApp(JupyterApp):
         return os.path.join(self.runtime_dir, 'jupyter_cookie_secret')
 
     cookie_secret = Bytes(b'', config=True,
-        help=_i18n("""The random bytes used to secure cookies.
+        help="""The random bytes used to secure cookies.
         By default this is a new random number every time you start the server.
         Set it to a value in a config file to enable logins to persist across server sessions.
 
         Note: Cookie secrets should be kept private, do not share config files with
         cookie_secret stored in plaintext (you can read the value from a file).
-        """)
+        """
     )
 
     @default('cookie_secret')
@@ -805,13 +800,12 @@ class ServerApp(JupyterApp):
             return binascii.hexlify(os.urandom(24)).decode('ascii')
 
     min_open_files_limit = Integer(config=True,
-        help=_i18n("""
+        help="""
         Gets or sets a lower bound on the open file handles process resource
         limit. This may need to be increased if you run into an
         OSError: [Errno 24] Too many open files.
         This is not applicable when running on Windows.
         """)
-    )
 
     @default('min_open_files_limit')
     def _default_min_open_files_limit(self):
@@ -830,21 +824,21 @@ class ServerApp(JupyterApp):
         return soft
 
     max_body_size = Integer(512 * 1024 * 1024, config=True,
-        help=_i18n("""
+        help="""
         Sets the maximum allowed size of the client request body, specified in
         the Content-Length request header field. If the size in a request
         exceeds the configured value, a malformed HTTP message is returned to
         the client.
 
         Note: max_body_size is applied even in streaming mode.
-        """)
+        """
     )
 
     max_buffer_size = Integer(512 * 1024 * 1024, config=True,
-        help=_i18n("""
+        help="""
         Gets or sets the maximum amount of memory, in bytes, that is allocated
         for use by the buffer manager.
-        """)
+        """
     )
 
     @observe('token')
@@ -852,41 +846,41 @@ class ServerApp(JupyterApp):
         self._token_generated = False
 
     password = Unicode(u'', config=True,
-                      help=_i18n("""Hashed password to use for web authentication.
+                      help="""Hashed password to use for web authentication.
 
                       To generate, type in a python/IPython shell:
 
                         from jupyter_server.auth import passwd; passwd()
 
                       The string should be of the form type:salt:hashed-password.
-                      """)
+                      """
     )
 
     password_required = Bool(False, config=True,
-                      help=_i18n("""Forces users to use a password for the Jupyter server.
+                      help="""Forces users to use a password for the Jupyter server.
                       This is useful in a multi user environment, for instance when
                       everybody in the LAN can access each other's machine through ssh.
 
                       In such a case, serving on localhost is not secure since
                       any user can connect to the Jupyter server via ssh.
 
-                      """)
+                      """
     )
 
     allow_password_change = Bool(True, config=True,
-                    help=_i18n("""Allow password to be changed at login for the Jupyter server.
+                    help="""Allow password to be changed at login for the Jupyter server.
 
                     While loggin in with a token, the Jupyter server UI will give the opportunity to
                     the user to enter a new password at the same time that will replace
                     the token login mechanism.
 
                     This can be set to false to prevent changing password from the UI/API.
-                    """)
+                    """
     )
 
 
     disable_check_xsrf = Bool(False, config=True,
-        help=_i18n("""Disable cross-site-request-forgery protection
+        help="""Disable cross-site-request-forgery protection
 
         Jupyter notebook 4.3.1 introduces protection from cross-site request forgeries,
         requiring API requests to either:
@@ -898,11 +892,11 @@ class ServerApp(JupyterApp):
         completely without authentication.
         These services can disable all authentication and security checks,
         with the full knowledge of what that implies.
-        """)
+        """
     )
 
     allow_remote_access = Bool(config=True,
-       help=_i18n("""Allow requests where the Host header doesn't point to a local server
+       help="""Allow requests where the Host header doesn't point to a local server
 
        By default, requests get a 403 forbidden response if the 'Host' header
        shows that the browser thinks it's on a non-local domain.
@@ -915,7 +909,6 @@ class ServerApp(JupyterApp):
        Local IP addresses (such as 127.0.0.1 and ::1) are allowed as local,
        along with hostnames configured in local_hostnames.
        """)
-    )
 
     @default('allow_remote_access')
     def _default_allow_remote(self):
@@ -952,7 +945,7 @@ class ServerApp(JupyterApp):
             return not addr.is_loopback
 
     use_redirect_file = Bool(True, config=True,
-        help=_i18n("""Disable launching browser by redirect file
+        help="""Disable launching browser by redirect file
      For versions of notebook > 5.7.2, a security feature measure was added that
      prevented the authentication token used to launch the browser from being visible.
      This feature makes it difficult for other users on a multi-user system from
@@ -964,34 +957,32 @@ class ServerApp(JupyterApp):
 
      Disabling this setting to False will disable this behavior, allowing the browser
      to launch by using a URL and visible token (as before).
-     """)
+     """
     )
 
     local_hostnames = List(Unicode(), ['localhost'], config=True,
-       help=_i18n("""Hostnames to allow as local when allow_remote_access is False.
+       help="""Hostnames to allow as local when allow_remote_access is False.
 
        Local IP addresses (such as 127.0.0.1 and ::1) are automatically accepted
        as local as well.
-       """)
+       """
     )
 
     open_browser = Bool(False, config=True,
-                        help=_i18n("""Whether to open in a browser after starting.
+                        help="""Whether to open in a browser after starting.
                         The specific browser used is platform dependent and
                         determined by the python standard library `webbrowser`
                         module, unless it is overridden using the --browser
                         (ServerApp.browser) configuration option.
                         """)
-    )
 
     browser = Unicode(u'', config=True,
-                      help=_i18n("""Specify what command to use to invoke a web
+                      help="""Specify what command to use to invoke a web
                       browser when starting the server. If not specified, the
                       default browser will be determined by the `webbrowser`
                       standard library module, which allows setting of the
                       BROWSER environment variable to override it.
                       """)
-    )
 
     webbrowser_open_new = Integer(2, config=True,
         help=_i18n("""Specify where to open the server on startup. This is the
@@ -1047,11 +1038,11 @@ class ServerApp(JupyterApp):
     )
 
     base_url = Unicode('/', config=True,
-                       help=_i18n('''The base URL for the Jupyter server.
+                       help='''The base URL for the Jupyter server.
 
                        Leading and trailing slashes can be omitted,
                        and will automatically be added.
-                       '''))
+                       ''')
 
     @validate('base_url')
     def _update_base_url(self, proposal):
@@ -1063,10 +1054,10 @@ class ServerApp(JupyterApp):
         return value
 
     extra_static_paths = List(Unicode(), config=True,
-        help=_i18n("""Extra paths to search for serving static files.
+        help="""Extra paths to search for serving static files.
 
         This allows adding javascript/css to be available from the Jupyter server machine,
-        or overriding individual files in the IPython""")
+        or overriding individual files in the IPython"""
     )
 
     @property
@@ -1102,15 +1093,15 @@ class ServerApp(JupyterApp):
     )
 
     websocket_url = Unicode("", config=True,
-        help=_i18n("""The base URL for websockets,
+        help="""The base URL for websockets,
         if it differs from the HTTP server (hint: it almost certainly doesn't).
 
         Should be in the form of an HTTP origin: ws[s]://hostname[:port]
-        """)
+        """
     )
 
     quit_button = Bool(True, config=True,
-        help=_i18n("""If True, display controls to shut down the Jupyter server, such as menu items or buttons.""")
+        help="""If True, display controls to shut down the Jupyter server, such as menu items or buttons."""
     )
 
     # REMOVE in VERSION 2.0
@@ -1174,13 +1165,13 @@ class ServerApp(JupyterApp):
     kernel_spec_manager_class = Type(
         default_value=KernelSpecManager,
         config=True,
-        help=_i18n("""
+        help="""
         The kernel spec manager class to use. Should be a subclass
         of `jupyter_client.kernelspec.KernelSpecManager`.
 
         The Api of KernelSpecManager is provisional and might change
         without warning between this version of Jupyter and the next stable one.
-        """)
+        """
     )
 
     login_handler_class = Type(
@@ -1282,7 +1273,7 @@ class ServerApp(JupyterApp):
             # If we receive a non-absolute path, make it absolute.
             value = os.path.abspath(value)
         if not os.path.isdir(value):
-            raise TraitError(_i18n("No such directory: '%r'") % value)
+            raise TraitError(trans.gettext("No such directory: '%r'") % value)
         return value
 
     @observe('root_dir')
@@ -1319,7 +1310,7 @@ class ServerApp(JupyterApp):
         check the message and data rate limits."""))
 
     shutdown_no_activity_timeout = Integer(0, config=True,
-        help=_i18n("Shut down the server after N seconds with no kernels or "
+        help=("Shut down the server after N seconds with no kernels or "
               "terminals running and no activity. "
               "This can be used together with culling idle kernels "
               "(MappingKernelManager.cull_idle_timeout) to "
@@ -1340,9 +1331,9 @@ class ServerApp(JupyterApp):
 
     authenticate_prometheus = Bool(
         True,
-        help=_i18n("""
+        help=""""
         Require authentication to access prometheus metrics.
-        """),
+        """,
         config=True
     )
 
@@ -1485,9 +1476,7 @@ class ServerApp(JupyterApp):
     def init_resources(self):
         """initialize system resources"""
         if resource is None:
-            self.log.debug(
-                _i18n('Ignoring min_open_files_limit because the limit cannot be adjusted (for example, on Windows)')
-            )
+            self.log.debug('Ignoring min_open_files_limit because the limit cannot be adjusted (for example, on Windows)')
             return
 
         old_soft, old_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
@@ -1497,7 +1486,7 @@ class ServerApp(JupyterApp):
             if hard < soft:
                 hard = soft
             self.log.debug(
-                _i18n('Raising open file limit: soft {}->{}; hard {}->{}'.format(old_soft, soft, old_hard, hard))
+                'Raising open file limit: soft {}->{}; hard {}->{}'.format(old_soft, soft, old_hard, hard)
             )
             resource.setrlimit(resource.RLIMIT_NOFILE, (soft, hard))
 
@@ -1782,11 +1771,11 @@ class ServerApp(JupyterApp):
     @staticmethod
     def _init_asyncio_patch():
         """no longer needed with tornado 6.1"""
-        warnings.warn(_i18n(
+        warnings.warn(
             """ServerApp._init_asyncio_patch called, and is longer needed for """
             """tornado 6.1+, and will be removed in a future release.""",
             DeprecationWarning
-        ))
+        )
 
     @catch_config_error
     def initialize(self, argv=None, find_extensions=True, new_httpserver=True, starter_extension=None):
@@ -2149,8 +2138,6 @@ def list_running_servers(runtime_dir=None):
                     os.unlink(os.path.join(runtime_dir, file_name))
                 except OSError:
                     pass  # TODO: This should warn or log or something
-
-
 #-----------------------------------------------------------------------------
 # Main entry point
 #-----------------------------------------------------------------------------
