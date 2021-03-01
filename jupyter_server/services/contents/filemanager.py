@@ -27,7 +27,7 @@ from ipython_genutils.py3compat import getcwd, string_types
 from jupyter_core.paths import exists, is_hidden, is_file_hidden
 from jupyter_server import _tz as tz
 from jupyter_server.base.handlers import AuthenticatedFileHandler
-from jupyter_server.transutils import _
+from jupyter_server.transutils import _i18n
 
 try:
     from os.path import samefile
@@ -531,7 +531,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                                 (old_path, e)) from e
 
     def info_string(self):
-        return _("Serving notebooks from local directory: %s") % self.root_dir
+        return _i18n("Serving notebooks from local directory: %s") % self.root_dir
 
     def get_kernel_path(self, path, model=None):
         """Return the initial API path of  a kernel associated with a given notebook"""
