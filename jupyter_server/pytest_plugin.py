@@ -426,3 +426,9 @@ def jp_create_notebook(jp_root_dir):
         nbtext = nbformat.writes(nb, version=4)
         nbpath.write_text(nbtext)
     return inner
+
+
+@pytest.fixture(autouse=True)
+def jp_server_cleanup():
+    yield
+    ServerApp.clear_instance()

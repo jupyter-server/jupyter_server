@@ -154,7 +154,6 @@ class ExtensionApp(JupyterApp):
     # the default value to False if they don't offer a browser
     # based frontend.
     open_browser = Bool(
-        True,
         help="""Whether to open in a browser after starting.
         The specific browser used is platform dependent and
         determined by the python standard library `webbrowser`
@@ -162,6 +161,10 @@ class ExtensionApp(JupyterApp):
         (ServerApp.browser) configuration option.
         """
     ).tag(config=True)
+
+    @default('open_browser')
+    def _default_open_browser(self):
+        return self.serverapp.config["ServerApp"].get("open_browser", True)
 
     # The extension name used to name the jupyter config
     # file, jupyter_{name}_config.
