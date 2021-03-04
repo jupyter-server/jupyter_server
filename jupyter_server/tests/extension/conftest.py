@@ -1,4 +1,5 @@
 import pytest
+from .mockextensions.app import MockExtensionApp
 
 
 mock_html = """
@@ -42,3 +43,9 @@ def config_file(jp_config_dir):
     f = jp_config_dir.joinpath("jupyter_mockextension_config.py")
     f.write_text("c.MockExtensionApp.mock_trait ='config from file'")
     return f
+
+
+@pytest.fixture(autouse=True)
+def jp_mockextension_cleanup():
+    yield
+    MockExtensionApp.clear_instance()

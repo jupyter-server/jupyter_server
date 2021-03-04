@@ -49,7 +49,7 @@ jobs:
         # the file descriptions opened by the asyncio IOLoop.
         # This leads to a nasty, flaky race condition that we haven't
         # been able to solve.
-        pytest -vv -s
+        pytest -vv jupyter_server -s
     - name: Install the Python dependencies for the examples
       run: |
         cd examples/simple && pip install -e .

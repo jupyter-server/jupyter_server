@@ -38,7 +38,7 @@ Launch with:
 To test an installed `jupyter_server`, run the following:
 
     $ pip install jupyter_server[test]
-    $ pytest --pyargs jupyter_server
+    $ pytest jupyter_server
 
 ## Contributing
 
