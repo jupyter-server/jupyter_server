@@ -3,7 +3,6 @@ from tornado import web
 from ..base.handlers import APIHandler
 
 
-
 class TerminalRootHandler(APIHandler):
 
     @web.authenticated
