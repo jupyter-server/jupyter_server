@@ -1564,7 +1564,7 @@ class ServerApp(JupyterApp):
 
         try:
             from .terminal import initialize
-            initialize(server_app=self)
+            initialize(self.web_app, self.root_dir, self.connection_url, self.terminado_settings)
             self.terminals_available = True
         except ImportError as e:
             self.log.warning(_i18n("Terminals not available (error was %s)"), e)

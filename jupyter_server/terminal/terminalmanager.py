@@ -6,19 +6,18 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-import warnings
+import terminado
 
 from datetime import timedelta
 from jupyter_server._tz import utcnow, isoformat
-from terminado import NamedTermManager
 from tornado import web
 from tornado.ioloop import IOLoop, PeriodicCallback
-from traitlets import Integer, validate
+from traitlets import Integer
 from traitlets.config import LoggingConfigurable
 from ..prometheus.metrics import TERMINAL_CURRENTLY_RUNNING_TOTAL
 
 
-class TerminalManager(LoggingConfigurable, NamedTermManager):
+class TerminalManager(LoggingConfigurable, terminado.NamedTermManager):
     """  """
 
     _culler_callback = None

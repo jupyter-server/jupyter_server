@@ -14,12 +14,12 @@ from .handlers import TerminalHandler, TermSocket
 from .terminalmanager import TerminalManager
 
 
-def initialize(server_app):
+def initialize(webapp, root_dir, connection_url, settings):
     if os.name == 'nt':
         default_shell = 'powershell.exe'
     else:
         default_shell = which('sh')
-    shell_override = server_app.terminado_settings.get('shell_command')
+    shell_override = settings.get('shell_command')
     shell = (
         [os.environ.get('SHELL') or default_shell]
         if shell_override is None
@@ -32,19 +32,20 @@ def initialize(server_app):
     # the user has specifically set a preferred shell command.
     if os.name != 'nt' and shell_override is None and not sys.stdout.isatty():
         shell.append('-l')
-    terminal_manager = server_app.web_app.settings['terminal_manager'] = TerminalManager(
+    terminal_manager = webapp.settings['terminal_manager'] = TerminalManager(
         shell_command=shell,
-        extra_env={'JUPYTER_SERVER_ROOT': server_app.root_dir,
-                   'JUPYTER_SERVER_URL': server_app.connection_url,
+        extra_env={'JUPYTER_SERVER_ROOT': root_dir,
+                   'JUPYTER_SERVER_URL': connection_url,
                    },
-        parent=server_app,
+        parent=webapp.settings['serverapp'],
     )
-    terminal_manager.log = server_app.log
-    base_url = server_app.web_app.settings['base_url']
+    terminal_manager.log = webapp.settings['serverapp'].log
+    base_url = webapp.settings['base_url']
     handlers = [
+        (ujoin(base_url, r"/terminals/(\w+)"), TerminalHandler),
         (ujoin(base_url, r"/terminals/websocket/(\w+)"), TermSocket,
              {'term_manager': terminal_manager}),
         (ujoin(base_url, r"/api/terminals"), api_handlers.TerminalRootHandler),
         (ujoin(base_url, r"/api/terminals/(\w+)"), api_handlers.TerminalHandler),
     ]
-    server_app.web_app.add_handlers(".*$", handlers)
+    webapp.add_handlers(".*$", handlers)
