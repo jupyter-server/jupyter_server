@@ -14,7 +14,6 @@ except ImportError:
 from tornado import web
 
 from traitlets.config.configurable import LoggingConfigurable
-from ipython_genutils.py3compat import unicode_type
 from traitlets import Instance
 
 from jupyter_server.utils import ensure_async
@@ -81,7 +80,7 @@ class SessionManager(LoggingConfigurable):
 
     def new_session_id(self):
         "Create a uuid for a new session"
-        return unicode_type(uuid.uuid4())
+        return str(uuid.uuid4())
 
     async def create_session(self, path=None, name=None, type=None, kernel_name=None, kernel_id=None):
         """Creates a session and returns its model"""
