@@ -8,7 +8,7 @@ from nbformat.v4 import (
     new_notebook, new_markdown_cell, new_code_cell, new_output,
 )
 
-from ipython_genutils.py3compat import which
+from shutil import which
 
 
 from base64 import encodebytes
