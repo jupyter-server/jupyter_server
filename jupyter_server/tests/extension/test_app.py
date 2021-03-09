@@ -1,5 +1,7 @@
 import pytest
+from traitlets.config import Config
 from jupyter_server.serverapp import ServerApp
+from .mockextensions.app import MockExtensionApp
 
 
 @pytest.fixture
@@ -7,7 +9,7 @@ def jp_server_config(jp_template_dir):
     config = {
         "ServerApp": {
             "jpserver_extensions": {
-                "tests.extension.mockextensions": True
+                "jupyter_server.tests.extension.mockextensions": True
             },
         },
         "MockExtensionApp": {
@@ -22,7 +24,7 @@ def jp_server_config(jp_template_dir):
 
 @pytest.fixture
 def mock_extension(extension_manager):
-    name = "tests.extension.mockextensions"
+    name = "jupyter_server.tests.extension.mockextensions"
     pkg = extension_manager.extensions[name]
     point = pkg.extension_points["mockextension"]
     app = point.app
@@ -67,3 +69,23 @@ def test_extensionapp_load_config_file(
     assert mock_extension.config_file_name == 'jupyter_mockextension_config'
     # Assert that the trait is updated by config file
     assert mock_extension.mock_trait == 'config from file'
+
+
+OPEN_BROWSER_COMBINATIONS = (
+    (True, {}),
+    (True, {'ServerApp': {'open_browser': True}}),
+    (False, {'ServerApp': {'open_browser': False}}),
+    (True, {'MockExtensionApp': {'open_browser': True}}),
+    (False, {'MockExtensionApp': {'open_browser': False}}),
+    (True, {'ServerApp': {'open_browser': True}, 'MockExtensionApp': {'open_browser': True}}),
+    (False, {'ServerApp': {'open_browser': True}, 'MockExtensionApp': {'open_browser': False}}),
+    (True, {'ServerApp': {'open_browser': False}, 'MockExtensionApp': {'open_browser': True}}),
+    (False, {'ServerApp': {'open_browser': False}, 'MockExtensionApp': {'open_browser': False}}),
+)
+
+@pytest.mark.parametrize(
+    'expected_value, config', OPEN_BROWSER_COMBINATIONS
+)
+def test_browser_open(monkeypatch, jp_environ, config, expected_value):
+    serverapp = MockExtensionApp.initialize_server(config=Config(config))
+    assert serverapp.open_browser == expected_value

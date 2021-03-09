@@ -13,6 +13,15 @@ from jupyter_server.extension.handler import (
 
 STATIC_PATH = os.path.join(os.path.dirname(__file__), "static")
 
+# Function that makes these extensions discoverable
+# by the test functions.
+def _jupyter_server_extension_points():
+    return [
+        {
+            'module': __name__,
+            'app': MockExtensionApp
+        }
+    ]
 
 class MockExtensionHandler(ExtensionHandlerMixin, JupyterHandler):
 
@@ -38,7 +47,15 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     mock_trait = Unicode('mock trait', config=True)
     loaded = False
 
+    @staticmethod
+    def get_extension_package():
+        return "jupyter_server.tests.extension.mockextensions"
+
     def initialize_handlers(self):
         self.handlers.append(('/mock', MockExtensionHandler))
         self.handlers.append(('/mock_template', MockExtensionTemplateHandler))
         self.loaded = True
+
+
+if __name__ == "__main__":
+    MockExtensionApp.launch_instance()

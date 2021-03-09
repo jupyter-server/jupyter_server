@@ -18,12 +18,18 @@ from ipython_genutils.py3compat import unicode_type
 from traitlets import Instance
 
 from jupyter_server.utils import ensure_async
+from jupyter_server.traittypes import InstanceFromClasses
 
 
 class SessionManager(LoggingConfigurable):
 
     kernel_manager = Instance('jupyter_server.services.kernels.kernelmanager.MappingKernelManager')
-    contents_manager = Instance('jupyter_server.services.contents.manager.ContentsManager')
+    contents_manager = InstanceFromClasses(
+        [
+            'jupyter_server.services.contents.manager.ContentsManager',
+            'notebook.services.contents.manager.ContentsManager'
+        ]
+    )
 
     # Session database initialized below
     _cursor = None

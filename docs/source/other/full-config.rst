@@ -796,7 +796,7 @@ Session.unpacker : DottedObjectName
     Only used with custom functions for `packer`.
 
 Session.username : Unicode
-    Default: ``'mwakabayashi'``
+    Default: ``'username'``
 
     Username for the Session. Default is your system username.
 

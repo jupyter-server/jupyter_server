@@ -1,4 +1,5 @@
 import importlib
+import warnings
 
 
 class ExtensionLoadingError(Exception):
@@ -28,6 +29,11 @@ def get_loader(obj, logger=None):
         func = getattr(obj, '_load_jupyter_server_extension')
     except AttributeError:
         func = getattr(obj, 'load_jupyter_server_extension')
+        warnings.warn("A `_load_jupyter_server_extension` function was not "
+                "found in {name!s}. Instead, a `load_jupyter_server_extension` "
+                "function was found and will be used for now. This function "
+                "name will be deprecated in future releases "
+                "of Jupyter Server.".format(name=obj), DeprecationWarning)
     except Exception:
         raise ExtensionLoadingError("_load_jupyter_server_extension function was not found.")
     return func
@@ -54,16 +60,17 @@ def get_metadata(package_name, logger=None):
     # _jupyter_server_extension_paths. We will remove in
     # a later release of Jupyter Server.
     try:
-        return module, module._jupyter_server_extension_paths()
-    except AttributeError:
+        extension_points = module._jupyter_server_extension_paths()
         if logger:
-            logger.debug(
+            logger.warning(
                 "A `_jupyter_server_extension_points` function was not "
                 "found in {name}. Instead, a `_jupyter_server_extension_paths` "
                 "function was found and will be used for now. This function "
                 "name will be deprecated in future releases "
                 "of Jupyter Server.".format(name=package_name)
             )
+        return module, extension_points
+    except AttributeError:
         pass
 
     # Dynamically create metadata if the package doesn't

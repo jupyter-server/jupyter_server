@@ -22,7 +22,7 @@ class SessionRootHandler(APIHandler):
     async def get(self):
         # Return a list of running sessions
         sm = self.session_manager
-        sessions = await sm.list_sessions()
+        sessions = await ensure_async(sm.list_sessions())
         self.finish(json.dumps(sessions, default=date_default))
 
     @web.authenticated
@@ -59,7 +59,7 @@ class SessionRootHandler(APIHandler):
             self.log.debug("No kernel specified, using default kernel")
             kernel_name = None
 
-        exists = await sm.session_exists(path=path)
+        exists = await ensure_async(sm.session_exists(path=path))
         if exists:
             model = await sm.get_session(path=path)
         else:

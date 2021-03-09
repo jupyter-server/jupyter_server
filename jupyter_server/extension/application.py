@@ -4,21 +4,22 @@ import logging
 
 from jinja2 import Environment, FileSystemLoader
 
+from traitlets.config import Config
 from traitlets import (
     HasTraits,
     Unicode,
     List,
     Dict,
+    Bool,
     default
 )
-from traitlets.config import Config
 from tornado.log import LogFormatter
 from tornado.web import RedirectHandler
 
-from jupyter_core.application import JupyterApp
+from jupyter_core.application import JupyterApp, NoStart
 
 from jupyter_server.serverapp import ServerApp
-from jupyter_server.transutils import _
+from jupyter_server.transutils import _i18n
 from jupyter_server.utils import url_path_join
 from .handler import ExtensionHandlerMixin
 
@@ -86,7 +87,7 @@ class ExtensionAppJinjaMixin(HasTraits):
     """Use Jinja templates for HTML templates on top of an ExtensionApp."""
 
     jinja2_options = Dict(
-        help=_("""Options to pass to the jinja2 environment for this
+        help=_i18n("""Options to pass to the jinja2 environment for this
         """)
     ).tag(config=True)
 
@@ -147,9 +148,23 @@ class ExtensionApp(JupyterApp):
     # A useful class property that subclasses can override to
     # configure the underlying Jupyter Server when this extension
     # is launched directly (using its `launch_instance` method).
-    serverapp_config = {
-        "open_browser": True
-    }
+    serverapp_config = {}
+
+    # Some subclasses will likely override this trait to flip
+    # the default value to False if they don't offer a browser
+    # based frontend.
+    open_browser = Bool(
+        help="""Whether to open in a browser after starting.
+        The specific browser used is platform dependent and
+        determined by the python standard library `webbrowser`
+        module, unless it is overridden using the --browser
+        (ServerApp.browser) configuration option.
+        """
+    ).tag(config=True)
+
+    @default('open_browser')
+    def _default_open_browser(self):
+        return self.serverapp.config["ServerApp"].get("open_browser", True)
 
     # The extension name used to name the jupyter config
     # file, jupyter_{name}_config.
@@ -167,6 +182,17 @@ class ExtensionApp(JupyterApp):
 
     # Extension URL sets the default landing page for this extension.
     extension_url = "/"
+
+    default_url = Unicode().tag(config=True)
+
+    @default('default_url')
+    def _default_url(self):
+        return self.extension_url
+
+    file_url_prefix = Unicode('notebooks')
+
+    # Is this linked to a serverapp yet?
+    _linked = Bool(False)
 
     # Extension can configure the ServerApp from the command-line
     classes = [
@@ -207,24 +233,24 @@ class ExtensionApp(JupyterApp):
     ).tag(config=True)
 
     template_paths = List(Unicode(),
-        help=_("""Paths to search for serving jinja templates.
+        help=_i18n("""Paths to search for serving jinja templates.
 
         Can be used to override templates from notebook.templates.""")
     ).tag(config=True)
 
     settings = Dict(
-        help=_("""Settings that will passed to the server.""")
+        help=_i18n("""Settings that will passed to the server.""")
     ).tag(config=True)
 
     handlers = List(
-        help=_("""Handlers appended to the server.""")
+        help=_i18n("""Handlers appended to the server.""")
     ).tag(config=True)
 
     def _config_file_name_default(self):
         """The default config file name."""
         if not self.name:
             return ''
-        return 'jupyter_{}_config'.format(self.name.replace('-','_'))
+        return 'jupyter_{}_config'.format(self.name.replace('-', '_'))
 
     def initialize_settings(self):
         """Override this method to add handling of settings."""
@@ -312,15 +338,15 @@ class ExtensionApp(JupyterApp):
             })
         self.initialize_templates()
 
-    @classmethod
-    def _jupyter_server_config(cls):
+    def _jupyter_server_config(self):
         base_config = {
             "ServerApp": {
-                "jpserver_extensions": {cls.get_extension_package(): True},
-                "default_url": cls.extension_url
+                "default_url": self.default_url,
+                "open_browser": self.open_browser,
+                "file_url_prefix": self.file_url_prefix
             }
         }
-        base_config["ServerApp"].update(cls.serverapp_config)
+        base_config["ServerApp"].update(self.serverapp_config)
         return base_config
 
     def _link_jupyter_server_extension(self, serverapp):
@@ -331,6 +357,10 @@ class ExtensionApp(JupyterApp):
         the command line contains traits for the ExtensionApp
         or the ExtensionApp's config files have server
         settings.
+
+        Note, the ServerApp has not initialized the Tornado
+        Web Application yet, so do not try to affect the
+        `web_app` attribute.
         """
         self.serverapp = serverapp
         # Load config from an ExtensionApp's config files.
@@ -350,22 +380,8 @@ class ExtensionApp(JupyterApp):
         # ServerApp, do it here.
         # i.e. ServerApp traits <--- ExtensionApp config
         self.serverapp.update_config(self.config)
-
-    @classmethod
-    def initialize_server(cls, argv=[], load_other_extensions=True, **kwargs):
-        """Creates an instance of ServerApp where this extension is enabled
-        (superceding disabling found in other config from files).
-
-        This is necessary when launching the ExtensionApp directly from
-        the `launch_instance` classmethod.
-        """
-        # The ExtensionApp needs to add itself as enabled extension
-        # to the jpserver_extensions trait, so that the ServerApp
-        # initializes it.
-        config = Config(cls._jupyter_server_config())
-        serverapp = ServerApp.instance(**kwargs, argv=[], config=config)
-        serverapp.initialize(argv=argv, find_extensions=load_other_extensions)
-        return serverapp
+        # Acknowledge that this extension has been linked.
+        self._linked = True
 
     def initialize(self):
         """Initialize the extension app. The
@@ -453,6 +469,24 @@ class ExtensionApp(JupyterApp):
         extension.initialize()
 
     @classmethod
+    def initialize_server(cls, argv=[], load_other_extensions=True, **kwargs):
+        """Creates an instance of ServerApp and explicitly sets
+        this extension to enabled=True (i.e. superceding disabling
+        found in other config from files).
+
+        The `launch_instance` method uses this method to initialize
+        and start a server.
+        """
+        serverapp = ServerApp.instance(
+            jpserver_extensions={cls.get_extension_package(): True}, **kwargs)
+        serverapp.initialize(
+            argv=argv,
+            starter_extension=cls.name,
+            find_extensions=cls.load_other_extensions,
+        )
+        return serverapp
+
+    @classmethod
     def launch_instance(cls, argv=None, **kwargs):
         """Launch the extension like an application. Initializes+configs a stock server
         and appends the extension to the server. Then starts the server and routes to
@@ -463,24 +497,29 @@ class ExtensionApp(JupyterApp):
             args = sys.argv[1:]  # slice out extension config.
         else:
             args = argv
-        # Check for subcommands
+
+        # Handle all "stops" that could happen before
+        # continuing to launch a server+extension.
         subapp = _preparse_for_subcommand(cls, args)
         if subapp:
             subapp.start()
-        else:
-            # Check for help, version, and generate-config arguments
-            # before initializing server to make sure these
-            # arguments trigger actions from the extension not the server.
-            _preparse_for_stopping_flags(cls, args)
-            # Get a jupyter server instance.
-            serverapp = cls.initialize_server(
-                argv=args,
-                load_other_extensions=cls.load_other_extensions
+            return
+
+        # Check for help, version, and generate-config arguments
+        # before initializing server to make sure these
+        # arguments trigger actions from the extension not the server.
+        _preparse_for_stopping_flags(cls, args)
+
+        serverapp = cls.initialize_server(argv=args)
+
+        # Log if extension is blocking other extensions from loading.
+        if not cls.load_other_extensions:
+            serverapp.log.info(
+                "{ext_name} is running without loading "
+                "other extensions.".format(ext_name=cls.name)
             )
-            # Log if extension is blocking other extensions from loading.
-            if not cls.load_other_extensions:
-                serverapp.log.info(
-                    "{ext_name} is running without loading "
-                    "other extensions.".format(ext_name=cls.name)
-                )
+        # Start the server.
+        try:
             serverapp.start()
+        except NoStart:
+            pass

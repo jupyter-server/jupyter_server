@@ -18,11 +18,12 @@ from tornado.ioloop import IOLoop, PeriodicCallback
 
 from jupyter_client.session import Session
 from jupyter_client.multikernelmanager import MultiKernelManager, AsyncMultiKernelManager
+from jupyter_core.paths import exists
 from traitlets import (Any, Bool, Dict, List, Unicode, TraitError, Integer,
        Float, Instance, default, validate
 )
 
-from jupyter_server.utils import to_os_path, exists, ensure_async, run_sync
+from jupyter_server.utils import to_os_path, ensure_async
 from jupyter_server._tz import utcnow, isoformat
 from ipython_genutils.py3compat import getcwd
 
@@ -468,8 +469,9 @@ class MappingKernelManager(MultiKernelManager):
 
     async def cull_kernel_if_idle(self, kernel_id):
         kernel = self._kernels[kernel_id]
-        self.log.debug("kernel_id=%s, kernel_name=%s, last_activity=%s", kernel_id, kernel.kernel_name, kernel.last_activity)
-        if kernel.last_activity is not None:
+        if hasattr(kernel, 'last_activity'):  # last_activity is monkey-patched, so ensure that has occurred
+            self.log.debug("kernel_id=%s, kernel_name=%s, last_activity=%s",
+                           kernel_id, kernel.kernel_name, kernel.last_activity)
             dt_now = utcnow()
             dt_idle = dt_now - kernel.last_activity
             # Compute idle properties
@@ -482,7 +484,7 @@ class MappingKernelManager(MultiKernelManager):
                 idle_duration = int(dt_idle.total_seconds())
                 self.log.warning("Culling '%s' kernel '%s' (%s) with %d connections due to %s seconds of inactivity.",
                                  kernel.execution_state, kernel.kernel_name, kernel_id, connections, idle_duration)
-                await self.shutdown_kernel(kernel_id)
+                await ensure_async(self.shutdown_kernel(kernel_id))
 
 
 # AsyncMappingKernelManager inherits as much as possible from MappingKernelManager,
@@ -506,7 +508,6 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
             kernel._activity_stream.close()
             kernel._activity_stream = None
         self.stop_buffering(kernel_id)
-        self._kernel_connections.pop(kernel_id, None)
 
         # Decrease the metric of number of kernels
         # running for the relevant kernel type by 1
@@ -514,4 +515,7 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
             type=self._kernels[kernel_id].kernel_name
         ).dec()
 
-        return await self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
+        # Finish shutting down the kernel before clearing state to avoid a race condition.
+        ret = await self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
+        self._kernel_connections.pop(kernel_id, None)
+        return ret

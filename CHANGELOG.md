@@ -2,12 +2,143 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.4.1](https://github.com/jupyter-server/jupyter_server/tree/1.4.1) (2021-02-22)
 
-## [Unreleased]
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.4.0...bc252d33de2f647f98d048dc32888f0a83f005ac)
 
-## [1.1.0] - 2020-12-11
+**Merged pull requests:**
+
+* Update README.md [#425](https://github.com/jupyter-server/jupyter_server/pull/425) ([@BobinMathew](https://github.com/BobinMathew))
+* Solve UnboundLocalError in launch_browser() [#421](https://github.com/jupyter-server/jupyter_server/pull/421) ([@jamesmishra](https://github.com/jamesmishra))
+* Add file_to_run to server extension docs [#420](https://github.com/jupyter-server/jupyter_server/pull/420) ([@Zsailer](https://github.com/Zsailer))
+* Remove outdated reference to _jupyter_server_extension_paths in docs [#419](https://github.com/jupyter-server/jupyter_server/pull/419) ([@Zsailer](https://github.com/Zsailer))
+
+**Contributors to this release:**
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-02-18&to=2021-02-22&type=c))
+
+[@jamesmishra](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajamesmishra+updated%3A2021-02-18..2021-02-22&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-02-18..2021-02-22&type=Issues)
+
+
+## [1.4.0](https://github.com/jupyter-server/jupyter_server/tree/1.4.0) (2021-02-18)
+
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.3.0...HEAD)
+
+**Merged pull requests:**
+
+- Add Tests to Distribution [\#416](https://github.com/jupyter-server/jupyter_server/pull/416) ([afshin](https://github.com/afshin))
+- Enable extensions to control the file\_to\_run [\#415](https://github.com/jupyter-server/jupyter_server/pull/415) ([afshin](https://github.com/afshin))
+- add missing template for view.html [\#414](https://github.com/jupyter-server/jupyter_server/pull/414) ([minrk](https://github.com/minrk))
+- Remove obsoleted asyncio-patch fixture [\#412](https://github.com/jupyter-server/jupyter_server/pull/412) ([kevin-bates](https://github.com/kevin-bates))
+- Emit deprecation warning on old name [\#411](https://github.com/jupyter-server/jupyter_server/pull/411) ([fcollonval](https://github.com/fcollonval))
+- Correct logging message position [\#410](https://github.com/jupyter-server/jupyter_server/pull/410) ([fcollonval](https://github.com/fcollonval))
+- Update 1.3.0 Changelog to include broken 1.2.3 PRs [\#408](https://github.com/jupyter-server/jupyter_server/pull/408) ([kevin-bates](https://github.com/kevin-bates))
+- \[Gateway\] Track only this server's kernels [\#407](https://github.com/jupyter-server/jupyter_server/pull/407) ([kevin-bates](https://github.com/kevin-bates))
+- Update manager.py: more descriptive warnings when extensions fail to load [\#396](https://github.com/jupyter-server/jupyter_server/pull/396) ([alberti42](https://github.com/alberti42))
+
+
+## [1.3.0](https://github.com/jupyter-server/jupyter_server/tree/1.3.0) (2021-02-04)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.2.2...HEAD)
+
+**Merged pull requests (includes those from broken 1.2.3 release):**
+
+- Special case ExtensionApp that starts the ServerApp [\#401](https://github.com/jupyter-server/jupyter_server/pull/401) ([afshin](https://github.com/afshin))
+- only use deprecated notebook\_dir config if root\_dir is not set [\#400](https://github.com/jupyter-server/jupyter_server/pull/400) ([minrk](https://github.com/minrk))
+- Use async kernel manager by default [\#399](https://github.com/jupyter-server/jupyter_server/pull/399) ([kevin-bates](https://github.com/kevin-bates))
+- Revert Session.username default value change [\#398](https://github.com/jupyter-server/jupyter_server/pull/398) ([mwakaba2](https://github.com/mwakaba2))
+- Re-enable default\_url in ExtensionApp [\#393](https://github.com/jupyter-server/jupyter_server/pull/393) ([afshin](https://github.com/afshin))
+- Enable notebook ContentsManager in jupyter\_server [\#392](https://github.com/jupyter-server/jupyter_server/pull/392) ([afshin](https://github.com/afshin))
+- Use jupyter\_server\_config.json as config file in the update password api [\#390](https://github.com/jupyter-server/jupyter_server/pull/390) ([echarles](https://github.com/echarles))
+- Increase culling test idle timeout [\#388](https://github.com/jupyter-server/jupyter_server/pull/388) ([kevin-bates](https://github.com/kevin-bates))
+- update changelog for 1.2.2 [\#387](https://github.com/jupyter-server/jupyter_server/pull/387) ([Zsailer](https://github.com/Zsailer))
+
+## [1.2.3](https://github.com/jupyter-server/jupyter_server/tree/1.2.3) (2021-01-29)
+
+This was a broken release and was yanked from PyPI.
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.2.2...HEAD)
+
+**Merged pull requests:**
+
+- Re-enable default\_url in ExtensionApp [\#393](https://github.com/jupyter-server/jupyter_server/pull/393) ([afshin](https://github.com/afshin))
+- Enable notebook ContentsManager in jupyter\_server [\#392](https://github.com/jupyter-server/jupyter_server/pull/392) ([afshin](https://github.com/afshin))
+- Use jupyter\_server\_config.json as config file in the update password api [\#390](https://github.com/jupyter-server/jupyter_server/pull/390) ([echarles](https://github.com/echarles))
+- Increase culling test idle timeout [\#388](https://github.com/jupyter-server/jupyter_server/pull/388) ([kevin-bates](https://github.com/kevin-bates))
+- update changelog for 1.2.2 [\#387](https://github.com/jupyter-server/jupyter_server/pull/387) ([Zsailer](https://github.com/Zsailer))
+
+
+## [1.2.2](https://github.com/jupyter-server/jupyter_server/tree/1.2.2) (2021-01-14)
+
+**Merged pull requests:**
+
+- Apply missing ensure\_async to root session handler methods [\#386](https://github.com/jupyter-server/jupyter_server/pull/386) ([kevin-bates](https://github.com/kevin-bates))
+- Update changelog to 1.2.1 [\#385](https://github.com/jupyter-server/jupyter_server/pull/385) ([Zsailer](https://github.com/Zsailer))
+- Fix application exit [\#384](https://github.com/jupyter-server/jupyter_server/pull/384) ([afshin](https://github.com/afshin))
+- Replace secure\_write, is\_hidden, exists with jupyter\_core's [\#382](https://github.com/jupyter-server/jupyter_server/pull/382) ([kevin-bates](https://github.com/kevin-bates))
+- Add --autoreload flag [\#380](https://github.com/jupyter-server/jupyter_server/pull/380) ([afshin](https://github.com/afshin))
+
+
+## [1.2.1](https://github.com/jupyter-server/jupyter_server/tree/1.2.1) (2021-01-08)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.2.0...1.2.1)
+
+**Merged pull requests:**
+
+- Enable extensions to set debug and open-browser flags [\#379](https://github.com/jupyter-server/jupyter_server/pull/379) ([afshin](https://github.com/afshin))
+- Add reconnection to Gateway [\#378](https://github.com/jupyter-server/jupyter_server/pull/378) ([oyvsyo](https://github.com/oyvsyo))
+
+## [1.2.0](https://github.com/jupyter-server/jupyter_server/tree/1.2.0) (2021-01-07)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.1.4...1.2.0)
+
+**Merged pull requests:**
+
+- Flip default value for open\_browser in extensions [\#377](https://github.com/jupyter-server/jupyter_server/pull/377) ([ajbozarth](https://github.com/ajbozarth))
+- Improve Handling of the soft limit on open file handles [\#376](https://github.com/jupyter-server/jupyter_server/pull/376) ([afshin](https://github.com/afshin))
+- Handle open\_browser trait in ServerApp and ExtensionApp differently [\#375](https://github.com/jupyter-server/jupyter_server/pull/375) ([afshin](https://github.com/afshin))
+- Add setting to disable redirect file browser launch [\#374](https://github.com/jupyter-server/jupyter_server/pull/374) ([afshin](https://github.com/afshin))
+- Make trust handle use ensure\_async [\#373](https://github.com/jupyter-server/jupyter_server/pull/373) ([vidartf](https://github.com/vidartf))
+
+## [1.1.4](https://github.com/jupyter-server/jupyter_server/tree/1.1.4) (2021-01-04)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.1.3...1.1.4)
+
+**Merged pull requests:**
+
+- Update the link to paths documentation [\#371](https://github.com/jupyter-server/jupyter_server/pull/371) ([krassowski](https://github.com/krassowski))
+- IPythonHandler -\> JupyterHandler [\#370](https://github.com/jupyter-server/jupyter_server/pull/370) ([krassowski](https://github.com/krassowski))
+- use setuptools find\_packages, exclude tests, docs and examples from dist [\#368](https://github.com/jupyter-server/jupyter_server/pull/368) ([bollwyvl](https://github.com/bollwyvl))
+- Update serverapp.py [\#367](https://github.com/jupyter-server/jupyter_server/pull/367) ([michaelaye](https://github.com/michaelaye))
+
+## [1.1.3](https://github.com/jupyter-server/jupyter_server/tree/1.1.3) (2020-12-23)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.1.2...1.1.3)
+
+**Merged pull requests:**
+
+- Culling: ensure last\_activity attr exists before use [\#365](https://github.com/jupyter-server/jupyter_server/pull/365) ([afshin](https://github.com/afshin))
+
+## [1.1.2](https://github.com/jupyter-server/jupyter_server/tree/1.1.2) (2020-12-21)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.0.11...1.1.2)
+
+**Merged pull requests:**
+
+- Nudge kernel with info request until we receive IOPub messages [\#361](https://github.com/jupyter-server/jupyter_server/pull/361) ([SylvainCorlay](https://github.com/SylvainCorlay))
+
+
+## [1.1.1](https://github.com/jupyter-server/jupyter_server/tree/1.1.1) (2020-12-16)
+
+[Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.1.0...1.1.1)
+
+**Merged pull requests:**
+
+- Fix: await possible async dir\_exists method [\#363](https://github.com/jupyter-server/jupyter_server/pull/363) ([mwakaba2](https://github.com/mwakaba2))
+
+
+## 1.1.0 (2020-12-11)
 
 [Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.0.10...1.1.0)
 
@@ -29,8 +160,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Asynchronous Contents API [\#324](https://github.com/jupyter-server/jupyter_server/pull/324) ([mwakaba2](https://github.com/mwakaba2))
 
 
-
-## [1.0.6] - 2020-11-18
+## 1.0.6 (2020-11-18)
 
 1.0.6 is a security release, fixing one vulnerability:
 
@@ -39,7 +169,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix open redirect vulnerability GHSA-grfj-wjv9-4f9v (CVE-2020-26232)
 
 
-## [1.0] - 2020-9-18
+## 1.0 (2020-9-18)
 
 ### Added.
 
