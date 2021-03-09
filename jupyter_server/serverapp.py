@@ -1978,7 +1978,7 @@ class ServerApp(JupyterApp):
             os.unlink(self.browser_open_file_to_run)
         except OSError as e:
             if e.errno != errno.ENOENT:
-                raises
+                raise
 
     def remove_browser_open_file(self):
         """Remove the jpserver-<pid>-open.html file created for this server.
