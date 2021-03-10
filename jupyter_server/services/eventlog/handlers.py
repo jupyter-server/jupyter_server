@@ -2,8 +2,7 @@ import json
 
 from tornado import web
 
-from notebook.utils import url_path_join
-from notebook.base.handlers import APIHandler, json_errors
+from jupyter_server.base.handlers import APIHandler, json_errors
 from jupyter_telemetry.eventlog import EventLog
 
 class EventLoggingHandler(APIHandler):
@@ -18,22 +17,22 @@ class EventLoggingHandler(APIHandler):
             raw_event = json.loads(self.request.body.strip().decode())
         except Exception as e:
             raise web.HTTPError(400, str(e))
-        
+
         required_fields = {'schema', 'version', 'event'}
         for rf in required_fields:
             if rf not in raw_event:
                 raise web.HTTPError(400, '{} is a required field'.format(rf))
 
-        schema_name = raw_event['schema'] 
+        schema_name = raw_event['schema']
         version = raw_event['version']
         event = raw_event['event']
-        
+
         # Profile, may need to move to a background thread if this is problematic
-        try: 
+        try:
             self.eventlog.record_event(schema_name, version, event)
         except Exception as e:
             raise web.HTTPError(400, e)
-            
+
         self.set_status(204)
         self.finish()
 
