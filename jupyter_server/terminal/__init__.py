@@ -10,7 +10,7 @@ if not check_version(terminado.__version__, '0.8.3'):
 from ipython_genutils.py3compat import which
 from jupyter_server.utils import url_path_join as ujoin
 from . import api_handlers
-from .handlers import TerminalHandler, TermSocket
+from .handlers import TermSocket
 from .terminalmanager import TerminalManager
 
 
@@ -42,7 +42,6 @@ def initialize(webapp, root_dir, connection_url, settings):
     terminal_manager.log = webapp.settings['serverapp'].log
     base_url = webapp.settings['base_url']
     handlers = [
-        (ujoin(base_url, r"/terminals/(\w+)"), TerminalHandler),
         (ujoin(base_url, r"/terminals/websocket/(\w+)"), TermSocket,
              {'term_manager': terminal_manager}),
         (ujoin(base_url, r"/api/terminals"), api_handlers.TerminalRootHandler),

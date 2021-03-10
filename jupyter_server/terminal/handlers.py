@@ -11,14 +11,6 @@ from ..base.handlers import JupyterHandler
 from ..base.zmqhandlers import WebSocketMixin
 
 
-class TerminalHandler(JupyterHandler):
-    """Render the terminal interface."""
-    @web.authenticated
-    def get(self, term_name):
-        self.write(self.render_template('terminal.html',
-                   ws_path="terminals/websocket/%s" % term_name))
-
-
 class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
 
     def origin_check(self):
