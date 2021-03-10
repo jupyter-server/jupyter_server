@@ -224,5 +224,7 @@ def run_sync(maybe_async):
             if str(e) == 'This event loop is already running':
                 # just return a Future, hoping that it will be awaited
                 result = asyncio.ensure_future(maybe_async)
+            else:
+                raise e
         return result
     return wrapped()
