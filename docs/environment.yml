@@ -13,4 +13,5 @@ dependencies:
   - sphinxcontrib_github_alt
   - sphinxcontrib-openapi
   - sphinxemoji
+  - terminado
   - git+https://github.com/pandas-dev/pydata-sphinx-theme.git@master
