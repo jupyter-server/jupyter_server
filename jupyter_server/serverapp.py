@@ -1840,7 +1840,6 @@ class ServerApp(JupyterApp):
         self.init_resources()
         self.init_configurables()
         self.init_components()
-        self.init_eventlog()
         self.init_webapp()
         if new_httpserver:
             self.init_httpserver()
