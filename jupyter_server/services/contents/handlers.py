@@ -282,7 +282,7 @@ class NotebooksRedirectHandler(JupyterHandler):
         self.redirect(url_path_join(
             self.base_url,
             'api/contents',
-            path
+            url_escape(path)
         ))
 
     put = patch = post = delete = get
