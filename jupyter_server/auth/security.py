@@ -12,6 +12,9 @@ import random
 import traceback
 import warnings
 
+import argon2
+import argon2.exceptions
+from argon2 import PasswordHasher
 from ipython_genutils.py3compat import cast_bytes, str_to_bytes, cast_unicode
 from traitlets.config import Config, ConfigFileNotFound, JSONFileConfigLoader
 from jupyter_core.paths import jupyter_config_dir
@@ -21,7 +24,7 @@ from jupyter_core.paths import jupyter_config_dir
 salt_len = 12
 
 
-def passwd(passphrase=None, algorithm='sha1'):
+def passwd(passphrase=None, algorithm='argon2'):
     """Generate hashed password and salt for use in server configuration.
 
     In the server configuration, set `c.ServerApp.password` to
@@ -34,7 +37,7 @@ def passwd(passphrase=None, algorithm='sha1'):
         and verify a password.
     algorithm : str
         Hashing algorithm to use (e.g, 'sha1' or any argument supported
-        by :func:`hashlib.new`).
+        by :func:`hashlib.new`, or 'argon2').
 
     Returns
     -------
@@ -58,6 +61,16 @@ def passwd(passphrase=None, algorithm='sha1'):
                 print('Passwords do not match.')
         else:
             raise ValueError('No matching passwords found. Giving up.')
+
+    if algorithm == 'argon2':
+        ph = PasswordHasher(
+            memory_cost=10240,
+            time_cost=10,
+            parallelism=8,
+        )
+        h = ph.hash(passphrase)
+
+        return ':'.join((algorithm, cast_unicode(h, 'ascii')))
 
     h = hashlib.new(algorithm)
     salt = ('%0' + str(salt_len) + 'x') % random.getrandbits(4 * salt_len)
@@ -84,14 +97,24 @@ def passwd_check(hashed_passphrase, passphrase):
     Examples
     --------
     >>> from jupyter_server.auth.security import passwd_check
+    >>> passwd_check('argon2:...', 'mypassword')
+    True
+
+    >>> passwd_check('argon2:...', 'otherpassword')
+    False
+
     >>> passwd_check('sha1:0e112c3ddfce:a68df677475c2b47b6e86d0467eec97ac5f4b85a',
     ...              'mypassword')
     True
-
-    >>> passwd_check('sha1:0e112c3ddfce:a68df677475c2b47b6e86d0467eec97ac5f4b85a',
-    ...              'anotherpassword')
-    False
     """
+    if hashed_passphrase.startswith('argon2:'):
+        ph = argon2.PasswordHasher()
+
+        try:
+            return ph.verify(hashed_passphrase[7:], passphrase)
+        except argon2.exceptions.VerificationError:
+            return False
+
     try:
         algorithm, salt, pw_digest = hashed_passphrase.split(':', 2)
     except (ValueError, TypeError):
