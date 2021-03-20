@@ -26,7 +26,14 @@ def eventlog_sink(jp_configurable_serverapp):
 async def test_eventlog_list_notebooks(eventlog_sink, jp_fetch, contents, path, name):
     schema, version = (eventlogging_schema_fqn('contentsmanager-actions'), 1)
     serverapp, sink = eventlog_sink
-    serverapp.eventlog.allowed_schemas = [schema]
+    serverapp.eventlog.allowed_schemas = {
+        serverapp.eventlog.schemas[(schema, version)]['$id']: {
+            'allowed_categories': [
+                'category.jupyter.org/unrestricted',
+                'category.jupyter.org/user-identifiable-information'
+            ]
+        }
+    }
 
     r = await jp_fetch(
         'api',

@@ -54,7 +54,7 @@ setup_args = dict(
         "pywin32>=1.0 ; sys_platform == 'win32'",
         'anyio>=2.0.2',
         # Install the working branch of telemetry.
-        'jupyter_telemetry@git+https://github.com/Zsailer/telemetry.git@personal-data'
+        'jupyter_telemetry@git+https://github.com/jupyter/telemetry.git@d2c19ffa03fde7d1903759de4a265ef711b333ef'
     ],
     extras_require = {
         'test': ['coverage', 'requests',
