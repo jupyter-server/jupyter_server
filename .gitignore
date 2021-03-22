@@ -6,15 +6,9 @@ docs/man/*.gz
 docs/source/api/generated
 docs/source/config.rst
 docs/gh-pages
-notebook/i18n/*/LC_MESSAGES/*.mo
-notebook/i18n/*/LC_MESSAGES/nbjs.json
-notebook/static/components
-notebook/static/style/*.min.css*
-notebook/static/*/js/built/
-notebook/static/*/built/
-notebook/static/built/
-notebook/static/*/js/main.min.js*
-notebook/static/lab/*bundle.js
+jupyter_server/i18n/*/LC_MESSAGES/*.mo
+jupyter_server/i18n/*/LC_MESSAGES/nbjs.json
+jupyter_server/static/style/*.min.css*
 node_modules
 *.py[co]
 __pycache__
@@ -40,6 +34,3 @@ config.rst
 /.project
 /.pydevproject
 
-package-lock.json
-geckodriver.log
-yarn.lock
