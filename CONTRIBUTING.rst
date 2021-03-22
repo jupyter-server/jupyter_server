@@ -19,6 +19,8 @@ Setting Up a Development Environment
 Installing the Jupyter Server
 -----------------------------
 
+The development version of the server requires `node <https://nodejs.org/en/download/>`_ and `pip <https://pip.pypa.io/en/stable/installing/>`_.
+
 Once you have installed the dependencies mentioned above, use the following
 steps::
 

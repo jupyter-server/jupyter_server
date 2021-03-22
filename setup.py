@@ -4,7 +4,7 @@ from setuptools import (
     setup,
 )
 from setupbase import (
-    get_version,
+    get_version, create_cmdclass, install_npm
 )
 
 here = pathlib.Path('.')
@@ -14,6 +14,10 @@ VERSION = get_version(str(version_path))
 readme_path = here.joinpath('README.md')
 README = readme_path.read_text()
 
+cmdclass = create_cmdclass('jsdeps')
+cmdclass['jsdeps'] = install_npm()
+
+
 setup_args = dict(
     name             = 'jupyter_server',
     description      = 'The backend—i.e. core services, APIs, and REST endpoints—to Jupyter web applications.',
@@ -22,6 +26,7 @@ setup_args = dict(
     version          = VERSION,
     packages         = find_packages('.', exclude=['tests*', 'docs*', 'examples*']),
     include_package_data = True,
+    cmdclass         = cmdclass,
     author           = 'Jupyter Development Team',
     author_email     = 'jupyter@googlegroups.com',
     url              = 'http://jupyter.org',
