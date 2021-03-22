@@ -8,14 +8,17 @@ The Notebook Server can be configured to record structured events from a running
 .. _`Telemetry System`: https://github.com/jupyter/telemetry
 .. _`JSON schemas`: https://json-schema.org/
 
+.. warning::
+    Do NOT rely on this feature for security or auditing purposes. Neither `server <#emitting-server-events>`_ nor `client <#eventlog-endpoint>`_ events are protected against meddling. For server events, those who have access to the environment can change the server code to emit whatever they want. The same goes for client events where nothing prevents users from sending spurious data to the `eventlog` endpoint.
+
 Emitting Server Events
 ----------------------
 
-Event logging is handled by its ``Eventlog`` object. This leverages Python's standing logging_ library to emit, filter, and collect event data. 
+Event logging is handled by its ``Eventlog`` object. This leverages Python's standing logging_ library to emit, filter, and collect event data.
 
 To begin recording events, you'll need to set two configurations:
 
-    1. ``handlers``: tells the EventLog *where* to route your events. This trait is a list of Python logging handlers that route events to 
+    1. ``handlers``: tells the EventLog *where* to route your events. This trait is a list of Python logging handlers that route events to
     2. ``allows_schemas``: tells the EventLog *which* events should be recorded. No events are emitted by default; all recorded events must be listed here.
 
 Here's a basic example for emitting events from the `contents` service:
@@ -38,9 +41,9 @@ The output is a file, ``"event.log"``, with events recorded as JSON data.
 -------------------
 
 The Notebook Server provides a public REST endpoint for external applications to validate and log events
-through the Server's Event Log. 
+through the Server's Event Log.
 
-To log events, send a `POST` request to the `/api/eventlog` endpoint. The body of the request should be a 
+To log events, send a `POST` request to the `/api/eventlog` endpoint. The body of the request should be a
 JSON blog and is required to have the follow keys:
 
     1. `'schema'` : the event's schema ID.
