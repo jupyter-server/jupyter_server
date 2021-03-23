@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.5.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.4.1...74801f479d7bb89c5afd4c020c52e614cc566da5))
+
+**Merged pull requests:**
+
+- Add Styling to the HTML Pages [#452](https://github.com/jupyter-server/jupyter_server/pull/452) ([@afshin](https://github.com/afshin))
+- Implement password hashing with `argon2-cffi` [#450](https://github.com/jupyter-server/jupyter_server/pull/450) ([@afshin](https://github.com/afshin))
+- Escape user input in handlers flagged during code scans [#449](https://github.com/jupyter-server/jupyter_server/pull/449) ([@kevin-bates](https://github.com/kevin-bates))
+- Fix for the terminal shutdown issue [#446](https://github.com/jupyter-server/jupyter_server/pull/446) ([@afshin](https://github.com/afshin))
+- Update the branch filter for the CI badge [#445](https://github.com/jupyter-server/jupyter_server/pull/445) ([@jtpio](https://github.com/jtpio))
+- Fix for `UnboundLocalError` in shutdown [#444](https://github.com/jupyter-server/jupyter_server/pull/444) ([@afshin](https://github.com/afshin))
+- Update CI badge and fix broken link [#443](https://github.com/jupyter-server/jupyter_server/pull/443) ([@blink1073](https://github.com/blink1073))
+- Fix syntax typo [#442](https://github.com/jupyter-server/jupyter_server/pull/442) ([@kiendang](https://github.com/kiendang))
+- Port terminal culling from Notebook [#438](https://github.com/jupyter-server/jupyter_server/pull/438) ([@kevin-bates](https://github.com/kevin-bates))
+- More complex handling of `open_browser` from extension applications [#433](https://github.com/jupyter-server/jupyter_server/pull/433) ([@afshin](https://github.com/afshin))
+- Correction in Changelog [#429](https://github.com/jupyter-server/jupyter_server/pull/429) ([@Zsailer](https://github.com/Zsailer))
+- Rename translation function alias [#428](https://github.com/jupyter-server/jupyter_server/pull/428) ([@sngyo](https://github.com/sngyo))
+
+**Contributors to this release:**
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-02-22&to=2021-03-23&type=c))
+
+[@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2021-02-22..2021-03-23&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-02-22..2021-03-23&type=Issues) | [@codecov-io](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-io+updated%3A2021-02-22..2021-03-23&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-02-22..2021-03-23&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-02-22..2021-03-23&type=Issues) | [@kiendang](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akiendang+updated%3A2021-02-22..2021-03-23&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2021-02-22..2021-03-23&type=Issues) | [@sngyo](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Asngyo+updated%3A2021-02-22..2021-03-23&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-02-22..2021-03-23&type=Issues)
+
+
 ## [1.4.1](https://github.com/jupyter-server/jupyter_server/tree/1.4.1) (2021-02-22)
 
 [Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.4.0...bc252d33de2f647f98d048dc32888f0a83f005ac)
