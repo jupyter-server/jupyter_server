@@ -118,7 +118,13 @@ class ContentsManager(LoggingConfigurable):
             try:
                 self.log.debug("Running pre-save hook on %s", path)
                 self.pre_save_hook(model=model, path=path, contents_manager=self, **kwargs)
+            except HTTPError:
+                # allow custom HTTPErrors to raise,
+                # rejecting the save with a message.
+                raise
             except Exception:
+                # unhandled errors don't prevent saving,
+                # which could cause frustrating data loss
                 self.log.error("Pre-save hook failed on %s", path, exc_info=True)
 
     checkpoints_class = Type(Checkpoints, config=True)
