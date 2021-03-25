@@ -1145,11 +1145,6 @@ class ServerApp(JupyterApp):
                 "until its next major release (2.x)."
             )
 
-    @observe('notebook_dir')
-    def _update_notebook_dir(self, change):
-        self.log.warning(_i18n("notebook_dir is deprecated, use root_dir"))
-        self.root_dir = change['new']
-
     kernel_manager_class = Type(
         default_value=AsyncMappingKernelManager,
         klass=MappingKernelManager,
@@ -1767,7 +1762,10 @@ class ServerApp(JupyterApp):
                 self.http_server.listen(port, self.ip)
             except socket.error as e:
                 if e.errno == errno.EADDRINUSE:
-                    self.log.info(_i18n('The port %i is already in use, trying another port.') % port)
+                    if self.port_retries:
+                        self.log.info(_i18n('The port %i is already in use, trying another port.') % port)
+                    else:
+                        self.log.info(_i18n('The port %i is already in use.') % port)
                     continue
                 elif e.errno in (errno.EACCES, getattr(errno, 'WSAEACCES', errno.EACCES)):
                     self.log.warning(_i18n("Permission to listen on port %i denied") % port)
@@ -1779,8 +1777,12 @@ class ServerApp(JupyterApp):
                 success = True
                 break
         if not success:
-            self.log.critical(_i18n('ERROR: the Jupyter server could not be started because '
+            if self.port_retries:
+                self.log.critical(_i18n('ERROR: the notebook server could not be started because '
                               'no available port could be found.'))
+            else:
+                self.log.critical(_i18n('ERROR: the notebook server could not be started because '
+                              'port %i is not available.') % port)
             self.exit(1)
 
     @staticmethod
