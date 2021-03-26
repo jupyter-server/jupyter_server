@@ -1523,7 +1523,7 @@ class ServerApp(JupyterApp):
 
         url = (
             self.get_url(ip=ip, path=path, token=token)
-            + '\n or '
+            + '\n    '
             + self.get_url(ip='127.0.0.1', path=path, token=token)
         )
         return url
