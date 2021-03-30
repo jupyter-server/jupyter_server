@@ -786,6 +786,9 @@ class ServerApp(JupyterApp):
     token = Unicode('<generated>',
         help=_i18n("""Token used for authenticating first-time connections to the server.
 
+        The token can be read from the file referenced by JUPYTER_TOKEN_FILE or set directly
+        with the JUPYTER_TOKEN environment variable.
+
         When no password is enabled,
         the default is to generate a new, random token.
 
@@ -800,6 +803,10 @@ class ServerApp(JupyterApp):
         if os.getenv('JUPYTER_TOKEN'):
             self._token_generated = False
             return os.getenv('JUPYTER_TOKEN')
+        if os.getenv('JUPYTER_TOKEN_FILE'):
+            self._token_generated = False
+            with io.open(os.getenv('JUPYTER_TOKEN_FILE'), "r") as token_file:
+                return token_file.read()
         if self.password:
             # no token if password is enabled
             self._token_generated = False
