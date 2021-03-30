@@ -502,7 +502,7 @@ paths:
         - kernels
       responses:
         200:
-          description: Kernel interrupted
+          description: Kernel restarted
           headers:
             Location:
               description: URL for kernel commands
