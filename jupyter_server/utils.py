@@ -10,7 +10,10 @@ import errno
 import inspect
 import os
 import sys
+import importlib_resources
 from distutils.version import LooseVersion
+from importlib.metadata import entry_points
+from itertools import chain
 
 from urllib.parse import quote, unquote, urlparse, urljoin
 from urllib.request import pathname2url
@@ -248,3 +251,46 @@ def get_schema_files():
             if file.endswith('.yaml'):
                 file_path = os.path.join(dirname, file)
                 yield file_path
+
+
+JUPYTER_TELEMETRY_ENTRY_POINT = 'jupyter_telemetry'
+
+
+def get_client_schema_files():
+    telemetry_entry_points = entry_points().get(JUPYTER_TELEMETRY_ENTRY_POINT, [])
+
+    dirs = (_safe_entry_point_load(ep) for ep in telemetry_entry_points)
+    dirs = chain.from_iterable(d for d in dirs if d is not None)
+    dirs = (_safe_load_resource(d) for d in dirs)
+
+    files = chain.from_iterable(d.iterdir() for d in dirs if d is not None)
+
+    return (f for f in files if f.suffix in ('.json', '.yaml'))
+
+
+def _is_iterable(x):
+    try:
+        iter(x)
+        return True
+    except TypeError:
+        return False
+
+
+def _safe_entry_point_load(ep):
+    try:
+        v = ep.load()
+        if isinstance(v, str):
+            return [v]
+        elif _is_iterable(v):
+            return v
+        return None
+    except:
+        return None
+
+
+def _safe_load_resource(x):
+    try:
+        fs = importlib_resources.files(x)
+        return fs if fs.exists() and fs.is_dir() else None
+    except ModuleNotFoundError:
+        return None

@@ -53,6 +53,8 @@ setup_args = dict(
         'prometheus_client',
         "pywin32>=1.0 ; sys_platform == 'win32'",
         'anyio>=2.0.2',
+        "importlib-metadata ; python_version < '3.8'",
+        "importlib-resources ; python_version < '3.9'",
         # Install the working branch of telemetry.
         'jupyter_telemetry@git+https://github.com/jupyter/telemetry.git@d2c19ffa03fde7d1903759de4a265ef711b333ef'
     ],

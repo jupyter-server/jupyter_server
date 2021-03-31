@@ -33,6 +33,7 @@ import webbrowser
 import urllib
 import inspect
 import pathlib
+import importlib_resources
 
 from ruamel.yaml import YAML
 from glob import glob
@@ -114,7 +115,8 @@ from .utils import (
     url_escape,
     urljoin,
     pathname2url,
-    get_schema_files
+    get_schema_files,
+    get_client_schema_files
 )
 
 from jupyter_server.extension.serverextension import ServerExtensionApp
@@ -1789,6 +1791,11 @@ class ServerApp(JupyterApp):
         # Register schemas for notebook services.
         for file_path in get_schema_files():
             self.eventlog.register_schema_file(file_path)
+
+        for file in get_client_schema_files():
+            with importlib_resources.as_file(file) as f:
+                self.eventlog.register_schema_file_object(f)
+
 
     @catch_config_error
     def initialize(self, argv=None, find_extensions=True, new_httpserver=True, starter_extension=None):
