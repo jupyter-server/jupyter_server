@@ -1178,19 +1178,19 @@ NotebookNotary.store_factory : Callable
     A callable returning the storage backend for notebook signatures.
     The default uses an SQLite database.
 
-GatewayKernelManager.allow_tracebacks : Bool
+GatewayKernelManagers.allow_tracebacks : Bool
     Default: ``True``
 
     Whether to send tracebacks to clients on exceptions.
 
-GatewayKernelManager.allowed_message_types : List
+GatewayKernelManagers.allowed_message_types : List
     Default: ``[]``
 
     White list of allowed kernel message types.
     When the list is empty, all message types are allowed.
 
 
-GatewayKernelManager.buffer_offline_messages : Bool
+GatewayKernelManagers.buffer_offline_messages : Bool
     Default: ``True``
 
     Whether messages from kernels whose frontends have disconnected should be buffered in-memory.
@@ -1202,36 +1202,36 @@ GatewayKernelManager.buffer_offline_messages : Bool
     no frontends are connected.
 
 
-GatewayKernelManager.cull_busy : Bool
+GatewayKernelManagers.cull_busy : Bool
     Default: ``False``
 
     Whether to consider culling kernels which are busy.
     Only effective if cull_idle_timeout > 0.
 
-GatewayKernelManager.cull_connected : Bool
+GatewayKernelManagers.cull_connected : Bool
     Default: ``False``
 
     Whether to consider culling kernels which have one or more connections.
     Only effective if cull_idle_timeout > 0.
 
-GatewayKernelManager.cull_idle_timeout : Int
+GatewayKernelManagers.cull_idle_timeout : Int
     Default: ``0``
 
     Timeout (in seconds) after which a kernel is considered idle and ready to be culled.
     Values of 0 or lower disable culling. Very short timeouts may result in kernels being culled
     for users with poor network connections.
 
-GatewayKernelManager.cull_interval : Int
+GatewayKernelManagers.cull_interval : Int
     Default: ``300``
 
     The interval (in seconds) on which to check for idle kernels exceeding the cull timeout value.
 
-GatewayKernelManager.default_kernel_name : Unicode
+GatewayKernelManagers.default_kernel_name : Unicode
     Default: ``'python3'``
 
     The name of the default kernel to start
 
-GatewayKernelManager.kernel_info_timeout : Float
+GatewayKernelManagers.kernel_info_timeout : Float
     Default: ``60``
 
     Timeout for giving up on a kernel (in seconds).
@@ -1244,24 +1244,24 @@ GatewayKernelManager.kernel_info_timeout : Float
     and the ZMQChannelsHandler (which handles the startup).
 
 
-GatewayKernelManager.kernel_manager_class : DottedObjectName
+GatewayKernelManagers.kernel_manager_class : DottedObjectName
     Default: ``'jupyter_client.ioloop.IOLoopKernelManager'``
 
     The kernel manager class.  This is configurable to allow
     subclassing of the KernelManager for customized behavior.
 
 
-GatewayKernelManager.root_dir : Unicode
+GatewayKernelManagers.root_dir : Unicode
     Default: ``''``
 
     No description
 
-GatewayKernelManager.shared_context : Bool
+GatewayKernelManagers.shared_context : Bool
     Default: ``True``
 
     Share a single zmq.Context to talk to all my kernels
 
-GatewayKernelManager.traceback_replacement_message : Unicode
+GatewayKernelManagers.traceback_replacement_message : Unicode
     Default: ``'An exception occurred at runtime, which is not shown due to ...``
 
     Message to print when allow_tracebacks is False, and an exception occurs

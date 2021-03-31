@@ -179,7 +179,7 @@ async def test_gateway_cli_options(jp_configurable_serverapp):
 
 async def test_gateway_class_mappings(init_gateway, jp_serverapp):
     # Ensure appropriate class mappings are in place.
-    assert jp_serverapp.kernel_manager_class.__name__ == 'GatewayKernelManager'
+    assert jp_serverapp.kernel_manager_class.__name__ == 'GatewayKernelManagers'
     assert jp_serverapp.session_manager_class.__name__ == 'GatewaySessionManager'
     assert jp_serverapp.kernel_spec_manager_class.__name__ == 'GatewayKernelSpecManager'
 

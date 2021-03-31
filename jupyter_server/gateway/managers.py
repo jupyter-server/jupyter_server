@@ -329,14 +329,14 @@ async def gateway_request(endpoint, **kwargs):
     return response
 
 
-class GatewayKernelManager(AsyncMappingKernelManager):
+class GatewayKernelManagers(AsyncMappingKernelManager):
     """Kernel manager that supports remote kernels hosted by Jupyter Kernel or Enterprise Gateway."""
 
     # We'll maintain our own set of kernel ids
     _kernels = {}
 
     def __init__(self, **kwargs):
-        super(GatewayKernelManager, self).__init__(**kwargs)
+        super(GatewayKernelManagers, self).__init__(**kwargs)
         self.base_endpoint = url_path_join(GatewayClient.instance().url, GatewayClient.instance().kernels_endpoint)
 
     def __contains__(self, kernel_id):
@@ -634,7 +634,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
 
 
 class GatewaySessionManager(SessionManager):
-    kernel_manager = Instance('jupyter_server.gateway.managers.GatewayKernelManager')
+    kernel_manager = Instance('jupyter_server.gateway.managers.GatewayKernelManagers')
 
     async def kernel_culled(self, kernel_id):
         """Checks if the kernel is still considered alive and returns true if its not found. """
