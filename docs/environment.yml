@@ -1,17 +1,6 @@
 name: jupyter_server_docs
 dependencies:
-- python=3.7
+- python=3.8
+- pip
 - pip:
-  - sphinx
-  - jinja2
-  - tornado
-  - jupyter_client
-  - ipykernel
-  - nbformat
-  - Send2Trash
-  - prometheus_client
-  - sphinxcontrib_github_alt
-  - sphinxcontrib-openapi
-  - sphinxemoji
-  - terminado
-  - git+https://github.com/pandas-dev/pydata-sphinx-theme.git@master
+  - -r doc-requirements.txt

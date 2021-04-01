@@ -1388,3 +1388,4 @@ GatewayClient.ws_url : Unicode
 
     The websocket url of the Kernel or Enterprise Gateway server.  If not provided, this value
     will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (JUPYTER_GATEWAY_WS_URL env var)
+
