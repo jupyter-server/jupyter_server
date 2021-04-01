@@ -7,3 +7,4 @@ Other helpful documentation
    links
    faq
    full-config
+   changelog

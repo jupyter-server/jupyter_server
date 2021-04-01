@@ -15,7 +15,12 @@
 
 import sys
 import os
+import os.path as osp
 import shlex
+import shutil
+
+HERE = osp.abspath(osp.dirname(__file__))
+
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -63,6 +68,7 @@ if os.environ.get('READTHEDOCS', ''):
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'myst_parser',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
@@ -73,6 +79,8 @@ extensions = [
     'sphinxcontrib.openapi',
     'sphinxemoji.sphinxemoji'
 ]
+
+myst_enable_extensions = ["html_image"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -371,3 +379,8 @@ spelling_word_list_filename='spelling_wordlist.txt'
 
 # import before any doc is built, so _ is guaranteed to be injected
 import jupyter_server.transutils
+
+
+def setup(app):
+    dest = osp.join(HERE, 'other', 'changelog.md')
+    shutil.copy(osp.join(HERE, '..', '..', 'CHANGELOG.md'), dest)
