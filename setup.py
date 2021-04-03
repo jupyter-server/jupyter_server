@@ -59,6 +59,7 @@ setup_args = dict(
         'prometheus_client',
         "pywin32>=1.0 ; sys_platform == 'win32'",
         "anyio>=2.0.2",
+        "websocket-client",
     ],
     extras_require = {
         'test': ['coverage', 'requests',
