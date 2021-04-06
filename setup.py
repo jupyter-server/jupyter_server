@@ -56,7 +56,7 @@ setup_args = dict(
         "importlib-metadata ; python_version < '3.8'",
         "importlib-resources ; python_version < '3.9'",
         # Install the working branch of telemetry.
-        'jupyter_telemetry@git+https://github.com/jupyter/telemetry.git@d2c19ffa03fde7d1903759de4a265ef711b333ef'
+        'jupyter_telemetry@git+https://github.com/kiendang/telemetry.git@a4fbf987da063f9e0b337abd21803c968ac64f27'
     ],
     extras_require = {
         'test': ['coverage', 'requests',
