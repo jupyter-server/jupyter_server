@@ -11,13 +11,15 @@ share what area of the project you are interested in working on.
 For general documentation about contributing to Jupyter projects, see the
 `Project Jupyter Contributor Documentation`__.
 
-__ https://jupyter.readthedocs.io/en/latest/contributor/content-contributor.html
+__ https://jupyter.readthedocs.io/en/latest/contributing/content-contributor.html
 
 Setting Up a Development Environment
 ====================================
 
 Installing the Jupyter Server
 -----------------------------
+
+The development version of the server requires `node <https://nodejs.org/en/download/>`_ and `pip <https://pip.pypa.io/en/stable/installing/>`_.
 
 Once you have installed the dependencies mentioned above, use the following
 steps::

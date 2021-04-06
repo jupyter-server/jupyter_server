@@ -15,7 +15,12 @@
 
 import sys
 import os
+import os.path as osp
 import shlex
+import shutil
+
+HERE = osp.abspath(osp.dirname(__file__))
+
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -63,6 +68,7 @@ if os.environ.get('READTHEDOCS', ''):
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'myst_parser',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
@@ -72,6 +78,8 @@ extensions = [
     'sphinxcontrib_github_alt',
     'jupyter_telemetry_sphinxext'
 ]
+
+myst_enable_extensions = ["html_image"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -381,3 +389,7 @@ import jupyter_server.transutils
 jupyter_telemetry_schema_source = "../jupyter_server/event-schemas"   # Path is relative to conf.py
 jupyter_telemetry_schema_output = "source/operators/events"           # Path is relative to conf.py
 jupyter_telemetry_index_title = "Telemetry Event Schemas"                # Title of the index page that lists all found schemas.
+
+def setup(app):
+    dest = osp.join(HERE, 'other', 'changelog.md')
+    shutil.copy(osp.join(HERE, '..', '..', 'CHANGELOG.md'), dest)

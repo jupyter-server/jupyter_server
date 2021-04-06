@@ -4,9 +4,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import absolute_import, print_function
-
-import jupyter_server
 import binascii
 import datetime
 import errno
@@ -74,19 +71,19 @@ from jupyter_server import (
     __version__,
 )
 
-from .base.handlers import MainHandler, RedirectWithParams, Template404
-from .log import log_request
-from .services.kernels.kernelmanager import MappingKernelManager, AsyncMappingKernelManager
-from .services.config import ConfigManager
-from .services.contents.manager import AsyncContentsManager, ContentsManager
-from .services.contents.filemanager import AsyncFileContentsManager, FileContentsManager
-from .services.contents.largefilemanager import LargeFileManager
-from .services.sessions.sessionmanager import SessionManager
-from .gateway.managers import GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
+from jupyter_server.base.handlers import MainHandler, RedirectWithParams, Template404
+from jupyter_server.log import log_request
+from jupyter_server.services.kernels.kernelmanager import MappingKernelManager, AsyncMappingKernelManager
+from jupyter_server.services.config import ConfigManager
+from jupyter_server.services.contents.manager import AsyncContentsManager, ContentsManager
+from jupyter_server.services.contents.filemanager import AsyncFileContentsManager, FileContentsManager
+from jupyter_server.services.contents.largefilemanager import LargeFileManager
+from jupyter_server.services.sessions.sessionmanager import SessionManager
+from jupyter_server.gateway.managers import GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
 
-from .auth.login import LoginHandler
-from .auth.logout import LogoutHandler
-from .base.handlers import FileFindHandler
+from jupyter_server.auth.login import LoginHandler
+from jupyter_server.auth.logout import LogoutHandler
+from jupyter_server.base.handlers import FileFindHandler
 
 from traitlets.config import Config
 from traitlets.config.application import catch_config_error, boolean_flag
@@ -108,8 +105,8 @@ from jupyter_telemetry.eventlog import EventLog
 
 from jupyter_server._sysinfo import get_sys_info
 
-from ._tz import utcnow, utcfromtimestamp
-from .utils import (
+from jupyter_server._tz import utcnow, utcfromtimestamp
+from jupyter_server.utils import (
     url_path_join,
     check_pid,
     url_escape,
@@ -123,6 +120,13 @@ from jupyter_server.extension.serverextension import ServerExtensionApp
 from jupyter_server.extension.manager import ExtensionManager
 from jupyter_server.extension.config import ExtensionConfigManager
 from jupyter_server.traittypes import TypeFromClasses
+
+# Tolerate missing terminado package.
+try:
+    from jupyter_server.terminal import TerminalManager
+    terminado_available = True
+except ImportError:
+    terminado_available = False
 
 #-----------------------------------------------------------------------------
 # Module globals
@@ -152,6 +156,8 @@ JUPYTER_SERVICE_HANDLERS = dict(
     shutdown=['jupyter_server.services.shutdown'],
     view=['jupyter_server.view.handlers']
 )
+
+DEFAULT_SERVER_PORT = 8888
 
 #-----------------------------------------------------------------------------
 # Helper functions
@@ -292,7 +298,7 @@ class ServerWebApplication(web.Application):
             allow_password_change=jupyter_app.allow_password_change,
             server_root_dir=root_dir,
             jinja2_env=env,
-            terminals_available=False,  # Set later if terminals are available
+            terminals_available=terminado_available and jupyter_app.terminals_enabled,
             eventlog=jupyter_app.eventlog,
             serverapp=jupyter_app
         )
@@ -402,7 +408,7 @@ class JupyterPasswordApp(JupyterApp):
         return os.path.join(self.config_dir, 'jupyter_server_config.json')
 
     def start(self):
-        from .auth.security import set_password
+        from jupyter_server.auth.security import set_password
         set_password(config_file=self.config_file)
         self.log.info("Wrote hashed password to %s" % self.config_file)
 
@@ -458,8 +464,8 @@ class JupyterServerStopApp(JupyterApp):
     version = __version__
     description = "Stop currently running Jupyter server for a given port"
 
-    port = Integer(8888, config=True,
-        help="Port of the server to be killed. Default 8888")
+    port = Integer(DEFAULT_SERVER_PORT, config=True,
+        help=f"Port of the server to be killed. Default {DEFAULT_SERVER_PORT}")
 
     def parse_command_line(self, argv=None):
         super(JupyterServerStopApp, self).parse_command_line(argv)
@@ -598,6 +604,8 @@ class ServerApp(JupyterApp):
             ContentsManager, FileContentsManager, AsyncContentsManager, AsyncFileContentsManager, NotebookNotary,
             GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
         ]
+    if terminado_available:  # Only necessary when terminado is available
+        classes.append(TerminalManager)
 
     subcommands = dict(
         list=(JupyterServerListApp, JupyterServerListApp.description.splitlines()[0]),
@@ -723,13 +731,26 @@ class ServerApp(JupyterApp):
         or containerized setups for example).""")
     )
 
-    port = Integer(8888, config=True,
-        help=_i18n("The port the Jupyter server will listen on.")
+    port_env = 'JUPYTER_PORT'
+    port_default_value = DEFAULT_SERVER_PORT
+    port = Integer(port_default_value, config=True,
+        help=_i18n("The port the server will listen on (env: JUPYTER_PORT).")
     )
 
-    port_retries = Integer(50, config=True,
-        help=_i18n("The number of additional ports to try if the specified port is not available.")
+    @default('port')
+    def port_default(self):
+        return int(os.getenv(self.port_env, self.port_default_value))
+
+    port_retries_env = 'JUPYTER_PORT_RETRIES'
+    port_retries_default_value = 50
+    port_retries = Integer(port_retries_default_value, config=True,
+        help=_i18n("The number of additional ports to try if the specified port is not "
+               "available (env: JUPYTER_PORT_RETRIES).")
     )
+
+    @default('port_retries')
+    def port_retries_default(self):
+        return int(os.getenv(self.port_retries_env, self.port_retries_default_value))
 
     certfile = Unicode(u'', config=True,
         help=_i18n("""The full path to an SSL/TLS certificate file.""")
@@ -786,6 +807,9 @@ class ServerApp(JupyterApp):
     token = Unicode('<generated>',
         help=_i18n("""Token used for authenticating first-time connections to the server.
 
+        The token can be read from the file referenced by JUPYTER_TOKEN_FILE or set directly
+        with the JUPYTER_TOKEN environment variable.
+
         When no password is enabled,
         the default is to generate a new, random token.
 
@@ -800,6 +824,10 @@ class ServerApp(JupyterApp):
         if os.getenv('JUPYTER_TOKEN'):
             self._token_generated = False
             return os.getenv('JUPYTER_TOKEN')
+        if os.getenv('JUPYTER_TOKEN_FILE'):
+            self._token_generated = False
+            with io.open(os.getenv('JUPYTER_TOKEN_FILE'), "r") as token_file:
+                return token_file.read()
         if self.password:
             # no token if password is enabled
             self._token_generated = False
@@ -1145,11 +1173,6 @@ class ServerApp(JupyterApp):
                 "until its next major release (2.x)."
             )
 
-    @observe('notebook_dir')
-    def _update_notebook_dir(self, change):
-        self.log.warning(_i18n("notebook_dir is deprecated, use root_dir"))
-        self.root_dir = change['new']
-
     kernel_manager_class = Type(
         default_value=AsyncMappingKernelManager,
         klass=MappingKernelManager,
@@ -1338,6 +1361,15 @@ class ServerApp(JupyterApp):
          is not available.
          """))
 
+    # Since use of terminals is also a function of whether the terminado package is
+    # available, this variable holds the "final indication" of whether terminal functionality
+    # should be considered (particularly during shutdown/cleanup).  It is enabled only
+    # once both the terminals "service" can be initialized and terminals_enabled is True.
+    # Note: this variable is slightly different from 'terminals_available' in the web settings
+    # in that this variable *could* remain false if terminado is available, yet the terminal
+    # service's initialization still fails.  As a result, this variable holds the truth.
+    terminals_available = False
+
     authenticate_prometheus = Bool(
         True,
         help=""""
@@ -1519,7 +1551,7 @@ class ServerApp(JupyterApp):
 
         url = (
             self.get_url(ip=ip, path=path, token=token)
-            + '\n or '
+            + '\n    '
             + self.get_url(ip='127.0.0.1', path=path, token=token)
         )
         return url
@@ -1554,9 +1586,9 @@ class ServerApp(JupyterApp):
             return
 
         try:
-            from .terminal import initialize
+            from jupyter_server.terminal import initialize
             initialize(self.web_app, self.root_dir, self.connection_url, self.terminado_settings)
-            self.web_app.settings['terminals_available'] = True
+            self.terminals_available = True
         except ImportError as e:
             self.log.warning(_i18n("Terminals not available (error was %s)"), e)
 
@@ -1702,11 +1734,8 @@ class ServerApp(JupyterApp):
         if len(km) != 0:
             return   # Kernels still running
 
-        try:
+        if self.terminals_available:
             term_mgr = self.web_app.settings['terminal_manager']
-        except KeyError:
-            pass  # Terminals not enabled
-        else:
             if term_mgr.terminals:
                 return   # Terminals still running
 
@@ -1761,7 +1790,10 @@ class ServerApp(JupyterApp):
                 self.http_server.listen(port, self.ip)
             except socket.error as e:
                 if e.errno == errno.EADDRINUSE:
-                    self.log.info(_i18n('The port %i is already in use, trying another port.') % port)
+                    if self.port_retries:
+                        self.log.info(_i18n('The port %i is already in use, trying another port.') % port)
+                    else:
+                        self.log.info(_i18n('The port %i is already in use.') % port)
                     continue
                 elif e.errno in (errno.EACCES, getattr(errno, 'WSAEACCES', errno.EACCES)):
                     self.log.warning(_i18n("Permission to listen on port %i denied") % port)
@@ -1773,8 +1805,12 @@ class ServerApp(JupyterApp):
                 success = True
                 break
         if not success:
-            self.log.critical(_i18n('ERROR: the Jupyter server could not be started because '
+            if self.port_retries:
+                self.log.critical(_i18n('ERROR: the notebook server could not be started because '
                               'no available port could be found.'))
+            else:
+                self.log.critical(_i18n('ERROR: the notebook server could not be started because '
+                              'port %i is not available.') % port)
             self.exit(1)
 
     @staticmethod
@@ -1866,6 +1902,21 @@ class ServerApp(JupyterApp):
         kernel_msg = trans.ngettext('Shutting down %d kernel', 'Shutting down %d kernels', n_kernels)
         self.log.info(kernel_msg % n_kernels)
         run_sync(self.kernel_manager.shutdown_all())
+
+    def cleanup_terminals(self):
+        """Shutdown all terminals.
+
+        The terminals will shutdown themselves when this process no longer exists,
+        but explicit shutdown allows the TerminalManager to cleanup.
+        """
+        if not self.terminals_available:
+            return
+
+        terminal_manager = self.web_app.settings['terminal_manager']
+        n_terminals = len(terminal_manager.list())
+        terminal_msg = trans.ngettext('Shutting down %d terminal', 'Shutting down %d terminals', n_terminals)
+        self.log.info(terminal_msg % n_terminals)
+        run_sync(terminal_manager.terminate_all())
 
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
@@ -1999,7 +2050,7 @@ class ServerApp(JupyterApp):
             os.unlink(self.browser_open_file_to_run)
         except OSError as e:
             if e.errno != errno.ENOENT:
-                raises
+                raise
 
     def remove_browser_open_file(self):
         """Remove the jpserver-<pid>-open.html file created for this server.
@@ -2066,7 +2117,7 @@ class ServerApp(JupyterApp):
         for line in self.running_server_info(kernel_count=False).split("\n"):
             info(line)
         info(_i18n("Use Control-C to stop this server and shut down all kernels (twice to skip confirmation)."))
-        if 'dev' in jupyter_server.__version__:
+        if 'dev' in __version__:
             info(_i18n("Welcome to Project Jupyter! Explore the various tools available"
                  " and their corresponding documentation. If you are interested"
                  " in contributing to the platform, please visit the community"
@@ -2097,6 +2148,7 @@ class ServerApp(JupyterApp):
         self.remove_server_info_file()
         self.remove_browser_open_files()
         self.cleanup_kernels()
+        self.cleanup_terminals()
 
     def start_ioloop(self):
         """Start the IO Loop."""

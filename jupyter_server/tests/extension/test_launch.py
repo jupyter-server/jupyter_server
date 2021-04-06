@@ -1,6 +1,7 @@
 """Test launching Jupyter Server Applications
 through as ExtensionApp launch_instance.
 """
+from pathlib import Path
 import os
 import sys
 import time
@@ -45,7 +46,7 @@ def wait_up(url, interval=0.1, check=None):
 
 @pytest.fixture
 def launch_instance(request, port, token):
-    def _run_in_subprocess(argv=[]):
+    def _run_in_subprocess(argv=[], add_token=True):
 
         def _kill_extension_app():
             try:
@@ -55,13 +56,15 @@ def launch_instance(request, port, token):
                 pass
             process.wait(10)
 
+        if add_token:
+            f'--ServerApp.token="{token}"',
+
         process = subprocess.Popen([
             sys.executable, '-m',
             'mockextensions.app',
             f'--port={port}',
             '--ip=127.0.0.1',
             '--no-browser',
-            f'--ServerApp.token="{token}"',
             *argv,
         ], cwd=HERE)
 
@@ -90,6 +93,18 @@ def test_launch_instance(launch_instance, fetch):
 def test_base_url(launch_instance, fetch):
     launch_instance(['--ServerApp.base_url=/foo'])
     r = fetch("/foo/mock")
+    assert r.status_code == 200
+
+
+def test_token_file(launch_instance, fetch, token):
+    token_file = HERE / Path('token_file.txt')
+    os.environ['JUPYTER_TOKEN_FILE'] = str(token_file)
+    token_file.write_text(token, encoding='utf-8')
+
+    launch_instance(add_token=False)
+    r = fetch("/mock")
+    del os.environ['JUPYTER_TOKEN_FILE']
+    token_file.unlink()
     assert r.status_code == 200
 
 

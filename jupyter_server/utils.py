@@ -3,8 +3,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import print_function
-
 import asyncio
 import errno
 import inspect
@@ -227,6 +225,8 @@ def run_sync(maybe_async):
             if str(e) == 'This event loop is already running':
                 # just return a Future, hoping that it will be awaited
                 result = asyncio.ensure_future(maybe_async)
+            else:
+                raise e
         return result
     return wrapped()
 

@@ -8,5 +8,7 @@ prometheus_client
 sphinxcontrib_github_alt
 sphinxcontrib-openapi
 sphinxemoji
+myst-parser
+pydata_sphinx_theme
 git+https://github.com/pandas-dev/pydata-sphinx-theme.git@master
 jupyter_telemetry_sphinxext
