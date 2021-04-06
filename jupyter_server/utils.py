@@ -12,7 +12,7 @@ import os
 import sys
 import importlib_resources
 from distutils.version import LooseVersion
-from importlib.metadata import entry_points
+from importlib_metadata import entry_points
 from itertools import chain
 
 from urllib.parse import quote, unquote, urlparse, urljoin
