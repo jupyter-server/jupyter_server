@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.6.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.5.1...724c38ec08c15cf1ed3c2efb2ad5c11f684f2cda))
+
+### New features added
+
+- Add env variable support for port options [#461](https://github.com/jupyter-server/jupyter_server/pull/461) ([@afshin](https://github.com/afshin))
+
+### Enhancements made
+
+- Add support for JUPYTER_TOKEN_FILE [#462](https://github.com/jupyter-server/jupyter_server/pull/462) ([@afshin](https://github.com/afshin))
+
+### Maintenance and upkeep improvements
+
+- Remove unnecessary future imports [#464](https://github.com/jupyter-server/jupyter_server/pull/464) ([@afshin](https://github.com/afshin))
+
+### Documentation improvements
+
+- Add Changelog to Sphinx Docs [#465](https://github.com/jupyter-server/jupyter_server/pull/465) ([@afshin](https://github.com/afshin))
+- Update description for kernel restarted in the API docs [#463](https://github.com/jupyter-server/jupyter_server/pull/463) ([@jtpio](https://github.com/jtpio))
+- Delete the extra “or” that prevents easy cut-and-paste of URLs. [#460](https://github.com/jupyter-server/jupyter_server/pull/460) ([@jasongrout](https://github.com/jasongrout))
+- Add descriptive log for port unavailable and port-retries=0 [#459](https://github.com/jupyter-server/jupyter_server/pull/459) ([@afshin](https://github.com/afshin))
+
+### Other merged PRs
+
+- Add ReadTheDocs config [#468](https://github.com/jupyter-server/jupyter_server/pull/468) ([@jtpio](https://github.com/jtpio))
+- Update MappingKM.restart_kernel to accept now kwarg [#404](https://github.com/jupyter-server/jupyter_server/pull/404) ([@vidartf](https://github.com/vidartf))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-03-24&to=2021-04-08&type=c))
+
+[@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2021-03-24..2021-04-08&type=Issues) | [@codecov-io](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-io+updated%3A2021-03-24..2021-04-08&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2021-03-24..2021-04-08&type=Issues) | [@jasongrout](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajasongrout+updated%3A2021-03-24..2021-04-08&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-03-24..2021-04-08&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-03-24..2021-04-08&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2021-03-24..2021-04-08&type=Issues)
+
 ## 1.5.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.5.0...c3303cde880ecd1103118b8c7f9e5ebc19f0d1ba))
