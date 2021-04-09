@@ -313,7 +313,12 @@ class MappingKernelManager(MultiKernelManager):
             type=self._kernels[kernel_id].kernel_name
         ).dec()
 
-        return self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
+        self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
+        # Unlike its async sibling method in AsyncMappingKernelManager, removing the kernel_id
+        # from the connections dictionary isn't as problematic before the shutdown since the
+        # method is synchronous.  However, we'll keep the relative call orders the same from
+        # a maintenance perspective.
+        self._kernel_connections.pop(kernel_id, None)
 
     async def restart_kernel(self, kernel_id, now=False):
         """Restart a kernel by kernel_id"""
@@ -388,8 +393,11 @@ class MappingKernelManager(MultiKernelManager):
         kernels = []
         kernel_ids = self.pinned_superclass.list_kernel_ids(self)
         for kernel_id in kernel_ids:
-            model = self.kernel_model(kernel_id)
-            kernels.append(model)
+            try:
+                model = self.kernel_model(kernel_id)
+                kernels.append(model)
+            except (web.HTTPError, KeyError):
+                pass  # Probably due to a (now) non-existent kernel, continue building the list
         return kernels
 
     # override _check_kernel_id to raise 404 instead of KeyError
