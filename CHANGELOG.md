@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.6.1
+
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.6.0...2756a29c5fdcfa62a3492004627541089d53d14f))
+
+### Merged PRs
+
+- Fix race condition with async kernel management [#472](https://github.com/jupyter-server/jupyter_server/pull/472) ([@jtpio](https://github.com/jtpio))
+- Fix kernel lookup [#475](https://github.com/jupyter-server/jupyter_server/pull/475) ([@davidbrochart](https://github.com/davidbrochart))
+- Add Extension App Aliases to Server App [#473](https://github.com/jupyter-server/jupyter_server/pull/473) ([@jtpio](https://github.com/jtpio))
+- Correct 'Content-Type' headers [#471](https://github.com/jupyter-server/jupyter_server/pull/471) ([@faucct](https://github.com/faucct))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-08&to=2021-04-12&type=c))
+
+[@codecov-io](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-io+updated%3A2021-04-08..2021-04-12&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2021-04-08..2021-04-12&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2021-04-08..2021-04-12&type=Issues) | [@faucct](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afaucct+updated%3A2021-04-08..2021-04-12&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-04-08..2021-04-12&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-04-08..2021-04-12&type=Issues)
+
 ## 1.6.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.5.1...724c38ec08c15cf1ed3c2efb2ad5c11f684f2cda))
