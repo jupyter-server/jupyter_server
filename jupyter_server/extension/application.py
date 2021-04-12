@@ -479,6 +479,7 @@ class ExtensionApp(JupyterApp):
         """
         serverapp = ServerApp.instance(
             jpserver_extensions={cls.get_extension_package(): True}, **kwargs)
+        serverapp.aliases.update(cls.aliases)
         serverapp.initialize(
             argv=argv,
             starter_extension=cls.name,
