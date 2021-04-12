@@ -384,7 +384,7 @@ class MappingKernelManager(MultiKernelManager):
             "name": kernel.kernel_name,
             "last_activity": isoformat(kernel.last_activity),
             "execution_state": kernel.execution_state,
-            "connections": self._kernel_connections[kernel_id],
+            "connections": self._kernel_connections.get(kernel_id, 0),
         }
         return model
 
