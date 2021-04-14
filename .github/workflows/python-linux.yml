@@ -1,7 +1,7 @@
 name: Jupyter Server Tests [Linux]
 on:
   push:
-    branches: '*'
+    branches: 'master'
   pull_request:
     branches: '*'
 jobs:
@@ -37,7 +37,7 @@ jobs:
           ${{ runner.os }}-pip-
     - name: Install the Python dependencies
       run: |
-        pip install -e .[test] codecov
+        pip install -e ".[test]" codecov
     - name: List installed packages
       run: |
         pip freeze
@@ -62,7 +62,19 @@ jobs:
         codecov
     - name: Test full install
       run: |
-            pip uninstall -y jupyter_server
-            pip install .
-            cd /tmp
-            pytest --pyargs jupyter_server
+        python -m venv test_install
+        ./test_install/bin/python -m pip install -U pip
+        ./test_install/bin/python -m pip install ".[test]"
+        pushd test_install
+        ./bin/pytest --pyargs jupyter_server
+        popd
+    - name: Check the Manifest
+      run: |
+        pip install check-manifest
+        git clean -dfx
+        check-manifest -v
+    - name: Check Version Bump
+      run: |
+        pip install tbump
+        tbump --non-interactive --only-patch 100.1.1
+        git checkout .

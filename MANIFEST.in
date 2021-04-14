@@ -4,6 +4,7 @@ include README.md
 include RELEASE.md
 include CHANGELOG.md
 include setupbase.py
+include package.json
 
 # include everything in package_data
 recursive-include jupyter_server *
