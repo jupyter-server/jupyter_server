@@ -26,6 +26,7 @@ python -m build .
 echo "Enter dev version"
 read dev_version
 tbump ${dev_version} --no-tag
+git push origin $(git branch --show-current)
 ```
 
 ## Publish the artifacts to pypi
