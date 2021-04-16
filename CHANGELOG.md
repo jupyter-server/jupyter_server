@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.6.2
+
+### Enhancements made
+
+- Tighten xsrf checks [#478](https://github.com/jupyter-server/jupyter_server/pull/478) ([@jtpio](https://github.com/jtpio))
+
+### Bugs fixed
+
+- Re-enable support for answer_yes flag [#479](https://github.com/jupyter-server/jupyter_server/pull/479) ([@jtpio](https://github.com/jtpio))
+
+### Maintenance and upkeep improvements
+
+- Use Jupyter Packaging [#477](https://github.com/jupyter-server/jupyter_server/pull/477) ([@jtpio](https://github.com/jtpio))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-12&to=2021-04-16&type=c))
+
+[@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-04-12..2021-04-16&type=Issues)
+
 ## 1.6.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.6.0...2756a29c5fdcfa62a3492004627541089d53d14f))
