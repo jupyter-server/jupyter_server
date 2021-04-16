@@ -13,8 +13,6 @@ git clean -dffx
 echo "Enter new version"
 read script_version
 tbump ${script_version}
-git commit -a -m "Release ${script_version}"
-git tag $script_version -m "Release ${script_version}"
 ```
 
 ## Build the artifacts
