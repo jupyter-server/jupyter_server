@@ -26,13 +26,6 @@ python -m build .
 echo "Enter dev version"
 read dev_version
 tbump ${dev_version} --no-tag
-git commit -a -m "Back to dev version"
-```
-
-## Push the commits and tag
-```
-git push origin $(git branch --show-current)
-git push origin --tags
 ```
 
 ## Publish the artifacts to pypi
