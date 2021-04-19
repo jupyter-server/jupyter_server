@@ -2,6 +2,77 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.6.2
+
+### Enhancements made
+
+- Tighten xsrf checks [#478](https://github.com/jupyter-server/jupyter_server/pull/478) ([@jtpio](https://github.com/jtpio))
+
+### Bugs fixed
+
+- Re-enable support for answer_yes flag [#479](https://github.com/jupyter-server/jupyter_server/pull/479) ([@jtpio](https://github.com/jtpio))
+
+### Maintenance and upkeep improvements
+
+- Use Jupyter Packaging [#477](https://github.com/jupyter-server/jupyter_server/pull/477) ([@jtpio](https://github.com/jtpio))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-12&to=2021-04-16&type=c))
+
+[@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-04-12..2021-04-16&type=Issues)
+
+## 1.6.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.6.0...2756a29c5fdcfa62a3492004627541089d53d14f))
+
+### Merged PRs
+
+- Fix race condition with async kernel management [#472](https://github.com/jupyter-server/jupyter_server/pull/472) ([@jtpio](https://github.com/jtpio))
+- Fix kernel lookup [#475](https://github.com/jupyter-server/jupyter_server/pull/475) ([@davidbrochart](https://github.com/davidbrochart))
+- Add Extension App Aliases to Server App [#473](https://github.com/jupyter-server/jupyter_server/pull/473) ([@jtpio](https://github.com/jtpio))
+- Correct 'Content-Type' headers [#471](https://github.com/jupyter-server/jupyter_server/pull/471) ([@faucct](https://github.com/faucct))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-08&to=2021-04-12&type=c))
+
+[@codecov-io](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-io+updated%3A2021-04-08..2021-04-12&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2021-04-08..2021-04-12&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2021-04-08..2021-04-12&type=Issues) | [@faucct](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afaucct+updated%3A2021-04-08..2021-04-12&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-04-08..2021-04-12&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-04-08..2021-04-12&type=Issues)
+
+## 1.6.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.5.1...724c38ec08c15cf1ed3c2efb2ad5c11f684f2cda))
+
+### New features added
+
+- Add env variable support for port options [#461](https://github.com/jupyter-server/jupyter_server/pull/461) ([@afshin](https://github.com/afshin))
+
+### Enhancements made
+
+- Add support for JUPYTER_TOKEN_FILE [#462](https://github.com/jupyter-server/jupyter_server/pull/462) ([@afshin](https://github.com/afshin))
+
+### Maintenance and upkeep improvements
+
+- Remove unnecessary future imports [#464](https://github.com/jupyter-server/jupyter_server/pull/464) ([@afshin](https://github.com/afshin))
+
+### Documentation improvements
+
+- Add Changelog to Sphinx Docs [#465](https://github.com/jupyter-server/jupyter_server/pull/465) ([@afshin](https://github.com/afshin))
+- Update description for kernel restarted in the API docs [#463](https://github.com/jupyter-server/jupyter_server/pull/463) ([@jtpio](https://github.com/jtpio))
+- Delete the extra “or” that prevents easy cut-and-paste of URLs. [#460](https://github.com/jupyter-server/jupyter_server/pull/460) ([@jasongrout](https://github.com/jasongrout))
+- Add descriptive log for port unavailable and port-retries=0 [#459](https://github.com/jupyter-server/jupyter_server/pull/459) ([@afshin](https://github.com/afshin))
+
+### Other merged PRs
+
+- Add ReadTheDocs config [#468](https://github.com/jupyter-server/jupyter_server/pull/468) ([@jtpio](https://github.com/jtpio))
+- Update MappingKM.restart_kernel to accept now kwarg [#404](https://github.com/jupyter-server/jupyter_server/pull/404) ([@vidartf](https://github.com/vidartf))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-03-24&to=2021-04-08&type=c))
+
+[@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2021-03-24..2021-04-08&type=Issues) | [@codecov-io](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-io+updated%3A2021-03-24..2021-04-08&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2021-03-24..2021-04-08&type=Issues) | [@jasongrout](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajasongrout+updated%3A2021-03-24..2021-04-08&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-03-24..2021-04-08&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-03-24..2021-04-08&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2021-03-24..2021-04-08&type=Issues)
+
 ## 1.5.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.5.0...c3303cde880ecd1103118b8c7f9e5ebc19f0d1ba))
@@ -42,7 +113,6 @@ All notable changes to this project will be documented in this file.
 
 [@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2021-02-22..2021-03-23&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-02-22..2021-03-23&type=Issues) | [@codecov-io](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-io+updated%3A2021-02-22..2021-03-23&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-02-22..2021-03-23&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-02-22..2021-03-23&type=Issues) | [@kiendang](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akiendang+updated%3A2021-02-22..2021-03-23&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2021-02-22..2021-03-23&type=Issues) | [@sngyo](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Asngyo+updated%3A2021-02-22..2021-03-23&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-02-22..2021-03-23&type=Issues)
 
-
 ## [1.4.1](https://github.com/jupyter-server/jupyter_server/tree/1.4.1) (2021-02-22)
 
 [Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.4.0...bc252d33de2f647f98d048dc32888f0a83f005ac)
@@ -60,9 +130,7 @@ All notable changes to this project will be documented in this file.
 
 [@jamesmishra](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajamesmishra+updated%3A2021-02-18..2021-02-22&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-02-18..2021-02-22&type=Issues)
 
-
 ## [1.4.0](https://github.com/jupyter-server/jupyter_server/tree/1.4.0) (2021-02-18)
-
 
 [Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.3.0...HEAD)
 
@@ -77,7 +145,6 @@ All notable changes to this project will be documented in this file.
 - Update 1.3.0 Changelog to include broken 1.2.3 PRs [\#408](https://github.com/jupyter-server/jupyter_server/pull/408) ([kevin-bates](https://github.com/kevin-bates))
 - \[Gateway\] Track only this server's kernels [\#407](https://github.com/jupyter-server/jupyter_server/pull/407) ([kevin-bates](https://github.com/kevin-bates))
 - Update manager.py: more descriptive warnings when extensions fail to load [\#396](https://github.com/jupyter-server/jupyter_server/pull/396) ([alberti42](https://github.com/alberti42))
-
 
 ## [1.3.0](https://github.com/jupyter-server/jupyter_server/tree/1.3.0) (2021-02-04)
 
@@ -109,7 +176,6 @@ This was a broken release and was yanked from PyPI.
 - Increase culling test idle timeout [\#388](https://github.com/jupyter-server/jupyter_server/pull/388) ([kevin-bates](https://github.com/kevin-bates))
 - update changelog for 1.2.2 [\#387](https://github.com/jupyter-server/jupyter_server/pull/387) ([Zsailer](https://github.com/Zsailer))
 
-
 ## [1.2.2](https://github.com/jupyter-server/jupyter_server/tree/1.2.2) (2021-01-14)
 
 **Merged pull requests:**
@@ -119,7 +185,6 @@ This was a broken release and was yanked from PyPI.
 - Fix application exit [\#384](https://github.com/jupyter-server/jupyter_server/pull/384) ([afshin](https://github.com/afshin))
 - Replace secure\_write, is\_hidden, exists with jupyter\_core's [\#382](https://github.com/jupyter-server/jupyter_server/pull/382) ([kevin-bates](https://github.com/kevin-bates))
 - Add --autoreload flag [\#380](https://github.com/jupyter-server/jupyter_server/pull/380) ([afshin](https://github.com/afshin))
-
 
 ## [1.2.1](https://github.com/jupyter-server/jupyter_server/tree/1.2.1) (2021-01-08)
 
@@ -169,7 +234,6 @@ This was a broken release and was yanked from PyPI.
 
 - Nudge kernel with info request until we receive IOPub messages [\#361](https://github.com/jupyter-server/jupyter_server/pull/361) ([SylvainCorlay](https://github.com/SylvainCorlay))
 
-
 ## [1.1.1](https://github.com/jupyter-server/jupyter_server/tree/1.1.1) (2020-12-16)
 
 [Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/1.1.0...1.1.1)
@@ -177,7 +241,6 @@ This was a broken release and was yanked from PyPI.
 **Merged pull requests:**
 
 - Fix: await possible async dir\_exists method [\#363](https://github.com/jupyter-server/jupyter_server/pull/363) ([mwakaba2](https://github.com/mwakaba2))
-
 
 ## 1.1.0 (2020-12-11)
 
@@ -200,7 +263,6 @@ This was a broken release and was yanked from PyPI.
 - Enable CodeQL runs on all pushed branches [\#333](https://github.com/jupyter-server/jupyter_server/pull/333) ([kevin-bates](https://github.com/kevin-bates))
 - Asynchronous Contents API [\#324](https://github.com/jupyter-server/jupyter_server/pull/324) ([mwakaba2](https://github.com/mwakaba2))
 
-
 ## 1.0.6 (2020-11-18)
 
 1.0.6 is a security release, fixing one vulnerability:
@@ -208,7 +270,6 @@ This was a broken release and was yanked from PyPI.
 ### Changed
 
 - Fix open redirect vulnerability GHSA-grfj-wjv9-4f9v (CVE-2020-26232)
-
 
 ## 1.0 (2020-9-18)
 
@@ -241,14 +302,12 @@ This was a broken release and was yanked from PyPI.
 * Changed ExtensionApp mixin to inherit from `HasTraits`. This broke in traitlets 5.0 ([294](https://github.com/jupyter/jupyter_server/pull/294))
 * Replaces `urlparse` with `url_path_join` to prevent URL squashing issues. ([304](https://github.com/jupyter/jupyter_server/pull/304))
 
-
 ## [0.3] - 2020-4-22
 
 ### Added
 
 - ([#191](https://github.com/jupyter/jupyter_server/pull/191)) Async kernel managment is now possible using the `AsyncKernelManager` from `jupyter_client`
 - ([#201](https://github.com/jupyter/jupyter_server/pull/201)) Parameters can now be passed to new terminals created by the `terminals` REST API.
-
 
 ### Changed
 
@@ -258,7 +317,6 @@ This was a broken release and was yanked from PyPI.
 ### Removed
 
 - ([#194](https://github.com/jupyter/jupyter_server/pull/194)) The bundlerextension entry point was removed.
-
 
 ## [0.2.1] - 2020-1-10
 

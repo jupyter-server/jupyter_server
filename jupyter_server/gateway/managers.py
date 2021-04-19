@@ -369,7 +369,12 @@ class GatewayKernelManager(AsyncKernelManager):
             self.last_activity = datetime.datetime.strptime(
                 model['last_activity'], '%Y-%m-%dT%H:%M:%S.%fZ').replace(tzinfo=UTC)
             self.execution_state = model['execution_state']
-            self.parent._kernel_connections[self.kernel_id] = int(model['connections'])
+            if isinstance(self.parent, AsyncMappingKernelManager):
+                # Update connections only if there's a mapping kernel manager parent for
+                # this kernel manager.  The current kernel manager instance may not have
+                # an parent instance if, say, a server extension is using another application
+                # (e.g., papermill) that uses a KernelManager instance directly.
+                self.parent._kernel_connections[self.kernel_id] = int(model['connections'])
 
         self.kernel = model
         return model

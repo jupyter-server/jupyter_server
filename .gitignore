@@ -34,3 +34,6 @@ config.rst
 /.project
 /.pydevproject
 
+# copied changelog file
+docs/source/other/changelog.md
+

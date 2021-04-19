@@ -369,7 +369,13 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         buffer_info = km.get_buffer(kernel_id, self.session_key)
         if buffer_info and buffer_info['session_key'] == self.session_key:
             self.log.info("Restoring connection for %s", self.session_key)
-            self.channels = buffer_info['channels']
+            if km.ports_changed(kernel_id):
+                # If the kernel's ports have changed (some restarts trigger this)
+                # then reset the channels so nudge() is using the correct iopub channel
+                self.create_stream()
+            else:
+                # The kernel's ports have not changed; use the channels captured in the buffer
+                self.channels = buffer_info['channels']
 
             connected = self.nudge()
 
@@ -381,7 +387,6 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                         stream = self.channels[channel]
                         self._on_zmq_reply(stream, msg_list)
 
-
             connected.add_done_callback(replay)
         else:
             try:
@@ -389,7 +394,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 connected = self.nudge()
             except web.HTTPError as e:
                 self.log.error("Error opening stream: %s", e)
-                # WebSockets don't response to traditional error codes so we
+                # WebSockets don't respond to traditional error codes so we
                 # close the connection.
                 for channel, stream in self.channels.items():
                     if not stream.closed():

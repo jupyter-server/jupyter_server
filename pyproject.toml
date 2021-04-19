@@ -1,0 +1,27 @@
+[build-system]
+requires = ["jupyter_packaging~=0.9"]
+build-backend = "jupyter_packaging.build_api"
+
+[tool.jupyter-packaging.builder]
+factory = "jupyter_packaging.npm_builder"
+
+[tool.check-manifest]
+ignore = ["tbump.toml", ".*", "*.yml", "package-lock.json", "bootstrap*"]
+
+[tool.pytest.ini_options]
+# Exclude the example tests.
+norecursedirs = "examples/*"
+
+[tool.tbump.version]
+current = "1.7.0.dev0"
+regex = '''
+  (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)
+  ((?P<channel>a|b|rc|.dev)(?P<release>\d+))?
+'''
+
+[tool.tbump.git]
+message_template = "Bump to {new_version}"
+tag_template = "v{new_version}"
+
+[[tool.tbump.file]]
+src = "jupyter_server/_version.py"
