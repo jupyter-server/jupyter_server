@@ -17,7 +17,6 @@ from queue import Queue
 from threading import Thread
 from tornado import web
 from tornado.escape import json_encode, json_decode, url_escape, utf8
-from tornado.httpclient import HTTPClient, HTTPError
 from traitlets import Instance, DottedObjectName, Type, default
 from typing import Dict
 
@@ -43,7 +42,7 @@ class GatewayKernelManagers(AsyncMappingKernelManager):
         return False  # no need to share zmq contexts
 
     def __init__(self, **kwargs):
-        super(GatewayKernelManagers, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.kernels_url = url_path_join(GatewayClient.instance().url, GatewayClient.instance().kernels_endpoint)
 
     def remove_kernel(self, kernel_id):
@@ -179,7 +178,7 @@ class GatewayKernelManagers(AsyncMappingKernelManager):
 class GatewayKernelSpecManager(KernelSpecManager):
 
     def __init__(self, **kwargs):
-        super(GatewayKernelSpecManager, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         base_endpoint = url_path_join(GatewayClient.instance().url,
                                       GatewayClient.instance().kernelspecs_endpoint)
 
@@ -291,7 +290,7 @@ class GatewaySessionManager(SessionManager):
         try:
             km = self.kernel_manager.get_kernel(kernel_id)
             kernel = await km.refresh_model()
-        except Exception:
+        except Exception:  # Let exceptions here reflect culled kernel
             pass
         return kernel is None
 
@@ -494,6 +493,7 @@ class ChannelQueue(Queue):
     def serialize_datetime(dt):
         if isinstance(dt, (datetime.date, datetime.datetime)):
             return dt.timestamp()
+        return None
 
     def start(self) -> None:
         pass
@@ -548,7 +548,7 @@ class GatewayKernelClient(AsyncKernelClient):
     _channel_queues = {}
 
     def __init__(self, **kwargs):
-        super(GatewayKernelClient, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.kernel_id = kwargs['kernel_id']
         self.channel_socket = None
         self.response_router = None

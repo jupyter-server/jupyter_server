@@ -197,7 +197,7 @@ class GatewayClient(SingletonConfigurable):
         return bool(os.environ.get(self.validate_cert_env, str(self.validate_cert_default_value)) not in ['no', 'false'])
 
     def __init__(self, **kwargs):
-        super(GatewayClient, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._static_args = {}  # initialized on first use
 
     env_whitelist_default_value = ''
