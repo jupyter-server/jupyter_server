@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.6.3
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.6.2...aa2636795ae1d87e3055febb3931f891dd6b4451))
+
+### Merges
+
+- Gate anyio version. [2b51ee3](https://github.com/jupyter-server/jupyter_server/commit/2b51ee37bdad305cb349e246c8ba94381cdb2048)
+- Fix activity tracking and nudge issues when kernel ports change on restarts [#482](https://github.com/jupyter-server/jupyter_server/pull/482) ([@kevin-bates](https://github.com/kevin-bates))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-16&to=2021-04-21&type=c))
+
+[@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-04-16..2021-04-21&type=Issues)
+
+
 ## 1.6.2
 
 ### Enhancements made
