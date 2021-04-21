@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.6.4
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.6.3...68a64ea13be5d0d86460f04e0c47eb0b6662a0af))
+
+### Bugs fixed
+
+- Fix loading of sibling extensions [#485](https://github.com/jupyter-server/jupyter_server/pull/485) ([@afshin](https://github.com/afshin))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-21&to=2021-04-21&type=c))
+
+[@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2021-04-21..2021-04-21&type=Issues)
+
 ## 1.6.3
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.6.2...aa2636795ae1d87e3055febb3931f891dd6b4451))
