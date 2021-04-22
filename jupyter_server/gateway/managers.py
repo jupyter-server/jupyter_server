@@ -27,7 +27,7 @@ from ..utils import url_path_join, ensure_async
 from .._tz import UTC
 
 
-class GatewayKernelManagers(AsyncMappingKernelManager):
+class GatewayMappingKernelManager(AsyncMappingKernelManager):
     """Kernel manager that supports remote kernels hosted by Jupyter Kernel or Enterprise Gateway."""
 
     # We'll maintain our own set of kernel ids
@@ -282,7 +282,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
 
 
 class GatewaySessionManager(SessionManager):
-    kernel_manager = Instance('jupyter_server.gateway.managers.GatewayKernelManagers')
+    kernel_manager = Instance('jupyter_server.gateway.managers.GatewayMappingKernelManager')
 
     async def kernel_culled(self, kernel_id):
         """Checks if the kernel is still considered alive and returns true if its not found. """
