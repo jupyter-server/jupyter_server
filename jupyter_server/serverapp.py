@@ -1830,7 +1830,10 @@ class ServerApp(JupyterApp):
 
         for file in get_client_schema_files():
             with importlib_resources.as_file(file) as f:
-                self.eventlog.register_schema_file_object(f)
+                try:
+                    self.eventlog.register_schema_file_object(f)
+                except:
+                    pass
 
 
     @catch_config_error
