@@ -144,6 +144,7 @@ JUPYTER_SERVICE_HANDLERS = dict(
     config=['jupyter_server.services.config.handlers'],
     contents=['jupyter_server.services.contents.handlers'],
     files=['jupyter_server.files.handlers'],
+    eventlog=['jupyter_server.services.eventlog.handlers'],
     kernels=['jupyter_server.services.kernels.handlers'],
     kernelspecs=[
         'jupyter_server.kernelspecs.handlers',
@@ -623,6 +624,7 @@ class ServerApp(JupyterApp):
         'config',
         'contents',
         'files',
+        'eventlog',
         'kernels',
         'kernelspecs',
         'nbconvert',
