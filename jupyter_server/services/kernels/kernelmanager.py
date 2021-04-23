@@ -47,6 +47,8 @@ class MappingKernelManager(MultiKernelManager):
 
     _kernel_connections = Dict()
 
+    _kernel_ports = Dict()
+
     _culler_callback = None
 
     _initialized_culler = False
@@ -183,6 +185,7 @@ class MappingKernelManager(MultiKernelManager):
                 kwargs['cwd'] = self.cwd_for_path(path)
             kernel_id = await ensure_async(self.pinned_superclass.start_kernel(self, **kwargs))
             self._kernel_connections[kernel_id] = 0
+            self._kernel_ports[kernel_id] = self._kernels[kernel_id].ports
             self.start_watching_activity(kernel_id)
             self.log.info("Kernel started: %s" % kernel_id)
             self.log.debug("Kernel args: %r" % kwargs)
@@ -207,6 +210,40 @@ class MappingKernelManager(MultiKernelManager):
             self.initialize_culler()
 
         return kernel_id
+
+    def ports_changed(self, kernel_id):
+        """Used by ZMQChannelsHandler to determine how to coordinate nudge and replays.
+
+        Ports are captured when starting a kernel (via MappingKernelManager).  Ports
+        are considered changed (following restarts) if the referenced KernelManager
+        is using a set of ports different from those captured at startup.  If changes
+        are detected, the captured set is updated and a value of True is returned.
+
+        NOTE: Use is exclusive to ZMQChannelsHandler because this object is a singleton
+        instance while ZMQChannelsHandler instances are per WebSocket connection that
+        can vary per kernel lifetime.
+        """
+        changed_ports = self._get_changed_ports(kernel_id)
+        if changed_ports:
+            # If changed, update captured ports and return True, else return False.
+            self.log.debug(f"Port change detected for kernel: {kernel_id}")
+            self._kernel_ports[kernel_id] = changed_ports
+            return True
+        return False
+
+    def _get_changed_ports(self, kernel_id):
+        """Internal method to test if a kernel's ports have changed and, if so, return their values.
+
+        This method does NOT update the captured ports for the kernel as that can only be done
+        by ZMQChannelsHandler, but instead returns the new list of ports if they are different
+        than those captured at startup.  This enables the ability to conditionally restart
+        activity monitoring immediately following a kernel's restart (if ports have changed).
+        """
+        # Get current ports and return comparison with ports captured at startup.
+        km = self.get_kernel(kernel_id)
+        if km.ports != self._kernel_ports[kernel_id]:
+            return km.ports
+        return None
 
     def start_buffering(self, kernel_id, session_key, channels):
         """Start buffering messages for a kernel
@@ -300,10 +337,7 @@ class MappingKernelManager(MultiKernelManager):
     def shutdown_kernel(self, kernel_id, now=False, restart=False):
         """Shutdown a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
-        kernel = self._kernels[kernel_id]
-        if kernel._activity_stream:
-            kernel._activity_stream.close()
-            kernel._activity_stream = None
+        self.stop_watching_activity(kernel_id)
         self.stop_buffering(kernel_id)
         self._kernel_connections.pop(kernel_id, None)
 
@@ -313,7 +347,13 @@ class MappingKernelManager(MultiKernelManager):
             type=self._kernels[kernel_id].kernel_name
         ).dec()
 
-        return self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
+        self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
+        # Unlike its async sibling method in AsyncMappingKernelManager, removing the kernel_id
+        # from the connections dictionary isn't as problematic before the shutdown since the
+        # method is synchronous.  However, we'll keep the relative call orders the same from
+        # a maintenance perspective.
+        self._kernel_connections.pop(kernel_id, None)
+        self._kernel_ports.pop(kernel_id, None)
 
     async def restart_kernel(self, kernel_id, now=False):
         """Restart a kernel by kernel_id"""
@@ -354,6 +394,10 @@ class MappingKernelManager(MultiKernelManager):
         channel.on_recv(on_reply)
         loop = IOLoop.current()
         timeout = loop.add_timeout(loop.time() + self.kernel_info_timeout, on_timeout)
+        # Re-establish activity watching if ports have changed...
+        if self._get_changed_ports(kernel_id) is not None:
+            self.stop_watching_activity(kernel_id)
+            self.start_watching_activity(kernel_id)
         return future
 
     def notify_connect(self, kernel_id):
@@ -379,7 +423,7 @@ class MappingKernelManager(MultiKernelManager):
             "name": kernel.kernel_name,
             "last_activity": isoformat(kernel.last_activity),
             "execution_state": kernel.execution_state,
-            "connections": self._kernel_connections[kernel_id],
+            "connections": self._kernel_connections.get(kernel_id, 0),
         }
         return model
 
@@ -388,8 +432,11 @@ class MappingKernelManager(MultiKernelManager):
         kernels = []
         kernel_ids = self.pinned_superclass.list_kernel_ids(self)
         for kernel_id in kernel_ids:
-            model = self.kernel_model(kernel_id)
-            kernels.append(model)
+            try:
+                model = self.kernel_model(kernel_id)
+                kernels.append(model)
+            except (web.HTTPError, KeyError):
+                pass  # Probably due to a (now) non-existent kernel, continue building the list
         return kernels
 
     # override _check_kernel_id to raise 404 instead of KeyError
@@ -431,6 +478,13 @@ class MappingKernelManager(MultiKernelManager):
                 self.log.debug("activity on %s: %s", kernel_id, msg_type)
 
         kernel._activity_stream.on_recv(record_activity)
+
+    def stop_watching_activity(self, kernel_id):
+        """Stop watching IOPub messages on a kernel for activity."""
+        kernel = self._kernels[kernel_id]
+        if kernel._activity_stream:
+            kernel._activity_stream.close()
+            kernel._activity_stream = None
 
     def initialize_culler(self):
         """Start idle culler if 'cull_idle_timeout' is greater than zero.
@@ -503,10 +557,7 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
     async def shutdown_kernel(self, kernel_id, now=False, restart=False):
         """Shutdown a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
-        kernel = self._kernels[kernel_id]
-        if kernel._activity_stream:
-            kernel._activity_stream.close()
-            kernel._activity_stream = None
+        self.stop_watching_activity(kernel_id)
         self.stop_buffering(kernel_id)
 
         # Decrease the metric of number of kernels
@@ -518,4 +569,5 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
         # Finish shutting down the kernel before clearing state to avoid a race condition.
         ret = await self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
         self._kernel_connections.pop(kernel_id, None)
+        self._kernel_ports.pop(kernel_id, None)
         return ret

@@ -82,7 +82,7 @@ class NbconvertFileHandler(JupyterHandler):
 
     @web.authenticated
     async def get(self, format, path):
-
+        self.check_xsrf_cookie()
         exporter = get_exporter(format, config=self.config, log=self.log)
 
         path = path.strip('/')

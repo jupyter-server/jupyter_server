@@ -1,4 +1,3 @@
-import sys
 import time
 import json
 import shutil
@@ -6,18 +5,43 @@ import pytest
 
 import tornado
 
+from jupyter_client.ioloop import AsyncIOLoopKernelManager
+
 from nbformat.v4 import new_notebook
 from nbformat import writes
+from traitlets import default
 
 from ...utils import expected_http_error
+from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
 from jupyter_server.utils import url_path_join
 
 
 j = lambda r: json.loads(r.body.decode())
 
 
-@pytest.fixture(params=["MappingKernelManager", "AsyncMappingKernelManager"])
+class NewPortsKernelManager(AsyncIOLoopKernelManager):
+
+    @default('cache_ports')
+    def _default_cache_ports(self) -> bool:
+        return False
+
+    async def restart_kernel(self, now: bool = False, newports: bool = True, **kw) -> None:
+        self.log.debug(f"DEBUG**** calling super().restart_kernel with newports={newports}")
+        return await super().restart_kernel(now=now, newports=newports, **kw)
+
+
+class NewPortsMappingKernelManager(AsyncMappingKernelManager):
+
+    @default('kernel_manager_class')
+    def _default_kernel_manager_class(self):
+        self.log.debug("NewPortsMappingKernelManager in _default_kernel_manager_class!")
+        return "jupyter_server.tests.services.sessions.test_api.NewPortsKernelManager"
+
+
+@pytest.fixture(params=["MappingKernelManager", "AsyncMappingKernelManager", "NewPortsMappingKernelManager"])
 def jp_argv(request):
+    if request.param == "NewPortsMappingKernelManager":
+        return ["--ServerApp.kernel_manager_class=jupyter_server.tests.services.sessions.test_api." + request.param]
     return ["--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager." + request.param]
 
 
@@ -336,6 +360,86 @@ async def test_modify_kernel_id(session_client, jp_fetch):
     kernel.pop('last_activity')
     [ k.pop('last_activity') for k in kernel_list ]
     assert kernel_list == [kernel]
+
+    # Need to find a better solution to this.
+    await session_client.cleanup()
+
+
+async def test_restart_kernel(session_client, jp_base_url, jp_fetch, jp_ws_fetch):
+
+    # Create a session.
+    resp = await session_client.create('foo/nb1.ipynb')
+    assert resp.code == 201
+    new_session = j(resp)
+    assert 'id' in new_session
+    assert new_session['path'] == 'foo/nb1.ipynb'
+    assert new_session['type'] == 'notebook'
+    assert resp.headers['Location'] == url_path_join(jp_base_url, '/api/sessions/', new_session['id'])
+
+    kid = new_session['kernel']['id']
+
+    # Get kernel info
+    r = await jp_fetch(
+        'api', 'kernels', kid,
+        method='GET'
+    )
+    model = json.loads(r.body.decode())
+    assert model['connections'] == 0
+
+    # Open a websocket connection.
+    ws = await jp_ws_fetch(
+        'api', 'kernels', kid, 'channels'
+    )
+
+    # Test that it was opened.
+    r = await jp_fetch(
+        'api', 'kernels', kid,
+        method='GET'
+    )
+    model = json.loads(r.body.decode())
+    assert model['connections'] == 1
+
+    # Restart kernel
+    r = await jp_fetch(
+        'api', 'kernels', kid, 'restart',
+        method='POST',
+        allow_nonstandard_methods=True
+    )
+    restarted_kernel = json.loads(r.body.decode())
+    assert restarted_kernel['id'] == kid
+
+    # Close/open websocket
+    ws.close()
+    # give it some time to close on the other side:
+    for i in range(10):
+        r = await jp_fetch(
+            'api', 'kernels', kid,
+            method='GET'
+        )
+        model = json.loads(r.body.decode())
+        if model['connections'] > 0:
+            time.sleep(0.1)
+        else:
+            break
+
+    r = await jp_fetch(
+        'api', 'kernels', kid,
+        method='GET'
+    )
+    model = json.loads(r.body.decode())
+    assert model['connections'] == 0
+
+    # Open a websocket connection.
+    await jp_ws_fetch(
+        'api', 'kernels', kid, 'channels'
+    )
+
+    r = await jp_fetch(
+        'api', 'kernels', kid,
+        method='GET'
+    )
+    model = json.loads(r.body.decode())
+    assert model['connections'] == 1
 
     # Need to find a better solution to this.
     await session_client.cleanup()
