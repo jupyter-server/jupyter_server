@@ -3,7 +3,9 @@
 
 import os
 import sys
+import io
 import json
+import logging
 import pytest
 import shutil
 import urllib.parse
@@ -432,3 +434,15 @@ def jp_create_notebook(jp_root_dir):
 def jp_server_cleanup():
     yield
     ServerApp.clear_instance()
+
+
+@pytest.fixture
+def jp_eventlog_sink(jp_configurable_serverapp):
+    """Return eventlog and sink objects"""
+    sink = io.StringIO()
+    handler = logging.StreamHandler(sink)
+
+    cfg = Config()
+    cfg.EventLog.handlers = [handler]
+    serverapp = jp_configurable_serverapp(config=cfg)
+    yield serverapp, sink

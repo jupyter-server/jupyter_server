@@ -1,0 +1,21 @@
+$id: https://example.jupyter.org/client-event
+version: 1
+title: Client event
+description: |
+  An example client event
+type: object
+properties:
+  thing:
+    title: Thing
+    categories:
+      - category.jupyter.org/unrestricted
+    description: A random thing
+  user:
+    title: User name
+    type: string
+    categories:
+      - category.jupyter.org/user-identifier
+    description: Name of user who initiated event
+required:
+  - thing
+  - user
