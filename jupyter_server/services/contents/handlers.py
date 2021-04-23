@@ -277,6 +277,7 @@ class ContentsHandler(APIHandler):
         )
         self.finish()
 
+
 class CheckpointsHandler(APIHandler):
 
     @web.authenticated

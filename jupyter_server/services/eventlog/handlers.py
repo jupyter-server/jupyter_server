@@ -3,7 +3,7 @@ import json
 from tornado import web
 
 from jupyter_server.base.handlers import APIHandler, json_errors
-from jupyter_telemetry.eventlog import EventLog
+
 
 class EventLoggingHandler(APIHandler):
     """
@@ -35,6 +35,7 @@ class EventLoggingHandler(APIHandler):
 
         self.set_status(204)
         self.finish()
+
 
 default_handlers = [
     (r"/api/eventlog", EventLoggingHandler),

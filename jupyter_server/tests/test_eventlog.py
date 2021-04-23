@@ -1,17 +1,14 @@
-import io
 import json
-import logging
 
 import jsonschema
 import pytest
-from traitlets.config import Config
 
 from jupyter_server.utils import eventlogging_schema_fqn
-from .services.contents.test_api import contents, contents_dir, dirs
+from .services.contents.test_api import dirs
 
 
 @pytest.mark.parametrize('path, name', dirs)
-async def test_eventlog_list_notebooks(jp_eventlog_sink, jp_fetch, contents, path, name):
+async def test_eventlog_list_notebooks(jp_eventlog_sink, jp_fetch, path, name):
     schema, version = (eventlogging_schema_fqn('contentsmanager-actions'), 1)
     serverapp, sink = jp_eventlog_sink
     serverapp.eventlog.allowed_schemas = {

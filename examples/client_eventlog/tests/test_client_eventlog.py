@@ -1,12 +1,4 @@
-import io
 import json
-import logging
-
-import jsonschema
-import pytest
-from traitlets.config import Config
-
-from jupyter_server.utils import get_client_schema_files
 
 
 EVENT = {

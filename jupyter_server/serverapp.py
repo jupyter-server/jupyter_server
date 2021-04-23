@@ -32,9 +32,6 @@ import inspect
 import pathlib
 import importlib_resources
 
-from ruamel.yaml import YAML
-from glob import glob
-
 from base64 import encodebytes
 try:
     import resource
