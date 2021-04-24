@@ -121,12 +121,12 @@ class GenericCheckpointsMixin(object):
     def get_file_checkpoint(self, checkpoint_id, path):
         """Get the content of a checkpoint for a non-notebook file.
 
-         Returns a dict of the form:
-         {
-             'type': 'file',
-             'content': <str>,
-             'format': {'text','base64'},
-         }
+        Returns a dict of the form:
+        {
+            'type': 'file',
+            'content': <str>,
+            'format': {'text','base64'},
+        }
         """
         raise NotImplementedError("must be implemented in a subclass")
 
@@ -229,12 +229,12 @@ class AsyncGenericCheckpointsMixin(GenericCheckpointsMixin):
     async def get_file_checkpoint(self, checkpoint_id, path):
         """Get the content of a checkpoint for a non-notebook file.
 
-         Returns a dict of the form:
-         {
-             'type': 'file',
-             'content': <str>,
-             'format': {'text','base64'},
-         }
+        Returns a dict of the form:
+        {
+            'type': 'file',
+            'content': <str>,
+            'format': {'text','base64'},
+        }
         """
         raise NotImplementedError("must be implemented in a subclass")
 

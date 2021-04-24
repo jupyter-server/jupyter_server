@@ -252,11 +252,11 @@ class MappingKernelManager(MultiKernelManager):
         ----------
         kernel_id : str
             The id of the kernel to stop buffering.
-        session_key: str
+        session_key : str
             The session_key, if any, that should get the buffer.
             If the session_key matches the current buffered session_key,
             the buffer will be returned.
-        channels: dict({'channel': ZMQStream})
+        channels : dict({'channel': ZMQStream})
             The zmq channels whose messages should be buffered.
         """
 
@@ -291,7 +291,7 @@ class MappingKernelManager(MultiKernelManager):
         ----------
         kernel_id : str
             The id of the kernel to stop buffering.
-        session_key: str, optional
+        session_key : str, optional
             The session_key, if any, that should get the buffer.
             If the session_key matches the current buffered session_key,
             the buffer will be returned.

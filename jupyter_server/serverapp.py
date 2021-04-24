@@ -1826,19 +1826,16 @@ class ServerApp(JupyterApp):
 
         Parameters
         ----------
-        argv: list or None
+        argv : list or None
             CLI arguments to parse.
-
-        find_extensions: bool
+        find_extensions : bool
             If True, find and load extensions listed in Jupyter config paths. If False,
             only load extensions that are passed to ServerApp directy through
             the `argv`, `config`, or `jpserver_extensions` arguments.
-
-        new_httpserver: bool
+        new_httpserver : bool
             If True, a tornado HTTPServer instance will be created and configured for the Server Web
             Application. This will set the http_server attribute of this class.
-
-        starter_extension: str
+        starter_extension : str
             If given, it references the name of an extension point that started the Server.
             We will try to load configuration from extension point
         """
