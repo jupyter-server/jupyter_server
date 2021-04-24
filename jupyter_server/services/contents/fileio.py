@@ -12,7 +12,7 @@ import io
 import os
 import shutil
 
-from anyio import run_sync_in_worker_thread
+from anyio.to_thread import run_sync
 from tornado.web import HTTPError
 
 from jupyter_server.utils import (
@@ -36,7 +36,7 @@ def replace_file(src, dst):
 async def async_replace_file(src, dst):
     """ replace dst with src asynchronously
     """
-    await run_sync_in_worker_thread(os.replace, src, dst)
+    await run_sync(os.replace, src, dst)
 
 def copy2_safe(src, dst, log=None):
     """copy src to dst
@@ -55,9 +55,9 @@ async def async_copy2_safe(src, dst, log=None):
 
     like shutil.copy2, but log errors in copystat instead of raising
     """
-    await run_sync_in_worker_thread(shutil.copyfile, src, dst)
+    await run_sync(shutil.copyfile, src, dst)
     try:
-        await run_sync_in_worker_thread(shutil.copystat, src, dst)
+        await run_sync(shutil.copystat, src, dst)
     except OSError:
         if log:
             log.debug("copystat on %s failed", dst, exc_info=True)
@@ -355,7 +355,7 @@ class AsyncFileManagerMixin(FileManagerMixin):
         """Read a notebook from an os path."""
         with self.open(os_path, 'r', encoding='utf-8') as f:
             try:
-                return await run_sync_in_worker_thread(partial(nbformat.read, as_version=as_version), f)
+                return await run_sync(partial(nbformat.read, as_version=as_version), f)
             except Exception as e:
                 e_orig = e
 
@@ -379,7 +379,7 @@ class AsyncFileManagerMixin(FileManagerMixin):
     async def _save_notebook(self, os_path, nb):
         """Save a notebook to an os_path."""
         with self.atomic_writing(os_path, encoding='utf-8') as f:
-            await run_sync_in_worker_thread(partial(nbformat.write, version=nbformat.NO_CONVERT), nb, f)
+            await run_sync(partial(nbformat.write, version=nbformat.NO_CONVERT), nb, f)
 
     async def _read_file(self, os_path, format):
         """Read a non-notebook file.
@@ -394,7 +394,7 @@ class AsyncFileManagerMixin(FileManagerMixin):
             raise HTTPError(400, "Cannot read non-file %s" % os_path)
 
         with self.open(os_path, 'rb') as f:
-            bcontent = await run_sync_in_worker_thread(f.read)
+            bcontent = await run_sync(f.read)
 
         if format is None or format == 'text':
             # Try to interpret as unicode if format is unknown or if unicode
@@ -429,4 +429,4 @@ class AsyncFileManagerMixin(FileManagerMixin):
             ) from e
 
         with self.atomic_writing(os_path, text=False) as f:
-            await run_sync_in_worker_thread(f.write, bcontent)
+            await run_sync(f.write, bcontent)

@@ -23,7 +23,7 @@ def jp_contents_manager(request, tmp_path):
 
 
 @pytest.fixture(params=[FileContentsManager, AsyncFileContentsManager])
-def file_contents_manager_class(request, tmp_path):
+def jp_file_contents_manager_class(request, tmp_path):
     return request.param
 
 # -------------- Functions ----------------------------
@@ -100,46 +100,45 @@ async def check_populated_dir_files(jp_contents_manager, api_path):
 # ----------------- Tests ----------------------------------
 
 
-def test_root_dir(file_contents_manager_class, tmp_path):
-    fm = file_contents_manager_class(root_dir=str(tmp_path))
+def test_root_dir(jp_file_contents_manager_class, tmp_path):
+    fm = jp_file_contents_manager_class(root_dir=str(tmp_path))
     assert fm.root_dir == str(tmp_path)
 
 
-def test_missing_root_dir(file_contents_manager_class, tmp_path):
+def test_missing_root_dir(jp_file_contents_manager_class, tmp_path):
     root = tmp_path / 'notebook' / 'dir' / 'is' / 'missing'
     with pytest.raises(TraitError):
-        file_contents_manager_class(root_dir=str(root))
+        jp_file_contents_manager_class(root_dir=str(root))
 
 
-def test_invalid_root_dir(file_contents_manager_class, tmp_path):
+def test_invalid_root_dir(jp_file_contents_manager_class, tmp_path):
     temp_file = tmp_path / 'file.txt'
     temp_file.write_text('')
     with pytest.raises(TraitError):
-       file_contents_manager_class(root_dir=str(temp_file))
+       jp_file_contents_manager_class(root_dir=str(temp_file))
 
-
-def test_get_os_path(file_contents_manager_class, tmp_path):
-    fm = file_contents_manager_class(root_dir=str(tmp_path))
+def test_get_os_path(jp_file_contents_manager_class, tmp_path):
+    fm = jp_file_contents_manager_class(root_dir=str(tmp_path))
     path = fm._get_os_path('/path/to/notebook/test.ipynb')
     rel_path_list =  '/path/to/notebook/test.ipynb'.split('/')
     fs_path = os.path.join(fm.root_dir, *rel_path_list)
     assert path == fs_path
 
-    fm = file_contents_manager_class(root_dir=str(tmp_path))
+    fm = jp_file_contents_manager_class(root_dir=str(tmp_path))
     path = fm._get_os_path('test.ipynb')
     fs_path = os.path.join(fm.root_dir, 'test.ipynb')
     assert path == fs_path
 
-    fm = file_contents_manager_class(root_dir=str(tmp_path))
+    fm = jp_file_contents_manager_class(root_dir=str(tmp_path))
     path = fm._get_os_path('////test.ipynb')
     fs_path = os.path.join(fm.root_dir, 'test.ipynb')
     assert path == fs_path
 
 
-def test_checkpoint_subdir(file_contents_manager_class, tmp_path):
+def test_checkpoint_subdir(jp_file_contents_manager_class, tmp_path):
     subd = 'sub ∂ir'
     cp_name = 'test-cp.ipynb'
-    fm = file_contents_manager_class(root_dir=str(tmp_path))
+    fm = jp_file_contents_manager_class(root_dir=str(tmp_path))
     tmp_path.joinpath(subd).mkdir()
     cpm = fm.checkpoints
     cp_dir = cpm.checkpoint_path('cp', 'test.ipynb')
@@ -148,10 +147,10 @@ def test_checkpoint_subdir(file_contents_manager_class, tmp_path):
     assert cp_dir == os.path.join(str(tmp_path), cpm.checkpoint_dir, cp_name)
 
 
-async def test_bad_symlink(file_contents_manager_class, tmp_path):
+async def test_bad_symlink(jp_file_contents_manager_class, tmp_path):
     td = str(tmp_path)
 
-    cm = file_contents_manager_class(root_dir=td)
+    cm = jp_file_contents_manager_class(root_dir=td)
     path = 'test bad symlink'
     _make_dir(cm, path)
 
@@ -173,10 +172,10 @@ async def test_bad_symlink(file_contents_manager_class, tmp_path):
     sys.platform.startswith('win'),
     reason="Windows doesn't detect symlink loops"
 )
-async def test_recursive_symlink(file_contents_manager_class, tmp_path):
+async def test_recursive_symlink(jp_file_contents_manager_class, tmp_path):
     td = str(tmp_path)
 
-    cm = file_contents_manager_class(root_dir=td)
+    cm = jp_file_contents_manager_class(root_dir=td)
     path = 'test recursive symlink'
     _make_dir(cm, path)
 
@@ -195,9 +194,9 @@ async def test_recursive_symlink(file_contents_manager_class, tmp_path):
     assert 'recursive' not in contents
 
 
-async def test_good_symlink(file_contents_manager_class, tmp_path):
+async def test_good_symlink(jp_file_contents_manager_class, tmp_path):
     td = str(tmp_path)
-    cm = file_contents_manager_class(root_dir=td)
+    cm = jp_file_contents_manager_class(root_dir=td)
     parent = 'test good symlink'
     name = 'good symlink'
     path = '{0}/{1}'.format(parent, name)
@@ -216,13 +215,13 @@ async def test_good_symlink(file_contents_manager_class, tmp_path):
     sys.platform.startswith('win'),
     reason="Can't test permissions on Windows"
 )
-async def test_403(file_contents_manager_class, tmp_path):
+async def test_403(jp_file_contents_manager_class, tmp_path):
     if hasattr(os, 'getuid'):
         if os.getuid() == 0:
             raise pytest.skip("Can't test permissions as root")
 
     td = str(tmp_path)
-    cm = file_contents_manager_class(root_dir=td)
+    cm = jp_file_contents_manager_class(root_dir=td)
     model = await ensure_async(cm.new_untitled(type='file'))
     os_path = cm._get_os_path(model['path'])
 
@@ -233,10 +232,9 @@ async def test_403(file_contents_manager_class, tmp_path):
     except HTTPError as e:
         assert e.status_code == 403
 
-
-async def test_escape_root(file_contents_manager_class, tmp_path):
+async def test_escape_root(jp_file_contents_manager_class, tmp_path):
     td = str(tmp_path)
-    cm = file_contents_manager_class(root_dir=td)
+    cm = jp_file_contents_manager_class(root_dir=td)
     # make foo, bar next to root
     with open(os.path.join(cm.root_dir, '..', 'foo'), 'w') as f:
         f.write('foo')

@@ -1,4 +1,4 @@
-from anyio import run_sync_in_worker_thread
+from anyio.to_thread import run_sync
 from tornado import web
 import base64
 import os, io
@@ -135,6 +135,6 @@ class AsyncLargeFileManager(AsyncFileContentsManager):
             if os.path.islink(os_path):
                 os_path = os.path.join(os.path.dirname(os_path), os.readlink(os_path))
             with io.open(os_path, 'ab') as f:
-                await run_sync_in_worker_thread(f.write, bcontent)
+                await run_sync(f.write, bcontent)
 
 
