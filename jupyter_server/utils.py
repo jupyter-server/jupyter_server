@@ -82,12 +82,12 @@ def samefile_simple(path, other_path):
     Only to be used if os.path.samefile is not available.
 
     Parameters
-    -----------
-    path:       String representing a path to a file
-    other_path: String representing a path to another file
+    ----------
+    path : String representing a path to a file
+    other_path : String representing a path to another file
 
     Returns
-    -----------
+    -------
     same:   Boolean that is True if both path and other path are the same
     """
     path_stat = os.stat(path)
@@ -193,7 +193,7 @@ def run_sync(maybe_async):
 
     Returns
     -------
-    result :
+    result
         Whatever the async object returns, or the object itself.
     """
     if not inspect.isawaitable(maybe_async):

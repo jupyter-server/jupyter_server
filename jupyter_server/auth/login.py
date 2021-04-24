@@ -196,7 +196,7 @@ class LoginHandler(JupyterHandler):
     @classmethod
     def get_user_token(cls, handler):
         """Identify the user based on a token in the URL or Authorization header
-        
+
         Returns:
         - uuid if authenticated
         - None if not

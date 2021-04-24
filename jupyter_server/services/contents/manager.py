@@ -326,7 +326,7 @@ class ContentsManager(LoggingConfigurable):
             The name of a file, including extension
         path : unicode
             The API path of the target's directory
-        insert: unicode
+        insert : unicode
             The characters to insert after the base filename
 
         Returns
@@ -691,7 +691,7 @@ class AsyncContentsManager(ContentsManager):
             The name of a file, including extension
         path : unicode
             The API path of the target's directory
-        insert: unicode
+        insert : unicode
             The characters to insert after the base filename
 
         Returns
