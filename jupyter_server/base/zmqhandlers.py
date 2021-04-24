@@ -32,7 +32,6 @@ def serialize_binary_message(msg):
 
     Returns
     -------
-
     The message serialized to bytes.
 
     """
@@ -64,7 +63,6 @@ def deserialize_binary_message(bmsg):
 
     Returns
     -------
-
     message dictionary
     """
     nbufs = struct.unpack('!i', bmsg[:4])[0]

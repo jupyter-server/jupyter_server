@@ -293,7 +293,7 @@ class GatewayClient(SingletonConfigurable):
 
     def load_connection_args(self, **kwargs):
         """Merges the static args relative to the connection, with the given keyword arguments.  If statics
-         have yet to be initialized, we'll do that here.
+        have yet to be initialized, we'll do that here.
 
         """
         if len(self._static_args) == 0:
@@ -360,7 +360,7 @@ class GatewayKernelManager(AsyncMappingKernelManager):
 
         Parameters
         ----------
-        kernel_id: kernel UUID (optional)
+        kernel_id : kernel UUID (optional)
         """
         if kernel_id:
             return url_path_join(self.base_endpoint, url_escape(str(kernel_id)))
@@ -562,7 +562,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
 
         Parameters
         ----------
-        kernel_name: kernel name (optional)
+        kernel_name : kernel name (optional)
         """
         if kernel_name:
             return url_path_join(self.base_endpoint, url_escape(kernel_name))
