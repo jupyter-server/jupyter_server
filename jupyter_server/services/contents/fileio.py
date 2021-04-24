@@ -21,7 +21,6 @@ from jupyter_server.utils import (
 )
 import nbformat
 
-from ipython_genutils.py3compat import str_to_unicode
 
 from traitlets.config import Configurable
 from traitlets import Bool
@@ -231,7 +230,7 @@ class FileManagerMixin(Configurable):
                 # this may not work perfectly on unicode paths on Python 2,
                 # but nobody should be doing that anyway.
                 if not os_path:
-                    os_path = str_to_unicode(e.filename or 'unknown file')
+                    os_path = e.filename or "unknown file"
                 path = to_api_path(os_path, root=self.root_dir)
                 raise HTTPError(403, u'Permission denied: %s' % path) from e
             else:

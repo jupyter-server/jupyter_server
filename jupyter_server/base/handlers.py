@@ -26,7 +26,6 @@ from jupyter_server._sysinfo import get_sys_info
 
 from traitlets.config import Application
 from ipython_genutils.path import filefind
-from ipython_genutils.py3compat import string_types
 
 from jupyter_core.paths import is_hidden
 import jupyter_server
@@ -785,7 +784,7 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
     def initialize(self, path, default_filename=None, no_cache_paths=None):
         self.no_cache_paths = no_cache_paths or []
 
-        if isinstance(path, string_types):
+        if isinstance(path, str):
             path = [path]
 
         self.root = tuple(
