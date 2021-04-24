@@ -8,13 +8,21 @@ import errno
 import inspect
 import os
 import sys
-import importlib_resources
 from distutils.version import LooseVersion
-from importlib_metadata import entry_points
 from itertools import chain
 
 from urllib.parse import quote, unquote, urlparse, urljoin
 from urllib.request import pathname2url
+
+if sys.version_info >= (3, 8):
+    from importlib.metadata import entry_points
+else:
+    from importlib_metadata import entry_points
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as importlib_resources
+else:
+    import importlib_resources
 
 from ipython_genutils import py3compat
 

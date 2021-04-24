@@ -30,7 +30,11 @@ import webbrowser
 import urllib
 import inspect
 import pathlib
-import importlib_resources
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as importlib_resources
+else:
+    import importlib_resources
 
 from base64 import encodebytes
 try:
