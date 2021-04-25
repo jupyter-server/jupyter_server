@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
+<!-- <START NEW CHANGELOG ENTRY> -->
+
 ## 1.6.4
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.6.3...68a64ea13be5d0d86460f04e0c47eb0b6662a0af))
@@ -15,6 +17,8 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-21&to=2021-04-21&type=c))
 
 [@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2021-04-21..2021-04-21&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.6.3
 

@@ -25,7 +25,8 @@ prune docs/dist
 global-exclude *~
 global-exclude *.pyc
 global-exclude *.pyo
-global-exclude .git
-global-exclude .ipynb_checkpoints
-global-exclude .pytest_cache
-global-exclude .coverage
+prune .git
+prune **/.ipynb_checkpoints
+prune **/.pytest_cache
+prune **/.coverage
+prune **/.pytest_cache
