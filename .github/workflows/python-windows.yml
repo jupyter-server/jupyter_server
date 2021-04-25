@@ -58,7 +58,7 @@ jobs:
         pytest examples/simple/tests/test_handlers.py
     - name: Install the Python dependencies for the client telemetry eventlog example
       run: |
-        cd examples/client_eventlog && pip install -e .
+        cd examples/client_eventlog_example && pip install -e .
     - name: Run the tests for the client telemetry eventlog example
       run: |
-        pytest examples/client_eventlog/tests
+        pytest examples/client_eventlog_example/tests
