@@ -76,6 +76,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'IPython.sphinxext.ipython_console_highlighting',
     'sphinxcontrib_github_alt',
+    'sphinxcontrib.openapi',
+    'sphinxemoji.sphinxemoji',
     'sphinx-jsonschema',
     'jupyter_telemetry_sphinxext'
 ]
@@ -387,9 +389,10 @@ spelling_word_list_filename='spelling_wordlist.txt'
 import jupyter_server.transutils
 
 # Jupyter telemetry configuration values.
-jupyter_telemetry_schema_source = "../jupyter_server/event-schemas"   # Path is relative to conf.py
-jupyter_telemetry_schema_output = "source/operators/events"           # Path is relative to conf.py
-jupyter_telemetry_index_title = "Telemetry Event Schemas"                # Title of the index page that lists all found schemas.
+jupyter_telemetry_schema_source = osp.join(HERE, '../../jupyter_server/event-schemas')
+jupyter_telemetry_schema_output = osp.join(HERE, 'operators/events')
+# Title of the index page that lists all found schemas
+jupyter_telemetry_index_title = 'Telemetry Event Schemas'
 
 def setup(app):
     dest = osp.join(HERE, 'other', 'changelog.md')

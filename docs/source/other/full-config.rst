@@ -1523,7 +1523,7 @@ AsyncFileContentsManager.use_atomic_writing : Bool
     This procedure, namely 'atomic_writing', causes some bugs on file system whitout operation order enforcement (like some networked fs).
     If set to False, the new notebook is written directly on the old one which could fail (eg: full filesystem or quota )
 
-NotebookNotary.algorithm : any of ``'sha3_512'``|``'sha224'``|``'sha1'``|``'sha256'``|``'sha3_384'``|``'sha512'``|``'sha3_256'``|``'blake2s'``|``'sha3_224'``|``'md5'``|``'sha384'``|``'blake2b'``
+NotebookNotary.algorithm : any of ``'sha512'``|``'md5'``|``'sha224'``|``'sha256'``|``'blake2s'``|``'blake2b'``|``'sha3_224'``|``'sha384'``|``'sha1'``|``'sha3_256'``|``'sha3_512'``|``'sha3_384'``
     Default: ``'sha256'``
 
     The hashing algorithm used to sign notebooks.
