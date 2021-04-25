@@ -22,7 +22,6 @@ from .manager import AsyncContentsManager, ContentsManager
 
 from ipython_genutils.importstring import import_item
 from traitlets import Any, Unicode, Bool, TraitError, observe, default, validate
-from ipython_genutils.py3compat import getcwd, string_types
 
 from jupyter_core.paths import exists, is_hidden, is_file_hidden
 from jupyter_server import _tz as tz
@@ -47,7 +46,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         try:
             return self.parent.root_dir
         except AttributeError:
-            return getcwd()
+            return os.getcwd()
 
     post_save_hook = Any(None, config=True, allow_none=True,
         help="""Python callable or importstring thereof
@@ -70,7 +69,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
     @validate('post_save_hook')
     def _validate_post_save_hook(self, proposal):
         value = proposal['value']
-        if isinstance(value, string_types):
+        if isinstance(value, str):
             value = import_item(value)
         if not callable(value):
             raise TraitError("post_save_hook must be callable")

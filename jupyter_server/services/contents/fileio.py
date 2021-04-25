@@ -21,7 +21,6 @@ from jupyter_server.utils import (
 )
 import nbformat
 
-from ipython_genutils.py3compat import str_to_unicode
 
 from traitlets.config import Configurable
 from traitlets import Bool
@@ -87,17 +86,14 @@ def atomic_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
     Parameters
     ----------
     path : str
-      The target file to write to.
-
+        The target file to write to.
     text : bool, optional
-      Whether to open the file in text mode (i.e. to write unicode). Default is
-      True.
-
+        Whether to open the file in text mode (i.e. to write unicode). Default is
+        True.
     encoding : str, optional
-      The encoding to use for files opened in text mode. Default is UTF-8.
-
+        The encoding to use for files opened in text mode. Default is UTF-8.
     **kwargs
-      Passed to :func:`io.open`.
+        Passed to :func:`io.open`.
     """
     # realpath doesn't work on Windows: https://bugs.python.org/issue9949
     # Luckily, we only need to resolve the file itself being a symlink, not
@@ -143,17 +139,14 @@ def _simple_writing(path, text=True, encoding='utf-8', log=None, **kwargs):
     Parameters
     ----------
     path : str
-      The target file to write to.
-
+        The target file to write to.
     text : bool, optional
-      Whether to open the file in text mode (i.e. to write unicode). Default is
-      True.
-
+        Whether to open the file in text mode (i.e. to write unicode). Default is
+        True.
     encoding : str, optional
-      The encoding to use for files opened in text mode. Default is UTF-8.
-
+        The encoding to use for files opened in text mode. Default is UTF-8.
     **kwargs
-      Passed to :func:`io.open`.
+        Passed to :func:`io.open`.
     """
     # realpath doesn't work on Windows: https://bugs.python.org/issue9949
     # Luckily, we only need to resolve the file itself being a symlink, not
@@ -231,7 +224,7 @@ class FileManagerMixin(Configurable):
                 # this may not work perfectly on unicode paths on Python 2,
                 # but nobody should be doing that anyway.
                 if not os_path:
-                    os_path = str_to_unicode(e.filename or 'unknown file')
+                    os_path = e.filename or "unknown file"
                 path = to_api_path(os_path, root=self.root_dir)
                 raise HTTPError(403, u'Permission denied: %s' % path) from e
             else:

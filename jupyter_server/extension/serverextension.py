@@ -27,7 +27,6 @@ def _get_config_dir(user=False, sys_prefix=False):
 
     Parameters
     ----------
-
     user : bool [default: False]
         Get the user's .jupyter config directory
     sys_prefix : bool [default: False]

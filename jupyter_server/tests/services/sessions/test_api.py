@@ -150,9 +150,9 @@ def session_client(jp_root_dir, jp_fetch):
 
 def assert_kernel_equality(actual, expected):
     """ Compares kernel models after taking into account that execution_states
-        may differ from 'starting' to 'idle'.  The 'actual' argument is the
-        current state (which may have an 'idle' status) while the 'expected'
-        argument is the previous state (which may have a 'starting' status).
+    may differ from 'starting' to 'idle'.  The 'actual' argument is the
+    current state (which may have an 'idle' status) while the 'expected'
+    argument is the previous state (which may have a 'starting' status).
     """
     actual.pop('execution_state', None)
     actual.pop('last_activity', None)
@@ -163,8 +163,8 @@ def assert_kernel_equality(actual, expected):
 
 def assert_session_equality(actual, expected):
     """ Compares session models.  `actual` is the most current session,
-        while `expected` is the target of the comparison.  This order
-        matters when comparing the kernel sub-models.
+    while `expected` is the target of the comparison.  This order
+    matters when comparing the kernel sub-models.
     """
     assert actual['id'] == expected['id']
     assert actual['path'] == expected['path']

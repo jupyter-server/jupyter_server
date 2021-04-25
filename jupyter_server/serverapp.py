@@ -100,7 +100,6 @@ from traitlets import (
     Any, Dict, Unicode, Integer, List, Bool, Bytes, Instance,
     TraitError, Type, Float, observe, default, validate
 )
-from ipython_genutils import py3compat
 from jupyter_core.paths import jupyter_runtime_dir, jupyter_path
 from jupyter_telemetry.eventlog import EventLog
 
@@ -211,7 +210,7 @@ class ServerWebApplication(web.Application):
             "template_path",
             jupyter_app.template_file_path,
         )
-        if isinstance(_template_path, py3compat.string_types):
+        if isinstance(_template_path, str):
             _template_path = (_template_path,)
         template_path = [os.path.expanduser(path) for path in _template_path]
 
@@ -239,7 +238,7 @@ class ServerWebApplication(web.Application):
         now = utcnow()
 
         root_dir = contents_manager.root_dir
-        home = py3compat.str_to_unicode(os.path.expanduser('~'), encoding=sys.getfilesystemencoding())
+        home = os.path.expanduser("~")
         if root_dir.startswith(home + os.path.sep):
             # collapse $HOME to ~
             root_dir = '~' + root_dir[len(home):]
@@ -965,8 +964,6 @@ class ServerApp(JupyterApp):
             # Address is a hostname
             for info in socket.getaddrinfo(self.ip, self.port, 0, socket.SOCK_STREAM):
                 addr = info[4][0]
-                if not py3compat.PY3:
-                    addr = addr.decode('ascii')
 
                 try:
                     parsed = ipaddress.ip_address(addr.split('%')[0])
@@ -1293,7 +1290,7 @@ class ServerApp(JupyterApp):
             self._root_dir_set = True
             return os.path.dirname(os.path.abspath(self.file_to_run))
         else:
-            return py3compat.getcwd()
+            return os.getcwd()
 
     @validate('root_dir')
     def _root_dir_validate(self, proposal):
@@ -1632,7 +1629,7 @@ class ServerApp(JupyterApp):
         info(_i18n('interrupted'))
         # Check if answer_yes is set
         if self.answer_yes:
-            self.log.critical(_("Shutting down..."))
+            self.log.critical(_i18n("Shutting down..."))
             # schedule stop on the main thread,
             # since this might be called from a signal handler
             self.io_loop.add_callback_from_signal(self.io_loop.stop)
@@ -1852,19 +1849,16 @@ class ServerApp(JupyterApp):
 
         Parameters
         ----------
-        argv: list or None
+        argv : list or None
             CLI arguments to parse.
-
-        find_extensions: bool
+        find_extensions : bool
             If True, find and load extensions listed in Jupyter config paths. If False,
             only load extensions that are passed to ServerApp directy through
             the `argv`, `config`, or `jpserver_extensions` arguments.
-
-        new_httpserver: bool
+        new_httpserver : bool
             If True, a tornado HTTPServer instance will be created and configured for the Server Web
             Application. This will set the http_server attribute of this class.
-
-        starter_extension: str
+        starter_extension : str
             If given, it references the name of an extension point that started the Server.
             We will try to load configuration from extension point
         """
