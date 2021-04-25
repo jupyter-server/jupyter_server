@@ -11,4 +11,5 @@ sphinxemoji
 myst-parser
 pydata_sphinx_theme
 git+https://github.com/pandas-dev/pydata-sphinx-theme.git@master
+sphinx-jsonschema
 jupyter_telemetry_sphinxext
