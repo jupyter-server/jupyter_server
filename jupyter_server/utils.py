@@ -293,7 +293,6 @@ def _safe_entry_point_load(ep):
 
 def _safe_load_resource(x):
     try:
-        fs = importlib_resources.files(x)
-        return fs if fs.exists() and fs.is_dir() else None
+        return importlib_resources.files(x)
     except ModuleNotFoundError:
         return None
