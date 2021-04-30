@@ -273,7 +273,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                     # skip over broken symlinks in listing
                     if e.errno == errno.ENOENT:
                         self.log.warning("%s doesn't exist", os_path)
-                    else:
+                    elif e.errno != errno.EACCES:  # Don't provide clues about protected files
                         self.log.warning("Error stat-ing %s: %s", os_path, e)
                     continue
 
@@ -283,16 +283,24 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                     self.log.debug("%s not a regular file", os_path)
                     continue
 
-                if self.should_list(name):
-                    if self.allow_hidden or not is_file_hidden(os_path, stat_res=st):
-                        contents.append(
+                try:
+                    if self.should_list(name):
+                        if self.allow_hidden or not is_file_hidden(os_path, stat_res=st):
+                            contents.append(
                                 self.get(path='%s/%s' % (path, name), content=False)
+                            )
+                except OSError as e:
+                    # ELOOP: recursive symlink, also don't show failure due to permissions
+                    if e.errno not in [errno.ELOOP, errno.EACCES]:
+                        self.log.warning(
+                            "Unknown error checking if file %r is hidden",
+                            os_path,
+                            exc_info=True,
                         )
 
             model['format'] = 'json'
 
         return model
-
 
     def _file_model(self, path, content=True, format=None):
         """Build a model for a file
@@ -585,7 +593,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                     # skip over broken symlinks in listing
                     if e.errno == errno.ENOENT:
                         self.log.warning("%s doesn't exist", os_path)
-                    else:
+                    elif e.errno != errno.EACCES:  # Don't provide clues about protected files
                         self.log.warning("Error stat-ing %s: %s", os_path, e)
                     continue
 
@@ -595,10 +603,19 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                     self.log.debug("%s not a regular file", os_path)
                     continue
 
-                if self.should_list(name):
-                    if self.allow_hidden or not is_file_hidden(os_path, stat_res=st):
-                        contents.append(
-                                await self.get(path='%s/%s' % (path, name), content=False)
+                try:
+                    if self.should_list(name):
+                        if self.allow_hidden or not is_file_hidden(os_path, stat_res=st):
+                            contents.append(
+                                    await self.get(path='%s/%s' % (path, name), content=False)
+                        )
+                except OSError as e:
+                    # ELOOP: recursive symlink, also don't show failure due to permissions
+                    if e.errno not in [errno.ELOOP, errno.EACCES]:
+                        self.log.warning(
+                            "Unknown error checking if file %r is hidden",
+                            os_path,
+                            exc_info=True,
                         )
 
             model['format'] = 'json'

@@ -2,17 +2,16 @@ import os
 import sys
 import time
 import pytest
-import functools
 from traitlets import TraitError
 from tornado.web import HTTPError
 from itertools import combinations
-
 
 from nbformat import v4 as nbformat
 
 from jupyter_server.services.contents.filemanager import AsyncFileContentsManager, FileContentsManager
 from jupyter_server.utils import ensure_async
 from ...utils import expected_http_error
+
 
 @pytest.fixture(params=[(FileContentsManager, True),
                         (FileContentsManager, False),
@@ -28,6 +27,7 @@ def file_contents_manager_class(request, tmp_path):
     return request.param
 
 # -------------- Functions ----------------------------
+
 
 def _make_dir(jp_contents_manager, api_path):
     """
@@ -99,6 +99,7 @@ async def check_populated_dir_files(jp_contents_manager, api_path):
 
 # ----------------- Tests ----------------------------------
 
+
 def test_root_dir(file_contents_manager_class, tmp_path):
     fm = file_contents_manager_class(root_dir=str(tmp_path))
     assert fm.root_dir == str(tmp_path)
@@ -115,6 +116,7 @@ def test_invalid_root_dir(file_contents_manager_class, tmp_path):
     temp_file.write_text('')
     with pytest.raises(TraitError):
        file_contents_manager_class(root_dir=str(temp_file))
+
 
 def test_get_os_path(file_contents_manager_class, tmp_path):
     fm = file_contents_manager_class(root_dir=str(tmp_path))
@@ -146,10 +148,6 @@ def test_checkpoint_subdir(file_contents_manager_class, tmp_path):
     assert cp_dir == os.path.join(str(tmp_path), cpm.checkpoint_dir, cp_name)
 
 
-@pytest.mark.skipif(
-    sys.platform == 'win32' and sys.version_info[0] < 3,
-    reason="System platform is Windows, version < 3"
-)
 async def test_bad_symlink(file_contents_manager_class, tmp_path):
     td = str(tmp_path)
 
@@ -172,9 +170,31 @@ async def test_bad_symlink(file_contents_manager_class, tmp_path):
 
 
 @pytest.mark.skipif(
-    sys.platform == 'win32' and sys.version_info[0] < 3,
-    reason="System platform is Windows, version < 3"
+    sys.platform.startswith('win'),
+    reason="Windows doesn't detect symlink loops"
 )
+async def test_recursive_symlink(file_contents_manager_class, tmp_path):
+    td = str(tmp_path)
+
+    cm = file_contents_manager_class(root_dir=td)
+    path = 'test recursive symlink'
+    _make_dir(cm, path)
+
+    file_model = await ensure_async(cm.new_untitled(path=path, ext='.txt'))
+
+    # create recursive symlink
+    symlink(cm, '%s/%s' % (path, "recursive"), '%s/%s' % (path, "recursive"))
+    model = await ensure_async(cm.get(path))
+
+    contents = {
+        content['name']: content for content in model['content']
+    }
+    assert 'untitled.txt' in contents
+    assert contents['untitled.txt'] == file_model
+    # recursive symlinks should not be shown in the contents manager
+    assert 'recursive' not in contents
+
+
 async def test_good_symlink(file_contents_manager_class, tmp_path):
     td = str(tmp_path)
     cm = file_contents_manager_class(root_dir=td)
@@ -212,6 +232,7 @@ async def test_403(file_contents_manager_class, tmp_path):
             f.write(u"don't care")
     except HTTPError as e:
         assert e.status_code == 403
+
 
 async def test_escape_root(file_contents_manager_class, tmp_path):
     td = str(tmp_path)
