@@ -6,7 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ## 1.7.0a0
 
-([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.6.4...ad9ccb3da6183b7779676cf881242550671827c8))
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.6.4...afae85a7bb8c45f7610cd38b60d6075bb623490b))
+
+### Bugs fixed
+
+- Fix for recursive symlink - (port Notebook 4670) [#497](https://github.com/jupyter-server/jupyter_server/pull/497) ([@kevin-bates](https://github.com/kevin-bates))
 
 ### Maintenance and upkeep improvements
 
@@ -24,9 +28,9 @@ All notable changes to this project will be documented in this file.
 
 ### Contributors to this release
 
-([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-21&to=2021-04-30&type=c))
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-21&to=2021-05-01&type=c))
 
-[@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2021-04-21..2021-04-30&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2021-04-21..2021-04-30&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-04-21..2021-04-30&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-04-21..2021-04-30&type=Issues) | [@kiendang](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akiendang+updated%3A2021-04-21..2021-04-30&type=Issues)
+[@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2021-04-21..2021-05-01&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-04-21..2021-05-01&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2021-04-21..2021-05-01&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-04-21..2021-05-01&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-04-21..2021-05-01&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-04-21..2021-05-01&type=Issues) | [@kiendang](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akiendang+updated%3A2021-04-21..2021-05-01&type=Issues)
 
 <!-- <END NEW CHANGELOG ENTRY> -->
 
