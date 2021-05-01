@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+<!-- <START NEW CHANGELOG ENTRY> -->
+
+## 1.7.0a0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.6.4...afae85a7bb8c45f7610cd38b60d6075bb623490b))
+
+### Bugs fixed
+
+- Fix for recursive symlink - (port Notebook 4670) [#497](https://github.com/jupyter-server/jupyter_server/pull/497) ([@kevin-bates](https://github.com/kevin-bates))
+
+### Maintenance and upkeep improvements
+
+- Prep for Release Helper Usage [#494](https://github.com/jupyter-server/jupyter_server/pull/494) ([@jtpio](https://github.com/jtpio))
+- Typo in shutdown with answer_yes [#491](https://github.com/jupyter-server/jupyter_server/pull/491) ([@kiendang](https://github.com/kiendang))
+- Remove some of ipython_genutils no-op. [#440](https://github.com/jupyter-server/jupyter_server/pull/440) ([@Carreau](https://github.com/Carreau))
+
+### Documentation improvements
+
+- DOC: Autoreformat docstrings. [#493](https://github.com/jupyter-server/jupyter_server/pull/493) ([@Carreau](https://github.com/Carreau))
+
+### Other merged PRs
+
+- Add Appropriate Token Permission for CodeQL Workflow [#489](https://github.com/jupyter-server/jupyter_server/pull/489) ([@afshin](https://github.com/afshin))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-21&to=2021-05-01&type=c))
+
+[@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2021-04-21..2021-05-01&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-04-21..2021-05-01&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2021-04-21..2021-05-01&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-04-21..2021-05-01&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-04-21..2021-05-01&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-04-21..2021-05-01&type=Issues) | [@kiendang](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akiendang+updated%3A2021-04-21..2021-05-01&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
+## 1.6.4
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.6.3...68a64ea13be5d0d86460f04e0c47eb0b6662a0af))
+
+### Bugs fixed
+
+- Fix loading of sibling extensions [#485](https://github.com/jupyter-server/jupyter_server/pull/485) ([@afshin](https://github.com/afshin))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-21&to=2021-04-21&type=c))
+
+[@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2021-04-21..2021-04-21&type=Issues)
+
 ## 1.6.3
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.6.2...aa2636795ae1d87e3055febb3931f891dd6b4451))
@@ -16,7 +62,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-16&to=2021-04-21&type=c))
 
 [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-04-16..2021-04-21&type=Issues)
-
 
 ## 1.6.2
 

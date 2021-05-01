@@ -22,7 +22,6 @@ from .manager import AsyncContentsManager, ContentsManager
 
 from ipython_genutils.importstring import import_item
 from traitlets import Any, Unicode, Bool, TraitError, observe, default, validate
-from ipython_genutils.py3compat import getcwd, string_types
 
 from jupyter_core.paths import exists, is_hidden, is_file_hidden
 from jupyter_server import _tz as tz
@@ -47,7 +46,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         try:
             return self.parent.root_dir
         except AttributeError:
-            return getcwd()
+            return os.getcwd()
 
     post_save_hook = Any(None, config=True, allow_none=True,
         help="""Python callable or importstring thereof
@@ -70,7 +69,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
     @validate('post_save_hook')
     def _validate_post_save_hook(self, proposal):
         value = proposal['value']
-        if isinstance(value, string_types):
+        if isinstance(value, str):
             value = import_item(value)
         if not callable(value):
             raise TraitError("post_save_hook must be callable")
@@ -274,7 +273,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                     # skip over broken symlinks in listing
                     if e.errno == errno.ENOENT:
                         self.log.warning("%s doesn't exist", os_path)
-                    else:
+                    elif e.errno != errno.EACCES:  # Don't provide clues about protected files
                         self.log.warning("Error stat-ing %s: %s", os_path, e)
                     continue
 
@@ -284,16 +283,24 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                     self.log.debug("%s not a regular file", os_path)
                     continue
 
-                if self.should_list(name):
-                    if self.allow_hidden or not is_file_hidden(os_path, stat_res=st):
-                        contents.append(
+                try:
+                    if self.should_list(name):
+                        if self.allow_hidden or not is_file_hidden(os_path, stat_res=st):
+                            contents.append(
                                 self.get(path='%s/%s' % (path, name), content=False)
+                            )
+                except OSError as e:
+                    # ELOOP: recursive symlink, also don't show failure due to permissions
+                    if e.errno not in [errno.ELOOP, errno.EACCES]:
+                        self.log.warning(
+                            "Unknown error checking if file %r is hidden",
+                            os_path,
+                            exc_info=True,
                         )
 
             model['format'] = 'json'
 
         return model
-
 
     def _file_model(self, path, content=True, format=None):
         """Build a model for a file
@@ -586,7 +593,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                     # skip over broken symlinks in listing
                     if e.errno == errno.ENOENT:
                         self.log.warning("%s doesn't exist", os_path)
-                    else:
+                    elif e.errno != errno.EACCES:  # Don't provide clues about protected files
                         self.log.warning("Error stat-ing %s: %s", os_path, e)
                     continue
 
@@ -596,10 +603,19 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                     self.log.debug("%s not a regular file", os_path)
                     continue
 
-                if self.should_list(name):
-                    if self.allow_hidden or not is_file_hidden(os_path, stat_res=st):
-                        contents.append(
-                                await self.get(path='%s/%s' % (path, name), content=False)
+                try:
+                    if self.should_list(name):
+                        if self.allow_hidden or not is_file_hidden(os_path, stat_res=st):
+                            contents.append(
+                                    await self.get(path='%s/%s' % (path, name), content=False)
+                        )
+                except OSError as e:
+                    # ELOOP: recursive symlink, also don't show failure due to permissions
+                    if e.errno not in [errno.ELOOP, errno.EACCES]:
+                        self.log.warning(
+                            "Unknown error checking if file %r is hidden",
+                            os_path,
+                            exc_info=True,
                         )
 
             model['format'] = 'json'

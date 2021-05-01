@@ -13,7 +13,6 @@ from distutils.version import LooseVersion
 from urllib.parse import quote, unquote, urlparse, urljoin
 from urllib.request import pathname2url
 
-from ipython_genutils import py3compat
 
 
 def url_path_join(*pieces):
@@ -59,8 +58,8 @@ def url_escape(path):
 
     Turns '/foo bar/' into '/foo%20bar/'
     """
-    parts = py3compat.unicode_to_str(path, encoding='utf8').split('/')
-    return u'/'.join([quote(p) for p in parts])
+    parts = path.split("/")
+    return "/".join([quote(p) for p in parts])
 
 
 def url_unescape(path):
@@ -68,10 +67,7 @@ def url_unescape(path):
 
     Turns '/foo%20bar/' into '/foo bar/'
     """
-    return u'/'.join([
-        py3compat.str_to_unicode(unquote(p), encoding='utf8')
-        for p in py3compat.unicode_to_str(path, encoding='utf8').split('/')
-    ])
+    return "/".join([unquote(p) for p in path.split("/")])
 
 
 def samefile_simple(path, other_path):
@@ -86,12 +82,12 @@ def samefile_simple(path, other_path):
     Only to be used if os.path.samefile is not available.
 
     Parameters
-    -----------
-    path:       String representing a path to a file
-    other_path: String representing a path to another file
+    ----------
+    path : String representing a path to a file
+    other_path : String representing a path to another file
 
     Returns
-    -----------
+    -------
     same:   Boolean that is True if both path and other path are the same
     """
     path_stat = os.stat(path)
@@ -197,7 +193,7 @@ def run_sync(maybe_async):
 
     Returns
     -------
-    result :
+    result
         Whatever the async object returns, or the object itself.
     """
     if not inspect.isawaitable(maybe_async):

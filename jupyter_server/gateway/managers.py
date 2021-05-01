@@ -198,7 +198,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
 
         Parameters
         ----------
-        kernel_name: kernel name (optional)
+        kernel_name : kernel name (optional)
         """
         if kernel_name:
             return url_path_join(self.base_endpoint, url_escape(kernel_name))
