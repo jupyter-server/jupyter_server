@@ -1,6 +1,6 @@
 import importlib
 
-from traitlets.config import LoggingConfigurable, Config
+from traitlets.config import LoggingConfigurable
 
 from traitlets import (
     HasTraits,
@@ -8,9 +8,13 @@ from traitlets import (
     Unicode,
     Bool,
     Any,
-    validate
+    Instance,
+    default,
+    observe,
+    validate,
 )
 
+from .config import ExtensionConfigManager
 from .utils import (
     ExtensionMetadataError,
     ExtensionModuleNotFound,
@@ -240,35 +244,44 @@ class ExtensionManager(LoggingConfigurable):
     linking, loading, and managing Jupyter Server extensions.
 
     Usage:
-    m = ExtensionManager(jpserver_extensions=extensions)
+    m = ExtensionManager(config_manager=...)
     """
-    def __init__(self, config_manager=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # The `enabled_extensions` attribute provides a dictionary
-        # with extension (package) names mapped to their ExtensionPackage interface
-        # (see above). This manager simplifies the interaction between the
-        # ServerApp and the extensions being appended.
-        self._extensions = {}
-        # The `_linked_extensions` attribute tracks when each extension
-        # has been successfully linked to a ServerApp. This helps prevent
-        # extensions from being re-linked recursively unintentionally if another
-        # extension attempts to link extensions again.
-        self._linked_extensions = {}
-        self._config_manager = config_manager
-        if self._config_manager:
-            self.from_config_manager(self._config_manager)
 
-    @property
-    def config_manager(self):
-        return self._config_manager
+    config_manager = Instance(ExtensionConfigManager, allow_none=True)
 
-    @property
-    def extensions(self):
-        """Dictionary with extension package names as keys
-        and an ExtensionPackage objects as values.
+    @default("config_manager")
+    def _load_default_config_manager(self):
+        config_manager = ExtensionConfigManager()
+        self._load_config_manager(config_manager)
+        return config_manager
+
+    @observe("config_manager")
+    def _config_manager_changed(self, change):
+        if change.new:
+            self._load_config_manager(change.new)
+
+    # The `extensions` attribute provides a dictionary
+    # with extension (package) names mapped to their ExtensionPackage interface
+    # (see above). This manager simplifies the interaction between the
+    # ServerApp and the extensions being appended.
+    extensions = Dict(
+        help="""
+        Dictionary with extension package names as keys
+        and ExtensionPackage objects as values.
         """
-        # Sort enabled extensions before
-        return self._extensions
+    )
+
+    # The `_linked_extensions` attribute tracks when each extension
+    # has been successfully linked to a ServerApp. This helps prevent
+    # extensions from being re-linked recursively unintentionally if another
+    # extension attempts to link extensions again.
+    linked_extensions = Dict(
+        help="""
+        Dictionary with extension names as keys
+
+        values are True if the extension is linked, False if not.
+        """
+    )
 
     @property
     def extension_points(self):
@@ -279,16 +292,14 @@ class ExtensionManager(LoggingConfigurable):
             for name, point in value.extension_points.items()
         }
 
-    @property
-    def linked_extensions(self):
-        """Dictionary with extension names as keys; values are
-        True if the extension is linked, False if not."""
-        return self._linked_extensions
-
     def from_config_manager(self, config_manager):
         """Add extensions found by an ExtensionConfigManager"""
-        self._config_manager = config_manager
-        jpserver_extensions = self._config_manager.get_jpserver_extensions()
+        # load triggered via config_manager trait observer
+        self.config_manager = config_manager
+
+    def _load_config_manager(self, config_manager):
+        """Actually load our config manager"""
+        jpserver_extensions = config_manager.get_jpserver_extensions()
         self.from_jpserver_extensions(jpserver_extensions)
 
     def from_jpserver_extensions(self, jpserver_extensions):
@@ -302,7 +313,7 @@ class ExtensionManager(LoggingConfigurable):
         """
         try:
             extpkg = ExtensionPackage(name=extension_name, enabled=enabled)
-            self._extensions[extension_name] = extpkg
+            self.extensions[extension_name] = extpkg
             return True
         # Raise a warning if the extension cannot be loaded.
         except Exception as e:
@@ -310,13 +321,13 @@ class ExtensionManager(LoggingConfigurable):
         return False
 
     def link_extension(self, name, serverapp):
-        linked = self._linked_extensions.get(name, False)
+        linked = self.linked_extensions.get(name, False)
         extension = self.extensions[name]
         if not linked and extension.enabled:
             try:
                 # Link extension and store links
                 extension.link_all_points(serverapp)
-                self._linked_extensions[name] = True
+                self.linked_extensions[name] = True
                 self.log.info("{name} | extension was successfully linked.".format(name=name))
             except Exception as e:
                 self.log.warning(e)
