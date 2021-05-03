@@ -1,4 +1,9 @@
+import os
+
 import pytest
+
+from jupyter_core.paths import jupyter_config_path
+
 from jupyter_server.extension.manager import (
     ExtensionPoint,
     ExtensionPackage,
@@ -30,6 +35,7 @@ def test_extension_point_api():
     assert app is not None
     assert callable(e.load)
     assert callable(e.link)
+    assert e.validate()
 
 
 def test_extension_point_metadata_error():
@@ -59,6 +65,7 @@ def test_extension_package_api():
     assert hasattr(e, "extension_points")
     assert len(e.extension_points) == len(metadata_list)
     assert app.name in e.extension_points
+    assert e.validate()
 
 
 def test_extension_package_notfound_error():
@@ -66,11 +73,17 @@ def test_extension_package_notfound_error():
         ExtensionPackage(name="nonexistent")
 
 
+def _normalize_path(path_list):
+    return [p.rstrip(os.path.sep) for p in path_list]
+
+
 def test_extension_manager_api():
     jpserver_extensions = {
         "jupyter_server.tests.extension.mockextensions": True
     }
     manager = ExtensionManager()
+    assert manager.config_manager
+    assert _normalize_path(manager.config_manager.read_config_path) == _normalize_path(jupyter_config_path())
     manager.from_jpserver_extensions(jpserver_extensions)
     assert len(manager.extensions) == 1
     assert "jupyter_server.tests.extension.mockextensions" in manager.extensions

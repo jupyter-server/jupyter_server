@@ -306,7 +306,8 @@ class ListServerExtensionsApp(BaseExtensionApp):
                                 GREEN_ENABLED if enabled else RED_DISABLED))
                 try:
                     self.log.info("    - Validating {}...".format(name))
-                    extension.validate()
+                    if not extension.validate():
+                        raise ValueError("validation failed")
                     version = extension.version
                     self.log.info(
                         "      {} {} {}".format(name, version, GREEN_OK)
