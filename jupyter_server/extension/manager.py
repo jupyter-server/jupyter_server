@@ -129,6 +129,8 @@ class ExtensionPoint(HasTraits):
             self._get_loader()
         except Exception:
             return False
+        else:
+            return True
 
     def link(self, serverapp):
         """Link the extension to a Jupyter ServerApp object.

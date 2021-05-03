@@ -30,6 +30,7 @@ def test_extension_point_api():
     assert app is not None
     assert callable(e.load)
     assert callable(e.link)
+    assert e.validate()
 
 
 def test_extension_point_metadata_error():
@@ -59,6 +60,7 @@ def test_extension_package_api():
     assert hasattr(e, "extension_points")
     assert len(e.extension_points) == len(metadata_list)
     assert app.name in e.extension_points
+    assert e.validate()
 
 
 def test_extension_package_notfound_error():
