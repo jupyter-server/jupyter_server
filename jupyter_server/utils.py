@@ -268,7 +268,7 @@ def get_client_schema_files():
 
     files = chain.from_iterable(d.iterdir() for d in dirs if d is not None)
 
-    return (f for f in files if f.suffix in ('.json', '.yaml'))
+    return (f for f in files if f.suffix in ('.json', '.yaml', '.yml'))
 
 
 def _is_iterable(x):
