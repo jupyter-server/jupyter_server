@@ -61,38 +61,3 @@ JSON blog and is required to have the follow keys:
 Events that are validated by this endpoint must have their schema listed in the `allowed_schemas` trait listed above.
 
 .. _below:
-
-Register client event schemas
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-``jupyter_server`` looks for locations of schema files provided by external packages by looking into the ``jupyter_telemetry`` entry point and then loads the files using the ``importlib.resources`` standard library.
-
-For example, suppose there is a ``client_events`` package which wants to send events with schemas ``schema1.yaml``, ``schema2.yaml`` and ``extra_schema.yaml`` to the ``eventlog`` endpoint and has the following package structure:
-
-.. code-block:: text
-
-    client_events/
-        __init__.py
-        schemas/
-            __init__.py
-            schema1.yaml
-            schema2.yaml
-        extras/
-            __init__.py
-            extra_schema.yaml
-
-``schema1.yaml`` and ``schema2.yaml`` are resources under ``client_events.schemas`` and ``extra_schema.yaml`` under ``client_events.extras``. To make these schemas discoverable by ``jupyter_server``, create an entry point under the ``jupyter_telemetry`` group which resolves to a list containing their locations, in this case ``['client_events.schemas', 'client_events.extras']``:
-
-In :file:`setup.cfg`
-
-.. code-block:: yaml
-
-    [options.entry_points]
-    jupyter_telemetry =
-        my-event-entry-point = client_events:JUPYTER_TELEMETRY_SCHEMAS
-
-In :file:`client_events/__init__.py`
-
-.. code-block:: python
-
-    JUPYTER_TELEMETRY_SCHEMAS = ['client_events.schemas', 'client_events.extras']

@@ -31,11 +31,6 @@ import urllib
 import inspect
 import pathlib
 
-if sys.version_info >= (3, 9):
-    import importlib.resources as importlib_resources
-else:
-    import importlib_resources
-
 from base64 import encodebytes
 try:
     import resource
@@ -113,7 +108,6 @@ from jupyter_server.utils import (
     urljoin,
     pathname2url,
     get_schema_files,
-    get_client_schema_files
 )
 
 from jupyter_server.extension.serverextension import ServerExtensionApp
@@ -144,7 +138,6 @@ JUPYTER_SERVICE_HANDLERS = dict(
     config=['jupyter_server.services.config.handlers'],
     contents=['jupyter_server.services.contents.handlers'],
     files=['jupyter_server.files.handlers'],
-    eventlog=['jupyter_server.services.eventlog.handlers'],
     kernels=['jupyter_server.services.kernels.handlers'],
     kernelspecs=[
         'jupyter_server.kernelspecs.handlers',
@@ -624,7 +617,6 @@ class ServerApp(JupyterApp):
         'config',
         'contents',
         'files',
-        'eventlog',
         'kernels',
         'kernelspecs',
         'nbconvert',
@@ -1834,14 +1826,6 @@ class ServerApp(JupyterApp):
         # Register schemas for notebook services.
         for file_path in get_schema_files():
             self.eventlog.register_schema_file(file_path)
-
-        for file in get_client_schema_files():
-            with importlib_resources.as_file(file) as f:
-                try:
-                    self.eventlog.register_schema_file(f)
-                except:
-                    pass
-
 
     @catch_config_error
     def initialize(self, argv=None, find_extensions=True, new_httpserver=True, starter_extension=None):
