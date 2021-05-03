@@ -10,6 +10,11 @@ import os
 import sys
 from distutils.version import LooseVersion
 
+if sys.version_info >= (3, 9):
+    import importlib.resources as importlib_resources
+else:
+    import importlib_resources
+
 from urllib.parse import quote, unquote, urlparse, urljoin
 from urllib.request import pathname2url
 
@@ -232,14 +237,18 @@ def eventlogging_schema_fqn(name):
     return 'eventlogging.jupyter.org/jupyter_server/{}'.format(name)
 
 
+def list_resources(resources):
+    for entry in resources.iterdir():
+        if entry.is_dir():
+            yield from list_resources(entry)
+        else:
+            yield entry
+
+
 def get_schema_files():
     """Yield a sequence of event schemas for jupyter services."""
-    # Hardcode path to event schemas directory.
-    event_schemas_dir = os.path.join(os.path.dirname(__file__), 'event-schemas')
-    #schema_files = []
-    # Recursively register all .json files under event-schemas
-    for dirname, _, files in os.walk(event_schemas_dir):
-        for file in files:
-            if file.endswith('.yaml'):
-                file_path = os.path.join(dirname, file)
-                yield file_path
+    return (
+        entry for entry in list_resources(
+            importlib_resources.files('jupyter_server.event_schemas')
+        ) if os.path.splitext(entry.name)[1] == '.yaml'
+    )

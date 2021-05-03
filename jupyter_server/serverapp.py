@@ -31,6 +31,11 @@ import urllib
 import inspect
 import pathlib
 
+if sys.version_info >= (3, 9):
+    import importlib.resources as importlib_resources
+else:
+    import importlib_resources
+
 from base64 import encodebytes
 try:
     import resource
@@ -1824,8 +1829,9 @@ class ServerApp(JupyterApp):
     def init_eventlog(self):
         self.eventlog = EventLog(parent=self)
         # Register schemas for notebook services.
-        for file_path in get_schema_files():
-            self.eventlog.register_schema_file(file_path)
+        for file in get_schema_files():
+            with importlib_resources.as_file(file) as f:
+                self.eventlog.register_schema_file(f)
 
     @catch_config_error
     def initialize(self, argv=None, find_extensions=True, new_httpserver=True, starter_extension=None):
