@@ -10,7 +10,7 @@ include package.json
 recursive-include jupyter_server *
 
 # Event Schemas
-graft jupyter_server/event-schemas
+graft jupyter_server/event_schemas
 
 # Documentation
 graft docs

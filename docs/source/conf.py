@@ -389,7 +389,7 @@ spelling_word_list_filename='spelling_wordlist.txt'
 import jupyter_server.transutils
 
 # Jupyter telemetry configuration values.
-jupyter_telemetry_schema_source = osp.join(HERE, '../../jupyter_server/event-schemas')
+jupyter_telemetry_schema_source = osp.join(HERE, '../../jupyter_server/event_schemas')
 jupyter_telemetry_schema_output = osp.join(HERE, 'operators/events')
 # Title of the index page that lists all found schemas
 jupyter_telemetry_index_title = 'Telemetry Event Schemas'
