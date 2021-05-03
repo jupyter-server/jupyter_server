@@ -1,7 +1,7 @@
 Eventlogging and Telemetry
 ==========================
 
-The Notebook Server can be configured to record structured events from a running server using Jupyter's `Telemetry System`_. The types of events that the Notebook Server emits are defined by `JSON schemas`_ listed below_ emitted as JSON data, defined and validated by the JSON schemas listed below.
+Jupyter Server can be configured to record structured events from a running server using Jupyter's `Telemetry System`_. The types of events that Jupyter Server emits are defined by `JSON schemas`_ listed below_ emitted as JSON data, defined and validated by the JSON schemas listed below.
 
 
 .. _logging: https://docs.python.org/3/library/logging.html
