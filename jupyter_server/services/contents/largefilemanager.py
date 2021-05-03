@@ -1,4 +1,9 @@
-from anyio.to_thread import run_sync
+try:
+    from anyio.to_thread import run_sync
+except ImportError:
+    # fallback on anyio v2 for python version < 3.7
+    from anyio import run_sync_in_worker_thread as run_sync
+    
 from tornado import web
 import base64
 import os, io
