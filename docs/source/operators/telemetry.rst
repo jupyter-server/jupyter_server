@@ -9,7 +9,7 @@ Jupyter Server can be configured to record structured events from a running serv
 .. _`JSON schemas`: https://json-schema.org/
 
 .. warning::
-    Do NOT rely on this feature for security or auditing purposes. Neither `server <#emitting-server-events>`_ nor `client <#eventlog-endpoint>`_ events are protected against meddling. For server events, those who have access to the environment can change the server code to emit whatever they want. The same goes for client events where nothing prevents users from sending spurious data to the `eventlog` endpoint.
+    Do NOT rely on this feature for security or auditing purposes. Neither `server <#emitting-server-events>`_ nor `client <#the-eventlog-endpoint>`_ events are protected against meddling. For server events, those who have access to the environment can change the server code to emit whatever they want. The same goes for client events where nothing prevents users from sending spurious data to the `eventlog` endpoint.
 
 Emitting server events
 ----------------------
@@ -48,16 +48,7 @@ Server event schemas
 The ``eventlog`` endpoint
 -------------------------
 
-The Notebook Server provides a public REST endpoint for external applications to validate and log events
-through the Server's Event Log.
-
-To log events, send a `POST` request to the `/api/eventlog` endpoint. The body of the request should be a
-JSON blog and is required to have the follow keys:
-
-    1. `'schema'` : the event's schema ID.
-    2. `'version'` : the version of the event's schema.
-    3. `'event'` : the event data in JSON format.
-
-Events that are validated by this endpoint must have their schema listed in the `allowed_schemas` trait listed above.
+.. note::
+    This has not yet been implemented.
 
 .. _below:
