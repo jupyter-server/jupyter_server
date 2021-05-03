@@ -14,7 +14,12 @@ from .checkpoints import (
 )
 from .fileio import AsyncFileManagerMixin, FileManagerMixin
 
-from anyio import run_sync_in_worker_thread
+try:
+    from anyio.to_thread import run_sync
+except ImportError:
+    # fallback on anyio v2 for python version < 3.7
+    from anyio import run_sync_in_worker_thread as run_sync
+
 from jupyter_core.utils import ensure_dir_exists
 from traitlets import Unicode
 
@@ -156,7 +161,7 @@ class AsyncFileCheckpoints(FileCheckpoints, AsyncFileManagerMixin, AsyncCheckpoi
 
     async def checkpoint_model(self, checkpoint_id, os_path):
         """construct the info dict for a given checkpoint"""
-        stats = await run_sync_in_worker_thread(os.stat, os_path)
+        stats = await run_sync(os.stat, os_path)
         last_modified = tz.utcfromtimestamp(stats.st_mtime)
         info = dict(
             id=checkpoint_id,
@@ -176,7 +181,7 @@ class AsyncFileCheckpoints(FileCheckpoints, AsyncFileManagerMixin, AsyncCheckpoi
                 new_cp_path,
             )
             with self.perm_to_403():
-                await run_sync_in_worker_thread(shutil.move, old_cp_path, new_cp_path)
+                await run_sync(shutil.move, old_cp_path, new_cp_path)
 
     async def delete_checkpoint(self, checkpoint_id, path):
         """delete a file's checkpoint"""
@@ -187,7 +192,7 @@ class AsyncFileCheckpoints(FileCheckpoints, AsyncFileManagerMixin, AsyncCheckpoi
 
         self.log.debug("unlinking %s", cp_path)
         with self.perm_to_403():
-            await run_sync_in_worker_thread(os.unlink, cp_path)
+            await run_sync(os.unlink, cp_path)
 
     async def list_checkpoints(self, path):
         """list the checkpoints for a given file
