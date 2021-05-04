@@ -75,7 +75,7 @@ from jupyter_server.services.contents.manager import AsyncContentsManager, Conte
 from jupyter_server.services.contents.filemanager import AsyncFileContentsManager, FileContentsManager
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
 from jupyter_server.services.sessions.sessionmanager import SessionManager
-from jupyter_server.gateway.managers import GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
+from jupyter_server.gateway.managers import GatewayMappingKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
 
 from jupyter_server.auth.login import LoginHandler
 from jupyter_server.auth.logout import LogoutHandler
@@ -592,7 +592,7 @@ class ServerApp(JupyterApp):
     classes = [
             KernelManager, Session, MappingKernelManager, KernelSpecManager, AsyncMappingKernelManager,
             ContentsManager, FileContentsManager, AsyncContentsManager, AsyncFileContentsManager, NotebookNotary,
-            GatewayKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
+            GatewayMappingKernelManager, GatewayKernelSpecManager, GatewaySessionManager, GatewayClient
         ]
     if terminado_available:  # Only necessary when terminado is available
         classes.append(TerminalManager)
@@ -1405,7 +1405,7 @@ class ServerApp(JupyterApp):
         self.gateway_config = GatewayClient.instance(parent=self)
 
         if self.gateway_config.gateway_enabled:
-            self.kernel_manager_class = 'jupyter_server.gateway.managers.GatewayKernelManager'
+            self.kernel_manager_class = 'jupyter_server.gateway.managers.GatewayMappingKernelManager'
             self.session_manager_class = 'jupyter_server.gateway.managers.GatewaySessionManager'
             self.kernel_spec_manager_class = 'jupyter_server.gateway.managers.GatewayKernelSpecManager'
 
