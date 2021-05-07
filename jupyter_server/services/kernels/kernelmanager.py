@@ -201,7 +201,6 @@ class MappingKernelManager(MultiKernelManager):
             ).inc()
 
         else:
-            self._check_kernel_id(kernel_id)
             self.log.info("Using existing kernel: %s" % kernel_id)
 
         # Initialize culling if not already
