@@ -182,7 +182,8 @@ class MappingKernelManager(MultiKernelManager):
         if kernel_id is None or kernel_id not in self:
             if path is not None:
                 kwargs['cwd'] = self.cwd_for_path(path)
-            kernel_id = await ensure_async(self.pinned_superclass.start_kernel(self, **kwargs))
+            kernel_id = await ensure_async(
+                self.pinned_superclass.start_kernel(self, kernel_id=kernel_id, **kwargs))
             self._kernel_connections[kernel_id] = 0
             self._kernel_ports[kernel_id] = self._kernels[kernel_id].ports
             self.start_watching_activity(kernel_id)
