@@ -179,9 +179,11 @@ class MappingKernelManager(MultiKernelManager):
             The name identifying which kernel spec to launch. This is ignored if
             an existing kernel is returned, but it may be checked in the future.
         """
-        if kernel_id is None:
+        if kernel_id is None or kernel_id not in self:
             if path is not None:
                 kwargs['cwd'] = self.cwd_for_path(path)
+            if kernel_id is not None:
+                kwargs['kernel_id'] = kernel_id
             kernel_id = await ensure_async(self.pinned_superclass.start_kernel(self, **kwargs))
             self._kernel_connections[kernel_id] = 0
             self._kernel_ports[kernel_id] = self._kernels[kernel_id].ports
@@ -201,7 +203,6 @@ class MappingKernelManager(MultiKernelManager):
             ).inc()
 
         else:
-            self._check_kernel_id(kernel_id)
             self.log.info("Using existing kernel: %s" % kernel_id)
 
         # Initialize culling if not already
