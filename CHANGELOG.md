@@ -4,19 +4,28 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
-## 1.7.0a2
+## 1.7.0
 
-([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.7.0a1...69aa2e55612b4748124564e44caa576a74c2b387))
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.7.0a2...454a66a3935ca38501d532f42c5eb1be322de958))
+
+### Enhancements made
+
+- Make nbconvert root handler asynchronous [#512](https://github.com/jupyter-server/jupyter_server/pull/512) ([@hMED22](https://github.com/hMED22))
 
 ### Maintenance and upkeep improvements
 
-- Increase minimum jupyter_core dependency [#509](https://github.com/jupyter-server/jupyter_server/pull/509) ([@kevin-bates](https://github.com/kevin-bates))
+- Remove Packaging Dependency [#515](https://github.com/jupyter-server/jupyter_server/pull/515) ([@jtpio](https://github.com/jtpio))
+- Use kernel_id for new kernel if it doesn't exist in MappingKernelManager.start_kernel [#511](https://github.com/jupyter-server/jupyter_server/pull/511) ([@the-higgs](https://github.com/the-higgs))
+
+### Other merged PRs
+
+- Drop dependency on pywin32 [#514](https://github.com/jupyter-server/jupyter_server/pull/514) ([@kevin-bates](https://github.com/kevin-bates))
 
 ### Contributors to this release
 
-([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-05-05&to=2021-05-06&type=c))
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-05-06&to=2021-05-10&type=c))
 
-[@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-05-05..2021-05-06&type=Issues)
+[@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-05-06..2021-05-10&type=Issues) | [@hMED22](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AhMED22+updated%3A2021-05-06..2021-05-10&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-05-06..2021-05-10&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-05-06..2021-05-10&type=Issues) | [@the-higgs](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Athe-higgs+updated%3A2021-05-06..2021-05-10&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-05-06..2021-05-10&type=Issues)
 
 <!-- <END NEW CHANGELOG ENTRY> -->
 
