@@ -4,73 +4,46 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
-## 1.7.0a2
+## 1.7.0
 
-([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.7.0a1...69aa2e55612b4748124564e44caa576a74c2b387))
-
-### Maintenance and upkeep improvements
-
-- Increase minimum jupyter_core dependency [#509](https://github.com/jupyter-server/jupyter_server/pull/509) ([@kevin-bates](https://github.com/kevin-bates))
-
-### Contributors to this release
-
-([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-05-05&to=2021-05-06&type=c))
-
-[@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-05-05..2021-05-06&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
-
-## 1.7.0a1
-
-([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.7.0a0...bc2dc4ebaebf1235e8d84fea6882bc48c2ff5eb8))
-
-### Enhancements made
-
-- Refactor gateway kernel management to achieve a degree of consistency [#483](https://github.com/jupyter-server/jupyter_server/pull/483) ([@kevin-bates](https://github.com/kevin-bates))
-
-### Maintenance and upkeep improvements
-
-- Include backtrace in debug output when extension fails to load [#506](https://github.com/jupyter-server/jupyter_server/pull/506) ([@candlerb](https://github.com/candlerb))
-- ExtensionPoint: return True on successful validate() [#503](https://github.com/jupyter-server/jupyter_server/pull/503) ([@minrk](https://github.com/minrk))
-- ExtensionManager: load default config manager by default [#502](https://github.com/jupyter-server/jupyter_server/pull/502) ([@minrk](https://github.com/minrk))
-
-### Other merged PRs
-
-- Upgrade anyio to v3 [#492](https://github.com/jupyter-server/jupyter_server/pull/492) ([@mwakaba2](https://github.com/mwakaba2))
-
-### Contributors to this release
-
-([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-05-01&to=2021-05-05&type=c))
-
-[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-05-01..2021-05-05&type=Issues) | [@candlerb](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acandlerb+updated%3A2021-05-01..2021-05-05&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-05-01..2021-05-05&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-05-01..2021-05-05&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2021-05-01..2021-05-05&type=Issues) | [@mwakaba2](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amwakaba2+updated%3A2021-05-01..2021-05-05&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-05-01..2021-05-05&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-05-01..2021-05-05&type=Issues)
-
-## 1.7.0a0
-
-([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.6.4...afae85a7bb8c45f7610cd38b60d6075bb623490b))
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.7.0a2...afae85a7bb8c45f7610cd38b60d6075bb623490b))
 
 ### Bugs fixed
 
 - Fix for recursive symlink - (port Notebook 4670) [#497](https://github.com/jupyter-server/jupyter_server/pull/497) ([@kevin-bates](https://github.com/kevin-bates))
 
+### Enhancements made
+
+- Make nbconvert root handler asynchronous [#512](https://github.com/jupyter-server/jupyter_server/pull/512) ([@hMED22](https://github.com/hMED22))
+- Refactor gateway kernel management to achieve a degree of consistency [#483](https://github.com/jupyter-server/jupyter_server/pull/483) ([@kevin-bates](https://github.com/kevin-bates))
+
 ### Maintenance and upkeep improvements
 
+- Remove Packaging Dependency [#515](https://github.com/jupyter-server/jupyter_server/pull/515) ([@jtpio](https://github.com/jtpio))
+- Use kernel_id for new kernel if it doesn't exist in MappingKernelManager.start_kernel [#511](https://github.com/jupyter-server/jupyter_server/pull/511) ([@the-higgs](https://github.com/the-higgs))
+- Include backtrace in debug output when extension fails to load [#506](https://github.com/jupyter-server/jupyter_server/pull/506) ([@candlerb](https://github.com/candlerb))
+- ExtensionPoint: return True on successful validate() [#503](https://github.com/jupyter-server/jupyter_server/pull/503) ([@minrk](https://github.com/minrk))
+- ExtensionManager: load default config manager by default [#502](https://github.com/jupyter-server/jupyter_server/pull/502) ([@minrk](https://github.com/minrk))
 - Prep for Release Helper Usage [#494](https://github.com/jupyter-server/jupyter_server/pull/494) ([@jtpio](https://github.com/jtpio))
 - Typo in shutdown with answer_yes [#491](https://github.com/jupyter-server/jupyter_server/pull/491) ([@kiendang](https://github.com/kiendang))
 - Remove some of ipython_genutils no-op. [#440](https://github.com/jupyter-server/jupyter_server/pull/440) ([@Carreau](https://github.com/Carreau))
+- Drop dependency on pywin32 [#514](https://github.com/jupyter-server/jupyter_server/pull/514) ([@kevin-bates](https://github.com/kevin-bates))
+- Upgrade anyio to v3 [#492](https://github.com/jupyter-server/jupyter_server/pull/492) ([@mwakaba2](https://github.com/mwakaba2))
+- Add Appropriate Token Permission for CodeQL Workflow [#489](https://github.com/jupyter-server/jupyter_server/pull/489) ([@afshin](https://github.com/afshin))
 
 ### Documentation improvements
 
 - DOC: Autoreformat docstrings. [#493](https://github.com/jupyter-server/jupyter_server/pull/493) ([@Carreau](https://github.com/Carreau))
 
-### Other merged PRs
-
-- Add Appropriate Token Permission for CodeQL Workflow [#489](https://github.com/jupyter-server/jupyter_server/pull/489) ([@afshin](https://github.com/afshin))
-
 ### Contributors to this release
 
-([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-21&to=2021-05-01&type=c))
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-04-22&to=2021-05-10&type=c))
 
-[@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2021-04-21..2021-05-01&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-04-21..2021-05-01&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2021-04-21..2021-05-01&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-04-21..2021-05-01&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-04-21..2021-05-01&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-04-21..2021-05-01&type=Issues) | [@kiendang](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akiendang+updated%3A2021-04-21..2021-05-01&type=Issues)
+[@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-05-06..2021-05-10&type=Issues) | [@hMED22](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AhMED22+updated%3A2021-05-06..2021-05-10&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-05-06..2021-05-10&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-05-06..2021-05-10&type=Issues) | [@the-higgs](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Athe-higgs+updated%3A2021-05-06..2021-05-10&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-05-06..2021-05-10&type=Issues)
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-05-01..2021-05-05&type=Issues) | [@candlerb](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acandlerb+updated%3A2021-05-01..2021-05-05&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-05-01..2021-05-05&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2021-05-01..2021-05-05&type=Issues) | [@mwakaba2](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amwakaba2+updated%3A2021-05-01..2021-05-05&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-05-01..2021-05-05&type=Issues) | [@kiendang](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akiendang+updated%3A2021-04-21..2021-05-01&type=Issues) | [@Carreau]
+(https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2021-04-21..2021-05-01&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.6.4
 
