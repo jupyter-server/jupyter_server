@@ -1864,13 +1864,13 @@ class ServerApp(JupyterApp):
         self.init_configurables()
         self.init_components()
         self.init_webapp()
-        if new_httpserver:
-            self.init_httpserver()
         self.init_terminals()
         self.init_signal()
         self.load_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
+        if new_httpserver:
+            self.init_httpserver()
 
     def cleanup_kernels(self):
         """Shutdown all kernels.
