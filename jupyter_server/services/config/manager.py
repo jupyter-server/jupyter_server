@@ -15,7 +15,7 @@ class ConfigManager(LoggingConfigurable):
     """Config Manager used for storing frontend config"""
 
     config_dir_name = Unicode(
-        default="serverconfig",
+        "serverconfig",
         help="""Name of the config directory."""
     ).tag(config=True)
 
