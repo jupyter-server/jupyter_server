@@ -31,6 +31,12 @@ pytest_plugins = [
     # "jupyter_core.pytest_plugin"
 ]
 
+
+import asyncio
+if os.name == "nt" and sys.version_info >= (3, 7):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+
 # ============ Move to Jupyter Core =============
 
 def mkdir(tmp_path, *parts):

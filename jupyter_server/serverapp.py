@@ -1810,12 +1810,34 @@ class ServerApp(JupyterApp):
 
     @staticmethod
     def _init_asyncio_patch():
-        """no longer needed with tornado 6.1"""
-        warnings.warn(
-            """ServerApp._init_asyncio_patch called, and is longer needed for """
-            """tornado 6.1+, and will be removed in a future release.""",
-            DeprecationWarning
-        )
+        """set default asyncio policy to be compatible with tornado
+
+        Tornado 6.0 is not compatible with default asyncio
+        ProactorEventLoop, which lacks basic *_reader methods.
+        Tornado 6.1 adds a workaround to add these methods in a thread,
+        but SelectorEventLoop should still be preferred
+        to avoid the extra thread for ~all of our events,
+        at least until asyncio adds *_reader methods
+        to proactor.
+        """
+        if sys.platform.startswith("win") and sys.version_info >= (3, 8):
+            import asyncio
+
+            try:
+                from asyncio import (
+                    WindowsProactorEventLoopPolicy,
+                    WindowsSelectorEventLoopPolicy,
+                )
+            except ImportError:
+                pass
+                # not affected
+            else:
+                if (
+                    type(asyncio.get_event_loop_policy())
+                    is WindowsProactorEventLoopPolicy
+                ):
+                    # prefer Selector to Proactor for tornado + pyzmq
+                    asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
     @catch_config_error
     def initialize(self, argv=None, find_extensions=True, new_httpserver=True, starter_extension=None):
@@ -1836,6 +1858,7 @@ class ServerApp(JupyterApp):
             If given, it references the name of an extension point that started the Server.
             We will try to load configuration from extension point
         """
+        self._init_asyncio_patch()
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
         super(ServerApp, self).initialize(argv=argv)
