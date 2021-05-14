@@ -273,6 +273,11 @@ class ExtensionManager(LoggingConfigurable):
         """
     )
 
+    @property
+    def sorted_extensions(self):
+        """Returns an extensions dictionary, sorted alphabetically."""
+        return dict(sorted(self.extensions.items()))
+
     # The `_linked_extensions` attribute tracks when each extension
     # has been successfully linked to a ServerApp. This helps prevent
     # extensions from being re-linked recursively unintentionally if another
@@ -350,7 +355,7 @@ class ExtensionManager(LoggingConfigurable):
         """
         # Sort the extension names to enforce deterministic linking
         # order.
-        for name in sorted(self.extensions.keys()):
+        for name in self.sorted_extensions.keys():
             self.link_extension(name, serverapp)
 
     def load_all_extensions(self, serverapp):
@@ -359,5 +364,5 @@ class ExtensionManager(LoggingConfigurable):
         """
         # Sort the extension names to enforce deterministic loading
         # order.
-        for name in sorted(self.extensions.keys()):
+        for name in self.sorted_extensions.keys():
             self.load_extension(name, serverapp)
