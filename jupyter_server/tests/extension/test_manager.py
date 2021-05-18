@@ -83,7 +83,8 @@ def test_extension_manager_api():
     }
     manager = ExtensionManager()
     assert manager.config_manager
-    assert _normalize_path(manager.config_manager.read_config_path) == _normalize_path(jupyter_config_path())
+    expected = _normalize_path(os.path.join(jupyter_config_path()[0], 'serverconfig'))
+    assert _normalize_path(manager.config_manager.read_config_path[0]) == expected
     manager.from_jpserver_extensions(jpserver_extensions)
     assert len(manager.extensions) == 1
     assert "jupyter_server.tests.extension.mockextensions" in manager.extensions

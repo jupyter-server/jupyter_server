@@ -1,4 +1,4 @@
-# Only Run tests on MacOS and Linux
+import os
 import shutil
 import pytest
 import json
@@ -7,11 +7,6 @@ import sys
 
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
-
-# Skip this whole module on Windows. The terminal API leads
-# to timeouts on Windows CI.
-if sys.platform.startswith('win'):
-    pytest.skip("Terminal API tests time out on Windows.", allow_module_level=True)
 
 
 # Kill all running terminals after each test to avoid cross-test issues
@@ -137,7 +132,7 @@ async def test_terminal_create_with_cwd(jp_fetch, jp_ws_fetch, terminal_path):
 
     ws.close()
 
-    assert str(terminal_path) in message_stdout
+    assert os.path.basename(terminal_path) in message_stdout
 
 
 async def test_culling_config(jp_server_config, jp_configurable_serverapp):
