@@ -52,6 +52,15 @@ def log():
     else:
         return app_log
 
+def get_service_name(path):
+    ty = mimetypes.guess_type(path, strict=False)
+    if ty[0] and ty[0].startswith('text/') or path[-4:] in ['.yml', '.cpp', '.mak']:
+        return 'edit'
+    elif path[-6:] in ['.ipynb']:
+        return 'notebooks'
+    else:
+        return 'files'
+
 class AuthenticatedHandler(web.RequestHandler):
     """A RequestHandler with an authenticated user."""
 
