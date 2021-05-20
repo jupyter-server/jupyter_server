@@ -7,12 +7,18 @@ import asyncio
 import errno
 import inspect
 import os
+import socket
 import sys
 from distutils.version import LooseVersion
+from contextlib import contextmanager
 
-from urllib.parse import quote, unquote, urlparse, urljoin
+from urllib.parse import (quote, unquote, urlparse, urljoin,
+    urlsplit, urlunsplit, SplitResult)
 from urllib.request import pathname2url
 
+from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest
+from tornado.netutil import Resolver
+from tornado.ioloop import IOLoop
 
 
 def url_path_join(*pieces):
@@ -222,3 +228,127 @@ def run_sync(maybe_async):
                 raise e
         return result
     return wrapped()
+
+
+def urlencode_unix_socket_path(socket_path):
+    """Encodes a UNIX socket path string from a socket path for the `http+unix` URI form."""
+    return socket_path.replace('/', '%2F')
+
+
+def urldecode_unix_socket_path(socket_path):
+    """Decodes a UNIX sock path string from an encoded sock path for the `http+unix` URI form."""
+    return socket_path.replace('%2F', '/')
+
+
+def urlencode_unix_socket(socket_path):
+    """Encodes a UNIX socket URL from a socket path for the `http+unix` URI form."""
+    return 'http+unix://%s' % urlencode_unix_socket_path(socket_path)
+
+
+def unix_socket_in_use(socket_path):
+    """Checks whether a UNIX socket path on disk is in use by attempting to connect to it."""
+    if not os.path.exists(socket_path):
+        return False
+
+    try:
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(socket_path)
+    except socket.error:
+        return False
+    else:
+        return True
+    finally:
+        sock.close()
+
+
+@contextmanager
+def _request_for_tornado_client(
+    urlstring,
+    method="GET",
+    body=None,
+    headers=None
+):
+    """A utility that provides a context that handles
+    HTTP, HTTPS, and HTTP+UNIX request.
+    Creates a tornado HTTPRequest object with a URL
+    that tornado's HTTPClients can accept.
+    If the request is made to a unix socket, temporarily
+    configure the AsyncHTTPClient to resolve the URL
+    and connect to the proper socket.
+    """
+    parts = urlsplit(urlstring)
+    if parts.scheme in ["http", "https"]:
+        pass
+    elif parts.scheme == "http+unix":
+        # If unix socket, mimic HTTP.
+        parts = SplitResult(
+            scheme="http",
+            netloc=parts.netloc,
+            path=parts.path,
+            query=parts.query,
+            fragment=parts.fragment
+        )
+
+        class UnixSocketResolver(Resolver):
+            """A resolver that routes HTTP requests to unix sockets
+            in tornado HTTP clients.
+            Due to constraints in Tornados' API, the scheme of the
+            must be `http` (not `http+unix`). Applications should replace
+            the scheme in URLS before making a request to the HTTP client.
+            """
+            def initialize(self, resolver):
+                self.resolver = resolver
+
+            def close(self):
+                self.resolver.close()
+
+            async def resolve(self, host, port, *args, **kwargs):
+                return [
+                    (socket.AF_UNIX, urldecode_unix_socket_path(host))
+                ]
+
+        resolver = UnixSocketResolver(resolver=Resolver())
+        AsyncHTTPClient.configure(None, resolver=resolver)
+    else:
+        raise Exception("Unknown URL scheme.")
+
+    # Yield the request for the given client.
+    url = urlunsplit(parts)
+    request = HTTPRequest(
+        url,
+        method=method,
+        body=body,
+        headers=headers
+    )
+    yield request
+
+
+def fetch(
+    urlstring,
+    method="GET",
+    body=None,
+    headers=None
+):
+    """
+    Send a HTTP, HTTPS, or HTTP+UNIX request
+    to a Tornado Web Server. Returns a tornado HTTPResponse.
+    """
+    with _request_for_tornado_client(urlstring) as request:
+        response = HTTPClient(AsyncHTTPClient).fetch(request)
+    return response
+
+
+async def async_fetch(
+    urlstring,
+    method="GET",
+    body=None,
+    headers=None,
+    io_loop=None
+):
+    """
+    Send an asynchronous HTTP, HTTPS, or HTTP+UNIX request
+    to a Tornado Web Server. Returns a tornado HTTPResponse.
+    """
+    with _request_for_tornado_client(urlstring) as request:
+        response = await AsyncHTTPClient(io_loop).fetch(request)
+    return response

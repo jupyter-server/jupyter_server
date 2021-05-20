@@ -31,7 +31,7 @@ from jupyter_core.paths import is_hidden
 import jupyter_server
 from jupyter_server._tz import utcnow
 from jupyter_server.i18n import combine_translations
-from jupyter_server.utils import ensure_async, url_path_join, url_is_absolute, url_escape
+from jupyter_server.utils import ensure_async, url_path_join, url_is_absolute, url_escape, urldecode_unix_socket_path
 from jupyter_server.services.security import csp_report_uri
 
 #-----------------------------------------------------------------------------
@@ -462,13 +462,18 @@ class JupyterHandler(AuthenticatedHandler):
         if host.startswith('[') and host.endswith(']'):
             host = host[1:-1]
 
-        try:
-            addr = ipaddress.ip_address(host)
-        except ValueError:
-            # Not an IP address: check against hostnames
-            allow = host in self.settings.get('local_hostnames', ['localhost'])
+        # UNIX socket handling
+        check_host = urldecode_unix_socket_path(host)
+        if check_host.startswith('/') and os.path.exists(check_host):
+            allow = True
         else:
-            allow = addr.is_loopback
+            try:
+                addr = ipaddress.ip_address(host)
+            except ValueError:
+                # Not an IP address: check against hostnames
+                allow = host in self.settings.get('local_hostnames', ['localhost'])
+            else:
+                allow = addr.is_loopback
 
         if not allow:
             self.log.warning(
