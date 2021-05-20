@@ -20,7 +20,7 @@ from jupyter_core.application import JupyterApp, NoStart
 
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.transutils import _i18n
-from jupyter_server.utils import url_path_join
+from jupyter_server.utils import url_path_join, is_namespace_package
 from .handler import ExtensionHandlerMixin
 
 # -----------------------------------------------------------------------------
@@ -174,7 +174,11 @@ class ExtensionApp(JupyterApp):
 
     @classmethod
     def get_extension_package(cls):
-        return cls.__module__.split('.')[0]
+        parts = cls.__module__.split('.')
+        if is_namespace_package(parts[0]):
+            # in this case the package name is `<namespace>.<package>`.
+            return '.'.join(parts[0:2])
+        return parts[0]
 
     @classmethod
     def get_extension_point(cls):

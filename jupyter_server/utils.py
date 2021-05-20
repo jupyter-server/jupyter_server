@@ -3,8 +3,10 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from _frozen_importlib_external import _NamespacePath
 import asyncio
 import errno
+import importlib.util
 import inspect
 import os
 import socket
@@ -352,3 +354,19 @@ async def async_fetch(
     with _request_for_tornado_client(urlstring) as request:
         response = await AsyncHTTPClient(io_loop).fetch(request)
     return response
+
+
+def is_namespace_package(namespace):
+    """Is the provided namespace a Python Namespace Package (PEP420).
+
+    https://www.python.org/dev/peps/pep-0420/#specification
+
+    Returns `None` if module is not importable.
+
+    """
+    # NOTE: using submodule_search_locations because the loader can be None
+    spec = importlib.util.find_spec(namespace)
+    if not spec:
+        # e.g. module not installed
+        return None
+    return isinstance(spec.submodule_search_locations, _NamespacePath)
