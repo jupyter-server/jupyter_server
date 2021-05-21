@@ -230,15 +230,17 @@ class ExtensionPackage(HasTraits):
 
     def load_point(self, point_name, serverapp):
         point = self.extension_points[point_name]
-        point.load(serverapp)
+        return point.load(serverapp)
 
     def link_all_points(self, serverapp):
         for point_name in self.extension_points:
             self.link_point(point_name, serverapp)
 
     def load_all_points(self, serverapp):
-        for point_name in self.extension_points:
+        return [
             self.load_point(point_name, serverapp)
+            for point_name in self.extension_points
+        ]
 
 
 class ExtensionManager(LoggingConfigurable):
@@ -287,6 +289,13 @@ class ExtensionManager(LoggingConfigurable):
         Dictionary with extension names as keys
 
         values are True if the extension is linked, False if not.
+        """
+    )
+
+    extension_apps = Dict(
+        help="""
+        Dictionary with extension names as keys
+        and ExtensionApp objects as values.
         """
     )
 
@@ -343,11 +352,19 @@ class ExtensionManager(LoggingConfigurable):
         extension = self.extensions.get(name)
         if extension.enabled:
             try:
-                extension.load_all_points(serverapp)
+                self.extension_apps.setdefault(name, []).extend(
+                    extension.load_all_points(serverapp)
+                )
                 self.log.info("{name} | extension was successfully loaded.".format(name=name))
             except Exception as e:
                 self.log.debug("".join(traceback.format_exception(*sys.exc_info())))
                 self.log.warning("{name} | extension failed loading with message: {error}".format(name=name,error=str(e)))
+
+    def stop_extension(self, name, apps):
+        """Call the shutdown hooks in the specified apps."""
+        for app in apps:
+            if hasattr(app, 'stop_extension'):
+                app.stop_extension()
 
     def link_all_extensions(self, serverapp):
         """Link all enabled extensions
@@ -366,3 +383,9 @@ class ExtensionManager(LoggingConfigurable):
         # order.
         for name in self.sorted_extensions.keys():
             self.load_extension(name, serverapp)
+
+    def stop_all_extensions(self, serverapp):
+        """Call the shutdown hooks in all extensions."""
+        for name, apps in sorted(dict(self.extension_apps).items()):
+            self.stop_extension(name, apps)
+            del self.extension_apps[name]

@@ -156,6 +156,10 @@ The basic structure of an ExtensionApp is shown below:
             ...
             # Change the jinja templating environment
 
+        def stop_extension(self):
+            ...
+            # Perform any required shut down steps
+
 
 The ``ExtensionApp`` uses the following methods and properties to connect your extension to the Jupyter server. You do not need to define a ``_load_jupyter_server_extension`` function for these apps. Instead, overwrite the pieces below to add your custom settings, handlers and templates:
 
@@ -164,6 +168,7 @@ Methods
 * ``initialize_setting()``: adds custom settings to the Tornado Web Application.
 * ``initialize_handlers()``: appends handlers to the Tornado Web Application.
 * ``initialize_templates()``: initialize the templating engine (e.g. jinja2) for your frontend.
+* ``stop_extension()``: called on server shut down.
 
 Properties
 

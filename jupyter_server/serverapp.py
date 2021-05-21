@@ -2085,6 +2085,17 @@ class ServerApp(JupyterApp):
         self.log.info(terminal_msg % n_terminals)
         run_sync(terminal_manager.terminate_all())
 
+    def cleanup_extensions(self):
+        """Call shutdown hooks in all extensions."""
+        n_extensions = len(self.extension_manager.extension_apps)
+        extension_msg = trans.ngettext(
+            'Shutting down %d extension',
+            'Shutting down %d extensions',
+            n_extensions
+        )
+        self.log.info(extension_msg % n_extensions)
+        self.extension_manager.stop_all_extensions(self)
+
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
         info = self.contents_manager.info_string() + "\n"
@@ -2329,6 +2340,7 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         self.cleanup_kernels()
         self.cleanup_terminals()
+        self.cleanup_extensions()
 
     def start_ioloop(self):
         """Start the IO Loop."""

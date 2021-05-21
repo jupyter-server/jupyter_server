@@ -419,6 +419,8 @@ class ExtensionApp(JupyterApp):
     def stop(self):
         """Stop the underlying Jupyter server.
         """
+        if hasattr(self, 'stop_extension'):
+            self.stop_extension()
         self.serverapp.stop()
         self.serverapp.clear_instance()
 
