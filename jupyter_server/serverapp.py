@@ -512,16 +512,15 @@ class JupyterServerStopApp(JupyterApp):
                 if port == self.port:
                     self._shutdown_or_exit(port, server)
                     return
-        else:
-            current_endpoint = self.sock or self.port
-            print(
-                "There is currently no server running on {}".format(current_endpoint),
-                file=sys.stderr
-            )
-            print("Ports/sockets currently in use:", file=sys.stderr)
-            for server in servers:
-                print(" - {}".format(server.get('sock') or server['port']), file=sys.stderr)
-            self.exit(1)
+        current_endpoint = self.sock or self.port
+        print(
+            "There is currently no server running on {}".format(current_endpoint),
+            file=sys.stderr
+        )
+        print("Ports/sockets currently in use:", file=sys.stderr)
+        for server in servers:
+            print(" - {}".format(server.get('sock') or server['port']), file=sys.stderr)
+        self.exit(1)
 
 
 class JupyterServerListApp(JupyterApp):

@@ -33,7 +33,8 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
 
     assert complete, 'did not find socket URL in stdout when launching notebook'
 
-    assert encoded_sock_path.encode() in subprocess.check_output(['jupyter-server', 'list'])
+    socket_path = encoded_sock_path.encode()
+    assert socket_path in subprocess.check_output(['jupyter-server', 'list'])
 
     # Ensure umask is properly applied.
     assert stat.S_IMODE(os.lstat(jp_unix_socket_file).st_mode) == 0o700
@@ -120,7 +121,8 @@ def test_stop_multi_integration(jp_unix_socket_file, jp_http_port):
 
     time.sleep(3)
 
-    assert MSG_TMPL.format(jp_http_port) in subprocess.check_output(
+    shutdown_msg = MSG_TMPL.format(jp_http_port)
+    assert shutdown_msg in subprocess.check_output(
         ['jupyter-server', 'stop']
     ).decode()
 
@@ -157,10 +159,12 @@ def test_launch_socket_collision(jp_unix_socket_file):
     # Try to start a server bound to the same UNIX socket.
     try:
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        assert check_msg in e.output.decode()
+    except subprocess.CalledProcessError as cpe:
+        assert check_msg in cpe.output.decode()
+    except Exception as ex:
+        raise AssertionError(f"expected 'already in use' error, got '{ex}'!")
     else:
-        raise AssertionError('expected error, instead got %s' % e.output.decode())
+        raise AssertionError(f"expected 'already in use' error, got success instead!")
 
     # Stop the background server, ensure it's stopped and wait on the process to exit.
     subprocess.check_call(['jupyter-server', 'stop', sock])
