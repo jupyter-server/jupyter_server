@@ -336,7 +336,7 @@ def jp_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_base_url):
 
 
 @pytest.fixture
-def jp_ws_fetch(jp_serverapp, jp_auth_header, jp_http_port, jp_base_url):
+def jp_ws_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_http_port, jp_base_url):
     """Sends a websocket request to a test server.
 
     The fixture is a factory; it can be called like
