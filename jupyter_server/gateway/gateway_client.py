@@ -176,14 +176,29 @@ class GatewayClient(SingletonConfigurable):
         return os.environ.get(self.headers_env, self.headers_default_value)
 
     auth_token = Unicode(default_value=None, allow_none=True, config=True,
-        help="""The authorization token used in the HTTP headers.  (JUPYTER_GATEWAY_AUTH_TOKEN env var)
-        """
+        help="""The authorization token used in the HTTP headers. The header will be formatted as:
+
+            {
+                'Authorization': '{auth_scheme} {auth_token}'
+            }
+
+        (JUPYTER_GATEWAY_AUTH_TOKEN env var)"""
     )
     auth_token_env = 'JUPYTER_GATEWAY_AUTH_TOKEN'
 
     @default('auth_token')
     def _auth_token_default(self):
         return os.environ.get(self.auth_token_env, '')
+
+    auth_scheme = Unicode(default_value=None, allow_none=True, config=True,
+        help="""The auth scheme, added as a prefix to the authorization token used in the HTTP headers.
+        (JUPYTER_GATEWAY_AUTH_SCHEME env var)"""
+    )
+    auth_scheme_env = 'JUPYTER_GATEWAY_AUTH_SCHEME'
+
+    @default('auth_scheme')
+    def _auth_scheme_default(self):
+        return os.environ.get(self.auth_scheme_env, 'token')
 
     validate_cert_default_value = True
     validate_cert_env = 'JUPYTER_GATEWAY_VALIDATE_CERT'
@@ -268,7 +283,7 @@ class GatewayClient(SingletonConfigurable):
         self._static_args['headers'] = json.loads(self.headers)
         if 'Authorization' not in self._static_args['headers'].keys():
             self._static_args['headers'].update({
-                'Authorization': 'token {}'.format(self.auth_token)
+                'Authorization': '{} {}'.format(self.auth_scheme, self.auth_token)
             })
         self._static_args['connect_timeout'] = self.connect_timeout
         self._static_args['request_timeout'] = self.request_timeout
