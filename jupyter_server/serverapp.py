@@ -2338,11 +2338,24 @@ class ServerApp(JupyterApp):
             pc = ioloop.PeriodicCallback(lambda : None, 5000)
             pc.start()
         try:
+            self.start_task_when_ioloop_ready()
             self.io_loop.start()
         except KeyboardInterrupt:
             self.log.info(_i18n("Interrupted..."))
         finally:
             self._cleanup()
+
+    startup_tasks = List(
+        help=_i18n("""functions which created when io_loop is created""")
+    )
+
+    def start_task_when_ioloop_ready(self):
+        """run init tasks when io_loop is ready"""
+        for task in self.startup_tasks:
+            try:
+                self.io_loop.call_later(0, task)
+            except Exception:
+                self.log.error("not supported task:{}".format(task))
 
     def start(self):
         """ Start the Jupyter server app, after initialization
