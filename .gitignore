@@ -26,8 +26,6 @@ src
 
 *.swp
 *.map
-.idea/
-.vscode/
 Read the Docs
 config.rst
 
@@ -36,4 +34,14 @@ config.rst
 
 # copied changelog file
 docs/source/other/changelog.md
+
+# jetbrains ide stuff
+*.iml
+.idea/
+
+# vscode ide stuff
+*.code-workspace
+.history
+.vscode/*
+!.vscode/*.template
 
