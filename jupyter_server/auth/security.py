@@ -12,9 +12,6 @@ import random
 import traceback
 import warnings
 
-import argon2
-import argon2.exceptions
-from argon2 import PasswordHasher
 from ipython_genutils.py3compat import cast_bytes, str_to_bytes, cast_unicode
 from traitlets.config import Config, ConfigFileNotFound, JSONFileConfigLoader
 from jupyter_core.paths import jupyter_config_dir
@@ -63,7 +60,8 @@ def passwd(passphrase=None, algorithm='argon2'):
             raise ValueError('No matching passwords found. Giving up.')
 
     if algorithm == 'argon2':
-        ph = PasswordHasher(
+        import argon2
+        ph = argon2.PasswordHasher(
             memory_cost=10240,
             time_cost=10,
             parallelism=8,
@@ -108,6 +106,8 @@ def passwd_check(hashed_passphrase, passphrase):
     True
     """
     if hashed_passphrase.startswith('argon2:'):
+        import argon2
+        import argon2.exceptions
         ph = argon2.PasswordHasher()
 
         try:
