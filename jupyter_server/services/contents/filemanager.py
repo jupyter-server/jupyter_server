@@ -236,7 +236,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             model['writable'] = False
         return model
 
-    def _dir_model(self, path, content=True):
+    def _dir_model(self, path, content=True, page=None):
         """Build a model for a directory
 
         if content is requested, will include a listing of the directory
@@ -256,10 +256,28 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model = self._base_model(path)
         model['type'] = 'directory'
         model['size'] = None
+        MAX_NUM_CONTENTS_PAGE = 100 # A magic number of items that is acceptable to run os.lstat with, and also acceptable to render in the browser
         if content:
             model['content'] = contents = []
             os_dir = self._get_os_path(path)
-            for name in os.listdir(os_dir):
+            dir_contents = os.listdir(os_dir)
+            len_contents = len(dir_contents) 
+            # TODO: some items might be broken symlinks, hidden files, etc. so the real output of each page may have different length
+            
+            if len_contents > MAX_NUM_CONTENTS_PAGE:
+                # round up the max number of pages
+                max_page = int(len_contents / MAX_NUM_CONTENTS_PAGE) + (len_contents % MAX_NUM_CONTENTS_PAGE > 0)
+                model["max_page"] = max_page
+                if page and (1 <= page) and  (page <= max_page) :
+                    dir_contents = dir_contents[(page-1)*MAX_NUM_CONTENTS_PAGE: page*MAX_NUM_CONTENTS_PAGE]
+                    model["page"] = page
+                else:
+                    dir_contents = dir_contents[0:MAX_NUM_CONTENTS_PAGE]
+                    model["page"] = 1
+            else:
+                model["max_page"] = 1
+                model["page"] = 1
+            for name in dir_contents:
                 try:
                     os_path = os.path.join(os_dir, name)
                 except UnicodeDecodeError as e:
@@ -345,7 +363,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         return model
 
-    def get(self, path, content=True, type=None, format=None):
+    def get(self, path, content=True, type=None, format=None, page=None):
         """ Takes a path for an entity and returns its model
 
         Parameters
@@ -377,7 +395,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             if type not in (None, 'directory'):
                 raise web.HTTPError(400,
                                 u'%s is a directory, not a %s' % (path, type), reason='bad type')
-            model = self._dir_model(path, content=content)
+            model = self._dir_model(path, content=content, page=page)
         elif type == 'notebook' or (type is None and path.endswith('.ipynb')):
             model = self._notebook_model(path, content=content)
         else:
