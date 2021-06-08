@@ -34,3 +34,28 @@ Jupyter Server needs RBAC for the same reasons JupyterHub does, but without depe
 should be possible to serve a notebook without deploying a Hub. Also, the resources being accessed
 are actually orthogonal: while JupyterHub manages servers, Jupyter Server manages sub-server
 resources such as kernels, sessions, files, terminals...
+
+Definitions
+-----------
+
+**Scopes** are specific permissions used to evaluate API requests. For example: the API endpoint
+``api/kernels``, which enables listing or starting kernels, is guarded by the scope
+``users:kernels``.
+
+Scopes are not directly assigned to requesters. Rather, when a client performs an API call, their
+access will be evaluated based on their assigned roles.
+
+**Roles** are collections of scopes that specify the level of what a client is allowed to do. For
+example, a group administrator may be granted permission to control the kernels of group members,
+but not to create, modify or delete group members themselves. Within the RBAC framework, this is
+achieved by assigning a role to the administrator that covers exactly those privileges.
+
+Technical overview
+------------------
+
+.. toctree::
+   :maxdepth: 1
+   :name: rbac
+
+   roles
+   scopes
