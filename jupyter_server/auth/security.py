@@ -43,8 +43,8 @@ def passwd(passphrase=None, algorithm='argon2'):
 
     Examples
     --------
-    >>> passwd('mypassword')
-    'sha1:7cf3:b7d6da294ea9592a9480c8f52e63cd42cfb9dd12'
+    >>> passwd('mypassword')  # doctest: +ELLIPSIS
+    'argon2:...'
 
     """
     if passphrase is None:
@@ -94,11 +94,11 @@ def passwd_check(hashed_passphrase, passphrase):
 
     Examples
     --------
-    >>> from jupyter_server.auth.security import passwd_check
-    >>> passwd_check('argon2:...', 'mypassword')
+    >>> myhash = passwd('mypassword')
+    >>> passwd_check(myhash, 'mypassword')
     True
 
-    >>> passwd_check('argon2:...', 'otherpassword')
+    >>> passwd_check(myhash, 'otherpassword')
     False
 
     >>> passwd_check('sha1:0e112c3ddfce:a68df677475c2b47b6e86d0467eec97ac5f4b85a',

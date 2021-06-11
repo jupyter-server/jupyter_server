@@ -50,13 +50,15 @@ except ImportError:
         'an object'
         >>> describe("a", type(object))
         'a type'
+
         Definite description:
-        >>> describe("the", object())
-        "the object at '0x10741f1b0'"
+        >>> describe("the", object())  # doctest: +ELLIPSIS
+        "the object at '0x...'"
         >>> describe("the", object)
-        "the type 'object'"
+        'the object object'
         >>> describe("the", type(object))
-        "the type 'type'"
+        'the type type'
+
         Definitely named description:
         >>> describe("the", object(), "I made")
         'the object I made'

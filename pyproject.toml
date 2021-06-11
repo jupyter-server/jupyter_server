@@ -9,8 +9,10 @@ factory = "jupyter_packaging.npm_builder"
 ignore = ["tbump.toml", ".*", "*.yml", "package-lock.json", "bootstrap*", "conftest.py"]
 
 [tool.pytest.ini_options]
-# Exclude the example tests.
-norecursedirs = "examples/*"
+addopts = "--doctest-modules"
+testpaths = [
+    "jupyter_server"
+]
 
 [tool.tbump.version]
 current = "1.10.0.dev0"
