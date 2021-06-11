@@ -165,7 +165,7 @@ The ``ExtensionApp`` uses the following methods and properties to connect your e
 
 Methods
 
-* ``initialize_setting()``: adds custom settings to the Tornado Web Application.
+* ``initialize_settings()``: adds custom settings to the Tornado Web Application.
 * ``initialize_handlers()``: appends handlers to the Tornado Web Application.
 * ``initialize_templates()``: initialize the templating engine (e.g. jinja2) for your frontend.
 * ``stop_extension()``: called on server shut down.
