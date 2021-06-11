@@ -2094,7 +2094,7 @@ class ServerApp(JupyterApp):
             n_extensions
         )
         self.log.info(extension_msg % n_extensions)
-        self.extension_manager.stop_all_extensions(self)
+        run_sync(self.extension_manager.stop_all_extensions(self))
 
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
@@ -2353,8 +2353,6 @@ class ServerApp(JupyterApp):
             self.io_loop.start()
         except KeyboardInterrupt:
             self.log.info(_i18n("Interrupted..."))
-        finally:
-            self._cleanup()
 
     def init_ioloop(self):
         """init self.io_loop so that an extension can use it by io_loop.call_later() to create background tasks"""

@@ -2,6 +2,8 @@ import importlib
 import sys
 import traceback
 
+from tornado.gen import multi
+
 from traitlets.config import LoggingConfigurable
 
 from traitlets import (
@@ -360,11 +362,14 @@ class ExtensionManager(LoggingConfigurable):
                 self.log.debug("".join(traceback.format_exception(*sys.exc_info())))
                 self.log.warning("{name} | extension failed loading with message: {error}".format(name=name,error=str(e)))
 
-    def stop_extension(self, name, apps):
+    async def stop_extension(self, name, apps):
         """Call the shutdown hooks in the specified apps."""
         for app in apps:
             if hasattr(app, 'stop_extension'):
-                app.stop_extension()
+                await app.stop_extension()
+            if name in self.extension_apps:
+                # might not be the case in tests
+                del self.extension_apps[name]
 
     def link_all_extensions(self, serverapp):
         """Link all enabled extensions
@@ -384,8 +389,9 @@ class ExtensionManager(LoggingConfigurable):
         for name in self.sorted_extensions.keys():
             self.load_extension(name, serverapp)
 
-    def stop_all_extensions(self, serverapp):
+    async def stop_all_extensions(self, serverapp):
         """Call the shutdown hooks in all extensions."""
-        for name, apps in sorted(dict(self.extension_apps).items()):
+        await multi([
             self.stop_extension(name, apps)
-            del self.extension_apps[name]
+            for name, apps in sorted(dict(self.extension_apps).items())
+        ])

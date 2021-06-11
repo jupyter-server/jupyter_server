@@ -156,7 +156,7 @@ The basic structure of an ExtensionApp is shown below:
             ...
             # Change the jinja templating environment
 
-        def stop_extension(self):
+        async def stop_extension(self):
             ...
             # Perform any required shut down steps
 
