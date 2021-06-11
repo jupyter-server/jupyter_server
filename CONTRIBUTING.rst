@@ -58,10 +58,12 @@ Running Tests
 Install dependencies::
 
     pip install -e .[test]
+    pip install -e examples/simple
 
 To run the Python tests, use::
 
     pytest
+    pytest examples/simple
 
 Building the Docs
 =================

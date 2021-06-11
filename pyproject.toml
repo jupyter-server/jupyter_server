@@ -6,7 +6,7 @@ build-backend = "jupyter_packaging.build_api"
 factory = "jupyter_packaging.npm_builder"
 
 [tool.check-manifest]
-ignore = ["tbump.toml", ".*", "*.yml", "package-lock.json", "bootstrap*"]
+ignore = ["tbump.toml", ".*", "*.yml", "package-lock.json", "bootstrap*", "conftest.py"]
 
 [tool.pytest.ini_options]
 # Exclude the example tests.

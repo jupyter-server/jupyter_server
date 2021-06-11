@@ -6,9 +6,6 @@ pytest_plugins = [
 ]
 
 
-import pytest
-
-
 def pytest_addoption(parser):
     parser.addoption(
         "--integration_tests",
@@ -26,7 +23,7 @@ def pytest_configure(config):
 
 
 def pytest_runtest_setup(item):
-    is_integration_test = any([mark for mark in item.iter_markers(name="integration_test")])
+    is_integration_test = any(mark for mark in item.iter_markers(name="integration_test"))
 
     if item.config.getoption("--integration_tests") is True:
         if not is_integration_test:

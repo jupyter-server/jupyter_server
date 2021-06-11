@@ -35,10 +35,7 @@ Launch with:
 
 ### Testing
 
-To test an installed `jupyter_server`, run the following:
-
-    pip install jupyter_server[test]
-    pytest jupyter_server
+See [CONTRIBUTING](https://github.com/jupyter-server/jupyter_server/blob/master/CONTRIBUTING.rst#running-tests).
 
 ## Contributing
 
