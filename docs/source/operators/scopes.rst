@@ -1,4 +1,4 @@
-.. _scoles:
+.. _scopes:
 
 Scopes in Jupyter Server
 ========================
@@ -8,8 +8,8 @@ objects with a type, associated data, relationships to other resources, and a se
 operate on them.
 
 ``<resource>`` in the RBAC scope design refers to the resource name in the Jupyter Server's API
-endpoints in most cases (maybe prefixed with ``/api/``). For instance, ``<resource>`` equal to
-``users`` corresponds to Jupyter Server's API endpoints beginning with ``/api/users``.
+endpoints in most cases (prefixed with ``/api/``). For instance, ``<resource>`` equal to ``kernels``
+corresponds to Jupyter Server's API endpoints beginning with ``/api/kernels``.
 
 Available scopes
 ----------------
@@ -152,6 +152,10 @@ Scopes and APIs
      - ``GET``
      - List the JSON data for all kernels that are currently running
      - ``read:kernels``
+   * -
+     - ``POST``
+     - Start a kernel
+     - ``kernels``
    * - ``/api/kernels/{kernel_id}``
      - ``GET``
      - Get kernel information
