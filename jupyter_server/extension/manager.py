@@ -297,7 +297,7 @@ class ExtensionManager(LoggingConfigurable):
     extension_apps = Dict(
         help="""
         Dictionary with extension names as keys
-        and ExtensionApp objects as values.
+        and sets of ExtensionApp objects as values.
         """
     )
 
@@ -352,15 +352,21 @@ class ExtensionManager(LoggingConfigurable):
 
     def load_extension(self, name, serverapp):
         extension = self.extensions.get(name)
+
         if extension.enabled:
             try:
-                self.extension_apps.setdefault(name, []).extend(
-                    extension.load_all_points(serverapp)
-                )
-                self.log.info("{name} | extension was successfully loaded.".format(name=name))
+                points = extension.load_all_points(serverapp)
             except Exception as e:
                 self.log.debug("".join(traceback.format_exception(*sys.exc_info())))
                 self.log.warning("{name} | extension failed loading with message: {error}".format(name=name,error=str(e)))
+            else:
+                self.extension_apps.setdefault(name, set()).update((
+                    point
+                    for point in points
+                    if point is not None
+                ))
+                self.log.info("{name} | extension was successfully loaded.".format(name=name))
+
 
     async def stop_extension(self, name, apps):
         """Call the shutdown hooks in the specified apps."""
