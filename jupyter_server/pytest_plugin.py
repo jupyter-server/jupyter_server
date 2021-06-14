@@ -16,6 +16,7 @@ import tornado
 from tornado.escape import url_escape
 from traitlets.config import Config
 
+from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.extension import serverextension
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.services.contents.filemanager import FileContentsManager
@@ -498,3 +499,8 @@ def jp_cleanup_subprocesses(jp_serverapp):
                 print(e)
 
     return _
+
+
+def authorize_all():
+    yield
+    JupyterHandler.user_is_authorized = lambda self, user, action, resource: True
