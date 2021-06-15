@@ -77,6 +77,70 @@ but this is **NOT RECOMMENDED**, unless authentication or access restrictions ar
     c.ServerApp.token = ''
     c.ServerApp.password = ''
 
+Authorization
+-------------
+
+Authorization in Jupyter Server serves to provide finer grained control of access to its
+API resources. With authentication, requests are accepted if the current user is known by
+the server. Thus it can restrain access to specific users, but there is no way to give allowed
+users more or less permissions. Jupyter Server provides a thin and extensible authorization layer
+which checks if the current user is authorized to make a specific request.
+
+This is done by calling a ``user_is_authorized(user, action, resource)`` method before each request
+handler. Each request is labeled as either a "read", "write", or "execute" ``action``:
+
+- "read" wraps all ``GET`` and ``HEAD`` requests.
+- "write" wraps all ``PUT``, ``PATCH``, and ``DELETE`` requests.
+- "execute" wraps all requests to ZMQ/Websocket channels.
+
+The ``resource`` being accessed refers to the resource name in the Jupyter Server's API endpoints in
+most cases. For instance, ``resource`` equal to:
+
+- "kernelspecs" corresponds to endpoints beginning with ``/kernelspecs`` and ``/api/kernelspecs``.
+- "nbconvert" corresponds to endpoints beginning with ``/nbconvert`` and ``/api/nbconvert``.
+- "config" corresponds to endpoints beginning with ``/api/config``.
+- "contents" corresponds to endpoints beginning with ``/api/contents``.
+- "kernels" corresponds to endpoints beginning with ``/api/kernels``.
+- "sessions" corresponds to endpoints beginning with ``/api/sessions``.
+- "terminal" corresponds to endpoints beginning with ``/api/terminals``.
+- "view" corresponds to endpoints beginning with ``/view``.
+- "shutdown" corresponds to the endpoint ``/api/shutdown``.
+- "api" corresponds to endpoints ``/api/status`` and ``/api/spec.yaml``.
+- "csp" corresponds to the endpoint ``/api/security/csp-report`` (by default).
+
+If ``user_is_authorized(...)`` returns ``True``, the request is made; otherwise, a
+``HTTPError(401)`` (401 means "unauthorized") error is raised, and the request is blocked.
+
+By default, authorization is turned off—i.e. ``user_is_authorized()`` always returns ``True`` and
+all authenticated users are allowed to make all types of requests. To turn-on authorization, patch
+the ``user_is_authorized(...)`` method with your desired authorization method. Your patch should
+have the following signature:
+
+.. sourcecode:: python
+
+    def user_is_authorized(self, user, action, resource):
+        """A method to determine if `user` is authorized to perform `action`
+        (read, write, or executed) on the `resource` type.
+
+        Parameters
+        ------------
+        user : usually a dict
+            a user model with group, role, or permissions information.
+
+        action : str
+            the category of action for the current request: read, write, or execute.
+
+        resource : str
+            the type of resource (i.e. contents, kernels, files, etc.) the user is requesting.
+
+        Returns True if user authorized to make request; otherwise, returns False.
+        """
+        return True
+
+    # patch in the method
+    from jupyter_server.base import JupyterHandler
+    JupyterHandler.user_is_authorized = user_is_authorized
+
 Security in notebook documents
 ==============================
 
