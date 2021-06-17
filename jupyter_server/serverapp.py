@@ -2052,6 +2052,7 @@ class ServerApp(JupyterApp):
         self.init_webapp()
         self.init_terminals()
         self.init_signal()
+        self.init_ioloop()
         self.load_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
@@ -2331,7 +2332,6 @@ class ServerApp(JupyterApp):
 
     def start_ioloop(self):
         """Start the IO Loop."""
-        self.io_loop = ioloop.IOLoop.current()
         if sys.platform.startswith('win'):
             # add no-op to wake every 5s
             # to handle signals that may be ignored by the inner loop
@@ -2343,6 +2343,10 @@ class ServerApp(JupyterApp):
             self.log.info(_i18n("Interrupted..."))
         finally:
             self._cleanup()
+
+    def init_ioloop(self):
+        """init self.io_loop so that an extension can use it by io_loop.call_later() to create background tasks"""
+        self.io_loop = ioloop.IOLoop.current()
 
     def start(self):
         """ Start the Jupyter server app, after initialization
