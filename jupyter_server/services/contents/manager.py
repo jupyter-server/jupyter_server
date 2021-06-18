@@ -628,7 +628,7 @@ class AsyncContentsManager(ContentsManager):
         exists : bool
             Whether the target exists.
         """
-        return await (ensure_async(self.file_exists(path)) or ensure_async(self.dir_exists(path)))
+        return await ensure_async(self.file_exists(path)) or await ensure_async(self.dir_exists(path))
 
     async def get(self, path, content=True, type=None, format=None):
         """Get a file or directory model."""
