@@ -31,6 +31,7 @@ import webbrowser
 import urllib
 import inspect
 import pathlib
+import asyncio
 
 from base64 import encodebytes
 try:
@@ -1725,17 +1726,17 @@ class ServerApp(JupyterApp):
         """SIGINT handler spawns confirmation dialog"""
         # register more forceful signal handler for ^C^C case
         signal.signal(signal.SIGINT, self._signal_stop)
-        # request confirmation dialog in bg thread, to avoid
+        # request confirmation dialog in async task to avoid
         # blocking the App
-        thread = threading.Thread(target=self._confirm_exit)
-        thread.daemon = True
-        thread.start()
+        self._stdin_queue = asyncio.Queue()
+        asyncio.get_event_loop().add_reader(sys.stdin, self._process_input)
+        self.io_loop.add_callback_from_signal(self._confirm_exit)
 
     def _restore_sigint_handler(self):
         """callback for restoring original SIGINT handler"""
         signal.signal(signal.SIGINT, self._handle_sigint)
 
-    def _confirm_exit(self):
+    async def _confirm_exit(self):
         """confirm shutdown on ^C
 
         A second ^C, or answering 'y' within 5s will cause shutdown,
@@ -1755,24 +1756,24 @@ class ServerApp(JupyterApp):
         print(self.running_server_info())
         yes = _i18n('y')
         no = _i18n('n')
-        sys.stdout.write(_i18n("Shutdown this Jupyter server (%s/[%s])? ") % (yes, no))
-        sys.stdout.flush()
-        r,w,x = select.select([sys.stdin], [], [], 5)
-        if r:
-            line = sys.stdin.readline()
+        print(_i18n("Shutdown this Jupyter server (%s/[%s])? ") % (yes, no), flush=True)
+        try:
+            line = await asyncio.wait_for(self._stdin_queue.get(), timeout=5)
+        except asyncio.TimeoutError:
+            print(_i18n("No answer for 5s:"), end=' ')
+        else:
             if line.lower().startswith(yes) and no not in line.lower():
                 self.log.critical(_i18n("Shutdown confirmed"))
                 # schedule stop on the main thread,
                 # since this might be called from a signal handler
                 self.io_loop.add_callback_from_signal(self.io_loop.stop)
                 return
-        else:
-            print(_i18n("No answer for 5s:"), end=' ')
         print(_i18n("resuming operation..."))
         # no answer, or answer is no:
         # set it back to original SIGINT handler
-        # use IOLoop.add_callback because signal.signal must be called
+        # use IOLoop.add_callback_from_signal because signal.signal must be called
         # from main thread
+        asyncio.get_event_loop().remove_reader(sys.stdin)
         self.io_loop.add_callback_from_signal(self._restore_sigint_handler)
 
     def _signal_stop(self, sig, frame):
@@ -2329,6 +2330,9 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         self.cleanup_kernels()
         self.cleanup_terminals()
+
+    def _process_input(self):
+        asyncio.ensure_future(self._stdin_queue.put(sys.stdin.readline()))
 
     def start_ioloop(self):
         """Start the IO Loop."""
