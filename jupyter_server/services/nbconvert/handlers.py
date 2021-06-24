@@ -1,10 +1,13 @@
 import json
+import asyncio
 
 from anyio.to_thread import run_sync
 from tornado import web
 
 from ...base.handlers import APIHandler
 
+
+LOCK = asyncio.Lock()
 
 class NbconvertRootHandler(APIHandler):
 
@@ -20,7 +23,8 @@ class NbconvertRootHandler(APIHandler):
         exporters = await run_sync(base.get_export_names)
         for exporter_name in exporters:
             try:
-                exporter_class = await run_sync(base.get_exporter, exporter_name)
+                async with LOCK:
+                    exporter_class = await run_sync(base.get_exporter, exporter_name)
             except ValueError:
                 # I think the only way this will happen is if the entrypoint
                 # is uninstalled while this method is running
