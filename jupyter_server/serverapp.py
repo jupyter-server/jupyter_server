@@ -26,6 +26,7 @@ import sys
 import tempfile
 import threading
 import time
+import traceback
 import warnings
 import webbrowser
 import urllib
@@ -2085,6 +2086,19 @@ class ServerApp(JupyterApp):
         self.log.info(terminal_msg % n_terminals)
         run_sync(terminal_manager.terminate_all())
 
+    extension_cleanup_functions = List()
+
+    def cleanup_extensions(self):
+        """Execute cleanup functions for extensions
+
+        """
+        for maybe_async in self.extension_cleanup_functions:
+            try:
+                run_sync(maybe_async)
+            except Exception:
+                self.log.error(_i18n("Clean up function <{}> "
+                                    "went wrong, Because:{}".format(maybe_async, traceback.format_exc())))
+
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
         info = self.contents_manager.info_string() + "\n"
@@ -2329,6 +2343,7 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         self.cleanup_kernels()
         self.cleanup_terminals()
+        self.cleanup_extensions()
 
     def start_ioloop(self):
         """Start the IO Loop."""
