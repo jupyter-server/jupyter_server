@@ -1750,7 +1750,7 @@ class ServerApp(JupyterApp):
             self.log.critical(_i18n("Shutting down..."))
             # schedule stop on the main thread,
             # since this might be called from a signal handler
-            self.io_loop.add_callback_from_signal(self.io_loop.stop)
+            self.stop(from_signal=True)
             return
         print(self.running_server_info())
         yes = _i18n('y')
@@ -1764,7 +1764,7 @@ class ServerApp(JupyterApp):
                 self.log.critical(_i18n("Shutdown confirmed"))
                 # schedule stop on the main thread,
                 # since this might be called from a signal handler
-                self.io_loop.add_callback_from_signal(self.io_loop.stop)
+                self.stop(from_signal=True)
                 return
         else:
             print(_i18n("No answer for 5s:"), end=' ')
@@ -1777,7 +1777,7 @@ class ServerApp(JupyterApp):
 
     def _signal_stop(self, sig, frame):
         self.log.critical(_i18n("received signal %s, stopping"), sig)
-        self.io_loop.add_callback_from_signal(self.io_loop.stop)
+        self.stop(from_signal=True)
 
     def _signal_info(self, sig, frame):
         print(self.running_server_info())
@@ -2059,7 +2059,7 @@ class ServerApp(JupyterApp):
         if new_httpserver:
             self.init_httpserver()
 
-    def cleanup_kernels(self):
+    async def cleanup_kernels(self):
         """Shutdown all kernels.
 
         The kernels will shutdown themselves when this process no longer exists,
@@ -2068,9 +2068,9 @@ class ServerApp(JupyterApp):
         n_kernels = len(self.kernel_manager.list_kernel_ids())
         kernel_msg = trans.ngettext('Shutting down %d kernel', 'Shutting down %d kernels', n_kernels)
         self.log.info(kernel_msg % n_kernels)
-        run_sync(self.kernel_manager.shutdown_all())
+        await self.kernel_manager.shutdown_all()
 
-    def cleanup_terminals(self):
+    async def cleanup_terminals(self):
         """Shutdown all terminals.
 
         The terminals will shutdown themselves when this process no longer exists,
@@ -2083,9 +2083,9 @@ class ServerApp(JupyterApp):
         n_terminals = len(terminal_manager.list())
         terminal_msg = trans.ngettext('Shutting down %d terminal', 'Shutting down %d terminals', n_terminals)
         self.log.info(terminal_msg % n_terminals)
-        run_sync(terminal_manager.terminate_all())
+        await terminal_manager.terminate_all()
 
-    def cleanup_extensions(self):
+    async def cleanup_extensions(self):
         """Call shutdown hooks in all extensions."""
         n_extensions = len(self.extension_manager.extension_apps)
         extension_msg = trans.ngettext(
@@ -2094,7 +2094,7 @@ class ServerApp(JupyterApp):
             n_extensions
         )
         self.log.info(extension_msg % n_extensions)
-        run_sync(self.extension_manager.stop_all_extensions(self))
+        await self.extension_manager.stop_all_extensions(self)
 
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
@@ -2332,15 +2332,15 @@ class ServerApp(JupyterApp):
                     '    %s' % self.display_url,
                 ]))
 
-    def _cleanup(self):
-        """General cleanup of files and kernels created
+    async def _cleanup(self):
+        """General cleanup of files, extensions and kernels created
         by this instance ServerApp.
         """
         self.remove_server_info_file()
         self.remove_browser_open_files()
-        self.cleanup_kernels()
-        self.cleanup_terminals()
-        self.cleanup_extensions()
+        await self.cleanup_extensions()
+        await self.cleanup_kernels()
+        await self.cleanup_terminals()
 
     def start_ioloop(self):
         """Start the IO Loop."""
@@ -2366,13 +2366,23 @@ class ServerApp(JupyterApp):
         self.start_app()
         self.start_ioloop()
 
-    def stop(self):
-        def _stop():
+    async def _stop(self):
+        """Cleanup resources and stop the IO Loop."""
+        await self._cleanup()
+        self.io_loop.stop()
+
+    def stop(self, from_signal=False):
+        """Cleanup resources and stop the server."""
+        if hasattr(self, '_http_server'):
             # Stop a server if its set.
-            if hasattr(self, '_http_server'):
-                self.http_server.stop()
-            self.io_loop.stop()
-        self.io_loop.add_callback(_stop)
+            self.http_server.stop()
+        if getattr(self, 'io_loop', None):
+            # use IOLoop.add_callback because signal.signal must be called
+            # from main thread
+            if from_signal:
+                self.io_loop.add_callback_from_signal(self._stop)
+            else:
+                self.io_loop.add_callback(self._stop)
 
 
 def list_running_servers(runtime_dir=None):

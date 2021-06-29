@@ -1,6 +1,7 @@
 import pytest
 from traitlets.config import Config
 from jupyter_server.serverapp import ServerApp
+from jupyter_server.utils import run_sync
 from .mockextensions.app import MockExtensionApp
 
 
@@ -127,7 +128,7 @@ def test_stop_extension(jp_serverapp, caplog):
 
     # call cleanup_extensions, check the logging is correct
     caplog.clear()
-    jp_serverapp.cleanup_extensions()
+    run_sync(jp_serverapp.cleanup_extensions())
     assert [
         msg
         for *_, msg in caplog.record_tuples
