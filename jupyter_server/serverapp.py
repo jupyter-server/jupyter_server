@@ -43,7 +43,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from jupyter_core.paths import secure_write
 from jupyter_server.transutils import trans, _i18n
-from jupyter_server.utils import run_sync
+from jupyter_server.utils import run_sync_in_loop
 
 # the minimum viable tornado version: needs to be kept in sync with setup.py
 MIN_TORNADO = (6, 1, 0)
@@ -2068,7 +2068,7 @@ class ServerApp(JupyterApp):
         n_kernels = len(self.kernel_manager.list_kernel_ids())
         kernel_msg = trans.ngettext('Shutting down %d kernel', 'Shutting down %d kernels', n_kernels)
         self.log.info(kernel_msg % n_kernels)
-        await self.kernel_manager.shutdown_all()
+        await run_sync_in_loop(self.kernel_manager.shutdown_all())
 
     async def cleanup_terminals(self):
         """Shutdown all terminals.
@@ -2083,7 +2083,7 @@ class ServerApp(JupyterApp):
         n_terminals = len(terminal_manager.list())
         terminal_msg = trans.ngettext('Shutting down %d terminal', 'Shutting down %d terminals', n_terminals)
         self.log.info(terminal_msg % n_terminals)
-        await terminal_manager.terminate_all()
+        await run_sync_in_loop(terminal_manager.terminate_all())
 
     async def cleanup_extensions(self):
         """Call shutdown hooks in all extensions."""
@@ -2094,7 +2094,9 @@ class ServerApp(JupyterApp):
             n_extensions
         )
         self.log.info(extension_msg % n_extensions)
-        await self.extension_manager.stop_all_extensions(self)
+        await run_sync_in_loop(
+            self.extension_manager.stop_all_extensions(self)
+        )
 
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
