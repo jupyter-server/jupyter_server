@@ -286,3 +286,93 @@ def test_urls(config, public_url, local_url, connection_url):
     assert serverapp.connection_url == connection_url
     # Cleanup singleton after test.
     ServerApp.clear_instance()
+
+
+# Preferred dir tests
+# ----------------------------------------------------------------------------
+def test_valid_preferred_dir(tmp_path, jp_configurable_serverapp):
+    path = str(tmp_path)
+    app = jp_configurable_serverapp(root_dir=path, preferred_dir=path)
+    assert app.root_dir == path
+    assert app.preferred_dir == path
+    assert app.root_dir == app.preferred_dir
+
+
+def test_valid_preferred_dir_is_root_subdir(tmp_path, jp_configurable_serverapp):
+    path = str(tmp_path)
+    path_subdir = str(tmp_path / 'subdir')
+    os.makedirs(path_subdir, exist_ok=True)
+    app = jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
+    assert app.root_dir == path
+    assert app.preferred_dir == path_subdir
+    assert app.preferred_dir.startswith(app.root_dir)
+
+
+def test_valid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverapp):
+    path = str(tmp_path)
+    path_subdir = str(tmp_path / 'subdir')
+    with pytest.raises(TraitError) as error:
+        app = jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
+
+    assert "No such preferred dir:" in str(error)
+
+
+def test_invalid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverapp):
+    path = str(tmp_path)
+    path_subdir = str(tmp_path / 'subdir')
+    with pytest.raises(TraitError) as error:
+        app = jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
+
+    assert "No such preferred dir:" in str(error)
+
+
+def test_invalid_preferred_dir_does_not_exist_set(tmp_path, jp_configurable_serverapp):
+    path = str(tmp_path)
+    path_subdir = str(tmp_path / 'subdir')
+
+    app = jp_configurable_serverapp(root_dir=path)
+    with pytest.raises(TraitError) as error:
+        app.preferred_dir = path_subdir
+
+    assert "No such preferred dir:" in str(error)
+
+
+def test_invalid_preferred_dir_not_root_subdir(tmp_path, jp_configurable_serverapp):
+    path = str(tmp_path / 'subdir')
+    os.makedirs(path, exist_ok=True)
+    not_subdir_path = str(tmp_path)
+
+    with pytest.raises(TraitError) as error:
+        app = jp_configurable_serverapp(root_dir=path, preferred_dir=not_subdir_path)
+
+    assert "preferred_dir must be equal or a subdir of root_dir:" in str(error)
+
+
+def test_invalid_preferred_dir_not_root_subdir_set(tmp_path, jp_configurable_serverapp):
+    path = str(tmp_path / 'subdir')
+    os.makedirs(path, exist_ok=True)
+    not_subdir_path = str(tmp_path)
+
+    app = jp_configurable_serverapp(root_dir=path)
+    with pytest.raises(TraitError) as error:
+        app.preferred_dir = not_subdir_path
+
+    assert "preferred_dir must be equal or a subdir of root_dir:" in str(error)
+
+
+def test_observed_root_dir_updates_preferred_dir(tmp_path, jp_configurable_serverapp):
+    path = str(tmp_path)
+    new_path = str(tmp_path / 'subdir')
+    os.makedirs(new_path, exist_ok=True)
+
+    app = jp_configurable_serverapp(root_dir=path, preferred_dir=path)
+    app.root_dir = new_path
+    assert app.preferred_dir == new_path
+
+
+def test_observed_root_dir_does_not_update_preferred_dir(tmp_path, jp_configurable_serverapp):
+    path = str(tmp_path)
+    new_path = str(tmp_path.parent)
+    app = jp_configurable_serverapp(root_dir=path, preferred_dir=path)
+    app.root_dir = new_path
+    assert app.preferred_dir == path
