@@ -1356,7 +1356,7 @@ class ServerApp(JupyterApp):
         else:
             return os.getcwd()
 
-    def _normalize_root_or_preferred_dir(self, value):
+    def _normalize_dir(self, value):
         # Strip any trailing slashes
         # *except* if it's root
         _, path = os.path.splitdrive(value)
@@ -1370,13 +1370,13 @@ class ServerApp(JupyterApp):
 
     @validate('root_dir')
     def _root_dir_validate(self, proposal):
-        value = self._normalize_root_or_preferred_dir(proposal['value'])
+        value = self._normalize_dir(proposal['value'])
         if not os.path.isdir(value):
             raise TraitError(trans.gettext("No such directory: '%r'") % value)
         return value
 
     preferred_dir = Unicode(config=True,
-        help=trans.gettext("Prefered starting directory to use for notebooks and kernels.")
+        help=trans.gettext("Preferred starting directory to use for notebooks and kernels.")
     )
 
     @default('preferred_dir')
@@ -1385,7 +1385,7 @@ class ServerApp(JupyterApp):
 
     @validate('preferred_dir')
     def _preferred_dir_validate(self, proposal):
-        value = self._normalize_root_or_preferred_dir(proposal['value'])
+        value = self._normalize_dir(proposal['value'])
         if not os.path.isdir(value):
             raise TraitError(trans.gettext("No such preferred dir: '%r'") % value)
 
