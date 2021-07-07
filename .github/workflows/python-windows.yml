@@ -14,9 +14,9 @@ jobs:
         python-version: [ '3.6', '3.7', '3.8', '3.9' ]
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
     - name: Install Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
         architecture: 'x64'
@@ -28,7 +28,7 @@ jobs:
       run: |
         echo "::set-output name=dir::$(pip cache dir)"
     - name: Cache pip
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
         key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
