@@ -416,11 +416,12 @@ class ExtensionApp(JupyterApp):
         # Start the server.
         self.serverapp.start()
 
+    async def stop_extension(self):
+        """Cleanup any resources managed by this extension."""
+
     def stop(self):
         """Stop the underlying Jupyter server.
         """
-        if hasattr(self, 'stop_extension'):
-            self.stop_extension()
         self.serverapp.stop()
         self.serverapp.clear_instance()
 

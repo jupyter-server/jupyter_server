@@ -113,8 +113,9 @@ def test_stop_extension(jp_serverapp, caplog):
 
     # load extensions (make sure we only have the one extension loaded
     jp_serverapp.extension_manager.load_all_extensions(jp_serverapp)
+    extension_name = 'jupyter_server.tests.extension.mockextensions'
     assert list(jp_serverapp.extension_manager.extension_apps) == [
-        'jupyter_server.tests.extension.mockextensions'
+        extension_name
     ]
 
     # add a stop_extension method for the extension app
@@ -133,11 +134,10 @@ def test_stop_extension(jp_serverapp, caplog):
         msg
         for *_, msg in caplog.record_tuples
     ] == [
-        'Shutting down 1 extension'
+        'Shutting down 1 extension',
+        '{} | extension app "mockextension" stopping'.format(extension_name),
+        '{} | extension app "mockextension" stopped'.format(extension_name),
     ]
-
-    # check the extension_apps dictionary is updated
-    assert list(jp_serverapp.extension_manager.extension_apps) == []
 
     # check the shutdown method was called once
     assert calls == 1

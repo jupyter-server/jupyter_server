@@ -294,19 +294,26 @@ class ExtensionManager(LoggingConfigurable):
         """
     )
 
-    extension_apps = Dict(
-        help="""
-        Dictionary with extension names as keys
-        and sets of ExtensionApp objects as values.
+    @property
+    def extension_apps(self):
+        """Return mapping of extension names and sets of ExtensionApp objects.
         """
-    )
+        return {
+            name: {
+                point.app
+                for point in extension.extension_points.values()
+                if point.app
+            }
+            for name, extension in self.extensions.items()
+        }
 
     @property
     def extension_points(self):
-        extensions = self.extensions
+        """Return mapping of extension point names and ExtensionPoint objects.
+        """
         return {
             name: point
-            for value in extensions.values()
+            for value in self.extensions.values()
             for name, point in value.extension_points.items()
         }
 
@@ -360,22 +367,14 @@ class ExtensionManager(LoggingConfigurable):
                 self.log.debug("".join(traceback.format_exception(*sys.exc_info())))
                 self.log.warning("{name} | extension failed loading with message: {error}".format(name=name,error=str(e)))
             else:
-                self.extension_apps.setdefault(name, set()).update((
-                    point
-                    for point in points
-                    if point is not None
-                ))
                 self.log.info("{name} | extension was successfully loaded.".format(name=name))
-
 
     async def stop_extension(self, name, apps):
         """Call the shutdown hooks in the specified apps."""
         for app in apps:
-            if hasattr(app, 'stop_extension'):
-                await app.stop_extension()
-            if name in self.extension_apps:
-                # might not be the case in tests
-                del self.extension_apps[name]
+            self.log.debug('{} | extension app "{}" stopping'.format(name, app.name))
+            await app.stop_extension()
+            self.log.debug('{} | extension app "{}" stopped'.format(name, app.name))
 
     def link_all_extensions(self, serverapp):
         """Link all enabled extensions
