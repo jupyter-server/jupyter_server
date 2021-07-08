@@ -18,7 +18,7 @@ from traitlets.config import Config
 
 from jupyter_server.extension import serverextension
 from jupyter_server.serverapp import ServerApp
-from jupyter_server.utils import url_path_join
+from jupyter_server.utils import url_path_join, run_sync
 from jupyter_server.services.contents.filemanager import FileContentsManager
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
 
@@ -284,7 +284,7 @@ def jp_serverapp(
     """Starts a Jupyter Server instance based on the established configuration values."""
     app = jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
     yield app
-    app._cleanup()
+    run_sync(app._cleanup())
 
 
 @pytest.fixture

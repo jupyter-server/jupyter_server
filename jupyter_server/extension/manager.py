@@ -2,6 +2,8 @@ import importlib
 import sys
 import traceback
 
+from tornado.gen import multi
+
 from traitlets.config import LoggingConfigurable
 
 from traitlets import (
@@ -230,15 +232,17 @@ class ExtensionPackage(HasTraits):
 
     def load_point(self, point_name, serverapp):
         point = self.extension_points[point_name]
-        point.load(serverapp)
+        return point.load(serverapp)
 
     def link_all_points(self, serverapp):
         for point_name in self.extension_points:
             self.link_point(point_name, serverapp)
 
     def load_all_points(self, serverapp):
-        for point_name in self.extension_points:
+        return [
             self.load_point(point_name, serverapp)
+            for point_name in self.extension_points
+        ]
 
 
 class ExtensionManager(LoggingConfigurable):
@@ -291,11 +295,25 @@ class ExtensionManager(LoggingConfigurable):
     )
 
     @property
+    def extension_apps(self):
+        """Return mapping of extension names and sets of ExtensionApp objects.
+        """
+        return {
+            name: {
+                point.app
+                for point in extension.extension_points.values()
+                if point.app
+            }
+            for name, extension in self.extensions.items()
+        }
+
+    @property
     def extension_points(self):
-        extensions = self.extensions
+        """Return mapping of extension point names and ExtensionPoint objects.
+        """
         return {
             name: point
-            for value in extensions.values()
+            for value in self.extensions.values()
             for name, point in value.extension_points.items()
         }
 
@@ -341,13 +359,22 @@ class ExtensionManager(LoggingConfigurable):
 
     def load_extension(self, name, serverapp):
         extension = self.extensions.get(name)
+
         if extension.enabled:
             try:
-                extension.load_all_points(serverapp)
-                self.log.info("{name} | extension was successfully loaded.".format(name=name))
+                points = extension.load_all_points(serverapp)
             except Exception as e:
                 self.log.debug("".join(traceback.format_exception(*sys.exc_info())))
                 self.log.warning("{name} | extension failed loading with message: {error}".format(name=name,error=str(e)))
+            else:
+                self.log.info("{name} | extension was successfully loaded.".format(name=name))
+
+    async def stop_extension(self, name, apps):
+        """Call the shutdown hooks in the specified apps."""
+        for app in apps:
+            self.log.debug('{} | extension app "{}" stopping'.format(name, app.name))
+            await app.stop_extension()
+            self.log.debug('{} | extension app "{}" stopped'.format(name, app.name))
 
     def link_all_extensions(self, serverapp):
         """Link all enabled extensions
@@ -366,3 +393,10 @@ class ExtensionManager(LoggingConfigurable):
         # order.
         for name in self.sorted_extensions.keys():
             self.load_extension(name, serverapp)
+
+    async def stop_all_extensions(self, serverapp):
+        """Call the shutdown hooks in all extensions."""
+        await multi([
+            self.stop_extension(name, apps)
+            for name, apps in sorted(dict(self.extension_apps).items())
+        ])
