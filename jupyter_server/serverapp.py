@@ -610,6 +610,7 @@ aliases.update({
     'certfile': 'ServerApp.certfile',
     'client-ca': 'ServerApp.client_ca',
     'notebook-dir': 'ServerApp.root_dir',
+    'preferred-dir': 'ServerApp.preferred_dir',
     'browser': 'ServerApp.browser',
     'pylab': 'ServerApp.pylab',
     'gateway-url': 'GatewayClient.url',
@@ -1355,9 +1356,7 @@ class ServerApp(JupyterApp):
         else:
             return os.getcwd()
 
-    @validate('root_dir')
-    def _root_dir_validate(self, proposal):
-        value = proposal['value']
+    def _normalize_dir(self, value):
         # Strip any trailing slashes
         # *except* if it's root
         _, path = os.path.splitdrive(value)
@@ -1367,13 +1366,41 @@ class ServerApp(JupyterApp):
         if not os.path.isabs(value):
             # If we receive a non-absolute path, make it absolute.
             value = os.path.abspath(value)
+        return value
+
+    @validate('root_dir')
+    def _root_dir_validate(self, proposal):
+        value = self._normalize_dir(proposal['value'])
         if not os.path.isdir(value):
             raise TraitError(trans.gettext("No such directory: '%r'") % value)
+        return value
+
+    preferred_dir = Unicode(config=True,
+        help=trans.gettext("Preferred starting directory to use for notebooks and kernels.")
+    )
+
+    @default('preferred_dir')
+    def _default_prefered_dir(self):
+        return self.root_dir
+
+    @validate('preferred_dir')
+    def _preferred_dir_validate(self, proposal):
+        value = self._normalize_dir(proposal['value'])
+        if not os.path.isdir(value):
+            raise TraitError(trans.gettext("No such preferred dir: '%r'") % value)
+
+        # preferred_dir must be equal or a subdir of root_dir
+        if not value.startswith(self.root_dir):
+            raise TraitError(trans.gettext("preferred_dir must be equal or a subdir of root_dir: '%r'") % value)
+
         return value
 
     @observe('root_dir')
     def _root_dir_changed(self, change):
         self._root_dir_set = True
+        if not self.preferred_dir.startswith(change['new']):
+            self.log.warning(trans.gettext("Value of preferred_dir updated to use value of root_dir"))
+            self.preferred_dir = change['new']
 
     @observe('server_extensions')
     def _update_server_extensions(self, change):
