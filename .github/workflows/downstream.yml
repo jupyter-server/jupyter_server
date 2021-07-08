@@ -9,6 +9,7 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
     - name: Checkout
@@ -22,11 +23,14 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install ".[test]"
+        pip install "."
         pip install --pre --upgrade jupyterlab_server[test] jupyterlab[test] nbclassic[test]
         pip freeze
     - name: Run tests
+      working-directory: ../
       run: |
+        # NOTE: tests won't pass from inside the working copy because of
+        # conftest.py:pytest_plugins (must be at the top level)
         pytest --pyargs jupyterlab_server
         python -m jupyterlab.browser_check --no-browser-test
 

@@ -14,9 +14,9 @@ jobs:
         python-version: [ '3.6', '3.7', '3.8', '3.9' ]
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
     - name: Install Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
         architecture: 'x64'
@@ -28,10 +28,10 @@ jobs:
       run: |
         echo "::set-output name=dir::$(pip cache dir)"
     - name: Cache pip
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
         restore-keys: |
           ${{ runner.os }}-pip-${{ matrix.python-version }}-
           ${{ runner.os }}-pip-
@@ -49,10 +49,10 @@ jobs:
         # the file descriptions opened by the asyncio IOLoop.
         # This leads to a nasty, flaky race condition that we haven't
         # been able to solve.
-        pytest -vv jupyter_server -s
+        pytest -vv -s
     - name: Install the Python dependencies for the examples
       run: |
         cd examples/simple && pip install -e .
     - name: Run the tests for the examples
       run: |
-        pytest examples/simple/tests/test_handlers.py
+        pytest examples/simple/tests/test_handlers.py --confcutdir=$PWD
