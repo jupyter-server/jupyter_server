@@ -63,7 +63,7 @@ Install dependencies::
 To run the Python tests, use::
 
     pytest
-    pytest examples/simple
+    pytest examples/simple --confcutdir=$PWD
 
 Building the Docs
 =================
