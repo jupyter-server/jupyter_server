@@ -43,7 +43,7 @@ In the `jupyter_nbclassic_readonly_config.py`
 
 1. Clone and install nbclassic using `pip`.
 
-   git clone https://github.com/Zsailer/nbclassic
+   git clone https://github.com/jupyterlab/nbclassic
    cd nbclassic
    pip install .
 
@@ -59,7 +59,7 @@ In the `jupyter_nbclassic_readonly_config.py`
 
 1. Clone and install nbclassic using `pip`.
 
-   git clone https://github.com/Zsailer/nbclassic
+   git clone https://github.com/jupyterlab/nbclassic
    cd nbclassic
    pip install .
 
@@ -75,7 +75,7 @@ In the `jupyter_nbclassic_readonly_config.py`
 
 1. Clone and install nbclassic using `pip`.
 
-   git clone https://github.com/Zsailer/nbclassic
+   git clone https://github.com/jupyterlab/nbclassic
    cd nbclassic
    pip install .
 
