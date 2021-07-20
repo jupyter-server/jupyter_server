@@ -23,22 +23,25 @@ from tornado.ioloop import IOLoop
 from ...base.handlers import APIHandler
 from ...base.zmqhandlers import AuthenticatedZMQStreamHandler
 from ...base.zmqhandlers import deserialize_binary_message
-from jupyter_server.utils import authorized
 from jupyter_server.utils import ensure_async
 from jupyter_server.utils import url_escape
 from jupyter_server.utils import url_path_join
+from jupyter_server.services.auth.decorator import authorized
+
+
+RESOURCE_NAME = "kernels"
 
 
 class MainKernelHandler(APIHandler):
     @web.authenticated
-    @authorized("read", resource="kernels")
+    @authorized("read", resource=RESOURCE_NAME)
     async def get(self):
         km = self.kernel_manager
         kernels = await ensure_async(km.list_kernels())
         self.finish(json.dumps(kernels, default=json_default))
 
     @web.authenticated
-    @authorized("write", resource="kernels")
+    @authorized("write", resource=RESOURCE_NAME)
     async def post(self):
         km = self.kernel_manager
         model = self.get_json_body()
@@ -57,14 +60,14 @@ class MainKernelHandler(APIHandler):
 
 class KernelHandler(APIHandler):
     @web.authenticated
-    @authorized("read", resource="kernels")
+    @authorized("read", resource=RESOURCE_NAME)
     async def get(self, kernel_id):
         km = self.kernel_manager
         model = await ensure_async(km.kernel_model(kernel_id))
         self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
-    @authorized("write", resource="kernels")
+    @authorized("write", resource=RESOURCE_NAME)
     async def delete(self, kernel_id):
         km = self.kernel_manager
         await ensure_async(km.shutdown_kernel(kernel_id))
@@ -74,7 +77,7 @@ class KernelHandler(APIHandler):
 
 class KernelActionHandler(APIHandler):
     @web.authenticated
-    @authorized("write", resource="kernels")
+    @authorized("write", resource=RESOURCE_NAME)
     async def post(self, kernel_id, action):
         km = self.kernel_manager
         if action == "interrupt":

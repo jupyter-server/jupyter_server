@@ -86,11 +86,11 @@ the server. Thus it can restrain access to specific users, but there is no way t
 users more or less permissions. Jupyter Server provides a thin and extensible authorization layer
 which checks if the current user is authorized to make a specific request.
 
-This is done by calling a ``user_is_authorized(user, action, resource)`` method before each request
-handler. Each request is labeled as either a "read", "write", or "execute" ``action``:
+This is done by calling a ``is_authorized(handler, subject, action, resource)`` method before each
+request handler. Each request is labeled as either a "read", "write", or "execute" ``action``:
 
 - "read" wraps all ``GET`` and ``HEAD`` requests.
-- "write" wraps all ``PUT``, ``PATCH``, and ``DELETE`` requests.
+- "write" wraps all ``POST``, ``PUT``, ``PATCH``, and ``DELETE`` requests.
 - "execute" wraps all requests to ZMQ/Websocket channels.
 
 The ``resource`` being accessed refers to the resource name in the Jupyter Server's API endpoints in
@@ -108,38 +108,54 @@ most cases. For instance, ``resource`` equal to:
 - "api" corresponds to endpoints ``/api/status`` and ``/api/spec.yaml``.
 - "csp" corresponds to the endpoint ``/api/security/csp-report`` (by default).
 
-If ``user_is_authorized(...)`` returns ``True``, the request is made; otherwise, a
+If ``is_authorized(...)`` returns ``True``, the request is made; otherwise, a
 ``HTTPError(401)`` (401 means "unauthorized") error is raised, and the request is blocked.
 
-By default, authorization is turned off—i.e. ``user_is_authorized()`` always returns ``True`` and
-all authenticated users are allowed to make all types of requests. To turn-on authorization, patch
-the ``user_is_authorized(...)`` method with your desired authorization method. Your patch should
-have the following signature:
+By default, authorization is turned off—i.e. ``is_authorized()`` always returns ``True`` and
+all authenticated users are allowed to make all types of requests. To turn-on authorization, pass
+a class that inherits from ``AuthorizationManager`` to the ``ServerApp.authorization_manager_class``
+parameter, implementing a ``is_authorized()`` method with your desired authorization logic, as
+follows:
 
 .. sourcecode:: python
 
-    def user_is_authorized(self, user, action, resource):
-        """A method to determine if `user` is authorized to perform `action`
-        (read, write, or executed) on the `resource` type.
+    from jupyter_server.services.auth.manager import AuthorizationManager
 
-        Parameters
-        ------------
-        user : usually a dict
-            a user model with group, role, or permissions information.
+    class MyAuthorizationManager(AuthorizationManager):
+        """Class for managing authorization to resources in the Jupyter Server.
 
-        action : str
-            the category of action for the current request: read, write, or execute.
+        All authorization managers used in Jupyter Server should inherit from
+        AuthorizationManager and, at the very minimum, override and implement
+        an `is_authorized` method with the following signature.
 
-        resource : str
-            the type of resource (i.e. contents, kernels, files, etc.) the user is requesting.
-
-        Returns True if user authorized to make request; otherwise, returns False.
+        The `is_authorized` method is called by the `@authorized` decorator in
+        JupyterHandler. If it returns True, the incoming request to the server
+        is accepted; if it returns False, the server returns a 401 (Not
+        Authorized) error code.
         """
-        return True
 
-    # patch in the method
-    from jupyter_server.base import JupyterHandler
-    JupyterHandler.user_is_authorized = user_is_authorized
+        def is_authorized(self, handler, subject, action, resource):
+            """A method to determine if `subject` is authorized to perform `action`
+            (read, write, or execute) on the `resource` type.
+
+            Parameters
+            ------------
+            subject : usually a dict
+                a subject model with group, role, or permissions information.
+
+            action : str
+                the category of action for the current request: read, write, or execute.
+
+            resource : str
+                the type of resource (i.e. contents, kernels, files, etc.) the subject is requesting.
+
+            Returns True if subject authorized to make request; otherwise, returns False.
+            """
+            return True  # implement your authorization logic here
+
+The ``is_authorized()`` method will automatically be called whenever a handler is decorated with
+``@authorized`` (from ``jupyter_server.services.auth.decorator``), similarly to the
+``@authenticated`` decorator for authorization (from ``tornado.web``).
 
 Security in notebook documents
 ==============================

@@ -276,7 +276,7 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
             raise web.HTTPError(403)
 
         # authorize the user.
-        if not self.user_is_authorized(user, "execute", "channels"):
+        if not self.authorization_manager.is_authorized(self, user, "execute", "kernels"):
             raise web.HTTPError(401)
 
         if self.get_argument("session_id", False):

@@ -14,7 +14,10 @@ from tornado import web
 
 from ...base.handlers import APIHandler
 from ...utils import ensure_async, url_path_join, url_unescape
-from jupyter_server.utils import authorized
+from jupyter_server.services.auth.decorator import authorized
+
+
+RESOURCE_NAME = "kernelspecs"
 
 
 def kernelspec_model(handler, name, spec_dict, resource_dir):
@@ -47,7 +50,7 @@ def is_kernelspec_model(spec_dict):
 
 class MainKernelSpecHandler(APIHandler):
     @web.authenticated
-    @authorized("read", resource="kernelspecs")
+    @authorized("read", resource=RESOURCE_NAME)
     async def get(self):
         ksm = self.kernel_spec_manager
         km = self.kernel_manager
@@ -76,7 +79,7 @@ class MainKernelSpecHandler(APIHandler):
 
 class KernelSpecHandler(APIHandler):
     @web.authenticated
-    @authorized("read", resource="kernelspecs")
+    @authorized("read", resource=RESOURCE_NAME)
     async def get(self, kernel_name):
         ksm = self.kernel_spec_manager
         kernel_name = url_unescape(kernel_name)

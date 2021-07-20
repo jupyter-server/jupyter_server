@@ -503,4 +503,4 @@ def jp_cleanup_subprocesses(jp_serverapp):
 
 def authorize_all():
     yield
-    JupyterHandler.user_is_authorized = lambda self, user, action, resource: True
+    JupyterHandler.is_authorized = lambda self, user, action, resource: True

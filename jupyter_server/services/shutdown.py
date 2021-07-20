@@ -4,12 +4,15 @@ from tornado import ioloop
 from tornado import web
 
 from jupyter_server.base.handlers import JupyterHandler
-from jupyter_server.utils import authorized
+from jupyter_server.services.auth.decorator import authorized
+
+
+RESOURCE_NAME = "shutdown"
 
 
 class ShutdownHandler(JupyterHandler):
     @web.authenticated
-    @authorized("write", resource="shutdown")
+    @authorized("write", resource=RESOURCE_NAME)
     async def post(self):
         self.log.info("Shutting down on /api/shutdown request.")
 

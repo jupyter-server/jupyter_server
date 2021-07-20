@@ -8,29 +8,31 @@ This folder contains the following examples:
 
 ## How does it work?
 
-To add a custom authorization system to the Jupyter Server, you simply override (i.e. patch) the `user_is_authorized()` method in the `JupyterHandler`.
+To add a custom authorization system to the Jupyter Server, you will need to write your own `AuthorizationManager` subclass and pass it to Jupyter's configuration system (i.e. by file or CLI).
 
-In the examples here, we do this by patching this method in our Jupyter configuration files. It looks something like this:
+The examples below demonstrate some basic implementations of an `AuthorizationManager`.
 
 ```python
-from jupyter_server.base import JupyterHandler
+from jupyter_server.services.auth.manager import AuthorizationManager
 
 
-# Define my own method here for handling authorization.
-# The argument signature must have `self`, `user`, `action`, and `resource`.
+class MyCustomAuthorizationManager(AuthorizationManager):
+    """Custom authorization manager."""
 
-def my_authorization_method(self, user, action, resource):
-    """My override for handling authorization in Jupyter services."""
+    # Define my own method here for handling authorization.
+    # The argument signature must have `self`, `handler`, `subject`, `action`, and `resource`.
+    def is_authorized(self, handler, subject, action, resource):
+        """My override for handling authorization in Jupyter services."""
 
-    # Add logic here to check if user is allowed.
-    # For example, here is an example of a read-only server
-    if action in ['write', 'execute']:
-        return False
+        # Add logic here to check if user is allowed.
+        # For example, here is an example of a read-only server
+        if action in ['write', 'execute']:
+            return False
 
-    return True
+        return True
 
-# Patch the user_is_authorized method with my own method.
-JupyterHandler.user_is_authorized = my_authorization_method
+# Pass this custom class to Jupyter Server
+c.ServerApp.authorization_manager_class = MyCustomAuthorizationManager
 ```
 
 In the `jupyter_nbclassic_readonly_config.py`

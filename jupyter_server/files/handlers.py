@@ -8,8 +8,11 @@ from base64 import decodebytes
 from tornado import web
 
 from jupyter_server.base.handlers import JupyterHandler
-from jupyter_server.utils import authorized
+from jupyter_server.services.auth.decorator import authorized
 from jupyter_server.utils import ensure_async
+
+
+RESOURCE_NAME = "files"
 
 
 class FilesHandler(JupyterHandler):
@@ -28,14 +31,14 @@ class FilesHandler(JupyterHandler):
         return super(FilesHandler, self).content_security_policy + "; sandbox allow-scripts"
 
     @web.authenticated
-    @authorized("read", resource="files")
+    @authorized("read", resource=RESOURCE_NAME)
     def head(self, path):
         self.get(path, include_body=False)
         self.check_xsrf_cookie()
         return self.get(path, include_body=False)
 
     @web.authenticated
-    @authorized("read", resource="files")
+    @authorized("read", resource=RESOURCE_NAME)
     async def get(self, path, include_body=True):
         # /files/ requests must originate from the same site
         self.check_xsrf_cookie()

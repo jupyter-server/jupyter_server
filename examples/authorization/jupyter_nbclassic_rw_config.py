@@ -1,11 +1,14 @@
-from jupyter_server.base.handlers import JupyterHandler
+from jupyter_server.services.auth.manager import AuthorizationManager
 
 
-def user_is_authorized(self, user, action, resource=None):
-    """Only allows `read` operations."""
-    if action == "execute":
-        return False
-    return True
+class ReadWriteOnly(AuthorizationManager):
+    """Manager class that makes Jupyter Server a read-only server."""
+
+    def is_authorized(self, handler, subject, action, resource):
+        """Only allows `read` operations."""
+        if action == "execute":
+            return False
+        return True
 
 
-JupyterHandler.user_is_authorized = user_is_authorized
+c.ServerApp.authorization_manager_class = ReadWriteOnly

@@ -294,6 +294,10 @@ class JupyterHandler(AuthenticatedHandler, AuthorizedHandlerMixin):
     def config_manager(self):
         return self.settings["config_manager"]
 
+    @property
+    def authorization_manager(self):
+        return self.settings["authorization_manager"]
+
     # ---------------------------------------------------------------
     # CORS
     # ---------------------------------------------------------------

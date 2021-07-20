@@ -90,6 +90,7 @@ from jupyter_server.gateway.managers import (
     GatewaySessionManager,
     GatewayClient,
 )
+from jupyter_server.services.auth.manager import AuthorizationManager, NOPAuthorizationManager
 
 from jupyter_server.auth.login import LoginHandler
 from jupyter_server.auth.logout import LogoutHandler
@@ -222,6 +223,7 @@ class ServerWebApplication(web.Application):
         session_manager,
         kernel_spec_manager,
         config_manager,
+        authorization_manager,
         extra_services,
         log,
         base_url,
@@ -237,6 +239,7 @@ class ServerWebApplication(web.Application):
             session_manager,
             kernel_spec_manager,
             config_manager,
+            authorization_manager,
             extra_services,
             log,
             base_url,
@@ -256,6 +259,7 @@ class ServerWebApplication(web.Application):
         session_manager,
         kernel_spec_manager,
         config_manager,
+        authorization_manager,
         extra_services,
         log,
         base_url,
@@ -343,6 +347,7 @@ class ServerWebApplication(web.Application):
             session_manager=session_manager,
             kernel_spec_manager=kernel_spec_manager,
             config_manager=config_manager,
+            authorization_manager=authorization_manager,
             # handlers
             extra_services=extra_services,
             # Jupyter stuff
@@ -739,6 +744,7 @@ class ServerApp(JupyterApp):
         GatewayKernelSpecManager,
         GatewaySessionManager,
         GatewayClient,
+        AuthorizationManager,
     ]
     if terminado_available:  # Only necessary when terminado is available
         classes.append(TerminalManager)
@@ -1488,6 +1494,13 @@ class ServerApp(JupyterApp):
         help=_i18n("The logout handler class to use."),
     )
 
+    authorization_manager_class = Type(
+        default_value=NOPAuthorizationManager,
+        klass=AuthorizationManager,
+        config=True,
+        help=_i18n("The authorization manager class to use."),
+    )
+
     trust_xheaders = Bool(
         False,
         config=True,
@@ -1789,6 +1802,7 @@ class ServerApp(JupyterApp):
             parent=self,
             log=self.log,
         )
+        self.authorization_manager = self.authorization_manager_class(parent=self, log=self.log)
 
     def init_logging(self):
         # This prevents double log messages because tornado use a root logger that
@@ -1869,6 +1883,7 @@ class ServerApp(JupyterApp):
             self.session_manager,
             self.kernel_spec_manager,
             self.config_manager,
+            self.authorization_manager,
             self.extra_services,
             self.log,
             self.base_url,

@@ -5,7 +5,10 @@ from tornado import web
 
 from . import csp_report_uri
 from ...base.handlers import APIHandler
-from jupyter_server.utils import authorized
+from jupyter_server.services.auth.decorator import authorized
+
+
+RESOURCE_NAME = "csp"
 
 
 class CSPReportHandler(APIHandler):
@@ -22,7 +25,7 @@ class CSPReportHandler(APIHandler):
         return
 
     @web.authenticated
-    @authorized("write", resource="csp")
+    @authorized("write", resource=RESOURCE_NAME)
     def post(self):
         """Log a content security policy violation report"""
         self.log.warning(
