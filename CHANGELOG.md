@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.10.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.9.0...c9ee2a45e9a8f04215c2f3901f90cdc7b8fdc9c6))
+
+### Enhancements made
+
+- PR: Add a new preferred-dir traitlet [#549](https://github.com/jupyter-server/jupyter_server/pull/549) ([@goanpeca](https://github.com/goanpeca))
+- stop hook for extensions [#526](https://github.com/jupyter-server/jupyter_server/pull/526) ([@oliver-sanders](https://github.com/oliver-sanders))
+- extensions: allow extensions in namespace packages [#523](https://github.com/jupyter-server/jupyter_server/pull/523) ([@oliver-sanders](https://github.com/oliver-sanders))
+
+### Bugs fixed
+
+- Fix examples/simple test execution [#552](https://github.com/jupyter-server/jupyter_server/pull/552) ([@davidbrochart](https://github.com/davidbrochart))
+- Rebuild package-lock, fixing local setup [#548](https://github.com/jupyter-server/jupyter_server/pull/548) ([@martinRenou](https://github.com/martinRenou))
+
+### Maintenance and upkeep improvements
+
+- small test changes [#541](https://github.com/jupyter-server/jupyter_server/pull/541) ([@oliver-sanders](https://github.com/oliver-sanders))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-06-24&to=2021-07-21&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-06-24..2021-07-21&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-06-24..2021-07-21&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2021-06-24..2021-07-21&type=Issues) | [@goanpeca](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Agoanpeca+updated%3A2021-06-24..2021-07-21&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-06-24..2021-07-21&type=Issues) | [@martinRenou](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AmartinRenou+updated%3A2021-06-24..2021-07-21&type=Issues) | [@oliver-sanders](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aoliver-sanders+updated%3A2021-06-24..2021-07-21&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-06-24..2021-07-21&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-06-24..2021-07-21&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.9.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.8.0...f712734c4f7005f6a844abec9f57b993e7b004b0))
@@ -34,8 +61,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-05-20&to=2021-06-24&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-05-20..2021-06-24&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-05-20..2021-06-24&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2021-05-20..2021-06-24&type=Issues) | [@eastonsuo](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aeastonsuo+updated%3A2021-05-20..2021-06-24&type=Issues) | [@icankeep](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aicankeep+updated%3A2021-05-20..2021-06-24&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-05-20..2021-06-24&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-05-20..2021-06-24&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2021-05-20..2021-06-24&type=Issues) | [@telamonian](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Atelamonian+updated%3A2021-05-20..2021-06-24&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2021-05-20..2021-06-24&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-05-20..2021-06-24&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-05-20..2021-06-24&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.8.0
 
