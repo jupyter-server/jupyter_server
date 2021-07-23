@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import patch
 import sys
 
 import pytest
@@ -62,11 +63,25 @@ def namespace_package_test(monkeypatch):
     yield 'test_namespace'
 
 
-def test_is_namespace_package(namespace_package_test):
-    # returns True if it is a namespace package
-    assert is_namespace_package(namespace_package_test)
-    # returns False if it isn't a namespace package
-    assert not is_namespace_package('sys')
-    assert not is_namespace_package('jupyter_server')
-    # returns None if it isn't importable
-    assert is_namespace_package('not_a_python_namespace') is None
+@pytest.mark.parametrize(
+    'name, expected',
+    [
+        # returns True if it is a namespace package
+        (namespace_package_test, True),
+        # returns False if it isn't a namespace package
+        ('sys', False),
+        ('jupyter_server', False),
+        # returns None if it isn't importable
+        ('not_a_python_namespace', None)
+    ]
+)
+def test_is_namespace_package(namespace_package_test, name, expected):
+    assert is_namespace_package(name) is expected
+    
+
+def test_is_namespace_package_no_spec():
+    with patch("importlib.util.find_spec") as mocked_spec:
+        mocked_spec.side_effect = ValueError()
+
+        assert is_namespace_package('dummy') is None
+        mocked_spec.assert_called_once_with('dummy')
