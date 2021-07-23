@@ -973,7 +973,7 @@ class ServerApp(JupyterApp):
     allow_password_change = Bool(True, config=True,
                     help="""Allow password to be changed at login for the Jupyter server.
 
-                    While loggin in with a token, the Jupyter server UI will give the opportunity to
+                    While logging in with a token, the Jupyter server UI will give the opportunity to
                     the user to enter a new password at the same time that will replace
                     the token login mechanism.
 
