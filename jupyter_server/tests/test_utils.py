@@ -1,5 +1,5 @@
 from pathlib import Path
-import sys
+from unittest.mock import patch
 
 import pytest
 
@@ -45,28 +45,27 @@ def test_url_escaping(unescaped, escaped):
     assert path == unescaped
 
 
-@pytest.fixture
-def namespace_package_test(monkeypatch):
-    """Adds a blank namespace package into the PYTHONPATH for testing.
+@pytest.mark.parametrize(
+    'name, expected',
+    [
+        # returns True if it is a namespace package
+        ('test_namespace', True),
+        # returns False if it isn't a namespace package
+        ('sys', False),
+        ('jupyter_server', False),
+        # returns None if it isn't importable
+        ('not_a_python_namespace', None)
+    ]
+)
+def test_is_namespace_package(monkeypatch, name, expected):
+    monkeypatch.syspath_prepend(Path(__file__).parent / 'namespace-package-test')
+    
+    assert is_namespace_package(name) is expected
+    
 
-    Yields the name of the importable namespace.
-    """
-    monkeypatch.setattr(
-        sys,
-        'path',
-        [
-            str(Path(__file__).parent / 'namespace-package-test'),
-            *sys.path
-        ]
-    )
-    yield 'test_namespace'
+def test_is_namespace_package_no_spec():
+    with patch("importlib.util.find_spec") as mocked_spec:
+        mocked_spec.side_effect = ValueError()
 
-
-def test_is_namespace_package(namespace_package_test):
-    # returns True if it is a namespace package
-    assert is_namespace_package(namespace_package_test)
-    # returns False if it isn't a namespace package
-    assert not is_namespace_package('sys')
-    assert not is_namespace_package('jupyter_server')
-    # returns None if it isn't importable
-    assert is_namespace_package('not_a_python_namespace') is None
+        assert is_namespace_package('dummy') is None
+        mocked_spec.assert_called_once_with('dummy')
