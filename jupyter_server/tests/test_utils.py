@@ -46,28 +46,11 @@ def test_url_escaping(unescaped, escaped):
     assert path == unescaped
 
 
-@pytest.fixture
-def namespace_package_test(monkeypatch):
-    """Adds a blank namespace package into the PYTHONPATH for testing.
-
-    Yields the name of the importable namespace.
-    """
-    monkeypatch.setattr(
-        sys,
-        'path',
-        [
-            str(Path(__file__).parent / 'namespace-package-test'),
-            *sys.path
-        ]
-    )
-    yield 'test_namespace'
-
-
 @pytest.mark.parametrize(
     'name, expected',
     [
         # returns True if it is a namespace package
-        (namespace_package_test, True),
+        ('test_namespace', True),
         # returns False if it isn't a namespace package
         ('sys', False),
         ('jupyter_server', False),
@@ -75,7 +58,9 @@ def namespace_package_test(monkeypatch):
         ('not_a_python_namespace', None)
     ]
 )
-def test_is_namespace_package(namespace_package_test, name, expected):
+def test_is_namespace_package(monkeypatch, name, expected):
+    monkeypatch.syspath_prepend(Path(__file__).parent / 'namespace-package-test')
+    
     assert is_namespace_package(name) is expected
     
 
