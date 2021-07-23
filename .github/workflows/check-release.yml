@@ -32,7 +32,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.cache/pytest-link-check
-          key: ${{ runner.os }}-linkcheck-${{ hashFiles('**/.md') }}-md-links
+          key: ${{ runner.os }}-linkcheck-${{ hashFiles('**/*.md', '**/*.rst') }}-md-links
           restore-keys: |
             ${{ runner.os }}-linkcheck-
       - name: Upgrade packaging dependencies
