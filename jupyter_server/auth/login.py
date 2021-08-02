@@ -172,6 +172,8 @@ class LoginHandler(JupyterHandler):
         if user_id is None:
             get_secure_cookie_kwargs  = handler.settings.get('get_secure_cookie_kwargs', {})
             user_id = handler.get_secure_cookie(handler.cookie_name, **get_secure_cookie_kwargs )
+            if user_id:
+                user_id = user_id.decode()
         else:
             cls.set_login_cookie(handler, user_id)
             # Record that the current request has been authenticated with a token.
