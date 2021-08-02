@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.10.2
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.10.1...7956dc51d8239b7b9e8de3b22ceb4473bbf1d4e5))
+
+### Bugs fixed
+
+- decode bytes from secure cookie [#562](https://github.com/jupyter-server/jupyter_server/pull/562) ([@oliver-sanders](https://github.com/oliver-sanders))
+
+### Maintenance and upkeep improvements
+
+- Add the needed space in the welcome message [#561](https://github.com/jupyter-server/jupyter_server/pull/561) ([@echarles](https://github.com/echarles))
+
+### Documentation improvements
+
+- Fix typo in allow_password_change help [#559](https://github.com/jupyter-server/jupyter_server/pull/559) ([@manics](https://github.com/manics))
+
+### Other merged PRs
+
+- fix: make command line aliases work again [#564](https://github.com/jupyter-server/jupyter_server/pull/564) ([@mariobuikhuizen](https://github.com/mariobuikhuizen))
+- Update check-release workflow [#558](https://github.com/jupyter-server/jupyter_server/pull/558) ([@afshin](https://github.com/afshin))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-07-23&to=2021-08-02&type=c))
+
+[@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2021-07-23..2021-08-02&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-07-23..2021-08-02&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2021-07-23..2021-08-02&type=Issues) | [@manics](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amanics+updated%3A2021-07-23..2021-08-02&type=Issues) | [@mariobuikhuizen](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amariobuikhuizen+updated%3A2021-07-23..2021-08-02&type=Issues) | [@oliver-sanders](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aoliver-sanders+updated%3A2021-07-23..2021-08-02&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-07-23..2021-08-02&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-07-23..2021-08-02&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.10.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.10.0...42a195665aa8ae218fce4ec8165f19e734a9edaf))
@@ -17,8 +46,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-07-22&to=2021-07-23&type=c))
 
 [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afcollonval+updated%3A2021-07-22..2021-07-23&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.10.0
 
