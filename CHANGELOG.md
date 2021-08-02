@@ -10,20 +10,17 @@ All notable changes to this project will be documented in this file.
 
 ### Bugs fixed
 
+- fix: make command line aliases work again [#564](https://github.com/jupyter-server/jupyter_server/pull/564) ([@mariobuikhuizen](https://github.com/mariobuikhuizen))
 - decode bytes from secure cookie [#562](https://github.com/jupyter-server/jupyter_server/pull/562) ([@oliver-sanders](https://github.com/oliver-sanders))
 
 ### Maintenance and upkeep improvements
 
 - Add the needed space in the welcome message [#561](https://github.com/jupyter-server/jupyter_server/pull/561) ([@echarles](https://github.com/echarles))
+- Update check-release workflow [#558](https://github.com/jupyter-server/jupyter_server/pull/558) ([@afshin](https://github.com/afshin))
 
 ### Documentation improvements
 
 - Fix typo in allow_password_change help [#559](https://github.com/jupyter-server/jupyter_server/pull/559) ([@manics](https://github.com/manics))
-
-### Other merged PRs
-
-- fix: make command line aliases work again [#564](https://github.com/jupyter-server/jupyter_server/pull/564) ([@mariobuikhuizen](https://github.com/mariobuikhuizen))
-- Update check-release workflow [#558](https://github.com/jupyter-server/jupyter_server/pull/558) ([@afshin](https://github.com/afshin))
 
 ### Contributors to this release
 
