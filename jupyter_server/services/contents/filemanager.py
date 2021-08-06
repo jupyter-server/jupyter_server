@@ -256,20 +256,18 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model = self._base_model(path)
         model['type'] = 'directory'
         model['size'] = None
-        MAX_NUM_CONTENTS_PAGE = 100 # A magic number of items that is acceptable to run os.lstat with, and also acceptable to render in the browser
         if content:
             model['content'] = contents = []
             os_dir = self._get_os_path(path)
             dir_contents = os.listdir(os_dir)
             len_contents = len(dir_contents) 
-            # TODO: some items might be broken symlinks, hidden files, etc. so the real output of each page may have different length
-            
-            if len_contents > MAX_NUM_CONTENTS_PAGE:
-                # round up the max number of pages
+            MAX_NUM_CONTENTS_PAGE = 100 # A magic number of items that is acceptable to run os.lstat with, and also acceptable to render in the browser
+            # TODO: some items (broken symlinks, hidden files, etc.) won't be shown, so the number of items displayed per page could be lower than MAX_NUM_CONTENTS_PAGE
+            if page is not None and len_contents > MAX_NUM_CONTENTS_PAGE:
                 max_page = int(len_contents / MAX_NUM_CONTENTS_PAGE) + (len_contents % MAX_NUM_CONTENTS_PAGE > 0)
                 model["max_page"] = max_page
-                if page and (1 <= page) and  (page <= max_page) :
-                    dir_contents = dir_contents[(page-1)*MAX_NUM_CONTENTS_PAGE: page*MAX_NUM_CONTENTS_PAGE]
+                if 1 <= page <= max_page:
+                    dir_contents = dir_contents[(page - 1) * MAX_NUM_CONTENTS_PAGE:page * MAX_NUM_CONTENTS_PAGE]
                     model["page"] = page
                 else:
                     dir_contents = dir_contents[0:MAX_NUM_CONTENTS_PAGE]
