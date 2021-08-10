@@ -14,6 +14,9 @@ testpaths = [
     "jupyter_server"
 ]
 
+[tool.jupyter-releaser]
+skip = ["check-links"]
+
 [tool.tbump.version]
 current = "1.11.0.dev0"
 regex = '''
