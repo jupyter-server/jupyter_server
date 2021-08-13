@@ -340,6 +340,8 @@ class ExtensionManager(LoggingConfigurable):
                 self.linked_extensions[name] = True
                 self.log.info("{name} | extension was successfully linked.".format(name=name))
             except Exception as e:
+                if serverapp.reraise_server_extension_failures:
+                    raise
                 self.log.warning(e)
 
     def load_extension(self, name, serverapp):
@@ -349,6 +351,8 @@ class ExtensionManager(LoggingConfigurable):
             try:
                 points = extension.load_all_points(serverapp)
             except Exception as e:
+                if serverapp.reraise_server_extension_failures:
+                    raise
                 self.log.debug("".join(traceback.format_exception(*sys.exc_info())))
                 self.log.warning(
                     "{name} | extension failed loading with message: {error}".format(
