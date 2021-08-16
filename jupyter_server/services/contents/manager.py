@@ -251,7 +251,7 @@ class ContentsManager(LoggingConfigurable):
         """
         return self.file_exists(path) or self.dir_exists(path)
 
-    def get(self, path, content=True, type=None, format=None):
+    def get(self, path, content=True, type=None, format=None, page=None):
         """Get a file or directory model."""
         raise NotImplementedError('must be implemented in a subclass')
 

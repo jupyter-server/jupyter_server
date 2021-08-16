@@ -106,9 +106,15 @@ class ContentsHandler(APIHandler):
         if content not in {'0', '1'}:
             raise web.HTTPError(400, u'Content %r is invalid' % content)
         content = int(content)
+        page = self.get_query_argument('page', default=None)
+        if page:
+            try:
+                page = int(page)
+            except ValueError:
+                raise web.HTTPError(400, u'Page %r is invalid' % page)
 
         model = await ensure_async(self.contents_manager.get(
-            path=path, type=type, format=format, content=content,
+            path=path, type=type, format=format, content=content, page=page
         ))
         validate_model(model, expect_content=content)
         self._finish_model(model, location=False)
