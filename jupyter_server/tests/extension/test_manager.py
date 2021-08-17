@@ -74,11 +74,11 @@ def _normalize_path(path_list):
     return [p.rstrip(os.path.sep) for p in path_list]
 
 
-def test_extension_manager_api():
+def test_extension_manager_api(jp_serverapp):
     jpserver_extensions = {"jupyter_server.tests.extension.mockextensions": True}
-    manager = ExtensionManager()
+    manager = ExtensionManager(serverapp=jp_serverapp)
     assert manager.config_manager
-    expected = _normalize_path(os.path.join(jupyter_config_path()[0], "serverconfig"))
+    expected = _normalize_path(os.path.join(jupyter_config_path()[0], 'serverconfig'))
     assert _normalize_path(manager.config_manager.read_config_path[0]) == expected
     manager.from_jpserver_extensions(jpserver_extensions)
     assert len(manager.extensions) == 1
@@ -87,7 +87,7 @@ def test_extension_manager_api():
 
 def test_extension_manager_linked_extensions(jp_serverapp):
     name = "jupyter_server.tests.extension.mockextensions"
-    manager = ExtensionManager()
+    manager = ExtensionManager(serverapp=jp_serverapp)
     manager.add_extension(name, enabled=True)
-    manager.link_extension(name, jp_serverapp)
+    manager.link_extension(name)
     assert name in manager.linked_extensions
