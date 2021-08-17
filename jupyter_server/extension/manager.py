@@ -246,6 +246,8 @@ class ExtensionManager(LoggingConfigurable):
 
     config_manager = Instance(ExtensionConfigManager, allow_none=True)
 
+    serverapp = Any()  # Use Any to avoid circular import of Instance(ServerApp)
+
     @default("config_manager")
     def _load_default_config_manager(self):
         config_manager = ExtensionConfigManager()
@@ -327,31 +329,33 @@ class ExtensionManager(LoggingConfigurable):
             return True
         # Raise a warning if the extension cannot be loaded.
         except Exception as e:
+            if self.serverapp.reraise_server_extension_failures:
+                raise
             self.log.warning(e)
         return False
 
-    def link_extension(self, name, serverapp):
+    def link_extension(self, name):
         linked = self.linked_extensions.get(name, False)
         extension = self.extensions[name]
         if not linked and extension.enabled:
             try:
                 # Link extension and store links
-                extension.link_all_points(serverapp)
+                extension.link_all_points(self.serverapp)
                 self.linked_extensions[name] = True
                 self.log.info("{name} | extension was successfully linked.".format(name=name))
             except Exception as e:
-                if serverapp.reraise_server_extension_failures:
+                if self.serverapp.reraise_server_extension_failures:
                     raise
                 self.log.warning(e)
 
-    def load_extension(self, name, serverapp):
+    def load_extension(self, name):
         extension = self.extensions.get(name)
 
         if extension.enabled:
             try:
-                extension.load_all_points(serverapp)
+                extension.load_all_points(self.serverapp)
             except Exception as e:
-                if serverapp.reraise_server_extension_failures:
+                if self.serverapp.reraise_server_extension_failures:
                     raise
                 self.log.debug("".join(traceback.format_exception(*sys.exc_info())))
                 self.log.warning(
@@ -369,25 +373,25 @@ class ExtensionManager(LoggingConfigurable):
             await app.stop_extension()
             self.log.debug('{} | extension app "{}" stopped'.format(name, app.name))
 
-    def link_all_extensions(self, serverapp):
+    def link_all_extensions(self):
         """Link all enabled extensions
         to an instance of ServerApp
         """
         # Sort the extension names to enforce deterministic linking
         # order.
         for name in self.sorted_extensions.keys():
-            self.link_extension(name, serverapp)
+            self.link_extension(name)
 
-    def load_all_extensions(self, serverapp):
+    def load_all_extensions(self):
         """Load all enabled extensions and append them to
         the parent ServerApp.
         """
         # Sort the extension names to enforce deterministic loading
         # order.
         for name in self.sorted_extensions.keys():
-            self.load_extension(name, serverapp)
+            self.load_extension(name)
 
-    async def stop_all_extensions(self, serverapp):
+    async def stop_all_extensions(self):
         """Call the shutdown hooks in all extensions."""
         await multi(
             [

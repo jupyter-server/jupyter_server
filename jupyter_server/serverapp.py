@@ -2076,9 +2076,9 @@ class ServerApp(JupyterApp):
         and load its own config.
         """
         # Create an instance of the ExtensionManager.
-        self.extension_manager = ExtensionManager(log=self.log)
+        self.extension_manager = ExtensionManager(log=self.log, serverapp=self)
         self.extension_manager.from_jpserver_extensions(self.jpserver_extensions)
-        self.extension_manager.link_all_extensions(self)
+        self.extension_manager.link_all_extensions()
 
     def load_server_extensions(self):
         """Load any extensions specified by config.
@@ -2088,7 +2088,7 @@ class ServerApp(JupyterApp):
 
         The extension API is experimental, and may change in future releases.
         """
-        self.extension_manager.load_all_extensions(self)
+        self.extension_manager.load_all_extensions()
 
     def init_mime_overrides(self):
         # On some Windows machines, an application has registered incorrect
@@ -2365,7 +2365,7 @@ class ServerApp(JupyterApp):
             "Shutting down %d extension", "Shutting down %d extensions", n_extensions
         )
         self.log.info(extension_msg % n_extensions)
-        await run_sync_in_loop(self.extension_manager.stop_all_extensions(self))
+        await run_sync_in_loop(self.extension_manager.stop_all_extensions())
 
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
