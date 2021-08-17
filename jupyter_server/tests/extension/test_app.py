@@ -99,7 +99,7 @@ def test_stop_extension(jp_serverapp, caplog):
 
     # load extensions (make sure we only have the one extension loaded
     jp_serverapp.extension_manager.load_all_extensions()
-    extension_name = 'jupyter_server.tests.extension.mockextensions'
+    extension_name = "jupyter_server.tests.extension.mockextensions"
     assert list(jp_serverapp.extension_manager.extension_apps) == [extension_name]
 
     # add a stop_extension method for the extension app
