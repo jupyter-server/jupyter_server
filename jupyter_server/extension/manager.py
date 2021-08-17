@@ -349,7 +349,7 @@ class ExtensionManager(LoggingConfigurable):
 
         if extension.enabled:
             try:
-                points = extension.load_all_points(serverapp)
+                extension.load_all_points(serverapp)
             except Exception as e:
                 if serverapp.reraise_server_extension_failures:
                     raise
