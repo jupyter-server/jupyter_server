@@ -15,7 +15,7 @@ def jp_argv(request):
     ]
 
 
-CULL_TIMEOUT = 10 if platform.python_implementation() == "PyPy" else 5
+CULL_TIMEOUT = 30 if platform.python_implementation() == "PyPy" else 5
 CULL_INTERVAL = 1
 
 

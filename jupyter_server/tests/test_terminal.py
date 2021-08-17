@@ -28,7 +28,7 @@ def terminal_path(tmp_path):
     shutil.rmtree(str(subdir), ignore_errors=True)
 
 
-CULL_TIMEOUT = 2
+CULL_TIMEOUT = 10
 CULL_INTERVAL = 3
 
 
@@ -128,7 +128,7 @@ async def test_terminal_create_with_cwd(jp_fetch, jp_ws_fetch, terminal_path):
     message_stdout = ""
     while True:
         try:
-            message = await asyncio.wait_for(ws.read_message(), timeout=1.0)
+            message = await asyncio.wait_for(ws.read_message(), timeout=5.0)
         except asyncio.TimeoutError:
             break
 
@@ -164,7 +164,7 @@ async def test_culling(jp_server_config, jp_fetch):
     last_activity = term["last_activity"]
 
     culled = False
-    for i in range(10):  # Culling should occur in a few seconds
+    for i in range(CULL_TIMEOUT + CULL_INTERVAL):
         try:
             resp = await jp_fetch(
                 "api",
