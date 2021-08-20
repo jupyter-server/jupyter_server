@@ -21,7 +21,7 @@ from .fileio import AsyncFileManagerMixin, FileManagerMixin
 from .manager import AsyncContentsManager, ContentsManager
 
 from ipython_genutils.importstring import import_item
-from traitlets import Any, Unicode, Bool, TraitError, observe, default, validate
+from traitlets import Any, Unicode, Bool, TraitError, default, validate
 
 from jupyter_core.paths import exists, is_hidden, is_file_hidden
 from jupyter_server import _tz as tz

@@ -16,7 +16,6 @@
 import sys
 import os
 import os.path as osp
-import shlex
 import shutil
 
 HERE = osp.abspath(osp.dirname(__file__))
@@ -378,7 +377,7 @@ spelling_lang='en_US'
 spelling_word_list_filename='spelling_wordlist.txt'
 
 # import before any doc is built, so _ is guaranteed to be injected
-import jupyter_server.transutils
+import jupyter_server.transutils  # pylint: disable=unused-import
 
 
 def setup(app):

@@ -7,7 +7,6 @@ import uuid
 from datetime import datetime
 from tornado.web import HTTPError
 from tornado.httpclient import HTTPRequest, HTTPResponse
-from jupyter_server.serverapp import ServerApp
 from jupyter_server.gateway.managers import GatewayClient
 from jupyter_server.utils import ensure_async
 

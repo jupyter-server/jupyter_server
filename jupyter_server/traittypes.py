@@ -1,5 +1,6 @@
+from ast import literal_eval
 import inspect
-from traitlets import ClassBasedTraitType, Undefined, warn
+from traitlets import ClassBasedTraitType, Undefined, TraitError
 
 # Traitlet's 5.x includes a set of utilities for building
 # description strings for objects. Traitlets 5.x does not
@@ -10,7 +11,6 @@ from traitlets import ClassBasedTraitType, Undefined, warn
 try:
     from traitlets.utils.descriptions import describe
 except ImportError:
-    import inspect
     import re
     import types
 
@@ -138,6 +138,17 @@ except ImportError:
             return result[0].upper() + result[1:]
         else:
             return result
+
+    def _prefix(value):
+        if isinstance(value, types.MethodType):
+            name = describe(None, value.__self__, verbose=True) + '.'
+        else:
+            module = inspect.getmodule(value)
+            if module is not None and module.__name__ != "builtins":
+                name = module.__name__ + '.'
+            else:
+                name = ""
+        return name
 
 
 class TypeFromClasses(ClassBasedTraitType):
@@ -287,7 +298,7 @@ class InstanceFromClasses(ClassBasedTraitType):
             self.klasses = klasses
         else:
             raise TraitError('The klasses attribute must be a list of class names or classes'
-                                ' not: %r' % klass)
+                                ' not: %r' % klasses)
 
         if (kw is not None) and not isinstance(kw, dict):
             raise TraitError("The 'kw' argument must be a dict or None.")
@@ -350,4 +361,4 @@ class InstanceFromClasses(ClassBasedTraitType):
         return repr(self.make_dynamic_default())
 
     def from_string(self, s):
-        return _safe_literal_eval(s)
+        return literal_eval(s)

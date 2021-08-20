@@ -2,7 +2,6 @@ import sys
 import json
 import pathlib
 import pytest
-from urllib.parse import ParseResult, urlunparse
 
 import tornado
 

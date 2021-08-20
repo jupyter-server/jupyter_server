@@ -1,4 +1,4 @@
-import os, jinja2
+import os
 from traitlets import Unicode
 from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
 from .handlers import (DefaultHandler, RedirectHandler,

@@ -1,16 +1,10 @@
-import sys
 import time
 import json
 import pytest
 
-
-
 import tornado
-import urllib.parse
-from tornado.escape import url_escape
 
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
-from jupyter_client.multikernelmanager import AsyncMultiKernelManager
 
 from jupyter_server.utils import url_path_join
 from ...utils import expected_http_error

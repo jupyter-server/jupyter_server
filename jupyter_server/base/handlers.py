@@ -10,7 +10,6 @@ import json
 import mimetypes
 import os
 import re
-import sys
 import traceback
 import types
 import warnings
@@ -18,7 +17,7 @@ from http.client import responses
 from http.cookies import Morsel
 from urllib.parse import urlparse
 from jinja2 import TemplateNotFound
-from tornado import web, gen, escape, httputil
+from tornado import web, escape, httputil
 from tornado.log import app_log
 import prometheus_client
 

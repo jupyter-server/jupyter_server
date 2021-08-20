@@ -1,8 +1,6 @@
 import asyncio
 import json
 import platform
-import sys
-import time
 import pytest
 from traitlets.config import Config
 from tornado.httpclient import HTTPClientError

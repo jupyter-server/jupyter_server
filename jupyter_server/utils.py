@@ -14,13 +14,12 @@ import sys
 from distutils.version import LooseVersion
 from contextlib import contextmanager
 
-from urllib.parse import (quote, unquote, urlparse, urljoin,
+from urllib.parse import (quote, unquote, urlparse,
     urlsplit, urlunsplit, SplitResult)
-from urllib.request import pathname2url
-
+from urllib.parse import urljoin  # pylint: disable=unused-import
+from urllib.request import pathname2url  # pylint: disable=unused-import
 from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest
 from tornado.netutil import Resolver
-from tornado.ioloop import IOLoop
 
 
 def url_path_join(*pieces):
