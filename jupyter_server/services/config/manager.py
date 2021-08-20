@@ -2,22 +2,27 @@
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-
 import os.path
 
-from jupyter_server.config_manager import BaseJSONConfigManager, recursive_update
-from jupyter_core.paths import jupyter_config_dir, jupyter_config_path
-from traitlets import Unicode, Instance, List, observe, default
+from jupyter_core.paths import jupyter_config_dir
+from jupyter_core.paths import jupyter_config_path
+from traitlets import default
+from traitlets import Instance
+from traitlets import List
+from traitlets import observe
+from traitlets import Unicode
 from traitlets.config import LoggingConfigurable
+
+from jupyter_server.config_manager import BaseJSONConfigManager
+from jupyter_server.config_manager import recursive_update
 
 
 class ConfigManager(LoggingConfigurable):
     """Config Manager used for storing frontend config"""
 
-    config_dir_name = Unicode(
-        "serverconfig",
-        help="""Name of the config directory."""
-    ).tag(config=True)
+    config_dir_name = Unicode("serverconfig", help="""Name of the config directory.""").tag(
+        config=True
+    )
 
     # Public API
 
@@ -42,22 +47,22 @@ class ConfigManager(LoggingConfigurable):
 
     read_config_path = List(Unicode())
 
-    @default('read_config_path')
+    @default("read_config_path")
     def _default_read_config_path(self):
         return [os.path.join(p, self.config_dir_name) for p in jupyter_config_path()]
 
     write_config_dir = Unicode()
 
-    @default('write_config_dir')
+    @default("write_config_dir")
     def _default_write_config_dir(self):
         return os.path.join(jupyter_config_dir(), self.config_dir_name)
 
     write_config_manager = Instance(BaseJSONConfigManager)
 
-    @default('write_config_manager')
+    @default("write_config_manager")
     def _default_write_config_manager(self):
         return BaseJSONConfigManager(config_dir=self.write_config_dir)
 
-    @observe('write_config_dir')
+    @observe("write_config_dir")
     def _update_write_config_dir(self, change):
         self.write_config_manager = BaseJSONConfigManager(config_dir=self.write_config_dir)

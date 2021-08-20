@@ -2,22 +2,20 @@
 
 Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-Notebook-multi-directory-dashboard-and-URL-mapping#sessions-api
 """
-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-
 import json
 
+from jupyter_client.jsonutil import date_default
+from jupyter_client.kernelspec import NoSuchKernel
 from tornado import web
 
 from ...base.handlers import APIHandler
-from jupyter_client.jsonutil import date_default
-from jupyter_server.utils import url_path_join, ensure_async
-from jupyter_client.kernelspec import NoSuchKernel
+from jupyter_server.utils import ensure_async
+from jupyter_server.utils import url_path_join
 
 
 class SessionRootHandler(APIHandler):
-
     @web.authenticated
     async def get(self):
         # Return a list of running sessions
@@ -28,32 +26,32 @@ class SessionRootHandler(APIHandler):
     @web.authenticated
     async def post(self):
         # Creates a new session
-        #(unless a session already exists for the named session)
+        # (unless a session already exists for the named session)
         sm = self.session_manager
 
         model = self.get_json_body()
         if model is None:
             raise web.HTTPError(400, "No JSON data provided")
 
-        if 'notebook' in model and 'path' in model['notebook']:
-            self.log.warning('Sessions API changed, see updated swagger docs')
-            model['path'] = model['notebook']['path']
-            model['type'] = 'notebook'
+        if "notebook" in model and "path" in model["notebook"]:
+            self.log.warning("Sessions API changed, see updated swagger docs")
+            model["path"] = model["notebook"]["path"]
+            model["type"] = "notebook"
 
         try:
-            path = model['path']
+            path = model["path"]
         except KeyError as e:
             raise web.HTTPError(400, "Missing field in JSON data: path") from e
 
         try:
-            mtype = model['type']
+            mtype = model["type"]
         except KeyError as e:
             raise web.HTTPError(400, "Missing field in JSON data: type") from e
 
-        name = model.get('name', None)
-        kernel = model.get('kernel', {})
-        kernel_name = kernel.get('name', None)
-        kernel_id = kernel.get('id', None)
+        name = model.get("name", None)
+        kernel = model.get("kernel", {})
+        kernel_name = kernel.get("name", None)
+        kernel_id = kernel.get("id", None)
 
         if not kernel_id and not kernel_name:
             self.log.debug("No kernel specified, using default kernel")
@@ -65,26 +63,26 @@ class SessionRootHandler(APIHandler):
         else:
             try:
                 model = await sm.create_session(
-                                      path=path, kernel_name=kernel_name,
-                                      kernel_id=kernel_id, name=name,
-                                      type=mtype)
+                    path=path, kernel_name=kernel_name, kernel_id=kernel_id, name=name, type=mtype
+                )
             except NoSuchKernel:
-                msg = ("The '%s' kernel is not available. Please pick another "
-                       "suitable kernel instead, or install that kernel." % kernel_name)
-                status_msg = '%s not found' % kernel_name
-                self.log.warning('Kernel not found: %s' % kernel_name)
+                msg = (
+                    "The '%s' kernel is not available. Please pick another "
+                    "suitable kernel instead, or install that kernel." % kernel_name
+                )
+                status_msg = "%s not found" % kernel_name
+                self.log.warning("Kernel not found: %s" % kernel_name)
                 self.set_status(501)
                 self.finish(json.dumps(dict(message=msg, short_message=status_msg)))
                 return
 
-        location = url_path_join(self.base_url, 'api', 'sessions', model['id'])
-        self.set_header('Location', location)
+        location = url_path_join(self.base_url, "api", "sessions", model["id"])
+        self.set_header("Location", location)
         self.set_status(201)
         self.finish(json.dumps(model, default=date_default))
 
 
 class SessionHandler(APIHandler):
-
     @web.authenticated
     async def get(self, session_id):
         # Returns the JSON model for a single session
@@ -109,37 +107,41 @@ class SessionHandler(APIHandler):
         before = await sm.get_session(session_id=session_id)
 
         changes = {}
-        if 'notebook' in model and 'path' in model['notebook']:
-            self.log.warning('Sessions API changed, see updated swagger docs')
-            model['path'] = model['notebook']['path']
-            model['type'] = 'notebook'
-        if 'path' in model:
-            changes['path'] = model['path']
-        if 'name' in model:
-            changes['name'] = model['name']
-        if 'type' in model:
-            changes['type'] = model['type']
-        if 'kernel' in model:
+        if "notebook" in model and "path" in model["notebook"]:
+            self.log.warning("Sessions API changed, see updated swagger docs")
+            model["path"] = model["notebook"]["path"]
+            model["type"] = "notebook"
+        if "path" in model:
+            changes["path"] = model["path"]
+        if "name" in model:
+            changes["name"] = model["name"]
+        if "type" in model:
+            changes["type"] = model["type"]
+        if "kernel" in model:
             # Kernel id takes precedence over name.
-            if model['kernel'].get('id') is not None:
-                kernel_id = model['kernel']['id']
+            if model["kernel"].get("id") is not None:
+                kernel_id = model["kernel"]["id"]
                 if kernel_id not in km:
                     raise web.HTTPError(400, "No such kernel: %s" % kernel_id)
-                changes['kernel_id'] = kernel_id
-            elif model['kernel'].get('name') is not None:
-                kernel_name = model['kernel']['name']
+                changes["kernel_id"] = kernel_id
+            elif model["kernel"].get("name") is not None:
+                kernel_name = model["kernel"]["name"]
                 kernel_id = await sm.start_kernel_for_session(
-                    session_id, kernel_name=kernel_name, name=before['name'],
-                    path=before['path'], type=before['type'])
-                changes['kernel_id'] = kernel_id
+                    session_id,
+                    kernel_name=kernel_name,
+                    name=before["name"],
+                    path=before["path"],
+                    type=before["type"],
+                )
+                changes["kernel_id"] = kernel_id
 
         await sm.update_session(session_id, **changes)
         model = await sm.get_session(session_id=session_id)
 
-        if model['kernel']['id'] != before['kernel']['id']:
+        if model["kernel"]["id"] != before["kernel"]["id"]:
             # kernel_id changed because we got a new kernel
             # shutdown the old one
-            await ensure_async(km.shutdown_kernel(before['kernel']['id']))
+            await ensure_async(km.shutdown_kernel(before["kernel"]["id"]))
         self.finish(json.dumps(model, default=date_default))
 
     @web.authenticated
@@ -155,13 +157,13 @@ class SessionHandler(APIHandler):
         self.finish()
 
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # URL to handler mappings
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 _session_id_regex = r"(?P<session_id>\w+-\w+-\w+-\w+-\w+)"
 
 default_handlers = [
     (r"/api/sessions/%s" % _session_id_regex, SessionHandler),
-    (r"/api/sessions",  SessionRootHandler)
+    (r"/api/sessions", SessionRootHandler),
 ]

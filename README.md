@@ -24,7 +24,6 @@ When a new minor version is released on PyPI, a branch for that version will be 
 
 To see the changes between releases, checkout the [CHANGELOG](https://github.com/jupyter/jupyter_server/blob/master/CHANGELOG.md).
 
-
 ## Usage - Running Jupyter Server
 
 ### Running in a local installation
@@ -43,8 +42,8 @@ If you are interested in contributing to the project, see [`CONTRIBUTING.rst`](C
 
 ## Team Meetings and Roadmap
 
-* When: Thursdays [8:00am, Pacific time](https://www.thetimezoneconverter.com/?t=8%3A00%20am&tz=San%20Francisco&)
-* Where: [Jovyan Zoom](https://zoom.us/my/jovyan?pwd=c0JZTHlNdS9Sek9vdzR3aTJ4SzFTQT09)
-* What: [Meeting notes](https://github.com/jupyter-server/team-compass/issues/4)
+- When: Thursdays [8:00am, Pacific time](https://www.thetimezoneconverter.com/?t=8%3A00%20am&tz=San%20Francisco&)
+- Where: [Jovyan Zoom](https://zoom.us/my/jovyan?pwd=c0JZTHlNdS9Sek9vdzR3aTJ4SzFTQT09)
+- What: [Meeting notes](https://github.com/jupyter-server/team-compass/issues/4)
 
 See our tentative [roadmap here](https://github.com/jupyter/jupyter_server/issues/127).

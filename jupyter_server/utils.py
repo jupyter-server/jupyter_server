@@ -1,9 +1,6 @@
 """Notebook related utilities"""
-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-
-from _frozen_importlib_external import _NamespacePath
 import asyncio
 import errno
 import importlib.util
@@ -11,14 +8,21 @@ import inspect
 import os
 import socket
 import sys
-from distutils.version import LooseVersion
+from _frozen_importlib_external import _NamespacePath
 from contextlib import contextmanager
-
-from urllib.parse import (quote, unquote, urlparse,
-    urlsplit, urlunsplit, SplitResult)
+from distutils.version import LooseVersion
+from urllib.parse import quote
+from urllib.parse import SplitResult
+from urllib.parse import unquote
 from urllib.parse import urljoin  # pylint: disable=unused-import
+from urllib.parse import urlparse
+from urllib.parse import urlsplit
+from urllib.parse import urlunsplit
 from urllib.request import pathname2url  # pylint: disable=unused-import
-from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest
+
+from tornado.httpclient import AsyncHTTPClient
+from tornado.httpclient import HTTPClient
+from tornado.httpclient import HTTPRequest
 from tornado.netutil import Resolver
 
 
@@ -28,13 +32,16 @@ def url_path_join(*pieces):
     Use to prevent double slash when joining subpath. This will leave the
     initial and final / in place
     """
-    initial = pieces[0].startswith('/')
-    final = pieces[-1].endswith('/')
-    stripped = [s.strip('/') for s in pieces]
-    result = '/'.join(s for s in stripped if s)
-    if initial: result = '/' + result
-    if final: result = result + '/'
-    if result == '//': result = '/'
+    initial = pieces[0].startswith("/")
+    final = pieces[-1].endswith("/")
+    stripped = [s.strip("/") for s in pieces]
+    result = "/".join(s for s in stripped if s)
+    if initial:
+        result = "/" + result
+    if final:
+        result = result + "/"
+    if result == "//":
+        result = "/"
     return result
 
 
@@ -45,17 +52,17 @@ def url_is_absolute(url):
 
 def path2url(path):
     """Convert a local file path to a URL"""
-    pieces = [ quote(p) for p in path.split(os.sep) ]
+    pieces = [quote(p) for p in path.split(os.sep)]
     # preserve trailing /
-    if pieces[-1] == '':
-        pieces[-1] = '/'
+    if pieces[-1] == "":
+        pieces[-1] = "/"
     url = url_path_join(*pieces)
     return url
 
 
 def url2path(url):
     """Convert a URL to a local file path"""
-    pieces = [ unquote(p) for p in url.split('/') ]
+    pieces = [unquote(p) for p in url.split("/")]
     path = os.path.join(*pieces)
     return path
 
@@ -99,33 +106,32 @@ def samefile_simple(path, other_path):
     """
     path_stat = os.stat(path)
     other_path_stat = os.stat(other_path)
-    return (path.lower() == other_path.lower()
-        and path_stat == other_path_stat)
+    return path.lower() == other_path.lower() and path_stat == other_path_stat
 
 
-def to_os_path(path, root=''):
+def to_os_path(path, root=""):
     """Convert an API path to a filesystem path
 
     If given, root will be prepended to the path.
     root must be a filesystem path already.
     """
-    parts = path.strip('/').split('/')
-    parts = [p for p in parts if p != ''] # remove duplicate splits
+    parts = path.strip("/").split("/")
+    parts = [p for p in parts if p != ""]  # remove duplicate splits
     path = os.path.join(root, *parts)
     return path
 
 
-def to_api_path(os_path, root=''):
+def to_api_path(os_path, root=""):
     """Convert a filesystem path to an API path
 
     If given, root will be removed from the path.
     root must be a filesystem path already.
     """
     if os_path.startswith(root):
-        os_path = os_path[len(root):]
+        os_path = os_path[len(root) :]
     parts = os_path.strip(os.path.sep).split(os.path.sep)
-    parts = [p for p in parts if p != ''] # remove duplicate splits
-    path = '/'.join(parts)
+    parts = [p for p in parts if p != ""]  # remove duplicate splits
+    path = "/".join(parts)
     return path
 
 
@@ -144,11 +150,14 @@ def check_version(v, check):
 
 # Copy of IPython.utils.process.check_pid:
 
+
 def _check_pid_win32(pid):
     import ctypes
+
     # OpenProcess returns 0 if no such process (of ours) exists
     # positive int otherwise
-    return bool(ctypes.windll.kernel32.OpenProcess(1,0,pid))
+    return bool(ctypes.windll.kernel32.OpenProcess(1, 0, pid))
+
 
 def _check_pid_posix(pid):
     """Copy of IPython.utils.process.check_pid"""
@@ -164,7 +173,8 @@ def _check_pid_posix(pid):
     else:
         return True
 
-if sys.platform == 'win32':
+
+if sys.platform == "win32":
     check_pid = _check_pid_win32
 else:
     check_pid = _check_pid_posix
@@ -178,7 +188,7 @@ async def ensure_async(obj):
         try:
             result = await obj
         except RuntimeError as e:
-            if str(e) == 'cannot reuse already awaited coroutine':
+            if str(e) == "cannot reuse already awaited coroutine":
                 # obj is already the coroutine's result
                 return obj
             raise
@@ -222,12 +232,13 @@ def run_sync(maybe_async):
         try:
             result = loop.run_until_complete(maybe_async)
         except RuntimeError as e:
-            if str(e) == 'This event loop is already running':
+            if str(e) == "This event loop is already running":
                 # just return a Future, hoping that it will be awaited
                 result = asyncio.ensure_future(maybe_async)
             else:
                 raise e
         return result
+
     return wrapped()
 
 
@@ -256,17 +267,17 @@ async def run_sync_in_loop(maybe_async):
 
 def urlencode_unix_socket_path(socket_path):
     """Encodes a UNIX socket path string from a socket path for the `http+unix` URI form."""
-    return socket_path.replace('/', '%2F')
+    return socket_path.replace("/", "%2F")
 
 
 def urldecode_unix_socket_path(socket_path):
     """Decodes a UNIX sock path string from an encoded sock path for the `http+unix` URI form."""
-    return socket_path.replace('%2F', '/')
+    return socket_path.replace("%2F", "/")
 
 
 def urlencode_unix_socket(socket_path):
     """Encodes a UNIX socket URL from a socket path for the `http+unix` URI form."""
-    return 'http+unix://%s' % urlencode_unix_socket_path(socket_path)
+    return "http+unix://%s" % urlencode_unix_socket_path(socket_path)
 
 
 def unix_socket_in_use(socket_path):
@@ -286,12 +297,7 @@ def unix_socket_in_use(socket_path):
 
 
 @contextmanager
-def _request_for_tornado_client(
-    urlstring,
-    method="GET",
-    body=None,
-    headers=None
-):
+def _request_for_tornado_client(urlstring, method="GET", body=None, headers=None):
     """A utility that provides a context that handles
     HTTP, HTTPS, and HTTP+UNIX request.
     Creates a tornado HTTPRequest object with a URL
@@ -310,7 +316,7 @@ def _request_for_tornado_client(
             netloc=parts.netloc,
             path=parts.path,
             query=parts.query,
-            fragment=parts.fragment
+            fragment=parts.fragment,
         )
 
         class UnixSocketResolver(Resolver):
@@ -320,6 +326,7 @@ def _request_for_tornado_client(
             must be `http` (not `http+unix`). Applications should replace
             the scheme in URLS before making a request to the HTTP client.
             """
+
             def initialize(self, resolver):
                 self.resolver = resolver
 
@@ -327,9 +334,7 @@ def _request_for_tornado_client(
                 self.resolver.close()
 
             async def resolve(self, host, port, *args, **kwargs):
-                return [
-                    (socket.AF_UNIX, urldecode_unix_socket_path(host))
-                ]
+                return [(socket.AF_UNIX, urldecode_unix_socket_path(host))]
 
         resolver = UnixSocketResolver(resolver=Resolver())
         AsyncHTTPClient.configure(None, resolver=resolver)
@@ -338,21 +343,11 @@ def _request_for_tornado_client(
 
     # Yield the request for the given client.
     url = urlunsplit(parts)
-    request = HTTPRequest(
-        url,
-        method=method,
-        body=body,
-        headers=headers
-    )
+    request = HTTPRequest(url, method=method, body=body, headers=headers)
     yield request
 
 
-def fetch(
-    urlstring,
-    method="GET",
-    body=None,
-    headers=None
-):
+def fetch(urlstring, method="GET", body=None, headers=None):
     """
     Send a HTTP, HTTPS, or HTTP+UNIX request
     to a Tornado Web Server. Returns a tornado HTTPResponse.
@@ -362,13 +357,7 @@ def fetch(
     return response
 
 
-async def async_fetch(
-    urlstring,
-    method="GET",
-    body=None,
-    headers=None,
-    io_loop=None
-):
+async def async_fetch(urlstring, method="GET", body=None, headers=None, io_loop=None):
     """
     Send an asynchronous HTTP, HTTPS, or HTTP+UNIX request
     to a Tornado Web Server. Returns a tornado HTTPResponse.

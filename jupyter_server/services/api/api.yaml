@@ -1,4 +1,4 @@
-swagger: '2.0'
+swagger: "2.0"
 info:
   title: Jupyter Server API
   description: Server API
@@ -53,11 +53,9 @@ parameters:
     type: string
 
 paths:
-
-
   /api/contents/{path}:
     parameters:
-      - $ref: '#/parameters/path'
+      - $ref: "#/parameters/path"
     get:
       summary: Get contents of file or directory
       description: "A client can optionally specify a type and/or format argument via URL parameter. When given, the Contents service shall return a model in the requested type and/or format. If the request cannot be satisfied, e.g. type=text is requested, but the file is binary, then the request shall fail with 400 and have a JSON response containing a 'reason' field, with the value 'bad format' or 'bad type', depending on what was requested."
@@ -104,7 +102,7 @@ paths:
               type: string
               format: dateTime
           schema:
-            $ref: '#/definitions/Contents'
+            $ref: "#/definitions/Contents"
         500:
           description: Model key error
     post:
@@ -134,7 +132,7 @@ paths:
               type: string
               format: url
           schema:
-            $ref: '#/definitions/Contents'
+            $ref: "#/definitions/Contents"
         404:
           description: No item found
         400:
@@ -173,7 +171,7 @@ paths:
               type: string
               format: url
           schema:
-            $ref: '#/definitions/Contents'
+            $ref: "#/definitions/Contents"
         400:
           description: No data provided
           schema:
@@ -221,7 +219,7 @@ paths:
               type: string
               format: url
           schema:
-            $ref: '#/definitions/Contents'
+            $ref: "#/definitions/Contents"
         201:
           description: Path created
           headers:
@@ -230,7 +228,7 @@ paths:
               type: string
               format: url
           schema:
-            $ref: '#/definitions/Contents'
+            $ref: "#/definitions/Contents"
         400:
           description: No data provided
           schema:
@@ -256,7 +254,7 @@ paths:
               format: url
   /api/contents/{path}/checkpoints:
     parameters:
-      - $ref: '#/parameters/path'
+      - $ref: "#/parameters/path"
     get:
       summary: Get a list of checkpoints for a file
       description: List checkpoints for a given file. There will typically be zero or one results.
@@ -281,7 +279,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/Checkpoints'
+              $ref: "#/definitions/Checkpoints"
         500:
           description: Model key error
     post:
@@ -298,7 +296,7 @@ paths:
               type: string
               format: url
           schema:
-            $ref: '#/definitions/Checkpoints'
+            $ref: "#/definitions/Checkpoints"
         404:
           description: No item found
         400:
@@ -346,7 +344,7 @@ paths:
           description: Checkpoint deleted
   /api/sessions/{session}:
     parameters:
-      - $ref: '#/parameters/session'
+      - $ref: "#/parameters/session"
     get:
       summary: Get session
       tags:
@@ -355,7 +353,7 @@ paths:
         200:
           description: Session
           schema:
-            $ref: '#/definitions/Session'
+            $ref: "#/definitions/Session"
     patch:
       summary: "This can be used to rename the session."
       tags:
@@ -365,12 +363,12 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/Session'
+            $ref: "#/definitions/Session"
       responses:
         200:
           description: Session
           schema:
-            $ref: '#/definitions/Session'
+            $ref: "#/definitions/Session"
         400:
           description: No data provided
     delete:
@@ -393,7 +391,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/Session'
+              $ref: "#/definitions/Session"
     post:
       summary: "Create a new session, or return an existing session if a session of the same name already exists"
       tags:
@@ -402,12 +400,12 @@ paths:
         - name: session
           in: body
           schema:
-            $ref: '#/definitions/Session'
+            $ref: "#/definitions/Session"
       responses:
         201:
           description: Session created or returned
           schema:
-            $ref: '#/definitions/Session'
+            $ref: "#/definitions/Session"
           headers:
             Location:
               description: URL for session commands
@@ -435,7 +433,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/Kernel'
+              $ref: "#/definitions/Kernel"
     post:
       summary: Start a kernel and return the uuid
       tags:
@@ -458,7 +456,7 @@ paths:
         201:
           description: Kernel started
           schema:
-            $ref: '#/definitions/Kernel'
+            $ref: "#/definitions/Kernel"
           headers:
             Location:
               description: Model for started kernel
@@ -466,7 +464,7 @@ paths:
               format: url
   /api/kernels/{kernel_id}:
     parameters:
-      - $ref: '#/parameters/kernel'
+      - $ref: "#/parameters/kernel"
     get:
       summary: Get kernel information
       tags:
@@ -475,7 +473,7 @@ paths:
         200:
           description: Kernel information
           schema:
-            $ref: '#/definitions/Kernel'
+            $ref: "#/definitions/Kernel"
     delete:
       summary: Kill a kernel and delete the kernel id
       tags:
@@ -485,7 +483,7 @@ paths:
           description: Kernel deleted
   /api/kernels/{kernel_id}/interrupt:
     parameters:
-      - $ref: '#/parameters/kernel'
+      - $ref: "#/parameters/kernel"
     post:
       summary: Interrupt a kernel
       tags:
@@ -495,7 +493,7 @@ paths:
           description: Kernel interrupted
   /api/kernels/{kernel_id}/restart:
     parameters:
-      - $ref: '#/parameters/kernel'
+      - $ref: "#/parameters/kernel"
     post:
       summary: Restart a kernel
       tags:
@@ -509,7 +507,7 @@ paths:
               type: string
               format: url
           schema:
-            $ref: '#/definitions/Kernel'
+            $ref: "#/definitions/Kernel"
 
   /api/kernelspecs:
     get:
@@ -528,7 +526,7 @@ paths:
               kernelspecs:
                 type: object
                 additionalProperties:
-                  $ref: '#/definitions/KernelSpec'
+                  $ref: "#/definitions/KernelSpec"
   /api/config/{section_name}:
     get:
       summary: Get a configuration section by name
@@ -568,7 +566,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/Terminal'
+              $ref: "#/definitions/Terminal"
         403:
           description: Forbidden to access
         404:
@@ -582,7 +580,7 @@ paths:
         200:
           description: Succesfully created a new terminal
           schema:
-            $ref: '#/definitions/Terminal'
+            $ref: "#/definitions/Terminal"
         403:
           description: Forbidden to access
         404:
@@ -594,12 +592,12 @@ paths:
       tags:
         - terminals
       parameters:
-        - $ref: '#/parameters/terminal_id'
+        - $ref: "#/parameters/terminal_id"
       responses:
         200:
           description: Terminal session with given id
           schema:
-            $ref: '#/definitions/Terminal'
+            $ref: "#/definitions/Terminal"
         403:
           description: Forbidden to access
         404:
@@ -610,7 +608,7 @@ paths:
       tags:
         - terminals
       parameters:
-        - $ref: '#/parameters/terminal_id'
+        - $ref: "#/parameters/terminal_id"
       responses:
         204:
           description: Succesfully deleted terminal session
@@ -618,9 +616,6 @@ paths:
           description: Forbidden to access
         404:
           description: Not found
-
-
-
 
   /api/status:
     get:
@@ -631,7 +626,7 @@ paths:
         200:
           description: The current status of the server
           schema:
-              $ref: '#/definitions/APIStatus'
+            $ref: "#/definitions/APIStatus"
 
   /api/spec.yaml:
     get:
@@ -644,7 +639,7 @@ paths:
         200:
           description: The current spec for the notebook server's APIs.
           schema:
-              type: file
+            type: file
 definitions:
   APIStatus:
     description: |
@@ -675,7 +670,7 @@ definitions:
         type: string
         description: Unique name for kernel
       KernelSpecFile:
-        $ref: '#/definitions/KernelSpecFile'
+        $ref: "#/definitions/KernelSpecFile"
       resources:
         type: object
         properties:
@@ -723,8 +718,8 @@ definitions:
         items:
           type: object
           required:
-          - text
-          - url
+            - text
+            - url
           properties:
             text:
               type: string
@@ -780,7 +775,7 @@ definitions:
         type: string
         description: session type
       kernel:
-        $ref: '#/definitions/Kernel'
+        $ref: "#/definitions/Kernel"
   Contents:
     description: "A contents object.  The content and format keys may be null if content is not contained.  If type is 'file', then the mimetype will be null."
     type: object

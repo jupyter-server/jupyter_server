@@ -1,25 +1,23 @@
-import os
 import getpass
-import pathlib
-import pytest
 import logging
+import os
+import pathlib
 from unittest.mock import patch
 
+import pytest
+from jupyter_core.application import NoStart
 from traitlets import TraitError
 from traitlets.tests.utils import check_help_all_output
-from jupyter_core.application import NoStart
 
-from jupyter_server.serverapp import (
-    ServerApp,
-    list_running_servers,
-    JupyterPasswordApp
-)
 from jupyter_server.auth.security import passwd_check
+from jupyter_server.serverapp import JupyterPasswordApp
+from jupyter_server.serverapp import list_running_servers
+from jupyter_server.serverapp import ServerApp
 
 
 def test_help_output():
     """jupyter server --help-all works"""
-    check_help_all_output('jupyter_server')
+    check_help_all_output("jupyter_server")
 
 
 def test_server_info_file(tmp_path, jp_configurable_serverapp):
@@ -31,9 +29,9 @@ def test_server_info_file(tmp_path, jp_configurable_serverapp):
     assert len(servers) == 1
     sinfo = servers[0]
 
-    assert sinfo['port'] == app.port
-    assert sinfo['url'] == app.connection_url
-    assert sinfo['version'] == app.version
+    assert sinfo["port"] == app.port
+    assert sinfo["url"] == app.connection_url
+    assert sinfo["version"] == app.version
 
     app.remove_server_info_file()
 
@@ -47,18 +45,12 @@ def test_root_dir(tmp_path, jp_configurable_serverapp):
 
 
 # Build a list of invalid paths
-@pytest.fixture(
-    params=[
-        ('notebooks',),
-        ('root', 'dir', 'is', 'missing'),
-        ('test.txt',)
-    ]
-)
+@pytest.fixture(params=[("notebooks",), ("root", "dir", "is", "missing"), ("test.txt",)])
 def invalid_root_dir(tmp_path, request):
     path = tmp_path.joinpath(*request.param)
     # If the path is a file, create it.
-    if os.path.splitext(str(path))[1] != '':
-        path.write_text('')
+    if os.path.splitext(str(path))[1] != "":
+        path.write_text("")
     return str(path)
 
 
@@ -67,13 +59,8 @@ def test_invalid_root_dir(invalid_root_dir, jp_configurable_serverapp):
     with pytest.raises(TraitError):
         app.root_dir = invalid_root_dir
 
-@pytest.fixture(
-    params=[
-        ('/',),
-        ('first-level',),
-        ('first-level', 'second-level')
-    ]
-)
+
+@pytest.fixture(params=[("/",), ("first-level",), ("first-level", "second-level")])
 def valid_root_dir(tmp_path, request):
     path = tmp_path.joinpath(*request.param)
     if not path.exists():
@@ -81,35 +68,36 @@ def valid_root_dir(tmp_path, request):
         path.mkdir(parents=True)
     return str(path)
 
+
 def test_valid_root_dir(valid_root_dir, jp_configurable_serverapp):
     app = jp_configurable_serverapp(root_dir=valid_root_dir)
     root_dir = valid_root_dir
     # If nested path, the last slash should
     # be stripped by the root_dir trait.
-    if root_dir != '/':
-        root_dir = valid_root_dir.rstrip('/')
+    if root_dir != "/":
+        root_dir = valid_root_dir.rstrip("/")
     assert app.root_dir == root_dir
 
 
 def test_generate_config(tmp_path, jp_configurable_serverapp):
     app = jp_configurable_serverapp(config_dir=str(tmp_path))
-    app.initialize(['--generate-config', '--allow-root'])
+    app.initialize(["--generate-config", "--allow-root"])
     with pytest.raises(NoStart):
         app.start()
-    assert tmp_path.joinpath('jupyter_server_config.py').exists()
+    assert tmp_path.joinpath("jupyter_server_config.py").exists()
 
 
 def test_server_password(tmp_path, jp_configurable_serverapp):
-    password = 'secret'
-    with patch.dict(
-        'os.environ', {'JUPYTER_CONFIG_DIR': str(tmp_path)}
-        ), patch.object(getpass, 'getpass', return_value=password):
+    password = "secret"
+    with patch.dict("os.environ", {"JUPYTER_CONFIG_DIR": str(tmp_path)}), patch.object(
+        getpass, "getpass", return_value=password
+    ):
         app = JupyterPasswordApp(log_level=logging.ERROR)
         app.initialize([])
         app.start()
         sv = jp_configurable_serverapp()
         sv.load_config_file()
-        assert sv.password != ''
+        assert sv.password != ""
         passwd_check(sv.password, password)
 
 
@@ -126,57 +114,30 @@ def prefix_path(jp_root_dir, tmp_path):
 
     Returns a pathlib Path object.
     """
+
     def _inner(rawpath):
         path = pathlib.PurePosixPath(rawpath)
-        if rawpath.startswith('/jp_root_dir'):
+        if rawpath.startswith("/jp_root_dir"):
             path = jp_root_dir.joinpath(*path.parts[2:])
-        elif rawpath.startswith('/tmp_path'):
+        elif rawpath.startswith("/tmp_path"):
             path = tmp_path.joinpath(*path.parts[2:])
         return pathlib.Path(path)
+
     return _inner
 
 
 @pytest.mark.parametrize(
     "root_dir,file_to_run,expected_output",
     [
-        (
-            None,
-            'notebook.ipynb',
-            'notebook.ipynb'
-        ),
-        (
-            None,
-            '/tmp_path/path/to/notebook.ipynb',
-            'notebook.ipynb'
-        ),
-        (
-            '/jp_root_dir',
-            '/tmp_path/path/to/notebook.ipynb',
-            SystemExit
-        ),
-        (
-            '/tmp_path',
-            '/tmp_path/path/to/notebook.ipynb',
-            'path/to/notebook.ipynb'
-        ),
-        (
-            '/jp_root_dir',
-            'notebook.ipynb',
-            'notebook.ipynb'
-        ),
-        (
-            '/jp_root_dir',
-            'path/to/notebook.ipynb',
-            'path/to/notebook.ipynb'
-        ),
-    ]
+        (None, "notebook.ipynb", "notebook.ipynb"),
+        (None, "/tmp_path/path/to/notebook.ipynb", "notebook.ipynb"),
+        ("/jp_root_dir", "/tmp_path/path/to/notebook.ipynb", SystemExit),
+        ("/tmp_path", "/tmp_path/path/to/notebook.ipynb", "path/to/notebook.ipynb"),
+        ("/jp_root_dir", "notebook.ipynb", "notebook.ipynb"),
+        ("/jp_root_dir", "path/to/notebook.ipynb", "path/to/notebook.ipynb"),
+    ],
 )
-def test_resolve_file_to_run_and_root_dir(
-    prefix_path,
-    root_dir,
-    file_to_run,
-    expected_output
-):
+def test_resolve_file_to_run_and_root_dir(prefix_path, root_dir, file_to_run, expected_output):
     # Verify that the Singleton instance is cleared before the test runs.
     ServerApp.clear_instance()
 
@@ -213,62 +174,62 @@ def test_resolve_file_to_run_and_root_dir(
 # in urls shown below will be replaced with the token
 # generated by the ServerApp on instance creation.
 @pytest.mark.parametrize(
-    'config,public_url,local_url,connection_url',
+    "config,public_url,local_url,connection_url",
     [
         # Token is hidden when configured.
         (
             {"token": "test"},
             "http://localhost:8888/?token=...",
             "http://127.0.0.1:8888/?token=...",
-            "http://localhost:8888/"
+            "http://localhost:8888/",
         ),
         # Verify port number has changed
         (
             {"port": 9999},
             "http://localhost:9999/?token=<generated>",
             "http://127.0.0.1:9999/?token=<generated>",
-            "http://localhost:9999/"
+            "http://localhost:9999/",
         ),
         (
             {"ip": "1.1.1.1"},
             "http://1.1.1.1:8888/?token=<generated>",
             "http://127.0.0.1:8888/?token=<generated>",
-            "http://1.1.1.1:8888/"
+            "http://1.1.1.1:8888/",
         ),
         # Verify that HTTPS is returned when certfile is given
         (
             {"certfile": "/path/to/dummy/file"},
             "https://localhost:8888/?token=<generated>",
             "https://127.0.0.1:8888/?token=<generated>",
-            "https://localhost:8888/"
+            "https://localhost:8888/",
         ),
         # Verify changed port and a custom display URL
         (
             {"port": 9999, "custom_display_url": "http://test.org"},
             "http://test.org/?token=<generated>",
             "http://127.0.0.1:9999/?token=<generated>",
-            "http://localhost:9999/"
+            "http://localhost:9999/",
         ),
         (
             {"base_url": "/", "default_url": "/test/"},
             "http://localhost:8888/test/?token=<generated>",
             "http://127.0.0.1:8888/test/?token=<generated>",
-            "http://localhost:8888/"
+            "http://localhost:8888/",
         ),
         # Verify unix socket URLs are handled properly
         (
             {"sock": "/tmp/jp-test.sock"},
             "http+unix://%2Ftmp%2Fjp-test.sock/?token=<generated>",
             "http+unix://%2Ftmp%2Fjp-test.sock/?token=<generated>",
-            "http+unix://%2Ftmp%2Fjp-test.sock/"
+            "http+unix://%2Ftmp%2Fjp-test.sock/",
         ),
         (
             {"base_url": "/", "default_url": "/test/", "sock": "/tmp/jp-test.sock"},
             "http+unix://%2Ftmp%2Fjp-test.sock/test/?token=<generated>",
             "http+unix://%2Ftmp%2Fjp-test.sock/test/?token=<generated>",
-            "http+unix://%2Ftmp%2Fjp-test.sock/"
+            "http+unix://%2Ftmp%2Fjp-test.sock/",
         ),
-    ]
+    ],
 )
 def test_urls(config, public_url, local_url, connection_url):
     # Verify we're working with a clean instance.
@@ -299,7 +260,7 @@ def test_valid_preferred_dir(tmp_path, jp_configurable_serverapp):
 
 def test_valid_preferred_dir_is_root_subdir(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path)
-    path_subdir = str(tmp_path / 'subdir')
+    path_subdir = str(tmp_path / "subdir")
     os.makedirs(path_subdir, exist_ok=True)
     app = jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
     assert app.root_dir == path
@@ -309,7 +270,7 @@ def test_valid_preferred_dir_is_root_subdir(tmp_path, jp_configurable_serverapp)
 
 def test_valid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path)
-    path_subdir = str(tmp_path / 'subdir')
+    path_subdir = str(tmp_path / "subdir")
     with pytest.raises(TraitError) as error:
         app = jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
 
@@ -318,7 +279,7 @@ def test_valid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverapp)
 
 def test_invalid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path)
-    path_subdir = str(tmp_path / 'subdir')
+    path_subdir = str(tmp_path / "subdir")
     with pytest.raises(TraitError) as error:
         app = jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
 
@@ -327,7 +288,7 @@ def test_invalid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverap
 
 def test_invalid_preferred_dir_does_not_exist_set(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path)
-    path_subdir = str(tmp_path / 'subdir')
+    path_subdir = str(tmp_path / "subdir")
 
     app = jp_configurable_serverapp(root_dir=path)
     with pytest.raises(TraitError) as error:
@@ -337,7 +298,7 @@ def test_invalid_preferred_dir_does_not_exist_set(tmp_path, jp_configurable_serv
 
 
 def test_invalid_preferred_dir_not_root_subdir(tmp_path, jp_configurable_serverapp):
-    path = str(tmp_path / 'subdir')
+    path = str(tmp_path / "subdir")
     os.makedirs(path, exist_ok=True)
     not_subdir_path = str(tmp_path)
 
@@ -348,7 +309,7 @@ def test_invalid_preferred_dir_not_root_subdir(tmp_path, jp_configurable_servera
 
 
 def test_invalid_preferred_dir_not_root_subdir_set(tmp_path, jp_configurable_serverapp):
-    path = str(tmp_path / 'subdir')
+    path = str(tmp_path / "subdir")
     os.makedirs(path, exist_ok=True)
     not_subdir_path = str(tmp_path)
 
@@ -361,7 +322,7 @@ def test_invalid_preferred_dir_not_root_subdir_set(tmp_path, jp_configurable_ser
 
 def test_observed_root_dir_updates_preferred_dir(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path)
-    new_path = str(tmp_path / 'subdir')
+    new_path = str(tmp_path / "subdir")
     os.makedirs(new_path, exist_ok=True)
 
     app = jp_configurable_serverapp(root_dir=path, preferred_dir=path)

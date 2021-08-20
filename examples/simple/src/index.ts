@@ -3,4 +3,4 @@ function main() {
   div.innerText = "Hello from Typescript";
 }
 
-window.addEventListener('load', main);
+window.addEventListener("load", main);

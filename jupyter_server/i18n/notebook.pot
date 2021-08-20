@@ -440,4 +440,3 @@ msgstr ""
 #: jupyter_server/services/contents/manager.py:68
 msgid "Untitled"
 msgstr ""
-

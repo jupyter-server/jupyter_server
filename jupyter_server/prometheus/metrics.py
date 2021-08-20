@@ -10,25 +10,29 @@ try:
     # Try to de-duplicate by using the ones in Notebook if available.
     # See https://github.com/jupyter/jupyter_server/issues/209
     # pylint: disable=unused-import
-    from notebook.prometheus.metrics import HTTP_REQUEST_DURATION_SECONDS,TERMINAL_CURRENTLY_RUNNING_TOTAL, KERNEL_CURRENTLY_RUNNING_TOTAL
+    from notebook.prometheus.metrics import (
+        HTTP_REQUEST_DURATION_SECONDS,
+        TERMINAL_CURRENTLY_RUNNING_TOTAL,
+        KERNEL_CURRENTLY_RUNNING_TOTAL,
+    )
 
 except ImportError:
 
     from prometheus_client import Histogram, Gauge
 
     HTTP_REQUEST_DURATION_SECONDS = Histogram(
-        'http_request_duration_seconds',
-        'duration in seconds for all HTTP requests',
-        ['method', 'handler', 'status_code'],
+        "http_request_duration_seconds",
+        "duration in seconds for all HTTP requests",
+        ["method", "handler", "status_code"],
     )
 
     TERMINAL_CURRENTLY_RUNNING_TOTAL = Gauge(
-        'terminal_currently_running_total',
-        'counter for how many terminals are running',
+        "terminal_currently_running_total",
+        "counter for how many terminals are running",
     )
 
     KERNEL_CURRENTLY_RUNNING_TOTAL = Gauge(
-        'kernel_currently_running_total',
-        'counter for how many kernels are running labeled by type',
-        ['type']
+        "kernel_currently_running_total",
+        "counter for how many kernels are running labeled by type",
+        ["type"],
     )

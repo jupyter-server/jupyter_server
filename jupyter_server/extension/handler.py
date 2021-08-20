@@ -1,15 +1,17 @@
-from jupyter_server.base.handlers import FileFindHandler
 from jinja2.exceptions import TemplateNotFound
+
+from jupyter_server.base.handlers import FileFindHandler
 
 
 class ExtensionHandlerJinjaMixin:
     """Mixin class for ExtensionApp handlers that use jinja templating for
     template rendering.
     """
+
     def get_template(self, name):
         """Return the jinja template object for a given name"""
         try:
-            env = '{}_jinja2_env'.format(self.name)
+            env = "{}_jinja2_env".format(self.name)
             return self.settings[env].get_template(name)
         except TemplateNotFound:
             return super().get_template(name)
@@ -25,6 +27,7 @@ class ExtensionHandlerMixin:
     their own namespace and avoid intercepting requests for
     other extensions.
     """
+
     def initialize(self, name):
         self.name = name
 
@@ -39,7 +42,7 @@ class ExtensionHandlerMixin:
 
     @property
     def log(self):
-        if not hasattr(self, 'name'):
+        if not hasattr(self, "name"):
             return super().log
         # Attempt to pull the ExtensionApp's log, otherwise fall back to ServerApp.
         try:
@@ -57,7 +60,7 @@ class ExtensionHandlerMixin:
 
     @property
     def base_url(self):
-        return self.settings.get('base_url', '/')
+        return self.settings.get("base_url", "/")
 
     @property
     def static_url_prefix(self):
@@ -65,7 +68,7 @@ class ExtensionHandlerMixin:
 
     @property
     def static_path(self):
-        return self.settings['{}_static_paths'.format(self.name)]
+        return self.settings["{}_static_paths".format(self.name)]
 
     def static_url(self, path, include_host=None, **kwargs):
         """Returns a static URL for the given relative static file path.
@@ -96,9 +99,7 @@ class ExtensionHandlerMixin:
             else:
                 raise e
 
-        get_url = self.settings.get(
-            "static_handler_class", FileFindHandler
-        ).make_static_url
+        get_url = self.settings.get("static_handler_class", FileFindHandler).make_static_url
 
         if include_host is None:
             include_host = getattr(self, "include_host", False)
@@ -110,9 +111,6 @@ class ExtensionHandlerMixin:
 
         # Hijack settings dict to send extension templates to extension
         # static directory.
-        settings = {
-            "static_path": self.static_path,
-            "static_url_prefix": self.static_url_prefix
-        }
+        settings = {"static_path": self.static_path, "static_url_prefix": self.static_url_prefix}
 
         return base + get_url(settings, path, **kwargs)

@@ -1,27 +1,26 @@
-import sys
-import re
 import logging
+import re
+import sys
 
-from jinja2 import Environment, FileSystemLoader
-
-from traitlets.config import Config
-from traitlets import (
-    HasTraits,
-    Unicode,
-    List,
-    Dict,
-    Bool,
-    default
-)
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
+from jupyter_core.application import JupyterApp
+from jupyter_core.application import NoStart
 from tornado.log import LogFormatter
 from tornado.web import RedirectHandler
+from traitlets import Bool
+from traitlets import default
+from traitlets import Dict
+from traitlets import HasTraits
+from traitlets import List
+from traitlets import Unicode
+from traitlets.config import Config
 
-from jupyter_core.application import JupyterApp, NoStart
-
+from .handler import ExtensionHandlerMixin
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.transutils import _i18n
-from jupyter_server.utils import url_path_join, is_namespace_package
-from .handler import ExtensionHandlerMixin
+from jupyter_server.utils import is_namespace_package
+from jupyter_server.utils import url_path_join
 
 # -----------------------------------------------------------------------------
 # Util functions and classes.
@@ -29,8 +28,7 @@ from .handler import ExtensionHandlerMixin
 
 
 def _preparse_for_subcommand(Application, argv):
-    """Preparse command line to look for subcommands.
-    """
+    """Preparse command line to look for subcommands."""
     # Read in arguments from command line.
     if len(argv) == 0:
         return
@@ -39,7 +37,7 @@ def _preparse_for_subcommand(Application, argv):
     if Application.subcommands and len(argv) > 0:
         # we have subcommands, and one may have been specified
         subc, subargv = argv[0], argv[1:]
-        if re.match(r'^\w(\-?\w)*$', subc) and subc in Application.subcommands:
+        if re.match(r"^\w(\-?\w)*$", subc) and subc in Application.subcommands:
             # it's a subcommand, and *not* a flag or class parameter
             app = Application()
             app.initialize_subcommand(subc, subargv)
@@ -60,24 +58,24 @@ def _preparse_for_stopping_flags(Application, argv):
     # version), we want to only search the arguments up to the first
     # occurrence of '--', which we're calling interpreted_argv.
     try:
-        interpreted_argv = argv[:argv.index('--')]
+        interpreted_argv = argv[: argv.index("--")]
     except ValueError:
         interpreted_argv = argv
 
     # Catch any help calls.
-    if any(x in interpreted_argv for x in ('-h', '--help-all', '--help')):
+    if any(x in interpreted_argv for x in ("-h", "--help-all", "--help")):
         app = Application()
-        app.print_help('--help-all' in interpreted_argv)
+        app.print_help("--help-all" in interpreted_argv)
         app.exit(0)
 
     # Catch version commands
-    if '--version' in interpreted_argv or '-V' in interpreted_argv:
+    if "--version" in interpreted_argv or "-V" in interpreted_argv:
         app = Application()
         app.print_version()
         app.exit(0)
 
     # Catch generate-config commands.
-    if '--generate-config' in interpreted_argv:
+    if "--generate-config" in interpreted_argv:
         app = Application()
         app.write_default_config()
         app.exit(0)
@@ -87,8 +85,10 @@ class ExtensionAppJinjaMixin(HasTraits):
     """Use Jinja templates for HTML templates on top of an ExtensionApp."""
 
     jinja2_options = Dict(
-        help=_i18n("""Options to pass to the jinja2 environment for this
-        """)
+        help=_i18n(
+            """Options to pass to the jinja2 environment for this
+        """
+        )
     ).tag(config=True)
 
     def _prepare_templates(self):
@@ -96,25 +96,19 @@ class ExtensionAppJinjaMixin(HasTraits):
         self.initialize_templates()
         # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
-            self.settings.update({
-                "{}_template_paths".format(self.name): self.template_paths
-            })
+            self.settings.update({"{}_template_paths".format(self.name): self.template_paths})
 
         # Create a jinja environment for logging html templates.
         self.jinja2_env = Environment(
             loader=FileSystemLoader(self.template_paths),
-            extensions=['jinja2.ext.i18n'],
+            extensions=["jinja2.ext.i18n"],
             autoescape=True,
             **self.jinja2_options
         )
 
-
         # Add the jinja2 environment for this extension to the tornado settings.
-        self.settings.update(
-            {
-                "{}_jinja2_env".format(self.name): self.jinja2_env
-            }
-        )
+        self.settings.update({"{}_jinja2_env".format(self.name): self.jinja2_env})
+
 
 # -----------------------------------------------------------------------------
 # ExtensionApp
@@ -123,6 +117,7 @@ class ExtensionAppJinjaMixin(HasTraits):
 
 class JupyterServerExtensionException(Exception):
     """Exception class for raising for Server extensions errors."""
+
 
 # -----------------------------------------------------------------------------
 # ExtensionApp
@@ -140,6 +135,7 @@ class ExtensionApp(JupyterApp):
         class method. This method can be set as a entry_point in
         the extensions setup.py
     """
+
     # Subclasses should override this trait. Tells the server if
     # this extension allows other other extensions to be loaded
     # side-by-side when launched directly.
@@ -162,7 +158,7 @@ class ExtensionApp(JupyterApp):
         """
     ).tag(config=True)
 
-    @default('open_browser')
+    @default("open_browser")
     def _default_open_browser(self):
         return self.serverapp.config["ServerApp"].get("open_browser", True)
 
@@ -174,10 +170,10 @@ class ExtensionApp(JupyterApp):
 
     @classmethod
     def get_extension_package(cls):
-        parts = cls.__module__.split('.')
+        parts = cls.__module__.split(".")
         if is_namespace_package(parts[0]):
             # in this case the package name is `<namespace>.<package>`.
-            return '.'.join(parts[0:2])
+            return ".".join(parts[0:2])
         return parts[0]
 
     @classmethod
@@ -189,11 +185,11 @@ class ExtensionApp(JupyterApp):
 
     default_url = Unicode().tag(config=True)
 
-    @default('default_url')
+    @default("default_url")
     def _default_url(self):
         return self.extension_url
 
-    file_url_prefix = Unicode('notebooks')
+    file_url_prefix = Unicode("notebooks")
 
     # Is this linked to a serverapp yet?
     _linked = Bool(False)
@@ -208,11 +204,11 @@ class ExtensionApp(JupyterApp):
 
     _log_formatter_cls = LogFormatter
 
-    @default('log_level')
+    @default("log_level")
     def _default_log_level(self):
         return logging.INFO
 
-    @default('log_format')
+    @default("log_format")
     def _default_log_format(self):
         """override default log format to include date & time"""
         return u"%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
@@ -221,40 +217,38 @@ class ExtensionApp(JupyterApp):
         help="""Url where the static assets for the extension are served."""
     ).tag(config=True)
 
-    @default('static_url_prefix')
+    @default("static_url_prefix")
     def _default_static_url_prefix(self):
-        static_url = "static/{name}/".format(
-            name=self.name
-        )
+        static_url = "static/{name}/".format(name=self.name)
         return url_path_join(self.serverapp.base_url, static_url)
 
-    static_paths = List(Unicode(),
+    static_paths = List(
+        Unicode(),
         help="""paths to search for serving static files.
 
         This allows adding javascript/css to be available from the notebook server machine,
         or overriding individual files in the IPython
-        """
+        """,
     ).tag(config=True)
 
-    template_paths = List(Unicode(),
-        help=_i18n("""Paths to search for serving jinja templates.
+    template_paths = List(
+        Unicode(),
+        help=_i18n(
+            """Paths to search for serving jinja templates.
 
-        Can be used to override templates from notebook.templates.""")
+        Can be used to override templates from notebook.templates."""
+        ),
     ).tag(config=True)
 
-    settings = Dict(
-        help=_i18n("""Settings that will passed to the server.""")
-    ).tag(config=True)
+    settings = Dict(help=_i18n("""Settings that will passed to the server.""")).tag(config=True)
 
-    handlers = List(
-        help=_i18n("""Handlers appended to the server.""")
-    ).tag(config=True)
+    handlers = List(help=_i18n("""Handlers appended to the server.""")).tag(config=True)
 
     def _config_file_name_default(self):
         """The default config file name."""
         if not self.name:
-            return ''
-        return 'jupyter_{}_config'.format(self.name.replace('-', '_'))
+            return ""
+        return "jupyter_{}_config".format(self.name.replace("-", "_"))
 
     def initialize_settings(self):
         """Override this method to add handling of settings."""
@@ -274,7 +268,7 @@ class ExtensionApp(JupyterApp):
         """
         traits = self.class_own_traits().keys()
         self.extension_config = Config({t: getattr(self, t) for t in traits})
-        self.settings['{}_config'.format(self.name)] = self.extension_config
+        self.settings["{}_config".format(self.name)] = self.extension_config
 
     def _prepare_settings(self):
         # Make webapp settings accessible to initialize_settings method
@@ -282,10 +276,12 @@ class ExtensionApp(JupyterApp):
         self.settings.update(**webapp.settings)
 
         # Add static and template paths to settings.
-        self.settings.update({
-            "{}_static_paths".format(self.name): self.static_paths,
-            "{}".format(self.name): self,
-        })
+        self.settings.update(
+            {
+                "{}_static_paths".format(self.name): self.static_paths,
+                "{}".format(self.name): self,
+            }
+        )
 
         # Get setting defined by subclass using initialize_settings method.
         self.initialize_settings()
@@ -303,13 +299,13 @@ class ExtensionApp(JupyterApp):
         new_handlers = []
         for handler_items in self.handlers:
             # Build url pattern including base_url
-            pattern = url_path_join(webapp.settings['base_url'], handler_items[0])
+            pattern = url_path_join(webapp.settings["base_url"], handler_items[0])
             handler = handler_items[1]
 
             # Get handler kwargs, if given
             kwargs = {}
             if issubclass(handler, ExtensionHandlerMixin):
-                kwargs['name'] = self.name
+                kwargs["name"] = self.name
 
             try:
                 kwargs.update(handler_items[2])
@@ -327,19 +323,17 @@ class ExtensionApp(JupyterApp):
             # Construct handler.
             handler = (
                 static_url,
-                webapp.settings['static_handler_class'],
-                {'path': self.static_paths}
+                webapp.settings["static_handler_class"],
+                {"path": self.static_paths},
             )
             new_handlers.append(handler)
 
-        webapp.add_handlers('.*$', new_handlers)
+        webapp.add_handlers(".*$", new_handlers)
 
     def _prepare_templates(self):
         # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
-            self.settings.update({
-                "{}_template_paths".format(self.name): self.template_paths
-            })
+            self.settings.update({"{}_template_paths".format(self.name): self.template_paths})
         self.initialize_templates()
 
     def _jupyter_server_config(self):
@@ -347,7 +341,7 @@ class ExtensionApp(JupyterApp):
             "ServerApp": {
                 "default_url": self.default_url,
                 "open_browser": self.open_browser,
-                "file_url_prefix": self.file_url_prefix
+                "file_url_prefix": self.file_url_prefix,
             }
         }
         base_config["ServerApp"].update(self.serverapp_config)
@@ -424,8 +418,7 @@ class ExtensionApp(JupyterApp):
         """Cleanup any resources managed by this extension."""
 
     def stop(self):
-        """Stop the underlying Jupyter server.
-        """
+        """Stop the underlying Jupyter server."""
         self.serverapp.stop()
         self.serverapp.clear_instance()
 
@@ -447,32 +440,81 @@ class ExtensionApp(JupyterApp):
 
     @classmethod
     def load_classic_server_extension(cls, serverapp):
-        """Enables extension to be loaded as classic Notebook (jupyter/notebook) extension.
-        """
+        """Enables extension to be loaded as classic Notebook (jupyter/notebook) extension."""
         extension = cls()
         extension.serverapp = serverapp
         extension.load_config_file()
         extension.update_config(serverapp.config)
         extension.parse_command_line(serverapp.extra_args)
         # Add redirects to get favicons from old locations in the classic notebook server
-        extension.handlers.extend([
-            (r"/static/favicons/favicon.ico", RedirectHandler,
-                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon.ico")}),
-            (r"/static/favicons/favicon-busy-1.ico", RedirectHandler,
-                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-1.ico")}),
-            (r"/static/favicons/favicon-busy-2.ico", RedirectHandler,
-                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-2.ico")}),
-            (r"/static/favicons/favicon-busy-3.ico", RedirectHandler,
-                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-3.ico")}),
-            (r"/static/favicons/favicon-file.ico", RedirectHandler,
-                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-file.ico")}),
-            (r"/static/favicons/favicon-notebook.ico", RedirectHandler,
-                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-notebook.ico")}),
-            (r"/static/favicons/favicon-terminal.ico", RedirectHandler,
-                {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-terminal.ico")}),
-            (r"/static/logo/logo.png", RedirectHandler,
-                {"url": url_path_join(serverapp.base_url, "static/base/images/logo.png")}),
-        ])
+        extension.handlers.extend(
+            [
+                (
+                    r"/static/favicons/favicon.ico",
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon.ico")},
+                ),
+                (
+                    r"/static/favicons/favicon-busy-1.ico",
+                    RedirectHandler,
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-busy-1.ico"
+                        )
+                    },
+                ),
+                (
+                    r"/static/favicons/favicon-busy-2.ico",
+                    RedirectHandler,
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-busy-2.ico"
+                        )
+                    },
+                ),
+                (
+                    r"/static/favicons/favicon-busy-3.ico",
+                    RedirectHandler,
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-busy-3.ico"
+                        )
+                    },
+                ),
+                (
+                    r"/static/favicons/favicon-file.ico",
+                    RedirectHandler,
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-file.ico"
+                        )
+                    },
+                ),
+                (
+                    r"/static/favicons/favicon-notebook.ico",
+                    RedirectHandler,
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-notebook.ico"
+                        )
+                    },
+                ),
+                (
+                    r"/static/favicons/favicon-terminal.ico",
+                    RedirectHandler,
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-terminal.ico"
+                        )
+                    },
+                ),
+                (
+                    r"/static/logo/logo.png",
+                    RedirectHandler,
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/logo.png")},
+                ),
+            ]
+        )
         extension.initialize()
 
     @classmethod
@@ -486,12 +528,11 @@ class ExtensionApp(JupyterApp):
         """
         jpserver_extensions = {cls.get_extension_package(): True}
         find_extensions = cls.load_other_extensions
-        if 'jpserver_extensions' in cls.serverapp_config:
-            jpserver_extensions.update(cls.serverapp_config['jpserver_extensions'])
-            cls.serverapp_config['jpserver_extensions'] = jpserver_extensions
+        if "jpserver_extensions" in cls.serverapp_config:
+            jpserver_extensions.update(cls.serverapp_config["jpserver_extensions"])
+            cls.serverapp_config["jpserver_extensions"] = jpserver_extensions
             find_extensions = False
-        serverapp = ServerApp.instance(
-            jpserver_extensions=jpserver_extensions, **kwargs)
+        serverapp = ServerApp.instance(jpserver_extensions=jpserver_extensions, **kwargs)
         serverapp.aliases.update(cls.aliases)
         serverapp.initialize(
             argv=argv,

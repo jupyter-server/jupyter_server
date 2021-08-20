@@ -1,17 +1,17 @@
 """Tornado handlers for frontend config storage."""
-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
+
 from tornado import web
 
 from ...base.handlers import APIHandler
 
-class ConfigHandler(APIHandler):
 
+class ConfigHandler(APIHandler):
     @web.authenticated
     def get(self, section_name):
-        self.set_header("Content-Type", 'application/json')
+        self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(self.config_manager.get(section_name)))
 
     @web.authenticated

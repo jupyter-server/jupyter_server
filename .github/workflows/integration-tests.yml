@@ -1,9 +1,9 @@
 name: Jupyter Server Integration Tests [Linux]
 on:
   push:
-    branches: 'master'
+    branches: "master"
   pull_request:
-    branches: '*'
+    branches: "*"
 jobs:
   build:
     runs-on: ${{ matrix.os }}-latest
@@ -11,37 +11,37 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu]
-        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10-dev', 'pypy3' ]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10-dev", "pypy3"]
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-        architecture: 'x64'
-    - name: Upgrade packaging dependencies
-      run: |
-        pip install --upgrade pip setuptools wheel --user
-    - name: Get pip cache dir
-      id: pip-cache
-      run: |
-        echo "::set-output name=dir::$(pip cache dir)"
-    - name: Cache pip
-      uses: actions/cache@v2
-      with:
-        path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-${{ matrix.python-version }}-
-          ${{ runner.os }}-pip-
-    - name: Install the Python dependencies
-      run: |
-        pip install -e ".[test]"
-    - name: List installed packages
-      run: |
-        pip freeze
-        pip check
-    - name: Run the tests
-      run: |
-        pytest -vv --integration_tests=true
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: "x64"
+      - name: Upgrade packaging dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel --user
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          echo "::set-output name=dir::$(pip cache dir)"
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+            ${{ runner.os }}-pip-
+      - name: Install the Python dependencies
+        run: |
+          pip install -e ".[test]"
+      - name: List installed packages
+        run: |
+          pip freeze
+          pip check
+      - name: Run the tests
+        run: |
+          pytest -vv --integration_tests=true

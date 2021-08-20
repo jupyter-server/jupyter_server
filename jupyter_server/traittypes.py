@@ -1,6 +1,9 @@
-from ast import literal_eval
 import inspect
-from traitlets import ClassBasedTraitType, Undefined, TraitError
+from ast import literal_eval
+
+from traitlets import ClassBasedTraitType
+from traitlets import TraitError
+from traitlets import Undefined
 
 # Traitlet's 5.x includes a set of utilities for building
 # description strings for objects. Traitlets 5.x does not
@@ -102,16 +105,15 @@ except ImportError:
                     name = _prefix(value) + name
                 if tick_wrap:
                     name = name.join("''")
-                return describe(article, value, name=name,
-                    verbose=verbose, capital=capital)
+                return describe(article, value, name=name, verbose=verbose, capital=capital)
         elif article in ("a", "an") or article is None:
             if article is None:
                 return typename
             return add_article(typename, False, capital)
         else:
-            raise ValueError("The 'article' argument should "
-                "be 'the', 'a', 'an', or None not %r" % article)
-
+            raise ValueError(
+                "The 'article' argument should " "be 'the', 'a', 'an', or None not %r" % article
+            )
 
     def add_article(name, definite=False, capital=False):
         """Returns the string with a prepended article.
@@ -129,11 +131,11 @@ except ImportError:
         if definite:
             result = "the " + name
         else:
-            first_letters = re.compile(r'[\W_]+').sub('', name)
-            if first_letters[:1].lower() in 'aeiou':
-                result = 'an ' + name
+            first_letters = re.compile(r"[\W_]+").sub("", name)
+            if first_letters[:1].lower() in "aeiou":
+                result = "an " + name
             else:
-                result = 'a ' + name
+                result = "a " + name
         if capital:
             return result[0].upper() + result[1:]
         else:
@@ -141,11 +143,11 @@ except ImportError:
 
     def _prefix(value):
         if isinstance(value, types.MethodType):
-            name = describe(None, value.__self__, verbose=True) + '.'
+            name = describe(None, value.__self__, verbose=True) + "."
         else:
             module = inspect.getmodule(value)
             if module is not None and module.__name__ != "builtins":
-                name = module.__name__ + '.'
+                name = module.__name__ + "."
             else:
                 name = ""
         return name
@@ -209,8 +211,10 @@ class TypeFromClasses(ClassBasedTraitType):
             try:
                 value = self._resolve_string(value)
             except ImportError:
-                raise TraitError("The '%s' trait of %s instance must be a type, but "
-                                 "%r could not be imported" % (self.name, obj, value))
+                raise TraitError(
+                    "The '%s' trait of %s instance must be a type, but "
+                    "%r could not be imported" % (self.name, obj, value)
+                )
         try:
             if self.subclass_from_klasses(value):
                 return value
@@ -224,12 +228,12 @@ class TypeFromClasses(ClassBasedTraitType):
         result = "a subclass of "
         for klass in self.klasses:
             if not isinstance(klass, str):
-                klass = klass.__module__ + '.' + klass.__name__
+                klass = klass.__module__ + "." + klass.__name__
             result += f"{klass} or "
         # Strip the last "or"
         result = result.strip(" or ")
         if self.allow_none:
-            return result + ' or None'
+            return result + " or None"
         return result
 
     def instance_init(self, obj):
@@ -258,7 +262,7 @@ class TypeFromClasses(ClassBasedTraitType):
         if isinstance(value, str):
             return repr(value)
         else:
-            return repr(f'{value.__module__}.{value.__name__}')
+            return repr(f"{value.__module__}.{value.__name__}")
 
 
 class InstanceFromClasses(ClassBasedTraitType):
@@ -266,6 +270,7 @@ class InstanceFromClasses(ClassBasedTraitType):
     The value can also be an instance of a subclass of the specified classes.
     Subclasses can declare default classes by overriding the klass attribute
     """
+
     def __init__(self, klasses=None, args=None, kw=None, **kwargs):
         """Construct an Instance trait.
         This trait allows values that are instances of a particular
@@ -297,8 +302,10 @@ class InstanceFromClasses(ClassBasedTraitType):
         elif all(inspect.isclass(k) or isinstance(k, str) for k in klasses):
             self.klasses = klasses
         else:
-            raise TraitError('The klasses attribute must be a list of class names or classes'
-                                ' not: %r' % klasses)
+            raise TraitError(
+                "The klasses attribute must be a list of class names or classes"
+                " not: %r" % klasses
+            )
 
         if (kw is not None) and not isinstance(kw, dict):
             raise TraitError("The 'kw' argument must be a dict or None.")
@@ -330,7 +337,7 @@ class InstanceFromClasses(ClassBasedTraitType):
             result += " or "
         result = result.strip(" or ")
         if self.allow_none:
-            result += ' or None'
+            result += " or None"
         return result
 
     def instance_init(self, obj):
@@ -354,8 +361,7 @@ class InstanceFromClasses(ClassBasedTraitType):
     def make_dynamic_default(self):
         if (self.default_args is None) and (self.default_kwargs is None):
             return None
-        return self.klass(*(self.default_args or ()),
-                          **(self.default_kwargs or {}))
+        return self.klass(*(self.default_args or ()), **(self.default_kwargs or {}))
 
     def default_value_repr(self):
         return repr(self.make_dynamic_default())

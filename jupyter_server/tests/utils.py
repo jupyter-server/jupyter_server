@@ -1,11 +1,12 @@
 import json
+
 import tornado
 
 some_resource = u"The very model of a modern major general"
 
 sample_kernel_json = {
-    'argv':['cat', '{connection_file}'],
-    'display_name': 'Test kernel',
+    "argv": ["cat", "{connection_file}"],
+    "display_name": "Test kernel",
 }
 
 
@@ -25,14 +26,16 @@ def expected_http_error(error, expected_code, expected_message=None):
         if expected_message is not None and expected_message != str(e):
             return False
         return True
-    elif any([
-        isinstance(e, tornado.httpclient.HTTPClientError),
-        isinstance(e, tornado.httpclient.HTTPError)
-    ]):
+    elif any(
+        [
+            isinstance(e, tornado.httpclient.HTTPClientError),
+            isinstance(e, tornado.httpclient.HTTPError),
+        ]
+    ):
         if expected_code != e.code:
             return False
         if expected_message:
-            message = json.loads(e.response.body.decode())['message']
+            message = json.loads(e.response.body.decode())["message"]
             if expected_message != message:
                 return False
         return True

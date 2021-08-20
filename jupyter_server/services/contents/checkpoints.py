@@ -1,12 +1,9 @@
 """
 Classes for managing Checkpoints.
 """
-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-
 from tornado.web import HTTPError
-
 from traitlets.config.configurable import LoggingConfigurable
 
 
@@ -22,6 +19,7 @@ class Checkpoints(LoggingConfigurable):
     delete_checkpoint(self, checkpoint_id, path)
     list_checkpoints(self, path)
     """
+
     def create_checkpoint(self, contents_mgr, path):
         """Create a checkpoint."""
         raise NotImplementedError("must be implemented in a subclass")
@@ -45,12 +43,12 @@ class Checkpoints(LoggingConfigurable):
     def rename_all_checkpoints(self, old_path, new_path):
         """Rename all checkpoints for old_path to new_path."""
         for cp in self.list_checkpoints(old_path):
-            self.rename_checkpoint(cp['id'], old_path, new_path)
+            self.rename_checkpoint(cp["id"], old_path, new_path)
 
     def delete_all_checkpoints(self, path):
         """Delete all checkpoints for the given path."""
         for checkpoint in self.list_checkpoints(path):
-            self.delete_checkpoint(checkpoint['id'], path)
+            self.delete_checkpoint(checkpoint["id"], path)
 
 
 class GenericCheckpointsMixin(object):
@@ -77,30 +75,30 @@ class GenericCheckpointsMixin(object):
 
     def create_checkpoint(self, contents_mgr, path):
         model = contents_mgr.get(path, content=True)
-        type = model['type']
-        if type == 'notebook':
+        type = model["type"]
+        if type == "notebook":
             return self.create_notebook_checkpoint(
-                model['content'],
+                model["content"],
                 path,
             )
-        elif type == 'file':
+        elif type == "file":
             return self.create_file_checkpoint(
-                model['content'],
-                model['format'],
+                model["content"],
+                model["format"],
                 path,
             )
         else:
-            raise HTTPError(500, u'Unexpected type %s' % type)
+            raise HTTPError(500, u"Unexpected type %s" % type)
 
     def restore_checkpoint(self, contents_mgr, checkpoint_id, path):
         """Restore a checkpoint."""
-        type = contents_mgr.get(path, content=False)['type']
-        if type == 'notebook':
+        type = contents_mgr.get(path, content=False)["type"]
+        if type == "notebook":
             model = self.get_notebook_checkpoint(checkpoint_id, path)
-        elif type == 'file':
+        elif type == "file":
             model = self.get_file_checkpoint(checkpoint_id, path)
         else:
-            raise HTTPError(500, u'Unexpected type %s' % type)
+            raise HTTPError(500, u"Unexpected type %s" % type)
         contents_mgr.save(model, path)
 
     # Required Methods
@@ -146,6 +144,7 @@ class AsyncCheckpoints(Checkpoints):
     """
     Base class for managing checkpoints for a ContentsManager asynchronously.
     """
+
     async def create_checkpoint(self, contents_mgr, path):
         """Create a checkpoint."""
         raise NotImplementedError("must be implemented in a subclass")
@@ -168,13 +167,13 @@ class AsyncCheckpoints(Checkpoints):
 
     async def rename_all_checkpoints(self, old_path, new_path):
         """Rename all checkpoints for old_path to new_path."""
-        for cp in (await self.list_checkpoints(old_path)):
-            await self.rename_checkpoint(cp['id'], old_path, new_path)
+        for cp in await self.list_checkpoints(old_path):
+            await self.rename_checkpoint(cp["id"], old_path, new_path)
 
     async def delete_all_checkpoints(self, path):
         """Delete all checkpoints for the given path."""
-        for checkpoint in (await self.list_checkpoints(path)):
-            await self.delete_checkpoint(checkpoint['id'], path)
+        for checkpoint in await self.list_checkpoints(path):
+            await self.delete_checkpoint(checkpoint["id"], path)
 
 
 class AsyncGenericCheckpointsMixin(GenericCheckpointsMixin):
@@ -185,30 +184,30 @@ class AsyncGenericCheckpointsMixin(GenericCheckpointsMixin):
 
     async def create_checkpoint(self, contents_mgr, path):
         model = await contents_mgr.get(path, content=True)
-        type = model['type']
-        if type == 'notebook':
+        type = model["type"]
+        if type == "notebook":
             return await self.create_notebook_checkpoint(
-                model['content'],
+                model["content"],
                 path,
             )
-        elif type == 'file':
+        elif type == "file":
             return await self.create_file_checkpoint(
-                model['content'],
-                model['format'],
+                model["content"],
+                model["format"],
                 path,
             )
         else:
-            raise HTTPError(500, u'Unexpected type %s' % type)
+            raise HTTPError(500, u"Unexpected type %s" % type)
 
     async def restore_checkpoint(self, contents_mgr, checkpoint_id, path):
         """Restore a checkpoint."""
-        type = await contents_mgr.get(path, content=False)['type']
-        if type == 'notebook':
+        type = await contents_mgr.get(path, content=False)["type"]
+        if type == "notebook":
             model = await self.get_notebook_checkpoint(checkpoint_id, path)
-        elif type == 'file':
+        elif type == "file":
             model = await self.get_file_checkpoint(checkpoint_id, path)
         else:
-            raise HTTPError(500, u'Unexpected type %s' % type)
+            raise HTTPError(500, u"Unexpected type %s" % type)
         await contents_mgr.save(model, path)
 
     # Required Methods

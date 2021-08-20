@@ -1,13 +1,14 @@
 from tornado import web
+
 from ..base.handlers import JupyterHandler
 from ..services.kernelspecs.handlers import kernel_name_regex
 
 
 class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
-    SUPPORTED_METHODS = ('GET', 'HEAD')
+    SUPPORTED_METHODS = ("GET", "HEAD")
 
     def initialize(self):
-        web.StaticFileHandler.initialize(self, path='')
+        web.StaticFileHandler.initialize(self, path="")
 
     @web.authenticated
     def get(self, kernel_name, path, include_body=True):
@@ -15,8 +16,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
         try:
             self.root = ksm.get_kernel_spec(kernel_name).resource_dir
         except KeyError as e:
-            raise web.HTTPError(404, u'Kernel spec %s not found' %
-                                kernel_name) from e
+            raise web.HTTPError(404, u"Kernel spec %s not found" % kernel_name) from e
         self.log.debug("Serving kernel resource from: %s", self.root)
         return web.StaticFileHandler.get(self, path, include_body=include_body)
 
@@ -24,7 +24,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
     def head(self, kernel_name, path):
         return self.get(kernel_name, path, include_body=False)
 
+
 default_handlers = [
     (r"/kernelspecs/%s/(?P<path>.*)" % kernel_name_regex, KernelSpecResourceHandler),
 ]
-

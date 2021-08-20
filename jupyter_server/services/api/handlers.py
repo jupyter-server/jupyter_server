@@ -1,30 +1,29 @@
 """Tornado handlers for api specifications."""
-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-
 import json
 import os
 
 from tornado import web
 
-from ...base.handlers import JupyterHandler, APIHandler
+from ...base.handlers import APIHandler
+from ...base.handlers import JupyterHandler
+from jupyter_server._tz import isoformat
+from jupyter_server._tz import utcfromtimestamp
 from jupyter_server.utils import ensure_async
-from jupyter_server._tz import utcfromtimestamp, isoformat
 
 
 class APISpecHandler(web.StaticFileHandler, JupyterHandler):
-
     def initialize(self):
         web.StaticFileHandler.initialize(self, path=os.path.dirname(__file__))
 
     @web.authenticated
     def get(self):
         self.log.warning("Serving api spec (experimental, incomplete)")
-        return web.StaticFileHandler.get(self, 'api.yaml')
+        return web.StaticFileHandler.get(self, "api.yaml")
 
     def get_content_type(self):
-        return 'text/x-yaml'
+        return "text/x-yaml"
 
 
 class APIStatusHandler(APIHandler):
@@ -34,17 +33,17 @@ class APIStatusHandler(APIHandler):
     @web.authenticated
     async def get(self):
         # if started was missing, use unix epoch
-        started = self.settings.get('started', utcfromtimestamp(0))
+        started = self.settings.get("started", utcfromtimestamp(0))
         started = isoformat(started)
 
         kernels = await ensure_async(self.kernel_manager.list_kernels())
-        total_connections = sum(k['connections'] for k in kernels)
+        total_connections = sum(k["connections"] for k in kernels)
         last_activity = isoformat(self.application.last_activity())
         model = {
-            'started': started,
-            'last_activity': last_activity,
-            'kernels': len(kernels),
-            'connections': total_connections,
+            "started": started,
+            "last_activity": last_activity,
+            "kernels": len(kernels),
+            "connections": total_connections,
         }
         self.finish(json.dumps(model, sort_keys=True))
 
