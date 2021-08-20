@@ -1,4 +1,5 @@
 import pytest
+
 from .mockextensions.app import MockExtensionApp
 
 
@@ -25,10 +26,9 @@ mock_html = """
 """
 
 
-
 @pytest.fixture
 def mock_template(jp_template_dir):
-    index = jp_template_dir.joinpath('index.html')
+    index = jp_template_dir.joinpath("index.html")
     index.write_text(mock_html)
 
 

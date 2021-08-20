@@ -3,49 +3,43 @@ import sys
 import traceback
 
 from tornado.gen import multi
-
+from traitlets import Any
+from traitlets import Bool
+from traitlets import default
+from traitlets import Dict
+from traitlets import HasTraits
+from traitlets import Instance
+from traitlets import observe
+from traitlets import Unicode
+from traitlets import validate as validate_trait
 from traitlets.config import LoggingConfigurable
 
-from traitlets import (
-    HasTraits,
-    Dict,
-    Unicode,
-    Bool,
-    Any,
-    Instance,
-    default,
-    observe,
-    validate as validate_trait,
-)
-
 from .config import ExtensionConfigManager
-from .utils import (
-    ExtensionMetadataError,
-    ExtensionModuleNotFound,
-    get_loader,
-    get_metadata,
-)
+from .utils import ExtensionMetadataError
+from .utils import ExtensionModuleNotFound
+from .utils import get_loader
+from .utils import get_metadata
 
 
 class ExtensionPoint(HasTraits):
     """A simple API for connecting to a Jupyter Server extension
     point defined by metadata and importable from a Python package.
     """
+
     _linked = Bool(False)
     _app = Any(None, allow_none=True)
 
     metadata = Dict()
 
-    @validate_trait('metadata')
+    @validate_trait("metadata")
     def _valid_metadata(self, proposed):
-        metadata = proposed['value']
+        metadata = proposed["value"]
         # Verify that the metadata has a "name" key.
         try:
-            self._module_name = metadata['module']
+            self._module_name = metadata["module"]
         except KeyError:
             raise ExtensionMetadataError(
-                "There is no 'module' key in the extension's "
-                "metadata packet."
+                "There is no 'module' key in the extension's " "metadata packet."
             )
 
         try:
@@ -56,7 +50,7 @@ class ExtensionPoint(HasTraits):
                 "sure the extension is installed?".format(self._module_name)
             )
         # If the metadata includes an ExtensionApp, create an instance.
-        if 'app' in metadata:
+        if "app" in metadata:
             self._app = metadata["app"]()
         return metadata
 
@@ -106,8 +100,7 @@ class ExtensionPoint(HasTraits):
 
     @property
     def module(self):
-        """The imported module (using importlib.import_module)
-        """
+        """The imported module (using importlib.import_module)"""
         return self._module
 
     def _get_linker(self):
@@ -117,9 +110,9 @@ class ExtensionPoint(HasTraits):
             linker = getattr(
                 self.module,
                 # Search for a _link_jupyter_extension
-                '_link_jupyter_server_extension',
+                "_link_jupyter_server_extension",
                 # Otherwise return a dummy function.
-                lambda serverapp: None
+                lambda serverapp: None,
             )
         return linker
 
@@ -170,6 +163,7 @@ class ExtensionPackage(HasTraits):
     ext_name = "my_extensions"
     extpkg = ExtensionPackage(name=ext_name)
     """
+
     name = Unicode(help="Name of the an importable Python package.")
     enabled = Bool(False).tag(config=True)
 
@@ -182,7 +176,7 @@ class ExtensionPackage(HasTraits):
 
     @validate_trait("name")
     def _validate_name(self, proposed):
-        name = proposed['value']
+        name = proposed["value"]
         self._extension_points = {}
         try:
             self._module, self._metadata = get_metadata(name)
@@ -239,10 +233,7 @@ class ExtensionPackage(HasTraits):
             self.link_point(point_name, serverapp)
 
     def load_all_points(self, serverapp):
-        return [
-            self.load_point(point_name, serverapp)
-            for point_name in self.extension_points
-        ]
+        return [self.load_point(point_name, serverapp) for point_name in self.extension_points]
 
 
 class ExtensionManager(LoggingConfigurable):
@@ -296,21 +287,15 @@ class ExtensionManager(LoggingConfigurable):
 
     @property
     def extension_apps(self):
-        """Return mapping of extension names and sets of ExtensionApp objects.
-        """
+        """Return mapping of extension names and sets of ExtensionApp objects."""
         return {
-            name: {
-                point.app
-                for point in extension.extension_points.values()
-                if point.app
-            }
+            name: {point.app for point in extension.extension_points.values() if point.app}
             for name, extension in self.extensions.items()
         }
 
     @property
     def extension_points(self):
-        """Return mapping of extension point names and ExtensionPoint objects.
-        """
+        """Return mapping of extension point names and ExtensionPoint objects."""
         return {
             name: point
             for value in self.extensions.values()
@@ -365,7 +350,11 @@ class ExtensionManager(LoggingConfigurable):
                 points = extension.load_all_points(serverapp)
             except Exception as e:
                 self.log.debug("".join(traceback.format_exception(*sys.exc_info())))
-                self.log.warning("{name} | extension failed loading with message: {error}".format(name=name,error=str(e)))
+                self.log.warning(
+                    "{name} | extension failed loading with message: {error}".format(
+                        name=name, error=str(e)
+                    )
+                )
             else:
                 self.log.info("{name} | extension was successfully loaded.".format(name=name))
 
@@ -396,7 +385,9 @@ class ExtensionManager(LoggingConfigurable):
 
     async def stop_all_extensions(self, serverapp):
         """Call the shutdown hooks in all extensions."""
-        await multi([
-            self.stop_extension(name, apps)
-            for name, apps in sorted(dict(self.extension_apps).items())
-        ])
+        await multi(
+            [
+                self.stop_extension(name, apps)
+                for name, apps in sorted(dict(self.extension_apps).items())
+            ]
+        )

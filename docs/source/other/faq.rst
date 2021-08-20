@@ -11,4 +11,3 @@ Can I configure multiple extensions at once?
 --------------------------------------------
 
 Checkout our "Operator" docs on how to :ref:`configure extensions <configure-multiple-extensions>`. |:closed_book:|
-

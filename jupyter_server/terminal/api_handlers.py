@@ -1,10 +1,11 @@
 import json
+
 from tornado import web
+
 from ..base.handlers import APIHandler
 
 
 class TerminalRootHandler(APIHandler):
-
     @web.authenticated
     def get(self):
         models = self.terminal_manager.list()
@@ -20,7 +21,7 @@ class TerminalRootHandler(APIHandler):
 
 
 class TerminalHandler(APIHandler):
-    SUPPORTED_METHODS = ('GET', 'DELETE')
+    SUPPORTED_METHODS = ("GET", "DELETE")
 
     @web.authenticated
     def get(self, name):

@@ -1,6 +1,8 @@
 import os
 import pathlib
+
 import pytest
+
 from jupyter_server import DEFAULT_JUPYTER_SERVER_PORT
 
 
@@ -15,8 +17,8 @@ def jp_unix_socket_file(jp_process_id):
     """Define a temporary socket connection"""
     # Rely on `/tmp` to avoid any Linux socket length max buffer
     # issues. Key on PID for process-wise concurrency.
-    tmp_path = pathlib.Path('/tmp')
-    filename = 'jupyter_server.{}.sock'.format(jp_process_id)
+    tmp_path = pathlib.Path("/tmp")
+    filename = "jupyter_server.{}.sock".format(jp_process_id)
     jp_unix_socket_file = tmp_path.joinpath(filename)
     yield str(jp_unix_socket_file)
     # Clean up the file after the test runs.

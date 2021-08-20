@@ -1,12 +1,13 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (c) Jupyter Development Team
 #
 #  Distributed under the terms of the BSD License.  The full license is in
 #  the file COPYING, distributed as part of this software.
-#-----------------------------------------------------------------------------
-
+# -----------------------------------------------------------------------------
 import json
+
 from tornado.log import access_log
+
 from .prometheus.log_functions import prometheus_log_method
 
 
@@ -46,8 +47,8 @@ def log_request(handler):
     msg = "{status} {method} {uri} ({ip}) {request_time:.2f}ms"
     if status >= 400:
         # log bad referers
-        ns['referer'] = request.headers.get('Referer', 'None')
-        msg = msg + ' referer={referer}'
+        ns["referer"] = request.headers.get("Referer", "None")
+        msg = msg + " referer={referer}"
     if status >= 500 and status != 502:
         # log all headers if it caused an error
         log_method(json.dumps(dict(request.headers), indent=2))

@@ -1,6 +1,6 @@
 import pytest
-
 from jupyter_core.paths import jupyter_config_path
+
 from jupyter_server.extension.config import (
     ExtensionConfigManager,
 )
@@ -14,7 +14,7 @@ pytestmark = pytest.mark.usefixtures("jp_environ")
 @pytest.fixture
 def configd(jp_env_config_path):
     """A pathlib.Path object that acts like a jupyter_server_config.d folder."""
-    configd = jp_env_config_path.joinpath('jupyter_server_config.d')
+    configd = jp_env_config_path.joinpath("jupyter_server_config.d")
     configd.mkdir()
     return configd
 
@@ -28,6 +28,7 @@ ext1_json_config = """\
     }
 }
 """
+
 
 @pytest.fixture
 def ext1_config(configd):
@@ -53,9 +54,7 @@ def ext2_config(configd):
 
 
 def test_list_extension_from_configd(ext1_config, ext2_config):
-    manager = ExtensionConfigManager(
-        read_config_path=jupyter_config_path()
-    )
+    manager = ExtensionConfigManager(read_config_path=jupyter_config_path())
     extensions = manager.get_jpserver_extensions()
     assert "ext2_config" in extensions
     assert "ext1_config" in extensions

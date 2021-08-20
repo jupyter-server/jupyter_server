@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-
 import os
+
 from jupyter_server.serverapp import ServerApp
 
 header = """\
@@ -36,10 +36,10 @@ enter::
 
 """
 try:
-    destination = os.path.join(os.path.dirname(__file__), 'source/other/full-config.rst')
+    destination = os.path.join(os.path.dirname(__file__), "source/other/full-config.rst")
 except:
-    destination = os.path.join(os.getcwd(), 'full-config.rst')
+    destination = os.path.join(os.getcwd(), "full-config.rst")
 
-with open(destination, 'w') as f:
+with open(destination, "w") as f:
     f.write(header)
     f.write(ServerApp().document_config_options())

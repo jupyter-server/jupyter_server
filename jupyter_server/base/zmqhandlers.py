@@ -1,21 +1,20 @@
 # coding: utf-8
 """Tornado handlers for WebSocket <-> ZMQ sockets."""
-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-
 import json
 import struct
 import sys
-import tornado
-
 from urllib.parse import urlparse
-from tornado import ioloop, web
-from tornado.websocket import WebSocketHandler
 
-from jupyter_client.session import Session
-from jupyter_client.jsonutil import date_default, extract_dates
+import tornado
 from ipython_genutils.py3compat import cast_unicode
+from jupyter_client.jsonutil import date_default
+from jupyter_client.jsonutil import extract_dates
+from jupyter_client.session import Session
+from tornado import ioloop
+from tornado import web
+from tornado.websocket import WebSocketHandler
 
 from .handlers import JupyterHandler
 
@@ -37,18 +36,18 @@ def serialize_binary_message(msg):
     """
     # don't modify msg or buffer list in-place
     msg = msg.copy()
-    buffers = list(msg.pop('buffers'))
+    buffers = list(msg.pop("buffers"))
     if sys.version_info < (3, 4):
         buffers = [x.tobytes() for x in buffers]
-    bmsg = json.dumps(msg, default=date_default).encode('utf8')
+    bmsg = json.dumps(msg, default=date_default).encode("utf8")
     buffers.insert(0, bmsg)
     nbufs = len(buffers)
     offsets = [4 * (nbufs + 1)]
     for buf in buffers[:-1]:
         offsets.append(offsets[-1] + len(buf))
-    offsets_buf = struct.pack('!' + 'I' * (nbufs + 1), nbufs, *offsets)
+    offsets_buf = struct.pack("!" + "I" * (nbufs + 1), nbufs, *offsets)
     buffers.insert(0, offsets_buf)
-    return b''.join(buffers)
+    return b"".join(buffers)
 
 
 def deserialize_binary_message(bmsg):
@@ -65,17 +64,18 @@ def deserialize_binary_message(bmsg):
     -------
     message dictionary
     """
-    nbufs = struct.unpack('!i', bmsg[:4])[0]
-    offsets = list(struct.unpack('!' + 'I' * nbufs, bmsg[4:4*(nbufs+1)]))
+    nbufs = struct.unpack("!i", bmsg[:4])[0]
+    offsets = list(struct.unpack("!" + "I" * nbufs, bmsg[4 : 4 * (nbufs + 1)]))
     offsets.append(None)
     bufs = []
     for start, stop in zip(offsets[:-1], offsets[1:]):
         bufs.append(bmsg[start:stop])
-    msg = json.loads(bufs[0].decode('utf8'))
-    msg['header'] = extract_dates(msg['header'])
-    msg['parent_header'] = extract_dates(msg['parent_header'])
-    msg['buffers'] = bufs[1:]
+    msg = json.loads(bufs[0].decode("utf8"))
+    msg["header"] = extract_dates(msg["header"])
+    msg["parent_header"] = extract_dates(msg["parent_header"])
+    msg["buffers"] = bufs[1:]
     return msg
+
 
 # ping interval for keeping websockets alive (30 seconds)
 WS_PING_INTERVAL = 30000
@@ -83,6 +83,7 @@ WS_PING_INTERVAL = 30000
 
 class WebSocketMixin(object):
     """Mixin for common websocket options"""
+
     ping_callback = None
     last_ping = 0
     last_pong = 0
@@ -94,7 +95,7 @@ class WebSocketMixin(object):
 
         Set ws_ping_interval = 0 to disable pings.
         """
-        return self.settings.get('ws_ping_interval', WS_PING_INTERVAL)
+        return self.settings.get("ws_ping_interval", WS_PING_INTERVAL)
 
     @property
     def ping_timeout(self):
@@ -102,9 +103,7 @@ class WebSocketMixin(object):
         close the websocket connection (VPNs, etc. can fail to cleanly close ws connections).
         Default is max of 3 pings or 30 seconds.
         """
-        return self.settings.get('ws_ping_timeout',
-            max(3 * self.ping_interval, WS_PING_INTERVAL)
-        )
+        return self.settings.get("ws_ping_timeout", max(3 * self.ping_interval, WS_PING_INTERVAL))
 
     def check_origin(self, origin=None):
         """Check Origin == Host or Access-Control-Allow-Origin.
@@ -112,8 +111,9 @@ class WebSocketMixin(object):
         Tornado >= 4 calls this method automatically, raising 403 if it returns False.
         """
 
-        if self.allow_origin == '*' or (
-            hasattr(self, 'skip_check_origin') and self.skip_check_origin()):
+        if self.allow_origin == "*" or (
+            hasattr(self, "skip_check_origin") and self.skip_check_origin()
+        ):
             return True
 
         host = self.request.headers.get("Host")
@@ -140,8 +140,10 @@ class WebSocketMixin(object):
             # No CORS headers deny the request
             allow = False
         if not allow:
-            self.log.warning("Blocking Cross Origin WebSocket Attempt.  Origin: %s, Host: %s",
-                origin, host,
+            self.log.warning(
+                "Blocking Cross Origin WebSocket Attempt.  Origin: %s, Host: %s",
+                origin,
+                host,
             )
         return allow
 
@@ -158,7 +160,8 @@ class WebSocketMixin(object):
             self.last_ping = loop.time()  # Remember time of last ping
             self.last_pong = self.last_ping
             self.ping_callback = ioloop.PeriodicCallback(
-                self.send_ping, self.ping_interval,
+                self.send_ping,
+                self.ping_interval,
             )
             self.ping_callback.start()
         return super(WebSocketMixin, self).open(*args, **kwargs)
@@ -174,12 +177,12 @@ class WebSocketMixin(object):
         now = ioloop.IOLoop.current().time()
         since_last_pong = 1e3 * (now - self.last_pong)
         since_last_ping = 1e3 * (now - self.last_ping)
-        if since_last_ping < 2*self.ping_interval and since_last_pong > self.ping_timeout:
+        if since_last_ping < 2 * self.ping_interval and since_last_pong > self.ping_timeout:
             self.log.warning("WebSocket ping timeout after %i ms.", since_last_pong)
             self.close()
             return
 
-        self.ping(b'')
+        self.ping(b"")
         self.last_ping = now
 
     def on_pong(self, data):
@@ -188,8 +191,9 @@ class WebSocketMixin(object):
 
 class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
 
-    if tornado.version_info < (4,1):
+    if tornado.version_info < (4, 1):
         """Backport send_error from tornado 4.1 to 4.0"""
+
         def send_error(self, *args, **kwargs):
             if self.stream is None:
                 super(WebSocketHandler, self).send_error(*args, **kwargs)
@@ -199,7 +203,6 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
                 # TODO: for uncaught exceptions after the handshake,
                 # we can close the connection more gracefully.
                 self.stream.close()
-
 
     def _reserialize_reply(self, msg_or_list, channel=None):
         """Reserialize a reply message using JSON.
@@ -219,8 +222,8 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             idents, msg_list = self.session.feed_identities(msg_or_list)
             msg = self.session.deserialize(msg_list)
         if channel:
-            msg['channel'] = channel
-        if msg['buffers']:
+            msg["channel"] = channel
+        if msg["buffers"]:
             buf = serialize_binary_message(msg)
             return buf
         else:
@@ -234,7 +237,7 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             self.log.warning("zmq message arrived on closed channel")
             self.close()
             return
-        channel = getattr(stream, 'channel', None)
+        channel = getattr(stream, "channel", None)
         try:
             msg = self._reserialize_reply(msg_list, channel=channel)
         except Exception:
@@ -244,7 +247,6 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
 
 
 class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
-
     def set_default_headers(self):
         """Undo the set_default_headers in JupyterHandler
 
@@ -263,8 +265,8 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
             self.log.warning("Couldn't authenticate WebSocket connection")
             raise web.HTTPError(403)
 
-        if self.get_argument('session_id', False):
-            self.session.session = cast_unicode(self.get_argument('session_id'))
+        if self.get_argument("session_id", False):
+            self.session.session = cast_unicode(self.get_argument("session_id"))
         else:
             self.log.warning("No session ID specified")
 
@@ -281,4 +283,4 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
         self.session = Session(config=self.config)
 
     def get_compression_options(self):
-        return self.settings.get('websocket_compression_options', None)
+        return self.settings.get("websocket_compression_options", None)

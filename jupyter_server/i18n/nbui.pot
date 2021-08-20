@@ -729,4 +729,3 @@ msgstr ""
 #: notebook/templates/tree.html:179
 msgid "See '<a href=\"https://github.com/ipython/ipyparallel\">IPython parallel</a>' for installation details."
 msgstr ""
-

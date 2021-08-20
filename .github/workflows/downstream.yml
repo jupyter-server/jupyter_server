@@ -2,9 +2,9 @@ name: Test downstream projects
 
 on:
   push:
-    branches: '*'
+    branches: "*"
   pull_request:
-    branches: '*'
+    branches: "*"
 
 jobs:
   tests:
@@ -12,35 +12,35 @@ jobs:
     timeout-minutes: 15
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
 
-    - name: Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install "."
-        pip install --pre --upgrade jupyterlab_server[test] jupyterlab[test] nbclassic[test]
-        pip freeze
-    - name: Run tests
-      working-directory: ../
-      run: |
-        # NOTE: tests won't pass from inside the working copy because of
-        # conftest.py:pytest_plugins (must be at the top level)
-        pytest --pyargs jupyterlab_server
-        python -m jupyterlab.browser_check --no-browser-test
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install "."
+          pip install --pre --upgrade jupyterlab_server[test] jupyterlab[test] nbclassic[test]
+          pip freeze
+      - name: Run tests
+        working-directory: ../
+        run: |
+          # NOTE: tests won't pass from inside the working copy because of
+          # conftest.py:pytest_plugins (must be at the top level)
+          pytest --pyargs jupyterlab_server
+          python -m jupyterlab.browser_check --no-browser-test
 
-        # Make sure we can start and kill the nbclassic server
-        jupyter nbclassic --no-browser &
-        TASK_PID=$!
-        # Make sure the task is running
-        ps -p $TASK_PID || exit 1
-        sleep 5
-        kill $TASK_PID
-        wait $TASK_PID
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
+          # Make sure we can start and kill the nbclassic server
+          jupyter nbclassic --no-browser &
+          TASK_PID=$!
+          # Make sure the task is running
+          ps -p $TASK_PID || exit 1
+          sleep 5
+          kill $TASK_PID
+          wait $TASK_PID
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1

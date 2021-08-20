@@ -1,1 +1,1 @@
-c.SimpleApp2.configD = 'ConfigD from file'
+c.SimpleApp2.configD = "ConfigD from file"
