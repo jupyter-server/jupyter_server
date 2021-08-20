@@ -513,6 +513,47 @@ async def test_delete(jp_contents_manager):
         await ensure_async(cm.get(path))
 
 
+@pytest.mark.parametrize(
+    "delete_to_trash, always_delete, error",
+    (
+        [True, True, False],
+        # on linux test folder may not be on home folder drive
+        # => if this is the case, _check_trash will be False
+        [True, False, None],
+        [False, True, False],
+        [False, False, True],
+    ),
+)
+async def test_delete_non_empty_folder(delete_to_trash, always_delete, error, jp_contents_manager):
+    cm = jp_contents_manager
+    cm.delete_to_trash = delete_to_trash
+    cm.always_delete_dir = always_delete
+
+    dir = "to_delete"
+
+    await make_populated_dir(cm, dir)
+    await check_populated_dir_files(cm, dir)
+
+    if error is None:
+        error = False
+        if sys.platform == "win32":
+            error = True
+        elif sys.platform == "linux":
+            file_dev = os.stat(cm.root_dir).st_dev
+            home_dev = os.stat(os.path.expanduser("~")).st_dev
+            error = file_dev != home_dev
+
+    if error:
+        with pytest.raises(
+            HTTPError,
+            match=r"HTTP 400: Bad Request \(Directory .*?to_delete not empty\)",
+        ):
+            await ensure_async(cm.delete_file(dir))
+    else:
+        await ensure_async(cm.delete_file(dir))
+        assert cm.dir_exists(dir) == False
+
+
 async def test_rename(jp_contents_manager):
     cm = jp_contents_manager
     # Create a new notebook

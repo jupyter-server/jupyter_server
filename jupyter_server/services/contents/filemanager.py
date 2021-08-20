@@ -119,6 +119,16 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         deleting files really deletes them.""",
     )
 
+    always_delete_dir = Bool(
+        False,
+        config=True,
+        help="""If True, deleting non-empty directory will always be allowed.
+        WARNING this may result in files being definitely removed; e.g. on Windows
+        if the data size is too big for the trash/recycle bin they will be really
+        deleted. If False (default), non-empty directory will be send to trash only
+        if safe. And if ``delete_to_trash`` is True, they won't be deleted.""",
+    )
+
     @default("files_handler_class")
     def _files_handler_class_default(self):
         return AuthenticatedFileHandler
@@ -331,7 +341,10 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if content:
             content, format = self._read_file(os_path, format)
             if model["mimetype"] is None:
-                default_mime = {"text": "text/plain", "base64": "application/octet-stream"}[format]
+                default_mime = {
+                    "text": "text/plain",
+                    "base64": "application/octet-stream",
+                }[format]
                 model["mimetype"] = default_mime
 
             model.update(
@@ -391,7 +404,9 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if os.path.isdir(os_path):
             if type not in (None, "directory"):
                 raise web.HTTPError(
-                    400, u"%s is a directory, not a %s" % (path, type), reason="bad type"
+                    400,
+                    u"%s is a directory, not a %s" % (path, type),
+                    reason="bad type",
                 )
             model = self._dir_model(path, content=content)
         elif type == "notebook" or (type is None and path.endswith(".ipynb")):
@@ -494,7 +509,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             return False
 
         if self.delete_to_trash:
-            if sys.platform == "win32" and is_non_empty_dir(os_path):
+            if not self.always_delete_dir and sys.platform == "win32" and is_non_empty_dir(os_path):
                 # send2trash can really delete files on Windows, so disallow
                 # deleting non-empty files. See Github issue 3631.
                 raise web.HTTPError(400, u"Directory %s not empty" % os_path)
@@ -507,12 +522,13 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 return
             else:
                 self.log.warning(
-                    "Skipping trash for %s, on different device " "to home directory", os_path
+                    "Skipping trash for %s, on different device " "to home directory",
+                    os_path,
                 )
 
         if os.path.isdir(os_path):
             # Don't permanently delete non-empty directories.
-            if is_non_empty_dir(os_path):
+            if not self.always_delete_dir and is_non_empty_dir(os_path):
                 raise web.HTTPError(400, u"Directory %s not empty" % os_path)
             self.log.debug("Removing directory %s", os_path)
             with self.perm_to_403():
@@ -649,7 +665,10 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         if content:
             content, format = await self._read_file(os_path, format)
             if model["mimetype"] is None:
-                default_mime = {"text": "text/plain", "base64": "application/octet-stream"}[format]
+                default_mime = {
+                    "text": "text/plain",
+                    "base64": "application/octet-stream",
+                }[format]
                 model["mimetype"] = default_mime
 
             model.update(
@@ -709,7 +728,9 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         if os.path.isdir(os_path):
             if type not in (None, "directory"):
                 raise web.HTTPError(
-                    400, u"%s is a directory, not a %s" % (path, type), reason="bad type"
+                    400,
+                    u"%s is a directory, not a %s" % (path, type),
+                    reason="bad type",
                 )
             model = await self._dir_model(path, content=content)
         elif type == "notebook" or (type is None and path.endswith(".ipynb")):
@@ -813,7 +834,11 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             return False
 
         if self.delete_to_trash:
-            if sys.platform == "win32" and await is_non_empty_dir(os_path):
+            if (
+                not self.always_delete_dir
+                and sys.platform == "win32"
+                and await is_non_empty_dir(os_path)
+            ):
                 # send2trash can really delete files on Windows, so disallow
                 # deleting non-empty files. See Github issue 3631.
                 raise web.HTTPError(400, u"Directory %s not empty" % os_path)
@@ -826,12 +851,13 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 return
             else:
                 self.log.warning(
-                    "Skipping trash for %s, on different device " "to home directory", os_path
+                    "Skipping trash for %s, on different device " "to home directory",
+                    os_path,
                 )
 
         if os.path.isdir(os_path):
             # Don't permanently delete non-empty directories.
-            if await is_non_empty_dir(os_path):
+            if not self.always_delete_dir and await is_non_empty_dir(os_path):
                 raise web.HTTPError(400, u"Directory %s not empty" % os_path)
             self.log.debug("Removing directory %s", os_path)
             with self.perm_to_403():
