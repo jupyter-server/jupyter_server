@@ -7,17 +7,12 @@ pytestmark = pytest.mark.skipif(
     reason="Unix sockets are not available on Windows."
 )
 
-import os
 import urllib
-import pathlib
 
 if not sys.platform.startswith('win'):
     from tornado.netutil import bind_unix_socket
 
-from tornado.escape import url_escape
-
 import jupyter_server.serverapp
-from jupyter_server import DEFAULT_JUPYTER_SERVER_PORT
 from jupyter_server.utils import (
     url_path_join,
     urlencode_unix_socket,

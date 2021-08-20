@@ -1,4 +1,3 @@
-import pytest
 
 from jupyter_server.auth.security import passwd, passwd_check
 

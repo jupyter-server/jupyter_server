@@ -12,8 +12,7 @@ from jupyter_core.application import NoStart
 from jupyter_server.serverapp import (
     ServerApp,
     list_running_servers,
-    JupyterPasswordApp,
-    JupyterServerStopApp
+    JupyterPasswordApp
 )
 from jupyter_server.auth.security import passwd_check
 

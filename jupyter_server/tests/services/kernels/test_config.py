@@ -1,4 +1,3 @@
-import sys
 import pytest
 from traitlets.config import Config
 from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager

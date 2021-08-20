@@ -15,7 +15,7 @@ from traitlets import (
     Instance,
     default,
     observe,
-    validate,
+    validate as validate_trait,
 )
 
 from .config import ExtensionConfigManager
@@ -36,7 +36,7 @@ class ExtensionPoint(HasTraits):
 
     metadata = Dict()
 
-    @validate('metadata')
+    @validate_trait('metadata')
     def _valid_metadata(self, proposed):
         metadata = proposed['value']
         # Verify that the metadata has a "name" key.
@@ -180,7 +180,7 @@ class ExtensionPackage(HasTraits):
 
     _linked_points = {}
 
-    @validate("name")
+    @validate_trait("name")
     def _validate_name(self, proposed):
         name = proposed['value']
         self._extension_points = {}

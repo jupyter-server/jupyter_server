@@ -8,11 +8,10 @@ Utilities for getting information about Jupyter and the system it's running in.
 
 import os
 import platform
-import pprint
 import sys
 import subprocess
 
-from ipython_genutils import py3compat, encoding
+from ipython_genutils import encoding
 
 import jupyter_server
 

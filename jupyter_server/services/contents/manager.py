@@ -6,7 +6,6 @@
 from fnmatch import fnmatch
 import itertools
 import json
-import os
 import re
 
 from tornado.web import HTTPError, RequestHandler

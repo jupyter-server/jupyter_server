@@ -7,7 +7,7 @@ import io
 import os
 import zipfile
 
-from tornado import web, escape
+from tornado import web
 from tornado.log import app_log
 
 from ..base.handlers import (

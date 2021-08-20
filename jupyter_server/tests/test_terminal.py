@@ -3,7 +3,6 @@ import shutil
 import pytest
 import json
 import asyncio
-import sys
 
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
