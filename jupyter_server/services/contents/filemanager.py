@@ -122,11 +122,11 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
     always_delete_dir = Bool(
         False,
         config=True,
-        help="""If True, deleting non-empty directory will always be allowed.
-        WARNING this may result in files being definitely removed; e.g. on Windows
-        if the data size is too big for the trash/recycle bin they will be really
-        deleted. If False (default), non-empty directory will be send to trash only
-        if safe. And if ``delete_to_trash`` is True, they won't be deleted.""",
+        help="""If True, deleting a non-empty directory will always be allowed.
+        WARNING this may result in files being permanently removed; e.g. on Windows,
+        if the data size is too big for the trash/recycle bin the directory will be permanently
+        deleted. If False (default), the non-empty directory will be sent to the trash only
+        if safe. And if ``delete_to_trash`` is True, the directory won't be deleted.""",
     )
 
     @default("files_handler_class")
