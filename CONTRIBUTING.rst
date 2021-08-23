@@ -85,12 +85,12 @@ Running Tests
 Install dependencies::
 
     pip install -e .[test]
-    pip install -e examples/simple
+    pip install -e examples/simple  # to test the examples
 
 To run the Python tests, use::
 
-    pytest
-    pytest examples/simple --confcutdir=$PWD
+    pytest jupyter_server
+    pytest examples/simple  # to test the examples
 
 Building the Docs
 =================

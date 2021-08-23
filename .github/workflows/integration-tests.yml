@@ -44,4 +44,4 @@ jobs:
           pip check
       - name: Run the tests
         run: |
-          pytest -vv --integration_tests=true
+          pytest -vv --integration_tests=true jupyter_server
