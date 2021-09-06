@@ -11,8 +11,7 @@ class ShutdownHandler(JupyterHandler):
     async def post(self):
         self.log.info("Shutting down on /api/shutdown request.")
 
-        await self.terminal_manager.terminate_all()
-        await self.kernel_manager.shutdown_all()
+        await self._cleanup()
 
         ioloop.IOLoop.current().stop()
 
