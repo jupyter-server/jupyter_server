@@ -8,8 +8,11 @@ from jupyter_server.base.handlers import JupyterHandler
 
 class ShutdownHandler(JupyterHandler):
     @web.authenticated
-    def post(self):
+    async def post(self):
         self.log.info("Shutting down on /api/shutdown request.")
+
+        await self.kernel_manager.shutdown_all()
+
         ioloop.IOLoop.current().stop()
 
 
