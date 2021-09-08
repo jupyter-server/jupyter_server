@@ -368,7 +368,7 @@ def jp_ws_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_http_port, 
         # Add auth keys to header
         headers.update(jp_auth_header)
         # Make request.
-        req = tornado.httpclient.HTTPRequest(url, headers=jp_auth_header, connect_timeout=120)
+        req = tornado.httpclient.HTTPRequest(url, headers=headers, connect_timeout=120)
         return tornado.websocket.websocket_connect(req)
 
     return client_fetch
