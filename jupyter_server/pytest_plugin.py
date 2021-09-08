@@ -316,7 +316,11 @@ def jp_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_base_url):
             ...
     """
 
-    def client_fetch(*parts, headers={}, params={}, **kwargs):
+    def client_fetch(*parts, headers=None, params=None, **kwargs):
+        if not headers:
+            headers = {}
+        if not params:
+            params = {}
         # Handle URL strings
         path_url = url_escape(url_path_join(*parts), plus=False)
         base_path_url = url_path_join(jp_base_url, path_url)
@@ -358,7 +362,11 @@ def jp_ws_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_http_port, 
             ...
     """
 
-    def client_fetch(*parts, headers={}, params={}, **kwargs):
+    def client_fetch(*parts, headers=None, params=None, **kwargs):
+        if not headers:
+            headers = {}
+        if not params:
+            params = {}
         # Handle URL strings
         path_url = url_escape(url_path_join(*parts), plus=False)
         base_path_url = url_path_join(jp_base_url, path_url)
