@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.11.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.10.2...1863fde11af7971d040ad50ad015caa83b6c7d54))
+
+### Enhancements made
+
+- Allow non-empty directory deletion through settings [#574](https://github.com/jupyter-server/jupyter_server/pull/574) ([@fcollonval](https://github.com/fcollonval))
+
+### Bugs fixed
+
+- pytest_plugin: allow user specified headers in jp_ws_fetch [#580](https://github.com/jupyter-server/jupyter_server/pull/580) ([@oliver-sanders](https://github.com/oliver-sanders))
+- Shutdown kernels/terminals on api/shutdown [#579](https://github.com/jupyter-server/jupyter_server/pull/579) ([@martinRenou](https://github.com/martinRenou))
+- pytest: package conftest [#576](https://github.com/jupyter-server/jupyter_server/pull/576) ([@oliver-sanders](https://github.com/oliver-sanders))
+- Set stacklevel on warning to point to the right place. [#572](https://github.com/jupyter-server/jupyter_server/pull/572) ([@Carreau](https://github.com/Carreau))
+- Respect reraise setting [#571](https://github.com/jupyter-server/jupyter_server/pull/571) ([@vidartf](https://github.com/vidartf))
+
+### Maintenance and upkeep improvements
+
+- Fix jupyter_client warning [#581](https://github.com/jupyter-server/jupyter_server/pull/581) ([@martinRenou](https://github.com/martinRenou))
+- Add Pre-Commit Config [#575](https://github.com/jupyter-server/jupyter_server/pull/575) ([@fcollonval](https://github.com/fcollonval))
+- Clean up link checking [#569](https://github.com/jupyter-server/jupyter_server/pull/569) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-08-02&to=2021-09-09&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-08-02..2021-09-09&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2021-08-02..2021-09-09&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-08-02..2021-09-09&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afcollonval+updated%3A2021-08-02..2021-09-09&type=Issues) | [@martinRenou](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AmartinRenou+updated%3A2021-08-02..2021-09-09&type=Issues) | [@oliver-sanders](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aoliver-sanders+updated%3A2021-08-02..2021-09-09&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2021-08-02..2021-09-09&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.10.2
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.10.1...7956dc51d8239b7b9e8de3b22ceb4473bbf1d4e5))
@@ -27,8 +57,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-07-23&to=2021-08-02&type=c))
 
 [@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2021-07-23..2021-08-02&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-07-23..2021-08-02&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2021-07-23..2021-08-02&type=Issues) | [@manics](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amanics+updated%3A2021-07-23..2021-08-02&type=Issues) | [@mariobuikhuizen](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amariobuikhuizen+updated%3A2021-07-23..2021-08-02&type=Issues) | [@oliver-sanders](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aoliver-sanders+updated%3A2021-07-23..2021-08-02&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-07-23..2021-08-02&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-07-23..2021-08-02&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.10.1
 
