@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ## 1.11.0
 
-([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.10.2...1863fde11af7971d040ad50ad015caa83b6c7d54))
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.10.2...289ce54d2b8c41b87c6bb964d0a05693f9462749))
 
 ### Enhancements made
 
@@ -25,6 +25,8 @@ All notable changes to this project will be documented in this file.
 - Fix jupyter_client warning [#581](https://github.com/jupyter-server/jupyter_server/pull/581) ([@martinRenou](https://github.com/martinRenou))
 - Add Pre-Commit Config [#575](https://github.com/jupyter-server/jupyter_server/pull/575) ([@fcollonval](https://github.com/fcollonval))
 - Clean up link checking [#569](https://github.com/jupyter-server/jupyter_server/pull/569) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
 
 ### Contributors to this release
 
