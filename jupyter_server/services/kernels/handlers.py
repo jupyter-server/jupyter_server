@@ -10,7 +10,11 @@ from textwrap import dedent
 
 from ipython_genutils.py3compat import cast_unicode
 from jupyter_client import protocol_version as client_protocol_version
-from jupyter_client.jsonutil import date_default
+
+try:
+    from jupyter_client.jsonutil import json_default
+except ImportError:
+    from jupyter_client.jsonutil import date_default as json_default
 from tornado import gen
 from tornado import web
 from tornado.concurrent import Future
@@ -29,7 +33,7 @@ class MainKernelHandler(APIHandler):
     async def get(self):
         km = self.kernel_manager
         kernels = await ensure_async(km.list_kernels())
-        self.finish(json.dumps(kernels, default=date_default))
+        self.finish(json.dumps(kernels, default=json_default))
 
     @web.authenticated
     async def post(self):
@@ -45,7 +49,7 @@ class MainKernelHandler(APIHandler):
         location = url_path_join(self.base_url, "api", "kernels", url_escape(kernel_id))
         self.set_header("Location", location)
         self.set_status(201)
-        self.finish(json.dumps(model, default=date_default))
+        self.finish(json.dumps(model, default=json_default))
 
 
 class KernelHandler(APIHandler):
@@ -53,7 +57,7 @@ class KernelHandler(APIHandler):
     async def get(self, kernel_id):
         km = self.kernel_manager
         model = await ensure_async(km.kernel_model(kernel_id))
-        self.finish(json.dumps(model, default=date_default))
+        self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
     async def delete(self, kernel_id):
@@ -79,7 +83,7 @@ class KernelActionHandler(APIHandler):
                 self.set_status(500)
             else:
                 model = await ensure_async(km.kernel_model(kernel_id))
-                self.write(json.dumps(model, default=date_default))
+                self.write(json.dumps(model, default=json_default))
         self.finish()
 
 
@@ -443,7 +447,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 "stream", content={"text": error_message + "\n", "name": "stderr"}, parent=parent
             )
             msg["channel"] = "iopub"
-            self.write_message(json.dumps(msg, default=date_default))
+            self.write_message(json.dumps(msg, default=json_default))
 
         channel = getattr(stream, "channel", None)
         msg_type = msg["header"]["msg_type"]
@@ -610,7 +614,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             iopub.flush()
         msg = self.session.msg("status", {"execution_state": status})
         msg["channel"] = "iopub"
-        self.write_message(json.dumps(msg, default=date_default))
+        self.write_message(json.dumps(msg, default=json_default))
 
     def on_kernel_restarted(self):
         logging.warn("kernel %s restarted", self.kernel_id)

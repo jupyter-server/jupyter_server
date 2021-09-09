@@ -6,7 +6,10 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 # Distributed under the terms of the Modified BSD License.
 import json
 
-from jupyter_client.jsonutil import date_default
+try:
+    from jupyter_client.jsonutil import json_default
+except ImportError:
+    from jupyter_client.jsonutil import date_default as json_default
 from jupyter_client.kernelspec import NoSuchKernel
 from tornado import web
 
@@ -21,7 +24,7 @@ class SessionRootHandler(APIHandler):
         # Return a list of running sessions
         sm = self.session_manager
         sessions = await ensure_async(sm.list_sessions())
-        self.finish(json.dumps(sessions, default=date_default))
+        self.finish(json.dumps(sessions, default=json_default))
 
     @web.authenticated
     async def post(self):
@@ -79,7 +82,7 @@ class SessionRootHandler(APIHandler):
         location = url_path_join(self.base_url, "api", "sessions", model["id"])
         self.set_header("Location", location)
         self.set_status(201)
-        self.finish(json.dumps(model, default=date_default))
+        self.finish(json.dumps(model, default=json_default))
 
 
 class SessionHandler(APIHandler):
@@ -88,7 +91,7 @@ class SessionHandler(APIHandler):
         # Returns the JSON model for a single session
         sm = self.session_manager
         model = await sm.get_session(session_id=session_id)
-        self.finish(json.dumps(model, default=date_default))
+        self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
     async def patch(self, session_id):
@@ -142,7 +145,7 @@ class SessionHandler(APIHandler):
             # kernel_id changed because we got a new kernel
             # shutdown the old one
             await ensure_async(km.shutdown_kernel(before["kernel"]["id"]))
-        self.finish(json.dumps(model, default=date_default))
+        self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
     async def delete(self, session_id):

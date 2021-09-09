@@ -6,7 +6,10 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-27%3A-
 # Distributed under the terms of the Modified BSD License.
 import json
 
-from jupyter_client.jsonutil import date_default
+try:
+    from jupyter_client.jsonutil import json_default
+except ImportError:
+    from jupyter_client.jsonutil import date_default as json_default
 from tornado import web
 
 from jupyter_server.base.handlers import APIHandler
@@ -77,7 +80,7 @@ class ContentsHandler(APIHandler):
             self.set_header("Location", location)
         self.set_header("Last-Modified", model["last_modified"])
         self.set_header("Content-Type", "application/json")
-        self.finish(json.dumps(model, default=date_default))
+        self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
     async def get(self, path=""):
@@ -237,7 +240,7 @@ class CheckpointsHandler(APIHandler):
         """get lists checkpoints for a file"""
         cm = self.contents_manager
         checkpoints = await ensure_async(cm.list_checkpoints(path))
-        data = json.dumps(checkpoints, default=date_default)
+        data = json.dumps(checkpoints, default=json_default)
         self.finish(data)
 
     @web.authenticated
@@ -245,7 +248,7 @@ class CheckpointsHandler(APIHandler):
         """post creates a new checkpoint"""
         cm = self.contents_manager
         checkpoint = await ensure_async(cm.create_checkpoint(path))
-        data = json.dumps(checkpoint, default=date_default)
+        data = json.dumps(checkpoint, default=json_default)
         location = url_path_join(
             self.base_url,
             "api/contents",

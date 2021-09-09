@@ -9,7 +9,11 @@ from urllib.parse import urlparse
 
 import tornado
 from ipython_genutils.py3compat import cast_unicode
-from jupyter_client.jsonutil import date_default
+
+try:
+    from jupyter_client.jsonutil import json_default
+except ImportError:
+    from jupyter_client.jsonutil import date_default as json_default
 from jupyter_client.jsonutil import extract_dates
 from jupyter_client.session import Session
 from tornado import ioloop
@@ -39,7 +43,7 @@ def serialize_binary_message(msg):
     buffers = list(msg.pop("buffers"))
     if sys.version_info < (3, 4):
         buffers = [x.tobytes() for x in buffers]
-    bmsg = json.dumps(msg, default=date_default).encode("utf8")
+    bmsg = json.dumps(msg, default=json_default).encode("utf8")
     buffers.insert(0, bmsg)
     nbufs = len(buffers)
     offsets = [4 * (nbufs + 1)]
@@ -227,7 +231,7 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             buf = serialize_binary_message(msg)
             return buf
         else:
-            smsg = json.dumps(msg, default=date_default)
+            smsg = json.dumps(msg, default=json_default)
             return cast_unicode(smsg)
 
     def _on_zmq_reply(self, stream, msg_list):
