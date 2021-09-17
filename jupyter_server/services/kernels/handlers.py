@@ -392,7 +392,14 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 self.create_stream()
                 connected = self.nudge()
             except web.HTTPError as e:
-                self.log.error("Error opening stream: %s", e)
+                # Do not log error if the kernel is already shutdown,
+                # as it's normal that it's not responding
+                try:
+                    self.kernel_manager.get_kernel(kernel_id)
+
+                    self.log.error("Error opening stream: %s", e)
+                except KeyError:
+                    pass
                 # WebSockets don't respond to traditional error codes so we
                 # close the connection.
                 for channel, stream in self.channels.items():
