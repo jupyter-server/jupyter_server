@@ -1020,6 +1020,7 @@ class ServerApp(JupyterApp):
         OSError: [Errno 24] Too many open files.
         This is not applicable when running on Windows.
         """,
+        allow_none=True,
     )
 
     @default("min_open_files_limit")
