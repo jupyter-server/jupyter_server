@@ -11,9 +11,6 @@ All notable changes to this project will be documented in this file.
 ### Bugs fixed
 
 - Do not log connection error if the kernel is already shutdown [#584](https://github.com/jupyter-server/jupyter_server/pull/584) ([@martinRenou](https://github.com/martinRenou))
-
-### Other merged PRs
-
 - [BUG]: allow None for min_open_files_limit trait [#587](https://github.com/jupyter-server/jupyter_server/pull/587) ([@Zsailer](https://github.com/Zsailer))
 
 ### Contributors to this release
