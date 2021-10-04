@@ -34,7 +34,7 @@ def jp_server_config():
     )
 
 
-async def test_culling(jp_fetch, jp_ws_fetch):
+async def test_culling(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
     kid = kernel["id"]
@@ -50,6 +50,7 @@ async def test_culling(jp_fetch, jp_ws_fetch):
     ws.close()
     culled = await get_cull_status(kid, jp_fetch)  # not connected, should be culled
     assert culled
+    await jp_cleanup_subprocesses()
 
 
 async def get_cull_status(kid, jp_fetch):

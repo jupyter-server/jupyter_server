@@ -23,7 +23,7 @@ async def test_no_kernels(jp_fetch):
     assert kernels == []
 
 
-async def test_default_kernels(jp_fetch, jp_base_url):
+async def test_default_kernels(jp_fetch, jp_base_url, jp_cleanup_subprocesses):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
     assert r.headers["location"] == url_path_join(jp_base_url, "/api/kernels/", kernel["id"])
@@ -35,9 +35,10 @@ async def test_default_kernels(jp_fetch, jp_base_url):
         ["frame-ancestors 'self'", "report-uri " + report_uri, "default-src 'none'"]
     )
     assert r.headers["Content-Security-Policy"] == expected_csp
+    await jp_cleanup_subprocesses()
 
 
-async def test_main_kernel_handler(jp_fetch, jp_base_url):
+async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_cleanup_subprocesses):
     # Start the first kernel
     r = await jp_fetch(
         "api", "kernels", method="POST", body=json.dumps({"name": NATIVE_KERNEL_NAME})
@@ -98,9 +99,10 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url):
     )
     kernel3 = json.loads(r.body.decode())
     assert isinstance(kernel3, dict)
+    await jp_cleanup_subprocesses()
 
 
-async def test_kernel_handler(jp_fetch):
+async def test_kernel_handler(jp_fetch, jp_cleanup_subprocesses):
     # Create a kernel
     r = await jp_fetch(
         "api", "kernels", method="POST", body=json.dumps({"name": NATIVE_KERNEL_NAME})
@@ -138,10 +140,12 @@ async def test_kernel_handler(jp_fetch):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch("api", "kernels", bad_id, method="DELETE")
     assert expected_http_error(e, 404, "Kernel does not exist: " + bad_id)
+    await jp_cleanup_subprocesses()
 
 
-async def test_connection(jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header):
-    print("hello")
+async def test_connection(
+    jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header, jp_cleanup_subprocesses
+):
     # Create kernel
     r = await jp_fetch(
         "api", "kernels", method="POST", body=json.dumps({"name": NATIVE_KERNEL_NAME})
@@ -175,3 +179,4 @@ async def test_connection(jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header):
     r = await jp_fetch("api", "kernels", kid, method="GET")
     model = json.loads(r.body.decode())
     assert model["connections"] == 0
+    await jp_cleanup_subprocesses()

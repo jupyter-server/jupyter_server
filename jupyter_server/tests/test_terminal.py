@@ -8,16 +8,6 @@ from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
 
 
-# Kill all running terminals after each test to avoid cross-test issues
-# with still running terminals.
-@pytest.fixture
-def kill_all(jp_serverapp):
-    async def _():
-        await jp_serverapp.web_app.settings["terminal_manager"].kill_all()
-
-    return _
-
-
 @pytest.fixture
 def terminal_path(tmp_path):
     subdir = tmp_path.joinpath("terminal_path")
@@ -59,7 +49,7 @@ async def test_no_terminals(jp_fetch):
     assert len(data) == 0
 
 
-async def test_terminal_create(jp_fetch, kill_all):
+async def test_terminal_create(jp_fetch, jp_cleanup_subprocesses):
     resp = await jp_fetch(
         "api",
         "terminals",
@@ -80,10 +70,12 @@ async def test_terminal_create(jp_fetch, kill_all):
 
     assert len(data) == 1
     assert data[0] == term
-    await kill_all()
+    await jp_cleanup_subprocesses()
 
 
-async def test_terminal_create_with_kwargs(jp_fetch, jp_ws_fetch, terminal_path, kill_all):
+async def test_terminal_create_with_kwargs(
+    jp_fetch, jp_ws_fetch, terminal_path, jp_cleanup_subprocesses
+):
     resp_create = await jp_fetch(
         "api",
         "terminals",
@@ -106,10 +98,12 @@ async def test_terminal_create_with_kwargs(jp_fetch, jp_ws_fetch, terminal_path,
     data = json.loads(resp_get.body.decode())
 
     assert data["name"] == term_name
-    await kill_all()
+    await jp_cleanup_subprocesses()
 
 
-async def test_terminal_create_with_cwd(jp_fetch, jp_ws_fetch, terminal_path):
+async def test_terminal_create_with_cwd(
+    jp_fetch, jp_ws_fetch, terminal_path, jp_cleanup_subprocesses
+):
     resp = await jp_fetch(
         "api",
         "terminals",
@@ -140,6 +134,7 @@ async def test_terminal_create_with_cwd(jp_fetch, jp_ws_fetch, terminal_path):
     ws.close()
 
     assert os.path.basename(terminal_path) in message_stdout
+    await jp_cleanup_subprocesses()
 
 
 async def test_culling_config(jp_server_config, jp_configurable_serverapp):
@@ -151,7 +146,7 @@ async def test_culling_config(jp_server_config, jp_configurable_serverapp):
     assert terminal_mgr_settings.cull_interval == CULL_INTERVAL
 
 
-async def test_culling(jp_server_config, jp_fetch):
+async def test_culling(jp_server_config, jp_fetch, jp_cleanup_subprocesses):
     # POST request
     resp = await jp_fetch(
         "api",
@@ -181,3 +176,4 @@ async def test_culling(jp_server_config, jp_fetch):
             await asyncio.sleep(1)
 
     assert culled
+    await jp_cleanup_subprocesses()
