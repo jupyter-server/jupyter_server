@@ -151,7 +151,7 @@ def assert_session_equality(actual, expected):
     assert_kernel_equality(actual["kernel"], expected["kernel"])
 
 
-async def test_create(session_client, jp_base_url):
+async def test_create(session_client, jp_base_url, jp_cleanup_subprocesses):
     # Make sure no sessions exist.
     resp = await session_client.list()
     sessions = j(resp)
@@ -182,18 +182,20 @@ async def test_create(session_client, jp_base_url):
 
     # Need to find a better solution to this.
     await session_client.cleanup()
+    await jp_cleanup_subprocesses()
 
 
-async def test_create_file_session(session_client):
+async def test_create_file_session(session_client, jp_cleanup_subprocesses):
     resp = await session_client.create("foo/nb1.py", type="file")
     assert resp.code == 201
     newsession = j(resp)
     assert newsession["path"] == "foo/nb1.py"
     assert newsession["type"] == "file"
     await session_client.cleanup()
+    await jp_cleanup_subprocesses()
 
 
-async def test_create_console_session(session_client):
+async def test_create_console_session(session_client, jp_cleanup_subprocesses):
     resp = await session_client.create("foo/abc123", type="console")
     assert resp.code == 201
     newsession = j(resp)
@@ -201,9 +203,10 @@ async def test_create_console_session(session_client):
     assert newsession["type"] == "console"
     # Need to find a better solution to this.
     await session_client.cleanup()
+    await jp_cleanup_subprocesses()
 
 
-async def test_create_deprecated(session_client):
+async def test_create_deprecated(session_client, jp_cleanup_subprocesses):
     resp = await session_client.create_deprecated("foo/nb1.ipynb")
     assert resp.code == 201
     newsession = j(resp)
@@ -212,9 +215,12 @@ async def test_create_deprecated(session_client):
     assert newsession["notebook"]["path"] == "foo/nb1.ipynb"
     # Need to find a better solution to this.
     await session_client.cleanup()
+    await jp_cleanup_subprocesses()
 
 
-async def test_create_with_kernel_id(session_client, jp_fetch, jp_base_url):
+async def test_create_with_kernel_id(
+    session_client, jp_fetch, jp_base_url, jp_cleanup_subprocesses
+):
     # create a new kernel
     resp = await jp_fetch("api/kernels", method="POST", allow_nonstandard_methods=True)
     kernel = j(resp)
@@ -241,9 +247,10 @@ async def test_create_with_kernel_id(session_client, jp_fetch, jp_base_url):
     assert_session_equality(got, new_session)
     # Need to find a better solution to this.
     await session_client.cleanup()
+    await jp_cleanup_subprocesses()
 
 
-async def test_delete(session_client):
+async def test_delete(session_client, jp_cleanup_subprocesses):
     resp = await session_client.create("foo/nb1.ipynb")
     newsession = j(resp)
     sid = newsession["id"]
@@ -260,9 +267,10 @@ async def test_delete(session_client):
     assert expected_http_error(e, 404)
     # Need to find a better solution to this.
     await session_client.cleanup()
+    await jp_cleanup_subprocesses()
 
 
-async def test_modify_path(session_client):
+async def test_modify_path(session_client, jp_cleanup_subprocesses):
     resp = await session_client.create("foo/nb1.ipynb")
     newsession = j(resp)
     sid = newsession["id"]
@@ -273,9 +281,10 @@ async def test_modify_path(session_client):
     assert changed["path"] == "nb2.ipynb"
     # Need to find a better solution to this.
     await session_client.cleanup()
+    await jp_cleanup_subprocesses()
 
 
-async def test_modify_path_deprecated(session_client):
+async def test_modify_path_deprecated(session_client, jp_cleanup_subprocesses):
     resp = await session_client.create("foo/nb1.ipynb")
     newsession = j(resp)
     sid = newsession["id"]
@@ -286,9 +295,10 @@ async def test_modify_path_deprecated(session_client):
     assert changed["notebook"]["path"] == "nb2.ipynb"
     # Need to find a better solution to this.
     await session_client.cleanup()
+    await jp_cleanup_subprocesses()
 
 
-async def test_modify_type(session_client):
+async def test_modify_type(session_client, jp_cleanup_subprocesses):
     resp = await session_client.create("foo/nb1.ipynb")
     newsession = j(resp)
     sid = newsession["id"]
@@ -299,9 +309,10 @@ async def test_modify_type(session_client):
     assert changed["type"] == "console"
     # Need to find a better solution to this.
     await session_client.cleanup()
+    await jp_cleanup_subprocesses()
 
 
-async def test_modify_kernel_name(session_client, jp_fetch):
+async def test_modify_kernel_name(session_client, jp_fetch, jp_cleanup_subprocesses):
     resp = await session_client.create("foo/nb1.ipynb")
     before = j(resp)
     sid = before["id"]
@@ -321,9 +332,10 @@ async def test_modify_kernel_name(session_client, jp_fetch):
     assert kernel_list == [after["kernel"]]
     # Need to find a better solution to this.
     await session_client.cleanup()
+    await jp_cleanup_subprocesses()
 
 
-async def test_modify_kernel_id(session_client, jp_fetch):
+async def test_modify_kernel_id(session_client, jp_fetch, jp_cleanup_subprocesses):
     resp = await session_client.create("foo/nb1.ipynb")
     before = j(resp)
     sid = before["id"]
@@ -351,9 +363,12 @@ async def test_modify_kernel_id(session_client, jp_fetch):
 
     # Need to find a better solution to this.
     await session_client.cleanup()
+    await jp_cleanup_subprocesses()
 
 
-async def test_restart_kernel(session_client, jp_base_url, jp_fetch, jp_ws_fetch):
+async def test_restart_kernel(
+    session_client, jp_base_url, jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses
+):
 
     # Create a session.
     resp = await session_client.create("foo/nb1.ipynb")
@@ -412,3 +427,4 @@ async def test_restart_kernel(session_client, jp_base_url, jp_fetch, jp_ws_fetch
 
     # Need to find a better solution to this.
     await session_client.cleanup()
+    await jp_cleanup_subprocesses()

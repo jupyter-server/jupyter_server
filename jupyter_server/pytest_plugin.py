@@ -1,6 +1,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import io
 import json
+import logging
 import os
 import shutil
 import sys
@@ -18,7 +20,6 @@ from jupyter_server.extension import serverextension
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.services.contents.filemanager import FileContentsManager
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
-from jupyter_server.utils import run_sync
 from jupyter_server.utils import url_path_join
 
 
@@ -180,6 +181,22 @@ def jp_nbconvert_templates(jp_data_dir):
         shutil.copytree(nbconvert_path, str(nbconvert_target))
 
 
+@pytest.fixture
+def jp_logging_stream():
+    """StringIO stream intended to be used by the core
+    Jupyter ServerApp logger's default StreamHandler. This
+    helps avoid collision with stdout which is hijacked
+    by Pytest.
+    """
+    logging_stream = io.StringIO()
+    yield logging_stream
+    output = logging_stream.getvalue()
+    # If output exists, print it.
+    if output:
+        print(output)
+    return output
+
+
 @pytest.fixture(scope="function")
 def jp_configurable_serverapp(
     jp_nbconvert_templates,  # this fixture must preceed jp_environ
@@ -191,6 +208,7 @@ def jp_configurable_serverapp(
     tmp_path,
     jp_root_dir,
     io_loop,
+    jp_logging_stream,
 ):
     """Starts a Jupyter Server instance based on
     the provided configuration values.
@@ -240,6 +258,11 @@ def jp_configurable_serverapp(
         app.log.handlers = []
         # Initialize app without httpserver
         app.initialize(argv=argv, new_httpserver=False)
+        # Reroute all logging StreamHandlers away from stdin/stdout since pytest hijacks
+        # these streams and closes them at unfortunate times.
+        stream_handlers = [h for h in app.log.handlers if isinstance(h, logging.StreamHandler)]
+        for handler in stream_handlers:
+            handler.setStream(jp_logging_stream)
         app.log.propagate = True
         app.log.handlers = []
         # Start app without ioloop
@@ -279,7 +302,8 @@ def jp_serverapp(jp_ensure_app_fixture, jp_server_config, jp_argv, jp_configurab
     """Starts a Jupyter Server instance based on the established configuration values."""
     app = jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
     yield app
-    run_sync(app._cleanup())
+    app.remove_server_info_file()
+    app.remove_browser_open_files()
 
 
 @pytest.fixture
@@ -440,3 +464,22 @@ def jp_create_notebook(jp_root_dir):
 def jp_server_cleanup():
     yield
     ServerApp.clear_instance()
+
+
+@pytest.fixture
+def jp_cleanup_subprocesses(jp_serverapp):
+    """Clean up subprocesses started by a Jupyter Server, i.e. kernels and terminal."""
+
+    async def _():
+        terminal_cleanup = jp_serverapp.web_app.settings["terminal_manager"].terminate_all
+        kernel_cleanup = jp_serverapp.kernel_manager.shutdown_all
+        if asyncio.iscoroutinefunction(terminal_cleanup):
+            await terminal_cleanup()
+        else:
+            terminal_cleanup()
+        if asyncio.iscoroutinefunction(kernel_cleanup):
+            await kernel_cleanup()
+        else:
+            kernel_cleanup()
+
+    return _
