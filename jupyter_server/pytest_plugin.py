@@ -259,7 +259,7 @@ def jp_configurable_serverapp(
         # Initialize app without httpserver
         app.initialize(argv=argv, new_httpserver=False)
         # Reroute all logging StreamHandlers away from stdin/stdout since pytest hijacks
-        # these streams and closes them at unfortunately times.
+        # these streams and closes them at unfortunate times.
         stream_handlers = [h for h in app.log.handlers if isinstance(h, logging.StreamHandler)]
         for handler in stream_handlers:
             handler.setStream(jp_logging_stream)
