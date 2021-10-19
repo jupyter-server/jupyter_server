@@ -9,7 +9,7 @@ from ...utils import some_resource
 
 
 async def test_list_kernelspecs_bad(jp_fetch, jp_kernelspecs, jp_data_dir):
-    bad_kernel_dir = jp_data_dir.joinpath(jp_data_dir, "kernels", "bad")
+    bad_kernel_dir = jp_data_dir.joinpath(jp_data_dir, "kernels", "bad2")
     bad_kernel_dir.mkdir(parents=True)
     bad_kernel_json = bad_kernel_dir.joinpath("kernel.json")
     bad_kernel_json.write_text("garbage")

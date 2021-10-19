@@ -6,6 +6,7 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 # Distributed under the terms of the Modified BSD License.
 import json
 from textwrap import dedent
+from traceback import format_tb
 
 from ipython_genutils.py3compat import cast_unicode
 from jupyter_client import protocol_version as client_protocol_version
@@ -78,7 +79,10 @@ class KernelActionHandler(APIHandler):
             try:
                 await km.restart_kernel(kernel_id)
             except Exception as e:
-                self.log.error("Exception restarting kernel", exc_info=True)
+                message = "Exception restarting kernel"
+                self.log.error(message, exc_info=True)
+                traceback = format_tb(e.__traceback__)
+                self.write(json.dumps(dict(message=message, traceback=traceback)))
                 self.set_status(500)
             else:
                 model = await ensure_async(km.kernel_model(kernel_id))
@@ -325,6 +329,15 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         # We don't want to wait forever, because browsers don't take it well when
         # servers never respond to websocket connection requests.
         kernel = self.kernel_manager.get_kernel(self.kernel_id)
+
+        if hasattr(kernel, "ready"):
+            try:
+                await kernel.ready
+            except Exception as e:
+                kernel.execution_state = "dead"
+                kernel.reason = str(e)
+                raise web.HTTPError(500, str(e)) from e
+
         self.session.key = kernel.session.key
         future = self.request_kernel_info()
 
@@ -445,6 +458,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     def _on_zmq_reply(self, stream, msg_list):
         idents, fed_msg_list = self.session.feed_identities(msg_list)
         msg = self.session.deserialize(fed_msg_list)
+
         parent = msg["parent_header"]
 
         def write_stderr(error_message):

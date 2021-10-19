@@ -177,6 +177,10 @@ class WebSocketMixin(object):
             self.ping_callback.stop()
             return
 
+        if self.ws_connection.client_terminated:
+            self.close()
+            return
+
         # check for timeout on pong.  Make sure that we really have sent a recent ping in
         # case the machine with both server and client has been suspended since the last ping.
         now = ioloop.IOLoop.current().time()
