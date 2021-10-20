@@ -373,8 +373,8 @@ class AsyncFileManagerMixin(FileManagerMixin):
 
             # Move the bad file aside, restore the intermediate, and try again.
             invalid_file = path_to_invalid(os_path)
-            async_replace_file(os_path, invalid_file)
-            async_replace_file(tmp_path, os_path)
+            await async_replace_file(os_path, invalid_file)
+            await async_replace_file(tmp_path, os_path)
             return await self._read_notebook(os_path, as_version)
 
     async def _save_notebook(self, os_path, nb):
