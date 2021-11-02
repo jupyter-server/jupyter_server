@@ -295,7 +295,8 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def allow_origin_pat(self):
         """Regular expression version of allow_origin"""
-        return self.settings.get("allow_origin_pat", None)
+        pat_str = self.settings.get("allow_origin_pat", None)
+        return re.compile(pat_str) if pat_str else None
 
     @property
     def allow_credentials(self):
