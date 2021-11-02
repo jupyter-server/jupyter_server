@@ -295,8 +295,7 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def allow_origin_pat(self):
         """Regular expression version of allow_origin"""
-        pat_str = self.settings.get("allow_origin_pat", None)
-        return re.compile(pat_str) if pat_str else None
+        return self.settings.get("allow_origin_pat", None)
 
     @property
     def allow_credentials(self):
@@ -310,7 +309,7 @@ class JupyterHandler(AuthenticatedHandler):
             self.set_header("Access-Control-Allow-Origin", self.allow_origin)
         elif self.allow_origin_pat:
             origin = self.get_origin()
-            if origin and self.allow_origin_pat.match(origin):
+            if origin and re.match(self.allow_origin_pat, origin):
                 self.set_header("Access-Control-Allow-Origin", origin)
         elif self.token_authenticated and "Access-Control-Allow-Origin" not in self.settings.get(
             "headers", {}
@@ -383,7 +382,7 @@ class JupyterHandler(AuthenticatedHandler):
         if self.allow_origin:
             allow = self.allow_origin == origin
         elif self.allow_origin_pat:
-            allow = bool(self.allow_origin_pat.match(origin))
+            allow = bool(re.match(self.allow_origin_pat, origin))
         else:
             # No CORS headers deny the request
             allow = False
@@ -428,7 +427,7 @@ class JupyterHandler(AuthenticatedHandler):
         if self.allow_origin:
             allow = self.allow_origin == origin
         elif self.allow_origin_pat:
-            allow = bool(self.allow_origin_pat.match(origin))
+            allow = bool(re.match(self.allow_origin_pat, origin))
         else:
             # No CORS settings, deny the request
             allow = False
