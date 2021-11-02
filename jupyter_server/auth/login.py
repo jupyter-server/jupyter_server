@@ -53,7 +53,7 @@ class LoginHandler(JupyterHandler):
                 if self.allow_origin:
                     allow = self.allow_origin == origin
                 elif self.allow_origin_pat:
-                    allow = bool(self.allow_origin_pat.match(origin))
+                    allow = bool(re.match(self.allow_origin_pat, origin))
             if not allow:
                 # not allowed, use default
                 self.log.warning("Not allowing login redirect to %r" % url)
