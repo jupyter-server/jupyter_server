@@ -5,7 +5,6 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
-import logging
 from textwrap import dedent
 
 from ipython_genutils.py3compat import cast_unicode
