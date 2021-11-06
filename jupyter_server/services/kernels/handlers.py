@@ -5,7 +5,6 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
-import logging
 from textwrap import dedent
 
 from ipython_genutils.py3compat import cast_unicode
@@ -624,11 +623,11 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         self.write_message(json.dumps(msg, default=json_default))
 
     def on_kernel_restarted(self):
-        logging.warn("kernel %s restarted", self.kernel_id)
+        self.log.warning("kernel %s restarted", self.kernel_id)
         self._send_status_message("restarting")
 
     def on_restart_failed(self):
-        logging.error("kernel %s restarted failed!", self.kernel_id)
+        self.log.error("kernel %s restarted failed!", self.kernel_id)
         self._send_status_message("dead")
 
     def _on_error(self, msg):

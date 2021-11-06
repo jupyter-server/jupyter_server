@@ -558,7 +558,7 @@ class JupyterServerStopApp(JupyterApp):
             pass
 
     def start(self):
-        servers = list(list_running_servers(self.runtime_dir))
+        servers = list(list_running_servers(self.runtime_dir, log=self.log))
         if not servers:
             self.exit("There are no running servers (per %s)" % self.runtime_dir)
         for server in servers:
@@ -619,7 +619,7 @@ class JupyterServerListApp(JupyterApp):
     )
 
     def start(self):
-        serverinfo_list = list(list_running_servers(self.runtime_dir))
+        serverinfo_list = list(list_running_servers(self.runtime_dir, log=self.log))
         if self.jsonlist:
             print(json.dumps(serverinfo_list, indent=2))
         elif self.json:
@@ -2682,7 +2682,7 @@ class ServerApp(JupyterApp):
                 self.io_loop.add_callback(self._stop)
 
 
-def list_running_servers(runtime_dir=None):
+def list_running_servers(runtime_dir=None, log=None):
     """Iterate over the server info files of running Jupyter servers.
 
     Given a runtime directory, find jpserver-* files in the security directory,
@@ -2709,8 +2709,9 @@ def list_running_servers(runtime_dir=None):
                 # If the process has died, try to delete its info file
                 try:
                     os.unlink(os.path.join(runtime_dir, file_name))
-                except OSError:
-                    pass  # TODO: This should warn or log or something
+                except OSError as e:
+                    if log:
+                        log.warning(_i18n("Deleting server info file failed: %s.") % e)
 
 
 # -----------------------------------------------------------------------------
