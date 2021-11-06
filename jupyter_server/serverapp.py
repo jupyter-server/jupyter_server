@@ -2710,7 +2710,8 @@ def list_running_servers(runtime_dir=None, log=None):
                 try:
                     os.unlink(os.path.join(runtime_dir, file_name))
                 except OSError as e:
-                    log.warning(_i18n("Deleting server info file failed: %s.") % e)
+                    if log:
+                        log.warning(_i18n("Deleting server info file failed: %s.") % e)
 
 
 # -----------------------------------------------------------------------------
