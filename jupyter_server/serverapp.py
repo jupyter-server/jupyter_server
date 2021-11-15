@@ -1590,7 +1590,8 @@ class ServerApp(JupyterApp):
         self.server_extensions = change["new"]
 
     jpserver_extensions = Dict(
-        {},
+        default_value={},
+        value_trait=Bool(),
         config=True,
         help=(
             _i18n(
