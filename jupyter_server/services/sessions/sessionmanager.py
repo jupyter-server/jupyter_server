@@ -13,12 +13,18 @@ from tornado import web
 
 from traitlets.config.configurable import LoggingConfigurable
 from traitlets import Instance
+from traitlets import Unicode
 
 from jupyter_server.utils import ensure_async
 from jupyter_server.traittypes import InstanceFromClasses
 
 
 class SessionManager(LoggingConfigurable):
+
+    database_path = Unicode(
+        default_value=":memory:",
+        help="Filesystem path to SQLite Database file. Does not write to file by default."
+    ).tag(config=True)
 
     kernel_manager = Instance("jupyter_server.services.kernels.kernelmanager.MappingKernelManager")
     contents_manager = InstanceFromClasses(
@@ -39,7 +45,7 @@ class SessionManager(LoggingConfigurable):
         if self._cursor is None:
             self._cursor = self.connection.cursor()
             self._cursor.execute(
-                """CREATE TABLE session
+                """CREATE TABLE IF NOT EXISTS session
                 (session_id, path, name, type, kernel_id)"""
             )
         return self._cursor
@@ -48,7 +54,8 @@ class SessionManager(LoggingConfigurable):
     def connection(self):
         """Start a database connection"""
         if self._connection is None:
-            self._connection = sqlite3.connect(":memory:")
+            # Set isolation level to None to autocommit all changes to the database.
+            self._connection = sqlite3.connect(self.database_path, isolation_level=None)
             self._connection.row_factory = sqlite3.Row
         return self._connection
 
