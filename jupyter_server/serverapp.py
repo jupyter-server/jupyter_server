@@ -356,6 +356,10 @@ class ServerWebApplication(web.Application):
 
         # allow custom overrides for the tornado web app.
         settings.update(settings_overrides)
+
+        if base_url and "xsrf_cookie_kwargs" not in settings:
+            # default: set xsrf cookie on base_url
+            settings["xsrf_cookie_kwargs"] = {"path": base_url}
         return settings
 
     def init_handlers(self, default_services, settings):
