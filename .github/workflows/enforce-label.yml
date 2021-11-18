@@ -7,7 +7,5 @@ jobs:
   enforce-label:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
       - name: enforce-triage-label
         uses: jupyterlab/maintainer-tools/.github/actions/enforce-label
