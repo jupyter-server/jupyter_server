@@ -527,7 +527,7 @@ class MappingKernelManager(MultiKernelManager):
     def stop_watching_activity(self, kernel_id):
         """Stop watching IOPub messages on a kernel for activity."""
         kernel = self._kernels[kernel_id]
-        if getattr(kernel, '_activity_stream', None):
+        if getattr(kernel, "_activity_stream", None):
             kernel._activity_stream.close()
             kernel._activity_stream = None
 
