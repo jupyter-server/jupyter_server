@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import time
 
@@ -246,7 +247,8 @@ async def test_create_bad_pending(
     resp = await session_client.list()
     session = j(resp)[0]
     assert session["kernel"]["execution_state"] == "dead"
-    assert "non_existent_path" in session["kernel"]["reason"]
+    if os.name != "nt":
+        assert "non_existent_path" in session["kernel"]["reason"]
 
     # Need to find a better solution to this.
     await session_client.cleanup()
