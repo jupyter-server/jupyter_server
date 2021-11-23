@@ -444,8 +444,6 @@ async def test_modify_kernel_id(session_client, jp_fetch, jp_cleanup_subprocesse
     [k.pop("last_activity") for k in kernel_list]
     if not getattr(jp_serverapp.kernel_manager, "use_pending_kernels", False):
         assert kernel_list == [kernel]
-    else:
-        assert len(kernel_list) == 2
 
     # Need to find a better solution to this.
     await session_client.cleanup()
