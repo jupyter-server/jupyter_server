@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.12.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.11.2...758dba6f8873f60c1ca41057b4be108da5a6ff1a))
+
+### Enhancements made
+
+- Consistent logging method [#607](https://github.com/jupyter-server/jupyter_server/pull/607) ([@mwakaba2](https://github.com/mwakaba2))
+- Use pending kernels [#593](https://github.com/jupyter-server/jupyter_server/pull/593) ([@blink1073](https://github.com/blink1073))
+
+### Bugs fixed
+
+- Set `xsrf` cookie on base url [#612](https://github.com/jupyter-server/jupyter_server/pull/612) ([@minrk](https://github.com/minrk))
+- Update `jpserver_extensions` trait to work with `traitlets` 5.x [#610](https://github.com/jupyter-server/jupyter_server/pull/610) ([@Zsailer](https://github.com/Zsailer))
+- Fix `allow_origin_pat` property to properly parse regex [#603](https://github.com/jupyter-server/jupyter_server/pull/603) ([@havok2063](https://github.com/havok2063))
+
+### Maintenance and upkeep improvements
+
+- Enforce labels on PRs [#613](https://github.com/jupyter-server/jupyter_server/pull/613) ([@blink1073](https://github.com/blink1073))
+- Normalize file name and path in `test_api` [#608](https://github.com/jupyter-server/jupyter_server/pull/608) ([@toonn](https://github.com/toonn))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-11-01&to=2021-11-23&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-11-01..2021-11-23&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-11-01..2021-11-23&type=Issues) | [@havok2063](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ahavok2063+updated%3A2021-11-01..2021-11-23&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2021-11-01..2021-11-23&type=Issues) | [@mwakaba2](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amwakaba2+updated%3A2021-11-01..2021-11-23&type=Issues) | [@toonn](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Atoonn+updated%3A2021-11-01..2021-11-23&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-11-01..2021-11-23&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-11-01..2021-11-23&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.11.2
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.11.1...fda4cc5a96703bb4e871a5a622ef6031c7f6385b))
@@ -26,8 +54,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-10-04&to=2021-11-01&type=c))
 
 [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-10-04..2021-11-01&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2021-10-04..2021-11-01&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-10-04..2021-11-01&type=Issues) | [@stdll00](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Astdll00+updated%3A2021-10-04..2021-11-01&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-10-04..2021-11-01&type=Issues) | [@Wh1isper](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AWh1isper+updated%3A2021-10-04..2021-11-01&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-10-04..2021-11-01&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.11.1
 
