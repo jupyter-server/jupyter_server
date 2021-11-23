@@ -15,14 +15,14 @@ All notable changes to this project will be documented in this file.
 
 ### Bugs fixed
 
-- set xsrf cookie on base url [#612](https://github.com/jupyter-server/jupyter_server/pull/612) ([@minrk](https://github.com/minrk))
-- update jpserver_extensions trait to work with traitlets 5.x [#610](https://github.com/jupyter-server/jupyter_server/pull/610) ([@Zsailer](https://github.com/Zsailer))
-- Fix allow_origin_pat property to properly parse regex [#603](https://github.com/jupyter-server/jupyter_server/pull/603) ([@havok2063](https://github.com/havok2063))
+- Set `xsrf` cookie on base url [#612](https://github.com/jupyter-server/jupyter_server/pull/612) ([@minrk](https://github.com/minrk))
+- Update `jpserver_extensions` trait to work with `traitlets` 5.x [#610](https://github.com/jupyter-server/jupyter_server/pull/610) ([@Zsailer](https://github.com/Zsailer))
+- Fix `allow_origin_pat` property to properly parse regex [#603](https://github.com/jupyter-server/jupyter_server/pull/603) ([@havok2063](https://github.com/havok2063))
 
 ### Maintenance and upkeep improvements
 
 - Enforce labels on PRs [#613](https://github.com/jupyter-server/jupyter_server/pull/613) ([@blink1073](https://github.com/blink1073))
-- test_api: Normalize file name and path [#608](https://github.com/jupyter-server/jupyter_server/pull/608) ([@toonn](https://github.com/toonn))
+- Normalize file name and path in `test_api` [#608](https://github.com/jupyter-server/jupyter_server/pull/608) ([@toonn](https://github.com/toonn))
 
 ### Contributors to this release
 
