@@ -4,6 +4,7 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import asyncio
 import json
 
 try:
@@ -78,6 +79,8 @@ class SessionRootHandler(APIHandler):
                 self.set_status(501)
                 self.finish(json.dumps(dict(message=msg, short_message=status_msg)))
                 return
+            except Exception as e:
+                raise web.HTTPError(500, str(e)) from e
 
         location = url_path_join(self.base_url, "api", "sessions", model["id"])
         self.set_header("Location", location)
@@ -144,7 +147,10 @@ class SessionHandler(APIHandler):
         if model["kernel"]["id"] != before["kernel"]["id"]:
             # kernel_id changed because we got a new kernel
             # shutdown the old one
-            await ensure_async(km.shutdown_kernel(before["kernel"]["id"]))
+            fut = asyncio.ensure_future(ensure_async(km.shutdown_kernel(before["kernel"]["id"])))
+            # If we are not using pending kernels, wait for the kernel to shut down
+            if not getattr(km, "use_pending_kernels", None):
+                await fut
         self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
