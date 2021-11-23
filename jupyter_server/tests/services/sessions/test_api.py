@@ -177,7 +177,7 @@ async def test_create(session_client, jp_base_url, jp_cleanup_subprocesses, jp_s
     kid = new_session["kernel"]["id"]
     kernel = jp_serverapp.kernel_manager.get_kernel(kid)
 
-    if hasattr(kernel, "ready"):
+    if hasattr(kernel, "ready") and os.name != "nt":
         km = jp_serverapp.kernel_manager
         if isinstance(km, AsyncMappingKernelManager):
             assert kernel.ready.done() == (not km.use_pending_kernels)
@@ -412,8 +412,6 @@ async def test_modify_kernel_name(session_client, jp_fetch, jp_cleanup_subproces
     [k.pop("last_activity") for k in kernel_list]
     if not getattr(jp_serverapp.kernel_manager, "use_pending_kernels", False):
         assert kernel_list == [after["kernel"]]
-    else:
-        assert len(kernel_list) == 2
 
     # Need to find a better solution to this.
     await session_client.cleanup()
