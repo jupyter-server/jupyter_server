@@ -12,7 +12,7 @@ jobs:
       matrix:
         os: [macos]
         python-version:
-          ["3.6", "3.7", "3.8", "3.9", "3.10-dev", "pypy-3.7-v7.3.3"]
+          ["3.6", "3.7", "3.8", "3.9", "3.10", "pypy-3.7-v7.3.3"]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
