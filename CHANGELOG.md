@@ -10,12 +10,12 @@ All notable changes to this project will be documented in this file.
 
 ### Bugs fixed
 
-- await _finish_kernel_start [#617](https://github.com/jupyter-server/jupyter_server/pull/617) ([@jtpio](https://github.com/jtpio))
+- Await `_finish_kernel_start` [#617](https://github.com/jupyter-server/jupyter_server/pull/617) ([@jtpio](https://github.com/jtpio))
 
 ### Maintenance and upkeep improvements
 
 - Update to Python 3.10 in the CI workflows [#618](https://github.com/jupyter-server/jupyter_server/pull/618) ([@jtpio](https://github.com/jtpio))
-- Use maintainer-tools base setup action [#616](https://github.com/jupyter-server/jupyter_server/pull/616) ([@blink1073](https://github.com/blink1073))
+- Use `maintainer-tools` base setup action [#616](https://github.com/jupyter-server/jupyter_server/pull/616) ([@blink1073](https://github.com/blink1073))
 
 ### Contributors to this release
 
