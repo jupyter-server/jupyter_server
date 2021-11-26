@@ -210,7 +210,7 @@ class MappingKernelManager(MultiKernelManager):
                 kwargs["kernel_id"] = kernel_id
             kernel_id = await ensure_async(self.pinned_superclass.start_kernel(self, **kwargs))
             self._kernel_connections[kernel_id] = 0
-            asyncio.ensure_future(self._finish_kernel_start(kernel_id))
+            await asyncio.ensure_future(self._finish_kernel_start(kernel_id))
             # add busy/activity markers:
             kernel = self.get_kernel(kernel_id)
             kernel.execution_state = "starting"
