@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.12.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.12.0...ead83374b3b874bdf4ea47fca5aee1ecb5940a85))
+
+### Bugs fixed
+
+- Await `_finish_kernel_start` [#617](https://github.com/jupyter-server/jupyter_server/pull/617) ([@jtpio](https://github.com/jtpio))
+
+### Maintenance and upkeep improvements
+
+- Update to Python 3.10 in the CI workflows [#618](https://github.com/jupyter-server/jupyter_server/pull/618) ([@jtpio](https://github.com/jtpio))
+- Use `maintainer-tools` base setup action [#616](https://github.com/jupyter-server/jupyter_server/pull/616) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-11-23&to=2021-11-26&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-11-23..2021-11-26&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-11-23..2021-11-26&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-11-23..2021-11-26&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.12.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.11.2...758dba6f8873f60c1ca41057b4be108da5a6ff1a))
@@ -29,8 +50,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-11-01&to=2021-11-23&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-11-01..2021-11-23&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-11-01..2021-11-23&type=Issues) | [@havok2063](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ahavok2063+updated%3A2021-11-01..2021-11-23&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2021-11-01..2021-11-23&type=Issues) | [@mwakaba2](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amwakaba2+updated%3A2021-11-01..2021-11-23&type=Issues) | [@toonn](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Atoonn+updated%3A2021-11-01..2021-11-23&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-11-01..2021-11-23&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-11-01..2021-11-23&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.11.2
 
