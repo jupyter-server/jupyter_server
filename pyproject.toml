@@ -30,3 +30,11 @@ tag_template = "v{new_version}"
 
 [[tool.tbump.file]]
 src = "jupyter_server/_version.py"
+
+[[tool.tbump.field]]
+name = "channel"
+default = ""
+
+[[tool.tbump.field]]
+name = "release"
+default = ""
