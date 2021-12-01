@@ -1,5 +1,6 @@
 import base64
 import io
+import json
 import os
 
 from anyio.to_thread import run_sync
@@ -7,6 +8,13 @@ from tornado import web
 
 from jupyter_server.services.contents.filemanager import AsyncFileContentsManager
 from jupyter_server.services.contents.filemanager import FileContentsManager
+
+try:
+    from jupyterlab.handlers.yjs_echo_ws import ROOMS
+
+    YJS_SUPPORT = True
+except Exception:
+    YJS_SUPPORT = False
 
 
 class LargeFileManager(FileContentsManager):
@@ -29,6 +37,13 @@ class LargeFileManager(FileContentsManager):
                         model["type"]
                     ),
                 )
+
+            if YJS_SUPPORT and path in ROOMS:
+                if model["type"] == "notebook":
+                    model["content"] = json.loads(ROOMS[path].source)
+                elif model["type"] == "file":
+                    model["content"] = ROOMS[path].source
+
             if "content" not in model and model["type"] != "directory":
                 raise web.HTTPError(400, u"No file content provided")
 
@@ -104,6 +119,15 @@ class AsyncLargeFileManager(AsyncFileContentsManager):
                         model["type"]
                     ),
                 )
+
+            if YJS_SUPPORT and path in ROOMS:
+                await ROOMS[path].ready_to_save.wait()
+                if model["type"] == "notebook":
+                    model["content"] = json.loads(ROOMS[path].source)
+                elif model["type"] == "file":
+                    model["content"] = ROOMS[path].source
+                ROOMS[path].ready_to_save.clear()
+
             if "content" not in model and model["type"] != "directory":
                 raise web.HTTPError(400, u"No file content provided")
 

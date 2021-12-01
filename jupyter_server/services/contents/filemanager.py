@@ -2,6 +2,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import errno
+import json
 import mimetypes
 import os
 import shutil
@@ -39,6 +40,13 @@ try:
 except ImportError:
     # windows + py2
     from jupyter_server.utils import samefile_simple as samefile
+
+try:
+    from jupyterlab.handlers.yjs_echo_ws import ROOMS
+
+    YJS_SUPPORT = True
+except Exception:
+    YJS_SUPPORT = False
 
 _script_exporter = None
 
@@ -437,6 +445,13 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         if "type" not in model:
             raise web.HTTPError(400, u"No file type provided")
+
+        if YJS_SUPPORT and path in ROOMS:
+            if model["type"] == "notebook":
+                model["content"] = json.loads(ROOMS[path].source)
+            elif model["type"] == "file":
+                model["content"] = ROOMS[path].source
+
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, u"No file content provided")
 
@@ -763,6 +778,15 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         if "type" not in model:
             raise web.HTTPError(400, u"No file type provided")
+
+        if YJS_SUPPORT and path in ROOMS:
+            await ROOMS[path].ready_to_save.wait()
+            if model["type"] == "notebook":
+                model["content"] = json.loads(ROOMS[path].source)
+            elif model["type"] == "file":
+                model["content"] = ROOMS[path].source
+            ROOMS[path].ready_to_save.clear()
+
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, u"No file content provided")
 
