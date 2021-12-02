@@ -42,7 +42,7 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
             self.terminal_manager.terminals[self.term_name].last_activity = utcnow()
 
     def _set_state_busy(self):
-        self.log.info('set terminal execution_state as busy')
+        self.log.debug('set terminal execution_state as busy')
         if self.term_name in self.terminal_manager.terminals:
             self.terminal_manager.terminals[self.term_name].execution_state = 'busy'
 
