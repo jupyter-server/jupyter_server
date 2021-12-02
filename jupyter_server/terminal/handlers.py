@@ -5,9 +5,9 @@
 import terminado
 from tornado import web
 
+from jupyter_server._tz import utcnow
 from ..base.handlers import JupyterHandler
 from ..base.zmqhandlers import WebSocketMixin
-from jupyter_server._tz import utcnow
 
 
 class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
@@ -27,13 +27,26 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
     def on_message(self, message):
         super(TermSocket, self).on_message(message)
         self._update_activity()
+        self._set_state_busy()
 
     def write_message(self, message, binary=False):
         super(TermSocket, self).write_message(message, binary=binary)
         self._update_activity()
+        if message != '["stdout", "\\r\\n"]':
+            self._set_state_idle()
 
     def _update_activity(self):
         self.application.settings["terminal_last_activity"] = utcnow()
         # terminal may not be around on deletion/cull
         if self.term_name in self.terminal_manager.terminals:
             self.terminal_manager.terminals[self.term_name].last_activity = utcnow()
+
+    def _set_state_busy(self):
+        self.log.info('set terminal execution_state as busy')
+        if self.term_name in self.terminal_manager.terminals:
+            self.terminal_manager.terminals[self.term_name].execution_state = 'busy'
+
+    def _set_state_idle(self):
+        self.log.info('set terminal execution_state as idle')
+        if self.term_name in self.terminal_manager.terminals:
+            self.terminal_manager.terminals[self.term_name].execution_state = 'idle'

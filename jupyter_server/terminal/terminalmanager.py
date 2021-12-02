@@ -13,9 +13,9 @@ from tornado.ioloop import PeriodicCallback
 from traitlets import Integer
 from traitlets.config import LoggingConfigurable
 
-from ..prometheus.metrics import TERMINAL_CURRENTLY_RUNNING_TOTAL
 from jupyter_server._tz import isoformat
 from jupyter_server._tz import utcnow
+from ..prometheus.metrics import TERMINAL_CURRENTLY_RUNNING_TOTAL
 
 
 class TerminalManager(LoggingConfigurable, terminado.NamedTermManager):
@@ -96,6 +96,7 @@ class TerminalManager(LoggingConfigurable, terminado.NamedTermManager):
         model = {
             "name": name,
             "last_activity": isoformat(term.last_activity),
+            'execution_state': getattr(term, 'execution_state', 'not connected yet')
         }
         return model
 
