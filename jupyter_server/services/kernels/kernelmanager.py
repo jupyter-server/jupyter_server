@@ -5,6 +5,7 @@
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import asyncio
 import os
 from collections import defaultdict
 from datetime import datetime
@@ -209,16 +210,16 @@ class MappingKernelManager(MultiKernelManager):
                 kwargs["kernel_id"] = kernel_id
             kernel_id = await ensure_async(self.pinned_superclass.start_kernel(self, **kwargs))
             self._kernel_connections[kernel_id] = 0
-            self._kernel_ports[kernel_id] = self._kernels[kernel_id].ports
-            self.start_watching_activity(kernel_id)
+            fut = asyncio.ensure_future(self._finish_kernel_start(kernel_id))
+            if not getattr(self, "use_pending_kernels", None):
+                await fut
+            # add busy/activity markers:
+            kernel = self.get_kernel(kernel_id)
+            kernel.execution_state = "starting"
+            kernel.reason = ""
+            kernel.last_activity = utcnow()
             self.log.info("Kernel started: %s" % kernel_id)
             self.log.debug("Kernel args: %r" % kwargs)
-            # register callback for failed auto-restart
-            self.add_restart_callback(
-                kernel_id,
-                lambda: self._handle_kernel_died(kernel_id),
-                "dead",
-            )
 
             # Increase the metric of number of kernels running
             # for the relevant kernel type by 1
@@ -232,6 +233,24 @@ class MappingKernelManager(MultiKernelManager):
             self.initialize_culler()
 
         return kernel_id
+
+    async def _finish_kernel_start(self, kernel_id):
+        km = self.get_kernel(kernel_id)
+        if hasattr(km, "ready"):
+            try:
+                await km.ready
+            except Exception:
+                self.log.exception(km.ready.exception())
+                return
+
+        self._kernel_ports[kernel_id] = km.ports
+        self.start_watching_activity(kernel_id)
+        # register callback for failed auto-restart
+        self.add_restart_callback(
+            kernel_id,
+            lambda: self._handle_kernel_died(kernel_id),
+            "dead",
+        )
 
     def ports_changed(self, kernel_id):
         """Used by ZMQChannelsHandler to determine how to coordinate nudge and replays.
@@ -448,6 +467,8 @@ class MappingKernelManager(MultiKernelManager):
             "execution_state": kernel.execution_state,
             "connections": self._kernel_connections.get(kernel_id, 0),
         }
+        if getattr(kernel, "reason", None):
+            model["reason"] = kernel.reason
         return model
 
     def list_kernels(self):
@@ -479,6 +500,7 @@ class MappingKernelManager(MultiKernelManager):
         kernel = self._kernels[kernel_id]
         # add busy/activity markers:
         kernel.execution_state = "starting"
+        kernel.reason = ""
         kernel.last_activity = utcnow()
         kernel._activity_stream = kernel.connect_iopub()
         session = Session(
@@ -507,7 +529,7 @@ class MappingKernelManager(MultiKernelManager):
     def stop_watching_activity(self, kernel_id):
         """Stop watching IOPub messages on a kernel for activity."""
         kernel = self._kernels[kernel_id]
-        if kernel._activity_stream:
+        if getattr(kernel, "_activity_stream", None):
             kernel._activity_stream.close()
             kernel._activity_stream = None
 
@@ -561,6 +583,17 @@ class MappingKernelManager(MultiKernelManager):
 
     async def cull_kernel_if_idle(self, kernel_id):
         kernel = self._kernels[kernel_id]
+
+        if getattr(kernel, "execution_state") == "dead":
+            self.log.warning(
+                "Culling '%s' dead kernel '%s' (%s).",
+                kernel.execution_state,
+                kernel.kernel_name,
+                kernel_id,
+            )
+            await ensure_async(self.shutdown_kernel(kernel_id))
+            return
+
         if hasattr(
             kernel, "last_activity"
         ):  # last_activity is monkey-patched, so ensure that has occurred

@@ -3,6 +3,7 @@ import pathlib
 import sys
 from base64 import decodebytes
 from base64 import encodebytes
+from unicodedata import normalize
 
 import pytest
 import tornado
@@ -101,8 +102,8 @@ async def test_list_notebooks(jp_fetch, contents, path, name):
     data = json.loads(response.body.decode())
     nbs = notebooks_only(data)
     assert len(nbs) > 0
-    assert name + ".ipynb" in [n["name"] for n in nbs]
-    assert url_path_join(path, name + ".ipynb") in [n["path"] for n in nbs]
+    assert name + ".ipynb" in [normalize("NFC", n["name"]) for n in nbs]
+    assert url_path_join(path, name + ".ipynb") in [normalize("NFC", n["path"]) for n in nbs]
 
 
 @pytest.mark.parametrize("path,name", dirs)

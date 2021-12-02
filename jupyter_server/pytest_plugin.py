@@ -416,13 +416,16 @@ sample_kernel_json = {
 @pytest.fixture
 def jp_kernelspecs(jp_data_dir):
     """Configures some sample kernelspecs in the Jupyter data directory."""
-    spec_names = ["sample", "sample 2"]
+    spec_names = ["sample", "sample 2", "bad"]
     for name in spec_names:
         sample_kernel_dir = jp_data_dir.joinpath("kernels", name)
         sample_kernel_dir.mkdir(parents=True)
         # Create kernel json file
         sample_kernel_file = sample_kernel_dir.joinpath("kernel.json")
-        sample_kernel_file.write_text(json.dumps(sample_kernel_json))
+        kernel_json = sample_kernel_json.copy()
+        if name == "bad":
+            kernel_json["argv"] = ["non_existent_path"]
+        sample_kernel_file.write_text(json.dumps(kernel_json))
         # Create resources text
         sample_kernel_resources = sample_kernel_dir.joinpath("resource.txt")
         sample_kernel_resources.write_text(some_resource)
@@ -474,12 +477,24 @@ def jp_cleanup_subprocesses(jp_serverapp):
         terminal_cleanup = jp_serverapp.web_app.settings["terminal_manager"].terminate_all
         kernel_cleanup = jp_serverapp.kernel_manager.shutdown_all
         if asyncio.iscoroutinefunction(terminal_cleanup):
-            await terminal_cleanup()
+            try:
+                await terminal_cleanup()
+            except Exception as e:
+                print(e)
         else:
-            terminal_cleanup()
+            try:
+                await terminal_cleanup()
+            except Exception as e:
+                print(e)
         if asyncio.iscoroutinefunction(kernel_cleanup):
-            await kernel_cleanup()
+            try:
+                await kernel_cleanup()
+            except Exception as e:
+                print(e)
         else:
-            kernel_cleanup()
+            try:
+                kernel_cleanup()
+            except Exception as e:
+                print(e)
 
     return _

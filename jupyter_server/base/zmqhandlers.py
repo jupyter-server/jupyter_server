@@ -3,6 +3,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
+import re
 import struct
 import sys
 from urllib.parse import urlparse
@@ -139,7 +140,7 @@ class WebSocketMixin(object):
         if self.allow_origin:
             allow = self.allow_origin == origin
         elif self.allow_origin_pat:
-            allow = bool(self.allow_origin_pat.match(origin))
+            allow = bool(re.match(self.allow_origin_pat, origin))
         else:
             # No CORS headers deny the request
             allow = False
@@ -174,6 +175,10 @@ class WebSocketMixin(object):
         """send a ping to keep the websocket alive"""
         if self.ws_connection is None and self.ping_callback is not None:
             self.ping_callback.stop()
+            return
+
+        if self.ws_connection.client_terminated:
+            self.close()
             return
 
         # check for timeout on pong.  Make sure that we really have sent a recent ping in

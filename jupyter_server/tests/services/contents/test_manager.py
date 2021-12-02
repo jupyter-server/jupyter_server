@@ -551,7 +551,7 @@ async def test_delete_non_empty_folder(delete_to_trash, always_delete, error, jp
             await ensure_async(cm.delete_file(dir))
     else:
         await ensure_async(cm.delete_file(dir))
-        assert cm.dir_exists(dir) == False
+        assert await ensure_async(cm.dir_exists(dir)) == False
 
 
 async def test_rename(jp_contents_manager):
