@@ -37,6 +37,10 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
 
     def write_message(self, message, binary=False):
         super(TermSocket, self).write_message(message, binary=binary)
+        self._update_activity()
+        self._set_state_idle_if_return(message)
+
+    def _set_state_idle_if_return(self, message):
         message_seg = json.loads(message)
         if not self._first_stdout and message_seg[0] == 'stdout':
             # Record the first output to identify the terminal return
