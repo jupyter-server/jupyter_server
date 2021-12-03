@@ -29,7 +29,7 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
     def on_message(self, message):
         super(TermSocket, self).on_message(message)
         self._update_activity()
-        self._set_state_busy()
+        self._set_state_busy_if_stateful()
 
     def write_message(self, message, binary=False):
         super(TermSocket, self).write_message(message, binary=binary)
@@ -41,6 +41,8 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
         if self.term_name in self.terminal_manager.terminals:
             self.terminal_manager.terminals[self.term_name].last_activity = utcnow()
 
-    def _set_state_busy(self):
+    def _set_state_busy_if_stateful(self):
+        if not hasattr(self.terminal_manager, 'set_state_idle_if_return'):
+            return
         if self.term_name in self.terminal_manager.terminals:
             self.terminal_manager.terminals[self.term_name].execution_state = 'busy'

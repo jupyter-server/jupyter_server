@@ -12,7 +12,7 @@ from ipython_genutils.py3compat import which
 from jupyter_server.utils import url_path_join as ujoin
 from . import api_handlers
 from .handlers import TermSocket
-from .terminalmanager import TerminalManager
+from .terminalmanager import TerminalManager, StatefulTerminalManager
 
 
 def initialize(webapp, root_dir, connection_url, settings):
@@ -29,7 +29,8 @@ def initialize(webapp, root_dir, connection_url, settings):
     # the user has specifically set a preferred shell command.
     if os.name != "nt" and shell_override is None and not sys.stdout.isatty():
         shell.append("-l")
-    terminal_manager = webapp.settings["terminal_manager"] = TerminalManager(
+    terminal_class = StatefulTerminalManager if webapp.settings['stateful_terminals_enabled'] else TerminalManager
+    terminal_manager = webapp.settings['terminal_manager'] = terminal_class(
         shell_command=shell,
         extra_env={
             "JUPYTER_SERVER_ROOT": root_dir,

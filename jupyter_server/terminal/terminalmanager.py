@@ -82,48 +82,6 @@ class TerminalManager(LoggingConfigurable, terminado.NamedTermManager):
         # because a terminal has been shutdown
         TERMINAL_CURRENTLY_RUNNING_TOTAL.dec()
 
-    def pty_read(self, fd, events=None):
-        """Called by the event loop when there is pty data ready to read."""
-        # prevent blocking on fd
-        if not _poll(fd, timeout=0.1):  # 100ms
-            self.log.debug(f"Spurious pty_read() on fd {fd}")
-            return
-        ptywclients = self.ptys_by_fd[fd]
-        try:
-            s = ptywclients.ptyproc.read(65536)
-            client_list = ptywclients.clients
-            ptywclients.read_buffer.append(s)
-            # hook for set terminal status
-            self._set_state_idle_if_return(ptywclients, s)
-            if not client_list:
-                # No one to consume our output: buffer it.
-                ptywclients.preopen_buffer.append(s)
-                return
-            for client in ptywclients.clients:
-                client.on_pty_read(s)
-        except EOFError:
-            self.on_eof(ptywclients)
-            for client in ptywclients.clients:
-                client.on_pty_died()
-
-    def _set_state_idle_if_return(self, ptywclients, s):
-        first_stdout = getattr(ptywclients, 'first_stdout', '')
-
-        if not first_stdout:
-            # Record the first output to identify the terminal return
-            # It works well for jupyterhub-singleuser and should also work for other debian-based mirrors
-            # fixme: May fail if terminal is not properly separated with ':' or change user after connect
-            #        (Any change to the user, hostname or environment may render it invalid)
-            first_stdout = s.split(':')[0].lstrip()
-            ptywclients.first_stdout = first_stdout
-            self.log.debug(f'take "{first_stdout}" as terminal returned')
-        if s.lstrip().startswith(first_stdout):
-            self._set_state_idle(ptywclients)
-
-    def _set_state_idle(self, ptywclients):
-        self.log.debug('set terminal execution_state as idle')
-        ptywclients.execution_state = 'idle'
-
     async def terminate_all(self):
         """Terminate all terminals."""
         terms = [name for name in self.terminals]
@@ -209,3 +167,48 @@ class TerminalManager(LoggingConfigurable, terminado.NamedTermManager):
                     "Culling terminal '%s' due to %s seconds of inactivity.", name, inactivity
                 )
                 await self.terminate(name, force=True)
+
+
+class StatefulTerminalManager(TerminalManager):
+    # patch execution_state into terminal
+    def pty_read(self, fd, events=None):
+        """Called by the event loop when there is pty data ready to read."""
+        # prevent blocking on fd
+        if not _poll(fd, timeout=0.1):  # 100ms
+            self.log.debug(f"Spurious pty_read() on fd {fd}")
+            return
+        ptywclients = self.ptys_by_fd[fd]
+        try:
+            s = ptywclients.ptyproc.read(65536)
+            client_list = ptywclients.clients
+            ptywclients.read_buffer.append(s)
+            # hook for set terminal status
+            self.set_state_idle_if_return(ptywclients, s)
+            if not client_list:
+                # No one to consume our output: buffer it.
+                ptywclients.preopen_buffer.append(s)
+                return
+            for client in ptywclients.clients:
+                client.on_pty_read(s)
+        except EOFError:
+            self.on_eof(ptywclients)
+            for client in ptywclients.clients:
+                client.on_pty_died()
+
+    def set_state_idle_if_return(self, ptywclients, s):
+        first_stdout = getattr(ptywclients, 'first_stdout', '')
+
+        if not first_stdout:
+            # Record the first output to identify the terminal return
+            # It works well for jupyterhub-singleuser and should also work for other debian-based mirrors
+            # fixme: May fail if terminal is not properly separated with ':' or change user after connect
+            #        (Any change to the user, hostname or environment may render it invalid)
+            first_stdout = s.split(':')[0].lstrip()
+            ptywclients.first_stdout = first_stdout
+            self.log.debug(f'take "{first_stdout}" as terminal returned')
+        if s.lstrip().startswith(first_stdout):
+            self._set_state_idle(ptywclients)
+
+    def _set_state_idle(self, ptywclients):
+        self.log.debug('set terminal execution_state as idle')
+        ptywclients.execution_state = 'idle'

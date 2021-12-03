@@ -351,6 +351,7 @@ class ServerWebApplication(web.Application):
             server_root_dir=root_dir,
             jinja2_env=env,
             terminals_available=terminado_available and jupyter_app.terminals_enabled,
+            stateful_terminals_enabled=jupyter_app.stateful_terminals_enabled,
             serverapp=jupyter_app,
         )
 
@@ -1668,6 +1669,18 @@ class ServerApp(JupyterApp):
          Terminals may also be automatically disabled if the terminado package
          is not available.
          """
+        ),
+    )
+
+    stateful_terminals_enabled = Bool(
+        False,
+        config=True,
+        help=_i18n(
+            """Set to True to enable stateful terminals.
+
+            Terminals may also be automatically disabled if the terminado package
+         is not available.
+            """
         ),
     )
 
