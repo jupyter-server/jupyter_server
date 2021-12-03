@@ -34,7 +34,7 @@ def jp_server_config():
 
 
 async def test_set_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serverapp):
-    if platform.system().lower() != "linux":
+    if os.name == "nt":
         return
 
     # disable man sudo_root
