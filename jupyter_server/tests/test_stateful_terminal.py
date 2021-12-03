@@ -84,7 +84,7 @@ async def test_set_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serve
 
 
 async def test_set_idle_disconnect(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serverapp):
-    if platform.system().lower() != "linux":
+    if os.name != "nt":
         return
 
     # disable man sudo_root
