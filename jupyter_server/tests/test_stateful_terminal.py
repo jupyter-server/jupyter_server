@@ -35,7 +35,7 @@ def jp_server_config():
 
 async def test_set_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serverapp):
     if os.name == "nt":
-        return
+        pytest.skip("Feature not supported on Windows")
 
     # disable man sudo_root
     os.system(f"touch {os.path.expanduser('~/.sudo_as_admin_successful')}")
