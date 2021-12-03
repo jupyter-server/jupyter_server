@@ -50,8 +50,9 @@ async def test_set_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serve
     setup = ["set_size", 0, 0, 80, 32]
     await ws.write_message(json.dumps(setup))
     await ws.read_message()
-    sleep_1_msg = ['stdin', "python -c 'import time;time.sleep(1)'\r\n"]
-    await ws.write_message(json.dumps(sleep_1_msg))
+    sleep_2_msg = ['stdin', "python -c 'import time;time.sleep(2)'\r\n"]
+    await ws.write_message(json.dumps(sleep_2_msg))
+    await asyncio.sleep(1)
     assert jp_serverapp.web_app.settings["terminal_manager"].terminals[term_1].execution_state == 'busy'
     await asyncio.sleep(2)
     assert jp_serverapp.web_app.settings["terminal_manager"].terminals[term_1].execution_state == 'idle'
@@ -76,9 +77,10 @@ async def test_set_idle_disconnect(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesse
     setup = ["set_size", 0, 0, 80, 32]
     await ws.write_message(json.dumps(setup))
     await ws.read_message()
-    sleep_1_msg = ['stdin', "python -c 'import time;time.sleep(1)'\r\n"]
-    await ws.write_message(json.dumps(sleep_1_msg))
+    sleep_2_msg = ['stdin', "python -c 'import time;time.sleep(2)'\r\n"]
+    await ws.write_message(json.dumps(sleep_2_msg))
     ws.close()
+    await asyncio.sleep(1)
     assert jp_serverapp.web_app.settings["terminal_manager"].terminals[term_1].execution_state == 'busy'
     await asyncio.sleep(2)
     assert not jp_serverapp.web_app.settings["terminal_manager"].terminals[term_1].clients
