@@ -131,28 +131,16 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     def nudge(self):
         """Nudge the zmq connections with kernel_info_requests
         Returns a Future that will resolve when we have received
-        a shell reply and at least one iopub message,
+        a control reply and at least one iopub message,
         ensuring that zmq subscriptions are established,
         sockets are fully connected, and kernel is responsive.
         Keeps retrying kernel_info_request until these are both received.
         """
         kernel = self.kernel_manager.get_kernel(self.kernel_id)
 
-        # Do not nudge busy kernels as kernel info requests sent to shell are
-        # queued behind execution requests.
-        # nudging in this case would cause a potentially very long wait
-        # before connections are opened,
-        # plus it is *very* unlikely that a busy kernel will not finish
-        # establishing its zmq subscriptions before processing the next request.
-        if getattr(kernel, "execution_state") == "busy":
-            self.log.debug("Nudge: not nudging busy kernel %s", self.kernel_id)
-            f = Future()
-            f.set_result(None)
-            return f
-
-        # Use a transient shell channel to prevent leaking
-        # shell responses to the front-end.
-        shell_channel = kernel.connect_shell()
+        # Use a transient control channel to prevent leaking
+        # control responses to the front-end.
+        control_channel = kernel.connect_control()
         # The IOPub used by the client, whose subscriptions we are verifying.
         iopub_channel = self.channels["iopub"]
 
@@ -172,13 +160,13 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             """Common cleanup"""
             loop.remove_timeout(nudge_handle)
             iopub_channel.stop_on_recv()
-            if not shell_channel.closed():
-                shell_channel.close()
+            if not control_channel.closed():
+                control_channel.close()
 
         # trigger cleanup when both message futures are resolved
         both_done.add_done_callback(cleanup)
 
-        def on_shell_reply(msg):
+        def on_control_reply(msg):
             self.log.debug("Nudge: shell info reply received: %s", self.kernel_id)
             if not info_future.done():
                 self.log.debug("Nudge: resolving shell future: %s", self.kernel_id)
@@ -192,7 +180,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 iopub_future.set_result(None)
 
         iopub_channel.on_recv(on_iopub)
-        shell_channel.on_recv(on_shell_reply)
+        control_channel.on_recv(on_control_reply)
         loop = IOLoop.current()
 
         # Nudge the kernel with kernel info requests until we get an IOPub message
@@ -213,7 +201,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 return
 
             # check for closed zmq socket
-            if shell_channel.closed():
+            if control_channel.closed():
                 self.log.debug("Nudge: cancelling on closed zmq socket: %s", self.kernel_id)
                 finish()
                 return
@@ -221,7 +209,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             if not both_done.done():
                 log = self.log.warning if count % 10 == 0 else self.log.debug
                 log("Nudge: attempt %s on kernel %s" % (count, self.kernel_id))
-                self.session.send(shell_channel, "kernel_info_request")
+                self.session.send(control_channel, "kernel_info_request")
                 nonlocal nudge_handle
                 nudge_handle = loop.call_later(0.5, nudge, count)
 
