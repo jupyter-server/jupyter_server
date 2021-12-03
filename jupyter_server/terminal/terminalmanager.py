@@ -97,7 +97,6 @@ class TerminalManager(LoggingConfigurable, terminado.NamedTermManager):
         model = {
             "name": name,
             "last_activity": isoformat(term.last_activity),
-            'execution_state': getattr(term, 'execution_state', 'not connected yet')
         }
         return model
 
@@ -212,3 +211,12 @@ class StatefulTerminalManager(TerminalManager):
     def _set_state_idle(self, ptywclients):
         self.log.debug('set terminal execution_state as idle')
         ptywclients.execution_state = 'idle'
+
+    def get_terminal_model(self, name):
+        """Return a JSON-safe dict representing a terminal.
+        For use in representing terminals in the JSON APIs.
+        """
+        model = super(StatefulTerminalManager, self).get_terminal_model(name)
+        term = self.terminals[name]
+        model.setdefault('execution_state', getattr(term, 'execution_state', 'not connected yet'))
+        return model
