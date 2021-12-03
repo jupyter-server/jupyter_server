@@ -2,7 +2,6 @@
 """Tornado handlers for the terminal emulator."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-import json
 
 import terminado
 from tornado import web
@@ -35,24 +34,6 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
     def write_message(self, message, binary=False):
         super(TermSocket, self).write_message(message, binary=binary)
         self._update_activity()
-        self._set_state_idle_if_return(message)
-
-    def _set_state_idle_if_return(self, message):
-        if not self.term_name in self.terminal_manager.terminals:
-            return
-        message_seg = json.loads(message)
-        first_stdout = getattr(self.terminal_manager.terminals[self.term_name], 'first_stdout', '')
-
-        if not first_stdout and message_seg[0] == 'stdout':
-            # Record the first output to identify the terminal return
-            # It works well for jupyterhub-singleuser and should also work for other debian-based mirrors
-            # fixme: May fail if terminal is not properly separated with ':' or change user after connect
-            #        (Any change to the user, hostname or environment may render it invalid)
-            first_stdout = message_seg[1].split(':')[0].lstrip()
-            self.terminal_manager.terminals[self.term_name].first_stdout = first_stdout
-            self.log.debug(f'take "{first_stdout}" as terminal returned')
-        if isinstance(message_seg[1], str) and message_seg[1].lstrip().startswith(first_stdout):
-            self._set_state_idle()
 
     def _update_activity(self):
         self.application.settings["terminal_last_activity"] = utcnow()
@@ -63,8 +44,3 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
     def _set_state_busy(self):
         if self.term_name in self.terminal_manager.terminals:
             self.terminal_manager.terminals[self.term_name].execution_state = 'busy'
-
-    def _set_state_idle(self):
-        if self.term_name in self.terminal_manager.terminals:
-            self.log.debug('set terminal execution_state as idle')
-            self.terminal_manager.terminals[self.term_name].execution_state = 'idle'
