@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import platform
 import shutil
 
 import pytest
@@ -33,6 +34,9 @@ def jp_server_config():
 
 
 async def test_set_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serverapp):
+    if platform.system().lower() != 'linux':
+        return
+
     # disable man sudo_root
     os.system(f"touch {os.path.expanduser('~/.sudo_as_admin_successful')}")
 
@@ -76,6 +80,9 @@ async def test_set_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serve
 
 
 async def test_set_idle_disconnect(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serverapp):
+    if platform.system().lower() != 'linux':
+        return
+
     # disable man sudo_root
     os.system(f"touch {os.path.expanduser('~/.sudo_as_admin_successful')}")
 
