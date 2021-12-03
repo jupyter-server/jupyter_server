@@ -2,17 +2,15 @@
 """Tornado handlers for the terminal emulator."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-
 import terminado
 from tornado import web
 
-from jupyter_server._tz import utcnow
 from ..base.handlers import JupyterHandler
 from ..base.zmqhandlers import WebSocketMixin
+from jupyter_server._tz import utcnow
 
 
 class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
-
     def origin_check(self):
         """Terminado adds redundant origin_check
         Tornado already calls check_origin, so don't do anything here.
@@ -42,7 +40,7 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
             self.terminal_manager.terminals[self.term_name].last_activity = utcnow()
 
     def _set_state_busy_if_stateful(self):
-        if not hasattr(self.terminal_manager, 'set_state_idle_if_return'):
+        if not hasattr(self.terminal_manager, "set_state_idle_if_return"):
             return
         if self.term_name in self.terminal_manager.terminals:
-            self.terminal_manager.terminals[self.term_name].execution_state = 'busy'
+            self.terminal_manager.terminals[self.term_name].execution_state = "busy"
