@@ -33,10 +33,8 @@ def jp_server_config():
     )
 
 
+@pytest.mark.skipif(platform.system().lower() != "linux", reason="Only available on Linux")
 async def test_set_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serverapp):
-    if os.name == "nt":
-        pytest.skip("Feature not supported on Windows")
-
     # disable man sudo_root
     os.system(f"touch {os.path.expanduser('~/.sudo_as_admin_successful')}")
 
@@ -83,10 +81,8 @@ async def test_set_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serve
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.skipif(platform.system().lower() != "linux", reason="Only available on Linux")
 async def test_set_idle_disconnect(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serverapp):
-    if os.name == "nt":
-        pytest.skip("Feature not supported on Windows")
-
     # disable man sudo_root
     os.system(f"touch {os.path.expanduser('~/.sudo_as_admin_successful')}")
 
