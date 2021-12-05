@@ -27,7 +27,7 @@ def jp_server_config():
     return Config(
         {
             "ServerApp": {
-                "stateful_terminals_enabled": True,
+                "terminal_manager_class": "jupyter_server.terminal.StatefulTerminalManager",
             }
         }
     )
