@@ -15,24 +15,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
-      - name: Install dependencies
+      - name: Test jupyterlab_server
+        uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
+        with:
+          package_name: jupyterlab_server
+
+      - name: Test jupyterlab
+        uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
+        with:
+          package_name: jupyterlab
+          pytest_args: "--pyargs jupyterlab && python -m jupyterlab.browser_check --no-browser-test"
+
+      - name: Test nbclassic
+        uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
+        with:
+          package_name: nbclassic
+
+      - name: Test run nbclassic
         run: |
-          pip install --upgrade pip
-          pip install "."
-          pip install --pre --upgrade jupyterlab_server[test] jupyterlab[test] nbclassic[test]
-          pip freeze
-      - name: Run tests
-        working-directory: ../
-        run: |
-          # NOTE: tests won't pass from inside the working copy because of
-          # conftest.py:pytest_plugins (must be at the top level)
-          pytest --pyargs jupyterlab_server
-          python -m jupyterlab.browser_check --no-browser-test
+          pip install nbclassic
+          pip install --force-install "."
 
           # Make sure we can start and kill the nbclassic server
           jupyter nbclassic --no-browser &
@@ -42,5 +47,3 @@ jobs:
           sleep 5
           kill $TASK_PID
           wait $TASK_PID
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
