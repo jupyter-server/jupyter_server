@@ -27,7 +27,7 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
         with:
           package_name: jupyterlab
-          extra_test: "python -m jupyterlab.browser_check --no-browser-test"
+          test_command: "python -m jupyterlab.browser_check --no-browser-test"
 
       - name: Test nbclassic
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
