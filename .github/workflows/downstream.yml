@@ -37,7 +37,7 @@ jobs:
       - name: Test run nbclassic
         run: |
           pip install nbclassic
-          pip install --force-install "."
+          pip install --force-reinstall "."
 
           # Make sure we can start and kill the nbclassic server
           jupyter nbclassic --no-browser &
