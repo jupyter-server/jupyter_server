@@ -178,6 +178,7 @@ JUPYTER_SERVICE_HANDLERS = dict(
 # Added for backwards compatibility from classic notebook server.
 DEFAULT_SERVER_PORT = DEFAULT_JUPYTER_SERVER_PORT
 
+
 # -----------------------------------------------------------------------------
 # Helper functions
 # -----------------------------------------------------------------------------
@@ -351,7 +352,7 @@ class ServerWebApplication(web.Application):
             server_root_dir=root_dir,
             jinja2_env=env,
             terminals_available=terminado_available and jupyter_app.terminals_enabled,
-            stateful_terminals_enabled=jupyter_app.stateful_terminals_enabled,
+            terminal_manager_class=jupyter_app.terminal_manager_class,
             serverapp=jupyter_app,
         )
 
@@ -526,7 +527,6 @@ def shutdown_server(server_info, timeout=5, log=None):
 
 
 class JupyterServerStopApp(JupyterApp):
-
     version = __version__
     description = "Stop currently running Jupyter server for a given port"
 
@@ -666,7 +666,6 @@ flags["autoreload"] = (
     """,
 )
 
-
 # Add notebook manager flags
 flags.update(
     boolean_flag(
@@ -695,13 +694,13 @@ aliases.update(
     }
 )
 
+
 # -----------------------------------------------------------------------------
 # ServerApp
 # -----------------------------------------------------------------------------
 
 
 class ServerApp(JupyterApp):
-
     name = "jupyter-server"
     version = __version__
     description = _i18n(
@@ -1672,15 +1671,16 @@ class ServerApp(JupyterApp):
         ),
     )
 
-    stateful_terminals_enabled = Bool(
-        False,
+    terminal_manager_class = Type(
+        default_value=TerminalManager,
+        klass=TerminalManager,
         config=True,
         help=_i18n(
-            """Set to True to enable stateful terminals.
+            """The terminal manager class to use.
 
-            Terminals may also be automatically disabled if the terminado package
-         is not available.
-            """
+        Only when terminals_enabled is instantiated,
+        the call to init_terminals function will get self.terminal_manager
+        """
         ),
     )
 

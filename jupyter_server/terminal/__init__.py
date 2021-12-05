@@ -29,12 +29,9 @@ def initialize(webapp, root_dir, connection_url, settings):
     # the user has specifically set a preferred shell command.
     if os.name != "nt" and shell_override is None and not sys.stdout.isatty():
         shell.append("-l")
-    terminal_class = (
-        StatefulTerminalManager
-        if webapp.settings["stateful_terminals_enabled"]
-        else TerminalManager
-    )
-    terminal_manager = webapp.settings["terminal_manager"] = terminal_class(
+    terminal_manager = webapp.settings["terminal_manager"] = webapp.settings[
+        "terminal_manager_class"
+    ](
         shell_command=shell,
         extra_env={
             "JUPYTER_SERVER_ROOT": root_dir,
