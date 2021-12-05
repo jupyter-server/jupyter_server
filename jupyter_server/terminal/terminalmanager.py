@@ -169,7 +169,12 @@ class TerminalManager(LoggingConfigurable, terminado.NamedTermManager):
 
 
 class StatefulTerminalManager(TerminalManager):
-    # patch execution_state into terminal
+    """
+    ***Experimental***
+    Patch execution_state into terminal
+    The method of setting the state is not necessarily reliable, the terminal of bus y state will still be culled
+    """
+
     def pty_read(self, fd, events=None):
         """Called by the event loop when there is pty data ready to read."""
         # prevent blocking on fd
