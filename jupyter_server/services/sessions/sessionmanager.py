@@ -2,8 +2,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import os
-import uuid
 import pathlib
+import uuid
 
 try:
     import sqlite3
@@ -32,7 +32,7 @@ class SessionManager(LoggingConfigurable):
             "(e.g. /path/to/session_database.db). By default, the session "
             "database is stored in-memory (i.e. `:memory:` setting from sqlite3) "
             "and does not persist when the current Jupyter Server shuts down."
-        )
+        ),
     ).tag(config=True)
 
     @validate("database_filepath")
@@ -44,14 +44,16 @@ class SessionManager(LoggingConfigurable):
         if path.exists():
             # Verify that the database path is not a directory.
             if path.is_dir():
-                raise TraitError("`database_filepath` expected a file path, but the given path is a directory.")
+                raise TraitError(
+                    "`database_filepath` expected a file path, but the given path is a directory."
+                )
             # If the file exists, but it's empty, its a valid entry.
             if os.stat(path).st_size == 0:
                 return value
             # Verify that database path is an SQLite 3 Database by checking its header.
             with open(value, "rb") as f:
                 header = f.read(100)
-            if not header.startswith(b'SQLite format 3'):
+            if not header.startswith(b"SQLite format 3"):
                 raise TraitError("The file does not look like ")
         return value
 

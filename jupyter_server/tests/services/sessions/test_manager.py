@@ -1,5 +1,4 @@
 import pytest
-import pathlib
 from tornado import web
 from traitlets import TraitError
 
@@ -268,7 +267,6 @@ async def test_bad_delete_session(session_manager):
         await session_manager.delete_session(session_id="23424")  # nonexistent
 
 
-
 async def test_bad_database_filepath(jp_runtime_dir):
     kernel_manager = DummyMKM()
 
@@ -276,10 +274,10 @@ async def test_bad_database_filepath(jp_runtime_dir):
     path_id_directory = str(jp_runtime_dir)
     # Should raise an error because the path is a directory.
     with pytest.raises(TraitError) as err:
-         SessionManager(
+        SessionManager(
             kernel_manager=kernel_manager,
             contents_manager=ContentsManager(),
-            database_filepath=str(path_id_directory)
+            database_filepath=str(path_id_directory),
         )
 
     # Try writing to file that's not a valid SQLite 3 database file.
@@ -289,10 +287,10 @@ async def test_bad_database_filepath(jp_runtime_dir):
     # Should raise an error because the file doesn't
     # start with an SQLite database file header.
     with pytest.raises(TraitError) as err:
-         SessionManager(
+        SessionManager(
             kernel_manager=kernel_manager,
             contents_manager=ContentsManager(),
-            database_filepath=str(non_db_file)
+            database_filepath=str(non_db_file),
         )
 
 
@@ -306,7 +304,7 @@ async def test_good_database_filepath(jp_runtime_dir):
     session_manager = SessionManager(
         kernel_manager=kernel_manager,
         contents_manager=ContentsManager(),
-        database_filepath=str(empty_file)
+        database_filepath=str(empty_file),
     )
 
     await session_manager.create_session(
@@ -322,10 +320,11 @@ async def test_good_database_filepath(jp_runtime_dir):
     session_manager = SessionManager(
         kernel_manager=kernel_manager,
         contents_manager=ContentsManager(),
-        database_filepath=str(empty_file)
+        database_filepath=str(empty_file),
     )
 
     assert session_manager.database_filepath == str(empty_file)
+
 
 async def test_session_persistence(jp_runtime_dir):
     session_db_path = jp_runtime_dir.joinpath("test-session.db")
@@ -337,7 +336,7 @@ async def test_session_persistence(jp_runtime_dir):
     session_manager = SessionManager(
         kernel_manager=kernel_manager,
         contents_manager=ContentsManager(),
-        database_filepath=str(session_db_path)
+        database_filepath=str(session_db_path),
     )
 
     session = await session_manager.create_session(
@@ -350,7 +349,7 @@ async def test_session_persistence(jp_runtime_dir):
     with open(session_db_path, "rb") as f:
         header = f.read(100)
 
-    assert header.startswith(b'SQLite format 3')
+    assert header.startswith(b"SQLite format 3")
 
     # Close the current session manager
     del session_manager
@@ -359,7 +358,7 @@ async def test_session_persistence(jp_runtime_dir):
     session_manager = SessionManager(
         kernel_manager=kernel_manager,
         contents_manager=ContentsManager(),
-        database_filepath=str(session_db_path)
+        database_filepath=str(session_db_path),
     )
 
     # Assert that the session database persists.
