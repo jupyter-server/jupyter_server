@@ -28,10 +28,10 @@ class SessionManager(LoggingConfigurable):
     database_filepath = Unicode(
         default_value=":memory:",
         help=(
-            "Filesystem path to SQLite Database file. Does "
-            "not write to file by default. :memory: (default) stores the "
-            "database in-memory and is not persistent beyond "
-            "the current session."
+            "Th filesystem path to SQLite Database file "
+            "(e.g. /path/to/session_database.db). By default, the session "
+            "database is stored in-memory (i.e. `:memory:` setting from sqlite3) "
+            "and does not persist when the current Jupyter Server shuts down."
         )
     ).tag(config=True)
 
