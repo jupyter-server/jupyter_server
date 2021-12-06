@@ -1,7 +1,6 @@
 """A base class session manager."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-import os
 import pathlib
 import uuid
 
@@ -47,14 +46,12 @@ class SessionManager(LoggingConfigurable):
                 raise TraitError(
                     "`database_filepath` expected a file path, but the given path is a directory."
                 )
-            # If the file exists, but it's empty, its a valid entry.
-            if os.stat(path).st_size == 0:
-                return value
             # Verify that database path is an SQLite 3 Database by checking its header.
             with open(value, "rb") as f:
                 header = f.read(100)
-            if not header.startswith(b"SQLite format 3"):
-                raise TraitError("The file does not look like ")
+
+            if not header.startswith(b"SQLite format 3") and not header == b"":
+                raise TraitError("The given file is not an SQLite database file.")
         return value
 
     kernel_manager = Instance("jupyter_server.services.kernels.kernelmanager.MappingKernelManager")
