@@ -274,6 +274,7 @@ async def test_bad_database_filepath(jp_runtime_dir):
 
     # Try to write to a path that's a directory, not a file.
     path_id_directory = str(jp_runtime_dir)
+    # Should raise an error because the path is a directory.
     with pytest.raises(TraitError) as err:
          SessionManager(
             kernel_manager=kernel_manager,
@@ -281,10 +282,12 @@ async def test_bad_database_filepath(jp_runtime_dir):
             database_filepath=str(path_id_directory)
         )
 
-    # Try writing to file that's not a database
+    # Try writing to file that's not a valid SQLite 3 database file.
     non_db_file = jp_runtime_dir.joinpath("non_db_file.db")
     non_db_file.write_bytes(b"this is a bad file")
 
+    # Should raise an error because the file doesn't
+    # start with an SQLite database file header.
     with pytest.raises(TraitError) as err:
          SessionManager(
             kernel_manager=kernel_manager,
