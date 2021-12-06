@@ -1,5 +1,6 @@
 import pytest
 from tornado import web
+from traitlets import TraitError
 
 from jupyter_server._tz import isoformat
 from jupyter_server._tz import utcnow
@@ -264,3 +265,101 @@ async def test_bad_delete_session(session_manager):
         await session_manager.delete_session(bad_kwarg="23424")  # Bad keyword
     with pytest.raises(web.HTTPError):
         await session_manager.delete_session(session_id="23424")  # nonexistent
+
+
+async def test_bad_database_filepath(jp_runtime_dir):
+    kernel_manager = DummyMKM()
+
+    # Try to write to a path that's a directory, not a file.
+    path_id_directory = str(jp_runtime_dir)
+    # Should raise an error because the path is a directory.
+    with pytest.raises(TraitError) as err:
+        SessionManager(
+            kernel_manager=kernel_manager,
+            contents_manager=ContentsManager(),
+            database_filepath=str(path_id_directory),
+        )
+
+    # Try writing to file that's not a valid SQLite 3 database file.
+    non_db_file = jp_runtime_dir.joinpath("non_db_file.db")
+    non_db_file.write_bytes(b"this is a bad file")
+
+    # Should raise an error because the file doesn't
+    # start with an SQLite database file header.
+    with pytest.raises(TraitError) as err:
+        SessionManager(
+            kernel_manager=kernel_manager,
+            contents_manager=ContentsManager(),
+            database_filepath=str(non_db_file),
+        )
+
+
+async def test_good_database_filepath(jp_runtime_dir):
+    kernel_manager = DummyMKM()
+
+    # Try writing to an empty file.
+    empty_file = jp_runtime_dir.joinpath("empty.db")
+    empty_file.write_bytes(b"")
+
+    session_manager = SessionManager(
+        kernel_manager=kernel_manager,
+        contents_manager=ContentsManager(),
+        database_filepath=str(empty_file),
+    )
+
+    await session_manager.create_session(
+        path="/path/to/test.ipynb", kernel_name="python", type="notebook"
+    )
+    # Assert that the database file exists
+    assert empty_file.exists()
+
+    # Close the current session manager
+    del session_manager
+
+    # Try writing to a file that already exists.
+    session_manager = SessionManager(
+        kernel_manager=kernel_manager,
+        contents_manager=ContentsManager(),
+        database_filepath=str(empty_file),
+    )
+
+    assert session_manager.database_filepath == str(empty_file)
+
+
+async def test_session_persistence(jp_runtime_dir):
+    session_db_path = jp_runtime_dir.joinpath("test-session.db")
+    # Kernel manager needs to persist.
+    kernel_manager = DummyMKM()
+
+    # Initialize a session and start a connection.
+    # This should create the session database the first time.
+    session_manager = SessionManager(
+        kernel_manager=kernel_manager,
+        contents_manager=ContentsManager(),
+        database_filepath=str(session_db_path),
+    )
+
+    session = await session_manager.create_session(
+        path="/path/to/test.ipynb", kernel_name="python", type="notebook"
+    )
+
+    # Assert that the database file exists
+    assert session_db_path.exists()
+
+    with open(session_db_path, "rb") as f:
+        header = f.read(100)
+
+    assert header.startswith(b"SQLite format 3")
+
+    # Close the current session manager
+    del session_manager
+
+    # Get a new session_manager
+    session_manager = SessionManager(
+        kernel_manager=kernel_manager,
+        contents_manager=ContentsManager(),
+        database_filepath=str(session_db_path),
+    )
+
+    # Assert that the session database persists.
+    session = await session_manager.get_session(session_id=session["id"])
