@@ -1,7 +1,9 @@
 """A base class session manager."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import os
 import uuid
+import pathlib
 
 try:
     import sqlite3
@@ -14,6 +16,8 @@ from tornado import web
 from traitlets.config.configurable import LoggingConfigurable
 from traitlets import Instance
 from traitlets import Unicode
+from traitlets import validate
+from traitlets import TraitError
 
 from jupyter_server.utils import ensure_async
 from jupyter_server.traittypes import InstanceFromClasses
@@ -21,10 +25,35 @@ from jupyter_server.traittypes import InstanceFromClasses
 
 class SessionManager(LoggingConfigurable):
 
-    database_path = Unicode(
+    database_filepath = Unicode(
         default_value=":memory:",
-        help="Filesystem path to SQLite Database file. Does not write to file by default."
+        help=(
+            "Filesystem path to SQLite Database file. Does "
+            "not write to file by default. :memory: (default) stores the "
+            "database in-memory and is not persistent beyond "
+            "the current session."
+        )
     ).tag(config=True)
+
+    @validate("database_filepath")
+    def _validate_database_filepath(self, proposal):
+        value = proposal["value"]
+        if value == ":memory:":
+            return value
+        path = pathlib.Path(value)
+        if path.exists():
+            # Verify that the database path is not a directory.
+            if path.is_dir():
+                raise TraitError("`database_filepath` expected a file path, but the given path is a directory.")
+            # If the file exists, but it's empty, its a valid entry.
+            if os.stat(path).st_size == 0:
+                return value
+            # Verify that database path is an SQLite 3 Database by checking its header.
+            with open(value, "rb") as f:
+                header = f.read(100)
+            if not header.startswith(b'SQLite format 3'):
+                raise TraitError("The file does not look like ")
+        return value
 
     kernel_manager = Instance("jupyter_server.services.kernels.kernelmanager.MappingKernelManager")
     contents_manager = InstanceFromClasses(
@@ -55,7 +84,7 @@ class SessionManager(LoggingConfigurable):
         """Start a database connection"""
         if self._connection is None:
             # Set isolation level to None to autocommit all changes to the database.
-            self._connection = sqlite3.connect(self.database_path, isolation_level=None)
+            self._connection = sqlite3.connect(self.database_filepath, isolation_level=None)
             self._connection.row_factory = sqlite3.Row
         return self._connection
 
