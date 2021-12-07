@@ -147,6 +147,11 @@ try:
 except ImportError:
     terminado_available = False
 
+
+    class TerminalManager:
+        # Compatible with terminal_manager_class configuration
+        ...
+
 # -----------------------------------------------------------------------------
 # Module globals
 # -----------------------------------------------------------------------------
@@ -1673,7 +1678,7 @@ class ServerApp(JupyterApp):
 
     terminal_manager_class = Type(
         default_value=TerminalManager,
-        klass=TerminalManager,
+        klass=TerminalManager if terminado_available else object,
         config=True,
         help=_i18n(
             """The terminal manager class to use.
