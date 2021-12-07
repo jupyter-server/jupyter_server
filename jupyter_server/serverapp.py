@@ -147,10 +147,10 @@ try:
 except ImportError:
     terminado_available = False
 
-
     class TerminalManager:
         # Compatible with terminal_manager_class configuration
         ...
+
 
 # -----------------------------------------------------------------------------
 # Module globals
