@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
-## 0.13.1
+## 1.13.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.13.0...affd5d9a2e6d718baa2185518256f51921fd4484))
 
