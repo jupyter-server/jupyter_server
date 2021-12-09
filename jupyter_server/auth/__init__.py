@@ -1,1 +1,1 @@
-from .security import passwd
+from .security import passwd  # noqa

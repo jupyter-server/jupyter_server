@@ -14,11 +14,11 @@ from distutils.version import LooseVersion
 from urllib.parse import quote
 from urllib.parse import SplitResult
 from urllib.parse import unquote
-from urllib.parse import urljoin  # pylint: disable=unused-import
+from urllib.parse import urljoin  # noqa: F401
 from urllib.parse import urlparse
 from urllib.parse import urlsplit
 from urllib.parse import urlunsplit
-from urllib.request import pathname2url  # pylint: disable=unused-import
+from urllib.request import pathname2url  # noqa: F401
 
 from tornado.httpclient import AsyncHTTPClient
 from tornado.httpclient import HTTPClient

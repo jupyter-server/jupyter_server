@@ -486,7 +486,6 @@ def shutdown_server(server_info, timeout=5, log=None):
     Returns True if the server was stopped by any means, False if stopping it
     failed (on Windows).
     """
-    from tornado.httpclient import HTTPClient, HTTPRequest
 
     url = server_info["url"]
     pid = server_info["pid"]

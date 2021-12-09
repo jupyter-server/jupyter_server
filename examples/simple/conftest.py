@@ -1,1 +1,1 @@
-from jupyter_server.conftest import *
+from jupyter_server.conftest import *  # noqa
