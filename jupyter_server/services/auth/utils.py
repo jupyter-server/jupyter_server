@@ -11,6 +11,7 @@ from jupyter_server.serverapp import JUPYTER_SERVICE_HANDLERS
 HTTP_METHOD_TO_AUTH_ACTION = {
     "GET": "read",
     "HEAD": "read",
+    "OPTIONS": "read",
     "POST": "write",
     "PUT": "write",
     "PATCH": "write",
@@ -38,6 +39,14 @@ def get_regex_to_resource_map():
         for handler in mod.default_handlers:
             url_regex = handler[0]
             resource_map[url_regex] = name
+    # terminal plugin doesn't have importable url patterns
+    # get these from terminal/__init__.py
+    for url_regex in [
+        r"/terminals/websocket/(\w+)",
+        "/api/terminals",
+        r"/api/terminals/(\w+)",
+    ]:
+        resource_map[url_regex] = "terminals"
     return resource_map
 
 

@@ -12,7 +12,7 @@ from ..utils import url_path_join
 from jupyter_server.services.auth.decorator import authorized
 
 
-RESOURCE_NAME = "view"
+RESOURCE_NAME = "contents"
 
 
 class ViewHandler(JupyterHandler):

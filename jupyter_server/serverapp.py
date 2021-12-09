@@ -26,6 +26,7 @@ import sys
 import threading
 import time
 import urllib
+import warnings
 import webbrowser
 from base64 import encodebytes
 
@@ -90,7 +91,7 @@ from jupyter_server.gateway.managers import (
     GatewaySessionManager,
     GatewayClient,
 )
-from jupyter_server.services.auth.manager import AuthorizationManager, NOPAuthorizationManager
+from jupyter_server.services.auth.authorizer import Authorizer, AllowAllAuthorizer
 
 from jupyter_server.auth.login import LoginHandler
 from jupyter_server.auth.logout import LogoutHandler
@@ -223,14 +224,22 @@ class ServerWebApplication(web.Application):
         session_manager,
         kernel_spec_manager,
         config_manager,
-        authorization_manager,
         extra_services,
         log,
         base_url,
         default_url,
         settings_overrides,
         jinja_env_options,
+        authorizer=None,
     ):
+        if authorizer is None:
+            warnings.warn(
+                "authorizer unspecified. Using permissive AllowAllAuthorizer."
+                " Specify an authorizer to avoid this message.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            authorizer = AllowAllAuthorizer(jupyter_app)
 
         settings = self.init_settings(
             jupyter_app,
@@ -239,13 +248,13 @@ class ServerWebApplication(web.Application):
             session_manager,
             kernel_spec_manager,
             config_manager,
-            authorization_manager,
             extra_services,
             log,
             base_url,
             default_url,
             settings_overrides,
             jinja_env_options,
+            authorizer=authorizer,
         )
         handlers = self.init_handlers(default_services, settings)
 
@@ -259,13 +268,13 @@ class ServerWebApplication(web.Application):
         session_manager,
         kernel_spec_manager,
         config_manager,
-        authorization_manager,
         extra_services,
         log,
         base_url,
         default_url,
         settings_overrides,
         jinja_env_options=None,
+        authorizer=None,
     ):
 
         _template_path = settings_overrides.get(
@@ -347,7 +356,7 @@ class ServerWebApplication(web.Application):
             session_manager=session_manager,
             kernel_spec_manager=kernel_spec_manager,
             config_manager=config_manager,
-            authorization_manager=authorization_manager,
+            authorizer=authorizer,
             # handlers
             extra_services=extra_services,
             # Jupyter stuff
@@ -744,7 +753,7 @@ class ServerApp(JupyterApp):
         GatewayKernelSpecManager,
         GatewaySessionManager,
         GatewayClient,
-        AuthorizationManager,
+        Authorizer,
     ]
     if terminado_available:  # Only necessary when terminado is available
         classes.append(TerminalManager)
@@ -1494,11 +1503,11 @@ class ServerApp(JupyterApp):
         help=_i18n("The logout handler class to use."),
     )
 
-    authorization_manager_class = Type(
-        default_value=NOPAuthorizationManager,
-        klass=AuthorizationManager,
+    authorizer_class = Type(
+        default_value=AllowAllAuthorizer,
+        klass=Authorizer,
         config=True,
-        help=_i18n("The authorization manager class to use."),
+        help=_i18n("The authorizer class to use."),
     )
 
     trust_xheaders = Bool(
@@ -1802,7 +1811,7 @@ class ServerApp(JupyterApp):
             parent=self,
             log=self.log,
         )
-        self.authorization_manager = self.authorization_manager_class(parent=self, log=self.log)
+        self.authorizer = self.authorizer_class(parent=self, log=self.log)
 
     def init_logging(self):
         # This prevents double log messages because tornado use a root logger that
@@ -1883,13 +1892,13 @@ class ServerApp(JupyterApp):
             self.session_manager,
             self.kernel_spec_manager,
             self.config_manager,
-            self.authorization_manager,
             self.extra_services,
             self.log,
             self.base_url,
             self.default_url,
             self.tornado_settings,
             self.jinja_environment_options,
+            authorizer=self.authorizer,
         )
         if self.certfile:
             self.ssl_options["certfile"] = self.certfile

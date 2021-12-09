@@ -9,6 +9,8 @@ from ..base.handlers import JupyterHandler
 from ..base.zmqhandlers import WebSocketMixin
 from jupyter_server._tz import utcnow
 
+RESOURCE_NAME = "terminals"
+
 
 class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
     def origin_check(self):
@@ -18,8 +20,14 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
         return True
 
     def get(self, *args, **kwargs):
-        if not self.get_current_user():
+        user = self.current_user
+
+        if not user:
             raise web.HTTPError(403)
+
+        if not self.authorizer.is_authorized(self, user, "execute", RESOURCE_NAME):
+            raise web.HTTPError(403)
+
         if not args[0] in self.term_manager.terminals:
             raise web.HTTPError(404)
         return super(TermSocket, self).get(*args, **kwargs)

@@ -10,9 +10,10 @@ from jupyter_server.services.auth.utils import match_url_to_resource
         ("/api/kernelspecs", "kernelspecs"),
         ("/api/contents", "contents"),
         ("/api/sessions", "sessions"),
+        ("/api/terminals", "terminals"),
         ("/api/nbconvert", "nbconvert"),
         ("/api/config/x", "config"),
-        ("/api/shutdown", "shutdown"),
+        ("/api/shutdown", "server"),
         ("/nbconvert/py", "nbconvert"),
     ],
 )

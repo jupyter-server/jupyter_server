@@ -7,7 +7,7 @@ from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.services.auth.decorator import authorized
 
 
-RESOURCE_NAME = "shutdown"
+RESOURCE_NAME = "server"
 
 
 class ShutdownHandler(JupyterHandler):

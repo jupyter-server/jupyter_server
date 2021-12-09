@@ -6,7 +6,7 @@ from ..base.handlers import APIHandler
 from jupyter_server.services.auth.decorator import authorized
 
 
-RESOURCE_NAME = "terminal"
+RESOURCE_NAME = "terminals"
 
 
 class TerminalRootHandler(APIHandler):
