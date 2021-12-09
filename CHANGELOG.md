@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.13.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.13.0...affd5d9a2e6d718baa2185518256f51921fd4484))
+
+### Bugs fixed
+
+- nudge both the shell and control channels [#636](https://github.com/jupyter-server/jupyter_server/pull/636) ([@Zsailer](https://github.com/Zsailer))
+
+### Maintenance and upkeep improvements
+
+- Fix macos pypy check [#632](https://github.com/jupyter-server/jupyter_server/pull/632) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-12-06&to=2021-12-09&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-12-06..2021-12-09&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-12-06..2021-12-09&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-12-06..2021-12-09&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.13.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.12.1...b51969f16f04375d52cb029d72f90174141c760d))
@@ -26,8 +46,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-11-26&to=2021-12-06&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-11-26..2021-12-06&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-11-26..2021-12-06&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2021-11-26..2021-12-06&type=Issues) | [@JohanMabille](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AJohanMabille+updated%3A2021-11-26..2021-12-06&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2021-11-26..2021-12-06&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-11-26..2021-12-06&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.12.1
 
