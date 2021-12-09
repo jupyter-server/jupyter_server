@@ -12,14 +12,16 @@ from ..utils import url_path_join
 from jupyter_server.services.auth.decorator import authorized
 
 
-RESOURCE_NAME = "contents"
+AUTH_RESOURCE = "contents"
 
 
 class ViewHandler(JupyterHandler):
     """Render HTML files within an iframe."""
 
+    auth_resource = AUTH_RESOURCE
+
     @web.authenticated
-    @authorized("read", resource=RESOURCE_NAME)
+    @authorized
     async def get(self, path):
         path = path.strip("/")
         if not await ensure_async(self.contents_manager.file_exists(path)):

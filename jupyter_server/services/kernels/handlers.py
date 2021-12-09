@@ -29,19 +29,23 @@ from jupyter_server.utils import url_path_join
 from jupyter_server.services.auth.decorator import authorized
 
 
-RESOURCE_NAME = "kernels"
+AUTH_RESOURCE = "kernels"
 
 
-class MainKernelHandler(APIHandler):
+class KernelsAPIHandler(APIHandler):
+    auth_resource = AUTH_RESOURCE
+
+
+class MainKernelHandler(KernelsAPIHandler):
     @web.authenticated
-    @authorized("read", resource=RESOURCE_NAME)
+    @authorized
     async def get(self):
         km = self.kernel_manager
         kernels = await ensure_async(km.list_kernels())
         self.finish(json.dumps(kernels, default=json_default))
 
     @web.authenticated
-    @authorized("write", resource=RESOURCE_NAME)
+    @authorized
     async def post(self):
         km = self.kernel_manager
         model = self.get_json_body()
@@ -58,16 +62,16 @@ class MainKernelHandler(APIHandler):
         self.finish(json.dumps(model, default=json_default))
 
 
-class KernelHandler(APIHandler):
+class KernelHandler(KernelsAPIHandler):
     @web.authenticated
-    @authorized("read", resource=RESOURCE_NAME)
+    @authorized
     async def get(self, kernel_id):
         km = self.kernel_manager
         model = await ensure_async(km.kernel_model(kernel_id))
         self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
-    @authorized("write", resource=RESOURCE_NAME)
+    @authorized
     async def delete(self, kernel_id):
         km = self.kernel_manager
         await ensure_async(km.shutdown_kernel(kernel_id))
@@ -75,9 +79,9 @@ class KernelHandler(APIHandler):
         self.finish()
 
 
-class KernelActionHandler(APIHandler):
+class KernelActionHandler(KernelsAPIHandler):
     @web.authenticated
-    @authorized("write", resource=RESOURCE_NAME)
+    @authorized
     async def post(self, kernel_id, action):
         km = self.kernel_manager
         if action == "interrupt":
@@ -103,6 +107,8 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     """There is one ZMQChannelsHandler per running kernel and it oversees all
     the sessions.
     """
+
+    auth_resource = AUTH_RESOURCE
 
     # class-level registry of open sessions
     # allows checking for conflict on session-id,

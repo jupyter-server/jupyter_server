@@ -17,7 +17,7 @@ from ...utils import ensure_async, url_path_join, url_unescape
 from jupyter_server.services.auth.decorator import authorized
 
 
-RESOURCE_NAME = "kernelspecs"
+AUTH_RESOURCE = "kernelspecs"
 
 
 def kernelspec_model(handler, name, spec_dict, resource_dir):
@@ -48,9 +48,13 @@ def is_kernelspec_model(spec_dict):
     )
 
 
-class MainKernelSpecHandler(APIHandler):
+class KernelSpecsAPIHandler(APIHandler):
+    auth_resource = AUTH_RESOURCE
+
+
+class MainKernelSpecHandler(KernelSpecsAPIHandler):
     @web.authenticated
-    @authorized("read", resource=RESOURCE_NAME)
+    @authorized
     async def get(self):
         ksm = self.kernel_spec_manager
         km = self.kernel_manager
@@ -77,9 +81,9 @@ class MainKernelSpecHandler(APIHandler):
         self.finish(json.dumps(model))
 
 
-class KernelSpecHandler(APIHandler):
+class KernelSpecHandler(KernelSpecsAPIHandler):
     @web.authenticated
-    @authorized("read", resource=RESOURCE_NAME)
+    @authorized
     async def get(self, kernel_name):
         ksm = self.kernel_spec_manager
         kernel_name = url_unescape(kernel_name)

@@ -14,15 +14,17 @@ from jupyter_server.services.auth.decorator import authorized
 from jupyter_server.utils import ensure_async
 
 
-RESOURCE_NAME = "api"
+AUTH_RESOURCE = "api"
 
 
 class APISpecHandler(web.StaticFileHandler, JupyterHandler):
+    auth_resource = AUTH_RESOURCE
+
     def initialize(self):
         web.StaticFileHandler.initialize(self, path=os.path.dirname(__file__))
 
     @web.authenticated
-    @authorized("read", resource=RESOURCE_NAME)
+    @authorized
     def get(self):
         self.log.warning("Serving api spec (experimental, incomplete)")
         return web.StaticFileHandler.get(self, "api.yaml")
@@ -33,10 +35,11 @@ class APISpecHandler(web.StaticFileHandler, JupyterHandler):
 
 class APIStatusHandler(APIHandler):
 
+    auth_resource = AUTH_RESOURCE
     _track_activity = False
 
     @web.authenticated
-    @authorized("read", resource=RESOURCE_NAME)
+    @authorized
     async def get(self):
         # if started was missing, use unix epoch
         started = self.settings.get("started", utcfromtimestamp(0))

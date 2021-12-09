@@ -9,10 +9,13 @@ from ..base.handlers import JupyterHandler
 from ..base.zmqhandlers import WebSocketMixin
 from jupyter_server._tz import utcnow
 
-RESOURCE_NAME = "terminals"
+AUTH_RESOURCE = "terminals"
 
 
 class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
+
+    auth_resource = AUTH_RESOURCE
+
     def origin_check(self):
         """Terminado adds redundant origin_check
         Tornado already calls check_origin, so don't do anything here.
@@ -25,7 +28,7 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
         if not user:
             raise web.HTTPError(403)
 
-        if not self.authorizer.is_authorized(self, user, "execute", RESOURCE_NAME):
+        if not self.authorizer.is_authorized(self, user, "execute", self.auth_resource):
             raise web.HTTPError(403)
 
         if not args[0] in self.term_manager.terminals:

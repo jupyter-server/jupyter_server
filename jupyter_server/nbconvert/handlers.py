@@ -19,7 +19,7 @@ from jupyter_server.services.auth.decorator import authorized
 from jupyter_server.utils import ensure_async
 
 
-RESOURCE_NAME = "nbconvert"
+AUTH_RESOURCE = "nbconvert"
 
 
 def find_resource_files(output_files_dir):
@@ -82,10 +82,11 @@ def get_exporter(format, **kwargs):
 
 class NbconvertFileHandler(JupyterHandler):
 
+    auth_resource = AUTH_RESOURCE
     SUPPORTED_METHODS = ("GET",)
 
     @web.authenticated
-    @authorized("read", resource=RESOURCE_NAME)
+    @authorized
     async def get(self, format, path):
         self.check_xsrf_cookie()
         exporter = get_exporter(format, config=self.config, log=self.log)
@@ -149,9 +150,10 @@ class NbconvertFileHandler(JupyterHandler):
 class NbconvertPostHandler(JupyterHandler):
 
     SUPPORTED_METHODS = ("POST",)
+    auth_resource = AUTH_RESOURCE
 
     @web.authenticated
-    @authorized("write", resource=RESOURCE_NAME)
+    @authorized
     def post(self, format):
         exporter = get_exporter(format, config=self.config)
 

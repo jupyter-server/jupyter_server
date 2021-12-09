@@ -8,12 +8,13 @@ from ...base.handlers import APIHandler
 from jupyter_server.services.auth.decorator import authorized
 
 
-RESOURCE_NAME = "csp"
+AUTH_RESOURCE = "csp"
 
 
 class CSPReportHandler(APIHandler):
     """Accepts a content security policy violation report"""
 
+    auth_resource = AUTH_RESOURCE
     _track_activity = False
 
     def skip_check_origin(self):
@@ -25,7 +26,7 @@ class CSPReportHandler(APIHandler):
         return
 
     @web.authenticated
-    @authorized("write", resource=RESOURCE_NAME)
+    @authorized
     def post(self):
         """Log a content security policy violation report"""
         self.log.warning(

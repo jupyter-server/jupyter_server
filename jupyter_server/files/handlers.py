@@ -12,7 +12,7 @@ from jupyter_server.services.auth.decorator import authorized
 from jupyter_server.utils import ensure_async
 
 
-RESOURCE_NAME = "files"
+AUTH_RESOURCE = "contents"
 
 
 class FilesHandler(JupyterHandler):
@@ -24,6 +24,8 @@ class FilesHandler(JupyterHandler):
     a subclass of StaticFileHandler.
     """
 
+    auth_resource = AUTH_RESOURCE
+
     @property
     def content_security_policy(self):
         # In case we're serving HTML/SVG, confine any Javascript to a unique
@@ -31,14 +33,14 @@ class FilesHandler(JupyterHandler):
         return super(FilesHandler, self).content_security_policy + "; sandbox allow-scripts"
 
     @web.authenticated
-    @authorized("read", resource=RESOURCE_NAME)
+    @authorized
     def head(self, path):
         self.get(path, include_body=False)
         self.check_xsrf_cookie()
         return self.get(path, include_body=False)
 
     @web.authenticated
-    @authorized("read", resource=RESOURCE_NAME)
+    @authorized
     async def get(self, path, include_body=True):
         # /files/ requests must originate from the same site
         self.check_xsrf_cookie()

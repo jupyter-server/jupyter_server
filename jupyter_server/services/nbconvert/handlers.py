@@ -8,15 +8,17 @@ from ...base.handlers import APIHandler
 from jupyter_server.services.auth.decorator import authorized
 
 
-RESOURCE_NAME = "nbconvert"
+AUTH_RESOURCE = "nbconvert"
 
 
 LOCK = asyncio.Lock()
 
 
 class NbconvertRootHandler(APIHandler):
+    auth_resource = AUTH_RESOURCE
+
     @web.authenticated
-    @authorized("read", resource=RESOURCE_NAME)
+    @authorized
     async def get(self):
         try:
             from nbconvert.exporters import base

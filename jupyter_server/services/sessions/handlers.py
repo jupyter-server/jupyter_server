@@ -20,12 +20,16 @@ from jupyter_server.utils import url_path_join
 from jupyter_server.services.auth.decorator import authorized
 
 
-RESOURCE_NAME = "sessions"
+AUTH_RESOURCE = "sessions"
 
 
-class SessionRootHandler(APIHandler):
+class SessionsAPIHandler(APIHandler):
+    auth_resource = AUTH_RESOURCE
+
+
+class SessionRootHandler(SessionsAPIHandler):
     @web.authenticated
-    @authorized("read", resource=RESOURCE_NAME)
+    @authorized
     async def get(self):
         # Return a list of running sessions
         sm = self.session_manager
@@ -33,7 +37,7 @@ class SessionRootHandler(APIHandler):
         self.finish(json.dumps(sessions, default=json_default))
 
     @web.authenticated
-    @authorized("write", resource=RESOURCE_NAME)
+    @authorized
     async def post(self):
         # Creates a new session
         # (unless a session already exists for the named session)
@@ -98,9 +102,9 @@ class SessionRootHandler(APIHandler):
         self.finish(json.dumps(model, default=json_default))
 
 
-class SessionHandler(APIHandler):
+class SessionHandler(SessionsAPIHandler):
     @web.authenticated
-    @authorized("read", resource=RESOURCE_NAME)
+    @authorized
     async def get(self, session_id):
         # Returns the JSON model for a single session
         sm = self.session_manager
@@ -108,7 +112,7 @@ class SessionHandler(APIHandler):
         self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
-    @authorized("write", resource=RESOURCE_NAME)
+    @authorized
     async def patch(self, session_id):
         """Patch updates sessions:
 
@@ -166,7 +170,7 @@ class SessionHandler(APIHandler):
         self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
-    @authorized("write", resource=RESOURCE_NAME)
+    @authorized
     async def delete(self, session_id):
         # Deletes the session with given session_id
         sm = self.session_manager

@@ -1,1 +1,1 @@
-from .decorator import authorized
+from .decorator import authorized  # noqa
