@@ -27,8 +27,3 @@ repos:
     rev: v7.32.0
     hooks:
       - id: eslint
-  - repo: https://github.com/pre-commit/mirrors-pylint
-    rev: v3.0.0a3
-    hooks:
-      - id: pylint
-        args: [--disable=all, --enable=unused-import]

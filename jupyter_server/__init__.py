@@ -13,7 +13,7 @@ DEFAULT_JUPYTER_SERVER_PORT = 8888
 
 del os
 
-from ._version import version_info, __version__
+from ._version import version_info, __version__  # noqa
 
 
 def _cleanup():

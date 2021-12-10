@@ -1,1 +1,1 @@
-from .manager import ConfigManager
+from .manager import ConfigManager  # noqa
