@@ -91,7 +91,7 @@ async def test_get_session_dead_kernel(session_manager):
     )
     # Kill the kernel
     await session_manager.kernel_manager.shutdown_kernel(session["kernel"]["id"])
-    with pytest.raises(KeyError):
+    with pytest.raises(web.HTTPError):
         await session_manager.get_session(session_id=session["id"])
     # no session left
     listed = await session_manager.list_sessions()
