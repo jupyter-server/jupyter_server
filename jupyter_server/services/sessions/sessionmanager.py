@@ -219,7 +219,7 @@ class SessionManager(LoggingConfigurable):
         try:
             model = await self.row_to_model(row)
         except KeyError as e:
-            raise web.HTTPError(404, u'Session not found: %s' % str(e))
+            raise web.HTTPError(404, u"Session not found: %s" % str(e))
         return model
 
     async def update_session(self, session_id, **kwargs):
