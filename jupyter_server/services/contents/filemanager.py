@@ -2,7 +2,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import errno
-import json
 import mimetypes
 import os
 import shutil
@@ -447,10 +446,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             raise web.HTTPError(400, u"No file type provided")
 
         if YJS_SUPPORT and path in ROOMS:
-            if model["type"] == "notebook":
-                model["content"] = json.loads(ROOMS[path].source)
-            elif model["type"] == "file":
-                model["content"] = ROOMS[path].source
+            model["content"] = ROOMS[path].get_source()
 
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, u"No file content provided")
@@ -780,12 +776,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             raise web.HTTPError(400, u"No file type provided")
 
         if YJS_SUPPORT and path in ROOMS:
-            await ROOMS[path].ready_to_save.wait()
-            if model["type"] == "notebook":
-                model["content"] = json.loads(ROOMS[path].source)
-            elif model["type"] == "file":
-                model["content"] = ROOMS[path].source
-            ROOMS[path].ready_to_save.clear()
+            model["content"] = ROOMS[path].get_source()
 
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, u"No file content provided")
