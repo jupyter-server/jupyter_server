@@ -433,15 +433,14 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         """Save the file model and return the model with no content."""
         path = path.strip("/")
 
+        os_path = self._get_os_path(path)
+        self.log.debug("Saving %s", os_path)
+        self.run_pre_save_hook(model=model, path=path)
+
         if "type" not in model:
             raise web.HTTPError(400, u"No file type provided")
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, u"No file content provided")
-
-        os_path = self._get_os_path(path)
-        self.log.debug("Saving %s", os_path)
-
-        self.run_pre_save_hook(model=model, path=path)
 
         try:
             if model["type"] == "notebook":
@@ -757,15 +756,14 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         """Save the file model and return the model with no content."""
         path = path.strip("/")
 
+        os_path = self._get_os_path(path)
+        self.log.debug("Saving %s", os_path)
+        self.run_pre_save_hook(model=model, path=path)
+
         if "type" not in model:
             raise web.HTTPError(400, u"No file type provided")
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, u"No file content provided")
-
-        os_path = self._get_os_path(path)
-        self.log.debug("Saving %s", os_path)
-
-        self.run_pre_save_hook(model=model, path=path)
 
         try:
             if model["type"] == "notebook":
