@@ -32,7 +32,7 @@ steps::
 If you are using a system-wide Python installation and you only want to install the server for you,
 you can add ``--user`` to the install commands.
 
-Once you have done this, you can launch the master branch of Jupyter server
+Once you have done this, you can launch the main branch of Jupyter server
 from any directory in your system with::
 
     jupyter server

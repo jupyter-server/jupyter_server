@@ -1,6 +1,6 @@
 # Jupyter Server
 
-[![Build Status](https://github.com/jupyter/jupyter_server/workflows/CI/badge.svg?query=branch%3Amaster++)](https://github.com/jupyter-server/jupyter_server/actions?query=branch%3Amaster++)
+[![Build Status](https://github.com/jupyter/jupyter_server/workflows/CI/badge.svg?query=branch%3Amain++)](https://github.com/jupyter-server/jupyter_server/actions?query=branch%3Amain++)
 [![Documentation Status](https://readthedocs.org/projects/jupyter-server/badge/?version=latest)](http://jupyter-server.readthedocs.io/en/latest/?badge=latest)
 
 The Jupyter Server provides the backend (i.e. the core services, APIs, and REST endpoints) for Jupyter web applications like Jupyter notebook, JupyterLab, and Voila.
@@ -20,9 +20,9 @@ Jupyter Server currently supports Python>=3.6 on Linux, OSX and Windows.
 
 If Jupyter Server is a dependency of your project/application, it is important that you pin it to a version that works for your application. Currently, Jupyter Server only has minor and patch versions. Different minor versions likely include API-changes while patch versions do not change API.
 
-When a new minor version is released on PyPI, a branch for that version will be created in this repository, and the version of the master branch will be bumped to the next minor version number. That way, the master branch always reflects the latest un-released version.
+When a new minor version is released on PyPI, a branch for that version will be created in this repository, and the version of the main branch will be bumped to the next minor version number. That way, the main branch always reflects the latest un-released version.
 
-To see the changes between releases, checkout the [CHANGELOG](https://github.com/jupyter/jupyter_server/blob/master/CHANGELOG.md).
+To see the changes between releases, checkout the [CHANGELOG](https://github.com/jupyter/jupyter_server/blob/main/CHANGELOG.md).
 
 ## Usage - Running Jupyter Server
 
@@ -34,7 +34,7 @@ Launch with:
 
 ### Testing
 
-See [CONTRIBUTING](https://github.com/jupyter-server/jupyter_server/blob/master/CONTRIBUTING.rst#running-tests).
+See [CONTRIBUTING](https://github.com/jupyter-server/jupyter_server/blob/main/CONTRIBUTING.rst#running-tests).
 
 ## Contributing
 
