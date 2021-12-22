@@ -285,7 +285,7 @@ class ServerWebApplication(web.Application):
         env.install_gettext_translations(nbui, newstyle=False)
 
         if sys_info["commit_source"] == "repository":
-            # don't cache (rely on 304) when working from master
+            # don't cache (rely on 304) when working from default branch
             version_hash = ""
         else:
             # reset the cache on server restart
