@@ -25,9 +25,15 @@ import stat
 import sys
 import threading
 import time
+import typing
 import urllib
 import webbrowser
 from base64 import encodebytes
+from typing import Iterable, Optional
+
+from tornado import httputil
+
+from jupyter_server.firewall import FireWall
 
 try:
     import resource
@@ -222,7 +228,16 @@ class ServerWebApplication(web.Application):
         default_url,
         settings_overrides,
         jinja_env_options,
+        endpoints_filters = None
     ):
+        if endpoints_filters is None:
+            self.__firewall = FireWall(base_url, None, None)
+        else:
+            self.__firewall = FireWall(
+                base_url,
+                endpoints_filters.get('allowed'),
+                endpoints_filters.get('blocked')
+            )
 
         settings = self.init_settings(
             jupyter_app,
@@ -432,6 +447,14 @@ class ServerWebApplication(web.Application):
         # add 404 on the end, which will catch everything that falls through
         new_handlers.append((r"(.*)", Template404))
         return new_handlers
+
+    def find_handler(
+        self, request: httputil.HTTPServerRequest, **kwargs: Any
+    ) -> "web._HandlerDelegate":
+        if self.__firewall.validate(request):
+            return super().find_handler(request, **kwargs)
+        else:
+            return self.get_handler_delegate(request, web.ErrorHandler, {"status_code": 403})
 
     def last_activity(self):
         """Get a UTC timestamp for when the server last did something.
@@ -755,6 +778,11 @@ class ServerApp(JupyterApp):
         "shutdown",
         "view",
     )
+
+    # Filtering rules to apply on handlers registration
+    # Subclasses can override this list to filter handlers
+    __allowed_spec: Optional[dict] = None
+    __blocked_spec: Optional[dict] = None
 
     _log_formatter_cls = LogFormatter
 
@@ -1843,6 +1871,10 @@ class ServerApp(JupyterApp):
             self.default_url,
             self.tornado_settings,
             self.jinja_environment_options,
+            endpoints_filters={
+                "allowed": self.__allowed_spec,
+                "blocked": self.__blocked_spec
+            }
         )
         if self.certfile:
             self.ssl_options["certfile"] = self.certfile
@@ -2316,6 +2348,10 @@ class ServerApp(JupyterApp):
             # Set starter_app property.
             if point.app:
                 self._starter_app = point.app
+                # Apply endpoint filters from the extension app
+                firewall_rules = point.app.get_firewall_rules()
+                self.__allowed_spec = firewall_rules["allowed"]
+                self.__blocked_spec = firewall_rules["blocked"]
             # Load any configuration that comes from the Extension point.
             self.update_config(Config(point.config))
 
