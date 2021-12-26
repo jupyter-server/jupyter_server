@@ -37,6 +37,18 @@ from any directory in your system with::
 
     jupyter server
 
+For connecting the frontend app with the server, you need to run the following command::
+
+    pip install nbclassic
+
+Once it is completed, you can connect the server with the frontend app with the following command::
+
+    jupyter nbclassic --ServerApp.log_level="CRITICAL"
+
+The following log levels are supported:
+1. CRITICAL
+2. INFO
+3. DEBUG
 
 Code Styling
 -----------------------------
