@@ -143,8 +143,8 @@ class ExtensionApp(JupyterApp):
     # Filtering rules to apply on handlers registration
     # Subclasses can override this list to filter handlers
     # They will be applied on the ServerApp
-    __allowed_spec: Optional[dict] = None
-    __blocked_spec: Optional[dict] = None
+    _allowed_spec: Optional[dict] = None
+    _blocked_spec: Optional[dict] = None
 
     # Subclasses should override this trait. Tells the server if
     # this extension allows other other extensions to be loaded

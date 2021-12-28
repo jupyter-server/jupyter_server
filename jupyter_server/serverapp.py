@@ -33,7 +33,10 @@ from typing import Iterable, Optional
 
 from tornado import httputil
 
-from jupyter_server.firewall import FireWall
+try:
+    from jupyter_server.specvalidator import SpecValidator
+except ImportError:
+    SpecValidator = None
 
 try:
     import resource
@@ -230,10 +233,10 @@ class ServerWebApplication(web.Application):
         jinja_env_options,
         endpoints_filters = None
     ):
-        if endpoints_filters is None:
-            self.__firewall = FireWall(base_url, None, None)
+        if SpecValidator is None or endpoints_filters is None:
+            self.__requestValidator: Optional[SpecValidator] = None
         else:
-            self.__firewall = FireWall(
+            self.__requestValidator: Optional[SpecValidator] = SpecValidator(
                 base_url,
                 endpoints_filters.get('allowed'),
                 endpoints_filters.get('blocked')
@@ -451,7 +454,7 @@ class ServerWebApplication(web.Application):
     def find_handler(
         self, request: httputil.HTTPServerRequest, **kwargs: Any
     ) -> "web._HandlerDelegate":
-        if self.__firewall.validate(request):
+        if self.__requestValidator.validate(request):
             return super().find_handler(request, **kwargs)
         else:
             return self.get_handler_delegate(request, web.ErrorHandler, {"status_code": 403})
@@ -781,8 +784,8 @@ class ServerApp(JupyterApp):
 
     # Filtering rules to apply on handlers registration
     # Subclasses can override this list to filter handlers
-    __allowed_spec: Optional[dict] = None
-    __blocked_spec: Optional[dict] = None
+    _allowed_spec: Optional[dict] = None
+    _blocked_spec: Optional[dict] = None
 
     _log_formatter_cls = LogFormatter
 
