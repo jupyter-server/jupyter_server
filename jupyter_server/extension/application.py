@@ -1,7 +1,6 @@
 import logging
 import re
 import sys
-import typing
 from typing import Iterable, Optional
 
 from jinja2 import Environment
@@ -145,6 +144,7 @@ class ExtensionApp(JupyterApp):
     # They will be applied on the ServerApp
     _allowed_spec: Optional[dict] = None
     _blocked_spec: Optional[dict] = None
+    _slash_encoder: Optional[Iterable[str]] = None
 
     # Subclasses should override this trait. Tells the server if
     # this extension allows other other extensions to be loaded
@@ -191,8 +191,8 @@ class ExtensionApp(JupyterApp):
         return cls.__module__
 
     @classmethod
-    def get_firewall_rules(cls):
-        return {"allowed": cls.__allowed_spec, "blocked": cls.__blocked_spec}
+    def get_openapi3_spec_rules(cls):
+        return {"allowed": cls._allowed_spec, "blocked": cls._blocked_spec, "slash_encoder": cls._slash_encoder}
 
     # Extension URL sets the default landing page for this extension.
     extension_url = "/"

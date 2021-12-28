@@ -3,9 +3,11 @@ import logging
 import pytest
 from tornado.httputil import HTTPServerRequest, HTTPHeaders
 from tornado.log import access_log
-from jupyter_server.specvalidator import SpecValidator, encode_slash
 
 pytest.importorskip("tornado_openapi3")
+
+from jupyter_server.specvalidator import SpecValidator, encode_slash
+
 
 access_log.setLevel(logging.DEBUG)
 

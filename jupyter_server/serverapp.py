@@ -25,7 +25,6 @@ import stat
 import sys
 import threading
 import time
-import typing
 import urllib
 import webbrowser
 from base64 import encodebytes
@@ -231,15 +230,21 @@ class ServerWebApplication(web.Application):
         default_url,
         settings_overrides,
         jinja_env_options,
-        endpoints_filters = None
+        spec_validators = None
     ):
-        if SpecValidator is None or endpoints_filters is None:
-            self.__requestValidator: Optional[SpecValidator] = None
+        if SpecValidator is None or spec_validators is None:
+            class DummyValidator:
+                """Dummy request validator that is always valid."""
+                def validate(self, request):
+                    return True
+
+            self.__requestValidator: Optional[SpecValidator] = DummyValidator()
         else:
             self.__requestValidator: Optional[SpecValidator] = SpecValidator(
                 base_url,
-                endpoints_filters.get('allowed'),
-                endpoints_filters.get('blocked')
+                spec_validators.get("allowed"),
+                spec_validators.get("blocked"),
+                spec_validators.get("slash_encoder")
             )
 
         settings = self.init_settings(
@@ -786,6 +791,7 @@ class ServerApp(JupyterApp):
     # Subclasses can override this list to filter handlers
     _allowed_spec: Optional[dict] = None
     _blocked_spec: Optional[dict] = None
+    _slash_encoder: Optional[Iterable[str]] = None
 
     _log_formatter_cls = LogFormatter
 
@@ -1874,9 +1880,10 @@ class ServerApp(JupyterApp):
             self.default_url,
             self.tornado_settings,
             self.jinja_environment_options,
-            endpoints_filters={
-                "allowed": self.__allowed_spec,
-                "blocked": self.__blocked_spec
+            spec_validators={
+                "allowed": self._allowed_spec,
+                "blocked": self._blocked_spec,
+                "slash_encoder": self._slash_encoder
             }
         )
         if self.certfile:
@@ -2352,9 +2359,10 @@ class ServerApp(JupyterApp):
             if point.app:
                 self._starter_app = point.app
                 # Apply endpoint filters from the extension app
-                firewall_rules = point.app.get_firewall_rules()
-                self.__allowed_spec = firewall_rules["allowed"]
-                self.__blocked_spec = firewall_rules["blocked"]
+                spec_rules = point.app.get_openapi3_spec_rules()
+                self._allowed_spec = spec_rules["allowed"]
+                self._blocked_spec = spec_rules["blocked"]
+                self._slash_encoder = spec_rules["slash_encoder"]
             # Load any configuration that comes from the Extension point.
             self.update_config(Config(point.config))
 

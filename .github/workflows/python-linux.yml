@@ -74,3 +74,25 @@ jobs:
           pushd test_install
           ./bin/pytest --pyargs jupyter_server
           popd
+
+  no-tornado-openapi3:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu]
+        python-version: ["3.10"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - name: Install the Python dependencies
+        run: |
+          pip install -e ".[test]"
+          # Remove optional dependency
+          pip uninstall -y tornado-openapi3
+      - name: Run some tests
+        run: |
+          # Use that files as it contains some tests that should pass and other that needs to be skipped
+          pytest -vv jupyter_server/tests/extension/test_launch.py
