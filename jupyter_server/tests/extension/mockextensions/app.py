@@ -38,9 +38,7 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     loaded = False
 
     serverapp_config = {
-        "jpserver_extensions": {
-            "jupyter_server.tests.extension.mockextensions.mock1": True
-        }
+        "jpserver_extensions": {"jupyter_server.tests.extension.mockextensions.mock1": True}
     }
 
     _allowed_spec = {
@@ -98,9 +96,7 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         },
     }
 
-    _slash_encoder = (
-        r"/mocked_blocked/([^/?]+(?:(?:/[^/]+)*?))$",
-    )
+    _slash_encoder = (r"/mocked_blocked/([^/?]+(?:(?:/[^/]+)*?))$",)
 
     @staticmethod
     def get_extension_package():

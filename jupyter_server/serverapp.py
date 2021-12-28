@@ -28,7 +28,8 @@ import time
 import urllib
 import webbrowser
 from base64 import encodebytes
-from typing import Iterable, Optional
+from typing import Iterable
+from typing import Optional
 
 from tornado import httputil
 
@@ -230,11 +231,13 @@ class ServerWebApplication(web.Application):
         default_url,
         settings_overrides,
         jinja_env_options,
-        spec_validators = None
+        spec_validators=None,
     ):
         if SpecValidator is None or spec_validators is None:
+
             class DummyValidator:
                 """Dummy request validator that is always valid."""
+
                 def validate(self, request):
                     return True
 
@@ -244,7 +247,7 @@ class ServerWebApplication(web.Application):
                 base_url,
                 spec_validators.get("allowed"),
                 spec_validators.get("blocked"),
-                spec_validators.get("slash_encoder")
+                spec_validators.get("slash_encoder"),
             )
 
         settings = self.init_settings(
@@ -1883,8 +1886,8 @@ class ServerApp(JupyterApp):
             spec_validators={
                 "allowed": self._allowed_spec,
                 "blocked": self._blocked_spec,
-                "slash_encoder": self._slash_encoder
-            }
+                "slash_encoder": self._slash_encoder,
+            },
         )
         if self.certfile:
             self.ssl_options["certfile"] = self.certfile

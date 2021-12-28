@@ -1,7 +1,8 @@
 import logging
 
 import pytest
-from tornado.httputil import HTTPServerRequest, HTTPHeaders
+from tornado.httputil import HTTPHeaders
+from tornado.httputil import HTTPServerRequest
 from tornado.log import access_log
 
 pytest.importorskip("tornado_openapi3")
@@ -19,9 +20,7 @@ allowed_spec = {
             "put": {
                 "requestBody": {
                     "content": {
-                        "application/json": {
-                            "schema": {"$ref": "#/components/schemas/Pet"}
-                        },
+                        "application/json": {"schema": {"$ref": "#/components/schemas/Pet"}},
                     },
                     "required": True,
                 },
@@ -213,9 +212,7 @@ def test_SpecValidator_allowed_spec(base_url, server_request, expected):
     headers = server_request.pop("headers") if "headers" in server_request else {}
 
     assert (
-        validator.validate(
-            HTTPServerRequest(**server_request, headers=HTTPHeaders(headers))
-        )
+        validator.validate(HTTPServerRequest(**server_request, headers=HTTPHeaders(headers)))
         == expected
     )
 
@@ -327,9 +324,7 @@ def test_SpecValidator_blocked_spec(base_url, server_request, expected):
     headers = server_request.pop("headers") if "headers" in server_request else {}
 
     assert (
-        validator.validate(
-            HTTPServerRequest(**server_request, headers=HTTPHeaders(headers))
-        )
+        validator.validate(HTTPServerRequest(**server_request, headers=HTTPHeaders(headers)))
         == expected
     )
 
@@ -365,9 +360,7 @@ def test_SpecValidator_allowed_and_blocked_spec(server_request, expected):
     headers = server_request.pop("headers") if "headers" in server_request else {}
 
     assert (
-        validator.validate(
-            HTTPServerRequest(**server_request, headers=HTTPHeaders(headers))
-        )
+        validator.validate(HTTPServerRequest(**server_request, headers=HTTPHeaders(headers)))
         == expected
     )
 
@@ -477,9 +470,7 @@ def test_SpecValidator_encoded_slash(server_request, expected):
     headers = server_request.pop("headers") if "headers" in server_request else {}
 
     assert (
-        validator.validate(
-            HTTPServerRequest(**server_request, headers=HTTPHeaders(headers))
-        )
+        validator.validate(HTTPServerRequest(**server_request, headers=HTTPHeaders(headers)))
         == expected
     )
 

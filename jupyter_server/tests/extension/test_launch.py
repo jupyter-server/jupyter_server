@@ -135,9 +135,7 @@ def test_request_allowed(launch_instance, fetch):
 
 
 @pytest.mark.skipif(tornado_openapi3 is None, reason="tornado_openapi3 not available")
-async def test_ServerApp_with_spec_validation_blocked_with_encoded_path(
-    launch_instance, fetch
-):
+async def test_ServerApp_with_spec_validation_blocked_with_encoded_path(launch_instance, fetch):
     launch_instance()
 
     r = fetch("/mock_blocked/path/dummy.txt")

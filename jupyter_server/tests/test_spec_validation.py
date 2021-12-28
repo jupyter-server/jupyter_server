@@ -6,6 +6,7 @@ from binascii import hexlify
 import pytest
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
+
 from jupyter_server.serverapp import ServerApp
 
 
@@ -78,7 +79,7 @@ def jp_serverapp(
                 },
             },
         }
-        
+
         _blocked_spec = {
             "openapi": "3.0.1",
             "info": {"title": "Test specs", "version": "0.0.1"},
@@ -142,9 +143,7 @@ def jp_serverapp(
         app.initialize(argv=argv, new_httpserver=False)
         # Reroute all logging StreamHandlers away from stdin/stdout since pytest hijacks
         # these streams and closes them at unfortunate times.
-        stream_handlers = [
-            h for h in app.log.handlers if isinstance(h, logging.StreamHandler)
-        ]
+        stream_handlers = [h for h in app.log.handlers if isinstance(h, logging.StreamHandler)]
         for handler in stream_handlers:
             handler.setStream(jp_logging_stream)
         app.log.propagate = True
@@ -159,9 +158,7 @@ def jp_serverapp(
     app.remove_browser_open_files()
 
 
-async def test_ServerApp_with_spec_validation_blocked(
-    tmp_path, jp_serverapp, jp_fetch
-):
+async def test_ServerApp_with_spec_validation_blocked(tmp_path, jp_serverapp, jp_fetch):
     content = tmp_path / jp_serverapp.root_dir / "content" / "test.txt"
     content.parent.mkdir(parents=True)
     content.write_text("dummy content")
@@ -178,21 +175,14 @@ async def test_ServerApp_with_spec_validation_blocked(
     assert error.value.code == 403
 
 
-async def test_ServerApp_with_spec_validation_not_allowed(
-    tmp_path, jp_serverapp, jp_fetch
-):
+async def test_ServerApp_with_spec_validation_not_allowed(tmp_path, jp_serverapp, jp_fetch):
     content = tmp_path / jp_serverapp.root_dir / "content" / "test.txt"
     content.parent.mkdir(parents=True)
     content.write_text("dummy content")
 
     with pytest.raises(HTTPClientError) as error:
         await jp_fetch(
-            "api",
-            "contents",
-            content.parent.name,
-            content.name,
-            method="PUT",
-            body=b"{}"
+            "api", "contents", content.parent.name, content.name, method="PUT", body=b"{}"
         )
 
     assert error.value.code == 403

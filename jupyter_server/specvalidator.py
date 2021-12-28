@@ -1,20 +1,21 @@
 import itertools
 import re
-from typing import Iterable, Optional, Union
+from typing import Iterable
+from typing import Optional
+from typing import Union
 from urllib.parse import parse_qsl
 
 from openapi_core import create_spec
 from openapi_core.validation.request import validators
-from openapi_core.validation.request.datatypes import (
-    OpenAPIRequest,
-    RequestParameters,
-    RequestValidationResult,
-)
-from openapi_spec_validator.handlers import base
-from tornado import httpclient, httputil
+from openapi_core.validation.request.datatypes import OpenAPIRequest
+from openapi_core.validation.request.datatypes import RequestParameters
+from openapi_core.validation.request.datatypes import RequestValidationResult
+from tornado import httpclient
+from tornado import httputil
 from tornado.log import access_log
 from tornado_openapi3.util import parse_mimetype
-from werkzeug.datastructures import Headers, ImmutableMultiDict
+from werkzeug.datastructures import Headers
+from werkzeug.datastructures import ImmutableMultiDict
 
 
 def encode_slash(regex: Iterable[Union[str, re.Pattern]], path: str) -> str:
@@ -134,9 +135,7 @@ class RequestValidator(validators.RequestValidator):
         self, request: Union[httpclient.HTTPRequest, httputil.HTTPServerRequest]
     ) -> RequestValidationResult:
         """Validate a Tornado HTTP request object."""
-        return super().validate(
-            TornadoRequestFactory.create(request, self.__encoded_slash_regex)
-        )
+        return super().validate(TornadoRequestFactory.create(request, self.__encoded_slash_regex))
 
 
 class SpecValidator:
@@ -192,9 +191,7 @@ class SpecValidator:
                 encoded_slash_regex=slash_regex,
             )
 
-    def validate(
-        self, request: Union[httpclient.HTTPRequest, httputil.HTTPServerRequest]
-    ) -> bool:
+    def validate(self, request: Union[httpclient.HTTPRequest, httputil.HTTPServerRequest]) -> bool:
         """Validate a request against allowed and blocked specifications.
 
         Args:
@@ -203,15 +200,11 @@ class SpecValidator:
             Whether the request is valid or not.
         """
         allowed_result = (
-            None
-            if self.__allowed_validator is None
-            else self.__allowed_validator.validate(request)
+            None if self.__allowed_validator is None else self.__allowed_validator.validate(request)
         )
 
         blocked_result = (
-            None
-            if self.__blocked_validator is None
-            else self.__blocked_validator.validate(request)
+            None if self.__blocked_validator is None else self.__blocked_validator.validate(request)
         )
 
         allowed = allowed_result is None or len(allowed_result.errors) == 0
@@ -224,6 +217,6 @@ class SpecValidator:
                 # Provides only the first error
                 access_log.debug(f"Request not allowed: {allowed_result.errors[0]!s}")
             elif not not_blocked:
-                access_log.debug(f"Request blocked.")
+                access_log.debug("Request blocked.")
 
         return allowed and not_blocked
