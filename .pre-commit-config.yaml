@@ -47,6 +47,7 @@ repos:
     hooks:
       - id: doc8
         args: [--max-line-length=200]
+        exclude: docs/source/other/full-config.rst
 
   - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
