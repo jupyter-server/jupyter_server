@@ -77,5 +77,5 @@ jobs:
       - name: Test the docs
         run: |
           cd docs
-          pip install -r docs-requirements.txt
+          pip install -r doc-requirements.txt
           make html SPHINXOPTS="-W"
