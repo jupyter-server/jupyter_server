@@ -74,3 +74,8 @@ jobs:
           pushd test_install
           ./bin/pytest --pyargs jupyter_server
           popd
+      - name: Test the docs
+        run: |
+          cd docs
+          pip install -r docs-requirements.yml
+          make html SPHINXOPTS="-W"

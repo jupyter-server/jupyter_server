@@ -232,7 +232,7 @@ class GatewayClient(SingletonConfigurable):
         default_value=None,
         allow_none=True,
         config=True,
-        help="""The authorization token used in the HTTP headers. The header will be formatted as:
+        help="""The authorization token used in the HTTP headers. The header will be formatted as::
 
             {
                 'Authorization': '{auth_scheme} {auth_token}'
