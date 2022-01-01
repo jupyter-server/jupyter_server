@@ -46,6 +46,7 @@ Once it is completed, you can connect the server with the frontend app with the 
     jupyter nbclassic --ServerApp.log_level="CRITICAL"
 
 The following log levels are supported:
+
 1. CRITICAL
 2. INFO
 3. DEBUG
