@@ -1900,10 +1900,10 @@ class ServerApp(JupyterApp):
             netloc = urlencode_unix_socket_path(self.sock)
         else:
             # Handle nonexplicit hostname.
-            if self.ip in ("", "0.0.0.0"):
+            if self.ip in ("", "0.0.0.0", "::"):
                 ip = "%s" % socket.gethostname()
             else:
-                ip = self.ip
+                ip = "[{}]".format(self.ip) if ":" in self.ip else self.ip
             netloc = "{ip}:{port}".format(ip=ip, port=self.port)
             if self.certfile:
                 scheme = "https"
