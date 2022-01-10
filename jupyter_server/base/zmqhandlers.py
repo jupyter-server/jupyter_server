@@ -162,9 +162,16 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             self.log.warning("zmq message arrived on closed channel")
             self.close()
             return
+        channel = getattr(stream, "channel", None)
+        offsets = []
+        curr_sum = 0
+        for msg in msg_list:
+            length = len(msg)
+            offsets.append(length + curr_sum)
+            curr_sum += length
         layout = json.dumps({
-            "channel": getattr(stream, "channel", None),
-            "offsets": [0] + [len(msg) for msg in msg_list] + [0],
+            "channel": channel,
+            "offsets": offsets,
         }).encode("utf-8")
         layout_length = len(layout).to_bytes(2, byteorder="little")
         bin_msg = b"".join([layout_length, layout] + msg_list)

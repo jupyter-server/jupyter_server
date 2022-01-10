@@ -694,17 +694,13 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         self._send_status_message("dead")
 
 
-
 def get_msg_list(msg, offsets):
     i0 = 0
-    i = 1
-    while True:
-        i1 = i0 + offsets[i]
-        if i0 == i1:
-            return
+    for i1 in offsets:
         yield msg[i0:i1]
         i0 = i1
-        i += 1
+    yield msg[i0:]
+
 
 # -----------------------------------------------------------------------------
 # URL to handler mappings
