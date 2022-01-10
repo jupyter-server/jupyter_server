@@ -164,7 +164,11 @@ async def test_kernel_handler(jp_fetch, jp_cleanup_subprocesses, pending_kernel_
     assert r.code == 204
 
     # Get list of kernels
-    await pending_kernel_is_ready(kernel_id)
+    try:
+        await pending_kernel_is_ready(kernel_id)
+    # If the kernel is already deleted, no need to await.
+    except tornado.web.HTTPError:
+        pass
     r = await jp_fetch("api", "kernels", method="GET")
     kernel_list = json.loads(r.body.decode())
     assert kernel_list == []
