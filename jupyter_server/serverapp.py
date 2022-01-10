@@ -1612,6 +1612,14 @@ class ServerApp(JupyterApp):
         help=_i18n("Reraise exceptions encountered loading server extensions?"),
     )
 
+    limit_rate = Bool(
+        False,
+        config=True,
+        help=_i18n("Whether to limit the rate of IOPub messages (default: False). "
+                   "If True, use iopub_msg_rate_limit, iopub_data_rate_limit and/or rate_limit_window "
+                   "to tune the rate."),
+    )
+
     iopub_msg_rate_limit = Float(
         1000,
         config=True,
