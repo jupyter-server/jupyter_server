@@ -51,7 +51,7 @@ async def test_no_kernels(jp_fetch):
     assert kernels == []
 
 
-async def test_default_kernels(jp_fetch, jp_base_url, jp_cleanup_subprocesses, jp_server_cleanup):
+async def test_default_kernels(jp_fetch, jp_base_url, jp_cleanup_subprocesses):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
     assert r.headers["location"] == url_path_join(jp_base_url, "/api/kernels/", kernel["id"])
