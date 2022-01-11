@@ -11,15 +11,27 @@ from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelMana
 from jupyter_server.utils import url_path_join
 
 
-class TestMappingKernelManager(AsyncMappingKernelManager):
+class DummyMappingKernelManager(AsyncMappingKernelManager):
     """A no-op subclass to use in a fixture"""
 
 
+@pytest.fixture
+def pending_kernel_is_ready(jp_serverapp):
+    async def _(kernel_id):
+        km = jp_serverapp.kernel_manager
+        if getattr(km, "use_pending_kernels", False):
+            kernel = km.get_kernel(kernel_id)
+            if getattr(kernel, "ready"):
+                await kernel.ready
+
+    return _
+
+
 @pytest.fixture(
-    params=["MappingKernelManager", "AsyncMappingKernelManager", "TestMappingKernelManager"]
+    params=["MappingKernelManager", "AsyncMappingKernelManager", "DummyMappingKernelManager"]
 )
 def jp_argv(request):
-    if request.param == "TestMappingKernelManager":
+    if request.param == "DummyMappingKernelManager":
         extra = []
         if hasattr(AsyncMappingKernelManager, "use_pending_kernels"):
             extra = ["--AsyncMappingKernelManager.use_pending_kernels=True"]
@@ -54,7 +66,9 @@ async def test_default_kernels(jp_fetch, jp_base_url, jp_cleanup_subprocesses):
     await jp_cleanup_subprocesses()
 
 
-async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_cleanup_subprocesses, jp_serverapp):
+async def test_main_kernel_handler(
+    jp_fetch, jp_base_url, jp_cleanup_subprocesses, jp_serverapp, pending_kernel_is_ready
+):
     # Start the first kernel
     r = await jp_fetch(
         "api", "kernels", method="POST", body=json.dumps({"name": NATIVE_KERNEL_NAME})
@@ -93,16 +107,14 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_cleanup_subprocesse
     assert len(kernel_list) == 2
 
     # Interrupt a kernel
+    await pending_kernel_is_ready(kernel2["id"])
     r = await jp_fetch(
         "api", "kernels", kernel2["id"], "interrupt", method="POST", allow_nonstandard_methods=True
     )
     assert r.code == 204
 
     # Restart a kernel
-    kernel = jp_serverapp.kernel_manager.get_kernel(kernel2["id"])
-    if hasattr(kernel, "ready"):
-        await kernel.ready
-
+    await pending_kernel_is_ready(kernel2["id"])
     r = await jp_fetch(
         "api", "kernels", kernel2["id"], "restart", method="POST", allow_nonstandard_methods=True
     )
@@ -122,7 +134,7 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_cleanup_subprocesse
     await jp_cleanup_subprocesses()
 
 
-async def test_kernel_handler(jp_fetch, jp_cleanup_subprocesses):
+async def test_kernel_handler(jp_fetch, jp_cleanup_subprocesses, pending_kernel_is_ready):
     # Create a kernel
     r = await jp_fetch(
         "api", "kernels", method="POST", body=json.dumps({"name": NATIVE_KERNEL_NAME})
@@ -142,6 +154,7 @@ async def test_kernel_handler(jp_fetch, jp_cleanup_subprocesses):
     assert expected_http_error(e, 404)
 
     # Delete kernel with id.
+    await pending_kernel_is_ready(kernel_id)
     r = await jp_fetch(
         "api",
         "kernels",
@@ -151,6 +164,11 @@ async def test_kernel_handler(jp_fetch, jp_cleanup_subprocesses):
     assert r.code == 204
 
     # Get list of kernels
+    try:
+        await pending_kernel_is_ready(kernel_id)
+    # If the kernel is already deleted, no need to await.
+    except tornado.web.HTTPError:
+        pass
     r = await jp_fetch("api", "kernels", method="GET")
     kernel_list = json.loads(r.body.decode())
     assert kernel_list == []
