@@ -5,6 +5,7 @@ import io
 import os
 import zipfile
 
+from anyio.to_thread import run_sync
 from ipython_genutils import text
 from ipython_genutils.py3compat import cast_bytes
 from nbformat import from_dict
@@ -115,8 +116,11 @@ class NbconvertFileHandler(JupyterHandler):
         if ext_resources_dir:
             resource_dict["metadata"]["path"] = ext_resources_dir
 
+        # Exporting can take a while, delegate to a thread so we don't block the event loop
         try:
-            output, resources = exporter.from_notebook_node(nb, resources=resource_dict)
+            output, resources = await run_sync(
+                exporter.from_notebook_node(nb, resources=resource_dict)
+            )
         except Exception as e:
             self.log.exception("nbconvert failed: %s", e)
             raise web.HTTPError(500, "nbconvert failed: %s" % e) from e
