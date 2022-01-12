@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.13.2
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.13.1...362d100ff24c1da7ef4cbd171c213e9570e8c289))
+
+### Enhancements made
+
+- Don't block the event loop when exporting with nbconvert [#655](https://github.com/jupyter-server/jupyter_server/pull/655) ([@davidbrochart](https://github.com/davidbrochart))
+- Add more awaits for pending kernel in unit tests [#654](https://github.com/jupyter-server/jupyter_server/pull/654) ([@Zsailer](https://github.com/Zsailer))
+- Print IPv6 url as hostname or enclosed in brackets [#652](https://github.com/jupyter-server/jupyter_server/pull/652) ([@op3](https://github.com/op3))
+
+### Bugs fixed
+
+- Run pre_save_hook before model check [#643](https://github.com/jupyter-server/jupyter_server/pull/643) ([@davidbrochart](https://github.com/davidbrochart))
+- handle KeyError when get session [#641](https://github.com/jupyter-server/jupyter_server/pull/641) ([@ccw630](https://github.com/ccw630))
+
+### Maintenance and upkeep improvements
+
+- Clean up deprecations [#650](https://github.com/jupyter-server/jupyter_server/pull/650) ([@blink1073](https://github.com/blink1073))
+- Update branch references [#646](https://github.com/jupyter-server/jupyter_server/pull/646) ([@blink1073](https://github.com/blink1073))
+- pyproject.toml: clarify build system version [#634](https://github.com/jupyter-server/jupyter_server/pull/634) ([@adamjstewart](https://github.com/adamjstewart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-12-09&to=2022-01-12&type=c))
+
+[@adamjstewart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aadamjstewart+updated%3A2021-12-09..2022-01-12&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-12-09..2022-01-12&type=Issues) | [@ccw630](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Accw630+updated%3A2021-12-09..2022-01-12&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-12-09..2022-01-12&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2021-12-09..2022-01-12&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2021-12-09..2022-01-12&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afcollonval+updated%3A2021-12-09..2022-01-12&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-12-09..2022-01-12&type=Issues) | [@op3](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aop3+updated%3A2021-12-09..2022-01-12&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-12-09..2022-01-12&type=Issues) | [@Wh1isper](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AWh1isper+updated%3A2021-12-09..2022-01-12&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-12-09..2022-01-12&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.13.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.13.0...affd5d9a2e6d718baa2185518256f51921fd4484))
@@ -21,8 +50,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-12-06&to=2021-12-09&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-12-06..2021-12-09&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-12-06..2021-12-09&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-12-06..2021-12-09&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.13.0
 
