@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.13.3
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.13.2...ee01e1955c8881b46075c78f1fbc932fa234bc72))
+
+### Enhancements made
+
+- More updates to unit tests for pending kernels work [#662](https://github.com/jupyter-server/jupyter_server/pull/662) ([@Zsailer](https://github.com/Zsailer))
+
+### Bugs fixed
+
+- bump traitlets dependency [#663](https://github.com/jupyter-server/jupyter_server/pull/663) ([@Zsailer](https://github.com/Zsailer))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-01-12&to=2022-01-14&type=c))
+
+[@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-01-12..2022-01-14&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.13.2
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.13.1...362d100ff24c1da7ef4cbd171c213e9570e8c289))
@@ -30,8 +50,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2021-12-09&to=2022-01-12&type=c))
 
 [@adamjstewart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aadamjstewart+updated%3A2021-12-09..2022-01-12&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2021-12-09..2022-01-12&type=Issues) | [@ccw630](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Accw630+updated%3A2021-12-09..2022-01-12&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2021-12-09..2022-01-12&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2021-12-09..2022-01-12&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2021-12-09..2022-01-12&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afcollonval+updated%3A2021-12-09..2022-01-12&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2021-12-09..2022-01-12&type=Issues) | [@op3](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aop3+updated%3A2021-12-09..2022-01-12&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2021-12-09..2022-01-12&type=Issues) | [@Wh1isper](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AWh1isper+updated%3A2021-12-09..2022-01-12&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2021-12-09..2022-01-12&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.13.1
 
