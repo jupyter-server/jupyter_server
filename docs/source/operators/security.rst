@@ -92,26 +92,96 @@ This is done by calling a ``is_authorized(handler, user, action, resource)`` met
 request handler. Each request is labeled as either a "read", "write", or "execute" ``action``:
 
 - "read" wraps all ``GET`` and ``HEAD`` requests.
+  In general, read permissions grants access to read but not modify anything about the given resource.
 - "write" wraps all ``POST``, ``PUT``, ``PATCH``, and ``DELETE`` requests.
+  In general, write permissions grants access to modify the given resource.
 - "execute" wraps all requests to ZMQ/Websocket channels (terminals and kernels).
+  Execute is a special permission that usually corresponds to arbitrary execution,
+  such as via a kernel or terminal.
+  These permissions should generally be considered sufficient to perform actions equivalent
+  to ~all other permissions via other means.
 
-The ``resource`` being accessed refers to the resource name in the Jupyter Server's API endpoints in
-most cases.
-For instance, values for ``resource`` in the endpoints provided by the base jupyter server package:
+The ``resource`` being accessed refers to the resource name in the Jupyter Server's API endpoints.
+In most cases, this is matches the field after `/api/`.
+For instance, values for ``resource`` in the endpoints provided by the base jupyter server package,
+and the corresponding permissions:
 
-- "kernelspecs" corresponds to endpoints beginning with ``/kernelspecs`` and ``/api/kernelspecs``.
-- "nbconvert" corresponds to endpoints beginning with ``/nbconvert`` and ``/api/nbconvert``.
-- "config" corresponds to endpoints beginning with ``/api/config``.
-- "contents" corresponds to endpoints beginning with ``/api/contents`` and ``/view``.
-- "kernels" corresponds to endpoints beginning with ``/api/kernels``.
-- "sessions" corresponds to endpoints beginning with ``/api/sessions``.
-- "terminals" corresponds to endpoints beginning with ``/api/terminals``.
-- "server" applies to the endpoint ``/api/shutdown``.
-- "api" corresponds to endpoints ``/api/status`` and ``/api/spec.yaml``.
-- "csp" corresponds to the endpoint ``/api/security/csp-report``
+.. list-table::
+   :header-rows: 1
 
-Extensions may define their own resource.
-Extension resources should start with `extension_name:`.
+   * - resource
+     - read
+     - write
+     - execute
+     - endpoints
+
+   * - *resource name*
+     - *what can you do with read permissions?*
+     - *what can you do with write permissions?*
+     - *what can you do with execute permissions, if anything?*
+     - ``/api/...`` *what endpoints are governed by this resource?*
+
+   * - api
+     - read server status (last activity, number of kernels, etc.), OpenAPI specification
+     -
+     -
+     - ``/api/status``, ``/api/spec.yaml``
+   * - csp
+     -
+     - report content-security-policy violations
+     -
+     - ``/api/security/csp-report``
+   * - config
+     - read frontend configuration, such as for notebook extensions
+     - modify frontend configuration
+     -
+     - ``/api/config``
+   * - contents
+     - read files
+     - modify files (create, modify, delete)
+     -
+     - ``/api/contents``, ``/view``, ``/files``
+   * - kernels
+     - list kernels, get status of kernels
+     - start, stop, and restart kernels
+     - Connect to kernel websockets, send/recv kernel messages.
+       **This generally means arbitrary code execution,
+       and should usually be considered equivalent to having all other permissions.**
+     - ``/api/kernels``
+   * - kernelspecs
+     - read, list information about available kernels
+     -
+     -
+     - ``/api/kernelspecs``
+   * - nbconvert
+     - render notebooks to other formats via nbconvert.
+       **Note: depending on server-side configuration,
+       this *could* involve execution.**
+     -
+     -
+     - ``/api/nbconvert``
+   * - server
+     -
+     - Shutdown the server
+     -
+     - ``/api/shutdown``
+   * - sessions
+     - list current sessions (association of documents to kernels)
+     - create, modify, and delete existing sessions,
+       which includes starting, stopping, and deleting kernels.
+     -
+     - ``/api/sessions``
+   * - terminals
+     - list running terminals and their last activity
+     - start new terminals, stop running terminals
+     - Connect to terminal websockets, execute code in a shell.
+       **This generally means arbitrary code execution,
+       and should usually be considered equivalent to having all other permissions.**
+     - ``/api/terminals``
+
+
+Extensions may define their own resources.
+Extension resources should start with ``extension_name:`` to avoid namespace conflicts.
 
 If ``is_authorized(...)`` returns ``True``, the request is made; otherwise, a
 ``HTTPError(403)`` (403 means "Forbidden") error is raised, and the request is blocked.
