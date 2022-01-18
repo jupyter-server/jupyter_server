@@ -142,12 +142,14 @@ def session_is_ready(jp_serverapp):
     """
 
     async def _(session_id):
-        sm = jp_serverapp.session_manager
         mkm = jp_serverapp.kernel_manager
-        session = await sm.get_session(session_id=session_id)
-        kernel_id = session["kernel"]["id"]
-        kernel = mkm.get_kernel(kernel_id)
-        await kernel.ready
+        if getattr(mkm, "use_pending_kernels", False):
+            sm = jp_serverapp.session_manager
+            session = await sm.get_session(session_id=session_id)
+            kernel_id = session["kernel"]["id"]
+            kernel = mkm.get_kernel(kernel_id)
+            if getattr(kernel, "ready"):
+                await kernel.ready
 
     return _
 
