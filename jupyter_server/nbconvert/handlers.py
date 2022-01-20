@@ -125,7 +125,7 @@ class NbconvertFileHandler(JupyterHandler):
         # Exporting can take a while, delegate to a thread so we don't block the event loop
         try:
             output, resources = await run_sync(
-                exporter.from_notebook_node(nb, resources=resource_dict)
+                lambda: exporter.from_notebook_node(nb, resources=resource_dict)
             )
         except Exception as e:
             self.log.exception("nbconvert failed: %s", e)
@@ -154,7 +154,7 @@ class NbconvertPostHandler(JupyterHandler):
 
     @web.authenticated
     @authorized
-    def post(self, format):
+    async def post(self, format):
         exporter = get_exporter(format, config=self.config)
 
         model = self.get_json_body()
@@ -162,14 +162,14 @@ class NbconvertPostHandler(JupyterHandler):
         nbnode = from_dict(model["content"])
 
         try:
-            output, resources = exporter.from_notebook_node(
-                nbnode,
-                resources={
-                    "metadata": {
-                        "name": name[: name.rfind(".")],
+            output, resources = await run_sync(
+                lambda: exporter.from_notebook_node(
+                    nbnode,
+                    resources={
+                        "metadata": {"name": name[: name.rfind(".")]},
+                        "config_dir": self.application.settings["config_dir"],
                     },
-                    "config_dir": self.application.settings["config_dir"],
-                },
+                )
             )
         except Exception as e:
             raise web.HTTPError(500, "nbconvert failed: %s" % e) from e
