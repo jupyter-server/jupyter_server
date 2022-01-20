@@ -91,6 +91,7 @@ from jupyter_server import (
 from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
 from jupyter_server.auth.authorizer import AllowAllAuthorizer, Authorizer
+from jupyter_server.auth.identity import IdentityProvider
 from jupyter_server.auth.login import LoginHandler
 from jupyter_server.auth.logout import LogoutHandler
 from jupyter_server.base.handlers import (
@@ -212,7 +213,9 @@ class ServerWebApplication(web.Application):
         default_url,
         settings_overrides,
         jinja_env_options,
+        *,
         authorizer=None,
+        identity_provider=None,
     ):
         if authorizer is None:
             warnings.warn(
@@ -221,7 +224,16 @@ class ServerWebApplication(web.Application):
                 RuntimeWarning,
                 stacklevel=2,
             )
-            authorizer = AllowAllAuthorizer(jupyter_app)
+            authorizer = AllowAllAuthorizer(parent=jupyter_app)
+
+        if identity_provider is None:
+            warnings.warn(
+                "identity_provider unspecified. Using default IdentityProvider."
+                " Specify an identity_provider to avoid this message.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            identity_provider = IdentityProvider(parent=jupyter_app)
 
         settings = self.init_settings(
             jupyter_app,
@@ -237,6 +249,7 @@ class ServerWebApplication(web.Application):
             settings_overrides,
             jinja_env_options,
             authorizer=authorizer,
+            identity_provider=identity_provider,
         )
         handlers = self.init_handlers(default_services, settings)
 
@@ -256,7 +269,9 @@ class ServerWebApplication(web.Application):
         default_url,
         settings_overrides,
         jinja_env_options=None,
+        *,
         authorizer=None,
+        identity_provider=None,
     ):
 
         _template_path = settings_overrides.get(
@@ -338,6 +353,7 @@ class ServerWebApplication(web.Application):
             kernel_spec_manager=kernel_spec_manager,
             config_manager=config_manager,
             authorizer=authorizer,
+            identity_provider=identity_provider,
             # handlers
             extra_services=extra_services,
             # Jupyter stuff
@@ -395,6 +411,8 @@ class ServerWebApplication(web.Application):
 
         # Add extra handlers from contents manager.
         handlers.extend(settings["contents_manager"].get_extra_handlers())
+        # And from identity provider
+        handlers.extend(settings["identity_provider"].get_handlers())
 
         # If gateway mode is enabled, replace appropriate handlers to perform redirection
         if GatewayClient.instance().gateway_enabled:
@@ -1488,6 +1506,13 @@ class ServerApp(JupyterApp):
         help=_i18n("The authorizer class to use."),
     )
 
+    identity_provider_class = Type(
+        default_value=IdentityProvider,
+        klass=IdentityProvider,
+        config=True,
+        help=_i18n("The identity provider class to use."),
+    )
+
     trust_xheaders = Bool(
         False,
         config=True,
@@ -1811,6 +1836,7 @@ class ServerApp(JupyterApp):
             log=self.log,
         )
         self.authorizer = self.authorizer_class(parent=self, log=self.log)
+        self.identity_provider = self.identity_provider_class(parent=self, log=self.log)
 
     def init_logging(self):
         # This prevents double log messages because tornado use a root logger that
@@ -1898,6 +1924,7 @@ class ServerApp(JupyterApp):
             self.tornado_settings,
             self.jinja_environment_options,
             authorizer=self.authorizer,
+            identity_provider=self.identity_provider,
         )
         if self.certfile:
             self.ssl_options["certfile"] = self.certfile
