@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.13.4
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.13.3...d2015290b80bfdaa6ebb990cdccc0155921696f5))
+
+### Bugs fixed
+
+- Fix nbconvert handler run_sync() [#667](https://github.com/jupyter-server/jupyter_server/pull/667) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-01-14&to=2022-01-21&type=c))
+
+[@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-01-14..2022-01-21&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2022-01-14..2022-01-21&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-01-14..2022-01-21&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.13.3
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.13.2...ee01e1955c8881b46075c78f1fbc932fa234bc72))
@@ -21,8 +37,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-01-12&to=2022-01-14&type=c))
 
 [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-01-12..2022-01-14&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.13.2
 
