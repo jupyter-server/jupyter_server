@@ -315,6 +315,7 @@ class ServerWebApplication(web.Application):
             },
             version_hash=version_hash,
             # rate limits
+            limit_rate=jupyter_app.limit_rate,
             iopub_msg_rate_limit=jupyter_app.iopub_msg_rate_limit,
             iopub_data_rate_limit=jupyter_app.iopub_data_rate_limit,
             rate_limit_window=jupyter_app.rate_limit_window,

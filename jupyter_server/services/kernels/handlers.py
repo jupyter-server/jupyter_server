@@ -453,58 +453,53 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
 
         return connected
 
-    def on_message(self, msg):
+    def on_message(self, ws_msg):
         if not self.channels:
             # already closed, ignore the message
-            self.log.debug("Received message on closed websocket %r", msg)
+            self.log.debug("Received message on closed websocket %r", ws_msg)
             return
 
         if self.selected_subprotocol == "0.0.1":
-            return self.on_message_0_0_1(msg)
-
-        if isinstance(msg, bytes):
-            msg = deserialize_binary_message(msg)
+            layout_len = int.from_bytes(ws_msg[:2], "little")
+            layout = json.loads(ws_msg[2 : 2 + layout_len])
+            msg_list = list(get_parts_from_ws(ws_msg[2 + layout_len :], layout["offsets"]))
+            msg = {
+                "header": None,
+            }
+            channel = layout["channel"]
         else:
-            msg = json.loads(msg)
-        channel = msg.pop("channel", None)
+            if isinstance(ws_msg, bytes):
+                msg = deserialize_binary_message(ws_msg)
+            else:
+                msg = json.loads(ws_msg)
+            msg_list = []
+            channel = msg.pop("channel", None)
+
         if channel is None:
             self.log.warning("No channel specified, assuming shell: %s", msg)
             channel = "shell"
         if channel not in self.channels:
             self.log.warning("No such channel: %r", channel)
             return
-        am = self.kernel_manager.allowed_message_types
-        mt = msg["header"]["msg_type"]
-        if am and mt not in am:
-            self.log.warning('Received message of type "%s", which is not allowed. Ignoring.' % mt)
-        else:
-            stream = self.channels[channel]
-            self.session.send(stream, msg)
 
-    def on_message_0_0_1(self, msg):
-        layout_len = int.from_bytes(msg[:2], "little")
-        layout = json.loads(msg[2 : 2 + layout_len])
-        msg_list = list(get_msg_list_from_zmq(msg[2 + layout_len :], layout["offsets"]))
-        channel = layout["channel"]
-        if channel not in self.channels:
-            self.log.warning("No such channel: %r", channel)
-            return
         am = self.kernel_manager.allowed_message_types
         ignore_msg = False
-        header = None
         if am:
-            header = self.get_msg_field("header", header, msg_list)
-            mt = header["msg_type"]
-            if mt not in am:
+            msg["header"] = self.get_part("header", msg["header"], msg_list)
+            if msg["header"]["msg_type"] not in am:
                 self.log.warning(
-                    'Received message of type "%s", which is not allowed. Ignoring.' % mt
+                    'Received message of type "%s", which is not allowed. Ignoring.'
+                    % msg["header"]["msg_type"]
                 )
                 ignore_msg = True
         if not ignore_msg:
             stream = self.channels[channel]
-            self.session.send_raw(stream, msg_list)
+            if self.selected_subprotocol == "0.0.1":
+                self.session.send_raw(stream, msg_list)
+            else:
+                self.session.send(stream, msg)
 
-    def get_msg_field(self, field, value, msg_list):
+    def get_part(self, field, value, msg_list):
         if value is None:
             field2idx = {
                 "header": 0,
@@ -515,291 +510,162 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         return value
 
     def _on_zmq_reply(self, stream, msg_list):
+        idents, fed_msg_list = self.session.feed_identities(msg_list)
+
         if self.selected_subprotocol == "0.0.1":
-            return self._on_zmq_reply_0_0_1(stream, msg_list)
-
-        idents, fed_msg_list = self.session.feed_identities(msg_list)
-        msg = self.session.deserialize(fed_msg_list)
-
-        parent = msg["parent_header"]
-
-        def write_stderr(error_message):
-            self.log.warning(error_message)
-            msg = self.session.msg(
-                "stream", content={"text": error_message + "\n", "name": "stderr"}, parent=parent
-            )
-            msg["channel"] = "iopub"
-            self.write_message(json.dumps(msg, default=json_default))
+            msg = {"header": None, "parent_header": None, "content": None}
+        else:
+            msg = self.session.deserialize(fed_msg_list)
 
         channel = getattr(stream, "channel", None)
-        msg_type = msg["header"]["msg_type"]
+        parts = fed_msg_list[1:]
 
-        if channel == "iopub" and msg_type == "error":
-            self._on_error(msg)
+        self._on_error(channel, msg, parts)
 
-        if self.limit_rate:
-            if (
-                channel == "iopub"
-                and msg_type == "status"
-                and msg["content"].get("execution_state") == "idle"
-            ):
-                # reset rate limit counter on status=idle,
-                # to avoid 'Run All' hitting limits prematurely.
-                self._iopub_window_byte_queue = []
-                self._iopub_window_msg_count = 0
-                self._iopub_window_byte_count = 0
-                self._iopub_msgs_exceeded = False
-                self._iopub_data_exceeded = False
+        if self._limit_rate(channel, msg, parts):
+            return
 
-            if channel == "iopub" and msg_type not in {"status", "comm_open", "execute_input"}:
+        if self.selected_subprotocol == "0.0.1":
+            super(ZMQChannelsHandler, self)._on_zmq_reply(stream, parts)
+        else:
+            super(ZMQChannelsHandler, self)._on_zmq_reply(stream, msg)
 
-                # Remove the counts queued for removal.
-                now = IOLoop.current().time()
-                while len(self._iopub_window_byte_queue) > 0:
-                    queued = self._iopub_window_byte_queue[0]
-                    if now >= queued[0]:
-                        self._iopub_window_byte_count -= queued[1]
-                        self._iopub_window_msg_count -= 1
-                        del self._iopub_window_byte_queue[0]
-                    else:
-                        # This part of the queue hasn't be reached yet, so we can
-                        # abort the loop.
-                        break
-
-                # Increment the bytes and message count
-                self._iopub_window_msg_count += 1
-                if msg_type == "stream":
-                    byte_count = sum([len(x) for x in msg_list])
-                else:
-                    byte_count = 0
-                self._iopub_window_byte_count += byte_count
-
-                # Queue a removal of the byte and message count for a time in the
-                # future, when we are no longer interested in it.
-                self._iopub_window_byte_queue.append((now + self.rate_limit_window, byte_count))
-
-                # Check the limits, set the limit flags, and reset the
-                # message and data counts.
-                msg_rate = float(self._iopub_window_msg_count) / self.rate_limit_window
-                data_rate = float(self._iopub_window_byte_count) / self.rate_limit_window
-
-                # Check the msg rate
-                if self.iopub_msg_rate_limit > 0 and msg_rate > self.iopub_msg_rate_limit:
-                    if not self._iopub_msgs_exceeded:
-                        self._iopub_msgs_exceeded = True
-                        write_stderr(
-                            dedent(
-                                """\
-                        IOPub message rate exceeded.
-                        The Jupyter server will temporarily stop sending output
-                        to the client in order to avoid crashing it.
-                        To change this limit, set the config variable
-                        `--ServerApp.iopub_msg_rate_limit`.
-
-                        Current values:
-                        ServerApp.iopub_msg_rate_limit={} (msgs/sec)
-                        ServerApp.rate_limit_window={} (secs)
-                        """.format(
-                                    self.iopub_msg_rate_limit, self.rate_limit_window
-                                )
-                            )
-                        )
-                else:
-                    # resume once we've got some headroom below the limit
-                    if self._iopub_msgs_exceeded and msg_rate < (0.8 * self.iopub_msg_rate_limit):
-                        self._iopub_msgs_exceeded = False
-                        if not self._iopub_data_exceeded:
-                            self.log.warning("iopub messages resumed")
-
-                # Check the data rate
-                if self.iopub_data_rate_limit > 0 and data_rate > self.iopub_data_rate_limit:
-                    if not self._iopub_data_exceeded:
-                        self._iopub_data_exceeded = True
-                        write_stderr(
-                            dedent(
-                                """\
-                        IOPub data rate exceeded.
-                        The Jupyter server will temporarily stop sending output
-                        to the client in order to avoid crashing it.
-                        To change this limit, set the config variable
-                        `--ServerApp.iopub_data_rate_limit`.
-
-                        Current values:
-                        ServerApp.iopub_data_rate_limit={} (bytes/sec)
-                        ServerApp.rate_limit_window={} (secs)
-                        """.format(
-                                    self.iopub_data_rate_limit, self.rate_limit_window
-                                )
-                            )
-                        )
-                else:
-                    # resume once we've got some headroom below the limit
-                    if self._iopub_data_exceeded and data_rate < (0.8 * self.iopub_data_rate_limit):
-                        self._iopub_data_exceeded = False
-                        if not self._iopub_msgs_exceeded:
-                            self.log.warning("iopub messages resumed")
-
-                # If either of the limit flags are set, do not send the message.
-                if self._iopub_msgs_exceeded or self._iopub_data_exceeded:
-                    # we didn't send it, remove the current message from the calculus
-                    self._iopub_window_msg_count -= 1
-                    self._iopub_window_byte_count -= byte_count
-                    self._iopub_window_byte_queue.pop(-1)
-                    return
-        super(ZMQChannelsHandler, self)._on_zmq_reply(stream, msg)
-
-    def _on_zmq_reply_0_0_1(self, stream, msg_list):
-        idents, fed_msg_list = self.session.feed_identities(msg_list)
-
-        # parse only what is needed for now
-        # we will parse more later if needed
-        msg = None
-        header = None
-        content = None
-        parent_header = None
-
-        def write_stderr(error_message, parent_header):
-            self.log.warning(error_message)
-            msg = self.session.msg(
-                "stream",
-                content={"text": error_message + "\n", "name": "stderr"},
-                parent=parent_header,
-            )
-            bin_msg = serialize_msg_to_ws(msg, "iopub", self.session.pack)
+    def write_stderr(self, error_message, msg):
+        self.log.warning(error_message)
+        err_msg = self.session.msg(
+            "stream",
+            content={"text": error_message + "\n", "name": "stderr"},
+            parent=msg["parent_header"],
+        )
+        if self.selected_subprotocol == "0.0.1":
+            bin_msg = serialize_msg_to_ws(err_msg, "iopub", self.session.pack)
             self.write_message(bin_msg, binary=True)
+        else:
+            err_msg["channel"] = "iopub"
+            self.write_message(json.dumps(err_msg, default=json_default))
 
-        channel = getattr(stream, "channel", None)
+    def _limit_rate(self, channel, msg, msg_list):
+        if not (channel == "iopub" and self.limit_rate):
+            return False
 
-        if not self.kernel_manager.allow_tracebacks:
-            header = self.get_msg_field("header", header, fed_msg_list)
-            if channel == "iopub" and header["msg_type"] == "error":
-                content = self.get_msg_field("content", content, fed_msg_list)
-                content["ename"] = "ExecutionError"
-                content["evalue"] = "Execution error"
-                content["traceback"] = [self.kernel_manager.traceback_replacement_message]
-                fed_msg_list[4] = self.session.pack(content)
+        msg["header"] = self.get_part("header", msg["header"], msg_list)
+        msg["content"] = self.get_part("content", msg["content"], msg_list)
 
-        if self.limit_rate:
-            header = self.get_msg_field("header", header, fed_msg_list)
-            content = self.get_msg_field("content", content, fed_msg_list)
-            msg_type = header["msg_type"]
-            if (
-                channel == "iopub"
-                and msg_type == "status"
-                and content.get("execution_state") == "idle"
-            ):
-                # reset rate limit counter on status=idle,
-                # to avoid 'Run All' hitting limits prematurely.
-                self._iopub_window_byte_queue = []
-                self._iopub_window_msg_count = 0
-                self._iopub_window_byte_count = 0
-                self._iopub_msgs_exceeded = False
-                self._iopub_data_exceeded = False
+        msg_type = msg["header"]["msg_type"]
+        if msg_type == "status" and msg["content"].get("execution_state") == "idle":
+            # reset rate limit counter on status=idle,
+            # to avoid 'Run All' hitting limits prematurely.
+            self._iopub_window_byte_queue = []
+            self._iopub_window_msg_count = 0
+            self._iopub_window_byte_count = 0
+            self._iopub_msgs_exceeded = False
+            self._iopub_data_exceeded = False
 
-            if channel == "iopub" and msg_type not in {"status", "comm_open", "execute_input"}:
+        if msg_type not in {"status", "comm_open", "execute_input"}:
 
-                # Remove the counts queued for removal.
-                now = IOLoop.current().time()
-                while len(self._iopub_window_byte_queue) > 0:
-                    queued = self._iopub_window_byte_queue[0]
-                    if now >= queued[0]:
-                        self._iopub_window_byte_count -= queued[1]
-                        self._iopub_window_msg_count -= 1
-                        del self._iopub_window_byte_queue[0]
-                    else:
-                        # This part of the queue hasn't be reached yet, so we can
-                        # abort the loop.
-                        break
-
-                # Increment the bytes and message count
-                self._iopub_window_msg_count += 1
-                if msg_type == "stream":
-                    byte_count = sum([len(x) for x in msg_list])
-                else:
-                    byte_count = 0
-                self._iopub_window_byte_count += byte_count
-
-                # Queue a removal of the byte and message count for a time in the
-                # future, when we are no longer interested in it.
-                self._iopub_window_byte_queue.append((now + self.rate_limit_window, byte_count))
-
-                # Check the limits, set the limit flags, and reset the
-                # message and data counts.
-                msg_rate = float(self._iopub_window_msg_count) / self.rate_limit_window
-                data_rate = float(self._iopub_window_byte_count) / self.rate_limit_window
-
-                # Check the msg rate
-                if self.iopub_msg_rate_limit > 0 and msg_rate > self.iopub_msg_rate_limit:
-                    if not self._iopub_msgs_exceeded:
-                        self._iopub_msgs_exceeded = True
-                        parent_header = self.get_msg_field(
-                            "parent_header", parent_header, fed_msg_list
-                        )
-                        write_stderr(
-                            dedent(
-                                """\
-                        IOPub message rate exceeded.
-                        The Jupyter server will temporarily stop sending output
-                        to the client in order to avoid crashing it.
-                        To change this limit, set the config variable
-                        `--ServerApp.iopub_msg_rate_limit`.
-
-                        Current values:
-                        ServerApp.iopub_msg_rate_limit={} (msgs/sec)
-                        ServerApp.rate_limit_window={} (secs)
-                        """.format(
-                                    self.iopub_msg_rate_limit, self.rate_limit_window
-                                )
-                            ),
-                            parent_header,
-                        )
-                else:
-                    # resume once we've got some headroom below the limit
-                    if self._iopub_msgs_exceeded and msg_rate < (0.8 * self.iopub_msg_rate_limit):
-                        self._iopub_msgs_exceeded = False
-                        if not self._iopub_data_exceeded:
-                            self.log.warning("iopub messages resumed")
-
-                # Check the data rate
-                if self.iopub_data_rate_limit > 0 and data_rate > self.iopub_data_rate_limit:
-                    if not self._iopub_data_exceeded:
-                        self._iopub_data_exceeded = True
-                        parent_header = self.get_msg_field(
-                            "parent_header", parent_header, fed_msg_list
-                        )
-                        write_stderr(
-                            dedent(
-                                """\
-                        IOPub data rate exceeded.
-                        The Jupyter server will temporarily stop sending output
-                        to the client in order to avoid crashing it.
-                        To change this limit, set the config variable
-                        `--ServerApp.iopub_data_rate_limit`.
-
-                        Current values:
-                        ServerApp.iopub_data_rate_limit={} (bytes/sec)
-                        ServerApp.rate_limit_window={} (secs)
-                        """.format(
-                                    self.iopub_data_rate_limit, self.rate_limit_window
-                                )
-                            ),
-                            parent_header,
-                        )
-                else:
-                    # resume once we've got some headroom below the limit
-                    if self._iopub_data_exceeded and data_rate < (0.8 * self.iopub_data_rate_limit):
-                        self._iopub_data_exceeded = False
-                        if not self._iopub_msgs_exceeded:
-                            self.log.warning("iopub messages resumed")
-
-                # If either of the limit flags are set, do not send the message.
-                if self._iopub_msgs_exceeded or self._iopub_data_exceeded:
-                    # we didn't send it, remove the current message from the calculus
+            # Remove the counts queued for removal.
+            now = IOLoop.current().time()
+            while len(self._iopub_window_byte_queue) > 0:
+                queued = self._iopub_window_byte_queue[0]
+                if now >= queued[0]:
+                    self._iopub_window_byte_count -= queued[1]
                     self._iopub_window_msg_count -= 1
-                    self._iopub_window_byte_count -= byte_count
-                    self._iopub_window_byte_queue.pop(-1)
-                    return
-        super(ZMQChannelsHandler, self)._on_zmq_reply_0_0_1(stream, fed_msg_list[1:])
+                    del self._iopub_window_byte_queue[0]
+                else:
+                    # This part of the queue hasn't be reached yet, so we can
+                    # abort the loop.
+                    break
+
+            # Increment the bytes and message count
+            self._iopub_window_msg_count += 1
+            if msg_type == "stream":
+                byte_count = sum([len(x) for x in msg_list])
+            else:
+                byte_count = 0
+            self._iopub_window_byte_count += byte_count
+
+            # Queue a removal of the byte and message count for a time in the
+            # future, when we are no longer interested in it.
+            self._iopub_window_byte_queue.append((now + self.rate_limit_window, byte_count))
+
+            # Check the limits, set the limit flags, and reset the
+            # message and data counts.
+            msg_rate = float(self._iopub_window_msg_count) / self.rate_limit_window
+            data_rate = float(self._iopub_window_byte_count) / self.rate_limit_window
+
+            # Check the msg rate
+            if self.iopub_msg_rate_limit > 0 and msg_rate > self.iopub_msg_rate_limit:
+                if not self._iopub_msgs_exceeded:
+                    self._iopub_msgs_exceeded = True
+                    msg["parent_header"] = self.get_part(
+                        "parent_header", msg["parent_header"], msg_list
+                    )
+                    self.write_stderr(
+                        dedent(
+                            """\
+                    IOPub message rate exceeded.
+                    The Jupyter server will temporarily stop sending output
+                    to the client in order to avoid crashing it.
+                    To change this limit, set the config variable
+                    `--ServerApp.iopub_msg_rate_limit`.
+
+                    Current values:
+                    ServerApp.iopub_msg_rate_limit={} (msgs/sec)
+                    ServerApp.rate_limit_window={} (secs)
+                    """.format(
+                                self.iopub_msg_rate_limit, self.rate_limit_window
+                            )
+                        ),
+                        msg,
+                    )
+            else:
+                # resume once we've got some headroom below the limit
+                if self._iopub_msgs_exceeded and msg_rate < (0.8 * self.iopub_msg_rate_limit):
+                    self._iopub_msgs_exceeded = False
+                    if not self._iopub_data_exceeded:
+                        self.log.warning("iopub messages resumed")
+
+            # Check the data rate
+            if self.iopub_data_rate_limit > 0 and data_rate > self.iopub_data_rate_limit:
+                if not self._iopub_data_exceeded:
+                    self._iopub_data_exceeded = True
+                    msg["parent_header"] = self.get_part(
+                        "parent_header", msg["parent_header"], msg_list
+                    )
+                    self.write_stderr(
+                        dedent(
+                            """\
+                    IOPub data rate exceeded.
+                    The Jupyter server will temporarily stop sending output
+                    to the client in order to avoid crashing it.
+                    To change this limit, set the config variable
+                    `--ServerApp.iopub_data_rate_limit`.
+
+                    Current values:
+                    ServerApp.iopub_data_rate_limit={} (bytes/sec)
+                    ServerApp.rate_limit_window={} (secs)
+                    """.format(
+                                self.iopub_data_rate_limit, self.rate_limit_window
+                            )
+                        ),
+                        msg,
+                    )
+            else:
+                # resume once we've got some headroom below the limit
+                if self._iopub_data_exceeded and data_rate < (0.8 * self.iopub_data_rate_limit):
+                    self._iopub_data_exceeded = False
+                    if not self._iopub_msgs_exceeded:
+                        self.log.warning("iopub messages resumed")
+
+            # If either of the limit flags are set, do not send the message.
+            if self._iopub_msgs_exceeded or self._iopub_data_exceeded:
+                # we didn't send it, remove the current message from the calculus
+                self._iopub_window_msg_count -= 1
+                self._iopub_window_byte_count -= byte_count
+                self._iopub_window_byte_queue.pop(-1)
+                return True
+
+            return False
 
     def close(self):
         super(ZMQChannelsHandler, self).close()
@@ -849,12 +715,12 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             # that all messages from the stopped kernel have been delivered
             iopub.flush()
         msg = self.session.msg("status", {"execution_state": status})
-        if not self.selected_subprotocol:
-            msg["channel"] = "iopub"
-            self.write_message(json.dumps(msg, default=json_default))
-        elif self.selected_subprotocol == "0.0.1":
+        if self.selected_subprotocol == "0.0.1":
             bin_msg = serialize_msg_to_ws(msg, "iopub")
             self.write_message(bin_msg, binary=True)
+        else:
+            msg["channel"] = "iopub"
+            self.write_message(json.dumps(msg, default=json_default))
 
     def on_kernel_restarted(self):
         self.log.warning("kernel %s restarted", self.kernel_id)
@@ -864,20 +730,29 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         self.log.error("kernel %s restarted failed!", self.kernel_id)
         self._send_status_message("dead")
 
-    def _on_error(self, msg):
+    def _on_error(self, channel, msg, msg_list):
         if self.kernel_manager.allow_tracebacks:
             return
-        msg["content"]["ename"] = "ExecutionError"
-        msg["content"]["evalue"] = "Execution error"
-        msg["content"]["traceback"] = [self.kernel_manager.traceback_replacement_message]
+
+        if channel == "iopub":
+            msg["header"] = self.get_part("header", msg["header"], msg_list)
+            if msg["header"]["msg_type"] == "error":
+                msg["content"] = self.get_part("content", msg["content"], msg_list)
+                msg["content"]["ename"] = "ExecutionError"
+                msg["content"]["evalue"] = "Execution error"
+                msg["content"]["traceback"] = [self.kernel_manager.traceback_replacement_message]
+                if self.selected_subprotocol == "0.0.1":
+                    msg_list[3] = self.session.pack(msg["content"])
 
 
-def get_msg_list_from_zmq(msg, offsets):
+def get_parts_from_ws(msg, offsets):
     i0 = 0
     for i1 in offsets:
         yield msg[i0:i1]
         i0 = i1
-    yield msg[i0:]
+    last_part = msg[i0:]
+    if last_part:
+        yield last_part
 
 
 def serialize_msg_to_ws(msg, channel, pack):

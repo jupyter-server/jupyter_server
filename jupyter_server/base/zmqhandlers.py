@@ -252,37 +252,29 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             self.close()
             return
         channel = getattr(stream, "channel", None)
-        try:
-            msg = self._reserialize_reply(msg_list, channel=channel)
-        except Exception:
-            self.log.critical("Malformed message: %r" % msg_list, exc_info=True)
+        if self.selected_subprotocol == "0.0.1":
+            offsets = []
+            curr_sum = 0
+            for msg in msg_list:
+                length = len(msg)
+                offsets.append(length + curr_sum)
+                curr_sum += length
+            layout = json.dumps(
+                {
+                    "channel": channel,
+                    "offsets": offsets,
+                }
+            ).encode("utf-8")
+            layout_length = len(layout).to_bytes(2, byteorder="little")
+            bin_msg = b"".join([layout_length, layout] + msg_list)
+            self.write_message(bin_msg, binary=True)
         else:
-            self.write_message(msg, binary=isinstance(msg, bytes))
-
-    def _on_zmq_reply_0_0_1(self, stream, msg_list):
-        # Sometimes this gets triggered when the on_close method is scheduled in the
-        # eventloop but hasn't been called.
-        if self.ws_connection is None or stream.closed():
-            self.log.warning("zmq message arrived on closed channel")
-            self.close()
-            return
-
-        channel = getattr(stream, "channel", None)
-        offsets = []
-        curr_sum = 0
-        for msg in msg_list:
-            length = len(msg)
-            offsets.append(length + curr_sum)
-            curr_sum += length
-        layout = json.dumps(
-            {
-                "channel": channel,
-                "offsets": offsets,
-            }
-        ).encode("utf-8")
-        layout_length = len(layout).to_bytes(2, byteorder="little")
-        bin_msg = b"".join([layout_length, layout] + msg_list)
-        self.write_message(bin_msg, binary=True)
+            try:
+                msg = self._reserialize_reply(msg_list, channel=channel)
+            except Exception:
+                self.log.critical("Malformed message: %r" % msg_list, exc_info=True)
+            else:
+                self.write_message(msg, binary=isinstance(msg, bytes))
 
 
 class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
