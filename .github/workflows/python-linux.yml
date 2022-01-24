@@ -71,9 +71,9 @@ jobs:
           python -m venv test_install
           ./test_install/bin/python -m pip install -U pip
           ./test_install/bin/python -m pip install ".[test]"
-          pushd test_install
+          cd test_install
           ./bin/pytest --pyargs jupyter_server
-          popd
+          cd ..
       - name: Test the docs
         run: |
           cd docs
