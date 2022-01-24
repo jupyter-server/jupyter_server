@@ -17,6 +17,9 @@ from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelMana
 from jupyter_server.utils import url_path_join
 
 
+TEST_TIMEOUT = 20
+
+
 j = lambda r: json.loads(r.body.decode())
 
 
@@ -197,6 +200,7 @@ def assert_session_equality(actual, expected):
     assert_kernel_equality(actual["kernel"], expected["kernel"])
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_create(session_client, jp_base_url, jp_cleanup_subprocesses, jp_serverapp):
     # Make sure no sessions exist.
     resp = await session_client.list()
@@ -241,6 +245,7 @@ async def test_create(session_client, jp_base_url, jp_cleanup_subprocesses, jp_s
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_create_bad(
     session_client, jp_base_url, jp_cleanup_subprocesses, jp_serverapp, jp_kernelspecs
 ):
@@ -261,6 +266,7 @@ async def test_create_bad(
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_create_bad_pending(
     session_client, jp_base_url, jp_ws_fetch, jp_cleanup_subprocesses, jp_serverapp, jp_kernelspecs
 ):
@@ -293,6 +299,7 @@ async def test_create_bad_pending(
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_create_file_session(
     session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
 ):
@@ -306,6 +313,7 @@ async def test_create_file_session(
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_create_console_session(
     session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
 ):
@@ -320,6 +328,7 @@ async def test_create_console_session(
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_create_deprecated(session_client, jp_cleanup_subprocesses, jp_serverapp):
     resp = await session_client.create_deprecated("foo/nb1.ipynb")
     assert resp.code == 201
@@ -332,6 +341,7 @@ async def test_create_deprecated(session_client, jp_cleanup_subprocesses, jp_ser
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_create_with_kernel_id(
     session_client, jp_fetch, jp_base_url, jp_cleanup_subprocesses, jp_serverapp
 ):
@@ -363,6 +373,7 @@ async def test_create_with_kernel_id(
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_create_with_bad_kernel_id(
     session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
 ):
@@ -378,6 +389,7 @@ async def test_create_with_bad_kernel_id(
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_delete(session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.ipynb")
 
@@ -399,6 +411,7 @@ async def test_delete(session_client, jp_cleanup_subprocesses, jp_serverapp, ses
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_modify_path(session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.ipynb")
     newsession = j(resp)
@@ -413,6 +426,7 @@ async def test_modify_path(session_client, jp_cleanup_subprocesses, jp_serverapp
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_modify_path_deprecated(
     session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
 ):
@@ -429,6 +443,7 @@ async def test_modify_path_deprecated(
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_modify_type(session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.ipynb")
     newsession = j(resp)
@@ -443,6 +458,7 @@ async def test_modify_type(session_client, jp_cleanup_subprocesses, jp_serverapp
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_modify_kernel_name(
     session_client, jp_fetch, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
 ):
@@ -470,6 +486,7 @@ async def test_modify_kernel_name(
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_modify_kernel_id(
     session_client, jp_fetch, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
 ):
@@ -504,6 +521,7 @@ async def test_modify_kernel_id(
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_restart_kernel(
     session_client, jp_base_url, jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, session_is_ready
 ):
