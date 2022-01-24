@@ -89,6 +89,7 @@ async def test_cull_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses):
         )
     ],
 )
+@pytest.mark.timeout(30)
 async def test_cull_dead(
     jp_fetch, jp_ws_fetch, jp_serverapp, jp_cleanup_subprocesses, jp_kernelspecs
 ):

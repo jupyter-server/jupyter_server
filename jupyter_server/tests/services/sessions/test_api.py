@@ -197,9 +197,7 @@ def assert_session_equality(actual, expected):
     assert_kernel_equality(actual["kernel"], expected["kernel"])
 
 
-async def test_create(
-    session_client, jp_base_url, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
-):
+async def test_create(session_client, jp_base_url, jp_cleanup_subprocesses, jp_serverapp):
     # Make sure no sessions exist.
     resp = await session_client.list()
     sessions = j(resp)
@@ -295,22 +293,30 @@ async def test_create_bad_pending(
     await jp_cleanup_subprocesses()
 
 
-async def test_create_file_session(session_client, jp_cleanup_subprocesses, jp_serverapp):
+async def test_create_file_session(
+    session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
+):
     resp = await session_client.create("foo/nb1.py", type="file")
     assert resp.code == 201
     newsession = j(resp)
     assert newsession["path"] == "foo/nb1.py"
     assert newsession["type"] == "file"
+    sid = newsession["id"]
+    await session_is_ready(sid)
     await jp_cleanup_subprocesses()
 
 
-async def test_create_console_session(session_client, jp_cleanup_subprocesses, jp_serverapp):
+async def test_create_console_session(
+    session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
+):
     resp = await session_client.create("foo/abc123", type="console")
     assert resp.code == 201
     newsession = j(resp)
     assert newsession["path"] == "foo/abc123"
     assert newsession["type"] == "console"
     # Need to find a better solution to this.
+    sid = newsession["id"]
+    await session_is_ready(sid)
     await jp_cleanup_subprocesses()
 
 
@@ -322,6 +328,7 @@ async def test_create_deprecated(session_client, jp_cleanup_subprocesses, jp_ser
     assert newsession["type"] == "notebook"
     assert newsession["notebook"]["path"] == "foo/nb1.ipynb"
     # Need to find a better solution to this.
+    sid = newsession["id"]
     await jp_cleanup_subprocesses()
 
 
@@ -356,10 +363,15 @@ async def test_create_with_kernel_id(
     await jp_cleanup_subprocesses()
 
 
-async def test_create_with_bad_kernel_id(session_client, jp_cleanup_subprocesses, jp_serverapp):
+async def test_create_with_bad_kernel_id(
+    session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
+):
     resp = await session_client.create("foo/nb1.py", type="file")
     assert resp.code == 201
     newsession = j(resp)
+    sid = newsession["id"]
+    await session_is_ready(sid)
+
     # TODO
     assert newsession["path"] == "foo/nb1.py"
     assert newsession["type"] == "file"
@@ -387,10 +399,11 @@ async def test_delete(session_client, jp_cleanup_subprocesses, jp_serverapp, ses
     await jp_cleanup_subprocesses()
 
 
-async def test_modify_path(session_client, jp_cleanup_subprocesses, jp_serverapp):
+async def test_modify_path(session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.ipynb")
     newsession = j(resp)
     sid = newsession["id"]
+    await session_is_ready(sid)
 
     resp = await session_client.modify_path(sid, "nb2.ipynb")
     changed = j(resp)
@@ -400,10 +413,13 @@ async def test_modify_path(session_client, jp_cleanup_subprocesses, jp_serverapp
     await jp_cleanup_subprocesses()
 
 
-async def test_modify_path_deprecated(session_client, jp_cleanup_subprocesses, jp_serverapp):
+async def test_modify_path_deprecated(
+    session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
+):
     resp = await session_client.create("foo/nb1.ipynb")
     newsession = j(resp)
     sid = newsession["id"]
+    await session_is_ready(sid)
 
     resp = await session_client.modify_path_deprecated(sid, "nb2.ipynb")
     changed = j(resp)
@@ -413,10 +429,11 @@ async def test_modify_path_deprecated(session_client, jp_cleanup_subprocesses, j
     await jp_cleanup_subprocesses()
 
 
-async def test_modify_type(session_client, jp_cleanup_subprocesses, jp_serverapp):
+async def test_modify_type(session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.ipynb")
     newsession = j(resp)
     sid = newsession["id"]
+    await session_is_ready(sid)
 
     resp = await session_client.modify_type(sid, "console")
     changed = j(resp)
@@ -426,10 +443,13 @@ async def test_modify_type(session_client, jp_cleanup_subprocesses, jp_serverapp
     await jp_cleanup_subprocesses()
 
 
-async def test_modify_kernel_name(session_client, jp_fetch, jp_cleanup_subprocesses, jp_serverapp):
+async def test_modify_kernel_name(
+    session_client, jp_fetch, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
+):
     resp = await session_client.create("foo/nb1.ipynb")
     before = j(resp)
     sid = before["id"]
+    await session_is_ready(sid)
 
     resp = await session_client.modify_kernel_name(sid, before["kernel"]["name"])
     after = j(resp)
@@ -450,10 +470,13 @@ async def test_modify_kernel_name(session_client, jp_fetch, jp_cleanup_subproces
     await jp_cleanup_subprocesses()
 
 
-async def test_modify_kernel_id(session_client, jp_fetch, jp_cleanup_subprocesses, jp_serverapp):
+async def test_modify_kernel_id(
+    session_client, jp_fetch, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
+):
     resp = await session_client.create("foo/nb1.ipynb")
     before = j(resp)
     sid = before["id"]
+    await session_is_ready(sid)
 
     # create a new kernel
     resp = await jp_fetch("api/kernels", method="POST", allow_nonstandard_methods=True)
@@ -482,7 +505,7 @@ async def test_modify_kernel_id(session_client, jp_fetch, jp_cleanup_subprocesse
 
 
 async def test_restart_kernel(
-    session_client, jp_base_url, jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses
+    session_client, jp_base_url, jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, session_is_ready
 ):
     # Create a session.
     resp = await session_client.create("foo/nb1.ipynb")
@@ -494,6 +517,8 @@ async def test_restart_kernel(
     assert resp.headers["Location"] == url_path_join(
         jp_base_url, "/api/sessions/", new_session["id"]
     )
+    sid = new_session["id"]
+    await session_is_ready(sid)
 
     kid = new_session["kernel"]["id"]
 
