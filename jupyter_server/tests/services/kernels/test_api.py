@@ -1,18 +1,15 @@
 import json
+import os
 import time
 
+import jupyter_client
 import pytest
 import tornado
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 from tornado.httpclient import HTTPClientError
 
 from ...utils import expected_http_error
-from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
 from jupyter_server.utils import url_path_join
-
-
-class DummyMappingKernelManager(AsyncMappingKernelManager):
-    """A no-op subclass to use in a fixture"""
 
 
 @pytest.fixture
@@ -27,22 +24,37 @@ def pending_kernel_is_ready(jp_serverapp):
     return _
 
 
-@pytest.fixture(
-    params=["MappingKernelManager", "AsyncMappingKernelManager", "DummyMappingKernelManager"]
-)
-def jp_argv(request):
-    if request.param == "DummyMappingKernelManager":
-        extra = []
-        if hasattr(AsyncMappingKernelManager, "use_pending_kernels"):
-            extra = ["--AsyncMappingKernelManager.use_pending_kernels=True"]
-        return [
-            "--ServerApp.kernel_manager_class=jupyter_server.tests.services.kernels.test_api."
-            + request.param
-        ] + extra
-    return [
-        "--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager."
-        + request.param
-    ]
+configs = [
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager"
+        }
+    },
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
+        }
+    },
+]
+
+
+# Pending kernels was released in Jupyter Client 7.1
+# It is currently broken on Windows (Jan 2022). When fixed, we can remove the Windows check.
+# See https://github.com/jupyter-server/jupyter_server/issues/672
+if os.name != "nt" and jupyter_client._version.version_info >= (7, 1):
+    # Add a pending kernels condition
+    c = {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
+        },
+        "AsyncMappingKernelManager": {"use_pending_kernels": True},
+    }
+    configs.append(c)
+
+
+@pytest.fixture(params=configs)
+def jp_server_config(request):
+    return request.param
 
 
 async def test_no_kernels(jp_fetch):

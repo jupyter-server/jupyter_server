@@ -3,6 +3,7 @@ import os
 import shutil
 import time
 
+import jupyter_client
 import pytest
 import tornado
 from jupyter_client.ioloop import AsyncIOLoopKernelManager
@@ -36,22 +37,42 @@ class NewPortsMappingKernelManager(AsyncMappingKernelManager):
         return "jupyter_server.tests.services.sessions.test_api.NewPortsKernelManager"
 
 
-@pytest.fixture(
-    params=["MappingKernelManager", "AsyncMappingKernelManager", "NewPortsMappingKernelManager"]
-)
-def jp_argv(request):
-    if request.param == "NewPortsMappingKernelManager":
-        extra = []
-        if hasattr(AsyncMappingKernelManager, "use_pending_kernels"):
-            extra = ["--AsyncMappingKernelManager.use_pending_kernels=True"]
-        return [
-            "--ServerApp.kernel_manager_class=jupyter_server.tests.services.sessions.test_api."
-            + request.param
-        ] + extra
-    return [
-        "--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager."
-        + request.param
-    ]
+configs = [
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager"
+        }
+    },
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
+        }
+    },
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.tests.services.sessions.test_api.NewPortsMappingKernelManager"
+        }
+    },
+]
+
+
+# Pending kernels was released in Jupyter Client 7.1
+# It is currently broken on Windows (Jan 2022). When fixed, we can remove the Windows check.
+# See https://github.com/jupyter-server/jupyter_server/issues/672
+if os.name != "nt" and jupyter_client._version.version_info >= (7, 1):
+    # Add a pending kernels condition
+    c = {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.tests.services.sessions.test_api.NewPortsMappingKernelManager"
+        },
+        "AsyncMappingKernelManager": {"use_pending_kernels": True},
+    }
+    configs.append(c)
+
+
+@pytest.fixture(params=configs)
+def jp_server_config(request):
+    return request.param
 
 
 class SessionClient:
