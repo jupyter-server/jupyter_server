@@ -459,7 +459,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             self.log.debug("Received message on closed websocket %r", ws_msg)
             return
 
-        if self.selected_subprotocol == "0.0.1":
+        if self.selected_subprotocol == "v1.websocket.jupyter.org":
             layout_len = int.from_bytes(ws_msg[:2], "little")
             layout = json.loads(ws_msg[2 : 2 + layout_len])
             msg_list = list(get_parts_from_ws(ws_msg[2 + layout_len :], layout["offsets"]))
@@ -494,7 +494,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 ignore_msg = True
         if not ignore_msg:
             stream = self.channels[channel]
-            if self.selected_subprotocol == "0.0.1":
+            if self.selected_subprotocol == "v1.websocket.jupyter.org":
                 self.session.send_raw(stream, msg_list)
             else:
                 self.session.send(stream, msg)
@@ -512,7 +512,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     def _on_zmq_reply(self, stream, msg_list):
         idents, fed_msg_list = self.session.feed_identities(msg_list)
 
-        if self.selected_subprotocol == "0.0.1":
+        if self.selected_subprotocol == "v1.websocket.jupyter.org":
             msg = {"header": None, "parent_header": None, "content": None}
         else:
             msg = self.session.deserialize(fed_msg_list)
@@ -525,7 +525,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         if self._limit_rate(channel, msg, parts):
             return
 
-        if self.selected_subprotocol == "0.0.1":
+        if self.selected_subprotocol == "v1.websocket.jupyter.org":
             super(ZMQChannelsHandler, self)._on_zmq_reply(stream, parts)
         else:
             super(ZMQChannelsHandler, self)._on_zmq_reply(stream, msg)
@@ -537,7 +537,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             content={"text": error_message + "\n", "name": "stderr"},
             parent=msg["parent_header"],
         )
-        if self.selected_subprotocol == "0.0.1":
+        if self.selected_subprotocol == "v1.websocket.jupyter.org":
             bin_msg = serialize_msg_to_ws(err_msg, "iopub", self.session.pack)
             self.write_message(bin_msg, binary=True)
         else:
@@ -715,7 +715,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             # that all messages from the stopped kernel have been delivered
             iopub.flush()
         msg = self.session.msg("status", {"execution_state": status})
-        if self.selected_subprotocol == "0.0.1":
+        if self.selected_subprotocol == "v1.websocket.jupyter.org":
             bin_msg = serialize_msg_to_ws(msg, "iopub")
             self.write_message(bin_msg, binary=True)
         else:
@@ -741,7 +741,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 msg["content"]["ename"] = "ExecutionError"
                 msg["content"]["evalue"] = "Execution error"
                 msg["content"]["traceback"] = [self.kernel_manager.traceback_replacement_message]
-                if self.selected_subprotocol == "0.0.1":
+                if self.selected_subprotocol == "v1.websocket.jupyter.org":
                     msg_list[3] = self.session.pack(msg["content"])
 
 

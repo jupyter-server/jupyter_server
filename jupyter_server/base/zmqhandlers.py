@@ -240,7 +240,7 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             return cast_unicode(smsg)
 
     def select_subprotocol(self, subprotocols):
-        selected_subprotocol = "0.0.1" if "0.0.1" in subprotocols else None
+        selected_subprotocol = "v1.websocket.jupyter.org" if "v1.websocket.jupyter.org" in subprotocols else None
         # None is the default, "legacy" protocol
         return selected_subprotocol
 
@@ -252,7 +252,7 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             self.close()
             return
         channel = getattr(stream, "channel", None)
-        if self.selected_subprotocol == "0.0.1":
+        if self.selected_subprotocol == "v1.websocket.jupyter.org":
             offsets = []
             curr_sum = 0
             for msg in msg_list:
