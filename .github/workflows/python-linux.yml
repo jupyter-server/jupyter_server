@@ -51,11 +51,11 @@ jobs:
       - name: Run the tests
         if: ${{ matrix.python-version != 'pypy-3.7' }}
         run: |
-          pytest -vv jupyter_server --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --doctest-modules
+          pytest -vv jupyter_server --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered
       - name: Run the tests on pypy
         if: ${{ matrix.python-version == 'pypy-3.7' }}
         run: |
-          pytest -vv jupyter_server --doctest-modules
+          pytest -vv jupyter_server
       - name: Install the Python dependencies for the examples
         run: |
           cd examples/simple && pip install -e .
