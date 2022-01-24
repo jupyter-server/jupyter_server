@@ -12,6 +12,9 @@ from ...utils import expected_http_error
 from jupyter_server.utils import url_path_join
 
 
+TEST_TIMEOUT = 20
+
+
 @pytest.fixture
 def pending_kernel_is_ready(jp_serverapp):
     async def _(kernel_id):
@@ -63,6 +66,7 @@ async def test_no_kernels(jp_fetch):
     assert kernels == []
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_default_kernels(jp_fetch, jp_base_url, jp_cleanup_subprocesses):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
@@ -78,6 +82,7 @@ async def test_default_kernels(jp_fetch, jp_base_url, jp_cleanup_subprocesses):
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_main_kernel_handler(
     jp_fetch, jp_base_url, jp_cleanup_subprocesses, jp_serverapp, pending_kernel_is_ready
 ):
@@ -146,6 +151,7 @@ async def test_main_kernel_handler(
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_kernel_handler(jp_fetch, jp_cleanup_subprocesses, pending_kernel_is_ready):
     # Create a kernel
     r = await jp_fetch(
@@ -193,6 +199,7 @@ async def test_kernel_handler(jp_fetch, jp_cleanup_subprocesses, pending_kernel_
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_kernel_handler_startup_error(
     jp_fetch, jp_cleanup_subprocesses, jp_serverapp, jp_kernelspecs
 ):
@@ -204,6 +211,7 @@ async def test_kernel_handler_startup_error(
         await jp_fetch("api", "kernels", method="POST", body=json.dumps({"name": "bad"}))
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_kernel_handler_startup_error_pending(
     jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serverapp, jp_kernelspecs
 ):
@@ -219,6 +227,7 @@ async def test_kernel_handler_startup_error_pending(
         await jp_ws_fetch("api", "kernels", kid, "channels")
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_connection(
     jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header, jp_cleanup_subprocesses
 ):

@@ -72,7 +72,7 @@ jobs:
           ./test_install/bin/python -m pip install -U pip
           ./test_install/bin/python -m pip install ".[test]"
           pushd test_install
-          ./bin/pytest --pyargs jupyter_server
+          ./bin/pytest --pyargs jupyter_server --capture=no
           popd
       - name: Test the docs
         run: |
