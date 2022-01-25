@@ -155,6 +155,28 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path=path)
         return is_hidden(os_path, self.root_dir)
 
+    def is_writable(self, path):
+        """Does the API style path correspond to a writable directory or file?
+
+        Parameters
+        ----------
+        path : string
+            The path to check. This is an API path (`/` separated,
+            relative to root_dir).
+
+        Returns
+        -------
+        hidden : bool
+            Whether the path exists and is writable.
+        """
+        path = path.strip("/")
+        os_path = self._get_os_path(path=path)
+        try:
+            return os.access(os_path, os.W_OK)
+        except OSError:
+            self.log.error("Failed to check write permissions on %s", os_path)
+            return False
+
     def file_exists(self, path):
         """Returns True if the file exists, else returns False.
 
@@ -251,12 +273,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model["format"] = None
         model["mimetype"] = None
         model["size"] = size
+        model["writable"] = self.is_writable(path)
 
-        try:
-            model["writable"] = os.access(os_path, os.W_OK)
-        except OSError:
-            self.log.error("Failed to check write permissions on %s", os_path)
-            model["writable"] = False
         return model
 
     def _dir_model(self, path, content=True):
@@ -514,10 +532,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 # deleting non-empty files. See Github issue 3631.
                 raise web.HTTPError(400, u"Directory %s not empty" % os_path)
             if _check_trash(os_path):
-                self.log.debug("Sending %s to trash", os_path)
                 # Looking at the code in send2trash, I don't think the errors it
                 # raises let us distinguish permission errors from other errors in
-                # code. So for now, just let them all get logged as server errors.
+                # code. So for now, the "look before you leap" approach is used.
+                if not self.is_writable(path):
+                    raise web.HTTPError(403, u"Permission denied: %s" % path)
+                self.log.debug("Sending %s to trash", os_path)
                 send2trash(os_path)
                 return
             else:
@@ -842,10 +862,12 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 # deleting non-empty files. See Github issue 3631.
                 raise web.HTTPError(400, u"Directory %s not empty" % os_path)
             if await _check_trash(os_path):
-                self.log.debug("Sending %s to trash", os_path)
                 # Looking at the code in send2trash, I don't think the errors it
                 # raises let us distinguish permission errors from other errors in
-                # code. So for now, just let them all get logged as server errors.
+                # code. So for now, the "look before you leap" approach is used.
+                if not self.is_writable(path):
+                    raise web.HTTPError(403, u"Permission denied: %s" % path)
+                self.log.debug("Sending %s to trash", os_path)
                 send2trash(os_path)
                 return
             else:
