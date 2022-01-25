@@ -138,7 +138,9 @@ class SessionManager(LoggingConfigurable):
         # allow contents manager to specify kernels cwd
         kernel_path = self.contents_manager.get_kernel_path(path=path)
         kernel_id = await self.kernel_manager.start_kernel(
-            path=kernel_path, kernel_name=kernel_name
+            path=kernel_path,
+            kernel_name=kernel_name,
+            env={"JPY_SESSION_NAME": path},
         )
         return kernel_id
 
