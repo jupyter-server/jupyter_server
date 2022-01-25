@@ -21,8 +21,12 @@ from tornado.concurrent import Future
 from tornado.ioloop import IOLoop
 
 from ...base.handlers import APIHandler
-from ...base.zmqhandlers import AuthenticatedZMQStreamHandler, serialize_msg_to_ws_v1
-from ...base.zmqhandlers import deserialize_binary_message
+from ...base.zmqhandlers import AuthenticatedZMQStreamHandler
+from ...base.zmqhandlers import (
+    deserialize_binary_message,
+    serialize_msg_to_ws_v1,
+    deserialize_msg_from_ws_v1,
+)
 from jupyter_server.utils import ensure_async
 from jupyter_server.utils import url_escape
 from jupyter_server.utils import url_path_join
@@ -460,13 +464,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             return
 
         if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
-            offset_number = int.from_bytes(ws_msg[:4], "little")
-            offsets = [
-                int.from_bytes(ws_msg[4 * (i + 1) : 4 * (i + 2)], "little")
-                for i in range(offset_number)
-            ]
-            channel = ws_msg[offsets[0] : offsets[1]].decode("utf-8")
-            msg_list = [ws_msg[offsets[i] : offsets[i + 1]] for i in range(1, offset_number - 1)]
+            channel, msg_list = deserialize_msg_from_ws_v1(ws_msg)
             msg = {
                 "header": None,
             }
