@@ -82,6 +82,28 @@ def deserialize_binary_message(bmsg):
     return msg
 
 
+def serialize_msg_to_ws_v1(msg_or_list, channel, pack=None):
+    if pack:
+        msg_list = [
+            pack(msg_or_list["header"]),
+            pack(msg_or_list["parent_header"]),
+            pack(msg_or_list["metadata"]),
+            pack(msg_or_list["content"]),
+        ]
+    else:
+        msg_list = msg_or_list
+    channel = channel.encode("utf-8")
+    offsets = []
+    offsets.append(4 * (1 + 1 + len(msg_list) + 1))
+    offsets.append(len(channel) + offsets[-1])
+    for msg in msg_list:
+        offsets.append(len(msg) + offsets[-1])
+    offset_number = len(offsets).to_bytes(4, byteorder="little")
+    offsets = [offset.to_bytes(4, byteorder="little") for offset in offsets]
+    bin_msg = b"".join([offset_number] + offsets + [channel] + msg_list)
+    return bin_msg
+
+
 # ping interval for keeping websockets alive (30 seconds)
 WS_PING_INTERVAL = 30000
 
@@ -240,7 +262,11 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             return cast_unicode(smsg)
 
     def select_subprotocol(self, subprotocols):
-        selected_subprotocol = "v1.websocket.jupyter.org" if "v1.websocket.jupyter.org" in subprotocols else None
+        selected_subprotocol = (
+            "v1.kernel.websocket.jupyter.org"
+            if "v1.kernel.websocket.jupyter.org" in subprotocols
+            else None
+        )
         # None is the default, "legacy" protocol
         return selected_subprotocol
 
@@ -252,21 +278,8 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             self.close()
             return
         channel = getattr(stream, "channel", None)
-        if self.selected_subprotocol == "v1.websocket.jupyter.org":
-            offsets = []
-            curr_sum = 0
-            for msg in msg_list:
-                length = len(msg)
-                offsets.append(length + curr_sum)
-                curr_sum += length
-            layout = json.dumps(
-                {
-                    "channel": channel,
-                    "offsets": offsets,
-                }
-            ).encode("utf-8")
-            layout_length = len(layout).to_bytes(2, byteorder="little")
-            bin_msg = b"".join([layout_length, layout] + msg_list)
+        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+            bin_msg = serialize_msg_to_ws_v1(msg_list, channel)
             self.write_message(bin_msg, binary=True)
         else:
             try:

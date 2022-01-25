@@ -21,7 +21,7 @@ from tornado.concurrent import Future
 from tornado.ioloop import IOLoop
 
 from ...base.handlers import APIHandler
-from ...base.zmqhandlers import AuthenticatedZMQStreamHandler
+from ...base.zmqhandlers import AuthenticatedZMQStreamHandler, serialize_msg_to_ws_v1
 from ...base.zmqhandlers import deserialize_binary_message
 from jupyter_server.utils import ensure_async
 from jupyter_server.utils import url_escape
@@ -459,14 +459,17 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             self.log.debug("Received message on closed websocket %r", ws_msg)
             return
 
-        if self.selected_subprotocol == "v1.websocket.jupyter.org":
-            layout_len = int.from_bytes(ws_msg[:2], "little")
-            layout = json.loads(ws_msg[2 : 2 + layout_len])
-            msg_list = list(get_parts_from_ws(ws_msg[2 + layout_len :], layout["offsets"]))
+        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+            offset_number = int.from_bytes(ws_msg[:4], "little")
+            offsets = [
+                int.from_bytes(ws_msg[4 * (i + 1) : 4 * (i + 2)], "little")
+                for i in range(offset_number)
+            ]
+            channel = ws_msg[offsets[0] : offsets[1]].decode("utf-8")
+            msg_list = [ws_msg[offsets[i] : offsets[i + 1]] for i in range(1, offset_number - 1)]
             msg = {
                 "header": None,
             }
-            channel = layout["channel"]
         else:
             if isinstance(ws_msg, bytes):
                 msg = deserialize_binary_message(ws_msg)
@@ -481,7 +484,6 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         if channel not in self.channels:
             self.log.warning("No such channel: %r", channel)
             return
-
         am = self.kernel_manager.allowed_message_types
         ignore_msg = False
         if am:
@@ -494,7 +496,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 ignore_msg = True
         if not ignore_msg:
             stream = self.channels[channel]
-            if self.selected_subprotocol == "v1.websocket.jupyter.org":
+            if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
                 self.session.send_raw(stream, msg_list)
             else:
                 self.session.send(stream, msg)
@@ -512,7 +514,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     def _on_zmq_reply(self, stream, msg_list):
         idents, fed_msg_list = self.session.feed_identities(msg_list)
 
-        if self.selected_subprotocol == "v1.websocket.jupyter.org":
+        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
             msg = {"header": None, "parent_header": None, "content": None}
         else:
             msg = self.session.deserialize(fed_msg_list)
@@ -525,7 +527,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         if self._limit_rate(channel, msg, parts):
             return
 
-        if self.selected_subprotocol == "v1.websocket.jupyter.org":
+        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
             super(ZMQChannelsHandler, self)._on_zmq_reply(stream, parts)
         else:
             super(ZMQChannelsHandler, self)._on_zmq_reply(stream, msg)
@@ -537,8 +539,8 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             content={"text": error_message + "\n", "name": "stderr"},
             parent=msg["parent_header"],
         )
-        if self.selected_subprotocol == "v1.websocket.jupyter.org":
-            bin_msg = serialize_msg_to_ws(err_msg, "iopub", self.session.pack)
+        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+            bin_msg = serialize_msg_to_ws_v1(err_msg, "iopub", self.session.pack)
             self.write_message(bin_msg, binary=True)
         else:
             err_msg["channel"] = "iopub"
@@ -715,8 +717,8 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             # that all messages from the stopped kernel have been delivered
             iopub.flush()
         msg = self.session.msg("status", {"execution_state": status})
-        if self.selected_subprotocol == "v1.websocket.jupyter.org":
-            bin_msg = serialize_msg_to_ws(msg, "iopub")
+        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+            bin_msg = serialize_msg_to_ws_v1(msg, "iopub", self.session.pack)
             self.write_message(bin_msg, binary=True)
         else:
             msg["channel"] = "iopub"
@@ -741,42 +743,8 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 msg["content"]["ename"] = "ExecutionError"
                 msg["content"]["evalue"] = "Execution error"
                 msg["content"]["traceback"] = [self.kernel_manager.traceback_replacement_message]
-                if self.selected_subprotocol == "v1.websocket.jupyter.org":
+                if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
                     msg_list[3] = self.session.pack(msg["content"])
-
-
-def get_parts_from_ws(msg, offsets):
-    i0 = 0
-    for i1 in offsets:
-        yield msg[i0:i1]
-        i0 = i1
-    last_part = msg[i0:]
-    if last_part:
-        yield last_part
-
-
-def serialize_msg_to_ws(msg, channel, pack):
-    offsets = []
-    curr_sum = 0
-    parts = [
-        pack(msg["header"]),
-        pack(msg["parent_header"]),
-        pack(msg["metadata"]),
-        pack(msg["content"]),
-    ]
-    for part in parts:
-        length = len(part)
-        offsets.append(length + curr_sum)
-        curr_sum += length
-    layout = json.dumps(
-        {
-            "channel": channel,
-            "offsets": offsets,
-        }
-    ).encode("utf-8")
-    layout_length = len(layout).to_bytes(2, byteorder="little")
-    bin_msg = b"".join([layout_length, layout] + parts)
-    return bin_msg
 
 
 # -----------------------------------------------------------------------------
