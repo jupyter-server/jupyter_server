@@ -272,11 +272,12 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             return cast_unicode(smsg)
 
     def select_subprotocol(self, subprotocols):
-        selected_subprotocol = (
-            "v1.kernel.websocket.jupyter.org"
-            if "v1.kernel.websocket.jupyter.org" in subprotocols
-            else None
-        )
+        preferred_protocol = self.settings.get("kernel_ws_protocol")
+        if preferred_protocol is None:
+            preferred_protocol = "v1.kernel.websocket.jupyter.org"
+        elif preferred_protocol == "":
+            preferred_protocol = None
+        selected_subprotocol = preferred_protocol if preferred_protocol in subprotocols else None
         # None is the default, "legacy" protocol
         return selected_subprotocol
 
