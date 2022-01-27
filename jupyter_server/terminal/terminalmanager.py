@@ -165,3 +165,6 @@ class TerminalManager(LoggingConfigurable, terminado.NamedTermManager):
                     "Culling terminal '%s' due to %s seconds of inactivity.", name, inactivity
                 )
                 await self.terminate(name, force=True)
+
+    def pre_pty_read_hook(self, ptywclients):
+        ptywclients.last_activity = utcnow()
