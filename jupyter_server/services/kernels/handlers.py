@@ -530,12 +530,12 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         else:
             super(ZMQChannelsHandler, self)._on_zmq_reply(stream, msg)
 
-    def write_stderr(self, error_message, msg):
+    def write_stderr(self, error_message, parent_header):
         self.log.warning(error_message)
         err_msg = self.session.msg(
             "stream",
             content={"text": error_message + "\n", "name": "stderr"},
-            parent=msg["parent_header"],
+            parent=parent_header,
         )
         if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
             bin_msg = serialize_msg_to_ws_v1(err_msg, "iopub", self.session.pack)
@@ -545,21 +545,22 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             self.write_message(json.dumps(err_msg, default=json_default))
 
     def _limit_rate(self, channel, msg, msg_list):
-        if not (channel == "iopub" and self.limit_rate):
+        if not (self.limit_rate and channel == "iopub"):
             return False
 
         msg["header"] = self.get_part("header", msg["header"], msg_list)
-        msg["content"] = self.get_part("content", msg["content"], msg_list)
 
         msg_type = msg["header"]["msg_type"]
-        if msg_type == "status" and msg["content"].get("execution_state") == "idle":
-            # reset rate limit counter on status=idle,
-            # to avoid 'Run All' hitting limits prematurely.
-            self._iopub_window_byte_queue = []
-            self._iopub_window_msg_count = 0
-            self._iopub_window_byte_count = 0
-            self._iopub_msgs_exceeded = False
-            self._iopub_data_exceeded = False
+        if msg_type == "status":
+            msg["content"] = self.get_part("content", msg["content"], msg_list)
+            if msg["content"].get("execution_state") == "idle":
+                # reset rate limit counter on status=idle,
+                # to avoid 'Run All' hitting limits prematurely.
+                self._iopub_window_byte_queue = []
+                self._iopub_window_msg_count = 0
+                self._iopub_window_byte_count = 0
+                self._iopub_msgs_exceeded = False
+                self._iopub_data_exceeded = False
 
         if msg_type not in {"status", "comm_open", "execute_input"}:
 
@@ -616,7 +617,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                                 self.iopub_msg_rate_limit, self.rate_limit_window
                             )
                         ),
-                        msg,
+                        msg["parent_header"],
                     )
             else:
                 # resume once we've got some headroom below the limit
@@ -648,7 +649,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                                 self.iopub_data_rate_limit, self.rate_limit_window
                             )
                         ),
-                        msg,
+                        msg["parent_header"],
                     )
             else:
                 # resume once we've got some headroom below the limit
