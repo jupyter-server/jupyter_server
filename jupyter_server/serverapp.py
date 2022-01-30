@@ -1629,10 +1629,10 @@ class ServerApp(JupyterApp):
     )
 
     limit_rate = Bool(
-        False,
+        True,
         config=True,
         help=_i18n(
-            "Whether to limit the rate of IOPub messages (default: False). "
+            "Whether to limit the rate of IOPub messages (default: True). "
             "If True, use iopub_msg_rate_limit, iopub_data_rate_limit and/or rate_limit_window "
             "to tune the rate."
         ),

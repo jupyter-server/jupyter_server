@@ -111,7 +111,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
 
     @property
     def limit_rate(self):
-        return self.settings.get("limit_rate", False)
+        return self.settings.get("limit_rate", True)
 
     @property
     def iopub_msg_rate_limit(self):
