@@ -476,6 +476,20 @@ def jp_cleanup_subprocesses(jp_serverapp):
     async def _():
         terminal_cleanup = jp_serverapp.web_app.settings["terminal_manager"].terminate_all
         kernel_cleanup = jp_serverapp.kernel_manager.shutdown_all
+
+        async def kernel_cleanup_steps():
+            # Try a graceful shutdown with a timeout
+            try:
+                await asyncio.wait_for(kernel_cleanup(), timeout=15.0)
+            except asyncio.TimeoutError:
+                # Now force a shutdown
+                try:
+                    await asyncio.wait_for(kernel_cleanup(now=True), timeout=15.0)
+                except asyncio.TimeoutError:
+                    print(Exception("Kernel never shutdown!"))
+            except Exception as e:
+                print(e)
+
         if asyncio.iscoroutinefunction(terminal_cleanup):
             try:
                 await terminal_cleanup()
@@ -487,10 +501,7 @@ def jp_cleanup_subprocesses(jp_serverapp):
             except Exception as e:
                 print(e)
         if asyncio.iscoroutinefunction(kernel_cleanup):
-            try:
-                await kernel_cleanup()
-            except Exception as e:
-                print(e)
+            await kernel_cleanup_steps()
         else:
             try:
                 kernel_cleanup()

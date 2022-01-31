@@ -1,18 +1,18 @@
 import json
+import os
 import time
 
+import jupyter_client
 import pytest
 import tornado
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 from tornado.httpclient import HTTPClientError
 
 from ...utils import expected_http_error
-from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
 from jupyter_server.utils import url_path_join
 
 
-class DummyMappingKernelManager(AsyncMappingKernelManager):
-    """A no-op subclass to use in a fixture"""
+TEST_TIMEOUT = 20
 
 
 @pytest.fixture
@@ -27,22 +27,37 @@ def pending_kernel_is_ready(jp_serverapp):
     return _
 
 
-@pytest.fixture(
-    params=["MappingKernelManager", "AsyncMappingKernelManager", "DummyMappingKernelManager"]
-)
-def jp_argv(request):
-    if request.param == "DummyMappingKernelManager":
-        extra = []
-        if hasattr(AsyncMappingKernelManager, "use_pending_kernels"):
-            extra = ["--AsyncMappingKernelManager.use_pending_kernels=True"]
-        return [
-            "--ServerApp.kernel_manager_class=jupyter_server.tests.services.kernels.test_api."
-            + request.param
-        ] + extra
-    return [
-        "--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager."
-        + request.param
-    ]
+configs = [
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager"
+        }
+    },
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
+        }
+    },
+]
+
+
+# Pending kernels was released in Jupyter Client 7.1
+# It is currently broken on Windows (Jan 2022). When fixed, we can remove the Windows check.
+# See https://github.com/jupyter-server/jupyter_server/issues/672
+if os.name != "nt" and jupyter_client._version.version_info >= (7, 1):
+    # Add a pending kernels condition
+    c = {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
+        },
+        "AsyncMappingKernelManager": {"use_pending_kernels": True},
+    }
+    configs.append(c)
+
+
+@pytest.fixture(params=configs)
+def jp_server_config(request):
+    return request.param
 
 
 async def test_no_kernels(jp_fetch):
@@ -51,6 +66,7 @@ async def test_no_kernels(jp_fetch):
     assert kernels == []
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_default_kernels(jp_fetch, jp_base_url, jp_cleanup_subprocesses):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
@@ -66,6 +82,7 @@ async def test_default_kernels(jp_fetch, jp_base_url, jp_cleanup_subprocesses):
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_main_kernel_handler(
     jp_fetch, jp_base_url, jp_cleanup_subprocesses, jp_serverapp, pending_kernel_is_ready
 ):
@@ -144,6 +161,7 @@ async def test_main_kernel_handler(
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_kernel_handler(jp_fetch, jp_cleanup_subprocesses, pending_kernel_is_ready):
     # Create a kernel
     r = await jp_fetch(
@@ -191,6 +209,7 @@ async def test_kernel_handler(jp_fetch, jp_cleanup_subprocesses, pending_kernel_
     await jp_cleanup_subprocesses()
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_kernel_handler_startup_error(
     jp_fetch, jp_cleanup_subprocesses, jp_serverapp, jp_kernelspecs
 ):
@@ -202,6 +221,7 @@ async def test_kernel_handler_startup_error(
         await jp_fetch("api", "kernels", method="POST", body=json.dumps({"name": "bad"}))
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_kernel_handler_startup_error_pending(
     jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serverapp, jp_kernelspecs
 ):
@@ -217,6 +237,7 @@ async def test_kernel_handler_startup_error_pending(
         await jp_ws_fetch("api", "kernels", kid, "channels")
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_connection(
     jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header, jp_cleanup_subprocesses
 ):

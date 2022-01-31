@@ -1,39 +1,49 @@
 import asyncio
 import json
+import os
 import platform
 
+import jupyter_client
 import pytest
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
-
-
-@pytest.fixture(params=["MappingKernelManager", "AsyncMappingKernelManager"])
-def jp_argv(request):
-    return [
-        "--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager."
-        + request.param
-    ]
 
 
 CULL_TIMEOUT = 30 if platform.python_implementation() == "PyPy" else 5
 CULL_INTERVAL = 1
 
 
-@pytest.fixture
-def jp_server_config():
-    return Config(
-        {
-            "ServerApp": {
-                "MappingKernelManager": {
-                    "cull_idle_timeout": CULL_TIMEOUT,
-                    "cull_interval": CULL_INTERVAL,
-                    "cull_connected": False,
+@pytest.mark.parametrize(
+    "jp_server_config",
+    [
+        # Test the synchronous case
+        Config(
+            {
+                "ServerApp": {
+                    "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager",
+                    "MappingKernelManager": {
+                        "cull_idle_timeout": CULL_TIMEOUT,
+                        "cull_interval": CULL_INTERVAL,
+                        "cull_connected": False,
+                    },
                 }
             }
-        }
-    )
-
-
+        ),
+        # Test the async case
+        Config(
+            {
+                "ServerApp": {
+                    "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+                    "AsyncMappingKernelManager": {
+                        "cull_idle_timeout": CULL_TIMEOUT,
+                        "cull_interval": CULL_INTERVAL,
+                        "cull_connected": False,
+                    },
+                }
+            }
+        ),
+    ],
+)
 async def test_cull_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
@@ -53,14 +63,36 @@ async def test_cull_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses):
     await jp_cleanup_subprocesses()
 
 
+# Pending kernels was released in Jupyter Client 7.1
+# It is currently broken on Windows (Jan 2022). When fixed, we can remove the Windows check.
+# See https://github.com/jupyter-server/jupyter_server/issues/672
+@pytest.mark.skipif(
+    os.name == "nt" or jupyter_client._version.version_info < (7, 1),
+    reason="Pending kernels require jupyter_client >= 7.1 on non-Windows",
+)
+@pytest.mark.parametrize(
+    "jp_server_config",
+    [
+        Config(
+            {
+                "ServerApp": {
+                    "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+                    "AsyncMappingKernelManager": {
+                        "cull_idle_timeout": CULL_TIMEOUT,
+                        "cull_interval": CULL_INTERVAL,
+                        "cull_connected": False,
+                        "default_kernel_name": "bad",
+                        "use_pending_kernels": True,
+                    },
+                }
+            }
+        )
+    ],
+)
+@pytest.mark.timeout(30)
 async def test_cull_dead(
     jp_fetch, jp_ws_fetch, jp_serverapp, jp_cleanup_subprocesses, jp_kernelspecs
 ):
-    if not hasattr(jp_serverapp.kernel_manager, "use_pending_kernels"):
-        return
-
-    jp_serverapp.kernel_manager.use_pending_kernels = True
-    jp_serverapp.kernel_manager.default_kernel_name = "bad"
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
     kid = kernel["id"]
