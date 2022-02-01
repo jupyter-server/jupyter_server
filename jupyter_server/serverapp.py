@@ -91,7 +91,7 @@ from jupyter_server.gateway.managers import (
     GatewaySessionManager,
     GatewayClient,
 )
-from jupyter_server.services.auth.authorizer import Authorizer, AllowAllAuthorizer
+from jupyter_server.auth.authorizer import Authorizer, AllowAllAuthorizer
 
 from jupyter_server.auth.login import LoginHandler
 from jupyter_server.auth.logout import LogoutHandler

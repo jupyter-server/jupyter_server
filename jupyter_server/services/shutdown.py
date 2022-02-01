@@ -3,8 +3,8 @@
 from tornado import ioloop
 from tornado import web
 
+from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import JupyterHandler
-from jupyter_server.services.auth.decorator import authorized
 
 
 AUTH_RESOURCE = "server"

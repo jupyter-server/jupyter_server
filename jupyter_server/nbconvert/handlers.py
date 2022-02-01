@@ -15,7 +15,7 @@ from tornado.log import app_log
 from ..base.handlers import FilesRedirectHandler
 from ..base.handlers import JupyterHandler
 from ..base.handlers import path_regex
-from jupyter_server.services.auth.decorator import authorized
+from jupyter_server.auth import authorized
 from jupyter_server.utils import ensure_async
 
 

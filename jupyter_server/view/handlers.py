@@ -9,7 +9,7 @@ from ..base.handlers import path_regex
 from ..utils import ensure_async
 from ..utils import url_escape
 from ..utils import url_path_join
-from jupyter_server.services.auth.decorator import authorized
+from jupyter_server.auth import authorized
 
 
 AUTH_RESOURCE = "contents"

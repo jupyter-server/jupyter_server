@@ -3,7 +3,7 @@ import json
 from tornado import web
 
 from ..base.handlers import APIHandler
-from jupyter_server.services.auth.decorator import authorized
+from jupyter_server.auth import authorized
 
 
 AUTH_RESOURCE = "terminals"

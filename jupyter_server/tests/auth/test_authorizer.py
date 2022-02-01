@@ -8,9 +8,9 @@ from nbformat.v4 import new_notebook
 from tornado.httpclient import HTTPClientError
 from tornado.websocket import WebSocketHandler
 
-from jupyter_server.services.auth.authorizer import Authorizer
-from jupyter_server.services.auth.utils import HTTP_METHOD_TO_AUTH_ACTION
-from jupyter_server.services.auth.utils import match_url_to_resource
+from jupyter_server.auth.authorizer import Authorizer
+from jupyter_server.auth.utils import HTTP_METHOD_TO_AUTH_ACTION
+from jupyter_server.auth.utils import match_url_to_resource
 from jupyter_server.services.security import csp_report_uri
 
 

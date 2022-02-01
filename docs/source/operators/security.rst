@@ -194,7 +194,7 @@ follows:
 
 .. sourcecode:: python
 
-    from jupyter_server.services.auth.authorizer import Authorizer
+    from jupyter_server.auth import Authorizer
 
     class MyAuthorizationManager(Authorizer):
         """Class for authorizing access to resources in the Jupyter Server.
@@ -230,7 +230,7 @@ follows:
             return True  # implement your authorization logic here
 
 The ``is_authorized()`` method will automatically be called whenever a handler is decorated with
-``@authorized`` (from ``jupyter_server.services.auth``), similarly to the
+``@authorized`` (from ``jupyter_server.auth``), similarly to the
 ``@authenticated`` decorator for authorization (from ``tornado.web``).
 
 Security in notebook documents

@@ -25,6 +25,8 @@ def authorized(
     Helpful for adding an 'authorization' layer to
     a REST API.
 
+    .. versionadded:: 2.0
+
     Parameters
     ----------
     action : str

@@ -1,6 +1,6 @@
 import pytest
 
-from jupyter_server.services.auth.utils import match_url_to_resource
+from jupyter_server.auth.utils import match_url_to_resource
 
 
 @pytest.mark.parametrize(

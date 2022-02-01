@@ -14,7 +14,7 @@ from tornado import web
 
 from ...base.handlers import APIHandler
 from ...utils import ensure_async, url_path_join, url_unescape
-from jupyter_server.services.auth.decorator import authorized
+from jupyter_server.auth import authorized
 
 
 AUTH_RESOURCE = "kernelspecs"

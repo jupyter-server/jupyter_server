@@ -1,4 +1,4 @@
-from jupyter_server.services.auth.authorizer import Authorizer
+from jupyter_server.auth import Authorizer
 
 
 class ReadOnly(Authorizer):

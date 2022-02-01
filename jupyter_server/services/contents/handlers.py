@@ -18,7 +18,7 @@ from jupyter_server.base.handlers import path_regex
 from jupyter_server.utils import ensure_async
 from jupyter_server.utils import url_escape
 from jupyter_server.utils import url_path_join
-from jupyter_server.services.auth.decorator import authorized
+from jupyter_server.auth import authorized
 
 
 AUTH_RESOURCE = "contents"

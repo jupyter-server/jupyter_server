@@ -13,7 +13,7 @@ To add a custom authorization system to the Jupyter Server, you will need to wri
 The examples below demonstrate some basic implementations of an `Authorizer`.
 
 ```python
-from jupyter_server.services.auth.authorizer import Authorizer
+from jupyter_server.auth import Authorizer
 
 
 class MyCustomAuthorizer(Authorizer):

@@ -3,6 +3,7 @@
 The default authorizer (AllowAllAuthorizer)
 allows all authenticated requests
 
+.. versionadded:: 2.0
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
@@ -27,6 +28,8 @@ class Authorizer(LoggingConfigurable):
 
     The authorization check will only be applied to requests
     that have already been authenticated.
+
+    .. versionadded:: 2.0
     """
 
     def is_authorized(self, handler: JupyterHandler, user: str, action: str, resource: str) -> bool:
@@ -54,6 +57,8 @@ class AllowAllAuthorizer(Authorizer):
     """A no-op implementation of the Authorizer
 
     This authorizer allows all authenticated requests.
+
+    .. versionadded:: 2.0
     """
 
     def is_authorized(self, handler: JupyterHandler, user: str, action: str, resource: str) -> bool:
