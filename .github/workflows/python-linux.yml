@@ -101,4 +101,4 @@ jobs:
         run: |
           pip install --find-links=./sdist --pre jupyter_server[test]
       - name: Run Test
-        run: pytest -vv --pyargs jupyter_server
+        run: pytest -vv --pyargs jupyter_server --capture=no
