@@ -98,6 +98,8 @@ jobs:
       - name: Download sdist
         uses: actions/download-artifact@v2
       - name: Install From SDist
-        run: pip install sdist/*.tar.gz[test]
+        run: |
+          ls
+          ls sdist
       - name: Run Test
         run: pytest -vv --pyargs jupyter_server
