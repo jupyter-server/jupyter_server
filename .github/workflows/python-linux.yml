@@ -91,13 +91,13 @@ jobs:
   test_sdist:
     runs-on: ubuntu-latest
     needs: [make_sdist]
-    name: Download SDist
+    name: Install from SDist and Test
     steps:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Download sdist
         uses: actions/download-artifact@v2
       - name: Install From SDist
-        run: pip install "*.tar.gz[test]"
+        run: pip install "sdist/*.tar.gz[test]"
       - name: Run Test
         run: pytest -vv --pyargs jupyter_server
