@@ -13,6 +13,8 @@ addopts = "--doctest-modules"
 testpaths = [
     "jupyter_server/"
 ]
+timeout = 300
+timeout_method = "thread"
 
 [tool.jupyter-releaser]
 skip = ["check-links"]
