@@ -99,6 +99,7 @@ jobs:
         uses: actions/download-artifact@v2
       - name: Install From SDist
         run: |
-          pip install --find-links=./sdist --pre jupyter_server[test]
+          pip install -U setuptools
+          pip install --find-links=./sdist "jupyter_server[test]>=0.0.dev0"
       - name: Run Test
         run: pytest -vv --pyargs jupyter_server --capture=no
