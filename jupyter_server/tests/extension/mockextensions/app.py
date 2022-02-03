@@ -41,6 +41,63 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         "jpserver_extensions": {"jupyter_server.tests.extension.mockextensions.mock1": True}
     }
 
+    _allowed_spec = {
+        "openapi": "3.0.1",
+        "info": {"title": "Test specs", "version": "0.0.1"},
+        "paths": {
+            "/": {
+                "get": {
+                    "responses": {"200": {"description": ""}},
+                },
+            },
+            "/mock": {
+                "get": {
+                    "responses": {"200": {"description": ""}},
+                },
+            },
+            "/mock_blocked/{path}": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "path",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "responses": {"200": {"description": ""}},
+                },
+            },
+            "/mock_template": {
+                "get": {
+                    "responses": {"200": {"description": ""}},
+                },
+            },
+        },
+    }
+
+    _blocked_spec = {
+        "openapi": "3.0.1",
+        "info": {"title": "Test specs", "version": "0.0.1"},
+        "paths": {
+            "/mock_blocked/{path}": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "path",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "responses": {"200": {"description": ""}},
+                },
+            },
+        },
+    }
+
+    _slash_encoder = (r"/mocked_blocked/([^/?]+(?:(?:/[^/]+)*?))$",)
+
     @staticmethod
     def get_extension_package():
         return "jupyter_server.tests.extension.mockextensions"

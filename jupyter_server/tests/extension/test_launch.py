@@ -11,6 +11,11 @@ from pathlib import Path
 import pytest
 import requests
 
+try:
+    import tornado_openapi3
+except ImportError:
+    tornado_openapi3 = None
+
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -109,3 +114,30 @@ def test_token_file(launch_instance, fetch, token):
     del os.environ["JUPYTER_TOKEN_FILE"]
     token_file.unlink()
     assert r.status_code == 200
+
+
+@pytest.mark.skipif(tornado_openapi3 is None, reason="tornado_openapi3 not available")
+def test_request_not_allowed(launch_instance, fetch):
+    launch_instance()
+
+    r = fetch("/mocka")
+
+    assert r.status_code == 403
+
+
+@pytest.mark.skipif(tornado_openapi3 is None, reason="tornado_openapi3 not available")
+def test_request_allowed(launch_instance, fetch):
+    launch_instance()
+
+    r = fetch("/mock")
+
+    assert r.status_code == 200
+
+
+@pytest.mark.skipif(tornado_openapi3 is None, reason="tornado_openapi3 not available")
+async def test_ServerApp_with_spec_validation_blocked_with_encoded_path(launch_instance, fetch):
+    launch_instance()
+
+    r = fetch("/mock_blocked/path/dummy.txt")
+
+    assert r.status_code == 403

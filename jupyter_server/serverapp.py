@@ -28,6 +28,15 @@ import time
 import urllib
 import webbrowser
 from base64 import encodebytes
+from typing import Iterable
+from typing import Optional
+
+from tornado import httputil
+
+try:
+    from jupyter_server.specvalidator import SpecValidator
+except ImportError:
+    SpecValidator = None
 
 try:
     import resource
@@ -222,7 +231,24 @@ class ServerWebApplication(web.Application):
         default_url,
         settings_overrides,
         jinja_env_options,
+        spec_validators=None,
     ):
+        if SpecValidator is None or spec_validators is None:
+
+            class DummyValidator:
+                """Dummy request validator that is always valid."""
+
+                def validate(self, request):
+                    return True
+
+            self.__requestValidator: Optional[SpecValidator] = DummyValidator()
+        else:
+            self.__requestValidator: Optional[SpecValidator] = SpecValidator(
+                base_url,
+                spec_validators.get("allowed"),
+                spec_validators.get("blocked"),
+                spec_validators.get("slash_encoder"),
+            )
 
         settings = self.init_settings(
             jupyter_app,
@@ -432,6 +458,14 @@ class ServerWebApplication(web.Application):
         # add 404 on the end, which will catch everything that falls through
         new_handlers.append((r"(.*)", Template404))
         return new_handlers
+
+    def find_handler(
+        self, request: httputil.HTTPServerRequest, **kwargs: Any
+    ) -> "web._HandlerDelegate":
+        if self.__requestValidator.validate(request):
+            return super().find_handler(request, **kwargs)
+        else:
+            return self.get_handler_delegate(request, web.ErrorHandler, {"status_code": 403})
 
     def last_activity(self):
         """Get a UTC timestamp for when the server last did something.
@@ -755,6 +789,12 @@ class ServerApp(JupyterApp):
         "shutdown",
         "view",
     )
+
+    # Filtering rules to apply on handlers registration
+    # Subclasses can override this list to filter handlers
+    _allowed_spec: Optional[dict] = None
+    _blocked_spec: Optional[dict] = None
+    _slash_encoder: Optional[Iterable[str]] = None
 
     _log_formatter_cls = LogFormatter
 
@@ -1843,6 +1883,11 @@ class ServerApp(JupyterApp):
             self.default_url,
             self.tornado_settings,
             self.jinja_environment_options,
+            spec_validators={
+                "allowed": self._allowed_spec,
+                "blocked": self._blocked_spec,
+                "slash_encoder": self._slash_encoder,
+            },
         )
         if self.certfile:
             self.ssl_options["certfile"] = self.certfile
@@ -2316,6 +2361,11 @@ class ServerApp(JupyterApp):
             # Set starter_app property.
             if point.app:
                 self._starter_app = point.app
+                # Apply endpoint filters from the extension app
+                spec_rules = point.app.get_openapi3_spec_rules()
+                self._allowed_spec = spec_rules["allowed"]
+                self._blocked_spec = spec_rules["blocked"]
+                self._slash_encoder = spec_rules["slash_encoder"]
             # Load any configuration that comes from the Extension point.
             self.update_config(Config(point.config))
 

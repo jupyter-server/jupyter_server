@@ -1,6 +1,8 @@
 import logging
 import re
 import sys
+from typing import Iterable
+from typing import Optional
 
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
@@ -136,6 +138,13 @@ class ExtensionApp(JupyterApp):
         the extensions setup.py
     """
 
+    # Filtering rules to apply on handlers registration
+    # Subclasses can override this list to filter handlers
+    # They will be applied on the ServerApp
+    _allowed_spec: Optional[dict] = None
+    _blocked_spec: Optional[dict] = None
+    _slash_encoder: Optional[Iterable[str]] = None
+
     # Subclasses should override this trait. Tells the server if
     # this extension allows other other extensions to be loaded
     # side-by-side when launched directly.
@@ -179,6 +188,14 @@ class ExtensionApp(JupyterApp):
     @classmethod
     def get_extension_point(cls):
         return cls.__module__
+
+    @classmethod
+    def get_openapi3_spec_rules(cls):
+        return {
+            "allowed": cls._allowed_spec,
+            "blocked": cls._blocked_spec,
+            "slash_encoder": cls._slash_encoder,
+        }
 
     # Extension URL sets the default landing page for this extension.
     extension_url = "/"
@@ -495,7 +512,8 @@ class ExtensionApp(JupyterApp):
                     RedirectHandler,
                     {
                         "url": url_path_join(
-                            serverapp.base_url, "static/base/images/favicon-notebook.ico"
+                            serverapp.base_url,
+                            "static/base/images/favicon-notebook.ico",
                         )
                     },
                 ),
@@ -504,7 +522,8 @@ class ExtensionApp(JupyterApp):
                     RedirectHandler,
                     {
                         "url": url_path_join(
-                            serverapp.base_url, "static/base/images/favicon-terminal.ico"
+                            serverapp.base_url,
+                            "static/base/images/favicon-terminal.ico",
                         )
                     },
                 ),

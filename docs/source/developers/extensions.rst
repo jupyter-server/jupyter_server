@@ -306,6 +306,101 @@ To make your extension executable from anywhere on your system, point an entry-p
         }
     )
 
+Filtering requests
+------------------
+
+When launching the ``ExtensionApp`` in standalone mode, you may want to restrict the available endpoints. You can do this by defining
+either ``_allowed_spec`` or ``_blocked_spec`` class attributes as OpenAPI v3 specifications. The allowed paths will blocked any requests
+not matching the specification and the blocked paths will allow any requests except the ones specified.
+
+.. note::
+
+   If both are defined, the blocked paths take precedence on the allowed one; i.e. if a path is allowed and blocked, it will be blocked.
+
+OpenAPI v3 does not support URL path arguments that contains slashes ``/``. For the specification,
+``/api/contents/{path}`` can only be ``/api/contents/[^/]+``. To circumvent this limitation, you can provide a list of regex's through
+the class attributes ``_slash_encoder``. The groups matching one of the encoder will have their slashes encoded (``/`` replaced by ``%2F``).
+This will allow the validation of path through the OpenAPI v3 specification.
+
+Here is an example for the unit tests.
+
+.. code-block:: python
+
+    class MyExtensionApp(ExtensionApp):
+    
+        _allowed_spec = {
+            "openapi": "3.0.1",
+            "info": {"title": "Test specs", "version": "0.0.1"},
+            "paths": {
+                "/api/contents/{path}": {
+                    # Will be blocked by _blocked_spec
+                    "get": {
+                        "parameters": [
+                            {
+                                "name": "path",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "string"},
+                            }
+                        ],
+                        "responses": {"200": {"description": ""}},
+                    },
+                },
+                "/api/contents/{path}/checkpoints": {
+                    "post": {
+                        "parameters": [
+                            {
+                                "name": "path",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "string"},
+                            }
+                        ],
+                        "responses": {"201": {"description": ""}},
+                    },
+                },
+                "/api/sessions/{sessionId}": {
+                    "get": {
+                        "parameters": [
+                            {
+                                "name": "sessionId",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "string"},
+                            }
+                        ],
+                        "responses": {"200": {"description": ""}},
+                    },
+                },
+            },
+        }
+    
+        _blocked_spec = {
+            "openapi": "3.0.1",
+            "info": {"title": "Test specs", "version": "0.0.1"},
+            "paths": {
+                "/api/contents/{path}": {
+                    "get": {
+                        "parameters": [
+                            {
+                                "name": "path",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "string"},
+                            }
+                        ],
+                        "responses": {"200": {"description": ""}},
+                    },
+                },
+            },
+        }
+    
+        _slash_encoder = (
+            r"/api/contents/([^/?]+(?:(?:/[^/]+)*?))/checkpoints$",
+            r"/api/contents/([^/?]+(?:(?:/[^/]+)*?))$",
+        )
+
+
 ``ExtensionApp`` as a classic Notebook server extension
 -------------------------------------------------------
 
