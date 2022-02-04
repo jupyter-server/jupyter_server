@@ -22,7 +22,11 @@ from tornado.ioloop import IOLoop
 
 from ...base.handlers import APIHandler
 from ...base.zmqhandlers import AuthenticatedZMQStreamHandler
-from ...base.zmqhandlers import deserialize_binary_message
+from ...base.zmqhandlers import (
+    deserialize_binary_message,
+    serialize_msg_to_ws_v1,
+    deserialize_msg_from_ws_v1,
+)
 from jupyter_server.utils import ensure_async
 from jupyter_server.utils import url_escape
 from jupyter_server.utils import url_path_join
@@ -104,6 +108,10 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     def kernel_info_timeout(self):
         km_default = self.kernel_manager.kernel_info_timeout
         return self.settings.get("kernel_info_timeout", km_default)
+
+    @property
+    def limit_rate(self):
+        return self.settings.get("limit_rate", True)
 
     @property
     def iopub_msg_rate_limit(self):
@@ -452,16 +460,25 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
 
         return connected
 
-    def on_message(self, msg):
+    def on_message(self, ws_msg):
         if not self.channels:
             # already closed, ignore the message
-            self.log.debug("Received message on closed websocket %r", msg)
+            self.log.debug("Received message on closed websocket %r", ws_msg)
             return
-        if isinstance(msg, bytes):
-            msg = deserialize_binary_message(msg)
+
+        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+            channel, msg_list = deserialize_msg_from_ws_v1(ws_msg)
+            msg = {
+                "header": None,
+            }
         else:
-            msg = json.loads(msg)
-        channel = msg.pop("channel", None)
+            if isinstance(ws_msg, bytes):
+                msg = deserialize_binary_message(ws_msg)
+            else:
+                msg = json.loads(ws_msg)
+            msg_list = []
+            channel = msg.pop("channel", None)
+
         if channel is None:
             self.log.warning("No channel specified, assuming shell: %s", msg)
             channel = "shell"
@@ -469,47 +486,86 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             self.log.warning("No such channel: %r", channel)
             return
         am = self.kernel_manager.allowed_message_types
-        mt = msg["header"]["msg_type"]
-        if am and mt not in am:
-            self.log.warning('Received message of type "%s", which is not allowed. Ignoring.' % mt)
-        else:
+        ignore_msg = False
+        if am:
+            msg["header"] = self.get_part("header", msg["header"], msg_list)
+            if msg["header"]["msg_type"] not in am:
+                self.log.warning(
+                    'Received message of type "%s", which is not allowed. Ignoring.'
+                    % msg["header"]["msg_type"]
+                )
+                ignore_msg = True
+        if not ignore_msg:
             stream = self.channels[channel]
-            self.session.send(stream, msg)
+            if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+                self.session.send_raw(stream, msg_list)
+            else:
+                self.session.send(stream, msg)
+
+    def get_part(self, field, value, msg_list):
+        if value is None:
+            field2idx = {
+                "header": 0,
+                "parent_header": 1,
+                "content": 3,
+            }
+            value = self.session.unpack(msg_list[field2idx[field]])
+        return value
 
     def _on_zmq_reply(self, stream, msg_list):
         idents, fed_msg_list = self.session.feed_identities(msg_list)
-        msg = self.session.deserialize(fed_msg_list)
 
-        parent = msg["parent_header"]
-
-        def write_stderr(error_message):
-            self.log.warning(error_message)
-            msg = self.session.msg(
-                "stream", content={"text": error_message + "\n", "name": "stderr"}, parent=parent
-            )
-            msg["channel"] = "iopub"
-            self.write_message(json.dumps(msg, default=json_default))
+        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+            msg = {"header": None, "parent_header": None, "content": None}
+        else:
+            msg = self.session.deserialize(fed_msg_list)
 
         channel = getattr(stream, "channel", None)
+        parts = fed_msg_list[1:]
+
+        self._on_error(channel, msg, parts)
+
+        if self._limit_rate(channel, msg, parts):
+            return
+
+        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+            super(ZMQChannelsHandler, self)._on_zmq_reply(stream, parts)
+        else:
+            super(ZMQChannelsHandler, self)._on_zmq_reply(stream, msg)
+
+    def write_stderr(self, error_message, parent_header):
+        self.log.warning(error_message)
+        err_msg = self.session.msg(
+            "stream",
+            content={"text": error_message + "\n", "name": "stderr"},
+            parent=parent_header,
+        )
+        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+            bin_msg = serialize_msg_to_ws_v1(err_msg, "iopub", self.session.pack)
+            self.write_message(bin_msg, binary=True)
+        else:
+            err_msg["channel"] = "iopub"
+            self.write_message(json.dumps(err_msg, default=json_default))
+
+    def _limit_rate(self, channel, msg, msg_list):
+        if not (self.limit_rate and channel == "iopub"):
+            return False
+
+        msg["header"] = self.get_part("header", msg["header"], msg_list)
+
         msg_type = msg["header"]["msg_type"]
+        if msg_type == "status":
+            msg["content"] = self.get_part("content", msg["content"], msg_list)
+            if msg["content"].get("execution_state") == "idle":
+                # reset rate limit counter on status=idle,
+                # to avoid 'Run All' hitting limits prematurely.
+                self._iopub_window_byte_queue = []
+                self._iopub_window_msg_count = 0
+                self._iopub_window_byte_count = 0
+                self._iopub_msgs_exceeded = False
+                self._iopub_data_exceeded = False
 
-        if channel == "iopub" and msg_type == "error":
-            self._on_error(msg)
-
-        if (
-            channel == "iopub"
-            and msg_type == "status"
-            and msg["content"].get("execution_state") == "idle"
-        ):
-            # reset rate limit counter on status=idle,
-            # to avoid 'Run All' hitting limits prematurely.
-            self._iopub_window_byte_queue = []
-            self._iopub_window_msg_count = 0
-            self._iopub_window_byte_count = 0
-            self._iopub_msgs_exceeded = False
-            self._iopub_data_exceeded = False
-
-        if channel == "iopub" and msg_type not in {"status", "comm_open", "execute_input"}:
+        if msg_type not in {"status", "comm_open", "execute_input"}:
 
             # Remove the counts queued for removal.
             now = IOLoop.current().time()
@@ -545,7 +601,10 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             if self.iopub_msg_rate_limit > 0 and msg_rate > self.iopub_msg_rate_limit:
                 if not self._iopub_msgs_exceeded:
                     self._iopub_msgs_exceeded = True
-                    write_stderr(
+                    msg["parent_header"] = self.get_part(
+                        "parent_header", msg["parent_header"], msg_list
+                    )
+                    self.write_stderr(
                         dedent(
                             """\
                     IOPub message rate exceeded.
@@ -560,7 +619,8 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                     """.format(
                                 self.iopub_msg_rate_limit, self.rate_limit_window
                             )
-                        )
+                        ),
+                        msg["parent_header"],
                     )
             else:
                 # resume once we've got some headroom below the limit
@@ -573,7 +633,10 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             if self.iopub_data_rate_limit > 0 and data_rate > self.iopub_data_rate_limit:
                 if not self._iopub_data_exceeded:
                     self._iopub_data_exceeded = True
-                    write_stderr(
+                    msg["parent_header"] = self.get_part(
+                        "parent_header", msg["parent_header"], msg_list
+                    )
+                    self.write_stderr(
                         dedent(
                             """\
                     IOPub data rate exceeded.
@@ -588,7 +651,8 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                     """.format(
                                 self.iopub_data_rate_limit, self.rate_limit_window
                             )
-                        )
+                        ),
+                        msg["parent_header"],
                     )
             else:
                 # resume once we've got some headroom below the limit
@@ -603,8 +667,9 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 self._iopub_window_msg_count -= 1
                 self._iopub_window_byte_count -= byte_count
                 self._iopub_window_byte_queue.pop(-1)
-                return
-        super(ZMQChannelsHandler, self)._on_zmq_reply(stream, msg)
+                return True
+
+            return False
 
     def close(self):
         super(ZMQChannelsHandler, self).close()
@@ -654,8 +719,12 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             # that all messages from the stopped kernel have been delivered
             iopub.flush()
         msg = self.session.msg("status", {"execution_state": status})
-        msg["channel"] = "iopub"
-        self.write_message(json.dumps(msg, default=json_default))
+        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+            bin_msg = serialize_msg_to_ws_v1(msg, "iopub", self.session.pack)
+            self.write_message(bin_msg, binary=True)
+        else:
+            msg["channel"] = "iopub"
+            self.write_message(json.dumps(msg, default=json_default))
 
     def on_kernel_restarted(self):
         self.log.warning("kernel %s restarted", self.kernel_id)
@@ -665,12 +734,19 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         self.log.error("kernel %s restarted failed!", self.kernel_id)
         self._send_status_message("dead")
 
-    def _on_error(self, msg):
+    def _on_error(self, channel, msg, msg_list):
         if self.kernel_manager.allow_tracebacks:
             return
-        msg["content"]["ename"] = "ExecutionError"
-        msg["content"]["evalue"] = "Execution error"
-        msg["content"]["traceback"] = [self.kernel_manager.traceback_replacement_message]
+
+        if channel == "iopub":
+            msg["header"] = self.get_part("header", msg["header"], msg_list)
+            if msg["header"]["msg_type"] == "error":
+                msg["content"] = self.get_part("content", msg["content"], msg_list)
+                msg["content"]["ename"] = "ExecutionError"
+                msg["content"]["evalue"] = "Execution error"
+                msg["content"]["traceback"] = [self.kernel_manager.traceback_replacement_message]
+                if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+                    msg_list[3] = self.session.pack(msg["content"])
 
 
 # -----------------------------------------------------------------------------

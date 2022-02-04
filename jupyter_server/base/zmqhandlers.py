@@ -82,6 +82,38 @@ def deserialize_binary_message(bmsg):
     return msg
 
 
+def serialize_msg_to_ws_v1(msg_or_list, channel, pack=None):
+    if pack:
+        msg_list = [
+            pack(msg_or_list["header"]),
+            pack(msg_or_list["parent_header"]),
+            pack(msg_or_list["metadata"]),
+            pack(msg_or_list["content"]),
+        ]
+    else:
+        msg_list = msg_or_list
+    channel = channel.encode("utf-8")
+    offsets = []
+    offsets.append(8 * (1 + 1 + len(msg_list) + 1))
+    offsets.append(len(channel) + offsets[-1])
+    for msg in msg_list:
+        offsets.append(len(msg) + offsets[-1])
+    offset_number = len(offsets).to_bytes(8, byteorder="little")
+    offsets = [offset.to_bytes(8, byteorder="little") for offset in offsets]
+    bin_msg = b"".join([offset_number] + offsets + [channel] + msg_list)
+    return bin_msg
+
+
+def deserialize_msg_from_ws_v1(ws_msg):
+    offset_number = int.from_bytes(ws_msg[:8], "little")
+    offsets = [
+        int.from_bytes(ws_msg[8 * (i + 1) : 8 * (i + 2)], "little") for i in range(offset_number)
+    ]
+    channel = ws_msg[offsets[0] : offsets[1]].decode("utf-8")
+    msg_list = [ws_msg[offsets[i] : offsets[i + 1]] for i in range(1, offset_number - 1)]
+    return channel, msg_list
+
+
 # ping interval for keeping websockets alive (30 seconds)
 WS_PING_INTERVAL = 30000
 
@@ -239,6 +271,16 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             smsg = json.dumps(msg, default=json_default)
             return cast_unicode(smsg)
 
+    def select_subprotocol(self, subprotocols):
+        preferred_protocol = self.settings.get("kernel_ws_protocol")
+        if preferred_protocol is None:
+            preferred_protocol = "v1.kernel.websocket.jupyter.org"
+        elif preferred_protocol == "":
+            preferred_protocol = None
+        selected_subprotocol = preferred_protocol if preferred_protocol in subprotocols else None
+        # None is the default, "legacy" protocol
+        return selected_subprotocol
+
     def _on_zmq_reply(self, stream, msg_list):
         # Sometimes this gets triggered when the on_close method is scheduled in the
         # eventloop but hasn't been called.
@@ -247,12 +289,16 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             self.close()
             return
         channel = getattr(stream, "channel", None)
-        try:
-            msg = self._reserialize_reply(msg_list, channel=channel)
-        except Exception:
-            self.log.critical("Malformed message: %r" % msg_list, exc_info=True)
+        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+            bin_msg = serialize_msg_to_ws_v1(msg_list, channel)
+            self.write_message(bin_msg, binary=True)
         else:
-            self.write_message(msg, binary=isinstance(msg, bytes))
+            try:
+                msg = self._reserialize_reply(msg_list, channel=channel)
+            except Exception:
+                self.log.critical("Malformed message: %r" % msg_list, exc_info=True)
+            else:
+                self.write_message(msg, binary=isinstance(msg, bytes))
 
 
 class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):

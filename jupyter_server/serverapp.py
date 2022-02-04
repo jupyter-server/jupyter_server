@@ -314,7 +314,10 @@ class ServerWebApplication(web.Application):
                 "no_cache_paths": [url_path_join(base_url, "static", "custom")],
             },
             version_hash=version_hash,
+            # kernel message protocol over websoclet
+            kernel_ws_protocol=jupyter_app.kernel_ws_protocol,
             # rate limits
+            limit_rate=jupyter_app.limit_rate,
             iopub_msg_rate_limit=jupyter_app.iopub_msg_rate_limit,
             iopub_data_rate_limit=jupyter_app.iopub_data_rate_limit,
             rate_limit_window=jupyter_app.rate_limit_window,
@@ -1610,6 +1613,29 @@ class ServerApp(JupyterApp):
         False,
         config=True,
         help=_i18n("Reraise exceptions encountered loading server extensions?"),
+    )
+
+    kernel_ws_protocol = Unicode(
+        None,
+        allow_none=True,
+        config=True,
+        help=_i18n(
+            "Preferred kernel message protocol over websocket to use (default: None). "
+            "If an empty string is passed, select the legacy protocol. If None, "
+            "the selected protocol will depend on what the front-end supports "
+            "(usually the most recent protocol supported by the back-end and the "
+            "front-end)."
+        ),
+    )
+
+    limit_rate = Bool(
+        True,
+        config=True,
+        help=_i18n(
+            "Whether to limit the rate of IOPub messages (default: True). "
+            "If True, use iopub_msg_rate_limit, iopub_data_rate_limit and/or rate_limit_window "
+            "to tune the rate."
+        ),
     )
 
     iopub_msg_rate_limit = Float(
