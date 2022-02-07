@@ -27,7 +27,7 @@ class SessionManager(LoggingConfigurable):
     database_filepath = Unicode(
         default_value=":memory:",
         help=(
-            "Th filesystem path to SQLite Database file "
+            "The filesystem path to SQLite Database file "
             "(e.g. /path/to/session_database.db). By default, the session "
             "database is stored in-memory (i.e. `:memory:` setting from sqlite3) "
             "and does not persist when the current Jupyter Server shuts down."
