@@ -20,6 +20,7 @@ jobs:
       - name: Install the Python dependencies
         run: |
           pip install -e .[test] codecov
+          pip install pytest-github-actions-annotate-failures
       - name: List installed packages
         run: |
           pip freeze
