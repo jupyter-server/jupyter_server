@@ -34,7 +34,7 @@ See also the `Jupyter Client documentation <https://jupyter-client.readthedocs.i
 
 Note that a set of ZeroMQ sockets, one for each channel (``IOPub``, ``shell``, etc.), are multiplexed into one WebSocket. Thus, the channel name must be encoded in WebSocket messages.
 
-WebSocket protocol negociation
+WebSocket protocol negotiation
 ------------------------------
 
 When opening a WebSocket, the Jupyter web application can optionally provide a list of subprotocols it supports (see e.g. the `MDN documentation <https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#subprotocols>`_). If nothing is provided (empty list), then the Jupyter Server assumes the default protocol will be used. Otherwise, the Jupyter Server must select one of the provided subprotocols, or none of them. If none of them is selected, the Jupyter Server must reply with an empty string, which means that the default protocol will be used.
