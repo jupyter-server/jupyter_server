@@ -140,11 +140,12 @@ Where:
 
 .. code-block:: python
 
-    channel = bin_msg[offset_0:offset_1]
-    header = bin_msg[offset_1:offset_2]
-    parent_header = bin_msg[offset_2:offset_3]
-    metadata = bin_msg[offset_3:offset_4]
-    content = bin_msg[offset_4:offset_5]
+    import json
+    channel = bin_msg[offset_0:offset_1].decode('utf-8')
+    header = json.loads(bin_msg[offset_1:offset_2])
+    parent_header = json.loads(bin_msg[offset_2:offset_3])
+    metadata = json.loads(bin_msg[offset_3:offset_4])
+    content = json.loads(bin_msg[offset_4:offset_5])
     buffer_0 = bin_msg[offset_5:offset_6]
     buffer_1 = bin_msg[offset_6:offset_7]
     # ...
