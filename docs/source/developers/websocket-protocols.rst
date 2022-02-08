@@ -136,6 +136,9 @@ Where:
 
 * ``offset_number`` is a 64-bit (little endian) unsigned integer.
 * ``offset_0`` to ``offset_n`` are 64-bit (little endian) unsigned integers (with ``n=offset_number-1``).
+* ``channel`` is a UTF-8 encoded string containing the channel for the message (shell, iopub, etc.)
+* ``header``, ``parent_header``, ``metadata``, and ``content`` are UTF-8 encoded JSON text representing the given part of a message in the Jupyter message protocol.
+* ``offset_n`` is the number of bytes in the message.
 * The message can be deserialized from the ``bin_msg`` serialized message as follows (Python code):
 
 .. code-block:: python
