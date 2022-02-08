@@ -149,3 +149,4 @@ Where:
     buffer_0 = bin_msg[offset_5:offset_6]
     buffer_1 = bin_msg[offset_6:offset_7]
     # ...
+    last_buffer = bin_msg[offset_(n-1):offset_n]
