@@ -82,14 +82,19 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             value = import_item(value)
         if not callable(value):
             raise TraitError("post_save_hook must be callable")
+        self._post_save_hooks.append(value)
         return value
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._post_save_hooks = []
 
     def run_post_save_hook(self, model, os_path):
         """Run the post-save hook if defined, and log errors"""
-        if self.post_save_hook:
+        for post_save_hook in self._post_save_hooks:
             try:
                 self.log.debug("Running post-save hook on %s", os_path)
-                self.post_save_hook(os_path=os_path, model=model, contents_manager=self)
+                post_save_hook(os_path=os_path, model=model, contents_manager=self)
             except Exception as e:
                 self.log.error("Post-save hook failed o-n %s", os_path, exc_info=True)
                 raise web.HTTPError(

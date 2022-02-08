@@ -126,14 +126,19 @@ class ContentsManager(LoggingConfigurable):
             value = import_item(self.pre_save_hook)
         if not callable(value):
             raise TraitError("pre_save_hook must be callable")
+        self._pre_save_hooks.append(value)
         return value
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._pre_save_hooks = []
 
     def run_pre_save_hook(self, model, path, **kwargs):
         """Run the pre-save hook if defined, and log errors"""
-        if self.pre_save_hook:
+        for pre_save_hook in self._pre_save_hooks:
             try:
                 self.log.debug("Running pre-save hook on %s", path)
-                self.pre_save_hook(model=model, path=path, contents_manager=self, **kwargs)
+                pre_save_hook(model=model, path=path, contents_manager=self, **kwargs)
             except HTTPError:
                 # allow custom HTTPErrors to raise,
                 # rejecting the save with a message.
