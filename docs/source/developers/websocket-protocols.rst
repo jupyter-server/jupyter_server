@@ -32,7 +32,7 @@ The kernel wire protocol over ZeroMQ takes advantage of multipart messages, allo
 
 See also the `Jupyter Client documentation <https://jupyter-client.readthedocs.io/en/stable/messaging.html#the-wire-protocol>`_.
 
-Note that a set of ZeroMQ sockets, one for each channel (``IOPub``, ``shell``, etc.), are multiplexed into one WebSocket. Thus, the channel name must be encoded in WebSocket messages.
+Note that a set of ZeroMQ sockets, one for each channel (shell, iopub, etc.), are multiplexed into one WebSocket. Thus, the channel name must be encoded in WebSocket messages.
 
 WebSocket protocol negotiation
 ------------------------------
@@ -136,7 +136,7 @@ Where:
 
 * ``offset_number`` is a 64-bit (little endian) unsigned integer.
 * ``offset_0`` to ``offset_n`` are 64-bit (little endian) unsigned integers (with ``n=offset_number-1``).
-* ``channel`` is a UTF-8 encoded string containing the channel for the message (shell, iopub, etc.)
+* ``channel`` is a UTF-8 encoded string containing the channel for the message (shell, iopub, etc.).
 * ``header``, ``parent_header``, ``metadata``, and ``content`` are UTF-8 encoded JSON text representing the given part of a message in the Jupyter message protocol.
 * ``offset_n`` is the number of bytes in the message.
 * The message can be deserialized from the ``bin_msg`` serialized message as follows (Python code):
@@ -152,4 +152,4 @@ Where:
     buffer_0 = bin_msg[offset_5:offset_6]
     buffer_1 = bin_msg[offset_6:offset_7]
     # ...
-    last_buffer = bin_msg[offset_(n-1):offset_n]
+    last_buffer = bin_msg[offset_n_minus_1:offset_n]
