@@ -17,10 +17,19 @@ from tornado import web
 from ...base.handlers import APIHandler
 from jupyter_server.utils import ensure_async
 from jupyter_server.utils import url_path_join
+from jupyter_server.auth import authorized
 
 
-class SessionRootHandler(APIHandler):
+AUTH_RESOURCE = "sessions"
+
+
+class SessionsAPIHandler(APIHandler):
+    auth_resource = AUTH_RESOURCE
+
+
+class SessionRootHandler(SessionsAPIHandler):
     @web.authenticated
+    @authorized
     async def get(self):
         # Return a list of running sessions
         sm = self.session_manager
@@ -28,6 +37,7 @@ class SessionRootHandler(APIHandler):
         self.finish(json.dumps(sessions, default=json_default))
 
     @web.authenticated
+    @authorized
     async def post(self):
         # Creates a new session
         # (unless a session already exists for the named session)
@@ -67,7 +77,11 @@ class SessionRootHandler(APIHandler):
         else:
             try:
                 model = await sm.create_session(
-                    path=path, kernel_name=kernel_name, kernel_id=kernel_id, name=name, type=mtype
+                    path=path,
+                    kernel_name=kernel_name,
+                    kernel_id=kernel_id,
+                    name=name,
+                    type=mtype,
                 )
             except NoSuchKernel:
                 msg = (
@@ -88,8 +102,9 @@ class SessionRootHandler(APIHandler):
         self.finish(json.dumps(model, default=json_default))
 
 
-class SessionHandler(APIHandler):
+class SessionHandler(SessionsAPIHandler):
     @web.authenticated
+    @authorized
     async def get(self, session_id):
         # Returns the JSON model for a single session
         sm = self.session_manager
@@ -97,6 +112,7 @@ class SessionHandler(APIHandler):
         self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
+    @authorized
     async def patch(self, session_id):
         """Patch updates sessions:
 
@@ -154,6 +170,7 @@ class SessionHandler(APIHandler):
         self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
+    @authorized
     async def delete(self, session_id):
         # Deletes the session with given session_id
         sm = self.session_manager

@@ -209,7 +209,10 @@ async def test_good_symlink(jp_file_contents_manager_class, tmp_path):
     symlink(cm, file_model["path"], path)
     symlink_model = await ensure_async(cm.get(path, content=False))
     dir_model = await ensure_async(cm.get(parent))
-    assert sorted(dir_model["content"], key=lambda x: x["name"]) == [symlink_model, file_model]
+    assert sorted(dir_model["content"], key=lambda x: x["name"]) == [
+        symlink_model,
+        file_model,
+    ]
 
 
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Can't test permissions on Windows")

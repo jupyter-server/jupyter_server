@@ -126,14 +126,24 @@ async def test_main_kernel_handler(
     # Interrupt a kernel
     await pending_kernel_is_ready(kernel2["id"])
     r = await jp_fetch(
-        "api", "kernels", kernel2["id"], "interrupt", method="POST", allow_nonstandard_methods=True
+        "api",
+        "kernels",
+        kernel2["id"],
+        "interrupt",
+        method="POST",
+        allow_nonstandard_methods=True,
     )
     assert r.code == 204
 
     # Restart a kernel
     await pending_kernel_is_ready(kernel2["id"])
     r = await jp_fetch(
-        "api", "kernels", kernel2["id"], "restart", method="POST", allow_nonstandard_methods=True
+        "api",
+        "kernels",
+        kernel2["id"],
+        "restart",
+        method="POST",
+        allow_nonstandard_methods=True,
     )
     restarted_kernel = json.loads(r.body.decode())
     assert restarted_kernel["id"] == kernel2["id"]

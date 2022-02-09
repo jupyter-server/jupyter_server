@@ -9,12 +9,19 @@ from ..base.handlers import path_regex
 from ..utils import ensure_async
 from ..utils import url_escape
 from ..utils import url_path_join
+from jupyter_server.auth import authorized
+
+
+AUTH_RESOURCE = "contents"
 
 
 class ViewHandler(JupyterHandler):
     """Render HTML files within an iframe."""
 
+    auth_resource = AUTH_RESOURCE
+
     @web.authenticated
+    @authorized
     async def get(self, path):
         path = path.strip("/")
         if not await ensure_async(self.contents_manager.file_exists(path)):

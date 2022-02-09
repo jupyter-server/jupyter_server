@@ -191,6 +191,10 @@ class AuthenticatedHandler(web.RequestHandler):
             return False
         return bool(self.login_handler.get_login_available(self.settings))
 
+    @property
+    def authorizer(self):
+        return self.settings["authorizer"]
+
 
 class JupyterHandler(AuthenticatedHandler):
     """Jupyter-specific extensions to authenticated handling
@@ -251,7 +255,8 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def contents_js_source(self):
         self.log.debug(
-            "Using contents: %s", self.settings.get("contents_js_source", "services/contents")
+            "Using contents: %s",
+            self.settings.get("contents_js_source", "services/contents"),
         )
         return self.settings.get("contents_js_source", "services/contents")
 
@@ -674,7 +679,8 @@ class APIHandler(JupyterHandler):
             )
         else:
             self.set_header(
-                "Access-Control-Allow-Headers", "accept, content-type, authorization, x-xsrftoken"
+                "Access-Control-Allow-Headers",
+                "accept, content-type, authorization, x-xsrftoken",
             )
         self.set_header("Access-Control-Allow-Methods", "GET, PUT, POST, PATCH, DELETE, OPTIONS")
 

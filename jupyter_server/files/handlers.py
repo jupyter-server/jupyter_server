@@ -7,8 +7,12 @@ from base64 import decodebytes
 
 from tornado import web
 
+from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.utils import ensure_async
+
+
+AUTH_RESOURCE = "contents"
 
 
 class FilesHandler(JupyterHandler):
@@ -20,6 +24,8 @@ class FilesHandler(JupyterHandler):
     a subclass of StaticFileHandler.
     """
 
+    auth_resource = AUTH_RESOURCE
+
     @property
     def content_security_policy(self):
         # In case we're serving HTML/SVG, confine any Javascript to a unique
@@ -27,12 +33,14 @@ class FilesHandler(JupyterHandler):
         return super(FilesHandler, self).content_security_policy + "; sandbox allow-scripts"
 
     @web.authenticated
+    @authorized
     def head(self, path):
         self.get(path, include_body=False)
         self.check_xsrf_cookie()
         return self.get(path, include_body=False)
 
     @web.authenticated
+    @authorized
     async def get(self, path, include_body=True):
         # /files/ requests must originate from the same site
         self.check_xsrf_cookie()

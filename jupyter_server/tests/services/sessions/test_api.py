@@ -87,7 +87,12 @@ class SessionClient:
             body = json.dumps(body)
 
         r = await self.jp_fetch(
-            "api", "sessions", *args, method=method, body=body, allow_nonstandard_methods=True
+            "api",
+            "sessions",
+            *args,
+            method=method,
+            body=body,
+            allow_nonstandard_methods=True,
         )
         return r
 
@@ -98,7 +103,11 @@ class SessionClient:
         return await self._req(id, method="GET")
 
     async def create(self, path, type="notebook", kernel_name=None, kernel_id=None):
-        body = {"path": path, "type": type, "kernel": {"name": kernel_name, "id": kernel_id}}
+        body = {
+            "path": path,
+            "type": type,
+            "kernel": {"name": kernel_name, "id": kernel_id},
+        }
         return await self._req(method="POST", body=body)
 
     def create_deprecated(self, path):
@@ -268,7 +277,12 @@ async def test_create_bad(
 
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_create_bad_pending(
-    session_client, jp_base_url, jp_ws_fetch, jp_cleanup_subprocesses, jp_serverapp, jp_kernelspecs
+    session_client,
+    jp_base_url,
+    jp_ws_fetch,
+    jp_cleanup_subprocesses,
+    jp_serverapp,
+    jp_kernelspecs,
 ):
     if not getattr(jp_serverapp.kernel_manager, "use_pending_kernels", False):
         return

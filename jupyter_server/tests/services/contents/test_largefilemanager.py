@@ -67,7 +67,13 @@ async def test_bad_save(jp_large_contents_manager, model, err_message):
 
 async def test_saving_different_chunks(jp_large_contents_manager):
     cm = jp_large_contents_manager
-    model = {"name": "test", "path": "test", "type": "file", "content": u"test==", "format": "text"}
+    model = {
+        "name": "test",
+        "path": "test",
+        "type": "file",
+        "content": u"test==",
+        "format": "text",
+    }
     name = model["name"]
     path = model["path"]
     await ensure_async(cm.save(model, path))

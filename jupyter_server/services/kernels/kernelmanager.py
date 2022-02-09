@@ -143,7 +143,8 @@ class MappingKernelManager(MultiKernelManager):
         return defaultdict(lambda: {"buffer": [], "session_key": "", "channels": {}})
 
     last_kernel_activity = Instance(
-        datetime, help="The last activity on any kernel, including shutting down a kernel"
+        datetime,
+        help="The last activity on any kernel, including shutting down a kernel",
     )
 
     def __init__(self, **kwargs):
@@ -519,7 +520,10 @@ class MappingKernelManager(MultiKernelManager):
             if msg_type == "status":
                 kernel.execution_state = msg["content"]["execution_state"]
                 self.log.debug(
-                    "activity on %s: %s (%s)", kernel_id, msg_type, kernel.execution_state
+                    "activity on %s: %s (%s)",
+                    kernel_id,
+                    msg_type,
+                    kernel.execution_state,
                 )
             else:
                 self.log.debug("activity on %s: %s", kernel_id, msg_type)

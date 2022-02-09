@@ -95,7 +95,9 @@ class BaseJSONConfigManager(LoggingConfigurable):
             # .json file is probably a user configuration.
             paths = sorted(glob.glob(pattern)) + paths
         self.log.debug(
-            "Paths used for configuration of %s: \n\t%s", section_name, "\n\t".join(paths)
+            "Paths used for configuration of %s: \n\t%s",
+            section_name,
+            "\n\t".join(paths),
         )
         data = {}
         for path in paths:

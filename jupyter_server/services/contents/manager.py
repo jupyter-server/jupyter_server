@@ -81,7 +81,9 @@ class ContentsManager(LoggingConfigurable):
     )
 
     untitled_notebook = Unicode(
-        _i18n("Untitled"), config=True, help="The base name used when creating untitled notebooks."
+        _i18n("Untitled"),
+        config=True,
+        help="The base name used when creating untitled notebooks.",
     )
 
     untitled_file = Unicode(

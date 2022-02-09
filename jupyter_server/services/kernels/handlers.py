@@ -30,16 +30,26 @@ from ...base.zmqhandlers import (
 from jupyter_server.utils import ensure_async
 from jupyter_server.utils import url_escape
 from jupyter_server.utils import url_path_join
+from jupyter_server.auth import authorized
 
 
-class MainKernelHandler(APIHandler):
+AUTH_RESOURCE = "kernels"
+
+
+class KernelsAPIHandler(APIHandler):
+    auth_resource = AUTH_RESOURCE
+
+
+class MainKernelHandler(KernelsAPIHandler):
     @web.authenticated
+    @authorized
     async def get(self):
         km = self.kernel_manager
         kernels = await ensure_async(km.list_kernels())
         self.finish(json.dumps(kernels, default=json_default))
 
     @web.authenticated
+    @authorized
     async def post(self):
         km = self.kernel_manager
         model = self.get_json_body()
@@ -56,14 +66,16 @@ class MainKernelHandler(APIHandler):
         self.finish(json.dumps(model, default=json_default))
 
 
-class KernelHandler(APIHandler):
+class KernelHandler(KernelsAPIHandler):
     @web.authenticated
+    @authorized
     async def get(self, kernel_id):
         km = self.kernel_manager
         model = await ensure_async(km.kernel_model(kernel_id))
         self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
+    @authorized
     async def delete(self, kernel_id):
         km = self.kernel_manager
         await ensure_async(km.shutdown_kernel(kernel_id))
@@ -71,8 +83,9 @@ class KernelHandler(APIHandler):
         self.finish()
 
 
-class KernelActionHandler(APIHandler):
+class KernelActionHandler(KernelsAPIHandler):
     @web.authenticated
+    @authorized
     async def post(self, kernel_id, action):
         km = self.kernel_manager
         if action == "interrupt":
@@ -98,6 +111,8 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     """There is one ZMQChannelsHandler per running kernel and it oversees all
     the sessions.
     """
+
+    auth_resource = AUTH_RESOURCE
 
     # class-level registry of open sessions
     # allows checking for conflict on session-id,
@@ -126,7 +141,10 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         return self.settings.get("rate_limit_window", 1.0)
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, getattr(self, "kernel_id", "uninitialized"))
+        return "%s(%s)" % (
+            self.__class__.__name__,
+            getattr(self, "kernel_id", "uninitialized"),
+        )
 
     def create_stream(self):
         km = self.kernel_manager
@@ -566,7 +584,6 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 self._iopub_data_exceeded = False
 
         if msg_type not in {"status", "comm_open", "execute_input"}:
-
             # Remove the counts queued for removal.
             now = IOLoop.current().time()
             while len(self._iopub_window_byte_queue) > 0:
@@ -760,6 +777,9 @@ _kernel_action_regex = r"(?P<action>restart|interrupt)"
 default_handlers = [
     (r"/api/kernels", MainKernelHandler),
     (r"/api/kernels/%s" % _kernel_id_regex, KernelHandler),
-    (r"/api/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex), KernelActionHandler),
+    (
+        r"/api/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex),
+        KernelActionHandler,
+    ),
     (r"/api/kernels/%s/channels" % _kernel_id_regex, ZMQChannelsHandler),
 ]

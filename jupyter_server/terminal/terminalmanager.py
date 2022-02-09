@@ -162,6 +162,8 @@ class TerminalManager(LoggingConfigurable, terminado.NamedTermManager):
             if is_time:
                 inactivity = int(dt_inactive.total_seconds())
                 self.log.warning(
-                    "Culling terminal '%s' due to %s seconds of inactivity.", name, inactivity
+                    "Culling terminal '%s' due to %s seconds of inactivity.",
+                    name,
+                    inactivity,
                 )
                 await self.terminate(name, force=True)
