@@ -71,7 +71,7 @@ async def test_saving_different_chunks(jp_large_contents_manager):
         "name": "test",
         "path": "test",
         "type": "file",
-        "content": u"test==",
+        "content": "test==",
         "format": "text",
     }
     name = model["name"]

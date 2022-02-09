@@ -961,10 +961,9 @@ class ServerApp(JupyterApp):
         return value
 
     certfile = Unicode(
-        u"",
+        "",
         config=True,
         help=_i18n("""The full path to an SSL/TLS certificate file."""),
-
     )
 
     keyfile = Unicode(
