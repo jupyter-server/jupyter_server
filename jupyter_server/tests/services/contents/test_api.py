@@ -27,16 +27,16 @@ def dirs_only(dir_model):
 dirs = [
     ("", "inroot"),
     ("Directory with spaces in", "inspace"),
-    (u"unicodé", "innonascii"),
+    ("unicodé", "innonascii"),
     ("foo", "a"),
     ("foo", "b"),
     ("foo", "name with spaces"),
-    ("foo", u"unicodé"),
+    ("foo", "unicodé"),
     ("foo/bar", "baz"),
     ("ordering", "A"),
     ("ordering", "b"),
     ("ordering", "C"),
-    (u"å b", u"ç d"),
+    ("å b", "ç d"),
 ]
 
 
@@ -173,7 +173,7 @@ async def test_get_nb_invalid(contents_dir, jp_fetch, contents):
             }
         ],
     }
-    nbpath = u"å b/Validate tést.ipynb"
+    nbpath = "å b/Validate tést.ipynb"
     (contents_dir / nbpath).write_text(json.dumps(nb))
     r = await jp_fetch(
         "api",

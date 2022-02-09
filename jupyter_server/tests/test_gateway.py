@@ -157,7 +157,7 @@ mock_http_user = "alice"
 
 @pytest.fixture
 def init_gateway(monkeypatch):
-    """Initializes the server for use as a gateway client. """
+    """Initializes the server for use as a gateway client."""
     # Clear the singleton first since previous tests may not have used a gateway.
     GatewayClient.clear_instance()
     monkeypatch.setenv("JUPYTER_GATEWAY_URL", mock_gateway_url)

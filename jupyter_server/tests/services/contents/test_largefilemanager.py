@@ -52,7 +52,7 @@ async def test_save(jp_large_contents_manager):
                 "path": "test",
                 "chunk": 2,
                 "type": "file",
-                "content": u"test",
+                "content": "test",
                 "format": "json",
             },
             "HTTP 400: Bad Request (Must specify format of file contents as 'text' or 'base64')",

@@ -109,7 +109,7 @@ def jp_environ(
     jp_env_jupyter_path,
     jp_env_config_path,
 ):
-    """Configures a temporary environment based on Jupyter-specific environment variables. """
+    """Configures a temporary environment based on Jupyter-specific environment variables."""
     monkeypatch.setenv("HOME", str(jp_home_dir))
     monkeypatch.setenv("PYTHONPATH", os.pathsep.join(sys.path))
     # monkeypatch.setenv("JUPYTER_NO_CONFIG", "1")
@@ -127,7 +127,7 @@ def jp_environ(
 
 @pytest.fixture
 def jp_server_config():
-    """Allows tests to setup their specific configuration values. """
+    """Allows tests to setup their specific configuration values."""
     return {}
 
 
@@ -145,7 +145,7 @@ def jp_template_dir(tmp_path):
 
 @pytest.fixture
 def jp_argv():
-    """Allows tests to setup specific argv values. """
+    """Allows tests to setup specific argv values."""
     return []
 
 
@@ -157,7 +157,7 @@ def jp_extension_environ(jp_env_config_path, monkeypatch):
 
 @pytest.fixture
 def jp_http_port(http_server_port):
-    """Returns the port value from the http_server_port fixture. """
+    """Returns the port value from the http_server_port fixture."""
     return http_server_port[-1]
 
 
@@ -406,7 +406,7 @@ def jp_ws_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_http_port, 
     return client_fetch
 
 
-some_resource = u"The very model of a modern major general"
+some_resource = "The very model of a modern major general"
 sample_kernel_json = {
     "argv": ["cat", "{connection_file}"],
     "display_name": "Test kernel",

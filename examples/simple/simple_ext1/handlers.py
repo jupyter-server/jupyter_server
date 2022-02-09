@@ -42,7 +42,7 @@ class TypescriptHandler(BaseTemplateHandler):
 
 class TemplateHandler(BaseTemplateHandler):
     def get(self, path):
-        """ Optionaly, you can print(self.get_template('simple1.html'))"""
+        """Optionaly, you can print(self.get_template('simple1.html'))"""
         self.write(self.render_template("simple1.html", path=path))
 
 

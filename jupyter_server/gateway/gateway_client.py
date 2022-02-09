@@ -400,7 +400,7 @@ class GatewayClient(SingletonConfigurable):
 
 
 async def gateway_request(endpoint, **kwargs):
-    """Make an async request to kernel gateway endpoint, returns a response """
+    """Make an async request to kernel gateway endpoint, returns a response"""
     client = AsyncHTTPClient()
     kwargs = GatewayClient.instance().load_connection_args(**kwargs)
     try:

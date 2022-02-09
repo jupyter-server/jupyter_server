@@ -23,7 +23,7 @@ class DummyMKM(MappingKernelManager):
 
     def __init__(self, *args, **kwargs):
         super(DummyMKM, self).__init__(*args, **kwargs)
-        self.id_letters = iter(u"ABCDEFGHIJK")
+        self.id_letters = iter("ABCDEFGHIJK")
 
     def _new_id(self):
         return next(self.id_letters)
@@ -62,8 +62,8 @@ async def test_get_session(session_manager):
     model = await session_manager.get_session(session_id=session_id)
     expected = {
         "id": session_id,
-        "path": u"/path/to/test.ipynb",
-        "notebook": {"path": u"/path/to/test.ipynb", "name": None},
+        "path": "/path/to/test.ipynb",
+        "notebook": {"path": "/path/to/test.ipynb", "name": None},
         "type": "notebook",
         "name": None,
         "kernel": {
@@ -109,9 +109,9 @@ async def test_list_session(session_manager):
     expected = [
         {
             "id": sessions[0]["id"],
-            "path": u"/path/to/1/test1.ipynb",
+            "path": "/path/to/1/test1.ipynb",
             "type": "notebook",
-            "notebook": {"path": u"/path/to/1/test1.ipynb", "name": None},
+            "notebook": {"path": "/path/to/1/test1.ipynb", "name": None},
             "name": None,
             "kernel": {
                 "id": "A",
@@ -123,7 +123,7 @@ async def test_list_session(session_manager):
         },
         {
             "id": sessions[1]["id"],
-            "path": u"/path/to/2/test2.py",
+            "path": "/path/to/2/test2.py",
             "type": "file",
             "name": None,
             "kernel": {
@@ -136,7 +136,7 @@ async def test_list_session(session_manager):
         },
         {
             "id": sessions[2]["id"],
-            "path": u"/path/to/3",
+            "path": "/path/to/3",
             "type": "console",
             "name": "foo",
             "kernel": {
@@ -163,10 +163,10 @@ async def test_list_sessions_dead_kernel(session_manager):
     expected = [
         {
             "id": sessions[1]["id"],
-            "path": u"/path/to/2/test2.ipynb",
+            "path": "/path/to/2/test2.ipynb",
             "type": "notebook",
             "name": None,
-            "notebook": {"path": u"/path/to/2/test2.ipynb", "name": None},
+            "notebook": {"path": "/path/to/2/test2.ipynb", "name": None},
             "kernel": {
                 "id": "B",
                 "name": "python",
@@ -188,10 +188,10 @@ async def test_update_session(session_manager):
     model = await session_manager.get_session(session_id=session_id)
     expected = {
         "id": session_id,
-        "path": u"/path/to/new_name.ipynb",
+        "path": "/path/to/new_name.ipynb",
         "type": "notebook",
         "name": None,
-        "notebook": {"path": u"/path/to/new_name.ipynb", "name": None},
+        "notebook": {"path": "/path/to/new_name.ipynb", "name": None},
         "kernel": {
             "id": "A",
             "name": "julia",
@@ -227,10 +227,10 @@ async def test_delete_session(session_manager):
     expected = [
         {
             "id": sessions[0]["id"],
-            "path": u"/path/to/1/test1.ipynb",
+            "path": "/path/to/1/test1.ipynb",
             "type": "notebook",
             "name": None,
-            "notebook": {"path": u"/path/to/1/test1.ipynb", "name": None},
+            "notebook": {"path": "/path/to/1/test1.ipynb", "name": None},
             "kernel": {
                 "id": "A",
                 "name": "python",
@@ -242,7 +242,7 @@ async def test_delete_session(session_manager):
         {
             "id": sessions[2]["id"],
             "type": "console",
-            "path": u"/path/to/3",
+            "path": "/path/to/3",
             "name": "foo",
             "kernel": {
                 "id": "C",
