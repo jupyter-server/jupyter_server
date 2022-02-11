@@ -559,7 +559,7 @@ class JupyterServerStopApp(JupyterApp):
         help="Port of the server to be killed. Default %s" % DEFAULT_JUPYTER_SERVER_PORT,
     )
 
-    sock = Unicode(u"", config=True, help="UNIX socket of the server to be killed.")
+    sock = Unicode("", config=True, help="UNIX socket of the server to be killed.")
 
     def parse_command_line(self, argv=None):
         super(JupyterServerStopApp, self).parse_command_line(argv)
@@ -795,7 +795,9 @@ class ServerApp(JupyterApp):
     @default("log_format")
     def _default_log_format(self):
         """override default log format to include date & time"""
-        return u"%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
+        return (
+            "%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
+        )
 
     # file to be opened in the Jupyter server
     file_to_run = Unicode("", help="Open the named file when the application is launched.").tag(
@@ -880,12 +882,12 @@ class ServerApp(JupyterApp):
     @validate("ip")
     def _validate_ip(self, proposal):
         value = proposal["value"]
-        if value == u"*":
-            value = u""
+        if value == "*":
+            value = ""
         return value
 
     custom_display_url = Unicode(
-        u"",
+        "",
         config=True,
         help=_i18n(
             """Override URL shown to users.
@@ -928,7 +930,7 @@ class ServerApp(JupyterApp):
     def port_retries_default(self):
         return int(os.getenv(self.port_retries_env, self.port_retries_default_value))
 
-    sock = Unicode(u"", config=True, help="The UNIX socket the Jupyter server will listen on.")
+    sock = Unicode("", config=True, help="The UNIX socket the Jupyter server will listen on.")
 
     sock_mode = Unicode(
         "0600",
@@ -947,7 +949,7 @@ class ServerApp(JupyterApp):
                     bool(converted_value & stat.S_IRUSR),
                     bool(converted_value & stat.S_IWUSR),
                     # And isn't out of bounds.
-                    converted_value <= 2 ** 12,
+                    converted_value <= 2**12,
                 )
             )
         except ValueError:
@@ -959,19 +961,19 @@ class ServerApp(JupyterApp):
         return value
 
     certfile = Unicode(
-        u"",
+        "",
         config=True,
         help=_i18n("""The full path to an SSL/TLS certificate file."""),
     )
 
     keyfile = Unicode(
-        u"",
+        "",
         config=True,
         help=_i18n("""The full path to a private key file for usage with SSL/TLS."""),
     )
 
     client_ca = Unicode(
-        u"",
+        "",
         config=True,
         help=_i18n(
             """The full path to a certificate authority certificate for SSL/TLS client authentication."""
@@ -1053,7 +1055,7 @@ class ServerApp(JupyterApp):
         if self.password:
             # no token if password is enabled
             self._token_generated = False
-            return u""
+            return ""
         else:
             self._token_generated = True
             return binascii.hexlify(os.urandom(24)).decode("ascii")
@@ -1116,7 +1118,7 @@ class ServerApp(JupyterApp):
         self._token_generated = False
 
     password = Unicode(
-        u"",
+        "",
         config=True,
         help="""Hashed password to use for web authentication.
 
@@ -1261,7 +1263,7 @@ class ServerApp(JupyterApp):
     )
 
     browser = Unicode(
-        u"",
+        "",
         config=True,
         help="""Specify what command to use to invoke a web
                       browser when starting the server. If not specified, the

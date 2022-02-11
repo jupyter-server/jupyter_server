@@ -81,7 +81,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
         self.ping(b"")
 
     def open(self, kernel_id, *args, **kwargs):
-        """Handle web socket connection open to notebook server and delegate to gateway web socket handler """
+        """Handle web socket connection open to notebook server and delegate to gateway web socket handler"""
         self.ping_callback = PeriodicCallback(self.send_ping, GATEWAY_WS_PING_INTERVAL_SECS * 1000)
         self.ping_callback.start()
 
@@ -221,7 +221,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
             jitter = random.randint(10, 100) * 0.01
             retry_interval = (
                 min(
-                    GatewayClient.instance().gateway_retry_interval * (2 ** self.retry),
+                    GatewayClient.instance().gateway_retry_interval * (2**self.retry),
                     GatewayClient.instance().gateway_retry_interval_max,
                 )
                 + jitter

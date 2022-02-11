@@ -30,9 +30,9 @@ def notebook(jp_root_dir):
 
     # Build a notebook programmatically.
     nb = new_notebook()
-    nb.cells.append(new_markdown_cell(u"Created by test ³"))
-    cc1 = new_code_cell(source=u"print(2*6)")
-    cc1.outputs.append(new_output(output_type="stream", text=u"12"))
+    nb.cells.append(new_markdown_cell("Created by test ³"))
+    cc1 = new_code_cell(source="print(2*6)")
+    cc1.outputs.append(new_output(output_type="stream", text="12"))
     cc1.outputs.append(
         new_output(
             output_type="execute_result",
@@ -134,7 +134,7 @@ async def test_from_post(jp_fetch, notebook):
 
     r = await jp_fetch("nbconvert", "python", method="POST", body=json.dumps(nbmodel))
     assert r.code == 200
-    assert u"text/x-python" in r.headers["Content-Type"]
+    assert "text/x-python" in r.headers["Content-Type"]
     assert "print(2*6)" in r.body.decode()
 
 

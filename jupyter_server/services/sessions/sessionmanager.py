@@ -215,12 +215,12 @@ class SessionManager(LoggingConfigurable):
             for key, value in kwargs.items():
                 q.append("%s=%r" % (key, value))
 
-            raise web.HTTPError(404, u"Session not found: %s" % (", ".join(q)))
+            raise web.HTTPError(404, "Session not found: %s" % (", ".join(q)))
 
         try:
             model = await self.row_to_model(row)
         except KeyError as e:
-            raise web.HTTPError(404, u"Session not found: %s" % str(e))
+            raise web.HTTPError(404, "Session not found: %s" % str(e))
         return model
 
     async def update_session(self, session_id, **kwargs):
@@ -253,7 +253,7 @@ class SessionManager(LoggingConfigurable):
         self.cursor.execute(query, list(kwargs.values()) + [session_id])
 
     def kernel_culled(self, kernel_id):
-        """Checks if the kernel is still considered alive and returns true if its not found. """
+        """Checks if the kernel is still considered alive and returns true if its not found."""
         return kernel_id not in self.kernel_manager
 
     async def row_to_model(self, row, tolerate_culled=False):

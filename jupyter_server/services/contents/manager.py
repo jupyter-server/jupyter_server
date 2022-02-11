@@ -66,7 +66,7 @@ class ContentsManager(LoggingConfigurable):
     hide_globs = List(
         Unicode(),
         [
-            u"__pycache__",
+            "__pycache__",
             "*.pyc",
             "*.pyo",
             ".DS_Store",
@@ -365,10 +365,10 @@ class ContentsManager(LoggingConfigurable):
                 insert_i = "{}{}".format(insert, i)
             else:
                 insert_i = ""
-            name = u"{basename}{insert}{suffix}".format(
+            name = "{basename}{insert}{suffix}".format(
                 basename=basename, insert=insert_i, suffix=suffix
             )
-            if not self.exists(u"{}/{}".format(path, name)):
+            if not self.exists("{}/{}".format(path, name)):
                 break
         return name
 
@@ -377,7 +377,7 @@ class ContentsManager(LoggingConfigurable):
         try:
             validate_nb(model["content"])
         except ValidationError as e:
-            model["message"] = u"Notebook validation failed: {}:\n{}".format(
+            model["message"] = "Notebook validation failed: {}:\n{}".format(
                 e.message,
                 json.dumps(e.instance, indent=1, default=lambda obj: "<UNKNOWN>"),
             )
@@ -418,7 +418,7 @@ class ContentsManager(LoggingConfigurable):
             raise HTTPError(400, "Unexpected model type: %r" % model["type"])
 
         name = self.increment_filename(untitled + ext, path, insert=insert)
-        path = u"{0}/{1}".format(path, name)
+        path = "{0}/{1}".format(path, name)
         return self.new(model, path)
 
     def new(self, model=None, path=""):
@@ -477,9 +477,9 @@ class ContentsManager(LoggingConfigurable):
         if to_path is None:
             to_path = from_dir
         if self.dir_exists(to_path):
-            name = copy_pat.sub(u".", from_name)
+            name = copy_pat.sub(".", from_name)
             to_name = self.increment_filename(name, to_path, insert="-Copy")
-            to_path = u"{0}/{1}".format(to_path, to_name)
+            to_path = "{0}/{1}".format(to_path, to_name)
 
         model = self.save(model, to_path)
         return model
@@ -734,10 +734,10 @@ class AsyncContentsManager(ContentsManager):
                 insert_i = "{}{}".format(insert, i)
             else:
                 insert_i = ""
-            name = u"{basename}{insert}{suffix}".format(
+            name = "{basename}{insert}{suffix}".format(
                 basename=basename, insert=insert_i, suffix=suffix
             )
-            file_exists = await ensure_async(self.exists(u"{}/{}".format(path, name)))
+            file_exists = await ensure_async(self.exists("{}/{}".format(path, name)))
             if not file_exists:
                 break
         return name
@@ -778,7 +778,7 @@ class AsyncContentsManager(ContentsManager):
             raise HTTPError(400, "Unexpected model type: %r" % model["type"])
 
         name = await self.increment_filename(untitled + ext, path, insert=insert)
-        path = u"{0}/{1}".format(path, name)
+        path = "{0}/{1}".format(path, name)
         return await self.new(model, path)
 
     async def new(self, model=None, path=""):
@@ -836,9 +836,9 @@ class AsyncContentsManager(ContentsManager):
         if to_path is None:
             to_path = from_dir
         if await ensure_async(self.dir_exists(to_path)):
-            name = copy_pat.sub(u".", from_name)
+            name = copy_pat.sub(".", from_name)
             to_name = await self.increment_filename(name, to_path, insert="-Copy")
-            to_path = u"{0}/{1}".format(to_path, to_name)
+            to_path = "{0}/{1}".format(to_path, to_name)
 
         model = await self.save(model, to_path)
         return model

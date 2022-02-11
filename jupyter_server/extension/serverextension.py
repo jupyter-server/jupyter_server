@@ -329,7 +329,7 @@ class ListServerExtensionsApp(BaseExtensionApp):
             for name, extension in ext_manager.extensions.items():
                 enabled = extension.enabled
                 # Attempt to get extension metadata
-                self.log.info(u"    {} {}".format(name, GREEN_ENABLED if enabled else RED_DISABLED))
+                self.log.info("    {} {}".format(name, GREEN_ENABLED if enabled else RED_DISABLED))
                 try:
                     self.log.info("    - Validating {}...".format(name))
                     if not extension.validate():

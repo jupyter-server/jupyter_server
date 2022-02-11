@@ -229,7 +229,7 @@ async def test_403(jp_file_contents_manager_class, tmp_path):
     os.chmod(os_path, 0o400)
     try:
         with cm.open(os_path, "w") as f:
-            f.write(u"don't care")
+            f.write("don't care")
     except HTTPError as e:
         assert e.status_code == 403
 
@@ -264,7 +264,7 @@ async def test_escape_root(jp_file_contents_manager_class, tmp_path):
             cm.save(
                 model={
                     "type": "file",
-                    "content": u"",
+                    "content": "",
                     "format": "text",
                 },
                 path="../foo",
@@ -375,12 +375,12 @@ async def test_get(jp_contents_manager):
     file_model_path = (await ensure_async(cm.new_untitled(path=sub_dir, ext=".txt")))["path"]
     file_model = await ensure_async(cm.get(file_model_path))
     expected_model = {
-        "content": u"",
-        "format": u"text",
-        "mimetype": u"text/plain",
-        "name": u"untitled.txt",
-        "path": u"foo/untitled.txt",
-        "type": u"file",
+        "content": "",
+        "format": "text",
+        "mimetype": "text/plain",
+        "name": "untitled.txt",
+        "path": "foo/untitled.txt",
+        "type": "file",
         "writable": True,
     }
     # Assert expected model is in file_model
@@ -402,7 +402,7 @@ async def test_get(jp_contents_manager):
     # Directory contents should match the contents of each individual entry
     # when requested with content=False.
     model2_no_content = await ensure_async(cm.get(sub_dir + name, content=False))
-    file_model_no_content = await ensure_async(cm.get(u"foo/untitled.txt", content=False))
+    file_model_no_content = await ensure_async(cm.get("foo/untitled.txt", content=False))
     sub_sub_dir_no_content = await ensure_async(cm.get("foo/bar", content=False))
     assert sub_sub_dir_no_content["path"] == "foo/bar"
     assert sub_sub_dir_no_content["name"] == "bar"
@@ -618,9 +618,9 @@ async def test_delete_root(jp_contents_manager):
 
 async def test_copy(jp_contents_manager):
     cm = jp_contents_manager
-    parent = u"å b"
-    name = u"nb √.ipynb"
-    path = u"{0}/{1}".format(parent, name)
+    parent = "å b"
+    name = "nb √.ipynb"
+    path = "{0}/{1}".format(parent, name)
     _make_dir(cm, parent)
 
     orig = await ensure_async(cm.new(path=path))
@@ -629,11 +629,11 @@ async def test_copy(jp_contents_manager):
     assert copy["name"] == orig["name"].replace(".ipynb", "-Copy1.ipynb")
 
     # copy with specified name
-    copy2 = await ensure_async(cm.copy(path, u"å b/copy 2.ipynb"))
-    assert copy2["name"] == u"copy 2.ipynb"
-    assert copy2["path"] == u"å b/copy 2.ipynb"
+    copy2 = await ensure_async(cm.copy(path, "å b/copy 2.ipynb"))
+    assert copy2["name"] == "copy 2.ipynb"
+    assert copy2["path"] == "å b/copy 2.ipynb"
     # copy with specified path
-    copy2 = await ensure_async(cm.copy(path, u"/"))
+    copy2 = await ensure_async(cm.copy(path, "/"))
     assert copy2["name"] == name
     assert copy2["path"] == name
 
