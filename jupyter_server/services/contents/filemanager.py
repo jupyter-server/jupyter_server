@@ -96,7 +96,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 self.log.debug("Running post-save hook on %s", os_path)
                 post_save_hook(os_path=os_path, model=model, contents_manager=self)
             except Exception as e:
-                self.log.error("Post-save hook failed o-n %s", os_path, exc_info=True)
+                self.log.error("Post-save %s hook failed on %s", post_save_hook.__name__, os_path, exc_info=True)
                 raise web.HTTPError(
                     500, "Unexpected error while running post hook save: %s" % e
                 ) from e

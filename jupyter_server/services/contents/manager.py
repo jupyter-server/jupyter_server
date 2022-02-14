@@ -146,7 +146,7 @@ class ContentsManager(LoggingConfigurable):
             except Exception:
                 # unhandled errors don't prevent saving,
                 # which could cause frustrating data loss
-                self.log.error("Pre-save hook failed on %s", path, exc_info=True)
+                self.log.error("Pre-save hook %s failed on %s", pre_save_hook.__name__, path, exc_info=True)
 
     checkpoints_class = Type(Checkpoints, config=True)
     checkpoints = Instance(Checkpoints, config=True)
