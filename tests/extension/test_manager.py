@@ -58,7 +58,7 @@ def test_extension_package_api():
     path1 = metadata_list[0]
     app = path1["app"]
 
-    e = ExtensionPackage(name="jupyter_server.tests.extension.mockextensions")
+    e = ExtensionPackage(name="tests.extension.mockextensions")
     e.extension_points
     assert hasattr(e, "extension_points")
     assert len(e.extension_points) == len(metadata_list)
@@ -76,18 +76,18 @@ def _normalize_path(path_list):
 
 
 def test_extension_manager_api(jp_serverapp):
-    jpserver_extensions = {"jupyter_server.tests.extension.mockextensions": True}
+    jpserver_extensions = {"tests.extension.mockextensions": True}
     manager = ExtensionManager(serverapp=jp_serverapp)
     assert manager.config_manager
     expected = _normalize_path(os.path.join(jupyter_config_path()[0], "serverconfig"))
     assert _normalize_path(manager.config_manager.read_config_path[0]) == expected
     manager.from_jpserver_extensions(jpserver_extensions)
     assert len(manager.extensions) == 1
-    assert "jupyter_server.tests.extension.mockextensions" in manager.extensions
+    assert "tests.extension.mockextensions" in manager.extensions
 
 
 def test_extension_manager_linked_extensions(jp_serverapp):
-    name = "jupyter_server.tests.extension.mockextensions"
+    name = "tests.extension.mockextensions"
     manager = ExtensionManager(serverapp=jp_serverapp)
     manager.add_extension(name, enabled=True)
     manager.link_extension(name)
@@ -95,7 +95,7 @@ def test_extension_manager_linked_extensions(jp_serverapp):
 
 
 def test_extension_manager_fail_add(jp_serverapp):
-    name = "jupyter_server.tests.extension.notanextension"
+    name = "tests.extension.notanextension"
     manager = ExtensionManager(serverapp=jp_serverapp)
     manager.add_extension(name, enabled=True)  # should only warn
     jp_serverapp.reraise_server_extension_failures = True
@@ -104,9 +104,9 @@ def test_extension_manager_fail_add(jp_serverapp):
 
 
 def test_extension_manager_fail_link(jp_serverapp):
-    name = "jupyter_server.tests.extension.mockextensions.app"
+    name = "tests.extension.mockextensions.app"
     with mock.patch(
-        "jupyter_server.tests.extension.mockextensions.app.MockExtensionApp.parse_command_line",
+        "tests.extension.mockextensions.app.MockExtensionApp.parse_command_line",
         side_effect=RuntimeError,
     ):
         manager = ExtensionManager(serverapp=jp_serverapp)
@@ -118,9 +118,9 @@ def test_extension_manager_fail_link(jp_serverapp):
 
 
 def test_extension_manager_fail_load(jp_serverapp):
-    name = "jupyter_server.tests.extension.mockextensions.app"
+    name = "tests.extension.mockextensions.app"
     with mock.patch(
-        "jupyter_server.tests.extension.mockextensions.app.MockExtensionApp.initialize_handlers",
+        "tests.extension.mockextensions.app.MockExtensionApp.initialize_handlers",
         side_effect=RuntimeError,
     ):
         manager = ExtensionManager(serverapp=jp_serverapp)

@@ -2,7 +2,7 @@
 """
 # by the test functions.
 def _jupyter_server_extension_paths():
-    return [{"module": "jupyter_server.tests.extension.mockextensions.mock2"}]
+    return [{"module": "tests.extension.mockextensions.mock2"}]
 
 
 def _load_jupyter_server_extension(serverapp):

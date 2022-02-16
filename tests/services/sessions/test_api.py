@@ -37,7 +37,7 @@ class NewPortsMappingKernelManager(AsyncMappingKernelManager):
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
         self.log.debug("NewPortsMappingKernelManager in _default_kernel_manager_class!")
-        return "jupyter_server.tests.services.sessions.test_api.NewPortsKernelManager"
+        return "tests.services.sessions.test_api.NewPortsKernelManager"
 
 
 configs = [
@@ -53,7 +53,7 @@ configs = [
     },
     {
         "ServerApp": {
-            "kernel_manager_class": "jupyter_server.tests.services.sessions.test_api.NewPortsMappingKernelManager"
+            "kernel_manager_class": "tests.services.sessions.test_api.NewPortsMappingKernelManager"
         }
     },
 ]
@@ -66,7 +66,7 @@ if os.name != "nt" and jupyter_client._version.version_info >= (7, 1):
     # Add a pending kernels condition
     c = {
         "ServerApp": {
-            "kernel_manager_class": "jupyter_server.tests.services.sessions.test_api.NewPortsMappingKernelManager"
+            "kernel_manager_class": "tests.services.sessions.test_api.NewPortsMappingKernelManager"
         },
         "AsyncMappingKernelManager": {"use_pending_kernels": True},
     }
