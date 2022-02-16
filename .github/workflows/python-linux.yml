@@ -107,4 +107,6 @@ jobs:
           pip install .[test]
           pip install pytest-github-actions-annotate-failures
       - name: Run Test
-        run: pytest -vv --timeout=300 --timeout_method=thread --capture=no tests
+        run: |
+          cd sdist/test
+          pytest -vv --timeout=300 --timeout_method=thread --capture=no tests
