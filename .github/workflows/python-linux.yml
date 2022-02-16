@@ -102,9 +102,8 @@ jobs:
           set -ex
           cd sdist
           mkdir test
-          tar --strip-components=2 -zxvf jupyter_server* -C ./test
+          tar --strip-components=1 -zxvf jupyter_server* -C ./test
           cd test
-          ls
           pip install .[test]
           pip install pytest-github-actions-annotate-failures
       - name: Run Test
