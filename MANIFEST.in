@@ -8,6 +8,7 @@ include package.json
 
 # include everything in package_data
 recursive-include jupyter_server *
+recursive-include tests *
 
 # Documentation
 graft docs
