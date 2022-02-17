@@ -61,13 +61,13 @@ def launch_instance(request, port, token):
             [
                 sys.executable,
                 "-m",
-                "tests.extensions.mockextensions.app",
+                "mockextensions.app",
                 f"--port={port}",
                 "--ip=127.0.0.1",
                 "--no-browser",
                 *argv,
             ],
-            cwd=os.path.dirname(os.path.dirname(HERE)),
+            cwd=HERE,
         )
 
         request.addfinalizer(_kill_extension_app)

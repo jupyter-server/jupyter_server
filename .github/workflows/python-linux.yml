@@ -104,7 +104,7 @@ jobs:
           mkdir test
           tar --strip-components=1 -zxvf jupyter_server* -C ./test
           cd test
-          pip install .[test]
+          pip install -e .[test]
           pip install pytest-github-actions-annotate-failures
       - name: Run Test
         run: |
