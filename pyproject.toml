@@ -11,7 +11,7 @@ ignore = ["tbump.toml", ".*", "*.yml", "package-lock.json", "bootstrap*", "conft
 [tool.pytest.ini_options]
 addopts = "--doctest-modules"
 testpaths = [
-    "jupyter_server/"
+    "tests/"
 ]
 timeout = 300
 timeout_method = "thread"
