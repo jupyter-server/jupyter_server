@@ -11,7 +11,6 @@ from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.utils import ensure_async
 
-
 AUTH_RESOURCE = "contents"
 
 
@@ -65,9 +64,14 @@ class FilesHandler(JupyterHandler):
         if name.lower().endswith(".ipynb"):
             self.set_header("Content-Type", "application/x-ipynb+json")
         else:
-            cur_mime = mimetypes.guess_type(name)[0]
+            cur_mime, encoding = mimetypes.guess_type(name)
             if cur_mime == "text/plain":
                 self.set_header("Content-Type", "text/plain; charset=UTF-8")
+            # RFC 6713
+            if encoding == "gzip":
+                return "application/gzip"
+            elif encoding is not None:
+                return "application/octet-stream"
             elif cur_mime is not None:
                 self.set_header("Content-Type", cur_mime)
             else:
