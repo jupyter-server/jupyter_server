@@ -18,6 +18,10 @@ from jupyter_server.base.handlers import path_regex
 from jupyter_server.utils import ensure_async
 from jupyter_server.utils import url_escape
 from jupyter_server.utils import url_path_join
+from jupyter_server.auth import authorized
+
+
+AUTH_RESOURCE = "contents"
 
 
 def validate_model(model, expect_content):
@@ -42,7 +46,7 @@ def validate_model(model, expect_content):
     if missing:
         raise web.HTTPError(
             500,
-            u"Missing Model Keys: {missing}".format(missing=missing),
+            "Missing Model Keys: {missing}".format(missing=missing),
         )
 
     maybe_none_keys = ["content", "format"]
@@ -51,18 +55,22 @@ def validate_model(model, expect_content):
         if errors:
             raise web.HTTPError(
                 500,
-                u"Keys unexpectedly None: {keys}".format(keys=errors),
+                "Keys unexpectedly None: {keys}".format(keys=errors),
             )
     else:
         errors = {key: model[key] for key in maybe_none_keys if model[key] is not None}
         if errors:
             raise web.HTTPError(
                 500,
-                u"Keys unexpectedly not None: {keys}".format(keys=errors),
+                "Keys unexpectedly not None: {keys}".format(keys=errors),
             )
 
 
-class ContentsHandler(APIHandler):
+class ContentsAPIHandler(APIHandler):
+    auth_resource = AUTH_RESOURCE
+
+
+class ContentsHandler(ContentsAPIHandler):
     def location_url(self, path):
         """Return the full URL location of a file.
 
@@ -83,6 +91,7 @@ class ContentsHandler(APIHandler):
         self.finish(json.dumps(model, default=json_default))
 
     @web.authenticated
+    @authorized
     async def get(self, path=""):
         """Return a model for a file or directory.
 
@@ -92,14 +101,14 @@ class ContentsHandler(APIHandler):
         path = path or ""
         type = self.get_query_argument("type", default=None)
         if type not in {None, "directory", "file", "notebook"}:
-            raise web.HTTPError(400, u"Type %r is invalid" % type)
+            raise web.HTTPError(400, "Type %r is invalid" % type)
 
         format = self.get_query_argument("format", default=None)
         if format not in {None, "text", "base64"}:
-            raise web.HTTPError(400, u"Format %r is invalid" % format)
+            raise web.HTTPError(400, "Format %r is invalid" % format)
         content = self.get_query_argument("content", default="1")
         if content not in {"0", "1"}:
-            raise web.HTTPError(400, u"Content %r is invalid" % content)
+            raise web.HTTPError(400, "Content %r is invalid" % content)
         content = int(content)
 
         model = await ensure_async(
@@ -114,12 +123,13 @@ class ContentsHandler(APIHandler):
         self._finish_model(model, location=False)
 
     @web.authenticated
+    @authorized
     async def patch(self, path=""):
         """PATCH renames a file or directory without re-uploading content."""
         cm = self.contents_manager
         model = self.get_json_body()
         if model is None:
-            raise web.HTTPError(400, u"JSON body missing")
+            raise web.HTTPError(400, "JSON body missing")
         model = await ensure_async(cm.update(model, path))
         validate_model(model, expect_content=False)
         self._finish_model(model)
@@ -127,7 +137,7 @@ class ContentsHandler(APIHandler):
     async def _copy(self, copy_from, copy_to=None):
         """Copy a file, optionally specifying a target directory."""
         self.log.info(
-            u"Copying {copy_from} to {copy_to}".format(
+            "Copying {copy_from} to {copy_to}".format(
                 copy_from=copy_from,
                 copy_to=copy_to or "",
             )
@@ -139,7 +149,7 @@ class ContentsHandler(APIHandler):
 
     async def _upload(self, model, path):
         """Handle upload of a new file to path"""
-        self.log.info(u"Uploading file to %s", path)
+        self.log.info("Uploading file to %s", path)
         model = await ensure_async(self.contents_manager.new(model, path))
         self.set_status(201)
         validate_model(model, expect_content=False)
@@ -147,7 +157,7 @@ class ContentsHandler(APIHandler):
 
     async def _new_untitled(self, path, type="", ext=""):
         """Create a new, empty untitled entity"""
-        self.log.info(u"Creating new %s in %s", type or "file", path)
+        self.log.info("Creating new %s in %s", type or "file", path)
         model = await ensure_async(
             self.contents_manager.new_untitled(path=path, type=type, ext=ext)
         )
@@ -159,12 +169,13 @@ class ContentsHandler(APIHandler):
         """Save an existing file."""
         chunk = model.get("chunk", None)
         if not chunk or chunk == -1:  # Avoid tedious log information
-            self.log.info(u"Saving file at %s", path)
+            self.log.info("Saving file at %s", path)
         model = await ensure_async(self.contents_manager.save(model, path))
         validate_model(model, expect_content=False)
         self._finish_model(model)
 
     @web.authenticated
+    @authorized
     async def post(self, path=""):
         """Create a new file in the specified path.
 
@@ -201,6 +212,7 @@ class ContentsHandler(APIHandler):
             await self._new_untitled(path)
 
     @web.authenticated
+    @authorized
     async def put(self, path=""):
         """Saves the file in the location specified by name and path.
 
@@ -225,6 +237,7 @@ class ContentsHandler(APIHandler):
             await self._new_untitled(path)
 
     @web.authenticated
+    @authorized
     async def delete(self, path=""):
         """delete a file in the given path"""
         cm = self.contents_manager
@@ -234,8 +247,9 @@ class ContentsHandler(APIHandler):
         self.finish()
 
 
-class CheckpointsHandler(APIHandler):
+class CheckpointsHandler(ContentsAPIHandler):
     @web.authenticated
+    @authorized
     async def get(self, path=""):
         """get lists checkpoints for a file"""
         cm = self.contents_manager
@@ -244,6 +258,7 @@ class CheckpointsHandler(APIHandler):
         self.finish(data)
 
     @web.authenticated
+    @authorized
     async def post(self, path=""):
         """post creates a new checkpoint"""
         cm = self.contents_manager
@@ -261,8 +276,9 @@ class CheckpointsHandler(APIHandler):
         self.finish(data)
 
 
-class ModifyCheckpointsHandler(APIHandler):
+class ModifyCheckpointsHandler(ContentsAPIHandler):
     @web.authenticated
+    @authorized
     async def post(self, path, checkpoint_id):
         """post restores a file from a checkpoint"""
         cm = self.contents_manager
@@ -271,6 +287,7 @@ class ModifyCheckpointsHandler(APIHandler):
         self.finish()
 
     @web.authenticated
+    @authorized
     async def delete(self, path, checkpoint_id):
         """delete clears a checkpoint for a given file"""
         cm = self.contents_manager
@@ -292,9 +309,10 @@ class NotebooksRedirectHandler(JupyterHandler):
 
 
 class TrustNotebooksHandler(JupyterHandler):
-    """ Handles trust/signing of notebooks """
+    """Handles trust/signing of notebooks"""
 
     @web.authenticated
+    @authorized(resource=AUTH_RESOURCE)
     async def post(self, path=""):
         cm = self.contents_manager
         await ensure_async(cm.trust_notebook(path))
@@ -308,6 +326,7 @@ class TrustNotebooksHandler(JupyterHandler):
 
 
 _checkpoint_id_regex = r"(?P<checkpoint_id>[\w-]+)"
+
 
 default_handlers = [
     (r"/api/contents%s/checkpoints" % path_regex, CheckpointsHandler),

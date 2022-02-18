@@ -13,7 +13,12 @@ from .utils import expected_http_error
 
 
 @pytest.fixture(
-    params=[[False, ["å b"]], [False, ["å b", "ç. d"]], [True, [".å b"]], [True, ["å b", ".ç d"]]]
+    params=[
+        [False, ["å b"]],
+        [False, ["å b", "ç. d"]],
+        [True, [".å b"]],
+        [True, ["å b", ".ç d"]],
+    ]
 )
 def maybe_hidden(request):
     return request.param
@@ -56,7 +61,7 @@ async def test_contents_manager(jp_fetch, jp_serverapp, jp_root_dir):
     """make sure ContentsManager returns right files (ipynb, bin, txt)."""
     nb = new_notebook(
         cells=[
-            new_markdown_cell(u"Created by test ³"),
+            new_markdown_cell("Created by test ³"),
             new_code_cell(
                 "print(2*6)",
                 outputs=[

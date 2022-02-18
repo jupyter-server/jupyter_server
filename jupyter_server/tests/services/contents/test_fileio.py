@@ -67,7 +67,7 @@ def test_atomic_writing(tmp_path):
     if have_symlink:
         # Check that writing over a file preserves a symlink
         with atomic_writing(str(f2)) as f:
-            f.write(u"written from symlink")
+            f.write("written from symlink")
 
         with io.open(str(f1), "r") as f:
             assert f.read() == "written from symlink"
@@ -105,9 +105,9 @@ def test_atomic_writing_umask(handle_umask, tmp_path):
 def test_atomic_writing_newlines(tmp_path):
     path = str(tmp_path / "testfile")
 
-    lf = u"a\nb\nc\n"
-    plat = lf.replace(u"\n", os.linesep)
-    crlf = lf.replace(u"\n", u"\r\n")
+    lf = "a\nb\nc\n"
+    plat = lf.replace("\n", os.linesep)
+    crlf = lf.replace("\n", "\r\n")
 
     # test default
     with io.open(path, "w") as f:
@@ -131,7 +131,7 @@ def test_atomic_writing_newlines(tmp_path):
     assert read == crlf
 
     # test newline=no convert
-    text = u"crlf\r\ncr\rlf\n"
+    text = "crlf\r\ncr\rlf\n"
     with atomic_writing(str(path), newline="") as f:
         f.write(text)
     with io.open(path, "r", newline="") as f:

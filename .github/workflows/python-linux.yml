@@ -1,9 +1,9 @@
 name: Jupyter Server Tests [Linux]
 on:
   push:
-    branches: "main"
+    branches: ["main"]
   pull_request:
-    branches: "*"
+    branches: ["*"]
 jobs:
   # Run "pre-commit run --all-files"
   pre-commit:
@@ -30,11 +30,11 @@ jobs:
           echo "    pre-commit run --all-files"
 
   build:
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu]
+        os: [ubuntu-latest]
         python-version: ["3.7", "3.8", "3.9", "3.10", "pypy-3.7"]
     steps:
       - name: Checkout
@@ -100,5 +100,6 @@ jobs:
       - name: Install From SDist
         run: |
           pip install --find-links=./sdist "jupyter_server[test]>=0.0.dev0"
+          pip install pytest-github-actions-annotate-failures
       - name: Run Test
         run: pytest -vv --pyargs --timeout=300 --timeout_method=thread jupyter_server --capture=no

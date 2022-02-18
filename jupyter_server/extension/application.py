@@ -211,7 +211,9 @@ class ExtensionApp(JupyterApp):
     @default("log_format")
     def _default_log_format(self):
         """override default log format to include date & time"""
-        return u"%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
+        return (
+            "%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
+        )
 
     static_url_prefix = Unicode(
         help="""Url where the static assets for the extension are served."""
@@ -495,7 +497,8 @@ class ExtensionApp(JupyterApp):
                     RedirectHandler,
                     {
                         "url": url_path_join(
-                            serverapp.base_url, "static/base/images/favicon-notebook.ico"
+                            serverapp.base_url,
+                            "static/base/images/favicon-notebook.ico",
                         )
                     },
                 ),
@@ -504,7 +507,8 @@ class ExtensionApp(JupyterApp):
                     RedirectHandler,
                     {
                         "url": url_path_join(
-                            serverapp.base_url, "static/base/images/favicon-terminal.ico"
+                            serverapp.base_url,
+                            "static/base/images/favicon-terminal.ico",
                         )
                     },
                 ),

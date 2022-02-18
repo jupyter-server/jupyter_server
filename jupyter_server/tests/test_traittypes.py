@@ -30,7 +30,11 @@ class Thing(HasTraits):
     b = TypeFromClasses(
         default_value=None,
         allow_none=True,
-        klasses=[DummyClass, int, "jupyter_server.services.contents.manager.ContentsManager"],
+        klasses=[
+            DummyClass,
+            int,
+            "jupyter_server.services.contents.manager.ContentsManager",
+        ],
     )
 
 

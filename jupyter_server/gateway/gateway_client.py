@@ -116,7 +116,8 @@ class GatewayClient(SingletonConfigurable):
     @default("kernelspecs_resource_endpoint")
     def _kernelspecs_resource_endpoint_default(self):
         return os.environ.get(
-            self.kernelspecs_resource_endpoint_env, self.kernelspecs_resource_endpoint_default_value
+            self.kernelspecs_resource_endpoint_env,
+            self.kernelspecs_resource_endpoint_default_value,
         )
 
     connect_timeout_default_value = 40.0
@@ -309,7 +310,8 @@ class GatewayClient(SingletonConfigurable):
     def gateway_retry_interval_default(self):
         return float(
             os.environ.get(
-                "JUPYTER_GATEWAY_RETRY_INTERVAL", self.gateway_retry_interval_default_value
+                "JUPYTER_GATEWAY_RETRY_INTERVAL",
+                self.gateway_retry_interval_default_value,
             )
         )
 
@@ -326,7 +328,8 @@ class GatewayClient(SingletonConfigurable):
     def gateway_retry_interval_max_default(self):
         return float(
             os.environ.get(
-                "JUPYTER_GATEWAY_RETRY_INTERVAL_MAX", self.gateway_retry_interval_max_default_value
+                "JUPYTER_GATEWAY_RETRY_INTERVAL_MAX",
+                self.gateway_retry_interval_max_default_value,
             )
         )
 
@@ -397,7 +400,7 @@ class GatewayClient(SingletonConfigurable):
 
 
 async def gateway_request(endpoint, **kwargs):
-    """Make an async request to kernel gateway endpoint, returns a response """
+    """Make an async request to kernel gateway endpoint, returns a response"""
     client = AsyncHTTPClient()
     kwargs = GatewayClient.instance().load_connection_args(**kwargs)
     try:

@@ -10,14 +10,21 @@ from ...base.handlers import APIHandler
 from ...base.handlers import JupyterHandler
 from jupyter_server._tz import isoformat
 from jupyter_server._tz import utcfromtimestamp
+from jupyter_server.auth import authorized
 from jupyter_server.utils import ensure_async
 
 
+AUTH_RESOURCE = "api"
+
+
 class APISpecHandler(web.StaticFileHandler, JupyterHandler):
+    auth_resource = AUTH_RESOURCE
+
     def initialize(self):
         web.StaticFileHandler.initialize(self, path=os.path.dirname(__file__))
 
     @web.authenticated
+    @authorized
     def get(self):
         self.log.warning("Serving api spec (experimental, incomplete)")
         return web.StaticFileHandler.get(self, "api.yaml")
@@ -28,9 +35,11 @@ class APISpecHandler(web.StaticFileHandler, JupyterHandler):
 
 class APIStatusHandler(APIHandler):
 
+    auth_resource = AUTH_RESOURCE
     _track_activity = False
 
     @web.authenticated
+    @authorized
     async def get(self):
         # if started was missing, use unix epoch
         started = self.settings.get("started", utcfromtimestamp(0))

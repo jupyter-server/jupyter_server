@@ -46,20 +46,28 @@ def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extensio
     # Toggle each extension module with a JSON config file
     # at the sys-prefix config dir.
     toggle_server_extension_python(
-        "jupyter_server.tests.extension.mockextensions.mockext_sys", enabled=True, sys_prefix=True
+        "jupyter_server.tests.extension.mockextensions.mockext_sys",
+        enabled=True,
+        sys_prefix=True,
     )
     toggle_server_extension_python(
-        "jupyter_server.tests.extension.mockextensions.mockext_user", enabled=True, user=True
+        "jupyter_server.tests.extension.mockextensions.mockext_user",
+        enabled=True,
+        user=True,
     )
 
     # Write this configuration in two places, sys-prefix and user.
     # sys-prefix supercedes users, so the extension should be disabled
     # when these two configs merge.
     toggle_server_extension_python(
-        "jupyter_server.tests.extension.mockextensions.mockext_both", enabled=True, sys_prefix=True
+        "jupyter_server.tests.extension.mockextensions.mockext_both",
+        enabled=True,
+        sys_prefix=True,
     )
     toggle_server_extension_python(
-        "jupyter_server.tests.extension.mockextensions.mockext_both", enabled=False, user=True
+        "jupyter_server.tests.extension.mockextensions.mockext_both",
+        enabled=False,
+        user=True,
     )
 
     arg = "--ServerApp.jpserver_extensions={{'{mockext_py}': True}}".format(

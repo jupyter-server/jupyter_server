@@ -191,6 +191,10 @@ class AuthenticatedHandler(web.RequestHandler):
             return False
         return bool(self.login_handler.get_login_available(self.settings))
 
+    @property
+    def authorizer(self):
+        return self.settings["authorizer"]
+
 
 class JupyterHandler(AuthenticatedHandler):
     """Jupyter-specific extensions to authenticated handling
@@ -251,7 +255,8 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def contents_js_source(self):
         self.log.debug(
-            "Using contents: %s", self.settings.get("contents_js_source", "services/contents")
+            "Using contents: %s",
+            self.settings.get("contents_js_source", "services/contents"),
         )
         return self.settings.get("contents_js_source", "services/contents")
 
@@ -548,13 +553,13 @@ class JupyterHandler(AuthenticatedHandler):
         if not self.request.body:
             return None
         # Do we need to call body.decode('utf-8') here?
-        body = self.request.body.strip().decode(u"utf-8")
+        body = self.request.body.strip().decode("utf-8")
         try:
             model = json.loads(body)
         except Exception as e:
             self.log.debug("Bad JSON: %r", body)
             self.log.error("Couldn't parse JSON", exc_info=True)
-            raise web.HTTPError(400, u"Invalid JSON in body of request") from e
+            raise web.HTTPError(400, "Invalid JSON in body of request") from e
         return model
 
     def write_error(self, status_code, **kwargs):
@@ -674,7 +679,8 @@ class APIHandler(JupyterHandler):
             )
         else:
             self.set_header(
-                "Access-Control-Allow-Headers", "accept, content-type, authorization, x-xsrftoken"
+                "Access-Control-Allow-Headers",
+                "accept, content-type, authorization, x-xsrftoken",
             )
         self.set_header("Access-Control-Allow-Methods", "GET, PUT, POST, PATCH, DELETE, OPTIONS")
 

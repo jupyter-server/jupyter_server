@@ -111,6 +111,9 @@ class ExtensionHandlerMixin:
 
         # Hijack settings dict to send extension templates to extension
         # static directory.
-        settings = {"static_path": self.static_path, "static_url_prefix": self.static_url_prefix}
+        settings = {
+            "static_path": self.static_path,
+            "static_url_prefix": self.static_url_prefix,
+        }
 
         return base + get_url(settings, path, **kwargs)

@@ -12,7 +12,10 @@ def jp_server_config(jp_template_dir):
         "ServerApp": {
             "jpserver_extensions": {"jupyter_server.tests.extension.mockextensions": True},
         },
-        "MockExtensionApp": {"template_paths": [str(jp_template_dir)], "log_level": "DEBUG"},
+        "MockExtensionApp": {
+            "template_paths": [str(jp_template_dir)],
+            "log_level": "DEBUG",
+        },
     }
     return config
 
@@ -36,7 +39,13 @@ def test_initialize(jp_serverapp, jp_template_dir, mock_extension):
 
 @pytest.mark.parametrize(
     "trait_name, trait_value, jp_argv",
-    (["mock_trait", "test mock trait", ["--MockExtensionApp.mock_trait=test mock trait"]],),
+    (
+        [
+            "mock_trait",
+            "test mock trait",
+            ["--MockExtensionApp.mock_trait=test mock trait"],
+        ],
+    ),
 )
 def test_instance_creation_with_argv(
     trait_name,
@@ -66,10 +75,34 @@ OPEN_BROWSER_COMBINATIONS = (
     (False, {"ServerApp": {"open_browser": False}}),
     (True, {"MockExtensionApp": {"open_browser": True}}),
     (False, {"MockExtensionApp": {"open_browser": False}}),
-    (True, {"ServerApp": {"open_browser": True}, "MockExtensionApp": {"open_browser": True}}),
-    (False, {"ServerApp": {"open_browser": True}, "MockExtensionApp": {"open_browser": False}}),
-    (True, {"ServerApp": {"open_browser": False}, "MockExtensionApp": {"open_browser": True}}),
-    (False, {"ServerApp": {"open_browser": False}, "MockExtensionApp": {"open_browser": False}}),
+    (
+        True,
+        {
+            "ServerApp": {"open_browser": True},
+            "MockExtensionApp": {"open_browser": True},
+        },
+    ),
+    (
+        False,
+        {
+            "ServerApp": {"open_browser": True},
+            "MockExtensionApp": {"open_browser": False},
+        },
+    ),
+    (
+        True,
+        {
+            "ServerApp": {"open_browser": False},
+            "MockExtensionApp": {"open_browser": True},
+        },
+    ),
+    (
+        False,
+        {
+            "ServerApp": {"open_browser": False},
+            "MockExtensionApp": {"open_browser": False},
+        },
+    ),
 )
 
 

@@ -75,8 +75,8 @@ class LoginHandler(JupyterHandler):
         return passwd_check(a, b)
 
     def post(self):
-        typed_password = self.get_argument("password", default=u"")
-        new_password = self.get_argument("new_password", default=u"")
+        typed_password = self.get_argument("password", default="")
+        new_password = self.get_argument("new_password", default="")
 
         if self.get_login_available(self.settings):
             if self.passwd_check(self.hashed_password, typed_password) and not new_password:
@@ -210,7 +210,8 @@ class LoginHandler(JupyterHandler):
         if user_token == token:
             # token-authenticated, set the login cookie
             handler.log.debug(
-                "Accepting token-authenticated connection from %s", handler.request.remote_ip
+                "Accepting token-authenticated connection from %s",
+                handler.request.remote_ip,
             )
             authenticated = True
 
@@ -247,7 +248,7 @@ class LoginHandler(JupyterHandler):
 
         If there is no configured password, an empty string will be returned.
         """
-        return settings.get("password", u"")
+        return settings.get("password", "")
 
     @classmethod
     def get_login_available(cls, settings):

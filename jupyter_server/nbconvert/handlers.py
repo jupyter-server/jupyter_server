@@ -15,7 +15,11 @@ from tornado.log import app_log
 from ..base.handlers import FilesRedirectHandler
 from ..base.handlers import JupyterHandler
 from ..base.handlers import path_regex
+from jupyter_server.auth import authorized
 from jupyter_server.utils import ensure_async
+
+
+AUTH_RESOURCE = "nbconvert"
 
 
 def find_resource_files(output_files_dir):
@@ -67,7 +71,7 @@ def get_exporter(format, **kwargs):
         Exporter = get_exporter(format)
     except KeyError as e:
         # should this be 400?
-        raise web.HTTPError(404, u"No exporter for format: %s" % format) from e
+        raise web.HTTPError(404, "No exporter for format: %s" % format) from e
 
     try:
         return Exporter(**kwargs)
@@ -78,9 +82,11 @@ def get_exporter(format, **kwargs):
 
 class NbconvertFileHandler(JupyterHandler):
 
+    auth_resource = AUTH_RESOURCE
     SUPPORTED_METHODS = ("GET",)
 
     @web.authenticated
+    @authorized
     async def get(self, format, path):
         self.check_xsrf_cookie()
         exporter = get_exporter(format, config=self.config, log=self.log)
@@ -144,8 +150,10 @@ class NbconvertFileHandler(JupyterHandler):
 class NbconvertPostHandler(JupyterHandler):
 
     SUPPORTED_METHODS = ("POST",)
+    auth_resource = AUTH_RESOURCE
 
     @web.authenticated
+    @authorized
     async def post(self, format):
         exporter = get_exporter(format, config=self.config)
 
