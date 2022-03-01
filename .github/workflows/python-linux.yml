@@ -51,11 +51,11 @@ jobs:
       - name: Run the tests
         if: ${{ matrix.python-version != 'pypy-3.7' }}
         run: |
-          pytest -vv jupyter_server --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered
+          pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered
       - name: Run the tests on pypy
         if: ${{ matrix.python-version == 'pypy-3.7' }}
         run: |
-          pytest -vv jupyter_server
+          pytest -vv
       - name: Install the Python dependencies for the examples
         run: |
           cd examples/simple && pip install -e .
@@ -99,7 +99,14 @@ jobs:
         uses: actions/download-artifact@v2
       - name: Install From SDist
         run: |
-          pip install --find-links=./sdist "jupyter_server[test]>=0.0.dev0"
+          set -ex
+          cd sdist
+          mkdir test
+          tar --strip-components=1 -zxvf jupyter_server* -C ./test
+          cd test
+          pip install -e .[test]
           pip install pytest-github-actions-annotate-failures
       - name: Run Test
-        run: pytest -vv --pyargs --timeout=300 --timeout_method=thread jupyter_server --capture=no
+        run: |
+          cd sdist/test
+          pytest -vv

@@ -46,12 +46,12 @@ def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extensio
     # Toggle each extension module with a JSON config file
     # at the sys-prefix config dir.
     toggle_server_extension_python(
-        "jupyter_server.tests.extension.mockextensions.mockext_sys",
+        "tests.extension.mockextensions.mockext_sys",
         enabled=True,
         sys_prefix=True,
     )
     toggle_server_extension_python(
-        "jupyter_server.tests.extension.mockextensions.mockext_user",
+        "tests.extension.mockextensions.mockext_user",
         enabled=True,
         user=True,
     )
@@ -60,29 +60,29 @@ def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extensio
     # sys-prefix supercedes users, so the extension should be disabled
     # when these two configs merge.
     toggle_server_extension_python(
-        "jupyter_server.tests.extension.mockextensions.mockext_both",
+        "tests.extension.mockextensions.mockext_both",
         enabled=True,
         sys_prefix=True,
     )
     toggle_server_extension_python(
-        "jupyter_server.tests.extension.mockextensions.mockext_both",
+        "tests.extension.mockextensions.mockext_both",
         enabled=False,
         user=True,
     )
 
     arg = "--ServerApp.jpserver_extensions={{'{mockext_py}': True}}".format(
-        mockext_py="jupyter_server.tests.extension.mockextensions.mockext_py"
+        mockext_py="tests.extension.mockextensions.mockext_py"
     )
 
     # Enable the last extension, mockext_py, using the CLI interface.
     app = jp_configurable_serverapp(config_dir=str(jp_env_config_path), argv=[arg])
     # Verify that extensions are enabled and merged in proper order.
     extensions = app.jpserver_extensions
-    assert extensions["jupyter_server.tests.extension.mockextensions.mockext_user"]
-    assert extensions["jupyter_server.tests.extension.mockextensions.mockext_sys"]
-    assert extensions["jupyter_server.tests.extension.mockextensions.mockext_py"]
+    assert extensions["tests.extension.mockextensions.mockext_user"]
+    assert extensions["tests.extension.mockextensions.mockext_sys"]
+    assert extensions["tests.extension.mockextensions.mockext_py"]
     # Merging should causes this extension to be disabled.
-    assert not extensions["jupyter_server.tests.extension.mockextensions.mockext_both"]
+    assert not extensions["tests.extension.mockextensions.mockext_both"]
 
 
 @pytest.mark.parametrize(
@@ -92,8 +92,8 @@ def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extensio
             "ServerApp": {
                 "jpserver_extensions": OrderedDict(
                     [
-                        ("jupyter_server.tests.extension.mockextensions.mock2", True),
-                        ("jupyter_server.tests.extension.mockextensions.mock1", True),
+                        ("tests.extension.mockextensions.mock2", True),
+                        ("tests.extension.mockextensions.mock1", True),
                     ]
                 )
             }

@@ -4,9 +4,7 @@ import pytest
 @pytest.fixture
 def jp_server_config(jp_template_dir):
     return {
-        "ServerApp": {
-            "jpserver_extensions": {"jupyter_server.tests.extension.mockextensions": True}
-        },
+        "ServerApp": {"jpserver_extensions": {"tests.extension.mockextensions": True}},
         "MockExtensionApp": {"template_paths": [str(jp_template_dir)]},
     }
 
@@ -26,9 +24,7 @@ async def test_handler_template(jp_fetch, mock_template):
     "jp_server_config",
     [
         {
-            "ServerApp": {
-                "jpserver_extensions": {"jupyter_server.tests.extension.mockextensions": True}
-            },
+            "ServerApp": {"jpserver_extensions": {"tests.extension.mockextensions": True}},
             "MockExtensionApp": {
                 # Change a trait in the MockExtensionApp using
                 # the following config value.
@@ -58,7 +54,7 @@ async def test_handler_argv(jp_fetch, jp_argv):
         (
             {
                 "ServerApp": {
-                    "jpserver_extensions": {"jupyter_server.tests.extension.mockextensions": True},
+                    "jpserver_extensions": {"tests.extension.mockextensions": True},
                     # Move extension handlers behind a url prefix
                     "base_url": "test_prefix",
                 },
