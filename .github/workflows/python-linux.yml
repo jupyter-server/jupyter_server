@@ -85,7 +85,7 @@ jobs:
       - name: Install miniumum versions
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
       - name: Run the unit tests
-        run: pytest -vv --pyargs jupyter_server
+        run: pytest -vv
 
   make_sdist:
     name: Make SDist
