@@ -75,6 +75,9 @@ jobs:
   test_miniumum_verisons:
     name: Test Minimum Versions
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.7"]
     steps:
       - uses: actions/checkout@v2
       - name: Base Setup
