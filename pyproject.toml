@@ -15,10 +15,6 @@ testpaths = [
 ]
 timeout = 300
 timeout_method = "thread"
-filterwarnings = [
-  # Fail on warnings
-  "error"
-]
 
 [tool.jupyter-releaser]
 skip = ["check-links"]

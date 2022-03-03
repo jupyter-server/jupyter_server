@@ -89,7 +89,7 @@ jobs:
         run: pytest -vv
 
   test_prereleases:
-    name: Test test_prereleases
+    name: Test Prereleases
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
