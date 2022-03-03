@@ -3,7 +3,9 @@ on:
   push:
     branches: ["main"]
   pull_request:
-    branches: ["*"]
+  schedule:
+    - cron: "0 8 * * *"
+
 jobs:
   # Run "pre-commit run --all-files"
   pre-commit:
@@ -75,17 +77,35 @@ jobs:
   test_miniumum_verisons:
     name: Test Minimum Versions
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.7"]
     steps:
       - uses: actions/checkout@v2
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+        with:
+          python_version: "3.7"
       - name: Install miniumum versions
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
       - name: Run the unit tests
         run: pytest -vv
+
+  test_prereleases:
+    name: Test test_prereleases
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - name: Install the Python dependencies
+        run: |
+          pip install --pre -e ".[test]"
+      - name: List installed packages
+        run: |
+          pip freeze
+          pip check
+      - name: Run the tests
+        run: |
+          pytest -vv
 
   make_sdist:
     name: Make SDist
