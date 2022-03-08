@@ -2143,9 +2143,9 @@ class ServerApp(JupyterApp):
         is configured, root_dir will be set to the parent
         directory of file_to_run.
         """
-        rootdir_abspath = pathlib.Path(self.root_dir).resolve()
+        rootdir_abspath = pathlib.Path(self.root_dir).absolute()
         file_rawpath = pathlib.Path(self.file_to_run)
-        combined_path = (rootdir_abspath / file_rawpath).resolve()
+        combined_path = (rootdir_abspath / file_rawpath).absolute()
         is_child = str(combined_path).startswith(str(rootdir_abspath))
 
         if is_child:
