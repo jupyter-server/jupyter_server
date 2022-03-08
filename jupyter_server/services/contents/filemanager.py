@@ -82,16 +82,25 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             value = import_item(value)
         if not callable(value):
             raise TraitError("post_save_hook must be callable")
-        self._post_save_hooks.append(value)
         return value
+
+    def register_post_save_hook(self, hook):
+        if isinstance(hook, str):
+            hook = import_item(hook)
+        if not callable(hook):
+            raise RuntimeError("post_save_hook must be callable")
+        self._post_save_hooks.append(hook)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._post_save_hooks = []
 
-    def run_post_save_hook(self, model, os_path):
-        """Run the post-save hook if defined, and log errors"""
-        for post_save_hook in self._post_save_hooks:
+    def run_post_save_hooks(self, model, os_path):
+        """Run the post-save hooks if any, and log errors"""
+        post_save_hooks = self._post_save_hooks
+        if self.post_save_hook:
+            post_save_hooks.append(self.post_save_hook)
+        for post_save_hook in post_save_hooks:
             try:
                 self.log.debug("Running post-save hook on %s", os_path)
                 post_save_hook(os_path=os_path, model=model, contents_manager=self)
@@ -461,7 +470,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         """Save the file model and return the model with no content."""
         path = path.strip("/")
 
-        self.run_pre_save_hook(model=model, path=path)
+        self.run_pre_save_hooks(model=model, path=path)
 
         if "type" not in model:
             raise web.HTTPError(400, "No file type provided")
@@ -501,7 +510,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if validation_message:
             model["message"] = validation_message
 
-        self.run_post_save_hook(model=model, os_path=os_path)
+        self.run_post_save_hooks(model=model, os_path=os_path)
 
         return model
 
@@ -825,7 +834,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         if validation_message:
             model["message"] = validation_message
 
-        self.run_post_save_hook(model=model, os_path=os_path)
+        self.run_post_save_hooks(model=model, os_path=os_path)
 
         return model
 

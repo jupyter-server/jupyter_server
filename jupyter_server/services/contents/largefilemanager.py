@@ -56,7 +56,7 @@ class LargeFileManager(FileContentsManager):
 
             # Last chunk
             if chunk == -1:
-                self.run_post_save_hook(model=model, os_path=os_path)
+                self.run_post_save_hooks(model=model, os_path=os_path)
             return model
         else:
             return super(LargeFileManager, self).save(model, path)
@@ -131,7 +131,7 @@ class AsyncLargeFileManager(AsyncFileContentsManager):
 
             # Last chunk
             if chunk == -1:
-                self.run_post_save_hook(model=model, os_path=os_path)
+                self.run_post_save_hooks(model=model, os_path=os_path)
             return model
         else:
             return await super(AsyncLargeFileManager, self).save(model, path)

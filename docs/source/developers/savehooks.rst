@@ -16,9 +16,6 @@ They are both called with keyword arguments::
     pre_save_hook(model=model, path=path, contents_manager=cm)
     post_save_hook(model=model, os_path=os_path, contents_manager=cm)
 
-Assigning to ``pre_save_hook`` (or ``post_save_hook``) multiple times will
-register hooks, not override them. They will then be called sequentially.
-
 Examples
 --------
 
