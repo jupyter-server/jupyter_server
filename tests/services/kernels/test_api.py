@@ -17,12 +17,12 @@ TEST_TIMEOUT = 20
 
 @pytest.fixture
 def pending_kernel_is_ready(jp_serverapp):
-    async def _(kernel_id):
+    async def _(kernel_id, attr="ready"):
         km = jp_serverapp.kernel_manager
         if getattr(km, "use_pending_kernels", False):
             kernel = km.get_kernel(kernel_id)
-            if getattr(kernel, "ready"):
-                await kernel.ready
+            if getattr(kernel, attr):
+                await getattr(kernel, attr)
 
     return _
 
@@ -193,7 +193,7 @@ async def test_kernel_handler(jp_fetch, jp_cleanup_subprocesses, pending_kernel_
 
     # Get list of kernels
     try:
-        await pending_kernel_is_ready(kernel_id)
+        await pending_kernel_is_ready(kernel_id, "shutdown_ready")
     # If the kernel is already deleted, no need to await.
     except tornado.web.HTTPError:
         pass

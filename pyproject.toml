@@ -15,6 +15,30 @@ testpaths = [
 ]
 timeout = 300
 timeout_method = "thread"
+filterwarnings= [
+  # Fail on warnings
+  "error",
+
+  # Workarounds for https://github.com/pytest-dev/pytest-asyncio/issues/77
+  "ignore:unclosed <socket.socket:ResourceWarning",
+  "ignore:unclosed event loop:ResourceWarning",
+
+  # Workaround for https://github.com/tornadoweb/tornado/issues/3106
+  # (To be fixed in Tornado 6.2)
+  "ignore:There is no current event loop:DeprecationWarning:tornado",
+
+  # Workaround for distutils.Version used in ipykernel
+  "ignore:The distutils package is deprecated and slated for removal:DeprecationWarning:ipykernel",
+
+  # ZMQ uses Future internally, which raises a DeprecationWarning
+  # When there is no loop running.
+  # We could eventually find a way to make sure these are only created
+  # when there is a running event loop.
+  "ignore:There is no current event loop:DeprecationWarning:zmq",
+
+  # Workaround for https://github.com/jupyter/nbformat/issues/232
+  "ignore:Passing a schema:DeprecationWarning:nbformat",
+]
 
 [tool.jupyter-releaser]
 skip = ["check-links"]
