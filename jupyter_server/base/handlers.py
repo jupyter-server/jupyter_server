@@ -871,6 +871,10 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
 
         return super(FileFindHandler, self).validate_absolute_path(root, absolute_path)
 
+    def write_error(self, status_code, **kwargs):
+        # This is a no-op, we don't write any HTML error file
+        pass
+
 
 class APIVersionHandler(APIHandler):
     def get(self):
