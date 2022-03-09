@@ -11,13 +11,11 @@ from datetime import datetime
 
 import nbformat
 from anyio.to_thread import run_sync
-from ipython_genutils.importstring import import_item
 from jupyter_core.paths import exists
 from jupyter_core.paths import is_file_hidden
 from jupyter_core.paths import is_hidden
 from send2trash import send2trash
 from tornado import web
-from traitlets import Any
 from traitlets import Bool
 from traitlets import default
 from traitlets import TraitError
@@ -53,67 +51,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             return self.parent.root_dir
         except AttributeError:
             return os.getcwd()
-
-    post_save_hook = Any(
-        None,
-        config=True,
-        allow_none=True,
-        help="""Python callable or importstring thereof
-
-        to be called on the path of a file just saved.
-
-        This can be used to process the file on disk,
-        such as converting the notebook to a script or HTML via nbconvert.
-
-        It will be called as (all arguments passed by keyword)::
-
-            hook(os_path=os_path, model=model, contents_manager=instance)
-
-        - path: the filesystem path to the file just written
-        - model: the model representing the file
-        - contents_manager: this ContentsManager instance
-        """,
-    )
-
-    @validate("post_save_hook")
-    def _validate_post_save_hook(self, proposal):
-        value = proposal["value"]
-        if isinstance(value, str):
-            value = import_item(value)
-        if not callable(value):
-            raise TraitError("post_save_hook must be callable")
-        return value
-
-    def register_post_save_hook(self, hook):
-        if isinstance(hook, str):
-            hook = import_item(hook)
-        if not callable(hook):
-            raise RuntimeError("post_save_hook must be callable")
-        self._post_save_hooks.append(hook)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._post_save_hooks = []
-
-    def run_post_save_hooks(self, model, os_path):
-        """Run the post-save hooks if any, and log errors"""
-        post_save_hooks = self._post_save_hooks
-        if self.post_save_hook:
-            post_save_hooks.append(self.post_save_hook)
-        for post_save_hook in post_save_hooks:
-            try:
-                self.log.debug("Running post-save hook on %s", os_path)
-                post_save_hook(os_path=os_path, model=model, contents_manager=self)
-            except Exception as e:
-                self.log.error(
-                    "Post-save %s hook failed on %s",
-                    post_save_hook.__name__,
-                    os_path,
-                    exc_info=True,
-                )
-                raise web.HTTPError(
-                    500, "Unexpected error while running post hook save: %s" % e
-                ) from e
 
     @validate("root_dir")
     def _validate_root_dir(self, proposal):
