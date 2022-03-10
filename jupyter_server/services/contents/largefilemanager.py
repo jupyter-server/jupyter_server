@@ -18,7 +18,8 @@ class LargeFileManager(FileContentsManager):
         if chunk is not None:
             path = path.strip("/")
 
-            self.run_pre_save_hook(model=model, path=path)
+            if chunk == 1:
+                self.run_pre_save_hook(model=model, path=path)
 
             if "type" not in model:
                 raise web.HTTPError(400, "No file type provided")
@@ -91,7 +92,8 @@ class AsyncLargeFileManager(AsyncFileContentsManager):
 
             os_path = self._get_os_path(path)
             self.log.debug("Saving %s", os_path)
-            self.run_pre_save_hook(model=model, path=path)
+            if chunk == 1:
+                self.run_pre_save_hook(model=model, path=path)
 
             if "type" not in model:
                 raise web.HTTPError(400, "No file type provided")
