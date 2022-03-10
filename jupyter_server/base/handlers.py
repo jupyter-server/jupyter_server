@@ -193,7 +193,7 @@ class AuthenticatedHandler(web.RequestHandler):
 
     @property
     def authorizer(self):
-        return self.settings["authorizer"]
+        return self.settings.get("authorizer")
 
 
 class JupyterHandler(AuthenticatedHandler):

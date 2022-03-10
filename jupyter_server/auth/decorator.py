@@ -2,6 +2,7 @@
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import warnings
 from functools import wraps
 from typing import Callable
 from typing import Optional
@@ -11,6 +12,20 @@ from tornado.log import app_log
 from tornado.web import HTTPError
 
 from .utils import HTTP_METHOD_TO_AUTH_ACTION
+
+
+def raise_no_authorizer_warning():
+    warnings.warn(
+        "The Tornado web application does not have an 'authorizer' defined "
+        "in its settings. In future releases of jupyter_server, this will "
+        "be a required key for all subclasses of `JupyterHandler`. For an "
+        "example, see the jupyter_server source code for how to "
+        "add an authorizer to the tornado settings: "
+        "https://github.com/jupyter-server/jupyter_server/blob/"
+        "653740cbad7ce0c8a8752ce83e4d3c2c754b13cb/jupyter_server/serverapp.py"
+        "#L234-L256",
+        # stacklevel=2
+    )
 
 
 def authorized(
@@ -61,7 +76,11 @@ def authorized(
                 raise HTTPError(status_code=403, log_message=message)
             # If the user is allowed to do this action,
             # call the method.
-            if self.authorizer.is_authorized(self, user, action, resource):
+            if not self.authorizer:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("once")
+                    raise_no_authorizer_warning()
+            elif self.authorizer.is_authorized(self, user, action, resource):
                 return method(self, *args, **kwargs)
             # else raise an exception.
             else:
