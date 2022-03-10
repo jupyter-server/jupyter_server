@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -58,7 +59,8 @@ async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir, maybe_hidden):
 
 
 async def test_contents_manager(jp_fetch, jp_serverapp, jp_root_dir):
-    """make sure ContentsManager returns right files (ipynb, bin, txt)."""
+    """make sure ContentsManager returns right files (ipynb, bin, txt).
+    Also test save file hooks."""
     nb = new_notebook(
         cells=[
             new_markdown_cell("Created by test ³"),
@@ -88,6 +90,32 @@ async def test_contents_manager(jp_fetch, jp_serverapp, jp_root_dir):
     assert r.code == 200
     assert r.headers["content-type"] == "text/plain; charset=UTF-8"
     assert r.body.decode() == "foobar"
+
+    # define a first pre-save hook that will change the content of the file before saving
+    def hook1(model, path, **kwargs):
+        model["content"] += " was modified"
+
+    # define a second pre-save hook that will change the content of the file before saving
+    # should be called after the first one
+    def hook2(model, path, **kwargs):
+        model["content"] += " twice!"
+
+    # register the pre-save hooks
+    jp_serverapp.contents_manager.register_pre_save_hook(hook1)
+    jp_serverapp.contents_manager.register_pre_save_hook(hook2)
+
+    # send a request to save a file, with an original content
+    r = await jp_fetch(
+        "api/contents/test.txt",
+        method="PUT",
+        body=json.dumps(
+            {"format": "text", "path": "test.txt", "type": "file", "content": "original content"}
+        ),
+    )
+
+    # read the file back, the original content should have been modified by hook1 then hook2
+    r = await jp_fetch("files/test.txt", method="GET")
+    assert r.body.decode() == "original content was modified twice!"
 
 
 async def test_download(jp_fetch, jp_serverapp, jp_root_dir):
