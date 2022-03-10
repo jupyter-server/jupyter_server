@@ -91,20 +91,34 @@ async def test_contents_manager(jp_fetch, jp_serverapp, jp_root_dir):
     assert r.headers["content-type"] == "text/plain; charset=UTF-8"
     assert r.body.decode() == "foobar"
 
+
+async def test_save_hooks(jp_fetch, jp_serverapp):
     # define a first pre-save hook that will change the content of the file before saving
-    def hook1(model, path, **kwargs):
+    def pre_save_hook1(model, **kwargs):
         model["content"] += " was modified"
 
     # define a second pre-save hook that will change the content of the file before saving
-    # should be called after the first one
-    def hook2(model, path, **kwargs):
+    def pre_save_hook2(model, **kwargs):
         model["content"] += " twice!"
 
+    # define a first post-save hook that will change the 'last_modified' date
+    def post_save_hook1(model, **kwargs):
+        model["last_modified"] = "yesterday"
+
+    # define a second post-save hook that will change the 'last_modified' date
+    def post_save_hook2(model, **kwargs):
+        model["last_modified"] += " or tomorrow!"
+
     # register the pre-save hooks
-    jp_serverapp.contents_manager.register_pre_save_hook(hook1)
-    jp_serverapp.contents_manager.register_pre_save_hook(hook2)
+    jp_serverapp.contents_manager.register_pre_save_hook(pre_save_hook1)
+    jp_serverapp.contents_manager.register_pre_save_hook(pre_save_hook2)
+
+    # register the post-save hooks
+    jp_serverapp.contents_manager.register_post_save_hook(post_save_hook1)
+    jp_serverapp.contents_manager.register_post_save_hook(post_save_hook2)
 
     # send a request to save a file, with an original content
+    # the 'last_modified' returned model field should have been modified by post_save_hook1 then post_save_hook2
     r = await jp_fetch(
         "api/contents/test.txt",
         method="PUT",
@@ -112,8 +126,10 @@ async def test_contents_manager(jp_fetch, jp_serverapp, jp_root_dir):
             {"format": "text", "path": "test.txt", "type": "file", "content": "original content"}
         ),
     )
+    assert json.loads(r.body.decode())["last_modified"] == "yesterday or tomorrow!"
 
-    # read the file back, the original content should have been modified by hook1 then hook2
+    # read the file back
+    # the original content should have been modified by pre_save_hook1 then pre_save_hook2
     r = await jp_fetch("files/test.txt", method="GET")
     assert r.body.decode() == "original content was modified twice!"
 
