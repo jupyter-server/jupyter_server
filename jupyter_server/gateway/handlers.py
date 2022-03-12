@@ -6,7 +6,6 @@ import mimetypes
 import os
 import random
 
-from ipython_genutils.py3compat import cast_unicode
 from jupyter_client.session import Session
 from tornado import web
 from tornado.concurrent import Future
@@ -59,7 +58,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
             raise web.HTTPError(403)
 
         if self.get_argument("session_id", False):
-            self.session.session = cast_unicode(self.get_argument("session_id"))
+            self.session.session = self.get_argument("session_id")
         else:
             self.log.warning("No session ID specified")
 
@@ -70,7 +69,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
     async def get(self, kernel_id, *args, **kwargs):
         self.authenticate()
-        self.kernel_id = cast_unicode(kernel_id, "ascii")
+        self.kernel_id = kernel_id
         await super(WebSocketChannelsHandler, self).get(kernel_id=kernel_id, *args, **kwargs)
 
     def send_ping(self):

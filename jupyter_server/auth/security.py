@@ -11,9 +11,6 @@ import traceback
 import warnings
 from contextlib import contextmanager
 
-from ipython_genutils.py3compat import cast_bytes
-from ipython_genutils.py3compat import cast_unicode
-from ipython_genutils.py3compat import str_to_bytes
 from jupyter_core.paths import jupyter_config_dir
 from traitlets.config import Config
 from traitlets.config import ConfigFileNotFound
@@ -72,11 +69,11 @@ def passwd(passphrase=None, algorithm="argon2"):
         )
         h = ph.hash(passphrase)
 
-        return ":".join((algorithm, cast_unicode(h, "ascii")))
+        return ":".join((algorithm, h))
 
     h = hashlib.new(algorithm)
     salt = ("%0" + str(salt_len) + "x") % random.getrandbits(4 * salt_len)
-    h.update(cast_bytes(passphrase, "utf-8") + str_to_bytes(salt, "ascii"))
+    h.update(passphrase.encode("utf-8") + salt.encode("ascii"))
 
     return ":".join((algorithm, salt, h.hexdigest()))
 
@@ -133,7 +130,7 @@ def passwd_check(hashed_passphrase, passphrase):
     if len(pw_digest) == 0:
         return False
 
-    h.update(cast_bytes(passphrase, "utf-8") + cast_bytes(salt, "ascii"))
+    h.update(passphrase.encode("utf-8") + salt.encode("ascii"))
 
     return h.hexdigest() == pw_digest
 
@@ -159,8 +156,8 @@ def persist_config(config_file=None, mode=0o600):
 
     yield config
 
-    with io.open(config_file, "w", encoding="utf8") as f:
-        f.write(cast_unicode(json.dumps(config, indent=2)))
+    with io.open(config_file, "wb", encoding="utf8") as f:
+        f.write(json.dumps(config, indent=2).encode("utf8"))
 
     try:
         os.chmod(config_file, mode)

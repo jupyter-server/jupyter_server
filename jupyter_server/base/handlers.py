@@ -16,7 +16,6 @@ from http.cookies import Morsel
 from urllib.parse import urlparse
 
 import prometheus_client
-from ipython_genutils.path import filefind
 from jinja2 import TemplateNotFound
 from jupyter_core.paths import is_hidden
 from tornado import escape
@@ -26,6 +25,7 @@ from tornado.log import app_log
 from traitlets.config import Application
 
 import jupyter_server
+from jupyter_server import filefind
 from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
 from jupyter_server.i18n import combine_translations

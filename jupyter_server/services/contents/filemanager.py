@@ -11,7 +11,6 @@ from datetime import datetime
 
 import nbformat
 from anyio.to_thread import run_sync
-from ipython_genutils.importstring import import_item
 from jupyter_core.paths import exists
 from jupyter_core.paths import is_file_hidden
 from jupyter_core.paths import is_hidden
@@ -33,6 +32,7 @@ from .manager import ContentsManager
 from jupyter_server import _tz as tz
 from jupyter_server.base.handlers import AuthenticatedFileHandler
 from jupyter_server.transutils import _i18n
+from jupyter_server.utils import import_item
 
 try:
     from os.path import samefile
