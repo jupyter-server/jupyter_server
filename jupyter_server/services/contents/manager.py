@@ -752,9 +752,6 @@ class AsyncContentsManager(ContentsManager):
         Use `new` to create files with a fully specified path (including filename).
         """
         path = path.strip("/")
-        dir_exists = await ensure_async(self.dir_exists(path))
-        if not dir_exists:
-            raise HTTPError(404, "No such directory: %s" % path)
 
         model = {}
         if type:
