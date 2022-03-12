@@ -156,8 +156,8 @@ def persist_config(config_file=None, mode=0o600):
 
     yield config
 
-    with io.open(config_file, "wb", encoding="utf8") as f:
-        f.write(json.dumps(config, indent=2).encode("utf8"))
+    with io.open(config_file, "w", encoding="utf8") as f:
+        f.write(json.dumps(config, indent=2))
 
     try:
         os.chmod(config_file, mode)
