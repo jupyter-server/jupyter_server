@@ -146,7 +146,6 @@ async def test_culling_config(jp_server_config, jp_configurable_serverapp):
     assert terminal_mgr_settings.cull_interval == CULL_INTERVAL
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Not currently working on Windows")
 async def test_culling(jp_server_config, jp_fetch, jp_cleanup_subprocesses):
     # POST request
     resp = await jp_fetch(

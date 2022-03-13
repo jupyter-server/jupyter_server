@@ -53,11 +53,11 @@ jobs:
       - name: Run the tests
         if: ${{ matrix.python-version != 'pypy-3.7' }}
         run: |
-          pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered
+          pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered || pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered -lf
       - name: Run the tests on pypy
         if: ${{ matrix.python-version == 'pypy-3.7' }}
         run: |
-          pytest -vv
+          pytest -vv|| pytest -vv -lf
       - name: Install the Python dependencies for the examples
         run: |
           cd examples/simple && pip install -e .
@@ -86,7 +86,7 @@ jobs:
       - name: Install miniumum versions
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
       - name: Run the unit tests
-        run: pytest -vv
+        run: pytest -vv|| pytest -vv -lf
 
   test_prereleases:
     name: Test Prereleases
@@ -105,7 +105,7 @@ jobs:
           pip check
       - name: Run the tests
         run: |
-          pytest -vv
+          pytest -vv || pytest -vv -lf
 
   make_sdist:
     name: Make SDist
@@ -144,4 +144,4 @@ jobs:
       - name: Run Test
         run: |
           cd sdist/test
-          pytest -vv
+          pytest -vv || pytest -vv -lf
