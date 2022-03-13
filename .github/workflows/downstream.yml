@@ -7,7 +7,7 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -20,6 +20,7 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
         with:
           package_name: nbclassic
+          test_command: pytest --pyargs nbclassic
 
       - name: Test jupyterlab_server
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
