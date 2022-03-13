@@ -907,3 +907,21 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             raise
         except Exception as e:
             raise web.HTTPError(500, "Unknown error renaming file: %s %s" % (old_path, e)) from e
+
+    async def dir_exists(self, path):
+        """Does a directory exist at the given path"""
+        path = path.strip("/")
+        os_path = self._get_os_path(path=path)
+        return os.path.isdir(os_path)
+
+    async def file_exists(self, path):
+        """Does a file exist at the given path"""
+        path = path.strip("/")
+        os_path = self._get_os_path(path)
+        return os.path.isfile(os_path)
+
+    async def is_hidden(self, path):
+        """Is path a hidden directory or file"""
+        path = path.strip("/")
+        os_path = self._get_os_path(path=path)
+        return is_hidden(os_path, self.root_dir)
