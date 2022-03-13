@@ -514,7 +514,7 @@ class MappingKernelManager(MultiKernelManager):
             self.last_kernel_activity = kernel.last_activity = utcnow()
 
             idents, fed_msg_list = session.feed_identities(msg_list)
-            msg = session.deserialize(fed_msg_list)
+            msg = session.deserialize(fed_msg_list, content=False)
 
             msg_type = msg["header"]["msg_type"]
             if msg_type == "status":
