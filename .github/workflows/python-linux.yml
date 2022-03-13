@@ -58,7 +58,7 @@ jobs:
       - name: Run the tests on pypy
         if: ${{ matrix.python-version == 'pypy-3.7' }}
         run: |
-          pytest -vv|| pytest -vv -lf
+          pytest -vv || pytest -vv -lf
       - name: Install the Python dependencies for the examples
         run: |
           cd examples/simple && pip install -e .
