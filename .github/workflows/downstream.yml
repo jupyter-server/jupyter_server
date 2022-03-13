@@ -27,10 +27,11 @@ jobs:
           package_name: jupyterlab
           test_command: "python -m jupyterlab.browser_check --no-browser-test"
 
-      - name: Test nbclassic
-        uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
-        with:
-          package_name: nbclassic
+      # Commented out until https://github.com/jupyterlab/maintainer-tools/issues/61 is fixed.
+      # - name: Test nbclassic
+      #   uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
+      #   with:
+      #     package_name: nbclassic
 
       - name: Test run nbclassic
         run: |
