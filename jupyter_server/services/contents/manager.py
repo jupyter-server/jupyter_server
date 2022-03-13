@@ -372,15 +372,25 @@ class ContentsManager(LoggingConfigurable):
                 break
         return name
 
-    def validate_notebook_model(self, model):
+    def validate_notebook_model(self, model, validation_error=None):
         """Add failed-validation message to model"""
         try:
-            validate_nb(model["content"])
+            # If we're given a validation_error dictionary, extract the exception
+            # from it and raise the exception, else call nbformat's validate method
+            # to determine if the notebook is valid.  This 'else' condition may
+            # pertain to server extension not using the server's notebook read/write
+            # functions.
+            if validation_error is not None:
+                e = validation_error.get("ValidationError")
+                if isinstance(e, ValidationError):
+                    raise e
+            else:
+                validate_nb(model["content"])
         except ValidationError as e:
             model["message"] = "Notebook validation failed: {}:\n{}".format(
-                e.message,
-                json.dumps(e.instance, indent=1, default=lambda obj: "<UNKNOWN>"),
-            )
+                    e.message,
+                    json.dumps(e.instance, indent=1, default=lambda obj: "<UNKNOWN>"),
+                )
         return model
 
     def new_untitled(self, path="", type="", ext=""):

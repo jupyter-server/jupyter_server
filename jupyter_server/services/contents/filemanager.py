@@ -383,11 +383,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path)
 
         if content:
-            nb = self._read_notebook(os_path, as_version=4)
+            validation_error = {}
+            nb = self._read_notebook(os_path, as_version=4, capture_validation_error=validation_error)
             self.mark_trusted_cells(nb, path)
             model["content"] = nb
             model["format"] = "json"
-            self.validate_notebook_model(model)
+            self.validate_notebook_model(model, validation_error)
 
         return model
 
@@ -461,11 +462,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path)
         self.log.debug("Saving %s", os_path)
 
+        validation_error = {}
         try:
             if model["type"] == "notebook":
                 nb = nbformat.from_dict(model["content"])
                 self.check_and_sign(nb, path)
-                self._save_notebook(os_path, nb)
+                self._save_notebook(os_path, nb, capture_validation_error=validation_error)
                 # One checkpoint should always exist for notebooks.
                 if not self.checkpoints.list_checkpoints(path):
                     self.create_checkpoint(path)
@@ -484,7 +486,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         validation_message = None
         if model["type"] == "notebook":
-            self.validate_notebook_model(model)
+            self.validate_notebook_model(model, validation_error=validation_error)
             validation_message = model.get("message", None)
 
         model = self.get(path, content=False)
@@ -707,11 +709,12 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         os_path = self._get_os_path(path)
 
         if content:
-            nb = await self._read_notebook(os_path, as_version=4)
+            validation_error = {}
+            nb = await self._read_notebook(os_path, as_version=4, capture_validation_error=validation_error)
             self.mark_trusted_cells(nb, path)
             model["content"] = nb
             model["format"] = "json"
-            self.validate_notebook_model(model)
+            self.validate_notebook_model(model, validation_error)
 
         return model
 
@@ -784,11 +787,12 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, "No file content provided")
 
+        validation_error = {}
         try:
             if model["type"] == "notebook":
                 nb = nbformat.from_dict(model["content"])
                 self.check_and_sign(nb, path)
-                await self._save_notebook(os_path, nb)
+                await self._save_notebook(os_path, nb, capture_validation_error=validation_error)
                 # One checkpoint should always exist for notebooks.
                 if not (await self.checkpoints.list_checkpoints(path)):
                     await self.create_checkpoint(path)
@@ -807,7 +811,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         validation_message = None
         if model["type"] == "notebook":
-            self.validate_notebook_model(model)
+            self.validate_notebook_model(model, validation_error=validation_error)
             validation_message = model.get("message", None)
 
         model = await self.get(path, content=False)
