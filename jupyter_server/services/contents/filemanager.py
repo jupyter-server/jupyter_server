@@ -384,7 +384,9 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         if content:
             validation_error = {}
-            nb = self._read_notebook(os_path, as_version=4, capture_validation_error=validation_error)
+            nb = self._read_notebook(
+                os_path, as_version=4, capture_validation_error=validation_error
+            )
             self.mark_trusted_cells(nb, path)
             model["content"] = nb
             model["format"] = "json"
@@ -710,7 +712,9 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         if content:
             validation_error = {}
-            nb = await self._read_notebook(os_path, as_version=4, capture_validation_error=validation_error)
+            nb = await self._read_notebook(
+                os_path, as_version=4, capture_validation_error=validation_error
+            )
             self.mark_trusted_cells(nb, path)
             model["content"] = nb
             model["format"] = "json"

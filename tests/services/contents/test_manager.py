@@ -1,14 +1,12 @@
 import os
 import sys
 import time
+from itertools import combinations
 from typing import Dict
 from typing import Optional
 from typing import Tuple
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
-from itertools import combinations
-
-import jsonschema
 import pytest
 from nbformat import v4 as nbformat
 from nbformat import ValidationError
@@ -77,7 +75,9 @@ def add_invalid_cell(notebook):
     notebook.cells.append(cell)
 
 
-async def prepare_notebook(jp_contents_manager, make_invalid: Optional[bool] = False) -> Tuple[Dict, str]:
+async def prepare_notebook(
+    jp_contents_manager, make_invalid: Optional[bool] = False
+) -> Tuple[Dict, str]:
     cm = jp_contents_manager
     model = await ensure_async(cm.new_untitled(type="notebook"))
     name = model["name"]
@@ -704,8 +704,9 @@ async def test_nb_validation(jp_contents_manager):
     # successful methods and ensure that calls to the aliased "validate_nb" are
     # zero.  Note that since patching side-effects the validation error case, we'll
     # skip call-count assertions for that portion of the test.
-    with patch("nbformat.validate") as mock_validate, \
-         patch("jupyter_server.services.contents.manager.validate_nb") as mock_validate_nb:
+    with patch("nbformat.validate") as mock_validate, patch(
+        "jupyter_server.services.contents.manager.validate_nb"
+    ) as mock_validate_nb:
         # Valid notebook, save, then get
         model = await ensure_async(cm.save(model, path))
         assert "message" not in model

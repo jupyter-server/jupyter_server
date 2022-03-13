@@ -265,7 +265,9 @@ class FileManagerMixin(Configurable):
         """Read a notebook from an os path."""
         with self.open(os_path, "r", encoding="utf-8") as f:
             try:
-                return nbformat.read(f, as_version=as_version, capture_validation_error=capture_validation_error)
+                return nbformat.read(
+                    f, as_version=as_version, capture_validation_error=capture_validation_error
+                )
             except Exception as e:
                 e_orig = e
 
@@ -284,12 +286,19 @@ class FileManagerMixin(Configurable):
             invalid_file = path_to_invalid(os_path)
             replace_file(os_path, invalid_file)
             replace_file(tmp_path, os_path)
-            return self._read_notebook(os_path, as_version, capture_validation_error=capture_validation_error)
+            return self._read_notebook(
+                os_path, as_version, capture_validation_error=capture_validation_error
+            )
 
     def _save_notebook(self, os_path, nb, capture_validation_error=None):
         """Save a notebook to an os_path."""
         with self.atomic_writing(os_path, encoding="utf-8") as f:
-            nbformat.write(nb, f, version=nbformat.NO_CONVERT, capture_validation_error=capture_validation_error)
+            nbformat.write(
+                nb,
+                f,
+                version=nbformat.NO_CONVERT,
+                capture_validation_error=capture_validation_error,
+            )
 
     def _read_file(self, os_path, format):
         """Read a non-notebook file.
@@ -356,8 +365,14 @@ class AsyncFileManagerMixin(FileManagerMixin):
         """Read a notebook from an os path."""
         with self.open(os_path, "r", encoding="utf-8") as f:
             try:
-                return await run_sync(partial(nbformat.read, as_version=as_version,
-                                              capture_validation_error=capture_validation_error), f)
+                return await run_sync(
+                    partial(
+                        nbformat.read,
+                        as_version=as_version,
+                        capture_validation_error=capture_validation_error,
+                    ),
+                    f,
+                )
             except Exception as e:
                 e_orig = e
 
@@ -376,13 +391,22 @@ class AsyncFileManagerMixin(FileManagerMixin):
             invalid_file = path_to_invalid(os_path)
             await async_replace_file(os_path, invalid_file)
             await async_replace_file(tmp_path, os_path)
-            return await self._read_notebook(os_path, as_version, capture_validation_error=capture_validation_error)
+            return await self._read_notebook(
+                os_path, as_version, capture_validation_error=capture_validation_error
+            )
 
     async def _save_notebook(self, os_path, nb, capture_validation_error=None):
         """Save a notebook to an os_path."""
         with self.atomic_writing(os_path, encoding="utf-8") as f:
-            await run_sync(partial(nbformat.write, version=nbformat.NO_CONVERT,
-                                   capture_validation_error=capture_validation_error), nb, f)
+            await run_sync(
+                partial(
+                    nbformat.write,
+                    version=nbformat.NO_CONVERT,
+                    capture_validation_error=capture_validation_error,
+                ),
+                nb,
+                f,
+            )
 
     async def _read_file(self, os_path, format):
         """Read a non-notebook file.
