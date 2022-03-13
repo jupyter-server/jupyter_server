@@ -17,7 +17,7 @@ from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelMana
 from jupyter_server.utils import url_path_join
 
 
-TEST_TIMEOUT = 30
+TEST_TIMEOUT = 40
 
 
 j = lambda r: json.loads(r.body.decode())

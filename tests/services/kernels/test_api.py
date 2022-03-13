@@ -12,7 +12,7 @@ from ...utils import expected_http_error
 from jupyter_server.utils import url_path_join
 
 
-TEST_TIMEOUT = 30
+TEST_TIMEOUT = 40
 
 
 @pytest.fixture
