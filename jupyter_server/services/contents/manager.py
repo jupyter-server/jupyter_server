@@ -462,9 +462,9 @@ class ContentsManager(LoggingConfigurable):
 
         if to_path is not None:
             to_path = to_path.strip("/")
-            dir_exists = self.dir_exists(path)
+            dir_exists = self.dir_exists(to_path)
             if not dir_exists:
-                raise HTTPError(404, "No such directory: %s" % path)
+                raise HTTPError(404, "No such directory: %s" % to_path)
 
         if "/" in path:
             from_dir, from_name = path.rsplit("/", 1)
@@ -827,9 +827,9 @@ class AsyncContentsManager(ContentsManager):
         if to_path is not None:
             to_path = to_path.strip("/")
 
-            dir_exists = await self.dir_exists(path)
+            dir_exists = await self.dir_exists(to_path)
             if not dir_exists:
-                raise HTTPError(404, "No such directory: %s" % path)
+                raise HTTPError(404, "No such directory: %s" % to_path)
 
         if "/" in path:
             from_dir, from_name = path.rsplit("/", 1)
