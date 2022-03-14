@@ -8,7 +8,6 @@ import json
 from textwrap import dedent
 from traceback import format_tb
 
-from ipython_genutils.py3compat import cast_unicode
 from jupyter_client import protocol_version as client_protocol_version
 
 try:
@@ -406,7 +405,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         await future
 
     async def get(self, kernel_id):
-        self.kernel_id = cast_unicode(kernel_id, "ascii")
+        self.kernel_id = kernel_id
         await super(ZMQChannelsHandler, self).get(kernel_id=kernel_id)
 
     async def _register_session(self):

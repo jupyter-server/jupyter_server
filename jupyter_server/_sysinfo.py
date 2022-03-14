@@ -9,8 +9,6 @@ import platform
 import subprocess
 import sys
 
-from ipython_genutils import encoding
-
 import jupyter_server
 
 
@@ -86,7 +84,6 @@ def pkg_info(pkg_path):
         sys_platform=sys.platform,
         platform=platform.platform(),
         os_name=os.name,
-        default_encoding=encoding.DEFAULT_ENCODING,
     )
 
 

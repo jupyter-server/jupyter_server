@@ -9,7 +9,6 @@ import sys
 from urllib.parse import urlparse
 
 import tornado
-from ipython_genutils.py3compat import cast_unicode
 
 try:
     from jupyter_client.jsonutil import json_default
@@ -268,8 +267,7 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             buf = serialize_binary_message(msg)
             return buf
         else:
-            smsg = json.dumps(msg, default=json_default)
-            return cast_unicode(smsg)
+            return json.dumps(msg, default=json_default)
 
     def select_subprotocol(self, subprotocols):
         preferred_protocol = self.settings.get("kernel_ws_protocol")
@@ -326,7 +324,7 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
             raise web.HTTPError(403)
 
         if self.get_argument("session_id", False):
-            self.session.session = cast_unicode(self.get_argument("session_id"))
+            self.session.session = self.get_argument("session_id")
         else:
             self.log.warning("No session ID specified")
 

@@ -1,25 +1,11 @@
-import functools
 import io
 import os
 import stat
 import sys
 
-import decorator
 import pytest
-from ipython_genutils.testing.decorators import skip_win32 as _skip_win32
 
 from jupyter_server.services.contents.fileio import atomic_writing
-
-
-@functools.wraps(_skip_win32)
-def skip_win32(f):
-    # Patches the "skip_win32" method to allow pytest fixtures
-    # in methods wrapped by this decorator.
-    def inner(f, *args, **kwargs):
-        decorated_f = _skip_win32(f)
-        return decorated_f(*args, **kwargs)
-
-    return decorator.decorator(inner, f)
 
 
 umask = 0

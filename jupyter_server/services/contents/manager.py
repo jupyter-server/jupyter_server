@@ -7,7 +7,6 @@ import re
 import warnings
 from fnmatch import fnmatch
 
-from ipython_genutils.importstring import import_item
 from nbformat import sign
 from nbformat import validate as validate_nb
 from nbformat import ValidationError
@@ -31,6 +30,7 @@ from .checkpoints import AsyncCheckpoints
 from .checkpoints import Checkpoints
 from jupyter_server.transutils import _i18n
 from jupyter_server.utils import ensure_async
+from jupyter_server.utils import import_item
 
 
 copy_pat = re.compile(r"\-Copy\d*\.")
