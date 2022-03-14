@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.15.3
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.15.2...93b1c838957c4f29d2bcdbaae1721f55fe8b4f27))
+
+### Bugs fixed
+
+- Revert "Server extension paths (#730)" [#732](https://github.com/jupyter-server/jupyter_server/pull/732) ([@blink1073](https://github.com/blink1073))
+
+### Maintenance and upkeep improvements
+
+- Avoid usage of ipython_genutils [#718](https://github.com/jupyter-server/jupyter_server/pull/718) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-03-14&to=2022-03-14&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-03-14..2022-03-14&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-03-14..2022-03-14&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.15.2
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.15.1...9711822e157bd2ff2d4f8abe4c12a013223230e0))
@@ -22,8 +42,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-03-14&to=2022-03-14&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-03-14..2022-03-14&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2022-03-14..2022-03-14&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-03-14..2022-03-14&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.15.1
 
