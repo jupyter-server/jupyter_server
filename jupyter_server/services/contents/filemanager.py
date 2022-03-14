@@ -906,4 +906,3 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             raise
         except Exception as e:
             raise web.HTTPError(500, "Unknown error renaming file: %s %s" % (old_path, e)) from e
-
