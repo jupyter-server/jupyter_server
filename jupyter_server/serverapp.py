@@ -104,6 +104,7 @@ from jupyter_core.application import (
     base_flags,
     base_aliases,
 )
+from jupyter_core.paths import jupyter_config_path
 from jupyter_client import KernelManager
 from jupyter_client.kernelspec import KernelSpecManager
 from jupyter_client.session import Session
@@ -2153,7 +2154,11 @@ class ServerApp(JupyterApp):
         # This enables merging on keys, which we want for extension enabling.
         # Regular config loading only merges at the class level,
         # so each level clobbers the previous.
-        manager = ExtensionConfigManager(read_config_path=self.config_file_paths)
+        config_paths = jupyter_config_path()
+        if self.config_dir not in config_paths:
+            # add self.config_dir to the front, if set manually
+            config_paths.insert(0, self.config_dir)
+        manager = ExtensionConfigManager(read_config_path=config_paths)
         extensions = manager.get_jpserver_extensions()
 
         for modulename, enabled in sorted(extensions.items()):

@@ -31,7 +31,6 @@ from .manager import ContentsManager
 from jupyter_server import _tz as tz
 from jupyter_server.base.handlers import AuthenticatedFileHandler
 from jupyter_server.transutils import _i18n
-from jupyter_server.utils import import_item
 
 try:
     from os.path import samefile

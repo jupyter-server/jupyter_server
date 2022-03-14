@@ -12,7 +12,6 @@ from traitlets import Bool
 from traitlets import default
 from traitlets import Dict
 from traitlets import HasTraits
-from traitlets import Instance
 from traitlets import List
 from traitlets import Unicode
 from traitlets.config import Config
@@ -104,7 +103,7 @@ class ExtensionAppJinjaMixin(HasTraits):
             loader=FileSystemLoader(self.template_paths),
             extensions=["jinja2.ext.i18n"],
             autoescape=True,
-            **self.jinja2_options,
+            **self.jinja2_options
         )
 
         # Add the jinja2 environment for this extension to the tornado settings.
@@ -163,12 +162,6 @@ class ExtensionApp(JupyterApp):
     def _default_open_browser(self):
         return self.serverapp.config["ServerApp"].get("open_browser", True)
 
-    @property
-    def config_file_paths(self):
-        """Look on the same path as our parent for config files"""
-        # rely on parent serverapp, which should control all config loading
-        return self.serverapp.config_file_paths
-
     # The extension name used to name the jupyter config
     # file, jupyter_{name}_config.
     # This should also match the jupyter subcommand used to launch
@@ -207,17 +200,7 @@ class ExtensionApp(JupyterApp):
     ]
 
     # A ServerApp is not defined yet, but will be initialized below.
-    serverapp = Instance(ServerApp)
-
-    @default("serverapp")
-    def _default_serverapp(self):
-        # load the current global instance, if any
-        if ServerApp.initialized():
-            return ServerApp.instance()
-        else:
-            # serverapp accessed before it was defined,
-            # declare an empty one
-            return ServerApp()
+    serverapp = None
 
     _log_formatter_cls = LogFormatter
 
