@@ -162,11 +162,6 @@ class ExtensionApp(JupyterApp):
     def _default_open_browser(self):
         return self.serverapp.config["ServerApp"].get("open_browser", True)
 
-    @property
-    def config_file_paths(self):
-        """Look on the same path as our parent for config files"""
-        return self.serverapp.config_file_paths
-
     # The extension name used to name the jupyter config
     # file, jupyter_{name}_config.
     # This should also match the jupyter subcommand used to launch
