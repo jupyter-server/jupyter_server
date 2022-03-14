@@ -69,6 +69,14 @@ def test_extensionapp_load_config_file(
     assert mock_extension.mock_trait == "config from file"
 
 
+def test_extensionapp_no_parent():
+    # make sure we can load config files, even when serverapp is not passed
+    # relevant for e.g. shortcuts to config-loading
+    app = MockExtensionApp()
+    assert isinstance(app.config_file_paths, list)
+    assert app.serverapp is not None
+
+
 OPEN_BROWSER_COMBINATIONS = (
     (True, {}),
     (True, {"ServerApp": {"open_browser": True}}),
