@@ -2,9 +2,14 @@ import os
 import sys
 import time
 from itertools import combinations
+from typing import Dict
+from typing import Optional
+from typing import Tuple
+from unittest.mock import patch
 
 import pytest
 from nbformat import v4 as nbformat
+from nbformat import ValidationError
 from tornado.web import HTTPError
 from traitlets import TraitError
 
@@ -63,7 +68,16 @@ def add_code_cell(notebook):
     notebook.cells.append(cell)
 
 
-async def new_notebook(jp_contents_manager):
+def add_invalid_cell(notebook):
+    output = nbformat.new_output("display_data", {"application/javascript": "alert('hi');"})
+    cell = nbformat.new_code_cell("print('hi')", outputs=[output])
+    cell.pop("source")  # Remove source to invaliate
+    notebook.cells.append(cell)
+
+
+async def prepare_notebook(
+    jp_contents_manager, make_invalid: Optional[bool] = False
+) -> Tuple[Dict, str]:
     cm = jp_contents_manager
     model = await ensure_async(cm.new_untitled(type="notebook"))
     name = model["name"]
@@ -72,8 +86,19 @@ async def new_notebook(jp_contents_manager):
     full_model = await ensure_async(cm.get(path))
     nb = full_model["content"]
     nb["metadata"]["counter"] = int(1e6 * time.time())
-    add_code_cell(nb)
+    if make_invalid:
+        add_invalid_cell(nb)
+    else:
+        add_code_cell(nb)
+    return full_model, path
 
+
+async def new_notebook(jp_contents_manager):
+    full_model, path = await prepare_notebook(jp_contents_manager)
+    cm = jp_contents_manager
+    name = full_model["name"]
+    path = full_model["path"]
+    nb = full_model["content"]
     await ensure_async(cm.save(full_model, path))
     return nb, name, path
 
@@ -667,3 +692,83 @@ async def test_check_and_sign(jp_contents_manager):
     cm.mark_trusted_cells(nb, path)
     cm.check_and_sign(nb, path)
     assert cm.notary.check_signature(nb)
+
+
+async def test_nb_validation(jp_contents_manager):
+    # Test that validation is performed once when a notebook is read or written
+
+    model, path = await prepare_notebook(jp_contents_manager, make_invalid=False)
+    cm = jp_contents_manager
+
+    # We'll use a patch to capture the call count on "nbformat.validate" for the
+    # successful methods and ensure that calls to the aliased "validate_nb" are
+    # zero.  Note that since patching side-effects the validation error case, we'll
+    # skip call-count assertions for that portion of the test.
+    with patch("nbformat.validate") as mock_validate, patch(
+        "jupyter_server.services.contents.manager.validate_nb"
+    ) as mock_validate_nb:
+        # Valid notebook, save, then get
+        model = await ensure_async(cm.save(model, path))
+        assert "message" not in model
+        assert mock_validate.call_count == 1
+        assert mock_validate_nb.call_count == 0
+        mock_validate.reset_mock()
+        mock_validate_nb.reset_mock()
+
+        # Get the notebook and ensure there are no messages
+        model = await ensure_async(cm.get(path))
+        assert "message" not in model
+        assert mock_validate.call_count == 1
+        assert mock_validate_nb.call_count == 0
+        mock_validate.reset_mock()
+        mock_validate_nb.reset_mock()
+
+    # Add invalid cell, save, then get
+    add_invalid_cell(model["content"])
+
+    model = await ensure_async(cm.save(model, path))
+    assert "message" in model
+    assert "Notebook validation failed:" in model["message"]
+
+    model = await ensure_async(cm.get(path))
+    assert "message" in model
+    assert "Notebook validation failed:" in model["message"]
+
+
+async def test_validate_notebook_model(jp_contents_manager):
+    # Test the validation_notebook_model method to ensure that validation is not
+    # performed when a validation_error dictionary is provided and is performed
+    # when that parameter is None.
+
+    model, path = await prepare_notebook(jp_contents_manager, make_invalid=False)
+    cm = jp_contents_manager
+
+    with patch("jupyter_server.services.contents.manager.validate_nb") as mock_validate_nb:
+        # Valid notebook and a non-None dictionary, no validate call expected
+
+        validation_error = {}
+        cm.validate_notebook_model(model, validation_error)
+        assert mock_validate_nb.call_count == 0
+        mock_validate_nb.reset_mock()
+
+        # And without the extra parameter, validate call expected
+        cm.validate_notebook_model(model)
+        assert mock_validate_nb.call_count == 1
+        mock_validate_nb.reset_mock()
+
+        # Now do the same with an invalid model
+        # invalidate the model...
+        add_invalid_cell(model["content"])
+
+        validation_error["ValidationError"] = ValidationError("not a real validation error")
+        cm.validate_notebook_model(model, validation_error)
+        assert "Notebook validation failed" in model["message"]
+        assert mock_validate_nb.call_count == 0
+        mock_validate_nb.reset_mock()
+        model.pop("message")
+
+        # And without the extra parameter, validate call expected.  Since patch side-effects
+        # the patched method, we won't attempt to access the message field.
+        cm.validate_notebook_model(model)
+        assert mock_validate_nb.call_count == 1
+        mock_validate_nb.reset_mock()
