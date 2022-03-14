@@ -906,14 +906,3 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             raise
         except Exception as e:
             raise web.HTTPError(500, "Unknown error renaming file: %s %s" % (old_path, e)) from e
-
-    async def dir_exists(self, path):
-        path = path.strip("/")
-        os_path = self._get_os_path(path=path)
-        return os.path.isdir(os_path)
-
-    async def file_exists(self, path):
-        pass
-
-    async def is_hidden(self, path):
-        pass

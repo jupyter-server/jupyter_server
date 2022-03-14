@@ -459,6 +459,10 @@ class ContentsManager(LoggingConfigurable):
         from_path must be a full path to a file.
         """
         path = from_path.strip("/")
+        dir_exists = self.dir_exists(path)
+        if not dir_exists:
+            raise HTTPError(404, "No such directory: %s" % path)
+
         if to_path is not None:
             to_path = to_path.strip("/")
 
@@ -752,6 +756,9 @@ class AsyncContentsManager(ContentsManager):
         Use `new` to create files with a fully specified path (including filename).
         """
         path = path.strip("/")
+        dir_exists = await ensure_async(self.dir_exists(path))
+        if not dir_exists:
+            raise HTTPError(404, "No such directory: %s" % path)
 
         model = {}
         if type:
@@ -816,6 +823,10 @@ class AsyncContentsManager(ContentsManager):
         from_path must be a full path to a file.
         """
         path = from_path.strip("/")
+        dir_exists = await self.dir_exists(path)
+        if not dir_exists:
+            raise HTTPError(404, "No such directory: %s" % path)
+
         if to_path is not None:
             to_path = to_path.strip("/")
 
