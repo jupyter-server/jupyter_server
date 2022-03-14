@@ -213,11 +213,15 @@ class ExtensionApp(JupyterApp):
     def _default_serverapp(self):
         # load the current global instance, if any
         if ServerApp.initialized():
-            return ServerApp.instance()
-        else:
-            # serverapp accessed before it was defined,
-            # declare an empty one
-            return ServerApp()
+            try:
+                return ServerApp.instance()
+            except Exception:
+                # error retrieving instance, e.g. MultipleInstanceError
+                pass
+
+        # serverapp accessed before it was defined,
+        # declare an empty one
+        return ServerApp()
 
     _log_formatter_cls = LogFormatter
 
