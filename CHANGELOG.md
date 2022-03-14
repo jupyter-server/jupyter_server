@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.15.2
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.15.1...9711822e157bd2ff2d4f8abe4c12a013223230e0))
+
+### Bugs fixed
+
+- Server extension paths [#730](https://github.com/jupyter-server/jupyter_server/pull/730) ([@minrk](https://github.com/minrk))
+- allow handlers to work without an authorizer in the Tornado settings [#717](https://github.com/jupyter-server/jupyter_server/pull/717) ([@Zsailer](https://github.com/Zsailer))
+
+### Maintenance and upkeep improvements
+
+- Skip nbclassic downstream tests for now [#725](https://github.com/jupyter-server/jupyter_server/pull/725) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-03-14&to=2022-03-14&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-03-14..2022-03-14&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2022-03-14..2022-03-14&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-03-14..2022-03-14&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.15.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.15.0...262cb46b95de2443c8552d80d6adade6bde5734b))
@@ -17,8 +38,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-03-14&to=2022-03-14&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-03-14..2022-03-14&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.15.0
 
