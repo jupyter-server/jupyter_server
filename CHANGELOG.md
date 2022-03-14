@@ -4,6 +4,50 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.15.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.13.5...6e0e49e720ee6626b5233df716b0fdb891b79793))
+
+### New features added
+
+- Add authorization layer to server request handlers [#165](https://github.com/jupyter-server/jupyter_server/pull/165) ([@Zsailer](https://github.com/Zsailer))
+
+### Enhancements made
+
+- Validate notebooks once per fetch or save [#724](https://github.com/jupyter-server/jupyter_server/pull/724) ([@kevin-bates](https://github.com/kevin-bates))
+- Register pre/post save hooks, call them sequentially [#696](https://github.com/jupyter-server/jupyter_server/pull/696) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Bugs fixed
+
+- Implement Required Methods in Async Manner [#721](https://github.com/jupyter-server/jupyter_server/pull/721) ([@jhamet93](https://github.com/jhamet93))
+- Call pre_save_hook only on first chunk of large files [#716](https://github.com/jupyter-server/jupyter_server/pull/716) ([@davidbrochart](https://github.com/davidbrochart))
+- Re-use ServerApp.config_file_paths for consistency [#715](https://github.com/jupyter-server/jupyter_server/pull/715) ([@minrk](https://github.com/minrk))
+- serverapp: Use .absolute() instead of .resolve() for symlinks [#712](https://github.com/jupyter-server/jupyter_server/pull/712) ([@EricCousineau-TRI](https://github.com/EricCousineau-TRI))
+- Fall back to legacy protocol if selected_subprotocol raises exception [#706](https://github.com/jupyter-server/jupyter_server/pull/706) ([@davidbrochart](https://github.com/davidbrochart))
+- Fix FilesHandler not meet RFC 6713 [#701](https://github.com/jupyter-server/jupyter_server/pull/701) ([@Wh1isper](https://github.com/Wh1isper))
+
+### Maintenance and upkeep improvements
+
+- Clean up CI [#723](https://github.com/jupyter-server/jupyter_server/pull/723) ([@blink1073](https://github.com/blink1073))
+- Clean up activity recording [#722](https://github.com/jupyter-server/jupyter_server/pull/722) ([@blink1073](https://github.com/blink1073))
+- Clean up Dependency Handling [#707](https://github.com/jupyter-server/jupyter_server/pull/707) ([@blink1073](https://github.com/blink1073))
+- Add Minimum Requirements Test [#704](https://github.com/jupyter-server/jupyter_server/pull/704) ([@blink1073](https://github.com/blink1073))
+- Clean up handling of tests [#700](https://github.com/jupyter-server/jupyter_server/pull/700) ([@blink1073](https://github.com/blink1073))
+- Refresh precommit [#698](https://github.com/jupyter-server/jupyter_server/pull/698) ([@blink1073](https://github.com/blink1073))
+- Use pytest-github-actions-annotate-failures [#694](https://github.com/jupyter-server/jupyter_server/pull/694) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Add WebSocket wire protocol documentation [#693](https://github.com/jupyter-server/jupyter_server/pull/693) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-02-05&to=2022-03-14&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-02-05..2022-03-14&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-02-05..2022-03-14&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2022-02-05..2022-03-14&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2022-02-05..2022-03-14&type=Issues) | [@EricCousineau-TRI](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AEricCousineau-TRI+updated%3A2022-02-05..2022-03-14&type=Issues) | [@jhamet93](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajhamet93+updated%3A2022-02-05..2022-03-14&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-02-05..2022-03-14&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2022-02-05..2022-03-14&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2022-02-05..2022-03-14&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-02-05..2022-03-14&type=Issues) | [@Wh1isper](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AWh1isper+updated%3A2022-02-05..2022-03-14&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-02-05..2022-03-14&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.13.5
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.13.4...cbc54fa3a99abdf1d2a8b5e35d33a74dd524d905))
@@ -32,8 +76,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-01-21&to=2022-02-05&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-01-21..2022-02-05&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-01-21..2022-02-05&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2022-01-21..2022-02-05&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2022-01-21..2022-02-05&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Agithub-actions+updated%3A2022-01-21..2022-02-05&type=Issues) | [@jasongrout](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajasongrout+updated%3A2022-01-21..2022-02-05&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2022-01-21..2022-02-05&type=Issues) | [@maartenbreddels](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amaartenbreddels+updated%3A2022-01-21..2022-02-05&type=Issues) | [@SylvainCorlay](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ASylvainCorlay+updated%3A2022-01-21..2022-02-05&type=Issues) | [@Vishwajeet0510](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AVishwajeet0510+updated%3A2022-01-21..2022-02-05&type=Issues) | [@vkaidalov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avkaidalov+updated%3A2022-01-21..2022-02-05&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-01-21..2022-02-05&type=Issues) | [@Wh1isper](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AWh1isper+updated%3A2022-01-21..2022-02-05&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-01-21..2022-02-05&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.13.4
 
