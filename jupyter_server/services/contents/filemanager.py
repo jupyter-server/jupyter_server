@@ -11,13 +11,11 @@ from datetime import datetime
 
 import nbformat
 from anyio.to_thread import run_sync
-from ipython_genutils.importstring import import_item
 from jupyter_core.paths import exists
 from jupyter_core.paths import is_file_hidden
 from jupyter_core.paths import is_hidden
 from send2trash import send2trash
 from tornado import web
-from traitlets import Any
 from traitlets import Bool
 from traitlets import default
 from traitlets import TraitError
@@ -53,48 +51,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             return self.parent.root_dir
         except AttributeError:
             return os.getcwd()
-
-    post_save_hook = Any(
-        None,
-        config=True,
-        allow_none=True,
-        help="""Python callable or importstring thereof
-
-        to be called on the path of a file just saved.
-
-        This can be used to process the file on disk,
-        such as converting the notebook to a script or HTML via nbconvert.
-
-        It will be called as (all arguments passed by keyword)::
-
-            hook(os_path=os_path, model=model, contents_manager=instance)
-
-        - path: the filesystem path to the file just written
-        - model: the model representing the file
-        - contents_manager: this ContentsManager instance
-        """,
-    )
-
-    @validate("post_save_hook")
-    def _validate_post_save_hook(self, proposal):
-        value = proposal["value"]
-        if isinstance(value, str):
-            value = import_item(value)
-        if not callable(value):
-            raise TraitError("post_save_hook must be callable")
-        return value
-
-    def run_post_save_hook(self, model, os_path):
-        """Run the post-save hook if defined, and log errors"""
-        if self.post_save_hook:
-            try:
-                self.log.debug("Running post-save hook on %s", os_path)
-                self.post_save_hook(os_path=os_path, model=model, contents_manager=self)
-            except Exception as e:
-                self.log.error("Post-save hook failed o-n %s", os_path, exc_info=True)
-                raise web.HTTPError(
-                    500, "Unexpected error while running post hook save: %s" % e
-                ) from e
 
     @validate("root_dir")
     def _validate_root_dir(self, proposal):
@@ -451,7 +407,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         """Save the file model and return the model with no content."""
         path = path.strip("/")
 
-        self.run_pre_save_hook(model=model, path=path)
+        self.run_pre_save_hooks(model=model, path=path)
 
         if "type" not in model:
             raise web.HTTPError(400, "No file type provided")
@@ -491,7 +447,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if validation_message:
             model["message"] = validation_message
 
-        self.run_post_save_hook(model=model, os_path=os_path)
+        self.run_post_save_hooks(model=model, os_path=os_path)
 
         return model
 
@@ -815,7 +771,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         if validation_message:
             model["message"] = validation_message
 
-        self.run_post_save_hook(model=model, os_path=os_path)
+        self.run_post_save_hooks(model=model, os_path=os_path)
 
         return model
 
