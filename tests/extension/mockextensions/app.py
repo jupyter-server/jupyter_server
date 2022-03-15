@@ -37,11 +37,11 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     mock_trait = Unicode("mock trait", config=True)
     loaded = False
 
-    serverapp_config = {"jpserver_extensions": {"tests.extension.mockextensions.mock1": True}}
+    serverapp_config = {"jpserver_extensions": {"mockextensions.mock1": True}}
 
     @staticmethod
     def get_extension_package():
-        return "tests.extension.mockextensions"
+        return "mockextensions"
 
     def initialize_handlers(self):
         self.handlers.append(("/mock", MockExtensionHandler))
