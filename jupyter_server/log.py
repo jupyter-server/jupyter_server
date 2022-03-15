@@ -52,7 +52,7 @@ def log_request(handler):
     if status >= 500 and status != 502:
         # Log a subset of the headers if it caused an error.
         headers = {}
-        for header in ['Host', 'Accept', 'Referer', 'User-Agent']:
+        for header in ["Host", "Accept", "Referer", "User-Agent"]:
             if header in request.headers:
                 headers[header] = request.headers[header]
         log_method(json.dumps(headers, indent=2))
