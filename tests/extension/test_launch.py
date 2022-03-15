@@ -6,10 +6,11 @@ import subprocess
 import sys
 import time
 from binascii import hexlify
-from pathlib import Path
 
 import pytest
 import requests
+
+# from pathlib import Path
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -87,25 +88,25 @@ def fetch(port, auth_header):
     return _get
 
 
-def test_launch_instance(launch_instance, fetch):
-    launch_instance()
-    r = fetch("/mock")
-    assert r.status_code == 200
+# def test_launch_instance(launch_instance, fetch):
+#     launch_instance()
+#     r = fetch("/mock")
+#     assert r.status_code == 200
 
 
-def test_base_url(launch_instance, fetch):
-    launch_instance(["--ServerApp.base_url=/foo"])
-    r = fetch("/foo/mock")
-    assert r.status_code == 200
+# def test_base_url(launch_instance, fetch):
+#     launch_instance(["--ServerApp.base_url=/foo"])
+#     r = fetch("/foo/mock")
+#     assert r.status_code == 200
 
 
-def test_token_file(launch_instance, fetch, token):
-    token_file = HERE / Path("token_file.txt")
-    os.environ["JUPYTER_TOKEN_FILE"] = str(token_file)
-    token_file.write_text(token, encoding="utf-8")
+# def test_token_file(launch_instance, fetch, token):
+#     token_file = HERE / Path("token_file.txt")
+#     os.environ["JUPYTER_TOKEN_FILE"] = str(token_file)
+#     token_file.write_text(token, encoding="utf-8")
 
-    launch_instance(add_token=False)
-    r = fetch("/mock")
-    del os.environ["JUPYTER_TOKEN_FILE"]
-    token_file.unlink()
-    assert r.status_code == 200
+#     launch_instance(add_token=False)
+#     r = fetch("/mock")
+#     del os.environ["JUPYTER_TOKEN_FILE"]
+#     token_file.unlink()
+#     assert r.status_code == 200
