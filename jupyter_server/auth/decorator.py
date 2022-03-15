@@ -14,23 +14,6 @@ from tornado.web import HTTPError
 from .utils import HTTP_METHOD_TO_AUTH_ACTION
 
 
-WARNED_ABOUT_DISABLED_AUTHORIZATION = False
-
-
-def raise_no_authorizer_warning():
-    warnings.warn(
-        "The Tornado web application does not have an 'authorizer' defined "
-        "in its settings. In future releases of jupyter_server, this will "
-        "be a required key for all subclasses of `JupyterHandler`. For an "
-        "example, see the jupyter_server source code for how to "
-        "add an authorizer to the tornado settings: "
-        "https://github.com/jupyter-server/jupyter_server/blob/"
-        "653740cbad7ce0c8a8752ce83e4d3c2c754b13cb/jupyter_server/serverapp.py"
-        "#L234-L256",
-        DeprecationWarning,
-    )
-
-
 def authorized(
     action: Optional[Union[str, Callable]] = None,
     resource: Optional[str] = None,
@@ -80,12 +63,17 @@ def authorized(
 
             # Handle the case where an authorizer wasn't attached to the handler.
             if not self.authorizer:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("default")
-                    global WARNED_ABOUT_DISABLED_AUTHORIZATION
-                    if not WARNED_ABOUT_DISABLED_AUTHORIZATION:
-                        raise_no_authorizer_warning()
-                        WARNED_ABOUT_DISABLED_AUTHORIZATION = True
+                warnings.warn(
+                    "The Tornado web application does not have an 'authorizer' defined "
+                    "in its settings. In future releases of jupyter_server, this will "
+                    "be a required key for all subclasses of `JupyterHandler`. For an "
+                    "example, see the jupyter_server source code for how to "
+                    "add an authorizer to the tornado settings: "
+                    "https://github.com/jupyter-server/jupyter_server/blob/"
+                    "653740cbad7ce0c8a8752ce83e4d3c2c754b13cb/jupyter_server/serverapp.py"
+                    "#L234-L256",
+                    FutureWarning,
+                )
                 return method(self, *args, **kwargs)
 
             # Only return the method if the action is authorized.
