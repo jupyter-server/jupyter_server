@@ -57,17 +57,19 @@ def launch_instance(request, port, token):
         if add_token:
             f'--ServerApp.token="{token}"',
 
+        root = Path(HERE).parent.parent
+
         process = subprocess.Popen(
             [
                 sys.executable,
                 "-m",
-                "mockextensions.app",
+                "tests.extension.mockextensions.app",
                 f"--port={port}",
                 "--ip=127.0.0.1",
                 "--no-browser",
                 *argv,
             ],
-            cwd=HERE,
+            cwd=str(root),
         )
 
         request.addfinalizer(_kill_extension_app)
