@@ -15,7 +15,7 @@ testpaths = [
 ]
 timeout = 300
 # Restore this setting to debug failures
-# timeout_method = "thread"
+timeout_method = "thread"
 
 [tool.jupyter-releaser]
 skip = ["check-links"]
