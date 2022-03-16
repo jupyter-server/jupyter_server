@@ -16,23 +16,20 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
-      # - name: Test nbclassic
-      #   uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
-      #   with:
-      #     package_name: nbclassic
-      #     test_command: pytest --pyargs nbclassic
+      - name: Test nbclassic
+        uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
+        with:
+          package_name: nbclassic
 
       - name: Test jupyterlab_server
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
         with:
           package_name: jupyterlab_server
-          test_command: pytest --pyargs jupyterlab_server
 
       - name: Test jupyterlab
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
         with:
           package_name: jupyterlab
-          package_spec: '".[test]"'
           test_command: "python -m jupyterlab.browser_check --no-browser-test"
 
       - name: Test run nbclassic
