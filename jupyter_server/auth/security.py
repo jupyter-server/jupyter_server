@@ -48,7 +48,7 @@ def passwd(passphrase=None, algorithm="argon2"):
 
     """
     if passphrase is None:
-        for i in range(3):
+        for _ in range(3):
             p0 = getpass.getpass("Enter password: ")
             p1 = getpass.getpass("Verify password: ")
             if p0 == p1:
@@ -161,7 +161,7 @@ def persist_config(config_file=None, mode=0o600):
 
     try:
         os.chmod(config_file, mode)
-    except Exception as e:
+    except Exception:
         tb = traceback.format_exc()
         warnings.warn("Failed to set permissions on %s:\n%s" % (config_file, tb), RuntimeWarning)
 

@@ -54,7 +54,7 @@ jobs:
       - name: Run the tests
         if: ${{ matrix.python-version != 'pypy-3.7' }}
         run: |
-          pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered || pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --lf
+          pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered  --cov-fail-under 70 || pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --cov-fail-under 70 --lf
       - name: Run the tests on pypy
         if: ${{ matrix.python-version == 'pypy-3.7' }}
         run: |

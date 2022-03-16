@@ -177,7 +177,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         # before connections are opened,
         # plus it is *very* unlikely that a busy kernel will not finish
         # establishing its zmq subscriptions before processing the next request.
-        if getattr(kernel, "execution_state") == "busy":
+        if getattr(kernel, "execution_state", None) == "busy":
             self.log.debug("Nudge: not nudging busy kernel %s", self.kernel_id)
             f = Future()
             f.set_result(None)
@@ -315,7 +315,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         idents, msg = self.session.feed_identities(msg)
         try:
             msg = self.session.deserialize(msg)
-        except:
+        except BaseException:
             self.log.error("Bad kernel_info reply", exc_info=True)
             self._kernel_info_future.set_result({})
             return
@@ -468,7 +468,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                     pass
                 # WebSockets don't respond to traditional error codes so we
                 # close the connection.
-                for channel, stream in self.channels.items():
+                for _, stream in self.channels.items():
                     if not stream.closed():
                         stream.close()
                 self.close()
@@ -478,7 +478,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         km.add_restart_callback(self.kernel_id, self.on_restart_failed, "dead")
 
         def subscribe(value):
-            for channel, stream in self.channels.items():
+            for _, stream in self.channels.items():
                 stream.on_recv_stream(self._on_zmq_reply)
 
         connected.add_done_callback(subscribe)
@@ -727,7 +727,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         # This method can be called twice, once by self.kernel_died and once
         # from the WebSocket close event. If the WebSocket connection is
         # closed before the ZMQ streams are setup, they could be None.
-        for channel, stream in self.channels.items():
+        for _, stream in self.channels.items():
             if stream is not None and not stream.closed():
                 stream.on_recv(None)
                 stream.close()

@@ -211,7 +211,7 @@ async def test_authorized_requests(
     body,
     allowed,
 ):
-    ### Setup stuff for the Contents API
+    # Setup stuff for the Contents API
     # Add a notebook on disk
     contents_dir = tmp_path / jp_serverapp.root_dir
     p = contents_dir / "dir_for_testing"
@@ -222,7 +222,7 @@ async def test_authorized_requests(
     nbname = p.joinpath("nb_for_testing.ipynb")
     nbname.write_text(nb, encoding="utf-8")
 
-    ### Setup
+    # Setup
     nbpath = "dir_for_testing/nb_for_testing.ipynb"
     kernelspec = NATIVE_KERNEL_NAME
     km = jp_serverapp.kernel_manager

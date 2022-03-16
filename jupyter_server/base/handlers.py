@@ -454,7 +454,7 @@ class JupyterHandler(AuthenticatedHandler):
             return
         try:
             return super(JupyterHandler, self).check_xsrf_cookie()
-        except web.HTTPError as e:
+        except web.HTTPError:
             if self.request.method in {"GET", "HEAD"}:
                 # Consider Referer a sufficient cross-origin check for GET requests
                 if not self.check_referer():

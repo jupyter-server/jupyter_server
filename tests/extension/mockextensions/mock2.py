@@ -1,6 +1,8 @@
 """A mock extension named `mock2` for testing purposes.
 """
 # by the test functions.
+
+
 def _jupyter_server_extension_paths():
     return [{"module": "tests.extension.mockextensions.mock2"}]
 

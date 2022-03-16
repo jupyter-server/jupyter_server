@@ -110,7 +110,7 @@ class TerminalManager(LoggingConfigurable, terminado.NamedTermManager):
         """
         if not self._initialized_culler and self.cull_inactive_timeout > 0:
             if self._culler_callback is None:
-                loop = IOLoop.current()
+                _ = IOLoop.current()
                 if self.cull_interval <= 0:  # handle case where user set invalid value
                     self.log.warning(
                         "Invalid value for 'cull_interval' detected (%s) - using default value (%s).",

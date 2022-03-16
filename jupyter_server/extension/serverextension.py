@@ -337,7 +337,7 @@ class ListServerExtensionsApp(BaseExtensionApp):
                     version = extension.version
                     self.log.info("      {} {} {}".format(name, version, GREEN_OK))
                 except Exception as err:
-                    self.log.warn("      {} {}".format(RED_X, err))
+                    self.log.warning("      {} {}".format(RED_X, err))
             # Add a blank line between paths.
             self.log.info("")
 

@@ -303,7 +303,7 @@ class MappingKernelManager(MultiKernelManager):
         """
 
         if not self.buffer_offline_messages:
-            for channel, stream in channels.items():
+            for _, stream in channels.items():
                 stream.close()
             return
 
@@ -545,7 +545,7 @@ class MappingKernelManager(MultiKernelManager):
         """
         if not self._initialized_culler and self.cull_idle_timeout > 0:
             if self._culler_callback is None:
-                loop = IOLoop.current()
+                _ = IOLoop.current()
                 if self.cull_interval <= 0:  # handle case where user set invalid value
                     self.log.warning(
                         "Invalid value for 'cull_interval' detected (%s) - using default value (%s).",
@@ -589,7 +589,7 @@ class MappingKernelManager(MultiKernelManager):
     async def cull_kernel_if_idle(self, kernel_id):
         kernel = self._kernels[kernel_id]
 
-        if getattr(kernel, "execution_state") == "dead":
+        if getattr(kernel, "execution_state", None) == "dead":
             self.log.warning(
                 "Culling '%s' dead kernel '%s' (%s).",
                 kernel.execution_state,

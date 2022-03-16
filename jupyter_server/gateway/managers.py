@@ -125,9 +125,11 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         # Remove any of our kernels that may have been culled on the gateway server
         our_kernels = self._kernels.copy()
         culled_ids = []
-        for kid, km in our_kernels.items():
+        for kid, _ in our_kernels.items():
             if kid not in kernel_models:
-                self.log.warn(f"Kernel {kid} no longer active - probably culled on Gateway server.")
+                self.log.warning(
+                    f"Kernel {kid} no longer active - probably culled on Gateway server."
+                )
                 self._kernels.pop(kid, None)
                 culled_ids.append(kid)  # TODO: Figure out what do with these.
         return list(kernel_models.values())
@@ -606,7 +608,7 @@ class GatewayKernelClient(AsyncKernelClient):
             "channels",
         )
         # Gather cert info in case where ssl is desired...
-        ssl_options = dict()
+        ssl_options = {}
         ssl_options["ca_certs"] = GatewayClient.instance().ca_certs
         ssl_options["certfile"] = GatewayClient.instance().client_cert
         ssl_options["keyfile"] = GatewayClient.instance().client_key

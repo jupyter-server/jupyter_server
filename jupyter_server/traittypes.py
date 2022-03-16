@@ -85,7 +85,7 @@ class TypeFromClasses(ClassBasedTraitType):
                 klass = klass.__module__ + "." + klass.__name__
             result += f"{klass} or "
         # Strip the last "or"
-        result = result.strip(" or ")
+        result = result.strip(" or ")  # noqa B005
         if self.allow_none:
             return result + " or None"
         return result
@@ -103,7 +103,7 @@ class TypeFromClasses(ClassBasedTraitType):
                 try:
                     klass = self._resolve_string(klass)
                     self.importable_klasses.append(klass)
-                except:
+                except Exception:
                     pass
             else:
                 self.importable_klasses.append(klass)
@@ -189,7 +189,7 @@ class InstanceFromClasses(ClassBasedTraitType):
             else:
                 result += describe("a", klass)
             result += " or "
-        result = result.strip(" or ")
+        result = result.strip(" or ")  # noqa B005
         if self.allow_none:
             result += " or None"
         return result
@@ -207,7 +207,7 @@ class InstanceFromClasses(ClassBasedTraitType):
                 try:
                     klass = self._resolve_string(klass)
                     self.importable_klasses.append(klass)
-                except:
+                except Exception:
                     pass
             else:
                 self.importable_klasses.append(klass)

@@ -275,7 +275,7 @@ class SessionManager(LoggingConfigurable):
                 )
             )
             if tolerate_culled:
-                self.log.warning(msg + "  Continuing...")
+                self.log.warning(f"{msg}  Continuing...")
                 return
             raise KeyError(msg)
 

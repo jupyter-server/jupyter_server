@@ -45,7 +45,9 @@ def wait_up(url, interval=0.1, check=None):
 
 @pytest.fixture
 def launch_instance(request, port, token):
-    def _run_in_subprocess(argv=[], add_token=True):
+    def _run_in_subprocess(argv=None, add_token=True):
+        argv = argv or []
+
         def _kill_extension_app():
             try:
                 process.terminate()

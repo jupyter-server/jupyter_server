@@ -57,7 +57,7 @@ class SimpleApp11(SimpleApp1):
 
     def initialize_settings(self):
         self.log.info("hello: {}".format(self.hello))
-        if self.hello == True:
+        if self.hello is True:
             self.log.info(
                 "Hello Simple11: You have launched with --hello flag or defined 'c.SimpleApp1.hello == True' in your config file"
             )
