@@ -21,7 +21,7 @@ TEST_TIMEOUT = 60
 
 
 def j(r):
-    json.loads(r.body.decode())
+    return json.loads(r.body.decode())
 
 
 class NewPortsKernelManager(AsyncIOLoopKernelManager):
