@@ -8,6 +8,7 @@ from tornado import web
 from ..base.handlers import JupyterHandler
 from ..base.zmqhandlers import WebSocketMixin
 from jupyter_server._tz import utcnow
+from jupyter_server.auth.utils import warn_disabled_authorization
 
 AUTH_RESOURCE = "terminals"
 
@@ -28,7 +29,11 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
         if not user:
             raise web.HTTPError(403)
 
-        if not self.authorizer.is_authorized(self, user, "execute", self.auth_resource):
+        # authorize the user.
+        if not self.authorizer:
+            # Warn if there is not authorizer.
+            warn_disabled_authorization()
+        elif not self.authorizer.is_authorized(self, user, "execute", self.auth_resource):
             raise web.HTTPError(403)
 
         if not args[0] in self.term_manager.terminals:
