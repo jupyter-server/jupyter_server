@@ -14,20 +14,6 @@ from tornado.web import HTTPError
 from .utils import HTTP_METHOD_TO_AUTH_ACTION
 
 
-def raise_no_authorizer_warning():
-    warnings.warn(
-        "The Tornado web application does not have an 'authorizer' defined "
-        "in its settings. In future releases of jupyter_server, this will "
-        "be a required key for all subclasses of `JupyterHandler`. For an "
-        "example, see the jupyter_server source code for how to "
-        "add an authorizer to the tornado settings: "
-        "https://github.com/jupyter-server/jupyter_server/blob/"
-        "653740cbad7ce0c8a8752ce83e4d3c2c754b13cb/jupyter_server/serverapp.py"
-        "#L234-L256",
-        # stacklevel=2
-    )
-
-
 def authorized(
     action: Optional[Union[str, Callable]] = None,
     resource: Optional[str] = None,
@@ -74,17 +60,28 @@ def authorized(
             if not user:
                 app_log.warning("Attempting to authorize request without authentication!")
                 raise HTTPError(status_code=403, log_message=message)
-            # If the user is allowed to do this action,
-            # call the method.
+
+            # Handle the case where an authorizer wasn't attached to the handler.
             if not self.authorizer:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("once")
-                    raise_no_authorizer_warning()
-            elif self.authorizer.is_authorized(self, user, action, resource):
+                warnings.warn(
+                    "The Tornado web application does not have an 'authorizer' defined "
+                    "in its settings. In future releases of jupyter_server, this will "
+                    "be a required key for all subclasses of `JupyterHandler`. For an "
+                    "example, see the jupyter_server source code for how to "
+                    "add an authorizer to the tornado settings: "
+                    "https://github.com/jupyter-server/jupyter_server/blob/"
+                    "653740cbad7ce0c8a8752ce83e4d3c2c754b13cb/jupyter_server/serverapp.py"
+                    "#L234-L256",
+                    FutureWarning,
+                )
                 return method(self, *args, **kwargs)
-            # else raise an exception.
-            else:
-                raise HTTPError(status_code=403, log_message=message)
+
+            # Only return the method if the action is authorized.
+            if self.authorizer.is_authorized(self, user, action, resource):
+                return method(self, *args, **kwargs)
+
+            # Raise an exception if the method wasn't returned (i.e. not authorized)
+            raise HTTPError(status_code=403, log_message=message)
 
         return inner
 
