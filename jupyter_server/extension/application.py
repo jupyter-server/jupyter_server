@@ -8,11 +8,11 @@ from jupyter_core.application import JupyterApp
 from jupyter_core.application import NoStart
 from tornado.log import LogFormatter
 from tornado.web import RedirectHandler
+from traitlets import Any
 from traitlets import Bool
 from traitlets import default
 from traitlets import Dict
 from traitlets import HasTraits
-from traitlets import Instance
 from traitlets import List
 from traitlets import Unicode
 from traitlets.config import Config
@@ -207,7 +207,7 @@ class ExtensionApp(JupyterApp):
     ]
 
     # A ServerApp is not defined yet, but will be initialized below.
-    serverapp = Instance(ServerApp)
+    serverapp = Any()
 
     @default("serverapp")
     def _default_serverapp(self):
