@@ -4,6 +4,21 @@
 # Distributed under the terms of the Modified BSD License.
 import importlib
 import re
+import warnings
+
+
+def warn_disabled_authorization():
+    warnings.warn(
+        "The Tornado web application does not have an 'authorizer' defined "
+        "in its settings. In future releases of jupyter_server, this will "
+        "be a required key for all subclasses of `JupyterHandler`. For an "
+        "example, see the jupyter_server source code for how to "
+        "add an authorizer to the tornado settings: "
+        "https://github.com/jupyter-server/jupyter_server/blob/"
+        "653740cbad7ce0c8a8752ce83e4d3c2c754b13cb/jupyter_server/serverapp.py"
+        "#L234-L256",
+        FutureWarning,
+    )
 
 
 HTTP_METHOD_TO_AUTH_ACTION = {
