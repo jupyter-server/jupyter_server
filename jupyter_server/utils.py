@@ -217,6 +217,7 @@ def run_sync(maybe_async):
         # that was not something async, just return it
         return maybe_async
     # it is async, we need to run it in an event loop
+
     def wrapped():
         create_new_event_loop = False
         try:

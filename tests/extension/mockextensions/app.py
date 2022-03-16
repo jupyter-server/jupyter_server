@@ -13,6 +13,8 @@ STATIC_PATH = os.path.join(os.path.dirname(__file__), "static")
 
 # Function that makes these extensions discoverable
 # by the test functions.
+
+
 def _jupyter_server_extension_points():
     return [{"module": __name__, "app": MockExtensionApp}]
 

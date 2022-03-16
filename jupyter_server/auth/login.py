@@ -229,10 +229,10 @@ class LoginHandler(JupyterHandler):
         if not app.ip:
             warning = "WARNING: The Jupyter server is listening on all IP addresses"
             if ssl_options is None:
-                app.log.warning(warning + " and not using encryption. This " "is not recommended.")
+                app.log.warning(f"{warning} and not using encryption. This is not recommended.")
             if not app.password and not app.token:
                 app.log.warning(
-                    warning + " and not using authentication. "
+                    f"{warning} and not using authentication. "
                     "This is highly insecure and not recommended."
                 )
         else:

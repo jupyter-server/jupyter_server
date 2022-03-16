@@ -505,7 +505,7 @@ class ContentsManager(LoggingConfigurable):
                 validate_nb(model["content"])
         except ValidationError as e:
             model["message"] = "Notebook validation failed: {}:\n{}".format(
-                e.message,
+                str(e),
                 json.dumps(e.instance, indent=1, default=lambda obj: "<UNKNOWN>"),
             )
         return model

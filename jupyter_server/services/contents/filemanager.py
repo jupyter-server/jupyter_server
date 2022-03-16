@@ -500,7 +500,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 return
             else:
                 self.log.warning(
-                    "Skipping trash for %s, on different device " "to home directory",
+                    "Skipping trash for %s, on different device to home directory",
                     os_path,
                 )
 
@@ -833,7 +833,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 return
             else:
                 self.log.warning(
-                    "Skipping trash for %s, on different device " "to home directory",
+                    "Skipping trash for %s, on different device to home directory",
                     os_path,
                 )
 

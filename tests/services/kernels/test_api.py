@@ -21,7 +21,7 @@ def pending_kernel_is_ready(jp_serverapp):
         km = jp_serverapp.kernel_manager
         if getattr(km, "use_pending_kernels", False):
             kernel = km.get_kernel(kernel_id)
-            if getattr(kernel, "ready"):
+            if getattr(kernel, "ready", None):
                 await kernel.ready
 
     return _
@@ -263,7 +263,7 @@ async def test_connection(
     # Close websocket
     ws.close()
     # give it some time to close on the other side:
-    for i in range(10):
+    for _ in range(10):
         r = await jp_fetch("api", "kernels", kid, method="GET")
         model = json.loads(r.body.decode())
         if model["connections"] > 0:

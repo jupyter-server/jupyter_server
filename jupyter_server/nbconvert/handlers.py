@@ -30,7 +30,7 @@ else:
 
 def find_resource_files(output_files_dir):
     files = []
-    for dirpath, dirnames, filenames in os.walk(output_files_dir):
+    for dirpath, _, filenames in os.walk(output_files_dir):
         files.extend([os.path.join(dirpath, f) for f in filenames])
     return files
 

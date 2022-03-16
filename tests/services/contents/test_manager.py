@@ -442,7 +442,7 @@ async def test_get(jp_contents_manager):
         elif entry["path"] == file_model_no_content["path"]:
             assert entry == file_model_no_content
         else:
-            assert False, "Unexpected directory entry: %s" % entry()
+            raise AssertionError("Unexpected directory entry: %s" % entry())
 
     with pytest.raises(HTTPError):
         await ensure_async(cm.get("foo", type="file"))
@@ -579,7 +579,7 @@ async def test_delete_non_empty_folder(delete_to_trash, always_delete, error, jp
             await ensure_async(cm.delete_file(dir))
     else:
         await ensure_async(cm.delete_file(dir))
-        assert await ensure_async(cm.dir_exists(dir)) == False
+        assert await ensure_async(cm.dir_exists(dir)) is False
 
 
 async def test_rename(jp_contents_manager):

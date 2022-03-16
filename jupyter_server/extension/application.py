@@ -543,7 +543,7 @@ class ExtensionApp(JupyterApp):
         extension.initialize()
 
     @classmethod
-    def initialize_server(cls, argv=[], load_other_extensions=True, **kwargs):
+    def initialize_server(cls, argv=None, load_other_extensions=True, **kwargs):
         """Creates an instance of ServerApp and explicitly sets
         this extension to enabled=True (i.e. superceding disabling
         found in other config from files).
@@ -560,7 +560,7 @@ class ExtensionApp(JupyterApp):
         serverapp = ServerApp.instance(jpserver_extensions=jpserver_extensions, **kwargs)
         serverapp.aliases.update(cls.aliases)
         serverapp.initialize(
-            argv=argv,
+            argv=argv or [],
             starter_extension=cls.name,
             find_extensions=find_extensions,
         )

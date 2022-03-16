@@ -44,7 +44,7 @@ kernelspecs = {
 
 
 # maintain a dictionary of expected running kernels.  Key = kernel_id, Value = model.
-running_kernels = dict()
+running_kernels = {}
 
 
 def generate_model(name):

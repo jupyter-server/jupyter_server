@@ -113,7 +113,7 @@ def atomic_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
 
     try:
         yield fileobj
-    except:
+    except BaseException:
         # Failed! Move the backup file back to the real path to avoid corruption
         fileobj.close()
         replace_file(tmp_path, path)
@@ -161,7 +161,7 @@ def _simple_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
 
     try:
         yield fileobj
-    except:
+    except BaseException:
         fileobj.close()
         raise
 
@@ -219,7 +219,7 @@ class FileManagerMixin(Configurable):
         """context manager for turning permission errors into 403."""
         try:
             yield
-        except (OSError, IOError) as e:
+        except OSError as e:
             if e.errno in {errno.EPERM, errno.EACCES}:
                 # make 403 error message without root prefix
                 # this may not work perfectly on unicode paths on Python 2,

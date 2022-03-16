@@ -40,13 +40,13 @@ def http_server_port(jp_unix_socket_file, jp_process_id):
 def jp_unix_socket_fetch(jp_unix_socket_file, jp_auth_header, jp_base_url, http_server, io_loop):
     """A fetch fixture for Jupyter Server tests that use the unix_serverapp fixture"""
 
-    async def client(*parts, headers={}, params={}, **kwargs):
+    async def client(*parts, headers=None, params=None, **kwargs):
         # Handle URL strings
         host_url = urlencode_unix_socket(jp_unix_socket_file)
         path_url = url_path_join(jp_base_url, *parts)
-        params_url = urllib.parse.urlencode(params)
+        params_url = urllib.parse.urlencode(params or {})
         url = url_path_join(host_url, path_url + "?" + params_url)
-        r = await async_fetch(url, headers=headers, io_loop=io_loop, **kwargs)
+        r = await async_fetch(url, headers=headers or {}, io_loop=io_loop, **kwargs)
         return r
 
     return client
@@ -59,7 +59,7 @@ async def test_get_spec(jp_unix_socket_fetch):
     # Make request and verify it succeeds.'
     response = await jp_unix_socket_fetch(*parts)
     assert response.code == 200
-    assert response.body != None
+    assert response.body is not None
 
 
 async def test_list_running_servers(jp_unix_socket_file, http_server):
