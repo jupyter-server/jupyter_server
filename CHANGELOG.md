@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.15.6
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.15.5...7fbaa767c71302cc756bdf1fb11fcbf1b3768dcc))
+
+### Bugs fixed
+
+- Missing warning when no authorizer in found ZMQ handlers [#744](https://github.com/jupyter-server/jupyter_server/pull/744) ([@Zsailer](https://github.com/Zsailer))
+
+### Maintenance and upkeep improvements
+
+- More CI Cleanup [#742](https://github.com/jupyter-server/jupyter_server/pull/742) ([@blink1073](https://github.com/blink1073))
+- Clean up downstream tests [#741](https://github.com/jupyter-server/jupyter_server/pull/741) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-03-16&to=2022-03-16&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-03-16..2022-03-16&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-03-16..2022-03-16&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-03-16..2022-03-16&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.15.5
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.15.4...67f6140ebca60bfde0fb068f10b428320c6c67cd))
@@ -22,8 +43,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-03-15&to=2022-03-16&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-03-15..2022-03-16&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-03-15..2022-03-16&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2022-03-15..2022-03-16&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-03-15..2022-03-16&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.15.3
 
