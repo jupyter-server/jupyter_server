@@ -59,7 +59,7 @@ jobs:
           pip freeze
           pip check
       - name: Run the tests
-        if: ${{ matrix.python-version != 'pypy-3.7' && matrix.os == 'windows' }}
+        if: ${{ matrix.python-version != 'pypy-3.7' && matrix.os != 'windows' }}
         run: |
           args="-vv -raXxs --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --durations 10 --color=yes --cov-fail-under 70"
           pytest $args || pytest $args --lf
