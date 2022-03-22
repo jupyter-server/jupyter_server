@@ -73,7 +73,7 @@ jobs:
           cd examples/simple && pip install -e .
       - name: Run the tests for the examples
         run: |
-          pytest examples/simple
+          python -m pytest examples/simple
       - name: Coverage
         if: ${{ matrix.python-version != 'pypy-3.7' }}
         run: |
