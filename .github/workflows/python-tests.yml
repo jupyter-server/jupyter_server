@@ -57,7 +57,7 @@ jobs:
       - name: Run the tests
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
         run: |
-          args="-vv -raXxs --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --durations 10 --color=yes --cov-fail-under 70"
+          args="-vv -raXs --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --durations 10 --color=yes --cov-fail-under 70"
           python -m pytest $args || python -m pytest $args --lf
       - name: Run the tests on pypy and windows
         if: ${{ startsWith(matrix.python-version, 'pypy-3.7') || startsWith(matrix.os, 'windows') }}
@@ -67,7 +67,7 @@ jobs:
           # the file descriptions opened by the asyncio IOLoop.
           # This leads to a nasty, flaky race condition that we haven't
           # been able to solve.
-          pytest -vv -s || pytest -vv -s --lf
+          python -m pytest -vv -raXs || python -m pytest -vv -raXs --lf
       - name: Install the Python dependencies for the examples
         run: |
           cd examples/simple && pip install -e .
@@ -98,7 +98,7 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
       - name: Run the unit tests
         run: |
-          args="-vv -raXxs --durations 10 --color=yes"
+          args="-vv -raXs --durations 10 --color=yes"
           pytest $args || pytest $args --lf
 
   test_prereleases:
@@ -119,7 +119,7 @@ jobs:
           pip check
       - name: Run the tests
         run: |
-          args="-vv -raXxs --durations 10 --color=yes"
+          args="-vv -raXs --durations 10 --color=yes"
           pytest $args || pytest $args --lf
 
   make_sdist:
@@ -161,5 +161,5 @@ jobs:
       - name: Run Test
         run: |
           cd sdist/test
-          args="-vv -raXxs --durations 10 --color=yes"
+          args="-vv -raXs --durations 10 --color=yes"
           pytest $args || pytest $args --lf
