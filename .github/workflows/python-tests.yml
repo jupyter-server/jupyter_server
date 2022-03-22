@@ -84,7 +84,7 @@ jobs:
           pip install -r doc-requirements.txt
           make html SPHINXOPTS="-W"
 
-  test_miniumum_verisons:
+  test_miniumum_versions:
     name: Test Minimum Versions
     timeout-minutes: 20
     runs-on: ubuntu-latest
