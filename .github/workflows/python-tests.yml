@@ -38,10 +38,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "pypy-3.7"]
-        exclude:
+        python-version: ["3.7", "3.10"]
+        include:
           - os: windows-latest
-            python-version: pypy-3.7
+            python-version: "3.9"
+          - os: ubuntu-latest
+            python-version: "pypy-3.7"
+          - os: macos-latest
+            python-version: "3.8"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -50,34 +54,34 @@ jobs:
       - name: Install the Python dependencies
         run: |
           pip install -e ".[test]" codecov
-      - name: List installed packages
-        run: |
-          pip freeze
-          pip check
       - name: Run the tests
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
         run: |
           args="-vv -raXs --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --durations 10 --color=yes --cov-fail-under 70"
           python -m pytest $args || python -m pytest $args --lf
       - name: Run the tests on pypy and windows
-        if: ${{ startsWith(matrix.python-version, 'pypy-3.7') || startsWith(matrix.os, 'windows') }}
+        if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(matrix.os, 'windows') }}
         run: |
-          # Disable capturing (-s) output from Pytest on Windows and PyPy.
-          # For an unknown reason, capturing output interferes with
-          # the file descriptions opened by the asyncio IOLoop.
-          # This leads to a nasty, flaky race condition that we haven't
-          # been able to solve.
           python -m pytest -vv -raXs || python -m pytest -vv -raXs --lf
+      - name: Coverage
+        run: |
+          codecov
+
+  test_docs_and_examples:
+    name: Test Docs and Examples
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Install the Python dependencies for the examples
         run: |
+          pip install -e ".[test]"
           cd examples/simple && pip install -e .
       - name: Run the tests for the examples
         run: |
           python -m pytest examples/simple
-      - name: Coverage
-        if: ${{ matrix.python-version != 'pypy-3.7' }}
-        run: |
-          codecov
       - name: Test the docs
         run: |
           cd docs
@@ -154,10 +158,9 @@ jobs:
           set -ex
           cd sdist
           mkdir test
-          tar --strip-components=1 -zxvf jupyter_server* -C ./test
+          tar --strip-components=1 -zxvf *.tar.gz -C ./test
           cd test
           pip install .[test]
-          pip install pytest-github-actions-annotate-failures
       - name: Run Test
         run: |
           cd sdist/test
