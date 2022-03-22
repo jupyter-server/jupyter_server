@@ -6,10 +6,6 @@ on:
   schedule:
     - cron: "0 8 * * *"
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
   # Run "pre-commit run --all-files"
   pre-commit:
