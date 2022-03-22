@@ -1,10 +1,14 @@
-name: Jupyter Server Tests [Linux]
+name: Jupyter Server Tests
 on:
   push:
     branches: ["main"]
   pull_request:
   schedule:
     - cron: "0 8 * * *"
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   # Run "pre-commit run --all-files"
@@ -37,8 +41,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.7", "3.8", "3.9", "3.10", "pypy-3.7"]
+        exclude:
+          - os: windows
+            python-version: pypy-3.7
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -52,13 +59,19 @@ jobs:
           pip freeze
           pip check
       - name: Run the tests
-        if: ${{ matrix.python-version != 'pypy-3.7' }}
+        if: ${{ matrix.python-version != 'pypy-3.7' && matrix.os == 'windows' }}
         run: |
-          pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered  --cov-fail-under 70 || pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --cov-fail-under 70 --lf
-      - name: Run the tests on pypy
-        if: ${{ matrix.python-version == 'pypy-3.7' }}
+          args="-vv -raXxs --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --durations 10 --color=yes --cov-fail-under 70"
+          pytest $args || pytest $args --lf
+      - name: Run the tests on pypy and windows
+        if: ${{ matrix.python-version == 'pypy-3.7' || matrix.os == 'windows' }}
         run: |
-          pytest -vv || pytest -vv -lf
+          # Disable capturing (-s) output from Pytest on Windows and PyPy.
+          # For an unknown reason, capturing output interferes with
+          # the file descriptions opened by the asyncio IOLoop.
+          # This leads to a nasty, flaky race condition that we haven't
+          # been able to solve.
+          pytest -vv -s || pytest -vv -s --lf
       - name: Install the Python dependencies for the examples
         run: |
           cd examples/simple && pip install -e .
@@ -88,7 +101,9 @@ jobs:
       - name: Install miniumum versions
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
       - name: Run the unit tests
-        run: pytest -vv|| pytest -vv --lf
+        run: |
+          args="-vv -raXxs --durations 10 --color=yes"
+          pytest $args || pytest $args --lf
 
   test_prereleases:
     name: Test Prereleases
@@ -108,7 +123,8 @@ jobs:
           pip check
       - name: Run the tests
         run: |
-          pytest -vv || pytest -vv --lf
+          args="-vv -raXxs --durations 10 --color=yes"
+          pytest $args || pytest $args --lf
 
   make_sdist:
     name: Make SDist
@@ -149,4 +165,5 @@ jobs:
       - name: Run Test
         run: |
           cd sdist/test
-          pytest -vv || pytest -vv --lf
+          args="-vv -raXxs --durations 10 --color=yes"
+          pytest $args || pytest $args --lf
