@@ -189,15 +189,9 @@ class MappingKernelManager(MultiKernelManager):
         return os_path
 
     async def _remove_kernel_when_ready(self, kernel_id, kernel_awaitable):
-        try:
-            await super()._remove_kernel_when_ready(kernel_id, kernel_awaitable)
-        finally:
-            # Unlike its async sibling method in AsyncMappingKernelManager, removing the kernel_id
-            # from the connections dictionary isn't as problematic before the shutdown since the
-            # method is synchronous.  However, we'll keep the relative call orders the same from
-            # a maintenance perspective.
-            self._kernel_connections.pop(kernel_id, None)
-            self._kernel_ports.pop(kernel_id, None)
+        await super()._remove_kernel_when_ready(kernel_id, kernel_awaitable)
+        self._kernel_connections.pop(kernel_id, None)
+        self._kernel_ports.pop(kernel_id, None)
 
     async def start_kernel(self, kernel_id=None, path=None, **kwargs):
         """Start a kernel for a session and return its kernel_id.
