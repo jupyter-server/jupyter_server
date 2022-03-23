@@ -21,16 +21,21 @@ from jupyter_server.traittypes import InstanceFromClasses
 from jupyter_server.utils import ensure_async
 
 from dataclasses import dataclass
+from dataclasses import fields
 
 
 @dataclass
-class SessionRecord:
+class KernelRecord:
+    """A temporary record.
+
+    Two records are equal if they share the
+    """
+
     session_id: Union[None, str] = None
     kernel_id: Union[None, str] = None
-    recorded: Union[None, bool] = None
 
-    def __eq__(self, other: "SessionRecord") -> bool:
-        if isinstance(other, SessionRecord):
+    def __eq__(self, other: "KernelRecord") -> bool:
+        if isinstance(other, KernelRecord):
             if any(
                 [
                     # Check if the session_id matches
@@ -41,6 +46,31 @@ class SessionRecord:
             ):
                 return True
         return False
+
+    def update(self, other: "KernelRecord") -> None:
+        """Updates in-place a kernel from other (only accepts positive updates"""
+        for field in fields(self):
+            if hasattr(other, field.name) and getattr(other, field.name):
+                setattr(self, field.name, getattr(other, field.name))
+
+
+class KernelRecordList:
+
+    _records = []
+
+    def __str__(self):
+        return str(self._records)
+
+    def update(self, record: KernelRecord) -> None:
+        try:
+            idx = self._records.index(record)
+            self._records[idx].update(record)
+        except ValueError:
+            self.append(record)
+
+    def remove(self, record: KernelRecord) -> None:
+        if record in self._records:
+            self._records.remove(record)
 
 
 class SessionManager(LoggingConfigurable):
@@ -83,7 +113,7 @@ class SessionManager(LoggingConfigurable):
         ]
     )
 
-    _pending_session = []
+    _pending_kernels = KernelRecordList()
 
     # Session database initialized below
     _cursor = None
@@ -145,15 +175,19 @@ class SessionManager(LoggingConfigurable):
     ):
         """Creates a session and returns its model"""
         session_id = self.new_session_id()
+        record = KernelRecord(session_id=session_id)
+        self._pending_kernels.update(record)
         if kernel_id is not None and kernel_id in self.kernel_manager:
             pass
         else:
             kernel_id = await self.start_kernel_for_session(
                 session_id, path, name, type, kernel_name
             )
+        self._pending_kernels.update(record)
         result = await self.save_session(
             session_id, path=path, name=name, type=type, kernel_id=kernel_id
         )
+        self._pending_kernels.remove(record)
         return result
 
     async def start_kernel_for_session(self, session_id, path, name, type, kernel_name):
@@ -332,6 +366,9 @@ class SessionManager(LoggingConfigurable):
 
     async def delete_session(self, session_id):
         """Deletes the row in the session database with given session_id"""
+        record = KernelRecord(session_id=session_id)
+        self._pending_kernels.update(record)
         session = await self.get_session(session_id=session_id)
         await ensure_async(self.kernel_manager.shutdown_kernel(session["kernel"]["id"]))
         self.cursor.execute("DELETE FROM session WHERE session_id=?", (session_id,))
+        self._pending_kernels.remove(record)
