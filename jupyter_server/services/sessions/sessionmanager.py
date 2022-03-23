@@ -14,8 +14,33 @@ from tornado import web
 from traitlets import Instance, TraitError, Unicode, validate
 from traitlets.config.configurable import LoggingConfigurable
 
+from typing import Union
+
+from jupyter_server.utils import ensure_async
 from jupyter_server.traittypes import InstanceFromClasses
 from jupyter_server.utils import ensure_async
+
+from dataclasses import dataclass
+
+
+@dataclass
+class SessionRecord:
+    session_id: Union[None, str] = None
+    kernel_id: Union[None, str] = None
+    recorded: Union[None, bool] = None
+
+    def __eq__(self, other: "SessionRecord") -> bool:
+        if isinstance(other, SessionRecord):
+            if any(
+                [
+                    # Check if the session_id matches
+                    self.session_id and other.session_id and self.session_id == other.session_id,
+                    # Check if the kernel_id matches.
+                    self.kernel_id and other.kernel_id and self.kernel_id == other.kernel_id,
+                ]
+            ):
+                return True
+        return False
 
 
 class SessionManager(LoggingConfigurable):
@@ -57,6 +82,8 @@ class SessionManager(LoggingConfigurable):
             "notebook.services.contents.manager.ContentsManager",
         ]
     )
+
+    _pending_session = []
 
     # Session database initialized below
     _cursor = None
