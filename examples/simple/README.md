@@ -15,7 +15,7 @@ git clone https://github.com/jupyter/jupyter_server && \
   pip install -e .[test]
 ```
 
-**OPTIONAL** If you want to build the Typescript code, you need [npm](https://www.npmjs.com) on your local environement. Compiled javascript is provided as artifact in this repository, so this Typescript build step is optional. The Typescript source and configuration have been taken from https://github.com/markellekelly/jupyter-server-example.
+**OPTIONAL** If you want to build the Typescript code, you need [npm](https://www.npmjs.com) on your local environment. Compiled javascript is provided as artifact in this repository, so this Typescript build step is optional. The Typescript source and configuration have been taken from https://github.com/markellekelly/jupyter-server-example.
 
 ```bash
 npm install && \
@@ -88,7 +88,7 @@ The following command starts both the `simple_ext1` and `simple_ext2` extensions
 jupyter server --ServerApp.jpserver_extensions="{'simple_ext1': True, 'simple_ext2': True}"
 ```
 
-Check that the previous `Extension 1` content is still available ant that you can also render `Extension 2` Server content in your browser.
+Check that the previous `Extension 1` content is still available and that you can also render `Extension 2` Server content in your browser.
 
 ```bash
 # HTML static page.
