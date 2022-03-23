@@ -24,9 +24,15 @@ from dataclasses import dataclass
 from dataclasses import fields
 
 
+class KernelRecordConflict(Exception):
+    """An exception raised when"""
+
+    pass
+
+
 @dataclass
 class KernelRecord:
-    """A temporary record.
+    """A record object for tracking a Jupyter Server Kernel Session.
 
     Two records are equal if they share the
     """
@@ -36,39 +42,102 @@ class KernelRecord:
 
     def __eq__(self, other: "KernelRecord") -> bool:
         if isinstance(other, KernelRecord):
-            if any(
+            condition1 = self.kernel_id and self.kernel_id == other.kernel_id
+            condition2 = all(
                 [
-                    # Check if the session_id matches
-                    self.session_id and other.session_id and self.session_id == other.session_id,
-                    # Check if the kernel_id matches.
-                    self.kernel_id and other.kernel_id and self.kernel_id == other.kernel_id,
+                    self.session_id == other.session_id,
+                    self.kernel_id is None or other.kernel_id is None,
+                ]
+            )
+            if any([condition1, condition2]):
+                return True
+            # If two records share session_id but have different kernels, this is
+            # and ill-posed expression. This should never be true. Raise an exception
+            # to inform the user.
+            if all(
+                [
+                    self.session_id,
+                    self.session_id == other.session_id,
+                    self.kernel_id != other.kernel_id,
                 ]
             ):
-                return True
+                raise KernelRecordConflict(
+                    "A single session_id can only have one kernel_id "
+                    "associated with. These two KernelRecords share the same "
+                    "session_id but have different kernel_ids. This should "
+                    "not be possible and is likely an issue with the session "
+                    "records."
+                )
         return False
 
     def update(self, other: "KernelRecord") -> None:
         """Updates in-place a kernel from other (only accepts positive updates"""
+        if not isinstance(other, KernelRecord):
+            raise TypeError("'other' must be an instance of KernelRecord.")
+
+        if other.kernel_id and self.kernel_id and other.kernel_id != self.kernel_id:
+            raise KernelRecordConflict(
+                "Could not update the record from 'other' because the two records conflict."
+            )
+
         for field in fields(self):
             if hasattr(other, field.name) and getattr(other, field.name):
                 setattr(self, field.name, getattr(other, field.name))
 
 
 class KernelRecordList:
+    """Handy object for storing and managing a list of KernelRecords.
 
-    _records = []
+    When adding a record to the list, first checks if the record
+    already exists. If it does, the record will be updated with
+    the new information.
+    """
+
+    def __init__(self, *records):
+        self._records = []
+        for record in records:
+            self.update(record)
 
     def __str__(self):
         return str(self._records)
 
+    def __contains__(self, record: Union[KernelRecord, str]):
+        """Search for records by kernel_id and session_id"""
+        if isinstance(record, KernelRecord) and record in self._records:
+            return True
+
+        if isinstance(record, str):
+            for r in self._records:
+                if record in [r.session_id, r.kernel_id]:
+                    return True
+        return False
+
+    def __len__(self):
+        return len(self._records)
+
+    def get(self, record: Union[KernelRecord, str]) -> KernelRecord:
+        if isinstance(record, str):
+            for r in self._records:
+                if record == r.kernel_id or record == r.session_id:
+                    return r
+        elif isinstance(record, KernelRecord):
+            for r in self._records:
+                if record == r:
+                    return record
+        raise ValueError(f"{record} not found in KernelRecordList.")
+
     def update(self, record: KernelRecord) -> None:
+        """Update a record in-place or append it if not in the list."""
         try:
             idx = self._records.index(record)
             self._records[idx].update(record)
         except ValueError:
-            self.append(record)
+            self._records.append(record)
 
     def remove(self, record: KernelRecord) -> None:
+        """Remove a record if its found in the list. If it's not found,
+        do nothing.
+        """
         if record in self._records:
             self._records.remove(record)
 
@@ -113,7 +182,9 @@ class SessionManager(LoggingConfigurable):
         ]
     )
 
-    _pending_kernels = KernelRecordList()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._pending_kernels = KernelRecordList()
 
     # Session database initialized below
     _cursor = None
@@ -183,6 +254,7 @@ class SessionManager(LoggingConfigurable):
             kernel_id = await self.start_kernel_for_session(
                 session_id, path, name, type, kernel_name
             )
+        record.kernel_id = kernel_id
         self._pending_kernels.update(record)
         result = await self.save_session(
             session_id, path=path, name=name, type=type, kernel_id=kernel_id
