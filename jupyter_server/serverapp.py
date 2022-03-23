@@ -91,6 +91,7 @@ from jupyter_server.gateway.managers import (
     GatewaySessionManager,
     GatewayClient,
 )
+from jupyter_server.sychronizer.synchronizer import Synchronizer
 from jupyter_server.auth.authorizer import Authorizer, AllowAllAuthorizer
 
 from jupyter_server.auth.login import LoginHandler
@@ -1763,6 +1764,10 @@ class ServerApp(JupyterApp):
         config=True,
     )
 
+    run_sychronizer = Bool(
+        False, help="If True, initializes and runs the Synchronizer.", config=True
+    )
+
     _starter_app = Instance(
         default_value=None,
         allow_none=True,
@@ -1834,6 +1839,18 @@ class ServerApp(JupyterApp):
             log=self.log,
         )
         self.authorizer = self.authorizer_class(parent=self, log=self.log)
+
+        if self.run_synchronizer:
+            fetch_remote_kernels = None
+            if self.gateway_config.gateway_enabled:
+                fetch_remote_kernels = self.kernel_manager.list_kernels
+            self.synchronizer = Synchronizer(
+                parent=self,
+                fetch_remote_kernels=fetch_remote_kernels,
+                multi_kernel_manager=self.kernel_manager,
+                session_manager=self.session_manager,
+                contents_manager=self.contents_manager,
+            )
 
     def init_logging(self):
         # This prevents double log messages because tornado use a root logger that
@@ -2759,6 +2776,8 @@ class ServerApp(JupyterApp):
         must be done prior to calling this method."""
         self.start_app()
         self.start_ioloop()
+        if self.run_synchronizer:
+            self.synchronizer.start_regular_syncing()
 
     async def _stop(self):
         """Cleanup resources and stop the IO Loop."""
