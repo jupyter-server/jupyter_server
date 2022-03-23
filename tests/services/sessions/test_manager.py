@@ -7,9 +7,9 @@ from traitlets import TraitError
 from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.services.contents.manager import ContentsManager
 from jupyter_server.services.kernels.kernelmanager import MappingKernelManager
-from jupyter_server.services.sessions.sessionmanager import KernelRecord
-from jupyter_server.services.sessions.sessionmanager import KernelRecordConflict
-from jupyter_server.services.sessions.sessionmanager import KernelRecordList
+from jupyter_server.services.sessions.sessionmanager import KernelSessionRecord
+from jupyter_server.services.sessions.sessionmanager import KernelSessionRecordConflict
+from jupyter_server.services.sessions.sessionmanager import KernelSessionRecordList
 from jupyter_server.services.sessions.sessionmanager import SessionManager
 
 
@@ -62,10 +62,10 @@ def session_manager():
 
 
 def test_kernel_record_equals():
-    record1 = KernelRecord(session_id="session1")
-    record2 = KernelRecord(session_id="session1", kernel_id="kernel1")
-    record3 = KernelRecord(session_id="session2", kernel_id="kernel1")
-    record4 = KernelRecord(session_id="session1", kernel_id="kernel2")
+    record1 = KernelSessionRecord(session_id="session1")
+    record2 = KernelSessionRecord(session_id="session1", kernel_id="kernel1")
+    record3 = KernelSessionRecord(session_id="session2", kernel_id="kernel1")
+    record4 = KernelSessionRecord(session_id="session1", kernel_id="kernel2")
 
     assert record1 == record2
     assert record2 == record3
@@ -73,55 +73,55 @@ def test_kernel_record_equals():
     assert record1 != record3
     assert record3 != record4
 
-    with pytest.raises(KernelRecordConflict):
+    with pytest.raises(KernelSessionRecordConflict):
         assert record2 == record4
 
 
 def test_kernel_record_update():
-    record1 = KernelRecord(session_id="session1")
-    record2 = KernelRecord(session_id="session1", kernel_id="kernel1")
+    record1 = KernelSessionRecord(session_id="session1")
+    record2 = KernelSessionRecord(session_id="session1", kernel_id="kernel1")
     record1.update(record2)
     assert record1.kernel_id == "kernel1"
 
-    record1 = KernelRecord(session_id="session1")
-    record2 = KernelRecord(kernel_id="kernel1")
+    record1 = KernelSessionRecord(session_id="session1")
+    record2 = KernelSessionRecord(kernel_id="kernel1")
     record1.update(record2)
     assert record1.kernel_id == "kernel1"
 
-    record1 = KernelRecord(kernel_id="kernel1")
-    record2 = KernelRecord(session_id="session1")
+    record1 = KernelSessionRecord(kernel_id="kernel1")
+    record2 = KernelSessionRecord(session_id="session1")
     record1.update(record2)
     assert record1.session_id == "session1"
 
-    record1 = KernelRecord(kernel_id="kernel1")
-    record2 = KernelRecord(session_id="session1", kernel_id="kernel1")
+    record1 = KernelSessionRecord(kernel_id="kernel1")
+    record2 = KernelSessionRecord(session_id="session1", kernel_id="kernel1")
     record1.update(record2)
     assert record1.session_id == "session1"
 
-    record1 = KernelRecord(kernel_id="kernel1")
-    record2 = KernelRecord(session_id="session1", kernel_id="kernel2")
-    with pytest.raises(KernelRecordConflict):
+    record1 = KernelSessionRecord(kernel_id="kernel1")
+    record2 = KernelSessionRecord(session_id="session1", kernel_id="kernel2")
+    with pytest.raises(KernelSessionRecordConflict):
         record1.update(record2)
 
-    record1 = KernelRecord(kernel_id="kernel1", session_id="session1")
-    record2 = KernelRecord(kernel_id="kernel2")
-    with pytest.raises(KernelRecordConflict):
+    record1 = KernelSessionRecord(kernel_id="kernel1", session_id="session1")
+    record2 = KernelSessionRecord(kernel_id="kernel2")
+    with pytest.raises(KernelSessionRecordConflict):
         record1.update(record2)
 
-    record1 = KernelRecord(kernel_id="kernel1", session_id="session1")
-    record2 = KernelRecord(kernel_id="kernel2", session_id="session1")
-    with pytest.raises(KernelRecordConflict):
+    record1 = KernelSessionRecord(kernel_id="kernel1", session_id="session1")
+    record2 = KernelSessionRecord(kernel_id="kernel2", session_id="session1")
+    with pytest.raises(KernelSessionRecordConflict):
         record1.update(record2)
 
-    record1 = KernelRecord(session_id="session1", kernel_id="kernel1")
-    record2 = KernelRecord(session_id="session2", kernel_id="kernel1")
+    record1 = KernelSessionRecord(session_id="session1", kernel_id="kernel1")
+    record2 = KernelSessionRecord(session_id="session2", kernel_id="kernel1")
     record1.update(record2)
     assert record1.session_id == "session2"
 
 
 def test_kernel_record_list():
-    records = KernelRecordList()
-    r = KernelRecord(kernel_id="kernel1")
+    records = KernelSessionRecordList()
+    r = KernelSessionRecord(kernel_id="kernel1")
     records.update(r)
     assert r in records
     assert "kernel1" in records
@@ -136,12 +136,12 @@ def test_kernel_record_list():
     with pytest.raises(ValueError):
         records.get("badkernel")
 
-    r_update = KernelRecord(kernel_id="kernel1", session_id="session1")
+    r_update = KernelSessionRecord(kernel_id="kernel1", session_id="session1")
     records.update(r_update)
     assert len(records) == 1
     assert "session1" in records
 
-    r2 = KernelRecord(kernel_id="kernel2")
+    r2 = KernelSessionRecord(kernel_id="kernel2")
     records.update(r2)
     assert r2 in records
     assert len(records) == 2
@@ -481,23 +481,23 @@ async def test_pending_kernel():
     )
     task = asyncio.create_task(fut)
     await asyncio.sleep(0.1)
-    assert len(session_manager._pending_kernels) == 1
+    assert len(session_manager._pending_sessions) == 1
     # Get a handle on the record
-    record = session_manager._pending_kernels._records[0]
+    record = session_manager._pending_sessions._records[0]
     session = await task
     # Check that record is cleared after the task has completed.
-    assert record not in session_manager._pending_kernels
+    assert record not in session_manager._pending_sessions
 
     # Check pending kernel list when sessions are
     fut = session_manager.delete_session(session_id=session["id"])
     task = asyncio.create_task(fut)
     await asyncio.sleep(0.1)
-    assert len(session_manager._pending_kernels) == 1
+    assert len(session_manager._pending_sessions) == 1
     # Get a handle on the record
-    record = session_manager._pending_kernels._records[0]
+    record = session_manager._pending_sessions._records[0]
     session = await task
     # Check that record is cleared after the task has completed.
-    assert record not in session_manager._pending_kernels
+    assert record not in session_manager._pending_sessions
 
     # Test multiple, parallel pending kernels
     fut1 = session_manager.create_session(
@@ -510,9 +510,9 @@ async def test_pending_kernel():
     await asyncio.sleep(0.1)
     task2 = asyncio.create_task(fut2)
     await asyncio.sleep(0.1)
-    assert len(session_manager._pending_kernels) == 2
+    assert len(session_manager._pending_sessions) == 2
 
     await task1
     await task2
     session1, session2 = await asyncio.gather(task1, task2)
-    assert len(session_manager._pending_kernels) == 0
+    assert len(session_manager._pending_sessions) == 0
