@@ -8,8 +8,10 @@ from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
 
 
-def create_terminal_fixture(path: "pathlib.Path"):
-    subdir = path.joinpath("terminal_path")
+@pytest.fixture
+def terminal_path(tmp_path):
+    # return create_terminal_fixture(tmp_path)
+    subdir = tmp_path.joinpath("terminal_path")
     subdir.mkdir()
 
     yield subdir
@@ -18,13 +20,13 @@ def create_terminal_fixture(path: "pathlib.Path"):
 
 
 @pytest.fixture
-def terminal_path(tmp_path):
-    return create_terminal_fixture(tmp_path)
-
-
-@pytest.fixture
 def terminal_root_dir(jp_root_dir):
-    return create_terminal_fixture(jp_root_dir)
+    subdir = jp_root_dir.joinpath("terminal_path")
+    subdir.mkdir()
+
+    yield subdir
+
+    shutil.rmtree(str(subdir), ignore_errors=True)
 
 
 CULL_TIMEOUT = 10
@@ -183,13 +185,14 @@ async def test_terminal_create_with_relative_cwd(
 
 
 async def test_terminal_create_with_bad_cwd(
-    jp_fetch, jp_ws_fetch, jp_root_dir, jp_cleanup_subprocesses
+    jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses
 ):
+    non_existing_path = "/tmp/path/to/nowhere"
     resp = await jp_fetch(
         "api",
         "terminals",
         method="POST",
-        body=json.dumps({"cwd": "/tmp/path/to/nowhere"}),
+        body=json.dumps({"cwd": non_existing_path}),
         allow_nonstandard_methods=True,
     )
 
@@ -214,7 +217,7 @@ async def test_terminal_create_with_bad_cwd(
 
     ws.close()
 
-    assert str(jp_root_dir) in message_stdout
+    assert non_existing_path not in message_stdout
     await jp_cleanup_subprocesses()
 
 
