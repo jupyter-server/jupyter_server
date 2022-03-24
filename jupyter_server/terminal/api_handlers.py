@@ -36,7 +36,7 @@ class TerminalRootHandler(TerminalAPIHandler):
                 cwd = Path(self.settings["server_root_dir"]) / cwd
                 if not cwd.resolve().exists():
                     cwd = None
-            
+
             if cwd is None:
                 del data["cwd"]
             else:

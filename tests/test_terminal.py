@@ -8,7 +8,7 @@ from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
 
 
-def create_terminal_fixture(path: pathlib.Path):
+def create_terminal_fixture(path: "pathlib.Path"):
     subdir = path.joinpath("terminal_path")
     subdir.mkdir()
 
@@ -153,9 +153,7 @@ async def test_terminal_create_with_relative_cwd(
         "api",
         "terminals",
         method="POST",
-        body=json.dumps(
-            {"cwd": str(terminal_root_dir.relative_to(jp_root_dir))}
-        ),
+        body=json.dumps({"cwd": str(terminal_root_dir.relative_to(jp_root_dir))}),
         allow_nonstandard_methods=True,
     )
 
@@ -191,9 +189,7 @@ async def test_terminal_create_with_bad_cwd(
         "api",
         "terminals",
         method="POST",
-        body=json.dumps(
-            {"cwd": "/tmp/path/to/nowhere"}
-        ),
+        body=json.dumps({"cwd": "/tmp/path/to/nowhere"}),
         allow_nonstandard_methods=True,
     )
 
