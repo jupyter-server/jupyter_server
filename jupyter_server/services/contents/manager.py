@@ -127,7 +127,7 @@ class ContentsManager(LoggingConfigurable):
             value = import_item(self.pre_save_hook)
         if not callable(value):
             raise TraitError("pre_save_hook must be callable")
-        if self.pre_save_hook is not None:
+        if callable(self.pre_save_hook):
             warnings.warn(
                 f"Overriding existing pre_save_hook ({self.pre_save_hook.__name__}) with a new one ({value.__name__}).",
                 stacklevel=2,
@@ -162,7 +162,7 @@ class ContentsManager(LoggingConfigurable):
             value = import_item(value)
         if not callable(value):
             raise TraitError("post_save_hook must be callable")
-        if self.post_save_hook is not None:
+        if callable(self.post_save_hook):
             warnings.warn(
                 f"Overriding existing post_save_hook ({self.post_save_hook.__name__}) with a new one ({value.__name__}).",
                 stacklevel=2,
