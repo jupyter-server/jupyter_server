@@ -25,8 +25,6 @@ from dataclasses import fields
 
 
 class KernelSessionRecordConflict(Exception):
-    """An exception raised when"""
-
     pass
 
 
@@ -34,7 +32,9 @@ class KernelSessionRecordConflict(Exception):
 class KernelSessionRecord:
     """A record object for tracking a Jupyter Server Kernel Session.
 
-    Two records are equal if they share the
+    Two records that share a session_id must also share a kernel_id, while
+    kernels can have multiple session (and thereby) session_ids
+    associated with them.
     """
 
     session_id: Union[None, str] = None
@@ -86,11 +86,12 @@ class KernelSessionRecord:
 
 
 class KernelSessionRecordList:
-    """Handy object for storing and managing a list of KernelSessionRecords.
+    """An object for storing and managing a list of KernelSessionRecords.
 
-    When adding a record to the list, first checks if the record
-    already exists. If it does, the record will be updated with
-    the new information.
+    When adding a record to the list, the KernelSessionRecordList
+    first checks if the record already exists in the list. If it does,
+    the record will be updated with the new information; otherwise,
+    it will be appended.
     """
 
     def __init__(self, *records):
@@ -116,6 +117,9 @@ class KernelSessionRecordList:
         return len(self._records)
 
     def get(self, record: Union[KernelSessionRecord, str]) -> KernelSessionRecord:
+        """Return a full KernelSessionRecord from a session_id, kernel_id, or
+        incomplete KernelSessionRecord.
+        """
         if isinstance(record, str):
             for r in self._records:
                 if record == r.kernel_id or record == r.session_id:
