@@ -33,12 +33,14 @@ class TerminalRootHandler(TerminalAPIHandler):
         if "cwd" in data:
             cwd = Path(data["cwd"])
             if not cwd.resolve().exists():
-                cwd = Path(self.settings["server_root_dir"]) / cwd
+                cwd = Path(self.settings["server_root_dir"]).expanduser() / cwd
                 if not cwd.resolve().exists():
                     cwd = None
 
             if cwd is None:
-                self.log.debug(f"Failed to find requested terminal cwd: {data.get('cwd')}")
+                self.log.debug(
+                    f"Failed to find requested terminal cwd: {data.get('cwd')}\n It was not found within the server root neither: {cwd.resolve()!s}."
+                )
                 del data["cwd"]
             else:
                 self.log.debug(f"Opening terminal in: {cwd.resolve()!s}")
