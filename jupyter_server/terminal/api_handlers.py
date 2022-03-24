@@ -38,8 +38,10 @@ class TerminalRootHandler(TerminalAPIHandler):
                     cwd = None
 
             if cwd is None:
+                server_root_dir = self.settings["server_root_dir"]
                 self.log.debug(
-                    f"Failed to find requested terminal cwd: {data.get('cwd')}\n It was not found within the server root neither: {cwd.resolve()!s}."
+                    f"Failed to find requested terminal cwd: {data.get('cwd')}\n"
+                    f"  It was not found within the server root neither: {server_root_dir}."
                 )
                 del data["cwd"]
             else:
