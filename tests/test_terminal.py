@@ -8,14 +8,23 @@ from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
 
 
-@pytest.fixture
-def terminal_path(tmp_path):
-    subdir = tmp_path.joinpath("terminal_path")
+def create_terminal_fixture(path: pathlib.Path):
+    subdir = path.joinpath("terminal_path")
     subdir.mkdir()
 
     yield subdir
 
     shutil.rmtree(str(subdir), ignore_errors=True)
+
+
+@pytest.fixture
+def terminal_path(tmp_path):
+    return create_terminal_fixture(tmp_path)
+
+
+@pytest.fixture
+def terminal_root_dir(jp_root_dir):
+    return create_terminal_fixture(jp_root_dir)
 
 
 CULL_TIMEOUT = 10
@@ -134,6 +143,82 @@ async def test_terminal_create_with_cwd(
     ws.close()
 
     assert os.path.basename(terminal_path) in message_stdout
+    await jp_cleanup_subprocesses()
+
+
+async def test_terminal_create_with_relative_cwd(
+    jp_fetch, jp_ws_fetch, jp_root_dir, terminal_root_dir, jp_cleanup_subprocesses
+):
+    resp = await jp_fetch(
+        "api",
+        "terminals",
+        method="POST",
+        body=json.dumps(
+            {"cwd": str(terminal_root_dir.relative_to(jp_root_dir))}
+        ),
+        allow_nonstandard_methods=True,
+    )
+
+    data = json.loads(resp.body.decode())
+    term_name = data["name"]
+
+    ws = await jp_ws_fetch("terminals", "websocket", term_name)
+
+    ws.write_message(json.dumps(["stdin", "pwd\r\n"]))
+
+    message_stdout = ""
+    while True:
+        try:
+            message = await asyncio.wait_for(ws.read_message(), timeout=5.0)
+        except asyncio.TimeoutError:
+            break
+
+        message = json.loads(message)
+
+        if message[0] == "stdout":
+            message_stdout += message[1]
+
+    ws.close()
+
+    assert str(terminal_root_dir) in message_stdout
+    await jp_cleanup_subprocesses()
+
+
+async def test_terminal_create_with_bad_cwd(
+    jp_fetch, jp_ws_fetch, jp_root_dir, jp_cleanup_subprocesses
+):
+    resp = await jp_fetch(
+        "api",
+        "terminals",
+        method="POST",
+        body=json.dumps(
+            {"cwd": "/tmp/path/to/nowhere"}
+        ),
+        allow_nonstandard_methods=True,
+    )
+
+    data = json.loads(resp.body.decode())
+    term_name = data["name"]
+
+    ws = await jp_ws_fetch("terminals", "websocket", term_name)
+
+    ws.write_message(json.dumps(["stdin", "pwd\r\n"]))
+
+    message_stdout = ""
+    while True:
+        try:
+            message = await asyncio.wait_for(ws.read_message(), timeout=5.0)
+        except asyncio.TimeoutError:
+            break
+
+        message = json.loads(message)
+
+        if message[0] == "stdout":
+            message_stdout += message[1]
+
+    ws.close()
+
+    assert str(jp_root_dir) in message_stdout
     await jp_cleanup_subprocesses()
 
 
