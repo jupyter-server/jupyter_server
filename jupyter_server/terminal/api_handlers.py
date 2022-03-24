@@ -38,8 +38,10 @@ class TerminalRootHandler(TerminalAPIHandler):
                     cwd = None
 
             if cwd is None:
+                self.log.debug(f"Failed to find requested terminal cwd: {data.get('cwd')}")
                 del data["cwd"]
             else:
+                self.log.debug(f"Opening terminal in: {cwd.resolve()!s}")
                 data["cwd"] = str(cwd.resolve())
 
         model = self.terminal_manager.create(**data)

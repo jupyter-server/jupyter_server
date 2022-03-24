@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import shutil
+import sys
 
 import pytest
 from tornado.httpclient import HTTPClientError
@@ -10,7 +11,6 @@ from traitlets.config import Config
 
 @pytest.fixture
 def terminal_path(tmp_path):
-    # return create_terminal_fixture(tmp_path)
     subdir = tmp_path.joinpath("terminal_path")
     subdir.mkdir()
 
@@ -180,13 +180,12 @@ async def test_terminal_create_with_relative_cwd(
 
     ws.close()
 
-    assert str(terminal_root_dir) in message_stdout
+    expected = terminal_root_dir.name if sys.platform == "win32" else str(terminal_root_dir)
+    assert expected in message_stdout
     await jp_cleanup_subprocesses()
 
 
-async def test_terminal_create_with_bad_cwd(
-    jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses
-):
+async def test_terminal_create_with_bad_cwd(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses):
     non_existing_path = "/tmp/path/to/nowhere"
     resp = await jp_fetch(
         "api",
