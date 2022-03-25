@@ -1,5 +1,5 @@
 import json
-import os
+from pathlib import Path
 
 from tornado import web
 
@@ -30,11 +30,23 @@ class TerminalRootHandler(TerminalAPIHandler):
         # if cwd is a relative path, it should be relative to the root_dir,
         # but if we pass it as relative, it will we be considered as relative to
         # the path jupyter_server was started in
-        if "cwd" in data.keys():
-            if not os.path.isabs(data["cwd"]):
-                cwd = data["cwd"]
-                cwd = os.path.join(self.settings["server_root_dir"], cwd)
-                data["cwd"] = cwd
+        if "cwd" in data:
+            cwd = Path(data["cwd"])
+            if not cwd.resolve().exists():
+                cwd = Path(self.settings["server_root_dir"]).expanduser() / cwd
+                if not cwd.resolve().exists():
+                    cwd = None
+
+            if cwd is None:
+                server_root_dir = self.settings["server_root_dir"]
+                self.log.debug(
+                    f"Failed to find requested terminal cwd: {data.get('cwd')}\n"
+                    f"  It was not found within the server root neither: {server_root_dir}."
+                )
+                del data["cwd"]
+            else:
+                self.log.debug(f"Opening terminal in: {cwd.resolve()!s}")
+                data["cwd"] = str(cwd.resolve())
 
         model = self.terminal_manager.create(**data)
         self.finish(json.dumps(model))
