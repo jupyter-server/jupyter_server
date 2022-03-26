@@ -45,7 +45,9 @@ def wait_up(url, interval=0.1, check=None):
 
 @pytest.fixture
 def launch_instance(request, port, token):
-    def _run_in_subprocess(argv=[], add_token=True):
+    def _run_in_subprocess(argv=None, add_token=True):
+        argv = argv or []
+
         def _kill_extension_app():
             try:
                 process.terminate()
@@ -57,17 +59,19 @@ def launch_instance(request, port, token):
         if add_token:
             f'--ServerApp.token="{token}"',
 
+        root = Path(HERE).parent.parent
+
         process = subprocess.Popen(
             [
                 sys.executable,
                 "-m",
-                "mockextensions.app",
+                "tests.extension.mockextensions.app",
                 f"--port={port}",
                 "--ip=127.0.0.1",
                 "--no-browser",
                 *argv,
             ],
-            cwd=HERE,
+            cwd=str(root),
         )
 
         request.addfinalizer(_kill_extension_app)

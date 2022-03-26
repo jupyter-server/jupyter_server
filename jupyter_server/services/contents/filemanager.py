@@ -11,13 +11,11 @@ from datetime import datetime
 
 import nbformat
 from anyio.to_thread import run_sync
-from ipython_genutils.importstring import import_item
 from jupyter_core.paths import exists
 from jupyter_core.paths import is_file_hidden
 from jupyter_core.paths import is_hidden
 from send2trash import send2trash
 from tornado import web
-from traitlets import Any
 from traitlets import Bool
 from traitlets import default
 from traitlets import TraitError
@@ -53,48 +51,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             return self.parent.root_dir
         except AttributeError:
             return os.getcwd()
-
-    post_save_hook = Any(
-        None,
-        config=True,
-        allow_none=True,
-        help="""Python callable or importstring thereof
-
-        to be called on the path of a file just saved.
-
-        This can be used to process the file on disk,
-        such as converting the notebook to a script or HTML via nbconvert.
-
-        It will be called as (all arguments passed by keyword)::
-
-            hook(os_path=os_path, model=model, contents_manager=instance)
-
-        - path: the filesystem path to the file just written
-        - model: the model representing the file
-        - contents_manager: this ContentsManager instance
-        """,
-    )
-
-    @validate("post_save_hook")
-    def _validate_post_save_hook(self, proposal):
-        value = proposal["value"]
-        if isinstance(value, str):
-            value = import_item(value)
-        if not callable(value):
-            raise TraitError("post_save_hook must be callable")
-        return value
-
-    def run_post_save_hook(self, model, os_path):
-        """Run the post-save hook if defined, and log errors"""
-        if self.post_save_hook:
-            try:
-                self.log.debug("Running post-save hook on %s", os_path)
-                self.post_save_hook(os_path=os_path, model=model, contents_manager=self)
-            except Exception as e:
-                self.log.error("Post-save hook failed o-n %s", os_path, exc_info=True)
-                raise web.HTTPError(
-                    500, "Unexpected error while running post hook save: %s" % e
-                ) from e
 
     @validate("root_dir")
     def _validate_root_dir(self, proposal):
@@ -383,11 +339,14 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path)
 
         if content:
-            nb = self._read_notebook(os_path, as_version=4)
+            validation_error = {}
+            nb = self._read_notebook(
+                os_path, as_version=4, capture_validation_error=validation_error
+            )
             self.mark_trusted_cells(nb, path)
             model["content"] = nb
             model["format"] = "json"
-            self.validate_notebook_model(model)
+            self.validate_notebook_model(model, validation_error)
 
         return model
 
@@ -451,7 +410,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         """Save the file model and return the model with no content."""
         path = path.strip("/")
 
-        self.run_pre_save_hook(model=model, path=path)
+        self.run_pre_save_hooks(model=model, path=path)
 
         if "type" not in model:
             raise web.HTTPError(400, "No file type provided")
@@ -461,11 +420,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path)
         self.log.debug("Saving %s", os_path)
 
+        validation_error = {}
         try:
             if model["type"] == "notebook":
                 nb = nbformat.from_dict(model["content"])
                 self.check_and_sign(nb, path)
-                self._save_notebook(os_path, nb)
+                self._save_notebook(os_path, nb, capture_validation_error=validation_error)
                 # One checkpoint should always exist for notebooks.
                 if not self.checkpoints.list_checkpoints(path):
                     self.create_checkpoint(path)
@@ -484,14 +444,14 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         validation_message = None
         if model["type"] == "notebook":
-            self.validate_notebook_model(model)
+            self.validate_notebook_model(model, validation_error=validation_error)
             validation_message = model.get("message", None)
 
         model = self.get(path, content=False)
         if validation_message:
             model["message"] = validation_message
 
-        self.run_post_save_hook(model=model, os_path=os_path)
+        self.run_post_save_hooks(model=model, os_path=os_path)
 
         return model
 
@@ -540,7 +500,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 return
             else:
                 self.log.warning(
-                    "Skipping trash for %s, on different device " "to home directory",
+                    "Skipping trash for %s, on different device to home directory",
                     os_path,
                 )
 
@@ -707,11 +667,14 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         os_path = self._get_os_path(path)
 
         if content:
-            nb = await self._read_notebook(os_path, as_version=4)
+            validation_error = {}
+            nb = await self._read_notebook(
+                os_path, as_version=4, capture_validation_error=validation_error
+            )
             self.mark_trusted_cells(nb, path)
             model["content"] = nb
             model["format"] = "json"
-            self.validate_notebook_model(model)
+            self.validate_notebook_model(model, validation_error)
 
         return model
 
@@ -775,8 +738,6 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         """Save the file model and return the model with no content."""
         path = path.strip("/")
 
-        os_path = self._get_os_path(path)
-        self.log.debug("Saving %s", os_path)
         self.run_pre_save_hook(model=model, path=path)
 
         if "type" not in model:
@@ -784,11 +745,15 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, "No file content provided")
 
+        os_path = self._get_os_path(path)
+        self.log.debug("Saving %s", os_path)
+
+        validation_error = {}
         try:
             if model["type"] == "notebook":
                 nb = nbformat.from_dict(model["content"])
                 self.check_and_sign(nb, path)
-                await self._save_notebook(os_path, nb)
+                await self._save_notebook(os_path, nb, capture_validation_error=validation_error)
                 # One checkpoint should always exist for notebooks.
                 if not (await self.checkpoints.list_checkpoints(path)):
                     await self.create_checkpoint(path)
@@ -807,14 +772,14 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         validation_message = None
         if model["type"] == "notebook":
-            self.validate_notebook_model(model)
+            self.validate_notebook_model(model, validation_error=validation_error)
             validation_message = model.get("message", None)
 
         model = await self.get(path, content=False)
         if validation_message:
             model["message"] = validation_message
 
-        self.run_post_save_hook(model=model, os_path=os_path)
+        self.run_post_save_hooks(model=model, os_path=os_path)
 
         return model
 
@@ -868,7 +833,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 return
             else:
                 self.log.warning(
-                    "Skipping trash for %s, on different device " "to home directory",
+                    "Skipping trash for %s, on different device to home directory",
                     os_path,
                 )
 
@@ -906,3 +871,21 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             raise
         except Exception as e:
             raise web.HTTPError(500, "Unknown error renaming file: %s %s" % (old_path, e)) from e
+
+    async def dir_exists(self, path):
+        """Does a directory exist at the given path"""
+        path = path.strip("/")
+        os_path = self._get_os_path(path=path)
+        return os.path.isdir(os_path)
+
+    async def file_exists(self, path):
+        """Does a file exist at the given path"""
+        path = path.strip("/")
+        os_path = self._get_os_path(path)
+        return os.path.isfile(os_path)
+
+    async def is_hidden(self, path):
+        """Is path a hidden directory or file"""
+        path = path.strip("/")
+        os_path = self._get_os_path(path=path)
+        return is_hidden(os_path, self.root_dir)

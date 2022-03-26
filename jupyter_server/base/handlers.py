@@ -16,7 +16,6 @@ from http.cookies import Morsel
 from urllib.parse import urlparse
 
 import prometheus_client
-from ipython_genutils.path import filefind
 from jinja2 import TemplateNotFound
 from jupyter_core.paths import is_hidden
 from tornado import escape
@@ -31,6 +30,7 @@ from jupyter_server._tz import utcnow
 from jupyter_server.i18n import combine_translations
 from jupyter_server.services.security import csp_report_uri
 from jupyter_server.utils import ensure_async
+from jupyter_server.utils import filefind
 from jupyter_server.utils import url_escape
 from jupyter_server.utils import url_is_absolute
 from jupyter_server.utils import url_path_join
@@ -193,7 +193,7 @@ class AuthenticatedHandler(web.RequestHandler):
 
     @property
     def authorizer(self):
-        return self.settings["authorizer"]
+        return self.settings.get("authorizer")
 
 
 class JupyterHandler(AuthenticatedHandler):
@@ -454,7 +454,7 @@ class JupyterHandler(AuthenticatedHandler):
             return
         try:
             return super(JupyterHandler, self).check_xsrf_cookie()
-        except web.HTTPError as e:
+        except web.HTTPError:
             if self.request.method in {"GET", "HEAD"}:
                 # Consider Referer a sufficient cross-origin check for GET requests
                 if not self.check_referer():

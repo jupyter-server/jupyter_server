@@ -4,9 +4,9 @@
 import itertools
 import json
 import re
+import warnings
 from fnmatch import fnmatch
 
-from ipython_genutils.importstring import import_item
 from nbformat import sign
 from nbformat import validate as validate_nb
 from nbformat import ValidationError
@@ -30,6 +30,7 @@ from .checkpoints import AsyncCheckpoints
 from .checkpoints import Checkpoints
 from jupyter_server.transutils import _i18n
 from jupyter_server.utils import ensure_async
+from jupyter_server.utils import import_item
 
 
 copy_pat = re.compile(r"\-Copy\d*\.")
@@ -126,10 +127,55 @@ class ContentsManager(LoggingConfigurable):
             value = import_item(self.pre_save_hook)
         if not callable(value):
             raise TraitError("pre_save_hook must be callable")
+        if callable(self.pre_save_hook):
+            warnings.warn(
+                f"Overriding existing pre_save_hook ({self.pre_save_hook.__name__}) with a new one ({value.__name__}).",
+                stacklevel=2,
+            )
+        return value
+
+    post_save_hook = Any(
+        None,
+        config=True,
+        allow_none=True,
+        help="""Python callable or importstring thereof
+
+        to be called on the path of a file just saved.
+
+        This can be used to process the file on disk,
+        such as converting the notebook to a script or HTML via nbconvert.
+
+        It will be called as (all arguments passed by keyword)::
+
+            hook(os_path=os_path, model=model, contents_manager=instance)
+
+        - path: the filesystem path to the file just written
+        - model: the model representing the file
+        - contents_manager: this ContentsManager instance
+        """,
+    )
+
+    @validate("post_save_hook")
+    def _validate_post_save_hook(self, proposal):
+        value = proposal["value"]
+        if isinstance(value, str):
+            value = import_item(value)
+        if not callable(value):
+            raise TraitError("post_save_hook must be callable")
+        if callable(self.post_save_hook):
+            warnings.warn(
+                f"Overriding existing post_save_hook ({self.post_save_hook.__name__}) with a new one ({value.__name__}).",
+                stacklevel=2,
+            )
         return value
 
     def run_pre_save_hook(self, model, path, **kwargs):
         """Run the pre-save hook if defined, and log errors"""
+        warnings.warn(
+            "run_pre_save_hook is deprecated, use run_pre_save_hooks instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if self.pre_save_hook:
             try:
                 self.log.debug("Running pre-save hook on %s", path)
@@ -142,6 +188,77 @@ class ContentsManager(LoggingConfigurable):
                 # unhandled errors don't prevent saving,
                 # which could cause frustrating data loss
                 self.log.error("Pre-save hook failed on %s", path, exc_info=True)
+
+    def run_post_save_hook(self, model, os_path):
+        """Run the post-save hook if defined, and log errors"""
+        warnings.warn(
+            "run_post_save_hook is deprecated, use run_post_save_hooks instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if self.post_save_hook:
+            try:
+                self.log.debug("Running post-save hook on %s", os_path)
+                self.post_save_hook(os_path=os_path, model=model, contents_manager=self)
+            except Exception as e:
+                self.log.error("Post-save hook failed o-n %s", os_path, exc_info=True)
+                raise HTTPError(500, "Unexpected error while running post hook save: %s" % e) from e
+
+    _pre_save_hooks = List()
+    _post_save_hooks = List()
+
+    def register_pre_save_hook(self, hook):
+        if isinstance(hook, str):
+            hook = import_item(hook)
+        if not callable(hook):
+            raise RuntimeError("hook must be callable")
+        self._pre_save_hooks.append(hook)
+
+    def register_post_save_hook(self, hook):
+        if isinstance(hook, str):
+            hook = import_item(hook)
+        if not callable(hook):
+            raise RuntimeError("hook must be callable")
+        self._post_save_hooks.append(hook)
+
+    def run_pre_save_hooks(self, model, path, **kwargs):
+        """Run the pre-save hooks if any, and log errors"""
+        pre_save_hooks = [self.pre_save_hook] if self.pre_save_hook is not None else []
+        pre_save_hooks += self._pre_save_hooks
+        for pre_save_hook in pre_save_hooks:
+            try:
+                self.log.debug("Running pre-save hook on %s", path)
+                pre_save_hook(model=model, path=path, contents_manager=self, **kwargs)
+            except HTTPError:
+                # allow custom HTTPErrors to raise,
+                # rejecting the save with a message.
+                raise
+            except Exception:
+                # unhandled errors don't prevent saving,
+                # which could cause frustrating data loss
+                self.log.error(
+                    "Pre-save hook %s failed on %s",
+                    pre_save_hook.__name__,
+                    path,
+                    exc_info=True,
+                )
+
+    def run_post_save_hooks(self, model, os_path):
+        """Run the post-save hooks if any, and log errors"""
+        post_save_hooks = [self.post_save_hook] if self.post_save_hook is not None else []
+        post_save_hooks += self._post_save_hooks
+        for post_save_hook in post_save_hooks:
+            try:
+                self.log.debug("Running post-save hook on %s", os_path)
+                post_save_hook(os_path=os_path, model=model, contents_manager=self)
+            except Exception as e:
+                self.log.error(
+                    "Post-save %s hook failed on %s",
+                    post_save_hook.__name__,
+                    os_path,
+                    exc_info=True,
+                )
+                raise HTTPError(500, "Unexpected error while running post hook save: %s" % e) from e
 
     checkpoints_class = Type(Checkpoints, config=True)
     checkpoints = Instance(Checkpoints, config=True)
@@ -372,13 +489,23 @@ class ContentsManager(LoggingConfigurable):
                 break
         return name
 
-    def validate_notebook_model(self, model):
+    def validate_notebook_model(self, model, validation_error=None):
         """Add failed-validation message to model"""
         try:
-            validate_nb(model["content"])
+            # If we're given a validation_error dictionary, extract the exception
+            # from it and raise the exception, else call nbformat's validate method
+            # to determine if the notebook is valid.  This 'else' condition may
+            # pertain to server extension not using the server's notebook read/write
+            # functions.
+            if validation_error is not None:
+                e = validation_error.get("ValidationError")
+                if isinstance(e, ValidationError):
+                    raise e
+            else:
+                validate_nb(model["content"])
         except ValidationError as e:
             model["message"] = "Notebook validation failed: {}:\n{}".format(
-                e.message,
+                str(e),
                 json.dumps(e.instance, indent=1, default=lambda obj: "<UNKNOWN>"),
             )
         return model

@@ -42,10 +42,11 @@ class TypescriptHandler(BaseTemplateHandler):
 
 class TemplateHandler(BaseTemplateHandler):
     def get(self, path):
-        """Optionaly, you can print(self.get_template('simple1.html'))"""
+        """Optionally, you can print(self.get_template('simple1.html'))"""
         self.write(self.render_template("simple1.html", path=path))
 
 
 class ErrorHandler(BaseTemplateHandler):
     def get(self, path):
-        self.write(self.render_template("error.html", path=path))
+        # write_error renders template from error.html file.
+        self.write_error(400)

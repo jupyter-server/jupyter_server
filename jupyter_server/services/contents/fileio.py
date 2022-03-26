@@ -113,7 +113,7 @@ def atomic_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
 
     try:
         yield fileobj
-    except:
+    except BaseException:
         # Failed! Move the backup file back to the real path to avoid corruption
         fileobj.close()
         replace_file(tmp_path, path)
@@ -161,7 +161,7 @@ def _simple_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
 
     try:
         yield fileobj
-    except:
+    except BaseException:
         fileobj.close()
         raise
 
@@ -219,7 +219,7 @@ class FileManagerMixin(Configurable):
         """context manager for turning permission errors into 403."""
         try:
             yield
-        except (OSError, IOError) as e:
+        except OSError as e:
             if e.errno in {errno.EPERM, errno.EACCES}:
                 # make 403 error message without root prefix
                 # this may not work perfectly on unicode paths on Python 2,
@@ -261,11 +261,13 @@ class FileManagerMixin(Configurable):
             raise HTTPError(404, "%s is outside root contents directory" % path)
         return os_path
 
-    def _read_notebook(self, os_path, as_version=4):
+    def _read_notebook(self, os_path, as_version=4, capture_validation_error=None):
         """Read a notebook from an os path."""
         with self.open(os_path, "r", encoding="utf-8") as f:
             try:
-                return nbformat.read(f, as_version=as_version)
+                return nbformat.read(
+                    f, as_version=as_version, capture_validation_error=capture_validation_error
+                )
             except Exception as e:
                 e_orig = e
 
@@ -284,12 +286,19 @@ class FileManagerMixin(Configurable):
             invalid_file = path_to_invalid(os_path)
             replace_file(os_path, invalid_file)
             replace_file(tmp_path, os_path)
-            return self._read_notebook(os_path, as_version)
+            return self._read_notebook(
+                os_path, as_version, capture_validation_error=capture_validation_error
+            )
 
-    def _save_notebook(self, os_path, nb):
+    def _save_notebook(self, os_path, nb, capture_validation_error=None):
         """Save a notebook to an os_path."""
         with self.atomic_writing(os_path, encoding="utf-8") as f:
-            nbformat.write(nb, f, version=nbformat.NO_CONVERT)
+            nbformat.write(
+                nb,
+                f,
+                version=nbformat.NO_CONVERT,
+                capture_validation_error=capture_validation_error,
+            )
 
     def _read_file(self, os_path, format):
         """Read a non-notebook file.
@@ -352,11 +361,18 @@ class AsyncFileManagerMixin(FileManagerMixin):
         """
         await async_copy2_safe(src, dest, log=self.log)
 
-    async def _read_notebook(self, os_path, as_version=4):
+    async def _read_notebook(self, os_path, as_version=4, capture_validation_error=None):
         """Read a notebook from an os path."""
         with self.open(os_path, "r", encoding="utf-8") as f:
             try:
-                return await run_sync(partial(nbformat.read, as_version=as_version), f)
+                return await run_sync(
+                    partial(
+                        nbformat.read,
+                        as_version=as_version,
+                        capture_validation_error=capture_validation_error,
+                    ),
+                    f,
+                )
             except Exception as e:
                 e_orig = e
 
@@ -375,12 +391,22 @@ class AsyncFileManagerMixin(FileManagerMixin):
             invalid_file = path_to_invalid(os_path)
             await async_replace_file(os_path, invalid_file)
             await async_replace_file(tmp_path, os_path)
-            return await self._read_notebook(os_path, as_version)
+            return await self._read_notebook(
+                os_path, as_version, capture_validation_error=capture_validation_error
+            )
 
-    async def _save_notebook(self, os_path, nb):
+    async def _save_notebook(self, os_path, nb, capture_validation_error=None):
         """Save a notebook to an os_path."""
         with self.atomic_writing(os_path, encoding="utf-8") as f:
-            await run_sync(partial(nbformat.write, version=nbformat.NO_CONVERT), nb, f)
+            await run_sync(
+                partial(
+                    nbformat.write,
+                    version=nbformat.NO_CONVERT,
+                    capture_validation_error=capture_validation_error,
+                ),
+                nb,
+                f,
+            )
 
     async def _read_file(self, os_path, format):
         """Read a non-notebook file.

@@ -8,6 +8,7 @@ from jupyter_core.application import JupyterApp
 from jupyter_core.application import NoStart
 from tornado.log import LogFormatter
 from tornado.web import RedirectHandler
+from traitlets import Any
 from traitlets import Bool
 from traitlets import default
 from traitlets import Dict
@@ -103,7 +104,7 @@ class ExtensionAppJinjaMixin(HasTraits):
             loader=FileSystemLoader(self.template_paths),
             extensions=["jinja2.ext.i18n"],
             autoescape=True,
-            **self.jinja2_options
+            **self.jinja2_options,
         )
 
         # Add the jinja2 environment for this extension to the tornado settings.
@@ -162,6 +163,12 @@ class ExtensionApp(JupyterApp):
     def _default_open_browser(self):
         return self.serverapp.config["ServerApp"].get("open_browser", True)
 
+    @property
+    def config_file_paths(self):
+        """Look on the same path as our parent for config files"""
+        # rely on parent serverapp, which should control all config loading
+        return self.serverapp.config_file_paths
+
     # The extension name used to name the jupyter config
     # file, jupyter_{name}_config.
     # This should also match the jupyter subcommand used to launch
@@ -200,7 +207,21 @@ class ExtensionApp(JupyterApp):
     ]
 
     # A ServerApp is not defined yet, but will be initialized below.
-    serverapp = None
+    serverapp = Any()
+
+    @default("serverapp")
+    def _default_serverapp(self):
+        # load the current global instance, if any
+        if ServerApp.initialized():
+            try:
+                return ServerApp.instance()
+            except Exception:
+                # error retrieving instance, e.g. MultipleInstanceError
+                pass
+
+        # serverapp accessed before it was defined,
+        # declare an empty one
+        return ServerApp()
 
     _log_formatter_cls = LogFormatter
 
@@ -522,7 +543,7 @@ class ExtensionApp(JupyterApp):
         extension.initialize()
 
     @classmethod
-    def initialize_server(cls, argv=[], load_other_extensions=True, **kwargs):
+    def initialize_server(cls, argv=None, load_other_extensions=True, **kwargs):
         """Creates an instance of ServerApp and explicitly sets
         this extension to enabled=True (i.e. superceding disabling
         found in other config from files).
@@ -539,7 +560,7 @@ class ExtensionApp(JupyterApp):
         serverapp = ServerApp.instance(jpserver_extensions=jpserver_extensions, **kwargs)
         serverapp.aliases.update(cls.aliases)
         serverapp.initialize(
-            argv=argv,
+            argv=argv or [],
             starter_extension=cls.name,
             find_extensions=find_extensions,
         )

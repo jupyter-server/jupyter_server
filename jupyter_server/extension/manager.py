@@ -39,7 +39,7 @@ class ExtensionPoint(HasTraits):
             self._module_name = metadata["module"]
         except KeyError:
             raise ExtensionMetadataError(
-                "There is no 'module' key in the extension's " "metadata packet."
+                "There is no 'module' key in the extension's metadata packet."
             )
 
         try:

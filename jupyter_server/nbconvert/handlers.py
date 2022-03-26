@@ -3,11 +3,10 @@
 # Distributed under the terms of the Modified BSD License.
 import io
 import os
+import sys
 import zipfile
 
 from anyio.to_thread import run_sync
-from ipython_genutils import text
-from ipython_genutils.py3compat import cast_bytes
 from nbformat import from_dict
 from tornado import web
 from tornado.log import app_log
@@ -21,10 +20,17 @@ from jupyter_server.utils import ensure_async
 
 AUTH_RESOURCE = "nbconvert"
 
+# datetime.strftime date format for jupyter
+# inlined from ipython_genutils
+if sys.platform == "win32":
+    date_format = "%B %d, %Y"
+else:
+    date_format = "%B %-d, %Y"
+
 
 def find_resource_files(output_files_dir):
     files = []
-    for dirpath, dirnames, filenames in os.walk(output_files_dir):
+    for dirpath, _, filenames in os.walk(output_files_dir):
         files.extend([os.path.join(dirpath, f) for f in filenames])
     return files
 
@@ -50,7 +56,7 @@ def respond_zip(handler, name, output, resources):
     buffer = io.BytesIO()
     zipf = zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED)
     output_filename = os.path.splitext(name)[0] + resources["output_extension"]
-    zipf.writestr(output_filename, cast_bytes(output, "utf-8"))
+    zipf.writestr(output_filename, output.encode("utf-8"))
     for filename, data in output_files.items():
         zipf.writestr(os.path.basename(filename), data)
     zipf.close()
@@ -111,7 +117,7 @@ class NbconvertFileHandler(JupyterHandler):
         self.set_header("Last-Modified", model["last_modified"])
 
         # create resources dictionary
-        mod_date = model["last_modified"].strftime(text.date_format)
+        mod_date = model["last_modified"].strftime(date_format)
         nb_title = os.path.splitext(name)[0]
 
         resource_dict = {

@@ -11,6 +11,7 @@ from tornado.log import app_log
 from tornado.web import HTTPError
 
 from .utils import HTTP_METHOD_TO_AUTH_ACTION
+from .utils import warn_disabled_authorization
 
 
 def authorized(
@@ -59,13 +60,18 @@ def authorized(
             if not user:
                 app_log.warning("Attempting to authorize request without authentication!")
                 raise HTTPError(status_code=403, log_message=message)
-            # If the user is allowed to do this action,
-            # call the method.
+
+            # Handle the case where an authorizer wasn't attached to the handler.
+            if not self.authorizer:
+                warn_disabled_authorization()
+                return method(self, *args, **kwargs)
+
+            # Only return the method if the action is authorized.
             if self.authorizer.is_authorized(self, user, action, resource):
                 return method(self, *args, **kwargs)
-            # else raise an exception.
-            else:
-                raise HTTPError(status_code=403, log_message=message)
+
+            # Raise an exception if the method wasn't returned (i.e. not authorized)
+            raise HTTPError(status_code=403, log_message=message)
 
         return inner
 

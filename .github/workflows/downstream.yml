@@ -7,7 +7,7 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -15,6 +15,11 @@ jobs:
 
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
+      - name: Test nbclassic
+        uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
+        with:
+          package_name: nbclassic
 
       - name: Test jupyterlab_server
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
@@ -26,11 +31,6 @@ jobs:
         with:
           package_name: jupyterlab
           test_command: "python -m jupyterlab.browser_check --no-browser-test"
-
-      - name: Test nbclassic
-        uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
-        with:
-          package_name: nbclassic
 
       - name: Test run nbclassic
         run: |

@@ -31,4 +31,4 @@ class TemplateHandler(BaseTemplateHandler):
 
 class ErrorHandler(BaseTemplateHandler):
     def get(self, path):
-        self.write(self.render_template("error.html"))
+        self.write_error(400)

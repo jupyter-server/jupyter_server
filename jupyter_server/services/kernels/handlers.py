@@ -8,7 +8,6 @@ import json
 from textwrap import dedent
 from traceback import format_tb
 
-from ipython_genutils.py3compat import cast_unicode
 from jupyter_client import protocol_version as client_protocol_version
 
 try:
@@ -140,6 +139,14 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     def rate_limit_window(self):
         return self.settings.get("rate_limit_window", 1.0)
 
+    @property
+    def subprotocol(self):
+        try:
+            protocol = self.selected_subprotocol
+        except Exception:
+            protocol = None
+        return protocol
+
     def __repr__(self):
         return "%s(%s)" % (
             self.__class__.__name__,
@@ -170,7 +177,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         # before connections are opened,
         # plus it is *very* unlikely that a busy kernel will not finish
         # establishing its zmq subscriptions before processing the next request.
-        if getattr(kernel, "execution_state") == "busy":
+        if getattr(kernel, "execution_state", None) == "busy":
             self.log.debug("Nudge: not nudging busy kernel %s", self.kernel_id)
             f = Future()
             f.set_result(None)
@@ -308,7 +315,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         idents, msg = self.session.feed_identities(msg)
         try:
             msg = self.session.deserialize(msg)
-        except:
+        except BaseException:
             self.log.error("Bad kernel_info reply", exc_info=True)
             self._kernel_info_future.set_result({})
             return
@@ -398,7 +405,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         await future
 
     async def get(self, kernel_id):
-        self.kernel_id = cast_unicode(kernel_id, "ascii")
+        self.kernel_id = kernel_id
         await super(ZMQChannelsHandler, self).get(kernel_id=kernel_id)
 
     async def _register_session(self):
@@ -461,7 +468,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                     pass
                 # WebSockets don't respond to traditional error codes so we
                 # close the connection.
-                for channel, stream in self.channels.items():
+                for _, stream in self.channels.items():
                     if not stream.closed():
                         stream.close()
                 self.close()
@@ -471,7 +478,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         km.add_restart_callback(self.kernel_id, self.on_restart_failed, "dead")
 
         def subscribe(value):
-            for channel, stream in self.channels.items():
+            for _, stream in self.channels.items():
                 stream.on_recv_stream(self._on_zmq_reply)
 
         connected.add_done_callback(subscribe)
@@ -484,7 +491,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             self.log.debug("Received message on closed websocket %r", ws_msg)
             return
 
-        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+        if self.subprotocol == "v1.kernel.websocket.jupyter.org":
             channel, msg_list = deserialize_msg_from_ws_v1(ws_msg)
             msg = {
                 "header": None,
@@ -515,7 +522,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 ignore_msg = True
         if not ignore_msg:
             stream = self.channels[channel]
-            if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+            if self.subprotocol == "v1.kernel.websocket.jupyter.org":
                 self.session.send_raw(stream, msg_list)
             else:
                 self.session.send(stream, msg)
@@ -533,7 +540,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     def _on_zmq_reply(self, stream, msg_list):
         idents, fed_msg_list = self.session.feed_identities(msg_list)
 
-        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+        if self.subprotocol == "v1.kernel.websocket.jupyter.org":
             msg = {"header": None, "parent_header": None, "content": None}
         else:
             msg = self.session.deserialize(fed_msg_list)
@@ -546,7 +553,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         if self._limit_rate(channel, msg, parts):
             return
 
-        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+        if self.subprotocol == "v1.kernel.websocket.jupyter.org":
             super(ZMQChannelsHandler, self)._on_zmq_reply(stream, parts)
         else:
             super(ZMQChannelsHandler, self)._on_zmq_reply(stream, msg)
@@ -558,7 +565,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             content={"text": error_message + "\n", "name": "stderr"},
             parent=parent_header,
         )
-        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+        if self.subprotocol == "v1.kernel.websocket.jupyter.org":
             bin_msg = serialize_msg_to_ws_v1(err_msg, "iopub", self.session.pack)
             self.write_message(bin_msg, binary=True)
         else:
@@ -720,7 +727,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         # This method can be called twice, once by self.kernel_died and once
         # from the WebSocket close event. If the WebSocket connection is
         # closed before the ZMQ streams are setup, they could be None.
-        for channel, stream in self.channels.items():
+        for _, stream in self.channels.items():
             if stream is not None and not stream.closed():
                 stream.on_recv(None)
                 stream.close()
@@ -736,7 +743,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             # that all messages from the stopped kernel have been delivered
             iopub.flush()
         msg = self.session.msg("status", {"execution_state": status})
-        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+        if self.subprotocol == "v1.kernel.websocket.jupyter.org":
             bin_msg = serialize_msg_to_ws_v1(msg, "iopub", self.session.pack)
             self.write_message(bin_msg, binary=True)
         else:
@@ -762,7 +769,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 msg["content"]["ename"] = "ExecutionError"
                 msg["content"]["evalue"] = "Execution error"
                 msg["content"]["traceback"] = [self.kernel_manager.traceback_replacement_message]
-                if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+                if self.subprotocol == "v1.kernel.websocket.jupyter.org":
                     msg_list[3] = self.session.pack(msg["content"])
 
 

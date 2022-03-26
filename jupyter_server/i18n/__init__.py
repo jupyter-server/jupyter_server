@@ -52,7 +52,7 @@ def parse_accept_lang_header(accept_lang):
         by_q[qvalue].append(lang)
 
     res = []
-    for qvalue, langs in sorted(by_q.items()):
+    for _, langs in sorted(by_q.items()):
         res.extend(sorted(langs))
     return res
 

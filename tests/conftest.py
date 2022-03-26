@@ -1,7 +1,12 @@
+import os
+
 import pytest
 
 from tests.extension.mockextensions.app import MockExtensionApp
 
+# Enforce WinPTY for Windows terminals, since the ConPTY backend
+# dones not work in CI.
+os.environ["PYWINPTY_BACKEND"] = "1"
 
 pytest_plugins = ["jupyter_server.pytest_plugin"]
 

@@ -17,10 +17,11 @@ from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelMana
 from jupyter_server.utils import url_path_join
 
 
-TEST_TIMEOUT = 20
+TEST_TIMEOUT = 60
 
 
-j = lambda r: json.loads(r.body.decode())
+def j(r):
+    return json.loads(r.body.decode())
 
 
 class NewPortsKernelManager(AsyncIOLoopKernelManager):
@@ -160,7 +161,7 @@ def session_is_ready(jp_serverapp):
             session = await sm.get_session(session_id=session_id)
             kernel_id = session["kernel"]["id"]
             kernel = mkm.get_kernel(kernel_id)
-            if getattr(kernel, "ready"):
+            if getattr(kernel, "ready", None):
                 await kernel.ready
 
     return _
@@ -577,7 +578,7 @@ async def test_restart_kernel(
     # Close/open websocket
     ws.close()
     # give it some time to close on the other side:
-    for i in range(10):
+    for _ in range(10):
         r = await jp_fetch("api", "kernels", kid, method="GET")
         model = json.loads(r.body.decode())
         if model["connections"] > 0:

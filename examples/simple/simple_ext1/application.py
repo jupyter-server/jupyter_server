@@ -46,7 +46,7 @@ class SimpleApp1(ExtensionAppJinjaMixin, ExtensionApp):
                 (r"/{}/template1/(.*)$".format(self.name), TemplateHandler),
                 (r"/{}/redirect".format(self.name), RedirectHandler),
                 (r"/{}/typescript/?".format(self.name), TypescriptHandler),
-                (r"/{}/(.*)", ErrorHandler),
+                (r"/{}/(.*)".format(self.name), ErrorHandler),
             ]
         )
 

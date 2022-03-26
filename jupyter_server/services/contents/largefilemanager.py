@@ -18,7 +18,8 @@ class LargeFileManager(FileContentsManager):
         if chunk is not None:
             path = path.strip("/")
 
-            self.run_pre_save_hook(model=model, path=path)
+            if chunk == 1:
+                self.run_pre_save_hook(model=model, path=path)
 
             if "type" not in model:
                 raise web.HTTPError(400, "No file type provided")
@@ -31,7 +32,10 @@ class LargeFileManager(FileContentsManager):
                 raise web.HTTPError(400, "No file content provided")
 
             os_path = self._get_os_path(path)
-            self.log.debug("Saving %s", os_path)
+            if chunk == -1:
+                self.log.debug(f"Saving last chunk of file {os_path}")
+            else:
+                self.log.debug(f"Saving chunk {chunk} of file {os_path}")
 
             try:
                 if chunk == 1:
@@ -52,7 +56,7 @@ class LargeFileManager(FileContentsManager):
 
             # Last chunk
             if chunk == -1:
-                self.run_post_save_hook(model=model, os_path=os_path)
+                self.run_post_save_hooks(model=model, os_path=os_path)
             return model
         else:
             return super(LargeFileManager, self).save(model, path)
@@ -89,9 +93,8 @@ class AsyncLargeFileManager(AsyncFileContentsManager):
         if chunk is not None:
             path = path.strip("/")
 
-            os_path = self._get_os_path(path)
-            self.log.debug("Saving %s", os_path)
-            self.run_pre_save_hook(model=model, path=path)
+            if chunk == 1:
+                self.run_pre_save_hook(model=model, path=path)
 
             if "type" not in model:
                 raise web.HTTPError(400, "No file type provided")
@@ -102,6 +105,12 @@ class AsyncLargeFileManager(AsyncFileContentsManager):
                 )
             if "content" not in model and model["type"] != "directory":
                 raise web.HTTPError(400, "No file content provided")
+
+            os_path = self._get_os_path(path)
+            if chunk == -1:
+                self.log.debug(f"Saving last chunk of file {os_path}")
+            else:
+                self.log.debug(f"Saving chunk {chunk} of file {os_path}")
 
             try:
                 if chunk == 1:
@@ -122,7 +131,7 @@ class AsyncLargeFileManager(AsyncFileContentsManager):
 
             # Last chunk
             if chunk == -1:
-                self.run_post_save_hook(model=model, os_path=os_path)
+                self.run_post_save_hooks(model=model, os_path=os_path)
             return model
         else:
             return await super(AsyncLargeFileManager, self).save(model, path)

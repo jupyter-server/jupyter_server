@@ -104,7 +104,6 @@ from jupyter_core.application import (
     base_flags,
     base_aliases,
 )
-from jupyter_core.paths import jupyter_config_path
 from jupyter_client import KernelManager
 from jupyter_client.kernelspec import KernelSpecManager
 from jupyter_client.session import Session
@@ -133,7 +132,6 @@ from jupyter_server.utils import (
     url_path_join,
     check_pid,
     url_escape,
-    pathname2url,
     unix_socket_in_use,
     urlencode_unix_socket_path,
     fetch,
@@ -199,7 +197,7 @@ def random_ports(port, n):
     """
     for i in range(min(5, n)):
         yield port + i
-    for i in range(n - 5):
+    for _ in range(n - 5):
         yield max(1, port + random.randint(-2 * n, 2 * n))
 
 
@@ -293,11 +291,7 @@ class ServerWebApplication(web.Application):
         )
         sys_info = get_sys_info()
 
-        # If the user is running the server in a git directory, make the assumption
-        # that this is a dev install and suggest to the developer `npm run build:watch`.
         base_dir = os.path.realpath(os.path.join(__file__, "..", ".."))
-        dev_mode = os.path.exists(os.path.join(base_dir, ".git"))
-
         nbui = gettext.translation(
             "nbui",
             localedir=os.path.join(base_dir, "jupyter_server/i18n"),
@@ -424,7 +418,7 @@ class ServerWebApplication(web.Application):
             # for each handler required for gateway, locate its pattern
             # in the current list and replace that entry...
             gateway_handlers = load_handlers("jupyter_server.gateway.handlers")
-            for i, gwh in enumerate(gateway_handlers):
+            for _, gwh in enumerate(gateway_handlers):
                 for j, h in enumerate(handlers):
                     if gwh[0] == h[0]:
                         handlers[j] = (gwh[0], gwh[1])
@@ -518,7 +512,7 @@ def shutdown_server(server_info, timeout=5, log=None):
     if log:
         log.debug("POST request to %sapi/shutdown", url)
 
-    r = fetch(url, method="POST", headers={"Authorization": "token " + server_info["token"]})
+    fetch(url, method="POST", headers={"Authorization": "token " + server_info["token"]})
     # Poll to see if it shut down.
     for _ in range(timeout * 10):
         if not check_pid(pid):
@@ -582,7 +576,7 @@ class JupyterServerStopApp(JupyterApp):
     def _maybe_remove_unix_socket(socket_path):
         try:
             os.unlink(socket_path)
-        except (OSError, IOError):
+        except OSError:
             pass
 
     def start(self):
@@ -1294,7 +1288,7 @@ class ServerApp(JupyterApp):
     tornado_settings = Dict(
         config=True,
         help=_i18n(
-            "Supply overrides for the tornado.web.Application that the " "Jupyter server uses."
+            "Supply overrides for the tornado.web.Application that the Jupyter server uses."
         ),
     )
 
@@ -1949,7 +1943,6 @@ class ServerApp(JupyterApp):
             )
             if self.ssl_options.get("ca_certs", False):
                 self.ssl_options.setdefault("cert_reqs", ssl.CERT_REQUIRED)
-            ssl_options = self.ssl_options
 
         self.login_handler_class.validate_security(self, ssl_options=self.ssl_options)
 
@@ -2154,11 +2147,7 @@ class ServerApp(JupyterApp):
         # This enables merging on keys, which we want for extension enabling.
         # Regular config loading only merges at the class level,
         # so each level clobbers the previous.
-        config_paths = jupyter_config_path()
-        if self.config_dir not in config_paths:
-            # add self.config_dir to the front, if set manually
-            config_paths.insert(0, self.config_dir)
-        manager = ExtensionConfigManager(read_config_path=config_paths)
+        manager = ExtensionConfigManager(read_config_path=self.config_file_paths)
         extensions = manager.get_jpserver_extensions()
 
         for modulename, enabled in sorted(extensions.items()):
@@ -2539,9 +2528,9 @@ class ServerApp(JupyterApp):
         is configured, root_dir will be set to the parent
         directory of file_to_run.
         """
-        rootdir_abspath = pathlib.Path(self.root_dir).resolve()
+        rootdir_abspath = pathlib.Path(self.root_dir).absolute()
         file_rawpath = pathlib.Path(self.file_to_run)
-        combined_path = (rootdir_abspath / file_rawpath).resolve()
+        combined_path = (rootdir_abspath / file_rawpath).absolute()
         is_child = str(combined_path).startswith(str(rootdir_abspath))
 
         if is_child:
@@ -2660,8 +2649,10 @@ class ServerApp(JupyterApp):
 
         assembled_url, _ = self._prepare_browser_open()
 
-        b = lambda: browser.open(assembled_url, new=self.webbrowser_open_new)
-        threading.Thread(target=b).start()
+        def target():
+            browser.open(assembled_url, new=self.webbrowser_open_new)
+
+        threading.Thread(target=target).start()
 
     def start_app(self):
         super(ServerApp, self).start()

@@ -188,6 +188,11 @@ class MappingKernelManager(MultiKernelManager):
             os_path = os.path.dirname(os_path)
         return os_path
 
+    async def _remove_kernel_when_ready(self, kernel_id, kernel_awaitable):
+        await super()._remove_kernel_when_ready(kernel_id, kernel_awaitable)
+        self._kernel_connections.pop(kernel_id, None)
+        self._kernel_ports.pop(kernel_id, None)
+
     async def start_kernel(self, kernel_id=None, path=None, **kwargs):
         """Start a kernel for a session and return its kernel_id.
 
@@ -303,7 +308,7 @@ class MappingKernelManager(MultiKernelManager):
         """
 
         if not self.buffer_offline_messages:
-            for channel, stream in channels.items():
+            for _, stream in channels.items():
                 stream.close()
             return
 
@@ -384,19 +389,12 @@ class MappingKernelManager(MultiKernelManager):
         self._check_kernel_id(kernel_id)
         self.stop_watching_activity(kernel_id)
         self.stop_buffering(kernel_id)
-        self._kernel_connections.pop(kernel_id, None)
 
         # Decrease the metric of number of kernels
         # running for the relevant kernel type by 1
         KERNEL_CURRENTLY_RUNNING_TOTAL.labels(type=self._kernels[kernel_id].kernel_name).dec()
 
         self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
-        # Unlike its async sibling method in AsyncMappingKernelManager, removing the kernel_id
-        # from the connections dictionary isn't as problematic before the shutdown since the
-        # method is synchronous.  However, we'll keep the relative call orders the same from
-        # a maintenance perspective.
-        self._kernel_connections.pop(kernel_id, None)
-        self._kernel_ports.pop(kernel_id, None)
 
     async def restart_kernel(self, kernel_id, now=False):
         """Restart a kernel by kernel_id"""
@@ -514,10 +512,11 @@ class MappingKernelManager(MultiKernelManager):
             self.last_kernel_activity = kernel.last_activity = utcnow()
 
             idents, fed_msg_list = session.feed_identities(msg_list)
-            msg = session.deserialize(fed_msg_list)
+            msg = session.deserialize(fed_msg_list, content=False)
 
             msg_type = msg["header"]["msg_type"]
             if msg_type == "status":
+                msg = session.deserialize(fed_msg_list)
                 kernel.execution_state = msg["content"]["execution_state"]
                 self.log.debug(
                     "activity on %s: %s (%s)",
@@ -544,7 +543,7 @@ class MappingKernelManager(MultiKernelManager):
         """
         if not self._initialized_culler and self.cull_idle_timeout > 0:
             if self._culler_callback is None:
-                loop = IOLoop.current()
+                _ = IOLoop.current()
                 if self.cull_interval <= 0:  # handle case where user set invalid value
                     self.log.warning(
                         "Invalid value for 'cull_interval' detected (%s) - using default value (%s).",
@@ -588,7 +587,7 @@ class MappingKernelManager(MultiKernelManager):
     async def cull_kernel_if_idle(self, kernel_id):
         kernel = self._kernels[kernel_id]
 
-        if getattr(kernel, "execution_state") == "dead":
+        if getattr(kernel, "execution_state", None) == "dead":
             self.log.warning(
                 "Culling '%s' dead kernel '%s' (%s).",
                 kernel.execution_state,
@@ -654,6 +653,4 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
         ret = await self.pinned_superclass.shutdown_kernel(
             self, kernel_id, now=now, restart=restart
         )
-        self._kernel_connections.pop(kernel_id, None)
-        self._kernel_ports.pop(kernel_id, None)
         return ret
