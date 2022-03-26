@@ -609,10 +609,11 @@ class ContentsManager(LoggingConfigurable):
             name = copy_pat.sub(".", from_name)
             to_name = self.increment_filename(name, to_path, insert="-Copy")
             to_path = "{0}/{1}".format(to_path, to_name)
-        elif is_destination_specified and "/" in to_path:
-            to_dir, to_name = path.rsplit("/", 1)
-            if not self.dir_exists(to_dir):
-                raise HTTPError(404, "No such parent directory: %s to copy file in" % to_dir)
+        elif is_destination_specified:
+            if "/" in to_path:
+                to_dir, to_name = to_path.rsplit("/", 1)
+                if not self.dir_exists(to_dir):
+                    raise HTTPError(404, "No such parent directory: %s to copy file in" % to_dir)
         else:
            raise HTTPError(404, "No such directory: %s" % to_path) 
 
@@ -977,10 +978,11 @@ class AsyncContentsManager(ContentsManager):
             name = copy_pat.sub(".", from_name)
             to_name = await self.increment_filename(name, to_path, insert="-Copy")
             to_path = "{0}/{1}".format(to_path, to_name)
-        elif is_destination_specified and "/" in to_path:
-            to_dir, to_name = path.rsplit("/", 1)
-            if not await ensure_async(self.dir_exists(to_dir)):
-                raise HTTPError(404, "No such parent directory: %s to copy file in" % to_dir)
+        elif is_destination_specified: 
+            if "/" in to_path:
+                to_dir, to_name = to_path.rsplit("/", 1)
+                if not await ensure_async(self.dir_exists(to_dir)):
+                    raise HTTPError(404, "No such parent directory: %s to copy file in" % to_dir)
         else:
             raise HTTPError(404, "No such directory: %s" % to_path)
 
