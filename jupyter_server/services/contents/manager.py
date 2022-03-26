@@ -602,14 +602,19 @@ class ContentsManager(LoggingConfigurable):
         if model["type"] == "directory":
             raise HTTPError(400, "Can't copy directories")
 
-        if to_path is None:
+        is_destination_specified = to_path is not None
+        if not is_destination_specified:
             to_path = from_dir
         if self.dir_exists(to_path):
             name = copy_pat.sub(".", from_name)
             to_name = self.increment_filename(name, to_path, insert="-Copy")
             to_path = "{0}/{1}".format(to_path, to_name)
+        elif is_destination_specified and "/" in to_path:
+            to_dir, to_name = path.rsplit("/", 1)
+            if not self.dir_exists(to_dir):
+                raise HTTPError(404, "No such parent directory: %s to copy file in" % to_dir)
         else:
-            raise HTTPError(404, "No such directory: %s" % to_path)
+           raise HTTPError(404, "No such directory: %s" % to_path) 
 
         model = self.save(model, to_path)
         return model
@@ -952,11 +957,7 @@ class AsyncContentsManager(ContentsManager):
 
         if to_path is not None:
             to_path = to_path.strip("/")
-
-            dir_exists = await self.dir_exists(to_path)
-            if not dir_exists:
-                raise HTTPError(404, "No such directory: %s" % to_path)
-
+            
         if "/" in path:
             from_dir, from_name = path.rsplit("/", 1)
         else:
@@ -968,12 +969,20 @@ class AsyncContentsManager(ContentsManager):
         model.pop("name", None)
         if model["type"] == "directory":
             raise HTTPError(400, "Can't copy directories")
-        if to_path is None:
+
+        is_destination_specified = to_path is not None
+        if not is_destination_specified:
             to_path = from_dir
         if await ensure_async(self.dir_exists(to_path)):
             name = copy_pat.sub(".", from_name)
             to_name = await self.increment_filename(name, to_path, insert="-Copy")
             to_path = "{0}/{1}".format(to_path, to_name)
+        elif is_destination_specified and "/" in to_path:
+            to_dir, to_name = path.rsplit("/", 1)
+            if not await ensure_async(self.dir_exists(to_dir)):
+                raise HTTPError(404, "No such parent directory: %s to copy file in" % to_dir)
+        else:
+            raise HTTPError(404, "No such directory: %s" % to_path)
 
         model = await self.save(model, to_path)
         return model

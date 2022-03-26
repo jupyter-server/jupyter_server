@@ -657,10 +657,19 @@ async def test_copy(jp_contents_manager):
     copy2 = await ensure_async(cm.copy(path, "å b/copy 2.ipynb"))
     assert copy2["name"] == "copy 2.ipynb"
     assert copy2["path"] == "å b/copy 2.ipynb"
+
     # copy with specified path
     copy2 = await ensure_async(cm.copy(path, "/"))
     assert copy2["name"] == name
     assert copy2["path"] == name
+
+    # copy to destination that does not exist
+    with pytest.raises(HTTPError) as e:
+        await ensure_async(cm.copy(path, "å x"))
+
+    # copy to destination whose parent dir does not exist
+    with pytest.raises(HTTPError) as e:
+        await ensure_async(cm.copy(path, "å x/copy 2.ipynb"))
 
 
 async def test_mark_trusted_cells(jp_contents_manager):
