@@ -462,10 +462,7 @@ class ContentsManager(LoggingConfigurable):
 
         if to_path is not None:
             to_path = to_path.strip("/")
-            dir_exists = self.dir_exists(to_path)
-            if not dir_exists:
-                raise HTTPError(404, "No such directory: %s" % to_path)
-
+            
         if "/" in path:
             from_dir, from_name = path.rsplit("/", 1)
         else:
@@ -484,6 +481,8 @@ class ContentsManager(LoggingConfigurable):
             name = copy_pat.sub(".", from_name)
             to_name = self.increment_filename(name, to_path, insert="-Copy")
             to_path = "{0}/{1}".format(to_path, to_name)
+        else:
+            raise HTTPError(404, "No such directory: %s" % to_path)
 
         model = self.save(model, to_path)
         return model
