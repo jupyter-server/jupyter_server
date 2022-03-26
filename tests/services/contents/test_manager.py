@@ -671,6 +671,10 @@ async def test_copy(jp_contents_manager):
     with pytest.raises(HTTPError) as e:
         await ensure_async(cm.copy(path, "å x/copy 2.ipynb"))
 
+    copy3 = await ensure_async(cm.copy(path, "/copy 3.ipynb"))
+    assert copy3["name"] == "copy 3.ipynb"
+    assert copy3["path"] == "/copy 3.ipynb"
+
 
 async def test_mark_trusted_cells(jp_contents_manager):
     cm = jp_contents_manager
