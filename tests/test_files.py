@@ -5,10 +5,7 @@ from pathlib import Path
 import pytest
 import tornado
 from nbformat import writes
-from nbformat.v4 import new_code_cell
-from nbformat.v4 import new_markdown_cell
-from nbformat.v4 import new_notebook
-from nbformat.v4 import new_output
+from nbformat.v4 import new_code_cell, new_markdown_cell, new_notebook, new_output
 
 from .utils import expected_http_error
 

@@ -1,14 +1,32 @@
 repos:
-  - repo: https://github.com/asottile/reorder_python_imports
-    rev: v2.7.1
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
     hooks:
-      - id: reorder-python-imports
+      - id: end-of-file-fixer
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: requirements-txt-fixer
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+      - id: forbid-new-submodules
+      - id: check-builtin-literals
+      - id: trailing-whitespace
 
   - repo: https://github.com/psf/black
     rev: 22.1.0
     hooks:
       - id: black
         args: ["--line-length", "100"]
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        files: \.py$
+        args: [--profile=black]
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v2.5.1
@@ -25,22 +43,6 @@ repos:
             "flake8-logging-format==0.6.0",
             "flake8-implicit-str-concat==0.2.0",
           ]
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
-    hooks:
-      - id: end-of-file-fixer
-      - id: check-case-conflict
-      - id: check-executables-have-shebangs
-      - id: requirements-txt-fixer
-      - id: check-added-large-files
-      - id: check-case-conflict
-      - id: check-toml
-      - id: check-yaml
-      - id: debug-statements
-      - id: forbid-new-submodules
-      - id: check-builtin-literals
-      - id: trailing-whitespace
 
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v8.8.0

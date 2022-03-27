@@ -10,9 +10,7 @@ from traitlets import TraitError
 from traitlets.tests.utils import check_help_all_output
 
 from jupyter_server.auth.security import passwd_check
-from jupyter_server.serverapp import JupyterPasswordApp
-from jupyter_server.serverapp import list_running_servers
-from jupyter_server.serverapp import ServerApp
+from jupyter_server.serverapp import JupyterPasswordApp, ServerApp, list_running_servers
 
 
 def test_help_output():

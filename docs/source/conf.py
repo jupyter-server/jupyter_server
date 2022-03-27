@@ -19,7 +19,6 @@ import sys
 
 from pkg_resources import parse_version
 
-
 HERE = osp.abspath(osp.dirname(__file__))
 
 

@@ -37,10 +37,10 @@ except ImportError:
     resource = None
 
 from jinja2 import Environment, FileSystemLoader
-
 from jupyter_core.paths import secure_write
-from jupyter_server.transutils import trans, _i18n
-from jupyter_server.utils import run_sync_in_loop, urljoin, pathname2url
+
+from jupyter_server.transutils import _i18n, trans
+from jupyter_server.utils import pathname2url, run_sync_in_loop, urljoin
 
 # the minimum viable tornado version: needs to be kept in sync with setup.py
 MIN_TORNADO = (6, 1, 0)
@@ -52,14 +52,37 @@ try:
 except (ImportError, AttributeError, AssertionError) as e:  # pragma: no cover
     raise ImportError(_i18n("The Jupyter Server requires tornado >=%s.%s.%s") % MIN_TORNADO) from e
 
-from tornado import httpserver
-from tornado import ioloop
-from tornado import web
+from tornado import httpserver, ioloop, web
 from tornado.httputil import url_concat
-from tornado.log import LogFormatter, app_log, access_log, gen_log
+from tornado.log import LogFormatter, access_log, app_log, gen_log
 
 if not sys.platform.startswith("win"):
     from tornado.netutil import bind_unix_socket
+
+from jupyter_client import KernelManager
+from jupyter_client.kernelspec import KernelSpecManager
+from jupyter_client.session import Session
+from jupyter_core.application import JupyterApp, base_aliases, base_flags
+from jupyter_core.paths import jupyter_runtime_dir
+from nbformat.sign import NotebookNotary
+from traitlets import (
+    Any,
+    Bool,
+    Bytes,
+    Dict,
+    Float,
+    Instance,
+    Integer,
+    List,
+    TraitError,
+    Type,
+    Unicode,
+    default,
+    observe,
+    validate,
+)
+from traitlets.config import Config
+from traitlets.config.application import boolean_flag, catch_config_error
 
 from jupyter_server import (
     DEFAULT_JUPYTER_SERVER_PORT,
@@ -67,80 +90,51 @@ from jupyter_server import (
     DEFAULT_TEMPLATE_PATH_LIST,
     __version__,
 )
-
-from jupyter_server.base.handlers import MainHandler, RedirectWithParams, Template404
+from jupyter_server._sysinfo import get_sys_info
+from jupyter_server._tz import utcnow
+from jupyter_server.auth.authorizer import AllowAllAuthorizer, Authorizer
+from jupyter_server.auth.login import LoginHandler
+from jupyter_server.auth.logout import LogoutHandler
+from jupyter_server.base.handlers import (
+    FileFindHandler,
+    MainHandler,
+    RedirectWithParams,
+    Template404,
+)
+from jupyter_server.extension.config import ExtensionConfigManager
+from jupyter_server.extension.manager import ExtensionManager
+from jupyter_server.extension.serverextension import ServerExtensionApp
+from jupyter_server.gateway.managers import (
+    GatewayClient,
+    GatewayKernelSpecManager,
+    GatewayMappingKernelManager,
+    GatewaySessionManager,
+)
 from jupyter_server.log import log_request
-from jupyter_server.services.kernels.kernelmanager import (
-    MappingKernelManager,
-    AsyncMappingKernelManager,
-)
 from jupyter_server.services.config import ConfigManager
-from jupyter_server.services.contents.manager import (
-    AsyncContentsManager,
-    ContentsManager,
-)
 from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
     FileContentsManager,
 )
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
+from jupyter_server.services.contents.manager import (
+    AsyncContentsManager,
+    ContentsManager,
+)
+from jupyter_server.services.kernels.kernelmanager import (
+    AsyncMappingKernelManager,
+    MappingKernelManager,
+)
 from jupyter_server.services.sessions.sessionmanager import SessionManager
-from jupyter_server.gateway.managers import (
-    GatewayMappingKernelManager,
-    GatewayKernelSpecManager,
-    GatewaySessionManager,
-    GatewayClient,
-)
-from jupyter_server.auth.authorizer import Authorizer, AllowAllAuthorizer
-
-from jupyter_server.auth.login import LoginHandler
-from jupyter_server.auth.logout import LogoutHandler
-from jupyter_server.base.handlers import FileFindHandler
-
-from traitlets.config import Config
-from traitlets.config.application import catch_config_error, boolean_flag
-from jupyter_core.application import (
-    JupyterApp,
-    base_flags,
-    base_aliases,
-)
-from jupyter_client import KernelManager
-from jupyter_client.kernelspec import KernelSpecManager
-from jupyter_client.session import Session
-from nbformat.sign import NotebookNotary
-from traitlets import (
-    Any,
-    Dict,
-    Unicode,
-    Integer,
-    List,
-    Bool,
-    Bytes,
-    Instance,
-    TraitError,
-    Type,
-    Float,
-    observe,
-    default,
-    validate,
-)
-from jupyter_core.paths import jupyter_runtime_dir
-from jupyter_server._sysinfo import get_sys_info
-
-from jupyter_server._tz import utcnow
-from jupyter_server.utils import (
-    url_path_join,
-    check_pid,
-    url_escape,
-    unix_socket_in_use,
-    urlencode_unix_socket_path,
-    fetch,
-)
-
-from jupyter_server.extension.serverextension import ServerExtensionApp
-from jupyter_server.extension.manager import ExtensionManager
-from jupyter_server.extension.config import ExtensionConfigManager
 from jupyter_server.traittypes import TypeFromClasses
+from jupyter_server.utils import (
+    check_pid,
+    fetch,
+    unix_socket_in_use,
+    url_escape,
+    url_path_join,
+    urlencode_unix_socket_path,
+)
 
 # Tolerate missing terminado package.
 try:

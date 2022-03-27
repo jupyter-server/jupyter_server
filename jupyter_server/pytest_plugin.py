@@ -22,7 +22,6 @@ from jupyter_server.services.contents.filemanager import FileContentsManager
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
 from jupyter_server.utils import url_path_join
 
-
 # List of dependencies needed for this plugin.
 pytest_plugins = [
     "pytest_tornasync",

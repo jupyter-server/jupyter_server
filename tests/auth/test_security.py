@@ -1,5 +1,4 @@
-from jupyter_server.auth.security import passwd
-from jupyter_server.auth.security import passwd_check
+from jupyter_server.auth.security import passwd, passwd_check
 
 
 def test_passwd_structure():

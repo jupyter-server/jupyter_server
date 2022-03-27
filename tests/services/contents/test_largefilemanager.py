@@ -1,10 +1,13 @@
 import pytest
 import tornado
 
-from ...utils import expected_http_error
-from jupyter_server.services.contents.largefilemanager import AsyncLargeFileManager
-from jupyter_server.services.contents.largefilemanager import LargeFileManager
+from jupyter_server.services.contents.largefilemanager import (
+    AsyncLargeFileManager,
+    LargeFileManager,
+)
 from jupyter_server.utils import ensure_async
+
+from ...utils import expected_http_error
 
 
 @pytest.fixture(params=[LargeFileManager, AsyncLargeFileManager])

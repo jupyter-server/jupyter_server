@@ -4,7 +4,6 @@ import pytest
 
 from jupyter_server import __version__
 
-
 pep440re = re.compile(r"^(\d+)\.(\d+)\.(\d+((a|b|rc)\d+)?)(\.post\d+)?(\.dev\d*)?$")
 
 

@@ -5,10 +5,11 @@
 import terminado
 from tornado import web
 
-from ..base.handlers import JupyterHandler
-from ..base.zmqhandlers import WebSocketMixin
 from jupyter_server._tz import utcnow
 from jupyter_server.auth.utils import warn_disabled_authorization
+
+from ..base.handlers import JupyterHandler
+from ..base.zmqhandlers import WebSocketMixin
 
 AUTH_RESOURCE = "terminals"
 

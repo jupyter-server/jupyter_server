@@ -7,31 +7,29 @@ import re
 import warnings
 from fnmatch import fnmatch
 
-from nbformat import sign
+from nbformat import ValidationError, sign
 from nbformat import validate as validate_nb
-from nbformat import ValidationError
 from nbformat.v4 import new_notebook
-from tornado.web import HTTPError
-from tornado.web import RequestHandler
-from traitlets import Any
-from traitlets import Bool
-from traitlets import default
-from traitlets import Dict
-from traitlets import Instance
-from traitlets import List
-from traitlets import TraitError
-from traitlets import Type
-from traitlets import Unicode
-from traitlets import validate
+from tornado.web import HTTPError, RequestHandler
+from traitlets import (
+    Any,
+    Bool,
+    Dict,
+    Instance,
+    List,
+    TraitError,
+    Type,
+    Unicode,
+    default,
+    validate,
+)
 from traitlets.config.configurable import LoggingConfigurable
 
-from ...files.handlers import FilesHandler
-from .checkpoints import AsyncCheckpoints
-from .checkpoints import Checkpoints
 from jupyter_server.transutils import _i18n
-from jupyter_server.utils import ensure_async
-from jupyter_server.utils import import_item
+from jupyter_server.utils import ensure_async, import_item
 
+from ...files.handlers import FilesHandler
+from .checkpoints import AsyncCheckpoints, Checkpoints
 
 copy_pat = re.compile(r"\-Copy\d*\.")
 

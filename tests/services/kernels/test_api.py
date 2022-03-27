@@ -8,9 +8,9 @@ import tornado
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 from tornado.httpclient import HTTPClientError
 
-from ...utils import expected_http_error
 from jupyter_server.utils import url_path_join
 
+from ...utils import expected_http_error
 
 TEST_TIMEOUT = 60
 

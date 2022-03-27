@@ -11,15 +11,11 @@ except ImportError:
     from pysqlite2 import dbapi2 as sqlite3
 
 from tornado import web
-
+from traitlets import Instance, TraitError, Unicode, validate
 from traitlets.config.configurable import LoggingConfigurable
-from traitlets import Instance
-from traitlets import Unicode
-from traitlets import validate
-from traitlets import TraitError
 
-from jupyter_server.utils import ensure_async
 from jupyter_server.traittypes import InstanceFromClasses
+from jupyter_server.utils import ensure_async
 
 
 class SessionManager(LoggingConfigurable):

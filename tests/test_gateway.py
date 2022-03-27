@@ -8,13 +8,13 @@ from unittest.mock import patch
 
 import pytest
 import tornado
-from tornado.httpclient import HTTPRequest
-from tornado.httpclient import HTTPResponse
+from tornado.httpclient import HTTPRequest, HTTPResponse
 from tornado.web import HTTPError
 
-from .utils import expected_http_error
 from jupyter_server.gateway.managers import GatewayClient
 from jupyter_server.utils import ensure_async
+
+from .utils import expected_http_error
 
 
 def generate_kernelspec(name):

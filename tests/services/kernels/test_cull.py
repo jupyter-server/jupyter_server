@@ -8,7 +8,6 @@ import pytest
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
 
-
 CULL_TIMEOUT = 30 if platform.python_implementation() == "PyPy" else 5
 CULL_INTERVAL = 1
 

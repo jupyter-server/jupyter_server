@@ -14,14 +14,15 @@ try:
     from jupyter_client.jsonutil import json_default
 except ImportError:
     from jupyter_client.jsonutil import date_default as json_default
+
 from jupyter_client.jsonutil import extract_dates
 from jupyter_client.session import Session
-from tornado import ioloop
-from tornado import web
+from tornado import ioloop, web
 from tornado.websocket import WebSocketHandler
 
-from .handlers import JupyterHandler
 from jupyter_server.auth.utils import warn_disabled_authorization
+
+from .handlers import JupyterHandler
 
 
 def serialize_binary_message(msg):

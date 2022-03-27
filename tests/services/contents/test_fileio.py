@@ -7,7 +7,6 @@ import pytest
 
 from jupyter_server.services.contents.fileio import atomic_writing
 
-
 umask = 0
 
 

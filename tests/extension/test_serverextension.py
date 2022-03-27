@@ -4,9 +4,10 @@ import pytest
 from traitlets.tests.utils import check_help_all_output
 
 from jupyter_server.config_manager import BaseJSONConfigManager
-from jupyter_server.extension.serverextension import _get_config_dir
-from jupyter_server.extension.serverextension import toggle_server_extension_python
-
+from jupyter_server.extension.serverextension import (
+    _get_config_dir,
+    toggle_server_extension_python,
+)
 
 # Use ServerApps environment because it monkeypatches
 # jupyter_core.paths and provides a config directory

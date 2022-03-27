@@ -18,9 +18,7 @@ from urllib.parse import urlparse
 import prometheus_client
 from jinja2 import TemplateNotFound
 from jupyter_core.paths import is_hidden
-from tornado import escape
-from tornado import httputil
-from tornado import web
+from tornado import escape, httputil, web
 from tornado.log import app_log
 from traitlets.config import Application
 
@@ -29,12 +27,14 @@ from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
 from jupyter_server.i18n import combine_translations
 from jupyter_server.services.security import csp_report_uri
-from jupyter_server.utils import ensure_async
-from jupyter_server.utils import filefind
-from jupyter_server.utils import url_escape
-from jupyter_server.utils import url_is_absolute
-from jupyter_server.utils import url_path_join
-from jupyter_server.utils import urldecode_unix_socket_path
+from jupyter_server.utils import (
+    ensure_async,
+    filefind,
+    url_escape,
+    url_is_absolute,
+    url_path_join,
+    urldecode_unix_socket_path,
+)
 
 # -----------------------------------------------------------------------------
 # Top-level handlers

@@ -1,19 +1,17 @@
 import json
 import pathlib
 import sys
-from base64 import decodebytes
-from base64 import encodebytes
+from base64 import decodebytes, encodebytes
 from unicodedata import normalize
 
 import pytest
 import tornado
-from nbformat import from_dict
-from nbformat import writes
-from nbformat.v4 import new_markdown_cell
-from nbformat.v4 import new_notebook
+from nbformat import from_dict, writes
+from nbformat.v4 import new_markdown_cell, new_notebook
+
+from jupyter_server.utils import url_path_join
 
 from ...utils import expected_http_error
-from jupyter_server.utils import url_path_join
 
 
 def notebooks_only(dir_model):

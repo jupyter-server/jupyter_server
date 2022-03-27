@@ -11,13 +11,13 @@ try:
     # See https://github.com/jupyter/jupyter_server/issues/209
     from notebook.prometheus.metrics import (
         HTTP_REQUEST_DURATION_SECONDS,
-        TERMINAL_CURRENTLY_RUNNING_TOTAL,
         KERNEL_CURRENTLY_RUNNING_TOTAL,
+        TERMINAL_CURRENTLY_RUNNING_TOTAL,
     )
 
 except ImportError:
 
-    from prometheus_client import Histogram, Gauge
+    from prometheus_client import Gauge, Histogram
 
     HTTP_REQUEST_DURATION_SECONDS = Histogram(
         "http_request_duration_seconds",

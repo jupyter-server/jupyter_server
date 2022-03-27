@@ -10,6 +10,7 @@ if not check_version(terminado.__version__, "0.8.3"):
     raise ImportError("terminado >= 0.8.3 required, found %s" % terminado.__version__)
 
 from jupyter_server.utils import url_path_join as ujoin
+
 from . import api_handlers
 from .handlers import TermSocket
 from .terminalmanager import TerminalManager

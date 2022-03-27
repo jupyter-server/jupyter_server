@@ -4,9 +4,9 @@ import json
 from anyio.to_thread import run_sync
 from tornado import web
 
-from ...base.handlers import APIHandler
 from jupyter_server.auth import authorized
 
+from ...base.handlers import APIHandler
 
 AUTH_RESOURCE = "nbconvert"
 

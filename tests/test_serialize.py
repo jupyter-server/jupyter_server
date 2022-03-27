@@ -3,8 +3,10 @@ import os
 
 from jupyter_client.session import Session
 
-from jupyter_server.base.zmqhandlers import deserialize_binary_message
-from jupyter_server.base.zmqhandlers import serialize_binary_message
+from jupyter_server.base.zmqhandlers import (
+    deserialize_binary_message,
+    serialize_binary_message,
+)
 
 
 def test_serialize_binary():

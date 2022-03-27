@@ -1,13 +1,13 @@
 import os
 
-from traitlets import List
-from traitlets import Unicode
+from traitlets import List, Unicode
 
 from jupyter_server.base.handlers import JupyterHandler
-from jupyter_server.extension.application import ExtensionApp
-from jupyter_server.extension.application import ExtensionAppJinjaMixin
-from jupyter_server.extension.handler import ExtensionHandlerJinjaMixin
-from jupyter_server.extension.handler import ExtensionHandlerMixin
+from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
+from jupyter_server.extension.handler import (
+    ExtensionHandlerJinjaMixin,
+    ExtensionHandlerMixin,
+)
 
 STATIC_PATH = os.path.join(os.path.dirname(__file__), "static")
 

@@ -2,14 +2,16 @@ import os
 
 from traitlets import Unicode
 
-from .handlers import DefaultHandler
-from .handlers import ErrorHandler
-from .handlers import ParameterHandler
-from .handlers import RedirectHandler
-from .handlers import TemplateHandler
-from .handlers import TypescriptHandler
-from jupyter_server.extension.application import ExtensionApp
-from jupyter_server.extension.application import ExtensionAppJinjaMixin
+from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
+
+from .handlers import (
+    DefaultHandler,
+    ErrorHandler,
+    ParameterHandler,
+    RedirectHandler,
+    TemplateHandler,
+    TypescriptHandler,
+)
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")

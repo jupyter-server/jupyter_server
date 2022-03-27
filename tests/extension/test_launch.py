@@ -11,7 +11,6 @@ from pathlib import Path
 import pytest
 import requests
 
-
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 

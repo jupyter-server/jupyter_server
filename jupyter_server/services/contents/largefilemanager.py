@@ -5,8 +5,10 @@ import os
 from anyio.to_thread import run_sync
 from tornado import web
 
-from jupyter_server.services.contents.filemanager import AsyncFileContentsManager
-from jupyter_server.services.contents.filemanager import FileContentsManager
+from jupyter_server.services.contents.filemanager import (
+    AsyncFileContentsManager,
+    FileContentsManager,
+)
 
 
 class LargeFileManager(FileContentsManager):

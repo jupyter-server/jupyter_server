@@ -11,8 +11,7 @@ import os
 
 from six import PY3
 from traitlets.config import LoggingConfigurable
-from traitlets.traitlets import Bool
-from traitlets.traitlets import Unicode
+from traitlets.traitlets import Bool, Unicode
 
 
 def recursive_update(target, new):

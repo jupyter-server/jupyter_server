@@ -1,11 +1,9 @@
 """HTTP handler to shut down the Jupyter server.
 """
-from tornado import ioloop
-from tornado import web
+from tornado import ioloop, web
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import JupyterHandler
-
 
 AUTH_RESOURCE = "server"
 
