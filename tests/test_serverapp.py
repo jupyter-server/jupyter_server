@@ -234,7 +234,7 @@ def test_resolve_file_to_run_and_root_dir(prefix_path, root_dir, file_to_run, ex
             "http://localhost:8888/?token=<generated>",
             "http://127.0.0.1:8888/?token=<generated>",
             "http://localhost:8888/",
-        )
+        ),
     ],
 )
 def test_urls(config, public_url, local_url, connection_url):
