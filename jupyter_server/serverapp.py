@@ -1976,8 +1976,10 @@ class ServerApp(JupyterApp):
             scheme = "http+unix"
             netloc = urlencode_unix_socket_path(self.sock)
         else:
+            if not self.ip:
+                ip = "localhost"
             # Handle nonexplicit hostname.
-            if self.ip in ("", "0.0.0.0", "::"):
+            elif self.ip in ("0.0.0.0", "::"):
                 ip = "%s" % socket.gethostname()
             else:
                 ip = "[{}]".format(self.ip) if ":" in self.ip else self.ip
