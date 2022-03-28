@@ -6,16 +6,13 @@ import os
 import sys
 
 from jupyter_core.application import JupyterApp
-from jupyter_core.paths import ENV_CONFIG_PATH
-from jupyter_core.paths import jupyter_config_dir
-from jupyter_core.paths import SYSTEM_CONFIG_PATH
+from jupyter_core.paths import ENV_CONFIG_PATH, SYSTEM_CONFIG_PATH, jupyter_config_dir
 from tornado.log import LogFormatter
 from traitlets import Bool
 
 from jupyter_server._version import __version__
 from jupyter_server.extension.config import ExtensionConfigManager
-from jupyter_server.extension.manager import ExtensionManager
-from jupyter_server.extension.manager import ExtensionPackage
+from jupyter_server.extension.manager import ExtensionManager, ExtensionPackage
 
 
 def _get_config_dir(user=False, sys_prefix=False):

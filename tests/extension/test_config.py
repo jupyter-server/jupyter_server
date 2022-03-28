@@ -1,9 +1,7 @@
 import pytest
 from jupyter_core.paths import jupyter_config_path
 
-from jupyter_server.extension.config import (
-    ExtensionConfigManager,
-)
+from jupyter_server.extension.config import ExtensionConfigManager
 
 # Use ServerApps environment because it monkeypatches
 # jupyter_core.paths and provides a config directory

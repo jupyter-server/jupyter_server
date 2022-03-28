@@ -4,9 +4,7 @@ from unittest.mock import patch
 import pytest
 from traitlets.tests.utils import check_help_all_output
 
-from jupyter_server.utils import is_namespace_package
-from jupyter_server.utils import url_escape
-from jupyter_server.utils import url_unescape
+from jupyter_server.utils import is_namespace_package, url_escape, url_unescape
 
 
 def test_help_output():

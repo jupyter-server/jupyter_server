@@ -9,8 +9,7 @@ from urllib.parse import urlparse
 from tornado.escape import url_escape
 
 from ..base.handlers import JupyterHandler
-from .security import passwd_check
-from .security import set_password
+from .security import passwd_check, set_password
 
 
 class LoginHandler(JupyterHandler):

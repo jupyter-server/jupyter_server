@@ -13,11 +13,7 @@ if not sys.platform.startswith("win"):
     from tornado.netutil import bind_unix_socket
 
 import jupyter_server.serverapp
-from jupyter_server.utils import (
-    url_path_join,
-    urlencode_unix_socket,
-    async_fetch,
-)
+from jupyter_server.utils import async_fetch, url_path_join, urlencode_unix_socket
 
 
 @pytest.fixture

@@ -6,13 +6,11 @@ import os
 
 from tornado import web
 
-from ...base.handlers import APIHandler
-from ...base.handlers import JupyterHandler
-from jupyter_server._tz import isoformat
-from jupyter_server._tz import utcfromtimestamp
+from jupyter_server._tz import isoformat, utcfromtimestamp
 from jupyter_server.auth import authorized
 from jupyter_server.utils import ensure_async
 
+from ...base.handlers import APIHandler, JupyterHandler
 
 AUTH_RESOURCE = "api"
 

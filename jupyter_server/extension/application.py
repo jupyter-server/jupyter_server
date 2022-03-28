@@ -2,26 +2,18 @@ import logging
 import re
 import sys
 
-from jinja2 import Environment
-from jinja2 import FileSystemLoader
-from jupyter_core.application import JupyterApp
-from jupyter_core.application import NoStart
+from jinja2 import Environment, FileSystemLoader
+from jupyter_core.application import JupyterApp, NoStart
 from tornado.log import LogFormatter
 from tornado.web import RedirectHandler
-from traitlets import Any
-from traitlets import Bool
-from traitlets import default
-from traitlets import Dict
-from traitlets import HasTraits
-from traitlets import List
-from traitlets import Unicode
+from traitlets import Any, Bool, Dict, HasTraits, List, Unicode, default
 from traitlets.config import Config
 
-from .handler import ExtensionHandlerMixin
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.transutils import _i18n
-from jupyter_server.utils import is_namespace_package
-from jupyter_server.utils import url_path_join
+from jupyter_server.utils import is_namespace_package, url_path_join
+
+from .handler import ExtensionHandlerMixin
 
 # -----------------------------------------------------------------------------
 # Util functions and classes.

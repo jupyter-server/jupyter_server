@@ -8,21 +8,14 @@ import inspect
 import os
 import socket
 import sys
-from _frozen_importlib_external import _NamespacePath
 from contextlib import contextmanager
-from urllib.parse import quote
-from urllib.parse import SplitResult
-from urllib.parse import unquote
 from urllib.parse import urljoin  # noqa: F401
-from urllib.parse import urlparse
-from urllib.parse import urlsplit
-from urllib.parse import urlunsplit
+from urllib.parse import SplitResult, quote, unquote, urlparse, urlsplit, urlunsplit
 from urllib.request import pathname2url  # noqa: F401
 
+from _frozen_importlib_external import _NamespacePath
 from packaging.version import Version
-from tornado.httpclient import AsyncHTTPClient
-from tornado.httpclient import HTTPClient
-from tornado.httpclient import HTTPRequest
+from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest
 from tornado.netutil import Resolver
 
 

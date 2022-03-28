@@ -3,22 +3,17 @@ import sys
 import traceback
 
 from tornado.gen import multi
-from traitlets import Any
-from traitlets import Bool
-from traitlets import default
-from traitlets import Dict
-from traitlets import HasTraits
-from traitlets import Instance
-from traitlets import observe
-from traitlets import Unicode
+from traitlets import Any, Bool, Dict, HasTraits, Instance, Unicode, default, observe
 from traitlets import validate as validate_trait
 from traitlets.config import LoggingConfigurable
 
 from .config import ExtensionConfigManager
-from .utils import ExtensionMetadataError
-from .utils import ExtensionModuleNotFound
-from .utils import get_loader
-from .utils import get_metadata
+from .utils import (
+    ExtensionMetadataError,
+    ExtensionModuleNotFound,
+    get_loader,
+    get_metadata,
+)
 
 
 class ExtensionPoint(HasTraits):

@@ -2,7 +2,6 @@ import pytest
 
 from jupyter_server.extension.utils import validate_extension
 
-
 # Use ServerApps environment because it monkeypatches
 # jupyter_core.paths and provides a config directory
 # that's not cross contaminating the user config directory.

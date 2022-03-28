@@ -4,8 +4,7 @@ from urllib.parse import urlencode
 
 import pytest
 from tornado.httpclient import HTTPClientError
-from tornado.httputil import parse_cookie
-from tornado.httputil import url_concat
+from tornado.httputil import parse_cookie, url_concat
 
 from jupyter_server.utils import url_path_join
 

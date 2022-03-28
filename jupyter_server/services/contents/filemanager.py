@@ -11,26 +11,18 @@ from datetime import datetime
 
 import nbformat
 from anyio.to_thread import run_sync
-from jupyter_core.paths import exists
-from jupyter_core.paths import is_file_hidden
-from jupyter_core.paths import is_hidden
+from jupyter_core.paths import exists, is_file_hidden, is_hidden
 from send2trash import send2trash
 from tornado import web
-from traitlets import Bool
-from traitlets import default
-from traitlets import TraitError
-from traitlets import Unicode
-from traitlets import validate
+from traitlets import Bool, TraitError, Unicode, default, validate
 
-from .filecheckpoints import AsyncFileCheckpoints
-from .filecheckpoints import FileCheckpoints
-from .fileio import AsyncFileManagerMixin
-from .fileio import FileManagerMixin
-from .manager import AsyncContentsManager
-from .manager import ContentsManager
 from jupyter_server import _tz as tz
 from jupyter_server.base.handlers import AuthenticatedFileHandler
 from jupyter_server.transutils import _i18n
+
+from .filecheckpoints import AsyncFileCheckpoints, FileCheckpoints
+from .fileio import AsyncFileManagerMixin, FileManagerMixin
+from .manager import AsyncContentsManager, ContentsManager
 
 try:
     from os.path import samefile

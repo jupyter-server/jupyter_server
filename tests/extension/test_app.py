@@ -1,9 +1,10 @@
 import pytest
 from traitlets.config import Config
 
-from .mockextensions.app import MockExtensionApp
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.utils import run_sync
+
+from .mockextensions.app import MockExtensionApp
 
 
 @pytest.fixture

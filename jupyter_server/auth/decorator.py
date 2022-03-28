@@ -3,15 +3,12 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from functools import wraps
-from typing import Callable
-from typing import Optional
-from typing import Union
+from typing import Callable, Optional, Union
 
 from tornado.log import app_log
 from tornado.web import HTTPError
 
-from .utils import HTTP_METHOD_TO_AUTH_ACTION
-from .utils import warn_disabled_authorization
+from .utils import HTTP_METHOD_TO_AUTH_ACTION, warn_disabled_authorization
 
 
 def authorized(

@@ -12,9 +12,7 @@ import warnings
 from contextlib import contextmanager
 
 from jupyter_core.paths import jupyter_config_dir
-from traitlets.config import Config
-from traitlets.config import ConfigFileNotFound
-from traitlets.config import JSONFileConfigLoader
+from traitlets.config import Config, ConfigFileNotFound, JSONFileConfigLoader
 
 # Length of the salt in nr of hex chars, which implies salt_len * 4
 # bits of randomness.

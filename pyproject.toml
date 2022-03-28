@@ -9,7 +9,7 @@ factory = "jupyter_packaging.npm_builder"
 ignore = ["tbump.toml", ".*", "*.yml", "package-lock.json", "bootstrap*", "conftest.py"]
 
 [tool.pytest.ini_options]
-addopts = "--doctest-modules"
+addopts = "-raXs --durations 10 --color=yes --doctest-modules"
 testpaths = [
     "tests/"
 ]

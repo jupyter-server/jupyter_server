@@ -57,12 +57,12 @@ jobs:
       - name: Run the tests
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
         run: |
-          args="-vv -raXs --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --durations 10 --color=yes --cov-fail-under 70"
+          args="-vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --cov-fail-under 70"
           python -m pytest $args || python -m pytest $args --lf
       - name: Run the tests on pypy and windows
         if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(matrix.os, 'windows') }}
         run: |
-          python -m pytest -vv -raXs || python -m pytest -vv -raXs --lf
+          python -m pytest -vv || python -m pytest -vv --lf
       - name: Coverage
         run: |
           codecov
@@ -88,7 +88,7 @@ jobs:
           pip install -r doc-requirements.txt
           make html SPHINXOPTS="-W"
 
-  test_miniumum_versions:
+  test_minimum_versions:
     name: Test Minimum Versions
     timeout-minutes: 20
     runs-on: ubuntu-latest
@@ -102,8 +102,7 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
       - name: Run the unit tests
         run: |
-          args="-vv -raXs --durations 10 --color=yes"
-          pytest $args || pytest $args --lf
+          pytest -vv || pytest -vv --lf
 
   test_prereleases:
     name: Test Prereleases
@@ -123,8 +122,7 @@ jobs:
           pip check
       - name: Run the tests
         run: |
-          args="-vv -raXs --durations 10 --color=yes"
-          pytest $args || pytest $args --lf
+          pytest -vv || pytest -vv --lf
 
   make_sdist:
     name: Make SDist
@@ -164,5 +162,4 @@ jobs:
       - name: Run Test
         run: |
           cd sdist/test
-          args="-vv -raXs --durations 10 --color=yes"
-          pytest $args || pytest $args --lf
+          pytest -vv || pytest -vv --lf

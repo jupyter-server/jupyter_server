@@ -15,22 +15,14 @@ from jupyter_client.kernelspec import KernelSpecManager
 from jupyter_client.manager import AsyncKernelManager
 from jupyter_client.managerabc import KernelManagerABC
 from tornado import web
-from tornado.escape import json_decode
-from tornado.escape import json_encode
-from tornado.escape import url_escape
-from tornado.escape import utf8
-from traitlets import default
-from traitlets import DottedObjectName
-from traitlets import Instance
-from traitlets import Type
+from tornado.escape import json_decode, json_encode, url_escape, utf8
+from traitlets import DottedObjectName, Instance, Type, default
 
 from .._tz import UTC
 from ..services.kernels.kernelmanager import AsyncMappingKernelManager
 from ..services.sessions.sessionmanager import SessionManager
-from ..utils import ensure_async
-from ..utils import url_path_join
-from .gateway_client import gateway_request
-from .gateway_client import GatewayClient
+from ..utils import ensure_async, url_path_join
+from .gateway_client import GatewayClient, gateway_request
 
 
 class GatewayMappingKernelManager(AsyncMappingKernelManager):

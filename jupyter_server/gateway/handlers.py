@@ -9,18 +9,13 @@ import random
 from jupyter_client.session import Session
 from tornado import web
 from tornado.concurrent import Future
-from tornado.escape import json_decode
-from tornado.escape import url_escape
-from tornado.escape import utf8
+from tornado.escape import json_decode, url_escape, utf8
 from tornado.httpclient import HTTPRequest
-from tornado.ioloop import IOLoop
-from tornado.ioloop import PeriodicCallback
-from tornado.websocket import websocket_connect
-from tornado.websocket import WebSocketHandler
+from tornado.ioloop import IOLoop, PeriodicCallback
+from tornado.websocket import WebSocketHandler, websocket_connect
 from traitlets.config.configurable import LoggingConfigurable
 
-from ..base.handlers import APIHandler
-from ..base.handlers import JupyterHandler
+from ..base.handlers import APIHandler, JupyterHandler
 from ..utils import url_path_join
 from .managers import GatewayClient
 

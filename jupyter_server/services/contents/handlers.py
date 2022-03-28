@@ -10,16 +10,12 @@ try:
     from jupyter_client.jsonutil import json_default
 except ImportError:
     from jupyter_client.jsonutil import date_default as json_default
+
 from tornado import web
 
-from jupyter_server.base.handlers import APIHandler
-from jupyter_server.base.handlers import JupyterHandler
-from jupyter_server.base.handlers import path_regex
-from jupyter_server.utils import ensure_async
-from jupyter_server.utils import url_escape
-from jupyter_server.utils import url_path_join
 from jupyter_server.auth import authorized
-
+from jupyter_server.base.handlers import APIHandler, JupyterHandler, path_regex
+from jupyter_server.utils import ensure_async, url_escape, url_path_join
 
 AUTH_RESOURCE = "contents"
 

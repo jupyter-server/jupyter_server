@@ -8,35 +8,35 @@
 import asyncio
 import os
 from collections import defaultdict
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from functools import partial
 
-from jupyter_client.multikernelmanager import AsyncMultiKernelManager
-from jupyter_client.multikernelmanager import MultiKernelManager
+from jupyter_client.multikernelmanager import (
+    AsyncMultiKernelManager,
+    MultiKernelManager,
+)
 from jupyter_client.session import Session
 from jupyter_core.paths import exists
 from tornado import web
 from tornado.concurrent import Future
-from tornado.ioloop import IOLoop
-from tornado.ioloop import PeriodicCallback
-from traitlets import Any
-from traitlets import Bool
-from traitlets import default
-from traitlets import Dict
-from traitlets import Float
-from traitlets import Instance
-from traitlets import Integer
-from traitlets import List
-from traitlets import TraitError
-from traitlets import Unicode
-from traitlets import validate
+from tornado.ioloop import IOLoop, PeriodicCallback
+from traitlets import (
+    Any,
+    Bool,
+    Dict,
+    Float,
+    Instance,
+    Integer,
+    List,
+    TraitError,
+    Unicode,
+    default,
+    validate,
+)
 
-from jupyter_server._tz import isoformat
-from jupyter_server._tz import utcnow
+from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
-from jupyter_server.utils import ensure_async
-from jupyter_server.utils import to_os_path
+from jupyter_server.utils import ensure_async, to_os_path
 
 
 class MappingKernelManager(MultiKernelManager):

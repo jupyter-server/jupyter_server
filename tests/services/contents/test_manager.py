@@ -2,21 +2,22 @@ import os
 import sys
 import time
 from itertools import combinations
-from typing import Dict
-from typing import Optional
-from typing import Tuple
+from typing import Dict, Optional, Tuple
 from unittest.mock import patch
 
 import pytest
-from nbformat import v4 as nbformat
 from nbformat import ValidationError
+from nbformat import v4 as nbformat
 from tornado.web import HTTPError
 from traitlets import TraitError
 
-from ...utils import expected_http_error
-from jupyter_server.services.contents.filemanager import AsyncFileContentsManager
-from jupyter_server.services.contents.filemanager import FileContentsManager
+from jupyter_server.services.contents.filemanager import (
+    AsyncFileContentsManager,
+    FileContentsManager,
+)
 from jupyter_server.utils import ensure_async
+
+from ...utils import expected_http_error
 
 
 @pytest.fixture(

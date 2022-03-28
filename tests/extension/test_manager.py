@@ -4,11 +4,13 @@ import unittest.mock as mock
 import pytest
 from jupyter_core.paths import jupyter_config_path
 
-from jupyter_server.extension.manager import ExtensionManager
-from jupyter_server.extension.manager import ExtensionMetadataError
-from jupyter_server.extension.manager import ExtensionModuleNotFound
-from jupyter_server.extension.manager import ExtensionPackage
-from jupyter_server.extension.manager import ExtensionPoint
+from jupyter_server.extension.manager import (
+    ExtensionManager,
+    ExtensionMetadataError,
+    ExtensionModuleNotFound,
+    ExtensionPackage,
+    ExtensionPoint,
+)
 
 # Use ServerApps environment because it monkeypatches
 # jupyter_core.paths and provides a config directory

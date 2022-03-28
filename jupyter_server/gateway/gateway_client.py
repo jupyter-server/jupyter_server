@@ -5,15 +5,8 @@ import os
 from socket import gaierror
 
 from tornado import web
-from tornado.httpclient import AsyncHTTPClient
-from tornado.httpclient import HTTPError
-from traitlets import Bool
-from traitlets import default
-from traitlets import Float
-from traitlets import Int
-from traitlets import TraitError
-from traitlets import Unicode
-from traitlets import validate
+from tornado.httpclient import AsyncHTTPClient, HTTPError
+from traitlets import Bool, Float, Int, TraitError, Unicode, default, validate
 from traitlets.config import SingletonConfigurable
 
 

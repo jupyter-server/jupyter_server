@@ -11,14 +11,14 @@ try:
     from jupyter_client.jsonutil import json_default
 except ImportError:
     from jupyter_client.jsonutil import date_default as json_default
+
 from jupyter_client.kernelspec import NoSuchKernel
 from tornado import web
 
-from ...base.handlers import APIHandler
-from jupyter_server.utils import ensure_async
-from jupyter_server.utils import url_path_join
 from jupyter_server.auth import authorized
+from jupyter_server.utils import ensure_async, url_path_join
 
+from ...base.handlers import APIHandler
 
 AUTH_RESOURCE = "sessions"
 

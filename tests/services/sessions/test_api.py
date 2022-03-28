@@ -12,10 +12,10 @@ from nbformat.v4 import new_notebook
 from tornado.httpclient import HTTPClientError
 from traitlets import default
 
-from ...utils import expected_http_error
 from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
 from jupyter_server.utils import url_path_join
 
+from ...utils import expected_http_error
 
 TEST_TIMEOUT = 60
 

@@ -1,9 +1,7 @@
 import inspect
 from ast import literal_eval
 
-from traitlets import ClassBasedTraitType
-from traitlets import TraitError
-from traitlets import Undefined
+from traitlets import ClassBasedTraitType, TraitError, Undefined
 from traitlets.utils.descriptions import describe
 
 

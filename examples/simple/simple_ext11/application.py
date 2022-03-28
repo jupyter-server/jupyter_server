@@ -1,12 +1,9 @@
 import os
 
 from simple_ext1.application import SimpleApp1
-from traitlets import Bool
-from traitlets import observe
-from traitlets import Unicode
+from traitlets import Bool, Unicode, observe
 
-from jupyter_server.serverapp import aliases
-from jupyter_server.serverapp import flags
+from jupyter_server.serverapp import aliases, flags
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "./../simple_ext1/static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "./../simple_ext1/templates")

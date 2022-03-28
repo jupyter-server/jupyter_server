@@ -4,8 +4,9 @@ from html.parser import HTMLParser
 import pytest
 import tornado
 
-from .utils import expected_http_error
 from jupyter_server.utils import url_path_join
+
+from .utils import expected_http_error
 
 
 class IFrameSrcFinder(HTMLParser):

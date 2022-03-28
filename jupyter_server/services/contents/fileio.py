@@ -7,8 +7,7 @@ import errno
 import io
 import os
 import shutil
-from base64 import decodebytes
-from base64 import encodebytes
+from base64 import decodebytes, encodebytes
 from contextlib import contextmanager
 from functools import partial
 
@@ -18,8 +17,7 @@ from tornado.web import HTTPError
 from traitlets import Bool
 from traitlets.config import Configurable
 
-from jupyter_server.utils import to_api_path
-from jupyter_server.utils import to_os_path
+from jupyter_server.utils import to_api_path, to_os_path
 
 
 def replace_file(src, dst):
