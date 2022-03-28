@@ -27,7 +27,7 @@ steps::
     pip install --upgrade setuptools pip
     git clone https://github.com/jupyter/jupyter_server
     cd jupyter_server
-    pip install -e .
+    pip install -e ".[test]"
 
 If you are using a system-wide Python installation and you only want to install the server for you,
 you can add ``--user`` to the install commands.
@@ -44,7 +44,10 @@ Code Styling
 need to worry too much about your code style.
 As long as your code is valid,
 the pre-commit hook should take care of how it should look.
-To install `pre-commit`, run the following::
+`pre-commit` and its associated hooks will automatically be installed when
+you run ``pip install -e ".[test]"``
+
+To install ``pre-commit`` manually, run the following::
 
     pip install pre-commit
     pre-commit install
