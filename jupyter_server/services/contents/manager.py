@@ -589,7 +589,7 @@ class ContentsManager(LoggingConfigurable):
 
         if to_path is not None:
             to_path = to_path.strip("/")
-            
+
         if "/" in path:
             from_dir, from_name = path.rsplit("/", 1)
         else:
@@ -615,7 +615,7 @@ class ContentsManager(LoggingConfigurable):
                 if not self.dir_exists(to_dir):
                     raise HTTPError(404, "No such parent directory: %s to copy file in" % to_dir)
         else:
-           raise HTTPError(404, "No such directory: %s" % to_path) 
+            raise HTTPError(404, "No such directory: %s" % to_path)
 
         model = self.save(model, to_path)
         return model
@@ -958,7 +958,7 @@ class AsyncContentsManager(ContentsManager):
 
         if to_path is not None:
             to_path = to_path.strip("/")
-            
+
         if "/" in path:
             from_dir, from_name = path.rsplit("/", 1)
         else:
@@ -978,7 +978,7 @@ class AsyncContentsManager(ContentsManager):
             name = copy_pat.sub(".", from_name)
             to_name = await self.increment_filename(name, to_path, insert="-Copy")
             to_path = "{0}/{1}".format(to_path, to_name)
-        elif is_destination_specified: 
+        elif is_destination_specified:
             if "/" in to_path:
                 to_dir, to_name = to_path.rsplit("/", 1)
                 if not await ensure_async(self.dir_exists(to_dir)):
