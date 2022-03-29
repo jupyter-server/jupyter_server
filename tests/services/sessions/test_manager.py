@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from tornado import web
 from traitlets import TraitError
@@ -5,7 +7,12 @@ from traitlets import TraitError
 from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.services.contents.manager import ContentsManager
 from jupyter_server.services.kernels.kernelmanager import MappingKernelManager
-from jupyter_server.services.sessions.sessionmanager import SessionManager
+from jupyter_server.services.sessions.sessionmanager import (
+    KernelSessionRecord,
+    KernelSessionRecordConflict,
+    KernelSessionRecordList,
+    SessionManager,
+)
 
 
 class DummyKernel(object):
@@ -17,11 +24,11 @@ dummy_date = utcnow()
 dummy_date_s = isoformat(dummy_date)
 
 
-class DummyMKM(MappingKernelManager):
+class MockMKM(MappingKernelManager):
     """MappingKernelManager interface that doesn't start kernels, for testing"""
 
     def __init__(self, *args, **kwargs):
-        super(DummyMKM, self).__init__(*args, **kwargs)
+        super(MockMKM, self).__init__(*args, **kwargs)
         self.id_letters = iter("ABCDEFGHIJK")
 
     def _new_id(self):
@@ -39,9 +46,111 @@ class DummyMKM(MappingKernelManager):
         del self._kernels[kernel_id]
 
 
+class SlowStartingKernelsMKM(MockMKM):
+    async def start_kernel(self, kernel_id=None, path=None, kernel_name="python", **kwargs):
+        await asyncio.sleep(1.0)
+        return await super().start_kernel(
+            kernel_id=kernel_id, path=path, kernel_name=kernel_name, **kwargs
+        )
+
+    async def shutdown_kernel(self, kernel_id, now=False):
+        await asyncio.sleep(1.0)
+        await super().shutdown_kernel(kernel_id, now=now)
+
+
 @pytest.fixture
 def session_manager():
-    return SessionManager(kernel_manager=DummyMKM(), contents_manager=ContentsManager())
+    return SessionManager(kernel_manager=MockMKM(), contents_manager=ContentsManager())
+
+
+def test_kernel_record_equals():
+    record1 = KernelSessionRecord(session_id="session1")
+    record2 = KernelSessionRecord(session_id="session1", kernel_id="kernel1")
+    record3 = KernelSessionRecord(session_id="session2", kernel_id="kernel1")
+    record4 = KernelSessionRecord(session_id="session1", kernel_id="kernel2")
+
+    assert record1 == record2
+    assert record2 == record3
+    assert record3 != record4
+    assert record1 != record3
+    assert record3 != record4
+
+    with pytest.raises(KernelSessionRecordConflict):
+        assert record2 == record4
+
+
+def test_kernel_record_update():
+    record1 = KernelSessionRecord(session_id="session1")
+    record2 = KernelSessionRecord(session_id="session1", kernel_id="kernel1")
+    record1.update(record2)
+    assert record1.kernel_id == "kernel1"
+
+    record1 = KernelSessionRecord(session_id="session1")
+    record2 = KernelSessionRecord(kernel_id="kernel1")
+    record1.update(record2)
+    assert record1.kernel_id == "kernel1"
+
+    record1 = KernelSessionRecord(kernel_id="kernel1")
+    record2 = KernelSessionRecord(session_id="session1")
+    record1.update(record2)
+    assert record1.session_id == "session1"
+
+    record1 = KernelSessionRecord(kernel_id="kernel1")
+    record2 = KernelSessionRecord(session_id="session1", kernel_id="kernel1")
+    record1.update(record2)
+    assert record1.session_id == "session1"
+
+    record1 = KernelSessionRecord(kernel_id="kernel1")
+    record2 = KernelSessionRecord(session_id="session1", kernel_id="kernel2")
+    with pytest.raises(KernelSessionRecordConflict):
+        record1.update(record2)
+
+    record1 = KernelSessionRecord(kernel_id="kernel1", session_id="session1")
+    record2 = KernelSessionRecord(kernel_id="kernel2")
+    with pytest.raises(KernelSessionRecordConflict):
+        record1.update(record2)
+
+    record1 = KernelSessionRecord(kernel_id="kernel1", session_id="session1")
+    record2 = KernelSessionRecord(kernel_id="kernel2", session_id="session1")
+    with pytest.raises(KernelSessionRecordConflict):
+        record1.update(record2)
+
+    record1 = KernelSessionRecord(session_id="session1", kernel_id="kernel1")
+    record2 = KernelSessionRecord(session_id="session2", kernel_id="kernel1")
+    record1.update(record2)
+    assert record1.session_id == "session2"
+
+
+def test_kernel_record_list():
+    records = KernelSessionRecordList()
+    r = KernelSessionRecord(kernel_id="kernel1")
+    records.update(r)
+    assert r in records
+    assert "kernel1" in records
+    assert len(records) == 1
+
+    # Test .get()
+    r_ = records.get(r)
+    assert r == r_
+    r_ = records.get(r.kernel_id)
+    assert r == r_
+
+    with pytest.raises(ValueError):
+        records.get("badkernel")
+
+    r_update = KernelSessionRecord(kernel_id="kernel1", session_id="session1")
+    records.update(r_update)
+    assert len(records) == 1
+    assert "session1" in records
+
+    r2 = KernelSessionRecord(kernel_id="kernel2")
+    records.update(r2)
+    assert r2 in records
+    assert len(records) == 2
+
+    records.remove(r2)
+    assert r2 not in records
+    assert len(records) == 1
 
 
 async def create_multiple_sessions(session_manager, *kwargs_list):
@@ -267,7 +376,7 @@ async def test_bad_delete_session(session_manager):
 
 
 async def test_bad_database_filepath(jp_runtime_dir):
-    kernel_manager = DummyMKM()
+    kernel_manager = MockMKM()
 
     # Try to write to a path that's a directory, not a file.
     path_id_directory = str(jp_runtime_dir)
@@ -294,7 +403,7 @@ async def test_bad_database_filepath(jp_runtime_dir):
 
 
 async def test_good_database_filepath(jp_runtime_dir):
-    kernel_manager = DummyMKM()
+    kernel_manager = MockMKM()
 
     # Try writing to an empty file.
     empty_file = jp_runtime_dir.joinpath("empty.db")
@@ -328,7 +437,7 @@ async def test_good_database_filepath(jp_runtime_dir):
 async def test_session_persistence(jp_runtime_dir):
     session_db_path = jp_runtime_dir.joinpath("test-session.db")
     # Kernel manager needs to persist.
-    kernel_manager = DummyMKM()
+    kernel_manager = MockMKM()
 
     # Initialize a session and start a connection.
     # This should create the session database the first time.
@@ -362,3 +471,50 @@ async def test_session_persistence(jp_runtime_dir):
 
     # Assert that the session database persists.
     session = await session_manager.get_session(session_id=session["id"])
+
+
+async def test_pending_kernel():
+    session_manager = SessionManager(
+        kernel_manager=SlowStartingKernelsMKM(), contents_manager=ContentsManager()
+    )
+    # Create a session with a slow starting kernel
+    fut = session_manager.create_session(
+        path="/path/to/test.ipynb", kernel_name="python", type="notebook"
+    )
+    task = asyncio.create_task(fut)
+    await asyncio.sleep(0.1)
+    assert len(session_manager._pending_sessions) == 1
+    # Get a handle on the record
+    record = session_manager._pending_sessions._records[0]
+    session = await task
+    # Check that record is cleared after the task has completed.
+    assert record not in session_manager._pending_sessions
+
+    # Check pending kernel list when sessions are
+    fut = session_manager.delete_session(session_id=session["id"])
+    task = asyncio.create_task(fut)
+    await asyncio.sleep(0.1)
+    assert len(session_manager._pending_sessions) == 1
+    # Get a handle on the record
+    record = session_manager._pending_sessions._records[0]
+    session = await task
+    # Check that record is cleared after the task has completed.
+    assert record not in session_manager._pending_sessions
+
+    # Test multiple, parallel pending kernels
+    fut1 = session_manager.create_session(
+        path="/path/to/test.ipynb", kernel_name="python", type="notebook"
+    )
+    fut2 = session_manager.create_session(
+        path="/path/to/test.ipynb", kernel_name="python", type="notebook"
+    )
+    task1 = asyncio.create_task(fut1)
+    await asyncio.sleep(0.1)
+    task2 = asyncio.create_task(fut2)
+    await asyncio.sleep(0.1)
+    assert len(session_manager._pending_sessions) == 2
+
+    await task1
+    await task2
+    session1, session2 = await asyncio.gather(task1, task2)
+    assert len(session_manager._pending_sessions) == 0
