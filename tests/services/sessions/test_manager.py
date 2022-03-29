@@ -22,11 +22,11 @@ dummy_date = utcnow()
 dummy_date_s = isoformat(dummy_date)
 
 
-class DummyMKM(MappingKernelManager):
+class MockMKM(MappingKernelManager):
     """MappingKernelManager interface that doesn't start kernels, for testing"""
 
     def __init__(self, *args, **kwargs):
-        super(DummyMKM, self).__init__(*args, **kwargs)
+        super(MockMKM, self).__init__(*args, **kwargs)
         self.id_letters = iter("ABCDEFGHIJK")
 
     def _new_id(self):
@@ -44,7 +44,7 @@ class DummyMKM(MappingKernelManager):
         del self._kernels[kernel_id]
 
 
-class SlowDummyMKM(DummyMKM):
+class SlowStartingKernelsMKM(MockMKM):
     async def start_kernel(self, kernel_id=None, path=None, kernel_name="python", **kwargs):
         await asyncio.sleep(1.0)
         return await super().start_kernel(
@@ -58,7 +58,7 @@ class SlowDummyMKM(DummyMKM):
 
 @pytest.fixture
 def session_manager():
-    return SessionManager(kernel_manager=DummyMKM(), contents_manager=ContentsManager())
+    return SessionManager(kernel_manager=MockMKM(), contents_manager=ContentsManager())
 
 
 def test_kernel_record_equals():
@@ -374,7 +374,7 @@ async def test_bad_delete_session(session_manager):
 
 
 async def test_bad_database_filepath(jp_runtime_dir):
-    kernel_manager = DummyMKM()
+    kernel_manager = MockMKM()
 
     # Try to write to a path that's a directory, not a file.
     path_id_directory = str(jp_runtime_dir)
@@ -401,7 +401,7 @@ async def test_bad_database_filepath(jp_runtime_dir):
 
 
 async def test_good_database_filepath(jp_runtime_dir):
-    kernel_manager = DummyMKM()
+    kernel_manager = MockMKM()
 
     # Try writing to an empty file.
     empty_file = jp_runtime_dir.joinpath("empty.db")
@@ -435,7 +435,7 @@ async def test_good_database_filepath(jp_runtime_dir):
 async def test_session_persistence(jp_runtime_dir):
     session_db_path = jp_runtime_dir.joinpath("test-session.db")
     # Kernel manager needs to persist.
-    kernel_manager = DummyMKM()
+    kernel_manager = MockMKM()
 
     # Initialize a session and start a connection.
     # This should create the session database the first time.
@@ -473,7 +473,7 @@ async def test_session_persistence(jp_runtime_dir):
 
 async def test_pending_kernel():
     session_manager = SessionManager(
-        kernel_manager=SlowDummyMKM(), contents_manager=ContentsManager()
+        kernel_manager=SlowStartingKernelsMKM(), contents_manager=ContentsManager()
     )
     # Create a session with a slow starting kernel
     fut = session_manager.create_session(
