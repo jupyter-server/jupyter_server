@@ -19,6 +19,8 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
     @authorized
     def get(self, kernel_name, path, include_body=True):
         ksm = self.kernel_spec_manager
+        if path.lower().endswith(".png"):
+            self.set_header("Cache-Control", f"max-age={60*60*24*30}")
         try:
             self.root = ksm.get_kernel_spec(kernel_name).resource_dir
         except KeyError as e:
