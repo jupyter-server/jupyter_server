@@ -190,10 +190,6 @@ class ContentsHandler(ContentsAPIHandler):
         if file_exists:
             raise web.HTTPError(400, "Cannot POST to files, use PUT instead.")
 
-        dir_exists = await ensure_async(cm.dir_exists(path))
-        if not dir_exists:
-            raise web.HTTPError(404, "No such directory: %s" % path)
-
         model = self.get_json_body()
 
         if model is not None:
