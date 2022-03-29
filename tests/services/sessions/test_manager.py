@@ -7,10 +7,12 @@ from traitlets import TraitError
 from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.services.contents.manager import ContentsManager
 from jupyter_server.services.kernels.kernelmanager import MappingKernelManager
-from jupyter_server.services.sessions.sessionmanager import KernelSessionRecord
-from jupyter_server.services.sessions.sessionmanager import KernelSessionRecordConflict
-from jupyter_server.services.sessions.sessionmanager import KernelSessionRecordList
-from jupyter_server.services.sessions.sessionmanager import SessionManager
+from jupyter_server.services.sessions.sessionmanager import (
+    KernelSessionRecord,
+    KernelSessionRecordConflict,
+    KernelSessionRecordList,
+    SessionManager,
+)
 
 
 class DummyKernel(object):
