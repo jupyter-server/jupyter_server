@@ -10,7 +10,9 @@ You can check some simple examples on the `examples folder
 Authoring a basic server extension
 ==================================
 
-The simplest way to write a Jupyter Server extension is to write an extension module with a ``_load_jupyter_server_extension`` function. This function should take a single argument, an instance of the ``ServerApp``.
+The simplest way to write a Jupyter Server extension is to write an extension
+module with a ``_load_jupyter_server_extension`` function. This function should
+take a single argument, an instance of the ``ServerApp``.
 
 
 .. code-block:: python
@@ -62,7 +64,11 @@ Then add this handler to Jupyter Server's Web Application through the ``_load_ju
 Making an extension discoverable
 --------------------------------
 
-To make this extension discoverable to Jupyter Server, first define a ``_jupyter_server_extension_points()`` function at the root of the module/package. This function returns metadata describing how to load the extension. Usually, this requires a ``module`` key with the import path to the extension's ``_load_jupyter_server_extension`` function.
+To make this extension discoverable to Jupyter Server, first define a
+``_jupyter_server_extension_points()`` function at the root of the module/
+package. This function returns metadata describing how to load the extension.
+Usually, this requires a ``module`` key with the import path to the extension's
+``_load_jupyter_server_extension`` function.
 
 .. code-block:: python
 
@@ -85,7 +91,10 @@ Second, add the extension to the ServerApp's ``jpserver_extensions`` trait. This
         "my_extension": True
     }
 
-or loaded from a JSON file in the ``jupyter_server_config.d`` directory under one of `Jupyter's paths`_. (See the `Distributing a server extension`_ section for details on how to automatically enabled your extension when users install it.)
+or loaded from a JSON file in the ``jupyter_server_config.d`` directory under
+one of `Jupyter's paths`_. (See the `Distributing a server extension`_ section
+for details on how to automatically enabled your extension when users install
+it.)
 
 .. code-block:: python
 
@@ -161,7 +170,10 @@ The basic structure of an ExtensionApp is shown below:
             # Perform any required shut down steps
 
 
-The ``ExtensionApp`` uses the following methods and properties to connect your extension to the Jupyter server. You do not need to define a ``_load_jupyter_server_extension`` function for these apps. Instead, overwrite the pieces below to add your custom settings, handlers and templates:
+The ``ExtensionApp`` uses the following methods and properties to connect your
+extension to the Jupyter server. You do not need to define a
+``_load_jupyter_server_extension`` function for these apps. Instead, overwrite
+the pieces below to add your custom settings, handlers and templates:
 
 Methods
 
@@ -212,7 +224,9 @@ Jinja templating from frontend extensions
 
 Many Jupyter frontend applications use Jinja for basic HTML templating. Since this is common enough, Jupyter Server provides some extra mixin that integrate Jinja with Jupyter server extensions.
 
-Use ``ExtensionAppJinjaMixin`` to automatically add a Jinja templating environment to an ``ExtensionApp``. This adds a ``<name>_jinja2_env`` setting to Tornado Web Server's settings that will be used by request handlers.
+Use ``ExtensionAppJinjaMixin`` to automatically add a Jinja templating
+environment to an ``ExtensionApp``. This adds a ``<name>_jinja2_env`` setting
+to Tornado Web Server's settings that will be used by request handlers.
 
 .. code-block:: python
 
@@ -224,7 +238,9 @@ Use ``ExtensionAppJinjaMixin`` to automatically add a Jinja templating environme
         ...
 
 
-Pair the example above with ``ExtensionHandlers`` that also inherit the ``ExtensionHandlerJinjaMixin`` mixin. This will automatically load HTML templates from the Jinja templating environment created by the ``ExtensionApp``.
+Pair the example above with ``ExtensionHandlers`` that also inherit the
+``ExtensionHandlerJinjaMixin`` mixin. This will automatically load HTML
+templates from the Jinja templating environment created by the ``ExtensionApp``.
 
 
 .. code-block:: python
@@ -347,7 +363,10 @@ Putting it all together, authors can distribute their extension following this s
     This is where the extension logic will live (i.e. custom extension handlers, config, etc). See the sections above for more information on how to create an extension.
 
 3. Add the following JSON config file to the extension package.
-    The file should be named after the extension (e.g. ``myextension.json``) and saved in a subdirectory of the package with the prefix: ``jupyter-config/jupyter_server_config.d/``. The extension package will have a similar structure to this example:
+    The file should be named after the extension (e.g. ``myextension.json``)
+    and saved in a subdirectory of the package with the prefix:
+    ``jupyter-config/jupyter_server_config.d/``. The extension package will
+    have a similar structure to this example:
 
     .. code-block::
 
@@ -413,12 +432,18 @@ Putting it all together, authors can distribute their extension following this s
 Migrating an extension to use Jupyter Server
 ============================================
 
-If you're a developer of a `classic Notebook Server`_ extension, your extension should be able to work with *both* the classic notebook server and ``jupyter_server``.
+If you're a developer of a `classic Notebook Server`_ extension, your extension
+should be able to work with *both* the classic notebook server and
+``jupyter_server``.
 
 There are a few key steps to make this happen:
 
 1. Point Jupyter Server to the ``load_jupyter_server_extension`` function with a new reference name.
-    The ``load_jupyter_server_extension`` function was the key to loading a server extension in the classic Notebook Server. Jupyter Server expects the name of this function to be prefixed with an underscore—i.e. ``_load_jupyter_server_extension``. You can easily achieve this by adding a reference to the old function name with the new name in the same module.
+    The ``load_jupyter_server_extension`` function was the key to loading a
+    server extension in the classic Notebook Server. Jupyter Server expects the
+    name of this function to be prefixed with an underscore—i.e.
+    ``_load_jupyter_server_extension``. You can easily achieve this by adding a
+    reference to the old function name with the new name in the same module.
 
     .. code-block:: python
 
@@ -483,7 +508,10 @@ There are a few key steps to make this happen:
         )
 
 3. (Optional) Point extension at the new favicon location.
-    The favicons in the Jupyter Notebook have been moved to a new location in Jupyter Server. If your extension is using one of these icons, you'll want to add a set of redirect handlers this. (In ``ExtensionApp``, this is handled automatically).
+    The favicons in the Jupyter Notebook have been moved to a new location in
+    Jupyter Server. If your extension is using one of these icons, you'll want
+    to add a set of redirect handlers this. (In ``ExtensionApp``, this is
+    handled automatically).
 
     This usually means adding a chunk to your ``load_jupyter_server_extension`` function similar to this:
 

@@ -233,7 +233,7 @@ def jp_configurable_serverapp(
         http_port=jp_http_port,
         tmp_path=tmp_path,
         root_dir=jp_root_dir,
-        **kwargs
+        **kwargs,
     ):
         c = Config(config)
         c.NotebookNotary.db_file = ":memory:"
@@ -249,7 +249,7 @@ def jp_configurable_serverapp(
             config=c,
             allow_root=True,
             token=token,
-            **kwargs
+            **kwargs,
         )
 
         app.init_signal = lambda: None
@@ -314,7 +314,7 @@ def jp_web_app(jp_serverapp):
 @pytest.fixture
 def jp_auth_header(jp_serverapp):
     """Configures an authorization header using the token from the serverapp fixture."""
-    return {"Authorization": "token {token}".format(token=jp_serverapp.token)}
+    return {"Authorization": f"token {jp_serverapp.token}"}
 
 
 @pytest.fixture
@@ -393,7 +393,7 @@ def jp_ws_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_http_port, 
         # Handle URL strings
         path_url = url_escape(url_path_join(*parts), plus=False)
         base_path_url = url_path_join(jp_base_url, path_url)
-        urlparts = urllib.parse.urlparse("ws://localhost:{}".format(jp_http_port))
+        urlparts = urllib.parse.urlparse(f"ws://localhost:{jp_http_port}")
         urlparts = urlparts._replace(path=base_path_url, query=urllib.parse.urlencode(params))
         url = urlparts.geturl()
         # Add auth keys to header

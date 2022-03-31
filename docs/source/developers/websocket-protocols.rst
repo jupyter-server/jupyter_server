@@ -8,7 +8,10 @@ The Jupyter Server needs to pass messages between kernels and the Jupyter web ap
 ZeroMQ wire protocol
 --------------------
 
-The kernel wire protocol over ZeroMQ takes advantage of multipart messages, allowing to decompose a message into parts and to send and receive them unmerged. The following table shows the message format (the beginning has been omitted for clarity):
+The kernel wire protocol over ZeroMQ takes advantage of multipart messages,
+allowing to decompose a message into parts and to send and receive them
+unmerged. The following table shows the message format (the beginning has been
+omitted for clarity):
 
 .. list-table:: Format of a kernel message over ZeroMQ socket (indices refer to parts, not bytes)
    :header-rows: 1

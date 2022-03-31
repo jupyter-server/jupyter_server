@@ -434,13 +434,11 @@ class GatewayKernelManager(AsyncKernelManager):
             response = await gateway_request(self.kernels_url, method="POST", body=json_body)
             self.kernel = json_decode(response.body)
             self.kernel_id = self.kernel["id"]
-            self.log.info(
-                "GatewayKernelManager started kernel: {}, args: {}".format(self.kernel_id, kwargs)
-            )
+            self.log.info(f"GatewayKernelManager started kernel: {self.kernel_id}, args: {kwargs}")
         else:
             self.kernel_id = kernel_id
             self.kernel = await self.refresh_model()
-            self.log.info("GatewayKernelManager using existing kernel: {}".format(self.kernel_id))
+            self.log.info(f"GatewayKernelManager using existing kernel: {self.kernel_id}")
 
         self.kernel_url = url_path_join(self.kernels_url, url_escape(str(self.kernel_id)))
 
@@ -704,7 +702,7 @@ class GatewayKernelClient(AsyncKernelClient):
 
         except BaseException as be:
             if not self._channels_stopped:
-                self.log.warning("Unexpected exception encountered ({})".format(be))
+                self.log.warning(f"Unexpected exception encountered ({be})")
 
         self.log.debug("Response router thread exiting...")
 

@@ -11,7 +11,7 @@ class ExtensionHandlerJinjaMixin:
     def get_template(self, name):
         """Return the jinja template object for a given name"""
         try:
-            env = "{}_jinja2_env".format(self.name)
+            env = f"{self.name}_jinja2_env"
             return self.settings[env].get_template(name)
         except TemplateNotFound:
             return super().get_template(name)
@@ -52,7 +52,7 @@ class ExtensionHandlerMixin:
 
     @property
     def config(self):
-        return self.settings["{}_config".format(self.name)]
+        return self.settings[f"{self.name}_config"]
 
     @property
     def server_config(self):
@@ -68,7 +68,7 @@ class ExtensionHandlerMixin:
 
     @property
     def static_path(self):
-        return self.settings["{}_static_paths".format(self.name)]
+        return self.settings[f"{self.name}_static_paths"]
 
     def static_url(self, path, include_host=None, **kwargs):
         """Returns a static URL for the given relative static file path.
@@ -87,7 +87,7 @@ class ExtensionHandlerMixin:
         that value will be used as the default for all `static_url`
         calls that do not pass ``include_host`` as a keyword argument.
         """
-        key = "{}_static_paths".format(self.name)
+        key = f"{self.name}_static_paths"
         try:
             self.require_setting(key, "static_url")
         except Exception as e:

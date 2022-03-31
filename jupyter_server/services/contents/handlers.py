@@ -42,7 +42,7 @@ def validate_model(model, expect_content):
     if missing:
         raise web.HTTPError(
             500,
-            "Missing Model Keys: {missing}".format(missing=missing),
+            f"Missing Model Keys: {missing}",
         )
 
     maybe_none_keys = ["content", "format"]
@@ -51,14 +51,14 @@ def validate_model(model, expect_content):
         if errors:
             raise web.HTTPError(
                 500,
-                "Keys unexpectedly None: {keys}".format(keys=errors),
+                f"Keys unexpectedly None: {errors}",
             )
     else:
         errors = {key: model[key] for key in maybe_none_keys if model[key] is not None}
         if errors:
             raise web.HTTPError(
                 500,
-                "Keys unexpectedly not None: {keys}".format(keys=errors),
+                f"Keys unexpectedly not None: {errors}",
             )
 
 
@@ -323,7 +323,7 @@ _checkpoint_id_regex = r"(?P<checkpoint_id>[\w-]+)"
 default_handlers = [
     (r"/api/contents%s/checkpoints" % path_regex, CheckpointsHandler),
     (
-        r"/api/contents%s/checkpoints/%s" % (path_regex, _checkpoint_id_regex),
+        rf"/api/contents{path_regex}/checkpoints/{_checkpoint_id_regex}",
         ModifyCheckpointsHandler,
     ),
     (r"/api/contents%s/trust" % path_regex, TrustNotebooksHandler),

@@ -15,7 +15,7 @@ from jupyter_server.services.sessions.sessionmanager import (
 )
 
 
-class DummyKernel(object):
+class DummyKernel:
     def __init__(self, kernel_name="python"):
         self.kernel_name = kernel_name
 
@@ -28,7 +28,7 @@ class MockMKM(MappingKernelManager):
     """MappingKernelManager interface that doesn't start kernels, for testing"""
 
     def __init__(self, *args, **kwargs):
-        super(MockMKM, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.id_letters = iter("ABCDEFGHIJK")
 
     def _new_id(self):

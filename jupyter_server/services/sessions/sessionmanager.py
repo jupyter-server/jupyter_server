@@ -347,7 +347,7 @@ class SessionManager(LoggingConfigurable):
         if row is None:
             q = []
             for key, value in kwargs.items():
-                q.append("%s=%r" % (key, value))
+                q.append(f"{key}={value!r}")
 
             raise web.HTTPError(404, "Session not found: %s" % (", ".join(q)))
 

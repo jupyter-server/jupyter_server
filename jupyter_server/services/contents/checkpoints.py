@@ -51,7 +51,7 @@ class Checkpoints(LoggingConfigurable):
             self.delete_checkpoint(checkpoint["id"], path)
 
 
-class GenericCheckpointsMixin(object):
+class GenericCheckpointsMixin:
     """
     Helper for creating Checkpoints subclasses that can be used with any
     ContentsManager.

@@ -197,5 +197,5 @@ _format_regex = r"(?P<format>\w+)"
 
 default_handlers = [
     (r"/nbconvert/%s" % _format_regex, NbconvertPostHandler),
-    (r"/nbconvert/%s%s" % (_format_regex, path_regex), NbconvertFileHandler),
+    (rf"/nbconvert/{_format_regex}{path_regex}", NbconvertFileHandler),
 ]

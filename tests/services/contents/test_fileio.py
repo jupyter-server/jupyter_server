@@ -1,4 +1,3 @@
-import io
 import os
 import stat
 import sys
@@ -36,13 +35,13 @@ def test_atomic_writing(tmp_path):
             f.write("Failing write")
             raise CustomExc
 
-    with io.open(str(f1), "r") as f:
+    with open(str(f1)) as f:
         assert f.read() == "Before"
 
     with atomic_writing(str(f1)) as f:
         f.write("Overwritten")
 
-    with io.open(str(f1), "r") as f:
+    with open(str(f1)) as f:
         assert f.read() == "Overwritten"
 
     if os.name != "nt":
@@ -54,7 +53,7 @@ def test_atomic_writing(tmp_path):
         with atomic_writing(str(f2)) as f:
             f.write("written from symlink")
 
-        with io.open(str(f1), "r") as f:
+        with open(str(f1)) as f:
             assert f.read() == "written from symlink"
 
 
@@ -95,23 +94,23 @@ def test_atomic_writing_newlines(tmp_path):
     crlf = lf.replace("\n", "\r\n")
 
     # test default
-    with io.open(path, "w") as f:
+    with open(path, "w") as f:
         f.write(lf)
-    with io.open(path, "r", newline="") as f:
+    with open(path, newline="") as f:
         read = f.read()
     assert read == plat
 
     # test newline=LF
-    with io.open(path, "w", newline="\n") as f:
+    with open(path, "w", newline="\n") as f:
         f.write(lf)
-    with io.open(path, "r", newline="") as f:
+    with open(path, newline="") as f:
         read = f.read()
     assert read == lf
 
     # test newline=CRLF
     with atomic_writing(str(path), newline="\r\n") as f:
         f.write(lf)
-    with io.open(path, "r", newline="") as f:
+    with open(path, newline="") as f:
         read = f.read()
     assert read == crlf
 
@@ -119,6 +118,6 @@ def test_atomic_writing_newlines(tmp_path):
     text = "crlf\r\ncr\rlf\n"
     with atomic_writing(str(path), newline="") as f:
         f.write(text)
-    with io.open(path, "r", newline="") as f:
+    with open(path, newline="") as f:
         read = f.read()
     assert read == text

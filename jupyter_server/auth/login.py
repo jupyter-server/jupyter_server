@@ -47,7 +47,7 @@ class LoginHandler(JupyterHandler):
             # OR pass our cross-origin check
             if parsed.netloc:
                 # if full URL, run our cross-origin check:
-                origin = "%s://%s" % (parsed.scheme, parsed.netloc)
+                origin = f"{parsed.scheme}://{parsed.netloc}"
                 origin = origin.lower()
                 if self.allow_origin:
                     allow = self.allow_origin == origin

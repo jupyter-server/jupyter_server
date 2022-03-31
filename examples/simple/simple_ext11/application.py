@@ -46,19 +46,19 @@ class SimpleApp11(SimpleApp1):
     @observe("ignore_js")
     def _update_ignore_js(self, change):
         """TODO Does the observe work?"""
-        self.log.info("ignore_js has just changed: {}".format(change))
+        self.log.info(f"ignore_js has just changed: {change}")
 
     @property
     def simple11_dir_formatted(self):
         return "/" + self.simple11_dir
 
     def initialize_settings(self):
-        self.log.info("hello: {}".format(self.hello))
+        self.log.info(f"hello: {self.hello}")
         if self.hello is True:
             self.log.info(
                 "Hello Simple11: You have launched with --hello flag or defined 'c.SimpleApp1.hello == True' in your config file"
             )
-        self.log.info("ignore_js: {}".format(self.ignore_js))
+        self.log.info(f"ignore_js: {self.ignore_js}")
         super().initialize_settings()
 
     def initialize_handlers(self):

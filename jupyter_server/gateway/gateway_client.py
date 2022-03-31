@@ -365,7 +365,7 @@ class GatewayClient(SingletonConfigurable):
         self._static_args["headers"] = json.loads(self.headers)
         if "Authorization" not in self._static_args["headers"].keys():
             self._static_args["headers"].update(
-                {"Authorization": "{} {}".format(self.auth_scheme, self.auth_token)}
+                {"Authorization": f"{self.auth_scheme} {self.auth_token}"}
             )
         self._static_args["connect_timeout"] = self.connect_timeout
         self._static_args["request_timeout"] = self.request_timeout

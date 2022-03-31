@@ -146,7 +146,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         return protocol
 
     def __repr__(self):
-        return "%s(%s)" % (
+        return "{}({})".format(
             self.__class__.__name__,
             getattr(self, "kernel_id", "uninitialized"),
         )
@@ -268,7 +268,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
 
             if not both_done.done():
                 log = self.log.warning if count % 10 == 0 else self.log.debug
-                log("Nudge: attempt %s on kernel %s" % (count, self.kernel_id))
+                log(f"Nudge: attempt {count} on kernel {self.kernel_id}")
                 self.session.send(shell_channel, "kernel_info_request")
                 self.session.send(control_channel, "kernel_info_request")
                 nonlocal nudge_handle
@@ -350,7 +350,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             self._kernel_info_future.set_result(info)
 
     def initialize(self):
-        super(ZMQChannelsHandler, self).initialize()
+        super().initialize()
         self.zmq_stream = None
         self.channels = {}
         self.kernel_id = None
@@ -371,7 +371,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
 
     async def pre_get(self):
         # authenticate first
-        super(ZMQChannelsHandler, self).pre_get()
+        super().pre_get()
         # check session collision:
         await self._register_session()
         # then request kernel info, waiting up to a certain time before giving up.
@@ -404,7 +404,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
 
     async def get(self, kernel_id):
         self.kernel_id = kernel_id
-        await super(ZMQChannelsHandler, self).get(kernel_id=kernel_id)
+        await super().get(kernel_id=kernel_id)
 
     async def _register_session(self):
         """Ensure we aren't creating a duplicate session.
@@ -413,7 +413,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         This is likely due to a client reconnecting from a lost network connection,
         where the socket on our side has not been cleaned up yet.
         """
-        self.session_key = "%s:%s" % (self.kernel_id, self.session.session)
+        self.session_key = f"{self.kernel_id}:{self.session.session}"
         stale_handler = self._open_sessions.get(self.session_key)
         if stale_handler:
             self.log.warning("Replacing stale connection: %s", self.session_key)
@@ -424,7 +424,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             self._open_sessions[self.session_key] = self
 
     def open(self, kernel_id):
-        super(ZMQChannelsHandler, self).open()
+        super().open()
         km = self.kernel_manager
         km.notify_connect(kernel_id)
 
@@ -552,9 +552,9 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             return
 
         if self.subprotocol == "v1.kernel.websocket.jupyter.org":
-            super(ZMQChannelsHandler, self)._on_zmq_reply(stream, parts)
+            super()._on_zmq_reply(stream, parts)
         else:
-            super(ZMQChannelsHandler, self)._on_zmq_reply(stream, msg)
+            super()._on_zmq_reply(stream, msg)
 
     def write_stderr(self, error_message, parent_header):
         self.log.warning(error_message)
@@ -605,7 +605,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             # Increment the bytes and message count
             self._iopub_window_msg_count += 1
             if msg_type == "stream":
-                byte_count = sum([len(x) for x in msg_list])
+                byte_count = sum(len(x) for x in msg_list)
             else:
                 byte_count = 0
             self._iopub_window_byte_count += byte_count
@@ -694,7 +694,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             return False
 
     def close(self):
-        super(ZMQChannelsHandler, self).close()
+        super().close()
         return self._close_future
 
     def on_close(self):
@@ -783,7 +783,7 @@ default_handlers = [
     (r"/api/kernels", MainKernelHandler),
     (r"/api/kernels/%s" % _kernel_id_regex, KernelHandler),
     (
-        r"/api/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex),
+        rf"/api/kernels/{_kernel_id_regex}/{_kernel_action_regex}",
         KernelActionHandler,
     ),
     (r"/api/kernels/%s/channels" % _kernel_id_regex, ZMQChannelsHandler),

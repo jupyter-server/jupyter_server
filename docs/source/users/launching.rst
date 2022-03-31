@@ -3,9 +3,14 @@
 Launching a bare Jupyter Server
 ===============================
 
-Most of the time, you won't need to start the Jupyter Server directly. Jupyter Web Applications (like Jupyter Notebook, Jupyterlab, Voila, etc.) come with their own entry points that start a server automatically.
+Most of the time, you won't need to start the Jupyter Server directly. Jupyter
+Web Applications (like Jupyter Notebook, Jupyterlab, Voila, etc.) come with
+their own entry points that start a server automatically.
 
-Sometimes, though, it can be useful to start Jupyter Server directly when you want to run multiple Jupyter Web applications at the same time. For more details, see the  :ref:`Managing multiple extensions <managing-multiple-extensions>` page. If these extensions are enabled, you can simple run the following:
+Sometimes, though, it can be useful to start Jupyter Server directly when you
+want to run multiple Jupyter Web applications at the same time. For more
+details, see the  :ref:`Managing multiple extensions <managing-multiple-extensions>` page.
+If these extensions are enabled, you can simple run the following:
 
 .. code-block:: bash
 
