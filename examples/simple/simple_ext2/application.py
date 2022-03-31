@@ -40,7 +40,7 @@ class SimpleApp2(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
     def initialize_settings(self):
-        self.log.info("Config {}".format(self.config))
+        self.log.info(f"Config {self.config}")
 
 
 # -----------------------------------------------------------------------------

@@ -167,7 +167,7 @@ class InstanceFromClasses(ClassBasedTraitType):
         self.default_args = args
         self.default_kwargs = kw
 
-        super(InstanceFromClasses, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def instance_from_importable_klasses(self, value):
         "Check that a given class is a subclasses found in the klasses list."

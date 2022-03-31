@@ -1,7 +1,6 @@
 """Server functions for loading translations
 """
 import errno
-import io
 import json
 import re
 from collections import defaultdict
@@ -60,8 +59,8 @@ def parse_accept_lang_header(accept_lang):
 def load(language, domain="nbjs"):
     """Load translations from an nbjs.json file"""
     try:
-        f = io.open(pjoin(I18N_DIR, language, "LC_MESSAGES", "nbjs.json"), encoding="utf-8")
-    except IOError as e:
+        f = open(pjoin(I18N_DIR, language, "LC_MESSAGES", "nbjs.json"), encoding="utf-8")
+    except OSError as e:
         if e.errno != errno.ENOENT:
             raise
         return {}

@@ -274,7 +274,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 try:
                     if self.should_list(name):
                         if self.allow_hidden or not is_file_hidden(os_path, stat_res=st):
-                            contents.append(self.get(path="%s/%s" % (path, name), content=False))
+                            contents.append(self.get(path=f"{path}/{name}", content=False))
                 except OSError as e:
                     # ELOOP: recursive symlink, also don't show failure due to permissions
                     if e.errno not in [errno.ELOOP, errno.EACCES]:
@@ -374,7 +374,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             if type not in (None, "directory"):
                 raise web.HTTPError(
                     400,
-                    "%s is a directory, not a %s" % (path, type),
+                    f"{path} is a directory, not a {type}",
                     reason="bad type",
                 )
             model = self._dir_model(path, content=content)
@@ -432,7 +432,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             raise
         except Exception as e:
             self.log.error("Error while saving file: %s %s", path, e, exc_info=True)
-            raise web.HTTPError(500, "Unexpected error while saving file: %s %s" % (path, e)) from e
+            raise web.HTTPError(500, f"Unexpected error while saving file: {path} {e}") from e
 
         validation_message = None
         if model["type"] == "notebook":
@@ -529,7 +529,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         except web.HTTPError:
             raise
         except Exception as e:
-            raise web.HTTPError(500, "Unknown error renaming file: %s %s" % (old_path, e)) from e
+            raise web.HTTPError(500, f"Unknown error renaming file: {old_path} {e}") from e
 
     def info_string(self):
         return _i18n("Serving notebooks from local directory: %s") % self.root_dir
@@ -600,9 +600,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 try:
                     if self.should_list(name):
                         if self.allow_hidden or not is_file_hidden(os_path, stat_res=st):
-                            contents.append(
-                                await self.get(path="%s/%s" % (path, name), content=False)
-                            )
+                            contents.append(await self.get(path=f"{path}/{name}", content=False))
                 except OSError as e:
                     # ELOOP: recursive symlink, also don't show failure due to permissions
                     if e.errno not in [errno.ELOOP, errno.EACCES]:
@@ -702,7 +700,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             if type not in (None, "directory"):
                 raise web.HTTPError(
                     400,
-                    "%s is a directory, not a %s" % (path, type),
+                    f"{path} is a directory, not a {type}",
                     reason="bad type",
                 )
             model = await self._dir_model(path, content=content)
@@ -760,7 +758,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             raise
         except Exception as e:
             self.log.error("Error while saving file: %s %s", path, e, exc_info=True)
-            raise web.HTTPError(500, "Unexpected error while saving file: %s %s" % (path, e)) from e
+            raise web.HTTPError(500, f"Unexpected error while saving file: {path} {e}") from e
 
         validation_message = None
         if model["type"] == "notebook":
@@ -862,7 +860,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         except web.HTTPError:
             raise
         except Exception as e:
-            raise web.HTTPError(500, "Unknown error renaming file: %s %s" % (old_path, e)) from e
+            raise web.HTTPError(500, f"Unknown error renaming file: {old_path} {e}") from e
 
     async def dir_exists(self, path):
         """Does a directory exist at the given path"""

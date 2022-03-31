@@ -9,18 +9,18 @@ from jupyter_server.utils import url_escape
 class DefaultHandler(ExtensionHandlerMixin, JupyterHandler):
     def get(self):
         # The name of the extension to which this handler is linked.
-        self.log.info("Extension Name in {} Default Handler: {}".format(self.name, self.name))
+        self.log.info(f"Extension Name in {self.name} Default Handler: {self.name}")
         # A method for getting the url to static files (prefixed with /static/<name>).
         self.log.info(
             "Static URL for / in simple_ext1 Default Handler: {}".format(self.static_url(path="/"))
         )
         self.write("<h1>Hello Simple 1 - I am the default...</h1>")
-        self.write("Config in {} Default Handler: {}".format(self.name, self.config))
+        self.write(f"Config in {self.name} Default Handler: {self.config}")
 
 
 class RedirectHandler(ExtensionHandlerMixin, JupyterHandler):
     def get(self):
-        self.redirect("/static/{}/favicon.ico".format(self.name))
+        self.redirect(f"/static/{self.name}/favicon.ico")
 
 
 class ParameterHandler(ExtensionHandlerMixin, JupyterHandler):
@@ -28,9 +28,9 @@ class ParameterHandler(ExtensionHandlerMixin, JupyterHandler):
         var1 = self.get_argument("var1", default=None)
         components = [x for x in self.request.path.split("/") if x]
         self.write("<h1>Hello Simple App 1 from Handler.</h1>")
-        self.write("<p>matched_part: {}</p>".format(url_escape(matched_part)))
-        self.write("<p>var1: {}</p>".format(url_escape(var1)))
-        self.write("<p>components: {}</p>".format(components))
+        self.write(f"<p>matched_part: {url_escape(matched_part)}</p>")
+        self.write(f"<p>var1: {url_escape(var1)}</p>")
+        self.write(f"<p>components: {components}</p>")
 
 
 class BaseTemplateHandler(ExtensionHandlerJinjaMixin, ExtensionHandlerMixin, JupyterHandler):

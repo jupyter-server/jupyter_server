@@ -514,7 +514,11 @@ ServerApp.show_config_json : Bool
 ServerApp.shutdown_no_activity_timeout : Int
     Default: ``0``
 
-    Shut down the server after N seconds with no kernels or terminals running and no activity. This can be used together with culling idle kernels (MappingKernelManager.cull_idle_timeout) to shutdown the Jupyter server when it's not in use. This is not precisely timed: it may shut down up to a minute later. 0 (the default) disables this automatic shutdown.
+    Shut down the server after N seconds with no kernels or terminals running
+    and no activity. This can be used together with culling idle kernels
+    (MappingKernelManager.cull_idle_timeout) to shutdown the Jupyter server
+    when it's not in use. This is not precisely timed: it may shut down up to
+    a minute later. 0 (the default) disables this automatic shutdown.
 
 ServerApp.ssl_options : Dict
     Default: ``{}``

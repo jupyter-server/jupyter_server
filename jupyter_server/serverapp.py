@@ -1,4 +1,3 @@
-# coding: utf-8
 """A tornado based Jupyter server."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
@@ -9,7 +8,6 @@ import gettext
 import hashlib
 import hmac
 import inspect
-import io
 import ipaddress
 import json
 import logging
@@ -250,7 +248,7 @@ class ServerWebApplication(web.Application):
         )
         handlers = self.init_handlers(default_services, settings)
 
-        super(ServerWebApplication, self).__init__(handlers, **settings)
+        super().__init__(handlers, **settings)
 
     def init_settings(
         self,
@@ -550,7 +548,7 @@ class JupyterServerStopApp(JupyterApp):
     sock = Unicode("", config=True, help="UNIX socket of the server to be killed.")
 
     def parse_command_line(self, argv=None):
-        super(JupyterServerStopApp, self).parse_command_line(argv)
+        super().parse_command_line(argv)
         if self.extra_args:
             try:
                 self.port = int(self.extra_args[0])
@@ -592,7 +590,7 @@ class JupyterServerStopApp(JupyterApp):
                     return
         current_endpoint = self.sock or self.port
         print(
-            "There is currently no server running on {}".format(current_endpoint),
+            f"There is currently no server running on {current_endpoint}",
             file=sys.stderr,
         )
         print("Ports/sockets currently in use:", file=sys.stderr)
@@ -858,7 +856,7 @@ class ServerApp(JupyterApp):
         s = socket.socket()
         try:
             s.bind(("localhost", 0))
-        except socket.error as e:
+        except OSError as e:
             self.log.warning(
                 _i18n("Cannot bind to localhost, using 127.0.0.1 as default ip\n%s"), e
             )
@@ -991,7 +989,7 @@ class ServerApp(JupyterApp):
     @default("cookie_secret")
     def _default_cookie_secret(self):
         if os.path.exists(self.cookie_secret_file):
-            with io.open(self.cookie_secret_file, "rb") as f:
+            with open(self.cookie_secret_file, "rb") as f:
                 key = f.read()
         else:
             key = encodebytes(os.urandom(32))
@@ -1038,7 +1036,7 @@ class ServerApp(JupyterApp):
             return os.getenv("JUPYTER_TOKEN")
         if os.getenv("JUPYTER_TOKEN_FILE"):
             self._token_generated = False
-            with io.open(os.getenv("JUPYTER_TOKEN_FILE"), "r") as token_file:
+            with open(os.getenv("JUPYTER_TOKEN_FILE")) as token_file:
                 return token_file.read()
         if self.password:
             # no token if password is enabled
@@ -1770,7 +1768,7 @@ class ServerApp(JupyterApp):
 
     def parse_command_line(self, argv=None):
 
-        super(ServerApp, self).parse_command_line(argv)
+        super().parse_command_line(argv)
 
         if self.extra_args:
             arg0 = self.extra_args[0]
@@ -1976,8 +1974,8 @@ class ServerApp(JupyterApp):
             elif self.ip in ("0.0.0.0", "::"):
                 ip = "%s" % socket.gethostname()
             else:
-                ip = "[{}]".format(self.ip) if ":" in self.ip else self.ip
-            netloc = "{ip}:{port}".format(ip=ip, port=self.port)
+                ip = f"[{self.ip}]" if ":" in self.ip else self.ip
+            netloc = f"{ip}:{self.port}"
             if self.certfile:
                 scheme = "https"
             else:
@@ -2018,7 +2016,7 @@ class ServerApp(JupyterApp):
         parts = self._get_urlparts(include_token=True)
         # Update with custom pieces.
         if not self.sock:
-            parts = parts._replace(netloc="127.0.0.1:{port}".format(port=self.port))
+            parts = parts._replace(netloc=f"127.0.0.1:{self.port}")
         return parts.geturl()
 
     @property
@@ -2272,7 +2270,7 @@ class ServerApp(JupyterApp):
         try:
             sock = bind_unix_socket(self.sock, mode=int(self.sock_mode.encode(), 8))
             self.http_server.add_socket(sock)
-        except socket.error as e:
+        except OSError as e:
             if e.errno == errno.EADDRINUSE:
                 self.log.warning(_i18n("The socket %s is already in use.") % self.sock)
                 return False
@@ -2289,7 +2287,7 @@ class ServerApp(JupyterApp):
         for port in random_ports(self.port, self.port_retries + 1):
             try:
                 self.http_server.listen(port, self.ip)
-            except socket.error as e:
+            except OSError as e:
                 if e.errno == errno.EADDRINUSE:
                     if self.port_retries:
                         self.log.info(
@@ -2385,7 +2383,7 @@ class ServerApp(JupyterApp):
         self._init_asyncio_patch()
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
-        super(ServerApp, self).initialize(argv=argv)
+        super().initialize(argv=argv)
         if self._dispatching:
             return
         # Then, use extensions' config loading mechanism to
@@ -2651,7 +2649,7 @@ class ServerApp(JupyterApp):
         threading.Thread(target=target).start()
 
     def start_app(self):
-        super(ServerApp, self).start()
+        super().start()
 
         if not self.allow_root:
             # check if we are running as root, and abort if it's not allowed
@@ -2791,7 +2789,7 @@ def list_running_servers(runtime_dir=None, log=None):
 
     for file_name in os.listdir(runtime_dir):
         if re.match("jpserver-(.+).json", file_name):
-            with io.open(os.path.join(runtime_dir, file_name), encoding="utf-8") as f:
+            with open(os.path.join(runtime_dir, file_name), encoding="utf-8") as f:
                 info = json.load(f)
 
             # Simple check whether that process is really still running

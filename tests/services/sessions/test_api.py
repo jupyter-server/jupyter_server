@@ -371,7 +371,7 @@ async def test_create_with_kernel_id(
     assert new_session["path"] == "foo/nb1.ipynb"
     assert new_session["kernel"]["id"] == kernel["id"]
     assert resp.headers["Location"] == url_path_join(
-        jp_base_url, "/api/sessions/{0}".format(new_session["id"])
+        jp_base_url, "/api/sessions/{}".format(new_session["id"])
     )
 
     resp = await session_client.list()

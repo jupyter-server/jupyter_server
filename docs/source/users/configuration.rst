@@ -27,7 +27,10 @@ By default, Jupyter Server looks for server-specific configuration in a ``jupyte
 The paths under ``config`` are listed in order of precedence. If the same trait is listed in multiple places, it will be set to the value from the file will highest precendence.
 
 
-Jupyter Server uses IPython's traitlets system for configuration. Traits can be listed in a Python or JSON config file. You can quickly create a ``jupyter_server_config.py`` file in the ``.jupyter`` directory, with all the defaults commented out, use the following command:
+Jupyter Server uses IPython's traitlets system for configuration. Traits can be
+listed in a Python or JSON config file. You can quickly create a
+``jupyter_server_config.py`` file in the ``.jupyter`` directory, with all the
+defaults commented out, use the following command:
 
 .. code-block:: console
 

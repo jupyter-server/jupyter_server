@@ -16,9 +16,9 @@ async def test_handler_default(jp_fetch):
 
 async def test_handler_template(jp_fetch):
     path = "/custom/path"
-    r = await jp_fetch("simple_ext1/template1/{}".format(path), method="GET")
+    r = await jp_fetch(f"simple_ext1/template1/{path}", method="GET")
     assert r.code == 200
-    assert r.body.decode().index("Path: {}".format(path)) > -1
+    assert r.body.decode().index(f"Path: {path}") > -1
 
 
 async def test_handler_typescript(jp_fetch):

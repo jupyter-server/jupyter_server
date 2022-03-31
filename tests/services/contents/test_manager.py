@@ -191,7 +191,7 @@ async def test_bad_symlink(jp_file_contents_manager_class, tmp_path):
     file_model = await ensure_async(cm.new_untitled(path=path, ext=".txt"))
 
     # create a broken symlink
-    symlink(cm, "target", "%s/%s" % (path, "bad symlink"))
+    symlink(cm, "target", "{}/{}".format(path, "bad symlink"))
     model = await ensure_async(cm.get(path))
 
     contents = {content["name"]: content for content in model["content"]}
@@ -211,7 +211,7 @@ async def test_recursive_symlink(jp_file_contents_manager_class, tmp_path):
     file_model = await ensure_async(cm.new_untitled(path=path, ext=".txt"))
 
     # create recursive symlink
-    symlink(cm, "%s/%s" % (path, "recursive"), "%s/%s" % (path, "recursive"))
+    symlink(cm, "{}/{}".format(path, "recursive"), "{}/{}".format(path, "recursive"))
     model = await ensure_async(cm.get(path))
 
     contents = {content["name"]: content for content in model["content"]}
@@ -226,7 +226,7 @@ async def test_good_symlink(jp_file_contents_manager_class, tmp_path):
     cm = jp_file_contents_manager_class(root_dir=td)
     parent = "test good symlink"
     name = "good symlink"
-    path = "{0}/{1}".format(parent, name)
+    path = f"{parent}/{name}"
     _make_dir(cm, parent)
 
     file_model = await ensure_async(cm.new(path=parent + "/zfoo.txt"))
@@ -395,7 +395,7 @@ async def test_get(jp_contents_manager):
     assert "path" in model2
     assert "content" in model2
     assert model2["name"] == "Untitled.ipynb"
-    assert model2["path"] == "{0}/{1}".format(sub_dir.strip("/"), name)
+    assert model2["path"] == "{}/{}".format(sub_dir.strip("/"), name)
 
     # Test with a regular file.
     file_model_path = (await ensure_async(cm.new_untitled(path=sub_dir, ext=".txt")))["path"]
@@ -646,7 +646,7 @@ async def test_copy(jp_contents_manager):
     cm = jp_contents_manager
     parent = "å b"
     name = "nb √.ipynb"
-    path = "{0}/{1}".format(parent, name)
+    path = f"{parent}/{name}"
     _make_dir(cm, parent)
 
     orig = await ensure_async(cm.new(path=path))

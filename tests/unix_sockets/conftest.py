@@ -18,7 +18,7 @@ def jp_unix_socket_file(jp_process_id):
     # Rely on `/tmp` to avoid any Linux socket length max buffer
     # issues. Key on PID for process-wise concurrency.
     tmp_path = pathlib.Path("/tmp")
-    filename = "jupyter_server.{}.sock".format(jp_process_id)
+    filename = f"jupyter_server.{jp_process_id}.sock"
     jp_unix_socket_file = tmp_path.joinpath(filename)
     yield str(jp_unix_socket_file)
     # Clean up the file after the test runs.

@@ -113,13 +113,13 @@ Preparing a hashed password
 You can prepare a hashed password manually, using the function
 :func:`notebook.auth.security.passwd`:
 
-.. code-block:: ipython
+.. code-block:: python
 
-    In [1]: from jupyter_server.auth import passwd
-    In [2]: passwd()
-    Enter password:
-    Verify password:
-    Out[2]: 'sha1:67c9e60bb8b6:9ffede0825894254b2e042ea597d771089e11aed'
+    >>> from jupyter_server.auth import passwd
+    >>> passwd()
+    ... Enter password:
+    ... Verify password:
+    'sha1:67c9e60bb8b6:9ffede0825894254b2e042ea597d771089e11aed'
 
 .. caution::
 

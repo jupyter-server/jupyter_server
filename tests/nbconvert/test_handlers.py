@@ -1,4 +1,3 @@
-# coding: utf-8
 import json
 from base64 import encodebytes
 from shutil import which

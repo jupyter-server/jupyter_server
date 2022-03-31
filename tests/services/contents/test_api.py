@@ -65,19 +65,19 @@ def contents(contents_dir):
 
         # Create a notebook
         nb = writes(new_notebook(), version=4)
-        nbname = p.joinpath("{}.ipynb".format(name))
+        nbname = p.joinpath(f"{name}.ipynb")
         nbname.write_text(nb, encoding="utf-8")
         paths["notebooks"].append(nbname.relative_to(contents_dir))
 
         # Create a text file
-        txt = "{} text file".format(name)
-        txtname = p.joinpath("{}.txt".format(name))
+        txt = f"{name} text file"
+        txtname = p.joinpath(f"{name}.txt")
         txtname.write_text(txt, encoding="utf-8")
         paths["textfiles"].append(txtname.relative_to(contents_dir))
 
         # Create a random blob
         blob = name.encode("utf-8") + b"\xFF"
-        blobname = p.joinpath("{}.blob".format(name))
+        blobname = p.joinpath(f"{name}.blob")
         blobname.write_bytes(blob)
         paths["blobs"].append(blobname.relative_to(contents_dir))
     paths["all"] = list(paths.values())
@@ -86,7 +86,7 @@ def contents(contents_dir):
 
 @pytest.fixture
 def folders():
-    return list(set(item[0] for item in dirs))
+    return list({item[0] for item in dirs})
 
 
 @pytest.mark.parametrize("path,name", dirs)
@@ -209,7 +209,7 @@ async def test_get_text_file_contents(jp_fetch, contents, path, name):
     assert "content" in model
     assert model["format"] == "text"
     assert model["type"] == "file"
-    assert model["content"] == "{} text file".format(name)
+    assert model["content"] == f"{name} text file"
 
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch(
@@ -267,7 +267,7 @@ async def test_get_bad_type(jp_fetch, contents):
             method="GET",
             params=dict(type=type),  # This should be a directory, and thus throw and error
         )
-    assert expected_http_error(e, 400, "%s is a directory, not a %s" % (path, type))
+    assert expected_http_error(e, 400, f"{path} is a directory, not a {type}")
 
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         path = "unicodé/innonascii.ipynb"

@@ -1,15 +1,12 @@
-# coding: utf-8
 """Manager to read and modify config data in JSON files."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import copy
 import errno
 import glob
-import io
 import json
 import os
 
-from six import PY3
 from traitlets.config import LoggingConfigurable
 from traitlets.traitlets import Bool, Unicode
 
@@ -101,7 +98,7 @@ class BaseJSONConfigManager(LoggingConfigurable):
         data = {}
         for path in paths:
             if os.path.isfile(path):
-                with io.open(path, encoding="utf-8") as f:
+                with open(path, encoding="utf-8") as f:
                     recursive_update(data, json.load(f))
         return data
 
@@ -119,10 +116,7 @@ class BaseJSONConfigManager(LoggingConfigurable):
         # Generate the JSON up front, since it could raise an exception,
         # in order to avoid writing half-finished corrupted data to disk.
         json_content = json.dumps(data, indent=2)
-        if PY3:
-            f = io.open(filename, "w", encoding="utf-8")
-        else:
-            f = open(filename, "wb")
+        f = open(filename, "w", encoding="utf-8")
         with f:
             f.write(json_content)
 

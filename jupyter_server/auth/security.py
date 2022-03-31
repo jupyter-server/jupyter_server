@@ -3,7 +3,6 @@ Password generation for the Jupyter Server.
 """
 import getpass
 import hashlib
-import io
 import json
 import os
 import random
@@ -154,14 +153,14 @@ def persist_config(config_file=None, mode=0o600):
 
     yield config
 
-    with io.open(config_file, "w", encoding="utf8") as f:
+    with open(config_file, "w", encoding="utf8") as f:
         f.write(json.dumps(config, indent=2))
 
     try:
         os.chmod(config_file, mode)
     except Exception:
         tb = traceback.format_exc()
-        warnings.warn("Failed to set permissions on %s:\n%s" % (config_file, tb), RuntimeWarning)
+        warnings.warn(f"Failed to set permissions on {config_file}:\n{tb}", RuntimeWarning)
 
 
 def set_password(password=None, config_file=None):

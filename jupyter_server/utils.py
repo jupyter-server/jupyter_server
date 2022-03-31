@@ -282,7 +282,7 @@ def unix_socket_in_use(socket_path):
     try:
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.connect(socket_path)
-    except socket.error:
+    except OSError:
         return False
     else:
         return True
@@ -425,7 +425,7 @@ def filefind(filename, path_dirs=None):
         if os.path.isfile(testname):
             return os.path.abspath(testname)
 
-    raise IOError("File %r does not exist in any of the search paths: %r" % (filename, path_dirs))
+    raise OSError(f"File {filename!r} does not exist in any of the search paths: {path_dirs!r}")
 
 
 def expand_path(s):

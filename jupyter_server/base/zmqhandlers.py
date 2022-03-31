@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tornado handlers for WebSocket <-> ZMQ sockets."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
@@ -119,7 +118,7 @@ def deserialize_msg_from_ws_v1(ws_msg):
 WS_PING_INTERVAL = 30000
 
 
-class WebSocketMixin(object):
+class WebSocketMixin:
     """Mixin for common websocket options"""
 
     ping_callback = None
@@ -202,7 +201,7 @@ class WebSocketMixin(object):
                 self.ping_interval,
             )
             self.ping_callback.start()
-        return super(WebSocketMixin, self).open(*args, **kwargs)
+        return super().open(*args, **kwargs)
 
     def send_ping(self):
         """send a ping to keep the websocket alive"""
@@ -338,7 +337,7 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
         # assign and yield in two step to avoid tornado 3 issues
         res = self.pre_get()
         await res
-        res = super(AuthenticatedZMQStreamHandler, self).get(*args, **kwargs)
+        res = super().get(*args, **kwargs)
         await res
 
     def initialize(self):

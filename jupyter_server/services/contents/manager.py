@@ -477,13 +477,13 @@ class ContentsManager(LoggingConfigurable):
 
         for i in itertools.count():
             if i:
-                insert_i = "{}{}".format(insert, i)
+                insert_i = f"{insert}{i}"
             else:
                 insert_i = ""
             name = "{basename}{insert}{suffix}".format(
                 basename=basename, insert=insert_i, suffix=suffix
             )
-            if not self.exists("{}/{}".format(path, name)):
+            if not self.exists(f"{path}/{name}"):
                 break
         return name
 
@@ -543,7 +543,7 @@ class ContentsManager(LoggingConfigurable):
             raise HTTPError(400, "Unexpected model type: %r" % model["type"])
 
         name = self.increment_filename(untitled + ext, path, insert=insert)
-        path = "{0}/{1}".format(path, name)
+        path = f"{path}/{name}"
         return self.new(model, path)
 
     def new(self, model=None, path=""):
@@ -606,7 +606,7 @@ class ContentsManager(LoggingConfigurable):
         if self.dir_exists(to_path):
             name = copy_pat.sub(".", from_name)
             to_name = self.increment_filename(name, to_path, insert="-Copy")
-            to_path = "{0}/{1}".format(to_path, to_name)
+            to_path = f"{to_path}/{to_name}"
         elif is_destination_specified:
             if "/" in to_path:
                 to_dir, to_name = to_path.rsplit("/", 1)
@@ -865,13 +865,13 @@ class AsyncContentsManager(ContentsManager):
 
         for i in itertools.count():
             if i:
-                insert_i = "{}{}".format(insert, i)
+                insert_i = f"{insert}{i}"
             else:
                 insert_i = ""
             name = "{basename}{insert}{suffix}".format(
                 basename=basename, insert=insert_i, suffix=suffix
             )
-            file_exists = await ensure_async(self.exists("{}/{}".format(path, name)))
+            file_exists = await ensure_async(self.exists(f"{path}/{name}"))
             if not file_exists:
                 break
         return name
@@ -912,7 +912,7 @@ class AsyncContentsManager(ContentsManager):
             raise HTTPError(400, "Unexpected model type: %r" % model["type"])
 
         name = await self.increment_filename(untitled + ext, path, insert=insert)
-        path = "{0}/{1}".format(path, name)
+        path = f"{path}/{name}"
         return await self.new(model, path)
 
     async def new(self, model=None, path=""):
@@ -975,7 +975,7 @@ class AsyncContentsManager(ContentsManager):
         if await ensure_async(self.dir_exists(to_path)):
             name = copy_pat.sub(".", from_name)
             to_name = await self.increment_filename(name, to_path, insert="-Copy")
-            to_path = "{0}/{1}".format(to_path, to_name)
+            to_path = f"{to_path}/{to_name}"
         elif is_destination_specified:
             if "/" in to_path:
                 to_dir, to_name = to_path.rsplit("/", 1)

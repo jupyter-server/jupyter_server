@@ -1,4 +1,3 @@
-# encoding: utf-8
 """Tornado handlers for the terminal emulator."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
@@ -39,14 +38,14 @@ class TermSocket(WebSocketMixin, JupyterHandler, terminado.TermSocket):
 
         if not args[0] in self.term_manager.terminals:
             raise web.HTTPError(404)
-        return super(TermSocket, self).get(*args, **kwargs)
+        return super().get(*args, **kwargs)
 
     def on_message(self, message):
-        super(TermSocket, self).on_message(message)
+        super().on_message(message)
         self._update_activity()
 
     def write_message(self, message, binary=False):
-        super(TermSocket, self).write_message(message, binary=binary)
+        super().write_message(message, binary=binary)
         self._update_activity()
 
     def _update_activity(self):

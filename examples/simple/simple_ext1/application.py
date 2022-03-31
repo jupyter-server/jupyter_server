@@ -43,17 +43,17 @@ class SimpleApp1(ExtensionAppJinjaMixin, ExtensionApp):
     def initialize_handlers(self):
         self.handlers.extend(
             [
-                (r"/{}/default".format(self.name), DefaultHandler),
-                (r"/{}/params/(.+)$".format(self.name), ParameterHandler),
-                (r"/{}/template1/(.*)$".format(self.name), TemplateHandler),
-                (r"/{}/redirect".format(self.name), RedirectHandler),
-                (r"/{}/typescript/?".format(self.name), TypescriptHandler),
-                (r"/{}/(.*)".format(self.name), ErrorHandler),
+                (rf"/{self.name}/default", DefaultHandler),
+                (rf"/{self.name}/params/(.+)$", ParameterHandler),
+                (rf"/{self.name}/template1/(.*)$", TemplateHandler),
+                (rf"/{self.name}/redirect", RedirectHandler),
+                (rf"/{self.name}/typescript/?", TypescriptHandler),
+                (rf"/{self.name}/(.*)", ErrorHandler),
             ]
         )
 
     def initialize_settings(self):
-        self.log.info("Config {}".format(self.config))
+        self.log.info(f"Config {self.config}")
 
 
 # -----------------------------------------------------------------------------

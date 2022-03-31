@@ -89,7 +89,7 @@ class ExtensionAppJinjaMixin(HasTraits):
         self.initialize_templates()
         # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
-            self.settings.update({"{}_template_paths".format(self.name): self.template_paths})
+            self.settings.update({f"{self.name}_template_paths": self.template_paths})
 
         # Create a jinja environment for logging html templates.
         self.jinja2_env = Environment(
@@ -100,7 +100,7 @@ class ExtensionAppJinjaMixin(HasTraits):
         )
 
         # Add the jinja2 environment for this extension to the tornado settings.
-        self.settings.update({"{}_jinja2_env".format(self.name): self.jinja2_env})
+        self.settings.update({f"{self.name}_jinja2_env": self.jinja2_env})
 
 
 # -----------------------------------------------------------------------------
@@ -234,7 +234,7 @@ class ExtensionApp(JupyterApp):
 
     @default("static_url_prefix")
     def _default_static_url_prefix(self):
-        static_url = "static/{name}/".format(name=self.name)
+        static_url = f"static/{self.name}/"
         return url_path_join(self.serverapp.base_url, static_url)
 
     static_paths = List(
@@ -283,7 +283,7 @@ class ExtensionApp(JupyterApp):
         """
         traits = self.class_own_traits().keys()
         self.extension_config = Config({t: getattr(self, t) for t in traits})
-        self.settings["{}_config".format(self.name)] = self.extension_config
+        self.settings[f"{self.name}_config"] = self.extension_config
 
     def _prepare_settings(self):
         # Make webapp settings accessible to initialize_settings method
@@ -293,8 +293,8 @@ class ExtensionApp(JupyterApp):
         # Add static and template paths to settings.
         self.settings.update(
             {
-                "{}_static_paths".format(self.name): self.static_paths,
-                "{}".format(self.name): self,
+                f"{self.name}_static_paths": self.static_paths,
+                f"{self.name}": self,
             }
         )
 
@@ -348,7 +348,7 @@ class ExtensionApp(JupyterApp):
     def _prepare_templates(self):
         # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
-            self.settings.update({"{}_template_paths".format(self.name): self.template_paths})
+            self.settings.update({f"{self.name}_template_paths": self.template_paths})
         self.initialize_templates()
 
     def _jupyter_server_config(self):
@@ -425,7 +425,7 @@ class ExtensionApp(JupyterApp):
 
         Server should be started after extension is initialized.
         """
-        super(ExtensionApp, self).start()
+        super().start()
         # Start the server.
         self.serverapp.start()
 
