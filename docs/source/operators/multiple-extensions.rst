@@ -90,4 +90,4 @@ Extensions can also be enabled manually from the Jupyter Server entrypoint using
 
 .. code-block:: console
 
-    > jupyter server --ServerApp.jpserver_extensions='{"myextension":{"enabled": True}}'
+    > jupyter server --ServerApp.jpserver_extensions="myextension=True"
