@@ -15,6 +15,15 @@ import time
 from jupyter_server.utils import urlencode_unix_socket, urlencode_unix_socket_path
 
 
+def _cleanup_process(proc):
+    proc.wait()
+    # Make sure all the fds get closed.
+    for attr in ["stdout", "stderr", "stdin"]:
+        fid = getattr(proc, attr)
+        if fid:
+            fid.close()
+
+
 @pytest.mark.integration_test
 def test_shutdown_sock_server_integration(jp_unix_socket_file):
     url = urlencode_unix_socket(jp_unix_socket_file).encode()
@@ -52,7 +61,7 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
 
     assert encoded_sock_path.encode() not in subprocess.check_output(["jupyter-server", "list"])
 
-    p.wait()
+    _cleanup_process(p)
 
 
 @pytest.mark.integration_test
@@ -129,9 +138,7 @@ def test_stop_multi_integration(jp_unix_socket_file, jp_http_port):
 
     _ensure_stopped()
 
-    p1.wait()
-    p2.wait()
-    p3.wait()
+    [_cleanup_process(p) for p in [p1, p2, p3]]
 
 
 @pytest.mark.integration_test
@@ -162,4 +169,4 @@ def test_launch_socket_collision(jp_unix_socket_file):
 
     _ensure_stopped()
 
-    p1.wait()
+    _cleanup_process(p1)

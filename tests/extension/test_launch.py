@@ -54,6 +54,11 @@ def launch_instance(request, port, token):
                 # Already dead.
                 pass
             process.wait(10)
+            # Make sure all the fds get closed.
+            for attr in ["stdout", "stderr", "stdin"]:
+                fid = getattr(process, attr)
+                if fid:
+                    fid.close()
 
         if add_token:
             f'--ServerApp.token="{token}"',
