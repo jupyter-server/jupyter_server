@@ -16,12 +16,9 @@ from http.cookies import Morsel
 from urllib.parse import urlparse
 
 import prometheus_client
-from ipython_genutils.path import filefind
 from jinja2 import TemplateNotFound
 from jupyter_core.paths import is_hidden
-from tornado import escape
-from tornado import httputil
-from tornado import web
+from tornado import escape, httputil, web
 from tornado.log import app_log
 from traitlets.config import Application
 
@@ -30,11 +27,14 @@ from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
 from jupyter_server.i18n import combine_translations
 from jupyter_server.services.security import csp_report_uri
-from jupyter_server.utils import ensure_async
-from jupyter_server.utils import url_escape
-from jupyter_server.utils import url_is_absolute
-from jupyter_server.utils import url_path_join
-from jupyter_server.utils import urldecode_unix_socket_path
+from jupyter_server.utils import (
+    ensure_async,
+    filefind,
+    url_escape,
+    url_is_absolute,
+    url_path_join,
+    urldecode_unix_socket_path,
+)
 
 # -----------------------------------------------------------------------------
 # Top-level handlers
@@ -160,7 +160,7 @@ class AuthenticatedHandler(web.RequestHandler):
 
     @property
     def cookie_name(self):
-        default_cookie_name = non_alphanum.sub("-", "username-{}".format(self.request.host))
+        default_cookie_name = non_alphanum.sub("-", f"username-{self.request.host}")
         return self.settings.get("cookie_name", default_cookie_name)
 
     @property
@@ -190,6 +190,10 @@ class AuthenticatedHandler(web.RequestHandler):
         if self.login_handler is None:
             return False
         return bool(self.login_handler.get_login_available(self.settings))
+
+    @property
+    def authorizer(self):
+        return self.settings.get("authorizer")
 
 
 class JupyterHandler(AuthenticatedHandler):
@@ -251,7 +255,8 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def contents_js_source(self):
         self.log.debug(
-            "Using contents: %s", self.settings.get("contents_js_source", "services/contents")
+            "Using contents: %s",
+            self.settings.get("contents_js_source", "services/contents"),
         )
         return self.settings.get("contents_js_source", "services/contents")
 
@@ -304,7 +309,7 @@ class JupyterHandler(AuthenticatedHandler):
 
     def set_default_headers(self):
         """Add CORS headers, if defined"""
-        super(JupyterHandler, self).set_default_headers()
+        super().set_default_headers()
         if self.allow_origin:
             self.set_header("Access-Control-Allow-Origin", self.allow_origin)
         elif self.allow_origin_pat:
@@ -423,7 +428,7 @@ class JupyterHandler(AuthenticatedHandler):
             return True
 
         # apply cross-origin checks to Referer:
-        origin = "{}://{}".format(referer_url.scheme, referer_url.netloc)
+        origin = f"{referer_url.scheme}://{referer_url.netloc}"
         if self.allow_origin:
             allow = self.allow_origin == origin
         elif self.allow_origin_pat:
@@ -448,14 +453,14 @@ class JupyterHandler(AuthenticatedHandler):
             # Servers without authentication are vulnerable to XSRF
             return
         try:
-            return super(JupyterHandler, self).check_xsrf_cookie()
-        except web.HTTPError as e:
+            return super().check_xsrf_cookie()
+        except web.HTTPError:
             if self.request.method in {"GET", "HEAD"}:
                 # Consider Referer a sufficient cross-origin check for GET requests
                 if not self.check_referer():
                     referer = self.request.headers.get("Referer")
                     if referer:
-                        msg = "Blocking Cross Origin request from {}.".format(referer)
+                        msg = f"Blocking Cross Origin request from {referer}."
                     else:
                         msg = "Blocking request from unknown origin"
                     raise web.HTTPError(403, msg)
@@ -505,7 +510,7 @@ class JupyterHandler(AuthenticatedHandler):
     def prepare(self):
         if not self.check_host():
             raise web.HTTPError(403)
-        return super(JupyterHandler, self).prepare()
+        return super().prepare()
 
     # ---------------------------------------------------------------
     # template rendering
@@ -540,7 +545,7 @@ class JupyterHandler(AuthenticatedHandler):
             nbjs_translations=json.dumps(
                 combine_translations(self.request.headers.get("Accept-Language", ""))
             ),
-            **self.jinja_template_vars
+            **self.jinja_template_vars,
         )
 
     def get_json_body(self):
@@ -548,13 +553,13 @@ class JupyterHandler(AuthenticatedHandler):
         if not self.request.body:
             return None
         # Do we need to call body.decode('utf-8') here?
-        body = self.request.body.strip().decode(u"utf-8")
+        body = self.request.body.strip().decode("utf-8")
         try:
             model = json.loads(body)
         except Exception as e:
             self.log.debug("Bad JSON: %r", body)
             self.log.error("Couldn't parse JSON", exc_info=True)
-            raise web.HTTPError(400, u"Invalid JSON in body of request") from e
+            raise web.HTTPError(400, "Invalid JSON in body of request") from e
         return model
 
     def write_error(self, status_code, **kwargs):
@@ -600,7 +605,7 @@ class APIHandler(JupyterHandler):
     def prepare(self):
         if not self.check_origin():
             raise web.HTTPError(404)
-        return super(APIHandler, self).prepare()
+        return super().prepare()
 
     def write_error(self, status_code, **kwargs):
         """APIHandler errors are JSON, not human pages"""
@@ -627,7 +632,7 @@ class APIHandler(JupyterHandler):
         # preserve _user_cache so we don't raise more than once
         if hasattr(self, "_user_cache"):
             return self._user_cache
-        self._user_cache = user = super(APIHandler, self).get_current_user()
+        self._user_cache = user = super().get_current_user()
         return user
 
     def get_login_url(self):
@@ -636,13 +641,13 @@ class APIHandler(JupyterHandler):
         # instead of redirecting, raise 403 instead.
         if not self.current_user:
             raise web.HTTPError(403)
-        return super(APIHandler, self).get_login_url()
+        return super().get_login_url()
 
     @property
     def content_security_policy(self):
         csp = "; ".join(
             [
-                super(APIHandler, self).content_security_policy,
+                super().content_security_policy,
                 "default-src 'none'",
             ]
         )
@@ -664,7 +669,7 @@ class APIHandler(JupyterHandler):
     def finish(self, *args, **kwargs):
         self.update_api_activity()
         self.set_header("Content-Type", "application/json")
-        return super(APIHandler, self).finish(*args, **kwargs)
+        return super().finish(*args, **kwargs)
 
     def options(self, *args, **kwargs):
         if "Access-Control-Allow-Headers" in self.settings.get("headers", {}):
@@ -674,7 +679,8 @@ class APIHandler(JupyterHandler):
             )
         else:
             self.set_header(
-                "Access-Control-Allow-Headers", "accept, content-type, authorization, x-xsrftoken"
+                "Access-Control-Allow-Headers",
+                "accept, content-type, authorization, x-xsrftoken",
             )
         self.set_header("Access-Control-Allow-Methods", "GET, PUT, POST, PATCH, DELETE, OPTIONS")
 
@@ -718,15 +724,12 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
     def content_security_policy(self):
         # In case we're serving HTML/SVG, confine any Javascript to a unique
         # origin so it can't interact with the Jupyter server.
-        return (
-            super(AuthenticatedFileHandler, self).content_security_policy
-            + "; sandbox allow-scripts"
-        )
+        return super().content_security_policy + "; sandbox allow-scripts"
 
     @web.authenticated
     def head(self, path):
         self.check_xsrf_cookie()
-        return super(AuthenticatedFileHandler, self).head(path)
+        return super().head(path)
 
     @web.authenticated
     def get(self, path):
@@ -749,10 +752,10 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
             if cur_mime == "text/plain":
                 return "text/plain; charset=UTF-8"
             else:
-                return super(AuthenticatedFileHandler, self).get_content_type()
+                return super().get_content_type()
 
     def set_headers(self):
-        super(AuthenticatedFileHandler, self).set_headers()
+        super().set_headers()
         # disable browser caching, rely on 304 replies for savings
         if "v" not in self.request.arguments:
             self.add_header("Cache-Control", "no-cache")
@@ -767,7 +770,7 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
 
         Adding to tornado's own handling, forbids the serving of hidden files.
         """
-        abs_path = super(AuthenticatedFileHandler, self).validate_absolute_path(root, absolute_path)
+        abs_path = super().validate_absolute_path(root, absolute_path)
         abs_root = os.path.abspath(root)
         if is_hidden(abs_path, abs_root) and not self.contents_manager.allow_hidden:
             self.log.info(
@@ -818,7 +821,7 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
     _static_paths = {}
 
     def set_headers(self):
-        super(FileFindHandler, self).set_headers()
+        super().set_headers()
         # disable browser caching, rely on 304 replies for savings
         if "v" not in self.request.arguments or any(
             self.request.path.startswith(path) for path in self.no_cache_paths
@@ -845,13 +848,13 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
                 return cls._static_paths[path]
             try:
                 abspath = os.path.abspath(filefind(path, roots))
-            except IOError:
+            except OSError:
                 # IOError means not found
                 return ""
 
             cls._static_paths[path] = abspath
 
-            log().debug("Path %s served from %s" % (path, abspath))
+            log().debug(f"Path {path} served from {abspath}")
             return abspath
 
     def validate_absolute_path(self, root, absolute_path):
@@ -863,7 +866,7 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
             if (absolute_path + os.sep).startswith(root):
                 break
 
-        return super(FileFindHandler, self).validate_absolute_path(root, absolute_path)
+        return super().validate_absolute_path(root, absolute_path)
 
 
 class APIVersionHandler(APIHandler):

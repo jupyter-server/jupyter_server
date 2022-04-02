@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 Utilities for getting information about Jupyter and the system it's running in.
 """
@@ -8,8 +7,6 @@ import os
 import platform
 import subprocess
 import sys
-
-from ipython_genutils import encoding
 
 import jupyter_server
 
@@ -56,10 +53,10 @@ def pkg_commit_hash(pkg_path):
             if repo_commit:
                 return "repository", repo_commit.strip().decode("ascii")
             else:
-                return u"", u""
+                return "", ""
         par_path = p.dirname(par_path)
 
-    return u"", u""
+    return "", ""
 
 
 def pkg_info(pkg_path):
@@ -86,7 +83,6 @@ def pkg_info(pkg_path):
         sys_platform=sys.platform,
         platform=platform.platform(),
         os_name=os.name,
-        default_encoding=encoding.DEFAULT_ENCODING,
     )
 
 

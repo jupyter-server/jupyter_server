@@ -1,5 +1,6 @@
 import os
 import sys
+from shutil import which
 
 import terminado
 
@@ -8,8 +9,8 @@ from ..utils import check_version
 if not check_version(terminado.__version__, "0.8.3"):
     raise ImportError("terminado >= 0.8.3 required, found %s" % terminado.__version__)
 
-from ipython_genutils.py3compat import which
 from jupyter_server.utils import url_path_join as ujoin
+
 from . import api_handlers
 from .handlers import TermSocket
 from .terminalmanager import TerminalManager

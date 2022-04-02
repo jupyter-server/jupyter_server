@@ -3,22 +3,17 @@ import sys
 import traceback
 
 from tornado.gen import multi
-from traitlets import Any
-from traitlets import Bool
-from traitlets import default
-from traitlets import Dict
-from traitlets import HasTraits
-from traitlets import Instance
-from traitlets import observe
-from traitlets import Unicode
+from traitlets import Any, Bool, Dict, HasTraits, Instance, Unicode, default, observe
 from traitlets import validate as validate_trait
 from traitlets.config import LoggingConfigurable
 
 from .config import ExtensionConfigManager
-from .utils import ExtensionMetadataError
-from .utils import ExtensionModuleNotFound
-from .utils import get_loader
-from .utils import get_metadata
+from .utils import (
+    ExtensionMetadataError,
+    ExtensionModuleNotFound,
+    get_loader,
+    get_metadata,
+)
 
 
 class ExtensionPoint(HasTraits):
@@ -39,7 +34,7 @@ class ExtensionPoint(HasTraits):
             self._module_name = metadata["module"]
         except KeyError:
             raise ExtensionMetadataError(
-                "There is no 'module' key in the extension's " "metadata packet."
+                "There is no 'module' key in the extension's metadata packet."
             )
 
         try:
@@ -342,7 +337,7 @@ class ExtensionManager(LoggingConfigurable):
                 # Link extension and store links
                 extension.link_all_points(self.serverapp)
                 self.linked_extensions[name] = True
-                self.log.info("{name} | extension was successfully linked.".format(name=name))
+                self.log.info(f"{name} | extension was successfully linked.")
             except Exception as e:
                 if self.serverapp.reraise_server_extension_failures:
                     raise
@@ -364,14 +359,14 @@ class ExtensionManager(LoggingConfigurable):
                     )
                 )
             else:
-                self.log.info("{name} | extension was successfully loaded.".format(name=name))
+                self.log.info(f"{name} | extension was successfully loaded.")
 
     async def stop_extension(self, name, apps):
         """Call the shutdown hooks in the specified apps."""
         for app in apps:
-            self.log.debug('{} | extension app "{}" stopping'.format(name, app.name))
+            self.log.debug(f'{name} | extension app "{app.name}" stopping')
             await app.stop_extension()
-            self.log.debug('{} | extension app "{}" stopped'.format(name, app.name))
+            self.log.debug(f'{name} | extension app "{app.name}" stopped')
 
     def link_all_extensions(self):
         """Link all enabled extensions

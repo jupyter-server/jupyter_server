@@ -1,4 +1,3 @@
-# coding: utf-8
 """A tornado based Jupyter server."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
@@ -9,7 +8,6 @@ import gettext
 import hashlib
 import hmac
 import inspect
-import io
 import ipaddress
 import json
 import logging
@@ -26,6 +24,7 @@ import sys
 import threading
 import time
 import urllib
+import warnings
 import webbrowser
 from base64 import encodebytes
 
@@ -36,10 +35,10 @@ except ImportError:
     resource = None
 
 from jinja2 import Environment, FileSystemLoader
-
 from jupyter_core.paths import secure_write
-from jupyter_server.transutils import trans, _i18n
-from jupyter_server.utils import run_sync_in_loop, urljoin, pathname2url
+
+from jupyter_server.transutils import _i18n, trans
+from jupyter_server.utils import pathname2url, run_sync_in_loop, urljoin
 
 # the minimum viable tornado version: needs to be kept in sync with setup.py
 MIN_TORNADO = (6, 1, 0)
@@ -51,14 +50,37 @@ try:
 except (ImportError, AttributeError, AssertionError) as e:  # pragma: no cover
     raise ImportError(_i18n("The Jupyter Server requires tornado >=%s.%s.%s") % MIN_TORNADO) from e
 
-from tornado import httpserver
-from tornado import ioloop
-from tornado import web
+from tornado import httpserver, ioloop, web
 from tornado.httputil import url_concat
-from tornado.log import LogFormatter, app_log, access_log, gen_log
+from tornado.log import LogFormatter, access_log, app_log, gen_log
 
 if not sys.platform.startswith("win"):
     from tornado.netutil import bind_unix_socket
+
+from jupyter_client import KernelManager
+from jupyter_client.kernelspec import KernelSpecManager
+from jupyter_client.session import Session
+from jupyter_core.application import JupyterApp, base_aliases, base_flags
+from jupyter_core.paths import jupyter_runtime_dir
+from nbformat.sign import NotebookNotary
+from traitlets import (
+    Any,
+    Bool,
+    Bytes,
+    Dict,
+    Float,
+    Instance,
+    Integer,
+    List,
+    TraitError,
+    Type,
+    Unicode,
+    default,
+    observe,
+    validate,
+)
+from traitlets.config import Config
+from traitlets.config.application import boolean_flag, catch_config_error
 
 from jupyter_server import (
     DEFAULT_JUPYTER_SERVER_PORT,
@@ -66,78 +88,51 @@ from jupyter_server import (
     DEFAULT_TEMPLATE_PATH_LIST,
     __version__,
 )
-
-from jupyter_server.base.handlers import MainHandler, RedirectWithParams, Template404
-from jupyter_server.log import log_request
-from jupyter_server.services.kernels.kernelmanager import (
-    MappingKernelManager,
-    AsyncMappingKernelManager,
+from jupyter_server._sysinfo import get_sys_info
+from jupyter_server._tz import utcnow
+from jupyter_server.auth.authorizer import AllowAllAuthorizer, Authorizer
+from jupyter_server.auth.login import LoginHandler
+from jupyter_server.auth.logout import LogoutHandler
+from jupyter_server.base.handlers import (
+    FileFindHandler,
+    MainHandler,
+    RedirectWithParams,
+    Template404,
 )
+from jupyter_server.extension.config import ExtensionConfigManager
+from jupyter_server.extension.manager import ExtensionManager
+from jupyter_server.extension.serverextension import ServerExtensionApp
+from jupyter_server.gateway.managers import (
+    GatewayClient,
+    GatewayKernelSpecManager,
+    GatewayMappingKernelManager,
+    GatewaySessionManager,
+)
+from jupyter_server.log import log_request
 from jupyter_server.services.config import ConfigManager
-from jupyter_server.services.contents.manager import AsyncContentsManager, ContentsManager
 from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
     FileContentsManager,
 )
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
+from jupyter_server.services.contents.manager import (
+    AsyncContentsManager,
+    ContentsManager,
+)
+from jupyter_server.services.kernels.kernelmanager import (
+    AsyncMappingKernelManager,
+    MappingKernelManager,
+)
 from jupyter_server.services.sessions.sessionmanager import SessionManager
-from jupyter_server.gateway.managers import (
-    GatewayMappingKernelManager,
-    GatewayKernelSpecManager,
-    GatewaySessionManager,
-    GatewayClient,
-)
-
-from jupyter_server.auth.login import LoginHandler
-from jupyter_server.auth.logout import LogoutHandler
-from jupyter_server.base.handlers import FileFindHandler
-
-from traitlets.config import Config
-from traitlets.config.application import catch_config_error, boolean_flag
-from jupyter_core.application import (
-    JupyterApp,
-    base_flags,
-    base_aliases,
-)
-from jupyter_core.paths import jupyter_config_path
-from jupyter_client import KernelManager
-from jupyter_client.kernelspec import KernelSpecManager
-from jupyter_client.session import Session
-from nbformat.sign import NotebookNotary
-from traitlets import (
-    Any,
-    Dict,
-    Unicode,
-    Integer,
-    List,
-    Bool,
-    Bytes,
-    Instance,
-    TraitError,
-    Type,
-    Float,
-    observe,
-    default,
-    validate,
-)
-from jupyter_core.paths import jupyter_runtime_dir
-from jupyter_server._sysinfo import get_sys_info
-
-from jupyter_server._tz import utcnow
-from jupyter_server.utils import (
-    url_path_join,
-    check_pid,
-    url_escape,
-    pathname2url,
-    unix_socket_in_use,
-    urlencode_unix_socket_path,
-    fetch,
-)
-
-from jupyter_server.extension.serverextension import ServerExtensionApp
-from jupyter_server.extension.manager import ExtensionManager
-from jupyter_server.extension.config import ExtensionConfigManager
 from jupyter_server.traittypes import TypeFromClasses
+from jupyter_server.utils import (
+    check_pid,
+    fetch,
+    unix_socket_in_use,
+    url_escape,
+    url_path_join,
+    urlencode_unix_socket_path,
+)
 
 # Tolerate missing terminado package.
 try:
@@ -168,7 +163,10 @@ JUPYTER_SERVICE_HANDLERS = dict(
         "jupyter_server.kernelspecs.handlers",
         "jupyter_server.services.kernelspecs.handlers",
     ],
-    nbconvert=["jupyter_server.nbconvert.handlers", "jupyter_server.services.nbconvert.handlers"],
+    nbconvert=[
+        "jupyter_server.nbconvert.handlers",
+        "jupyter_server.services.nbconvert.handlers",
+    ],
     security=["jupyter_server.services.security.handlers"],
     sessions=["jupyter_server.services.sessions.handlers"],
     shutdown=["jupyter_server.services.shutdown"],
@@ -191,7 +189,7 @@ def random_ports(port, n):
     """
     for i in range(min(5, n)):
         yield port + i
-    for i in range(n - 5):
+    for _ in range(n - 5):
         yield max(1, port + random.randint(-2 * n, 2 * n))
 
 
@@ -222,7 +220,16 @@ class ServerWebApplication(web.Application):
         default_url,
         settings_overrides,
         jinja_env_options,
+        authorizer=None,
     ):
+        if authorizer is None:
+            warnings.warn(
+                "authorizer unspecified. Using permissive AllowAllAuthorizer."
+                " Specify an authorizer to avoid this message.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            authorizer = AllowAllAuthorizer(jupyter_app)
 
         settings = self.init_settings(
             jupyter_app,
@@ -237,10 +244,11 @@ class ServerWebApplication(web.Application):
             default_url,
             settings_overrides,
             jinja_env_options,
+            authorizer=authorizer,
         )
         handlers = self.init_handlers(default_services, settings)
 
-        super(ServerWebApplication, self).__init__(handlers, **settings)
+        super().__init__(handlers, **settings)
 
     def init_settings(
         self,
@@ -256,6 +264,7 @@ class ServerWebApplication(web.Application):
         default_url,
         settings_overrides,
         jinja_env_options=None,
+        authorizer=None,
     ):
 
         _template_path = settings_overrides.get(
@@ -274,13 +283,11 @@ class ServerWebApplication(web.Application):
         )
         sys_info = get_sys_info()
 
-        # If the user is running the server in a git directory, make the assumption
-        # that this is a dev install and suggest to the developer `npm run build:watch`.
         base_dir = os.path.realpath(os.path.join(__file__, "..", ".."))
-        dev_mode = os.path.exists(os.path.join(base_dir, ".git"))
-
         nbui = gettext.translation(
-            "nbui", localedir=os.path.join(base_dir, "jupyter_server/i18n"), fallback=True
+            "nbui",
+            localedir=os.path.join(base_dir, "jupyter_server/i18n"),
+            fallback=True,
         )
         env.install_gettext_translations(nbui, newstyle=False)
 
@@ -314,7 +321,10 @@ class ServerWebApplication(web.Application):
                 "no_cache_paths": [url_path_join(base_url, "static", "custom")],
             },
             version_hash=version_hash,
+            # kernel message protocol over websoclet
+            kernel_ws_protocol=jupyter_app.kernel_ws_protocol,
             # rate limits
+            limit_rate=jupyter_app.limit_rate,
             iopub_msg_rate_limit=jupyter_app.iopub_msg_rate_limit,
             iopub_data_rate_limit=jupyter_app.iopub_data_rate_limit,
             rate_limit_window=jupyter_app.rate_limit_window,
@@ -335,6 +345,7 @@ class ServerWebApplication(web.Application):
             session_manager=session_manager,
             kernel_spec_manager=kernel_spec_manager,
             config_manager=config_manager,
+            authorizer=authorizer,
             # handlers
             extra_services=extra_services,
             # Jupyter stuff
@@ -399,7 +410,7 @@ class ServerWebApplication(web.Application):
             # for each handler required for gateway, locate its pattern
             # in the current list and replace that entry...
             gateway_handlers = load_handlers("jupyter_server.gateway.handlers")
-            for i, gwh in enumerate(gateway_handlers):
+            for _, gwh in enumerate(gateway_handlers):
                 for j, h in enumerate(handlers):
                     if gwh[0] == h[0]:
                         handlers[j] = (gwh[0], gwh[1])
@@ -493,7 +504,7 @@ def shutdown_server(server_info, timeout=5, log=None):
     if log:
         log.debug("POST request to %sapi/shutdown", url)
 
-    r = fetch(url, method="POST", headers={"Authorization": "token " + server_info["token"]})
+    fetch(url, method="POST", headers={"Authorization": "token " + server_info["token"]})
     # Poll to see if it shut down.
     for _ in range(timeout * 10):
         if not check_pid(pid):
@@ -534,10 +545,10 @@ class JupyterServerStopApp(JupyterApp):
         help="Port of the server to be killed. Default %s" % DEFAULT_JUPYTER_SERVER_PORT,
     )
 
-    sock = Unicode(u"", config=True, help="UNIX socket of the server to be killed.")
+    sock = Unicode("", config=True, help="UNIX socket of the server to be killed.")
 
     def parse_command_line(self, argv=None):
-        super(JupyterServerStopApp, self).parse_command_line(argv)
+        super().parse_command_line(argv)
         if self.extra_args:
             try:
                 self.port = int(self.extra_args[0])
@@ -557,7 +568,7 @@ class JupyterServerStopApp(JupyterApp):
     def _maybe_remove_unix_socket(socket_path):
         try:
             os.unlink(socket_path)
-        except (OSError, IOError):
+        except OSError:
             pass
 
     def start(self):
@@ -579,7 +590,8 @@ class JupyterServerStopApp(JupyterApp):
                     return
         current_endpoint = self.sock or self.port
         print(
-            "There is currently no server running on {}".format(current_endpoint), file=sys.stderr
+            f"There is currently no server running on {current_endpoint}",
+            file=sys.stderr,
         )
         print("Ports/sockets currently in use:", file=sys.stderr)
         for server in servers:
@@ -668,7 +680,10 @@ flags["autoreload"] = (
 # Add notebook manager flags
 flags.update(
     boolean_flag(
-        "script", "FileContentsManager.save_script", "DEPRECATED, IGNORED", "DEPRECATED, IGNORED"
+        "script",
+        "FileContentsManager.save_script",
+        "DEPRECATED, IGNORED",
+        "DEPRECATED, IGNORED",
     )
 )
 
@@ -727,6 +742,7 @@ class ServerApp(JupyterApp):
         GatewayKernelSpecManager,
         GatewaySessionManager,
         GatewayClient,
+        Authorizer,
     ]
     if terminado_available:  # Only necessary when terminado is available
         classes.append(TerminalManager)
@@ -765,7 +781,9 @@ class ServerApp(JupyterApp):
     @default("log_format")
     def _default_log_format(self):
         """override default log format to include date & time"""
-        return u"%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
+        return (
+            "%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
+        )
 
     # file to be opened in the Jupyter server
     file_to_run = Unicode("", help="Open the named file when the application is launched.").tag(
@@ -804,11 +822,15 @@ class ServerApp(JupyterApp):
     )
 
     allow_credentials = Bool(
-        False, config=True, help=_i18n("Set the Access-Control-Allow-Credentials: true header")
+        False,
+        config=True,
+        help=_i18n("Set the Access-Control-Allow-Credentials: true header"),
     )
 
     allow_root = Bool(
-        False, config=True, help=_i18n("Whether to allow the user to run the server as root.")
+        False,
+        config=True,
+        help=_i18n("Whether to allow the user to run the server as root."),
     )
 
     autoreload = Bool(
@@ -820,7 +842,9 @@ class ServerApp(JupyterApp):
     default_url = Unicode("/", config=True, help=_i18n("The default URL to redirect to from `/`"))
 
     ip = Unicode(
-        "localhost", config=True, help=_i18n("The IP address the Jupyter server will listen on.")
+        "localhost",
+        config=True,
+        help=_i18n("The IP address the Jupyter server will listen on."),
     )
 
     @default("ip")
@@ -832,7 +856,7 @@ class ServerApp(JupyterApp):
         s = socket.socket()
         try:
             s.bind(("localhost", 0))
-        except socket.error as e:
+        except OSError as e:
             self.log.warning(
                 _i18n("Cannot bind to localhost, using 127.0.0.1 as default ip\n%s"), e
             )
@@ -844,12 +868,12 @@ class ServerApp(JupyterApp):
     @validate("ip")
     def _validate_ip(self, proposal):
         value = proposal["value"]
-        if value == u"*":
-            value = u""
+        if value == "*":
+            value = ""
         return value
 
     custom_display_url = Unicode(
-        u"",
+        "",
         config=True,
         help=_i18n(
             """Override URL shown to users.
@@ -869,7 +893,8 @@ class ServerApp(JupyterApp):
     port_default_value = DEFAULT_JUPYTER_SERVER_PORT
 
     port = Integer(
-        config=True, help=_i18n("The port the server will listen on (env: JUPYTER_PORT).")
+        config=True,
+        help=_i18n("The port the server will listen on (env: JUPYTER_PORT)."),
     )
 
     @default("port")
@@ -891,10 +916,12 @@ class ServerApp(JupyterApp):
     def port_retries_default(self):
         return int(os.getenv(self.port_retries_env, self.port_retries_default_value))
 
-    sock = Unicode(u"", config=True, help="The UNIX socket the Jupyter server will listen on.")
+    sock = Unicode("", config=True, help="The UNIX socket the Jupyter server will listen on.")
 
     sock_mode = Unicode(
-        "0600", config=True, help="The permissions mode for UNIX socket creation (default: 0600)."
+        "0600",
+        config=True,
+        help="The permissions mode for UNIX socket creation (default: 0600).",
     )
 
     @validate("sock_mode")
@@ -908,7 +935,7 @@ class ServerApp(JupyterApp):
                     bool(converted_value & stat.S_IRUSR),
                     bool(converted_value & stat.S_IWUSR),
                     # And isn't out of bounds.
-                    converted_value <= 2 ** 12,
+                    converted_value <= 2**12,
                 )
             )
         except ValueError:
@@ -920,17 +947,19 @@ class ServerApp(JupyterApp):
         return value
 
     certfile = Unicode(
-        u"", config=True, help=_i18n("""The full path to an SSL/TLS certificate file.""")
+        "",
+        config=True,
+        help=_i18n("""The full path to an SSL/TLS certificate file."""),
     )
 
     keyfile = Unicode(
-        u"",
+        "",
         config=True,
         help=_i18n("""The full path to a private key file for usage with SSL/TLS."""),
     )
 
     client_ca = Unicode(
-        u"",
+        "",
         config=True,
         help=_i18n(
             """The full path to a certificate authority certificate for SSL/TLS client authentication."""
@@ -960,7 +989,7 @@ class ServerApp(JupyterApp):
     @default("cookie_secret")
     def _default_cookie_secret(self):
         if os.path.exists(self.cookie_secret_file):
-            with io.open(self.cookie_secret_file, "rb") as f:
+            with open(self.cookie_secret_file, "rb") as f:
                 key = f.read()
         else:
             key = encodebytes(os.urandom(32))
@@ -977,7 +1006,9 @@ class ServerApp(JupyterApp):
                 f.write(secret)
         except OSError as e:
             self.log.error(
-                _i18n("Failed to write cookie secret to %s: %s"), self.cookie_secret_file, e
+                _i18n("Failed to write cookie secret to %s: %s"),
+                self.cookie_secret_file,
+                e,
             )
 
     token = Unicode(
@@ -1005,12 +1036,12 @@ class ServerApp(JupyterApp):
             return os.getenv("JUPYTER_TOKEN")
         if os.getenv("JUPYTER_TOKEN_FILE"):
             self._token_generated = False
-            with io.open(os.getenv("JUPYTER_TOKEN_FILE"), "r") as token_file:
+            with open(os.getenv("JUPYTER_TOKEN_FILE")) as token_file:
                 return token_file.read()
         if self.password:
             # no token if password is enabled
             self._token_generated = False
-            return u""
+            return ""
         else:
             self._token_generated = True
             return binascii.hexlify(os.urandom(24)).decode("ascii")
@@ -1039,7 +1070,9 @@ class ServerApp(JupyterApp):
             return DEFAULT_SOFT
 
         self.log.debug(
-            "Default value for min_open_files_limit is ignored (hard=%r, soft=%r)", hard, soft
+            "Default value for min_open_files_limit is ignored (hard=%r, soft=%r)",
+            hard,
+            soft,
         )
 
         return soft
@@ -1071,7 +1104,7 @@ class ServerApp(JupyterApp):
         self._token_generated = False
 
     password = Unicode(
-        u"",
+        "",
         config=True,
         help="""Hashed password to use for web authentication.
 
@@ -1216,7 +1249,7 @@ class ServerApp(JupyterApp):
     )
 
     browser = Unicode(
-        u"",
+        "",
         config=True,
         help="""Specify what command to use to invoke a web
                       browser when starting the server. If not specified, the
@@ -1247,7 +1280,7 @@ class ServerApp(JupyterApp):
     tornado_settings = Dict(
         config=True,
         help=_i18n(
-            "Supply overrides for the tornado.web.Application that the " "Jupyter server uses."
+            "Supply overrides for the tornado.web.Application that the Jupyter server uses."
         ),
     )
 
@@ -1295,7 +1328,8 @@ class ServerApp(JupyterApp):
     )
 
     jinja_environment_options = Dict(
-        config=True, help=_i18n("Supply extra arguments that will be passed to Jinja environment.")
+        config=True,
+        help=_i18n("Supply extra arguments that will be passed to Jinja environment."),
     )
 
     jinja_template_vars = Dict(
@@ -1421,11 +1455,15 @@ class ServerApp(JupyterApp):
     )
 
     session_manager_class = Type(
-        default_value=SessionManager, config=True, help=_i18n("The session manager class to use.")
+        default_value=SessionManager,
+        config=True,
+        help=_i18n("The session manager class to use."),
     )
 
     config_manager_class = Type(
-        default_value=ConfigManager, config=True, help=_i18n("The config manager class to use")
+        default_value=ConfigManager,
+        config=True,
+        help=_i18n("The config manager class to use"),
     )
 
     kernel_spec_manager = Instance(KernelSpecManager, allow_none=True)
@@ -1454,6 +1492,13 @@ class ServerApp(JupyterApp):
         klass=web.RequestHandler,
         config=True,
         help=_i18n("The logout handler class to use."),
+    )
+
+    authorizer_class = Type(
+        default_value=AllowAllAuthorizer,
+        klass=Authorizer,
+        config=True,
+        help=_i18n("The authorizer class to use."),
     )
 
     trust_xheaders = Bool(
@@ -1612,6 +1657,29 @@ class ServerApp(JupyterApp):
         help=_i18n("Reraise exceptions encountered loading server extensions?"),
     )
 
+    kernel_ws_protocol = Unicode(
+        None,
+        allow_none=True,
+        config=True,
+        help=_i18n(
+            "Preferred kernel message protocol over websocket to use (default: None). "
+            "If an empty string is passed, select the legacy protocol. If None, "
+            "the selected protocol will depend on what the front-end supports "
+            "(usually the most recent protocol supported by the back-end and the "
+            "front-end)."
+        ),
+    )
+
+    limit_rate = Bool(
+        True,
+        config=True,
+        help=_i18n(
+            "Whether to limit the rate of IOPub messages (default: True). "
+            "If True, use iopub_msg_rate_limit, iopub_data_rate_limit and/or rate_limit_window "
+            "to tune the rate."
+        ),
+    )
+
     iopub_msg_rate_limit = Float(
         1000,
         config=True,
@@ -1700,7 +1768,7 @@ class ServerApp(JupyterApp):
 
     def parse_command_line(self, argv=None):
 
-        super(ServerApp, self).parse_command_line(argv)
+        super().parse_command_line(argv)
 
         if self.extra_args:
             arg0 = self.extra_args[0]
@@ -1757,6 +1825,7 @@ class ServerApp(JupyterApp):
             parent=self,
             log=self.log,
         )
+        self.authorizer = self.authorizer_class(parent=self, log=self.log)
 
     def init_logging(self):
         # This prevents double log messages because tornado use a root logger that
@@ -1843,6 +1912,7 @@ class ServerApp(JupyterApp):
             self.default_url,
             self.tornado_settings,
             self.jinja_environment_options,
+            authorizer=self.authorizer,
         )
         if self.certfile:
             self.ssl_options["certfile"] = self.certfile
@@ -1865,7 +1935,6 @@ class ServerApp(JupyterApp):
             )
             if self.ssl_options.get("ca_certs", False):
                 self.ssl_options.setdefault("cert_reqs", ssl.CERT_REQUIRED)
-            ssl_options = self.ssl_options
 
         self.login_handler_class.validate_security(self, ssl_options=self.ssl_options)
 
@@ -1899,12 +1968,14 @@ class ServerApp(JupyterApp):
             scheme = "http+unix"
             netloc = urlencode_unix_socket_path(self.sock)
         else:
+            if not self.ip:
+                ip = "localhost"
             # Handle nonexplicit hostname.
-            if self.ip in ("", "0.0.0.0", "::"):
+            elif self.ip in ("0.0.0.0", "::"):
                 ip = "%s" % socket.gethostname()
             else:
-                ip = "[{}]".format(self.ip) if ":" in self.ip else self.ip
-            netloc = "{ip}:{port}".format(ip=ip, port=self.port)
+                ip = f"[{self.ip}]" if ":" in self.ip else self.ip
+            netloc = f"{ip}:{self.port}"
             if self.certfile:
                 scheme = "https"
             else:
@@ -1918,7 +1989,12 @@ class ServerApp(JupyterApp):
                 query = urllib.parse.urlencode({"token": token})
         # Build the URL Parts to dump.
         urlparts = urllib.parse.ParseResult(
-            scheme=scheme, netloc=netloc, path=path, params=None, query=query, fragment=None
+            scheme=scheme,
+            netloc=netloc,
+            path=path,
+            params=None,
+            query=query,
+            fragment=None,
         )
         return urlparts
 
@@ -1940,7 +2016,7 @@ class ServerApp(JupyterApp):
         parts = self._get_urlparts(include_token=True)
         # Update with custom pieces.
         if not self.sock:
-            parts = parts._replace(netloc="127.0.0.1:{port}".format(port=self.port))
+            parts = parts._replace(netloc=f"127.0.0.1:{self.port}")
         return parts.geturl()
 
     @property
@@ -1963,7 +2039,12 @@ class ServerApp(JupyterApp):
         try:
             from jupyter_server.terminal import initialize
 
-            initialize(self.web_app, self.root_dir, self.connection_url, self.terminado_settings)
+            initialize(
+                self.web_app,
+                self.root_dir,
+                self.connection_url,
+                self.terminado_settings,
+            )
             self.terminals_available = True
         except ImportError as e:
             self.log.warning(_i18n("Terminals not available (error was %s)"), e)
@@ -2060,11 +2141,7 @@ class ServerApp(JupyterApp):
         # This enables merging on keys, which we want for extension enabling.
         # Regular config loading only merges at the class level,
         # so each level clobbers the previous.
-        config_paths = jupyter_config_path()
-        if self.config_dir not in config_paths:
-            # add self.config_dir to the front, if set manually
-            config_paths.insert(0, self.config_dir)
-        manager = ExtensionConfigManager(read_config_path=config_paths)
+        manager = ExtensionConfigManager(read_config_path=self.config_file_paths)
         extensions = manager.get_jpserver_extensions()
 
         for modulename, enabled in sorted(extensions.items()):
@@ -2126,7 +2203,8 @@ class ServerApp(JupyterApp):
         self.log.debug("No activity for %d seconds.", seconds_since_active)
         if seconds_since_active > self.shutdown_no_activity_timeout:
             self.log.info(
-                "No kernels or terminals for %d seconds; shutting down.", seconds_since_active
+                "No kernels or terminals for %d seconds; shutting down.",
+                seconds_since_active,
             )
             self.stop()
 
@@ -2192,7 +2270,7 @@ class ServerApp(JupyterApp):
         try:
             sock = bind_unix_socket(self.sock, mode=int(self.sock_mode.encode(), 8))
             self.http_server.add_socket(sock)
-        except socket.error as e:
+        except OSError as e:
             if e.errno == errno.EADDRINUSE:
                 self.log.warning(_i18n("The socket %s is already in use.") % self.sock)
                 return False
@@ -2209,7 +2287,7 @@ class ServerApp(JupyterApp):
         for port in random_ports(self.port, self.port_retries + 1):
             try:
                 self.http_server.listen(port, self.ip)
-            except socket.error as e:
+            except OSError as e:
                 if e.errno == errno.EADDRINUSE:
                     if self.port_retries:
                         self.log.info(
@@ -2218,7 +2296,10 @@ class ServerApp(JupyterApp):
                     else:
                         self.log.info(_i18n("The port %i is already in use.") % port)
                     continue
-                elif e.errno in (errno.EACCES, getattr(errno, "WSAEACCES", errno.EACCES)):
+                elif e.errno in (
+                    errno.EACCES,
+                    getattr(errno, "WSAEACCES", errno.EACCES),
+                ):
                     self.log.warning(_i18n("Permission to listen on port %i denied.") % port)
                     continue
                 else:
@@ -2276,7 +2357,11 @@ class ServerApp(JupyterApp):
 
     @catch_config_error
     def initialize(
-        self, argv=None, find_extensions=True, new_httpserver=True, starter_extension=None
+        self,
+        argv=None,
+        find_extensions=True,
+        new_httpserver=True,
+        starter_extension=None,
     ):
         """Initialize the Server application class, configurables, web application, and http server.
 
@@ -2298,7 +2383,7 @@ class ServerApp(JupyterApp):
         self._init_asyncio_patch()
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
-        super(ServerApp, self).initialize(argv=argv)
+        super().initialize(argv=argv)
         if self._dispatching:
             return
         # Then, use extensions' config loading mechanism to
@@ -2437,9 +2522,9 @@ class ServerApp(JupyterApp):
         is configured, root_dir will be set to the parent
         directory of file_to_run.
         """
-        rootdir_abspath = pathlib.Path(self.root_dir).resolve()
+        rootdir_abspath = pathlib.Path(self.root_dir).absolute()
         file_rawpath = pathlib.Path(self.file_to_run)
-        combined_path = (rootdir_abspath / file_rawpath).resolve()
+        combined_path = (rootdir_abspath / file_rawpath).absolute()
         is_child = str(combined_path).startswith(str(rootdir_abspath))
 
         if is_child:
@@ -2558,11 +2643,13 @@ class ServerApp(JupyterApp):
 
         assembled_url, _ = self._prepare_browser_open()
 
-        b = lambda: browser.open(assembled_url, new=self.webbrowser_open_new)
-        threading.Thread(target=b).start()
+        def target():
+            browser.open(assembled_url, new=self.webbrowser_open_new)
+
+        threading.Thread(target=target).start()
 
     def start_app(self):
-        super(ServerApp, self).start()
+        super().start()
 
         if not self.allow_root:
             # check if we are running as root, and abort if it's not allowed
@@ -2702,7 +2789,7 @@ def list_running_servers(runtime_dir=None, log=None):
 
     for file_name in os.listdir(runtime_dir):
         if re.match("jpserver-(.+).json", file_name):
-            with io.open(os.path.join(runtime_dir, file_name), encoding="utf-8") as f:
+            with open(os.path.join(runtime_dir, file_name), encoding="utf-8") as f:
                 info = json.load(f)
 
             # Simple check whether that process is really still running

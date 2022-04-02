@@ -1,0 +1,119 @@
+name: Jupyter Server Tests
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  schedule:
+    - cron: "0 8 * * *"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.7", "3.10"]
+        include:
+          - os: windows-latest
+            python-version: "3.9"
+          - os: ubuntu-latest
+            python-version: "pypy-3.7"
+          - os: macos-latest
+            python-version: "3.8"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - name: Install the Python dependencies
+        run: |
+          pip install -e ".[test]" codecov
+      - name: Run the tests
+        if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
+        run: |
+          args="-vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered"
+          python -m pytest $args  --cov-fail-under 70 || python -m pytest $args --lf
+      - name: Run the tests on pypy and windows
+        if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(matrix.os, 'windows') }}
+        run: |
+          python -m pytest -vv || python -m pytest -vv --lf
+      - name: Coverage
+        run: |
+          codecov
+
+  test_docs_and_examples:
+    name: Test Docs and Examples
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - name: Install the Python dependencies for the examples
+        run: |
+          pip install -e ".[test]"
+          cd examples/simple && pip install -e .
+      - name: Run the tests for the examples
+        run: |
+          python -m pytest examples/simple
+      - name: Test the docs
+        run: |
+          cd docs
+          pip install -r doc-requirements.txt
+          make html SPHINXOPTS="-W"
+
+  test_minimum_versions:
+    name: Test Minimum Versions
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+        with:
+          python_version: "3.7"
+      - name: Install miniumum versions
+        uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
+      - name: Run the unit tests
+        run: |
+          pytest -vv -W default || pytest -vv -W default --lf
+
+  test_prereleases:
+    name: Test Prereleases
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - name: Install the Python dependencies
+        run: |
+          pip install --pre -e ".[test]"
+      - name: List installed packages
+        run: |
+          pip freeze
+          pip check
+      - name: Run the tests
+        run: |
+          pytest -vv || pytest -vv --lf
+
+  make_sdist:
+    name: Make SDist
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - uses: jupyterlab/maintainer-tools/.github/actions/make-sdist@v1
+
+  test_sdist:
+    runs-on: ubuntu-latest
+    needs: [make_sdist]
+    name: Install from SDist and Test
+    timeout-minutes: 20
+    steps:
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - uses: jupyterlab/maintainer-tools/.github/actions/test-sdist@v1

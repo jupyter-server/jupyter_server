@@ -3,24 +3,32 @@
 # Distributed under the terms of the Modified BSD License.
 import io
 import os
+import sys
 import zipfile
 
 from anyio.to_thread import run_sync
-from ipython_genutils import text
-from ipython_genutils.py3compat import cast_bytes
 from nbformat import from_dict
 from tornado import web
 from tornado.log import app_log
 
-from ..base.handlers import FilesRedirectHandler
-from ..base.handlers import JupyterHandler
-from ..base.handlers import path_regex
+from jupyter_server.auth import authorized
 from jupyter_server.utils import ensure_async
+
+from ..base.handlers import FilesRedirectHandler, JupyterHandler, path_regex
+
+AUTH_RESOURCE = "nbconvert"
+
+# datetime.strftime date format for jupyter
+# inlined from ipython_genutils
+if sys.platform == "win32":
+    date_format = "%B %d, %Y"
+else:
+    date_format = "%B %-d, %Y"
 
 
 def find_resource_files(output_files_dir):
     files = []
-    for dirpath, dirnames, filenames in os.walk(output_files_dir):
+    for dirpath, _, filenames in os.walk(output_files_dir):
         files.extend([os.path.join(dirpath, f) for f in filenames])
     return files
 
@@ -46,7 +54,7 @@ def respond_zip(handler, name, output, resources):
     buffer = io.BytesIO()
     zipf = zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED)
     output_filename = os.path.splitext(name)[0] + resources["output_extension"]
-    zipf.writestr(output_filename, cast_bytes(output, "utf-8"))
+    zipf.writestr(output_filename, output.encode("utf-8"))
     for filename, data in output_files.items():
         zipf.writestr(os.path.basename(filename), data)
     zipf.close()
@@ -67,7 +75,7 @@ def get_exporter(format, **kwargs):
         Exporter = get_exporter(format)
     except KeyError as e:
         # should this be 400?
-        raise web.HTTPError(404, u"No exporter for format: %s" % format) from e
+        raise web.HTTPError(404, "No exporter for format: %s" % format) from e
 
     try:
         return Exporter(**kwargs)
@@ -78,9 +86,11 @@ def get_exporter(format, **kwargs):
 
 class NbconvertFileHandler(JupyterHandler):
 
+    auth_resource = AUTH_RESOURCE
     SUPPORTED_METHODS = ("GET",)
 
     @web.authenticated
+    @authorized
     async def get(self, format, path):
         self.check_xsrf_cookie()
         exporter = get_exporter(format, config=self.config, log=self.log)
@@ -105,7 +115,7 @@ class NbconvertFileHandler(JupyterHandler):
         self.set_header("Last-Modified", model["last_modified"])
 
         # create resources dictionary
-        mod_date = model["last_modified"].strftime(text.date_format)
+        mod_date = model["last_modified"].strftime(date_format)
         nb_title = os.path.splitext(name)[0]
 
         resource_dict = {
@@ -144,8 +154,10 @@ class NbconvertFileHandler(JupyterHandler):
 class NbconvertPostHandler(JupyterHandler):
 
     SUPPORTED_METHODS = ("POST",)
+    auth_resource = AUTH_RESOURCE
 
     @web.authenticated
+    @authorized
     async def post(self, format):
         exporter = get_exporter(format, config=self.config)
 
@@ -185,5 +197,5 @@ _format_regex = r"(?P<format>\w+)"
 
 default_handlers = [
     (r"/nbconvert/%s" % _format_regex, NbconvertPostHandler),
-    (r"/nbconvert/%s%s" % (_format_regex, path_regex), NbconvertFileHandler),
+    (rf"/nbconvert/{_format_regex}{path_regex}", NbconvertFileHandler),
 ]

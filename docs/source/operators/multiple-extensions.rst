@@ -4,7 +4,11 @@
 Managing multiple extensions
 ----------------------------
 
-One of the major benefits of Jupyter Server is that you can run serve multiple Jupyter frontend applications above the same Tornado web server. That's because every Jupyter frontend application is now a server extension. When you run a Jupyter Server will multiple extensions enabled, each extension appends its own set of handlers and static assets to the server.
+One of the major benefits of Jupyter Server is that you can run serve multiple
+Jupyter frontend applications above the same Tornado web server.
+That's because every Jupyter frontend application is now a server extension.
+When you run a Jupyter Server will multiple extensions enabled, each extension
+appends its own set of handlers and static assets to the server.
 
 Listing extensions
 ~~~~~~~~~~~~~~~~~~
@@ -86,4 +90,4 @@ Extensions can also be enabled manually from the Jupyter Server entrypoint using
 
 .. code-block:: console
 
-    > jupyter server --ServerApp.jpserver_extensions='{"myextension":{"enabled": True}}'
+    > jupyter server --ServerApp.jpserver_extensions="myextension=True"

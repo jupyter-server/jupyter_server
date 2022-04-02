@@ -22,7 +22,6 @@ from jupyter_server.services.contents.filemanager import FileContentsManager
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
 from jupyter_server.utils import url_path_join
 
-
 # List of dependencies needed for this plugin.
 pytest_plugins = [
     "pytest_tornasync",
@@ -109,7 +108,7 @@ def jp_environ(
     jp_env_jupyter_path,
     jp_env_config_path,
 ):
-    """Configures a temporary environment based on Jupyter-specific environment variables. """
+    """Configures a temporary environment based on Jupyter-specific environment variables."""
     monkeypatch.setenv("HOME", str(jp_home_dir))
     monkeypatch.setenv("PYTHONPATH", os.pathsep.join(sys.path))
     # monkeypatch.setenv("JUPYTER_NO_CONFIG", "1")
@@ -127,7 +126,7 @@ def jp_environ(
 
 @pytest.fixture
 def jp_server_config():
-    """Allows tests to setup their specific configuration values. """
+    """Allows tests to setup their specific configuration values."""
     return {}
 
 
@@ -145,7 +144,7 @@ def jp_template_dir(tmp_path):
 
 @pytest.fixture
 def jp_argv():
-    """Allows tests to setup specific argv values. """
+    """Allows tests to setup specific argv values."""
     return []
 
 
@@ -157,7 +156,7 @@ def jp_extension_environ(jp_env_config_path, monkeypatch):
 
 @pytest.fixture
 def jp_http_port(http_server_port):
-    """Returns the port value from the http_server_port fixture. """
+    """Returns the port value from the http_server_port fixture."""
     return http_server_port[-1]
 
 
@@ -234,7 +233,7 @@ def jp_configurable_serverapp(
         http_port=jp_http_port,
         tmp_path=tmp_path,
         root_dir=jp_root_dir,
-        **kwargs
+        **kwargs,
     ):
         c = Config(config)
         c.NotebookNotary.db_file = ":memory:"
@@ -250,7 +249,7 @@ def jp_configurable_serverapp(
             config=c,
             allow_root=True,
             token=token,
-            **kwargs
+            **kwargs,
         )
 
         app.init_signal = lambda: None
@@ -315,7 +314,7 @@ def jp_web_app(jp_serverapp):
 @pytest.fixture
 def jp_auth_header(jp_serverapp):
     """Configures an authorization header using the token from the serverapp fixture."""
-    return {"Authorization": "token {token}".format(token=jp_serverapp.token)}
+    return {"Authorization": f"token {jp_serverapp.token}"}
 
 
 @pytest.fixture
@@ -394,7 +393,7 @@ def jp_ws_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_http_port, 
         # Handle URL strings
         path_url = url_escape(url_path_join(*parts), plus=False)
         base_path_url = url_path_join(jp_base_url, path_url)
-        urlparts = urllib.parse.urlparse("ws://localhost:{}".format(jp_http_port))
+        urlparts = urllib.parse.urlparse(f"ws://localhost:{jp_http_port}")
         urlparts = urlparts._replace(path=base_path_url, query=urllib.parse.urlencode(params))
         url = urlparts.geturl()
         # Add auth keys to header
@@ -406,7 +405,7 @@ def jp_ws_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_http_port, 
     return client_fetch
 
 
-some_resource = u"The very model of a modern major general"
+some_resource = "The very model of a modern major general"
 sample_kernel_json = {
     "argv": ["cat", "{connection_file}"],
     "display_name": "Test kernel",
@@ -416,7 +415,7 @@ sample_kernel_json = {
 @pytest.fixture
 def jp_kernelspecs(jp_data_dir):
     """Configures some sample kernelspecs in the Jupyter data directory."""
-    spec_names = ["sample", "sample 2", "bad"]
+    spec_names = ["sample", "sample2", "bad"]
     for name in spec_names:
         sample_kernel_dir = jp_data_dir.joinpath("kernels", name)
         sample_kernel_dir.mkdir(parents=True)
@@ -476,6 +475,20 @@ def jp_cleanup_subprocesses(jp_serverapp):
     async def _():
         terminal_cleanup = jp_serverapp.web_app.settings["terminal_manager"].terminate_all
         kernel_cleanup = jp_serverapp.kernel_manager.shutdown_all
+
+        async def kernel_cleanup_steps():
+            # Try a graceful shutdown with a timeout
+            try:
+                await asyncio.wait_for(kernel_cleanup(), timeout=15.0)
+            except asyncio.TimeoutError:
+                # Now force a shutdown
+                try:
+                    await asyncio.wait_for(kernel_cleanup(now=True), timeout=15.0)
+                except asyncio.TimeoutError:
+                    print(Exception("Kernel never shutdown!"))
+            except Exception as e:
+                print(e)
+
         if asyncio.iscoroutinefunction(terminal_cleanup):
             try:
                 await terminal_cleanup()
@@ -487,10 +500,7 @@ def jp_cleanup_subprocesses(jp_serverapp):
             except Exception as e:
                 print(e)
         if asyncio.iscoroutinefunction(kernel_cleanup):
-            try:
-                await kernel_cleanup()
-            except Exception as e:
-                print(e)
+            await kernel_cleanup_steps()
         else:
             try:
                 kernel_cleanup()

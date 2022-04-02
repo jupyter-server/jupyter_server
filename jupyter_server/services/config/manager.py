@@ -4,17 +4,11 @@
 # Distributed under the terms of the Modified BSD License.
 import os.path
 
-from jupyter_core.paths import jupyter_config_dir
-from jupyter_core.paths import jupyter_config_path
-from traitlets import default
-from traitlets import Instance
-from traitlets import List
-from traitlets import observe
-from traitlets import Unicode
+from jupyter_core.paths import jupyter_config_dir, jupyter_config_path
+from traitlets import Instance, List, Unicode, default, observe
 from traitlets.config import LoggingConfigurable
 
-from jupyter_server.config_manager import BaseJSONConfigManager
-from jupyter_server.config_manager import recursive_update
+from jupyter_server.config_manager import BaseJSONConfigManager, recursive_update
 
 
 class ConfigManager(LoggingConfigurable):

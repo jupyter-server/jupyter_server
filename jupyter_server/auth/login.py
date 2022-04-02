@@ -9,8 +9,7 @@ from urllib.parse import urlparse
 from tornado.escape import url_escape
 
 from ..base.handlers import JupyterHandler
-from .security import passwd_check
-from .security import set_password
+from .security import passwd_check, set_password
 
 
 class LoginHandler(JupyterHandler):
@@ -48,7 +47,7 @@ class LoginHandler(JupyterHandler):
             # OR pass our cross-origin check
             if parsed.netloc:
                 # if full URL, run our cross-origin check:
-                origin = "%s://%s" % (parsed.scheme, parsed.netloc)
+                origin = f"{parsed.scheme}://{parsed.netloc}"
                 origin = origin.lower()
                 if self.allow_origin:
                     allow = self.allow_origin == origin
@@ -75,8 +74,8 @@ class LoginHandler(JupyterHandler):
         return passwd_check(a, b)
 
     def post(self):
-        typed_password = self.get_argument("password", default=u"")
-        new_password = self.get_argument("new_password", default=u"")
+        typed_password = self.get_argument("password", default="")
+        new_password = self.get_argument("new_password", default="")
 
         if self.get_login_available(self.settings):
             if self.passwd_check(self.hashed_password, typed_password) and not new_password:
@@ -210,7 +209,8 @@ class LoginHandler(JupyterHandler):
         if user_token == token:
             # token-authenticated, set the login cookie
             handler.log.debug(
-                "Accepting token-authenticated connection from %s", handler.request.remote_ip
+                "Accepting token-authenticated connection from %s",
+                handler.request.remote_ip,
             )
             authenticated = True
 
@@ -228,10 +228,10 @@ class LoginHandler(JupyterHandler):
         if not app.ip:
             warning = "WARNING: The Jupyter server is listening on all IP addresses"
             if ssl_options is None:
-                app.log.warning(warning + " and not using encryption. This " "is not recommended.")
+                app.log.warning(f"{warning} and not using encryption. This is not recommended.")
             if not app.password and not app.token:
                 app.log.warning(
-                    warning + " and not using authentication. "
+                    f"{warning} and not using authentication. "
                     "This is highly insecure and not recommended."
                 )
         else:
@@ -247,7 +247,7 @@ class LoginHandler(JupyterHandler):
 
         If there is no configured password, an empty string will be returned.
         """
-        return settings.get("password", u"")
+        return settings.get("password", "")
 
     @classmethod
     def get_login_available(cls, settings):

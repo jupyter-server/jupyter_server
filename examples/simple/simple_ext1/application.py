@@ -2,14 +2,16 @@ import os
 
 from traitlets import Unicode
 
-from .handlers import DefaultHandler
-from .handlers import ErrorHandler
-from .handlers import ParameterHandler
-from .handlers import RedirectHandler
-from .handlers import TemplateHandler
-from .handlers import TypescriptHandler
-from jupyter_server.extension.application import ExtensionApp
-from jupyter_server.extension.application import ExtensionAppJinjaMixin
+from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
+
+from .handlers import (
+    DefaultHandler,
+    ErrorHandler,
+    ParameterHandler,
+    RedirectHandler,
+    TemplateHandler,
+    TypescriptHandler,
+)
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "static")
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates")
@@ -41,17 +43,17 @@ class SimpleApp1(ExtensionAppJinjaMixin, ExtensionApp):
     def initialize_handlers(self):
         self.handlers.extend(
             [
-                (r"/{}/default".format(self.name), DefaultHandler),
-                (r"/{}/params/(.+)$".format(self.name), ParameterHandler),
-                (r"/{}/template1/(.*)$".format(self.name), TemplateHandler),
-                (r"/{}/redirect".format(self.name), RedirectHandler),
-                (r"/{}/typescript/?".format(self.name), TypescriptHandler),
-                (r"/{}/(.*)", ErrorHandler),
+                (rf"/{self.name}/default", DefaultHandler),
+                (rf"/{self.name}/params/(.+)$", ParameterHandler),
+                (rf"/{self.name}/template1/(.*)$", TemplateHandler),
+                (rf"/{self.name}/redirect", RedirectHandler),
+                (rf"/{self.name}/typescript/?", TypescriptHandler),
+                (rf"/{self.name}/(.*)", ErrorHandler),
             ]
         )
 
     def initialize_settings(self):
-        self.log.info("Config {}".format(self.config))
+        self.log.info(f"Config {self.config}")
 
 
 # -----------------------------------------------------------------------------
