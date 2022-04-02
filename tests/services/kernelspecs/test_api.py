@@ -50,12 +50,6 @@ async def test_get_kernelspecs(jp_fetch, jp_kernelspecs):
     assert isinstance(model["resources"], dict)
 
 
-async def test_get_kernelspec_spaces(jp_fetch, jp_kernelspecs):
-    r = await jp_fetch("api", "kernelspecs", "sample%202", method="GET")
-    model = json.loads(r.body.decode())
-    assert model["name"].lower() == "sample 2"
-
-
 async def test_get_nonexistant_kernelspec(jp_fetch, jp_kernelspecs):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch("api", "kernelspecs", "nonexistant", method="GET")

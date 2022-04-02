@@ -33,8 +33,8 @@ jobs:
       - name: Run the tests
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
         run: |
-          args="-vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --cov-fail-under 70"
-          python -m pytest $args || python -m pytest $args --lf
+          args="-vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered"
+          python -m pytest $args  --cov-fail-under 70 || python -m pytest $args --lf
       - name: Run the tests on pypy and windows
         if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(matrix.os, 'windows') }}
         run: |
@@ -78,7 +78,7 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
       - name: Run the unit tests
         run: |
-          pytest -vv || pytest -vv --lf
+          pytest -vv -W default || pytest -vv -W default --lf
 
   test_prereleases:
     name: Test Prereleases

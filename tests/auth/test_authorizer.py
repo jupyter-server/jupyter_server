@@ -205,6 +205,7 @@ async def test_authorized_requests(
     send_request,
     tmp_path,
     jp_serverapp,
+    jp_cleanup_subprocesses,
     method,
     url,
     body,
@@ -274,3 +275,5 @@ async def test_authorized_requests(
 
     code = await send_request(url, body=body, method=method)
     assert code in expected_codes
+
+    await jp_cleanup_subprocesses()

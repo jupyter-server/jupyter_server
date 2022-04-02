@@ -16,6 +16,14 @@ testpaths = [
 timeout = 300
 # Restore this setting to debug failures
 # timeout_method = "thread"
+filterwarnings = [
+  "error",
+  "ignore:There is no current event loop:DeprecationWarning",
+  "ignore:Passing a schema to Validator.iter_errors:DeprecationWarning",
+  "ignore:unclosed <socket.socket:ResourceWarning",
+  "ignore:unclosed event loop:ResourceWarning",
+  "ignore:run_pre_save_hook is deprecated:DeprecationWarning"
+]
 
 [tool.jupyter-releaser]
 skip = ["check-links"]
