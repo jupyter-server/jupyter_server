@@ -140,9 +140,11 @@ def test_stop_extension(jp_serverapp, caplog):
     calls = 0
 
     # load extensions (make sure we only have the one extension loaded
+    # as well as
     jp_serverapp.extension_manager.load_all_extensions()
     extension_name = "tests.extension.mockextensions"
-    assert list(jp_serverapp.extension_manager.extension_apps) == [extension_name]
+    apps = set(jp_serverapp.extension_manager.extension_apps)
+    assert apps == {"jupyter_server_terminals", extension_name}
 
     # add a stop_extension method for the extension app
     async def _stop(*args):
@@ -157,11 +159,13 @@ def test_stop_extension(jp_serverapp, caplog):
     # call cleanup_extensions, check the logging is correct
     caplog.clear()
     run_sync(jp_serverapp.cleanup_extensions())
-    assert [msg for *_, msg in caplog.record_tuples] == [
-        "Shutting down 1 extension",
+    assert {msg for *_, msg in caplog.record_tuples} == {
+        "Shutting down 2 extensions",
+        'jupyter_server_terminals | extension app "jupyter_server_terminals" stopping',
         f'{extension_name} | extension app "mockextension" stopping',
+        'jupyter_server_terminals | extension app "jupyter_server_terminals" stopped',
         f'{extension_name} | extension app "mockextension" stopped',
-    ]
+    }
 
-    # check the shutdown method was called once
-    assert calls == 1
+    # check the shutdown method was called twice
+    assert calls == 2
