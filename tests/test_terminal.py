@@ -41,7 +41,8 @@ def jp_server_config():
                 "TerminalManager": {
                     "cull_inactive_timeout": CULL_TIMEOUT,
                     "cull_interval": CULL_INTERVAL,
-                }
+                },
+                "jpserver_extensions": {"jupyter_server_terminals": True},
             }
         }
     )
