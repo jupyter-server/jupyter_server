@@ -127,7 +127,11 @@ def jp_environ(
 @pytest.fixture
 def jp_server_config():
     """Allows tests to setup their specific configuration values."""
-    return {}
+    return Config(
+        {
+            "jpserver_extensions": {"jupyter_server_terminals": True},
+        }
+    )
 
 
 @pytest.fixture
