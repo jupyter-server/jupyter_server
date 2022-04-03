@@ -477,7 +477,12 @@ def jp_cleanup_subprocesses(jp_serverapp):
     """Clean up subprocesses started by a Jupyter Server, i.e. kernels and terminal."""
 
     async def _():
-        terminal_cleanup = jp_serverapp.web_app.settings["terminal_manager"].terminate_all
+        term_manager = jp_serverapp.web_app.settings.get("terminal_manager")
+        if term_manager:
+            terminal_cleanup = term_manager.terminate_all
+        else:
+            terminal_cleanup = lambda: None  # noqa
+
         kernel_cleanup = jp_serverapp.kernel_manager.shutdown_all
 
         async def kernel_cleanup_steps():
@@ -500,7 +505,7 @@ def jp_cleanup_subprocesses(jp_serverapp):
                 print(e)
         else:
             try:
-                await terminal_cleanup()
+                terminal_cleanup()
             except Exception as e:
                 print(e)
         if asyncio.iscoroutinefunction(kernel_cleanup):
