@@ -231,7 +231,7 @@ def jp_configurable_serverapp(
 
     # Inject jupyter_server_terminals into config unless it was
     # explicitly put in config.
-    exts = jp_server_config.setdefault("jp_server_extensions", {})
+    exts = jp_server_config.setdefault("jpserver_extensions", {})
     if "jupyter_server_terminals" not in exts:
         exts["jupyter_server_terminals"] = True
 
