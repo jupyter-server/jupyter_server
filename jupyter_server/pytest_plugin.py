@@ -229,6 +229,12 @@ def jp_configurable_serverapp(
     """
     ServerApp.clear_instance()
 
+    # Inject jupyter_server_terminals into config unless it was
+    # explicitly put in config.
+    exts = jp_server_config.setdefault("jp_server_extensions", {})
+    if "jupyter_server_terminals" not in exts:
+        exts["jupyter_server_terminals"] = True
+
     def _configurable_serverapp(
         config=jp_server_config,
         base_url=jp_base_url,

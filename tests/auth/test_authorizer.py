@@ -59,12 +59,7 @@ class AuthorizerforTesting(Authorizer):
 
 @pytest.fixture
 def jp_server_config():
-    return {
-        "ServerApp": {
-            "authorizer_class": AuthorizerforTesting,
-            "jpserver_extensions": {"jupyter_server_terminals": True},
-        }
-    }
+    return {"ServerApp": {"authorizer_class": AuthorizerforTesting}}
 
 
 @pytest.fixture
