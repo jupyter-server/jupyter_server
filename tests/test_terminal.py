@@ -86,7 +86,7 @@ async def test_terminal_create(jp_fetch, jp_cleanup_subprocesses):
     data = json.loads(resp_list.body.decode())
 
     assert len(data) == 1
-    assert data[0] == term
+    assert data[0]["name"] == term["name"]
     await jp_cleanup_subprocesses()
 
 
