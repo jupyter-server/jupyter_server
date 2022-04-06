@@ -28,6 +28,9 @@ filterwarnings = [
 [tool.jupyter-releaser]
 skip = ["check-links"]
 
+[tool.jupyter-releaser.options]
+post-version-spec = "dev"
+
 [tool.tbump.version]
 current = "1.16.1.dev0"
 regex = '''
