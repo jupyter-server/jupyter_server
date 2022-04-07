@@ -28,8 +28,12 @@ class ExtensionHandlerMixin:
     other extensions.
     """
 
-    def initialize(self, name):
+    def initialize(self, name, *args, **kwargs):
         self.name = name
+        try:
+            super().initialize(*args, **kwargs)
+        except TypeError:
+            pass
 
     @property
     def extensionapp(self):
