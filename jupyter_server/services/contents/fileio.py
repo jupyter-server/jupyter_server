@@ -204,11 +204,12 @@ class FileManagerMixin(Configurable):
         Depending on flag 'use_atomic_writing', the wrapper perform an actual atomic writing or
         simply writes the file (whatever an old exists or not)"""
         with self.perm_to_403(os_path):
+            kwargs["log"] = self.log
             if self.use_atomic_writing:
-                with atomic_writing(os_path, *args, log=self.log, **kwargs) as f:
+                with atomic_writing(os_path, *args, **kwargs) as f:
                     yield f
             else:
-                with _simple_writing(os_path, *args, log=self.log, **kwargs) as f:
+                with _simple_writing(os_path, *args, **kwargs) as f:
                     yield f
 
     @contextmanager

@@ -18,7 +18,7 @@ class AuthorizerforTesting(Authorizer):
     # Set these class attributes from within a test
     # to verify that they match the arguments passed
     # by the REST API.
-    permissions = {}
+    permissions: dict = {}
 
     def normalize_url(self, path):
         """Drop the base URL and make sure path leads with a /"""

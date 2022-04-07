@@ -54,7 +54,7 @@ def validate_model(model, expect_content):
                 f"Keys unexpectedly None: {errors}",
             )
     else:
-        errors = {key: model[key] for key in maybe_none_keys if model[key] is not None}
+        errors = {key: model[key] for key in maybe_none_keys if model[key] is not None}  # type: ignore[assignment]
         if errors:
             raise web.HTTPError(
                 500,
@@ -102,10 +102,10 @@ class ContentsHandler(ContentsAPIHandler):
         format = self.get_query_argument("format", default=None)
         if format not in {None, "text", "base64"}:
             raise web.HTTPError(400, "Format %r is invalid" % format)
-        content = self.get_query_argument("content", default="1")
-        if content not in {"0", "1"}:
-            raise web.HTTPError(400, "Content %r is invalid" % content)
-        content = int(content)
+        content_str = self.get_query_argument("content", default="1")
+        if content_str not in {"0", "1"}:
+            raise web.HTTPError(400, "Content %r is invalid" % content_str)
+        content = int(content_str or "")
 
         model = await ensure_async(
             self.contents_manager.get(

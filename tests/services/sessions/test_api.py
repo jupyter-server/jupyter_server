@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import time
+from typing import Any
 
 import jupyter_client
 import pytest
@@ -29,7 +30,7 @@ class NewPortsKernelManager(AsyncIOLoopKernelManager):
     def _default_cache_ports(self) -> bool:
         return False
 
-    async def restart_kernel(self, now: bool = False, newports: bool = True, **kw) -> None:
+    async def restart_kernel(self, now: bool = False, newports: bool = True, **kw: Any) -> None:
         self.log.debug(f"DEBUG**** calling super().restart_kernel with newports={newports}")
         return await super().restart_kernel(now=now, newports=newports, **kw)
 
@@ -41,7 +42,7 @@ class NewPortsMappingKernelManager(AsyncMappingKernelManager):
         return "tests.services.sessions.test_api.NewPortsKernelManager"
 
 
-configs = [
+configs: list = [
     {
         "ServerApp": {
             "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager"
@@ -65,7 +66,7 @@ configs = [
 # See https://github.com/jupyter-server/jupyter_server/issues/672
 if os.name != "nt" and jupyter_client._version.version_info >= (7, 1):
     # Add a pending kernels condition
-    c = {
+    c: dict = {
         "ServerApp": {
             "kernel_manager_class": "tests.services.sessions.test_api.NewPortsMappingKernelManager"
         },

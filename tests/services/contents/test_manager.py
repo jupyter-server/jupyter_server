@@ -77,7 +77,7 @@ def add_invalid_cell(notebook):
 
 
 async def prepare_notebook(
-    jp_contents_manager, make_invalid: Optional[bool] = False
+    jp_contents_manager: FileContentsManager, make_invalid: Optional[bool] = False
 ) -> Tuple[Dict, str]:
     cm = jp_contents_manager
     model = await ensure_async(cm.new_untitled(type="notebook"))
@@ -756,7 +756,7 @@ async def test_validate_notebook_model(jp_contents_manager):
     with patch("jupyter_server.services.contents.manager.validate_nb") as mock_validate_nb:
         # Valid notebook and a non-None dictionary, no validate call expected
 
-        validation_error = {}
+        validation_error: dict = {}
         cm.validate_notebook_model(model, validation_error)
         assert mock_validate_nb.call_count == 0
         mock_validate_nb.reset_mock()

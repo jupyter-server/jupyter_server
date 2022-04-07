@@ -49,6 +49,7 @@ async def _login(jp_serverapp, http_server_client, jp_base_url, next):
     except HTTPClientError as e:
         if e.code != 302:
             raise
+        assert e.response is not None
         return e.response.headers["Location"]
     else:
         assert resp.code == 302, "Should have returned a redirect!"

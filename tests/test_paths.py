@@ -63,6 +63,7 @@ async def test_trailing_slash(
         )
     # Capture the response from the raised exception value.
     response = err.value.response
+    assert response is not None
     assert response.code == 302
     assert "Location" in response.headers
     assert response.headers["Location"] == url_path_join(jp_base_url, expected)

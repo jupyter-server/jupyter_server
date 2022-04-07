@@ -1,8 +1,8 @@
 import json
 
 import pytest
-import tornado
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
+from tornado.httpclient import HTTPClientError
 
 from ...utils import expected_http_error, some_resource
 
@@ -51,7 +51,7 @@ async def test_get_kernelspecs(jp_fetch, jp_kernelspecs):
 
 
 async def test_get_nonexistant_kernelspec(jp_fetch, jp_kernelspecs):
-    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+    with pytest.raises(HTTPClientError) as e:
         await jp_fetch("api", "kernelspecs", "nonexistant", method="GET")
     assert expected_http_error(e, 404)
 
@@ -63,10 +63,10 @@ async def test_get_kernel_resource_file(jp_fetch, jp_kernelspecs):
 
 
 async def test_get_nonexistant_resource(jp_fetch, jp_kernelspecs):
-    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+    with pytest.raises(HTTPClientError) as e:
         await jp_fetch("kernelspecs", "nonexistant", "resource.txt", method="GET")
     assert expected_http_error(e, 404)
 
-    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+    with pytest.raises(HTTPClientError) as e:
         await jp_fetch("kernelspecs", "sample", "nonexistant.txt", method="GET")
     assert expected_http_error(e, 404)

@@ -54,7 +54,7 @@ def contents_dir(tmp_path, jp_serverapp):
 @pytest.fixture
 def contents(contents_dir):
     # Create files in temporary directory
-    paths = {
+    paths: dict = {
         "notebooks": [],
         "textfiles": [],
         "blobs": [],

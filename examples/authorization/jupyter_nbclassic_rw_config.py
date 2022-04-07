@@ -11,4 +11,4 @@ class ReadWriteOnly(Authorizer):
         return True
 
 
-c.ServerApp.authorizer_class = ReadWriteOnly
+c.ServerApp.authorizer_class = ReadWriteOnly  # type:ignore[name-defined]
