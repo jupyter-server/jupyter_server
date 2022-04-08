@@ -125,16 +125,16 @@ def test_atomic_writing_newlines(tmp_path):
 
 
 async def test_watch_directory(tmp_path):
-    stop_event = asyncio.Event()
+    file_path = tmp_path / "file.txt"
 
     async def change_dir():
+        # let the watcher start
         await asyncio.sleep(0.1)
-        (tmp_path / "file.txt").write_text("foo")
-        await asyncio.sleep(0.1)
-        stop_event.set()
+        # add file to directory
+        file_path.write_text("foo")
 
     asyncio.create_task(change_dir())
-
-    changes = [change async for change in awatch(tmp_path, stop_event=stop_event)]
-
-    assert changes == [{(Change.added, str(tmp_path / "file.txt"))}]
+    stop_event = asyncio.Event()
+    async for change in awatch(tmp_path, stop_event=stop_event):
+        assert change == {(Change.added, str(file_path))}
+        stop_event.set()
