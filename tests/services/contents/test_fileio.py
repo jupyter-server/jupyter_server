@@ -1,10 +1,11 @@
+import asyncio
 import os
 import stat
 import sys
 
 import pytest
 
-from jupyter_server.services.contents.fileio import atomic_writing
+from jupyter_server.services.contents.fileio import Change, atomic_writing, awatch
 
 umask = 0
 
@@ -121,3 +122,33 @@ def test_atomic_writing_newlines(tmp_path):
     with open(path, newline="") as f:
         read = f.read()
     assert read == text
+
+
+async def test_watch_directory(tmp_path):
+    stop_event = asyncio.Event()
+
+    async def stop_soon():
+        await asyncio.sleep(0.4)
+        stop_event.set()
+
+    async def change_dir():
+        await asyncio.sleep(0.1)
+        (tmp_path / "file0").write_text("test0")
+        await asyncio.sleep(0.1)
+        (tmp_path / "file0").write_text("test1")
+        await asyncio.sleep(0.1)
+        (tmp_path / "file0").unlink()
+
+    tasks = [asyncio.create_task(stop_soon()), asyncio.create_task(change_dir())]
+
+    changes = []
+    async for change in awatch(tmp_path, stop_event=stop_event, step=1):
+        changes.append(change)
+
+    assert changes == [
+        {(Change.added, str(tmp_path / "file0"))},
+        {(Change.modified, str(tmp_path / "file0"))},
+        {(Change.deleted, str(tmp_path / "file0"))},
+    ]
+
+    await asyncio.gather(*tasks)

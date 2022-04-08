@@ -15,6 +15,7 @@ from anyio.to_thread import run_sync
 from tornado.web import HTTPError
 from traitlets import Bool
 from traitlets.config import Configurable
+from watchfiles import *  # noqa
 
 from jupyter_server.utils import to_api_path, to_os_path
 
