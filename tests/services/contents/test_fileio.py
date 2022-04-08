@@ -133,9 +133,10 @@ async def test_watch_directory(tmp_path):
 
     async def change_dir():
         await asyncio.sleep(0.1)
-        (tmp_path / "file0").write_text("test0")
+        (tmp_path / "file0").write_text("foo")
         await asyncio.sleep(0.1)
-        (tmp_path / "file0").write_text("test1")
+        with open(tmp_path / "file0", "a") as f:
+            f.write(" bar")
         await asyncio.sleep(0.1)
         (tmp_path / "file0").unlink()
 
