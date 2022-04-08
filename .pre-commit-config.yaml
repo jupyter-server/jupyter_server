@@ -62,6 +62,7 @@ repos:
     rev: v8.12.0
     hooks:
       - id: eslint
+        stages: [manual]
 
   - repo: https://github.com/sirosen/check-jsonschema
     rev: 0.14.2
