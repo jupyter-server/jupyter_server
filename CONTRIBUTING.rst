@@ -59,13 +59,16 @@ You can invoke the pre-commit hook by hand at any time with::
 
 which should run any autoformatting on your code
 and tell you about any errors it couldn't fix automatically.
-You may also install [black integration](https://github.com/psf/black#editor-integration)
+You may also install `black integration <https://github.com/psf/black#editor-integration>`_
 into your text editor to format code automatically.
 
 If you have already committed files before setting up the pre-commit
 hook with ``pre-commit install``, you can fix everything up using
 ``pre-commit run --all-files``. You need to make the fixing commit
 yourself after that.
+
+Some of the hooks only run on CI by default, but you can invoke them by
+running with the ``--hook-stage manual`` argument.
 
 Troubleshooting the Installation
 --------------------------------
