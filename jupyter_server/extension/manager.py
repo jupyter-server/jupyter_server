@@ -394,3 +394,9 @@ class ExtensionManager(LoggingConfigurable):
                 for name, apps in sorted(dict(self.extension_apps).items())
             ]
         )
+
+    def any_activity(self):
+        """Check for any activity currently happening across all extension applications."""
+        for _, app in sorted(dict(self.extension_apps).items()):
+            if app.current_activity():
+                return True

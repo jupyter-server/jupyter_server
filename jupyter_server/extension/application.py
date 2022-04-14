@@ -429,6 +429,10 @@ class ExtensionApp(JupyterApp):
         # Start the server.
         self.serverapp.start()
 
+    def current_activity(self):
+        """Return a list of activity happening in this extension."""
+        return
+
     async def stop_extension(self):
         """Cleanup any resources managed by this extension."""
 

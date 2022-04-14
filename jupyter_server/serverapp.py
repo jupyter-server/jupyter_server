@@ -134,14 +134,6 @@ from jupyter_server.utils import (
     urlencode_unix_socket_path,
 )
 
-# Tolerate missing terminado package.
-try:
-    from jupyter_server.terminal import TerminalManager
-
-    terminado_available = True
-except ImportError:
-    terminado_available = False
-
 # -----------------------------------------------------------------------------
 # Module globals
 # -----------------------------------------------------------------------------
@@ -292,7 +284,7 @@ class ServerWebApplication(web.Application):
         env.install_gettext_translations(nbui, newstyle=False)
 
         if sys_info["commit_source"] == "repository":
-            # don't cache (rely on 304) when working from default branch
+            # don't cache (rely on 304) when working from master
             version_hash = ""
         else:
             # reset the cache on server restart
@@ -361,7 +353,6 @@ class ServerWebApplication(web.Application):
             allow_password_change=jupyter_app.allow_password_change,
             server_root_dir=root_dir,
             jinja2_env=env,
-            terminals_available=terminado_available and jupyter_app.terminals_enabled,
             serverapp=jupyter_app,
         )
 
@@ -454,14 +445,12 @@ class ServerWebApplication(web.Application):
             self.settings["started"],
             self.settings["kernel_manager"].last_kernel_activity,
         ]
-        try:
-            sources.append(self.settings["api_last_activity"])
-        except KeyError:
-            pass
-        try:
-            sources.append(self.settings["terminal_last_activity"])
-        except KeyError:
-            pass
+        # Any setting that ends with a key that ends with `_last_activity` is
+        # counted here. This provides a hook for extensions to add a last activity
+        # setting to the server.
+        sources.extend(
+            [key for key, val in self.settings.items() if key.endswith("_last_activity")]
+        )
         sources.extend(self.settings["last_activity_times"].values())
         return max(sources)
 
@@ -744,8 +733,6 @@ class ServerApp(JupyterApp):
         GatewayClient,
         Authorizer,
     ]
-    if terminado_available:  # Only necessary when terminado is available
-        classes.append(TerminalManager)
 
     subcommands = dict(
         list=(JupyterServerListApp, JupyterServerListApp.description.splitlines()[0]),
@@ -1713,8 +1700,8 @@ class ServerApp(JupyterApp):
         0,
         config=True,
         help=(
-            "Shut down the server after N seconds with no kernels or "
-            "terminals running and no activity. "
+            "Shut down the server after N seconds with no kernels"
+            "running and no activity. "
             "This can be used together with culling idle kernels "
             "(MappingKernelManager.cull_idle_timeout) to "
             "shutdown the Jupyter server when it's not in use. This is not "
@@ -1724,7 +1711,6 @@ class ServerApp(JupyterApp):
     )
 
     terminals_enabled = Bool(
-        True,
         config=True,
         help=_i18n(
             """Set to False to disable terminals.
@@ -1738,14 +1724,10 @@ class ServerApp(JupyterApp):
         ),
     )
 
-    # Since use of terminals is also a function of whether the terminado package is
-    # available, this variable holds the "final indication" of whether terminal functionality
-    # should be considered (particularly during shutdown/cleanup).  It is enabled only
-    # once both the terminals "service" can be initialized and terminals_enabled is True.
-    # Note: this variable is slightly different from 'terminals_available' in the web settings
-    # in that this variable *could* remain false if terminado is available, yet the terminal
-    # service's initialization still fails.  As a result, this variable holds the truth.
-    terminals_available = False
+    @default("terminals_enabled")
+    def _default_terminals_enabled(self):
+
+        return True
 
     authenticate_prometheus = Bool(
         True,
@@ -2032,23 +2014,6 @@ class ServerApp(JupyterApp):
         urlparts = self._get_urlparts(path=self.base_url)
         return urlparts.geturl()
 
-    def init_terminals(self):
-        if not self.terminals_enabled:
-            return
-
-        try:
-            from jupyter_server.terminal import initialize
-
-            initialize(
-                self.web_app,
-                self.root_dir,
-                self.connection_url,
-                self.terminado_settings,
-            )
-            self.terminals_available = True
-        except ImportError as e:
-            self.log.warning(_i18n("Terminals not available (error was %s)"), e)
-
     def init_signal(self):
         if not sys.platform.startswith("win") and sys.stdin and sys.stdin.isatty():
             signal.signal(signal.SIGINT, self._handle_sigint)
@@ -2194,16 +2159,14 @@ class ServerApp(JupyterApp):
         if len(km) != 0:
             return  # Kernels still running
 
-        if self.terminals_available:
-            term_mgr = self.web_app.settings["terminal_manager"]
-            if term_mgr.terminals:
-                return  # Terminals still running
+        if self.extension_manager.any_activity:
+            return
 
         seconds_since_active = (utcnow() - self.web_app.last_activity()).total_seconds()
         self.log.debug("No activity for %d seconds.", seconds_since_active)
         if seconds_since_active > self.shutdown_no_activity_timeout:
             self.log.info(
-                "No kernels or terminals for %d seconds; shutting down.",
+                "No kernels for %d seconds; shutting down.",
                 seconds_since_active,
             )
             self.stop()
@@ -2211,7 +2174,7 @@ class ServerApp(JupyterApp):
     def init_shutdown_no_activity(self):
         if self.shutdown_no_activity_timeout > 0:
             self.log.info(
-                "Will shut down after %d seconds with no kernels or terminals.",
+                "Will shut down after %d seconds with no kernels.",
                 self.shutdown_no_activity_timeout,
             )
             pc = ioloop.PeriodicCallback(self.shutdown_no_activity, 60000)
@@ -2409,7 +2372,6 @@ class ServerApp(JupyterApp):
         self.init_configurables()
         self.init_components()
         self.init_webapp()
-        self.init_terminals()
         self.init_signal()
         self.init_ioloop()
         self.load_server_extensions()
@@ -2430,23 +2392,6 @@ class ServerApp(JupyterApp):
         )
         self.log.info(kernel_msg % n_kernels)
         await run_sync_in_loop(self.kernel_manager.shutdown_all())
-
-    async def cleanup_terminals(self):
-        """Shutdown all terminals.
-
-        The terminals will shutdown themselves when this process no longer exists,
-        but explicit shutdown allows the TerminalManager to cleanup.
-        """
-        if not self.terminals_available:
-            return
-
-        terminal_manager = self.web_app.settings["terminal_manager"]
-        n_terminals = len(terminal_manager.list())
-        terminal_msg = trans.ngettext(
-            "Shutting down %d terminal", "Shutting down %d terminals", n_terminals
-        )
-        self.log.info(terminal_msg % n_terminals)
-        await run_sync_in_loop(terminal_manager.terminate_all())
 
     async def cleanup_extensions(self):
         """Call shutdown hooks in all extensions."""
@@ -2728,7 +2673,6 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
-        await self.cleanup_terminals()
 
     def start_ioloop(self):
         """Start the IO Loop."""
