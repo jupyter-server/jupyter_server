@@ -1,9 +1,6 @@
-ci:
-  skip: [check-jsonschema]
-
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.2.0
     hooks:
       - id: end-of-file-fixer
       - id: check-case-conflict
@@ -32,22 +29,23 @@ repos:
         args: [--profile=black]
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.6.1
+    rev: v2.6.2
     hooks:
       - id: prettier
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.31.1
+    rev: v2.32.0
     hooks:
       - id: pyupgrade
         args: [--py37-plus]
 
   - repo: https://github.com/PyCQA/doc8
-    rev: 0.11.0
+    rev: 0.11.1
     hooks:
       - id: doc8
         args: [--max-line-length=200]
         exclude: docs/source/other/full-config.rst
+        stages: [manual]
 
   - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
@@ -59,17 +57,20 @@ repos:
             "flake8-logging-format==0.6.0",
             "flake8-implicit-str-concat==0.2.0",
           ]
+        stages: [manual]
 
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.12.0
+    rev: v8.13.0
     hooks:
       - id: eslint
+        stages: [manual]
 
   - repo: https://github.com/sirosen/check-jsonschema
-    rev: 0.14.1
+    rev: 0.14.2
     hooks:
       - id: check-jsonschema
         name: "Check GitHub Workflows"
         files: ^\.github/workflows/
         types: [yaml]
         args: ["--schemafile", "https://json.schemastore.org/github-workflow"]
+        stages: [manual]

@@ -72,7 +72,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
                 kwargs["cwd"] = self.cwd_for_path(path)
 
         km = self.kernel_manager_factory(parent=self, log=self.log)
-        await km.start_kernel(**kwargs)
+        await km.start_kernel(kernel_id=kernel_id, **kwargs)
         kernel_id = km.kernel_id
         self._kernels[kernel_id] = km
 
@@ -368,6 +368,7 @@ class GatewayKernelManager(AsyncKernelManager):
             self.log.debug("Request kernel at: %s" % self.kernel_url)
             try:
                 response = await gateway_request(self.kernel_url, method="GET")
+
             except web.HTTPError as error:
                 if error.status_code == 404:
                     self.log.warning("Kernel not found at: %s" % self.kernel_url)
@@ -434,13 +435,13 @@ class GatewayKernelManager(AsyncKernelManager):
             response = await gateway_request(self.kernels_url, method="POST", body=json_body)
             self.kernel = json_decode(response.body)
             self.kernel_id = self.kernel["id"]
+            self.kernel_url = url_path_join(self.kernels_url, url_escape(str(self.kernel_id)))
             self.log.info(f"GatewayKernelManager started kernel: {self.kernel_id}, args: {kwargs}")
         else:
             self.kernel_id = kernel_id
+            self.kernel_url = url_path_join(self.kernels_url, url_escape(str(self.kernel_id)))
             self.kernel = await self.refresh_model()
             self.log.info(f"GatewayKernelManager using existing kernel: {self.kernel_id}")
-
-        self.kernel_url = url_path_join(self.kernels_url, url_escape(str(self.kernel_id)))
 
     async def shutdown_kernel(self, now=False, restart=False):
         """Attempts to stop the kernel process cleanly via HTTP."""
