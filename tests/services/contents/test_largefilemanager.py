@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 import tornado
 
@@ -110,3 +112,29 @@ async def test_save_in_subdirectory(jp_large_contents_manager, tmp_path):
     assert "path" in model
     assert model["name"] == "Untitled.ipynb"
     assert model["path"] == "foo/Untitled.ipynb"
+
+
+async def test_watch_directory(tmp_path):
+    cm = AsyncLargeFileManager(root_dir=str(tmp_path))
+    file_path = tmp_path / "file.txt"
+    stop_event = asyncio.Event()
+
+    async def change_dir():
+        # let the watcher start
+        await asyncio.sleep(0.1)
+        # add file to directory
+        file_path.write_text("foo")
+
+    async def timeout():
+        await asyncio.sleep(10)
+        stop_event.set()
+
+    asyncio.create_task(change_dir())
+    asyncio.create_task(timeout())
+    test_ok = False
+    async for change in cm.watchfiles.awatch(tmp_path, stop_event=stop_event):
+        if (cm.watchfiles.Change.added, str(file_path)) in change:
+            test_ok = True
+            break
+
+    assert test_ok

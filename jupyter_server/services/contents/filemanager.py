@@ -35,6 +35,8 @@ _script_exporter = None
 
 class FileContentsManager(FileManagerMixin, ContentsManager):
 
+    import watchfiles
+
     root_dir = Unicode(config=True)
 
     @default("root_dir")
@@ -546,6 +548,9 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
 
 class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, AsyncContentsManager):
+
+    import watchfiles
+
     @default("checkpoints_class")
     def _checkpoints_class_default(self):
         return AsyncFileCheckpoints
