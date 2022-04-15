@@ -5,6 +5,7 @@ import itertools
 import json
 import re
 import warnings
+from enum import IntEnum
 from fnmatch import fnmatch
 
 from nbformat import ValidationError, sign
@@ -34,11 +35,19 @@ from .checkpoints import AsyncCheckpoints, Checkpoints
 copy_pat = re.compile(r"\-Copy\d*\.")
 
 
-class NoWatchfilesAPI:
-    pass
+class BaseWatchfiles:
+    """File system change notifyer API
 
+    Override these attributes in subclasses if the file system supports file change notifications.
+    """
 
-NOWATCHFILESAPI = NoWatchfilesAPI()
+    def watch(*paths, **kwargs):
+        raise NotImplementedError
+
+    async def awatch(*paths, **kwargs):
+        raise NotImplementedError
+
+    Change = IntEnum
 
 
 class ContentsManager(LoggingConfigurable):
@@ -416,19 +425,7 @@ class ContentsManager(LoggingConfigurable):
     # ContentsManager API part 2: methods that have useable default
     # implementations, but can be overridden in subclasses.
 
-    @property
-    def watchfiles(self):
-        """File system change notifyer
-
-        Override this method in subclasses if the file system supports change notifications.
-
-        Returns
-        -------
-        api : class
-            The supported API for file system change notifications. Loosely follows the API of the
-            watchfiles Python package (can be a subset of it).
-        """
-        return NOWATCHFILESAPI
+    watchfiles = BaseWatchfiles
 
     def delete(self, path):
         """Delete a file/directory and any associated checkpoints."""

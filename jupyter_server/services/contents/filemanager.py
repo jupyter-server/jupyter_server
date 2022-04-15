@@ -10,6 +10,7 @@ import sys
 from datetime import datetime
 
 import nbformat
+import watchfiles
 from anyio.to_thread import run_sync
 from jupyter_core.paths import exists, is_file_hidden, is_hidden
 from send2trash import send2trash
@@ -22,7 +23,7 @@ from jupyter_server.transutils import _i18n
 
 from .filecheckpoints import AsyncFileCheckpoints, FileCheckpoints
 from .fileio import AsyncFileManagerMixin, FileManagerMixin
-from .manager import AsyncContentsManager, ContentsManager
+from .manager import AsyncContentsManager, BaseWatchfiles, ContentsManager
 
 try:
     from os.path import samefile
@@ -33,9 +34,15 @@ except ImportError:
 _script_exporter = None
 
 
+class Watchfiles(BaseWatchfiles):
+    watch = watchfiles.watch
+    awatch = watchfiles.awatch
+    Change = watchfiles.Change
+
+
 class FileContentsManager(FileManagerMixin, ContentsManager):
 
-    import watchfiles
+    watchfiles = Watchfiles
 
     root_dir = Unicode(config=True)
 
@@ -549,7 +556,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
 class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, AsyncContentsManager):
 
-    import watchfiles
+    watchfiles = Watchfiles
 
     @default("checkpoints_class")
     def _checkpoints_class_default(self):
