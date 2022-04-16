@@ -8,6 +8,7 @@ import shutil
 import sys
 import urllib.parse
 from binascii import hexlify
+from concurrent.futures import wait
 
 import jupyter_core.paths
 import nbformat
@@ -279,7 +280,11 @@ def jp_configurable_serverapp(
         app.start_app()
         return app
 
-    return _configurable_serverapp
+    yield _configurable_serverapp
+    app: ServerApp = ServerApp.instance()
+    loop = asyncio.get_event_loop_policy().get_event_loop()
+    loop.run_until_complete(app._stop())
+    ServerApp.clear_instance()
 
 
 @pytest.fixture
@@ -310,10 +315,7 @@ def jp_ensure_app_fixture(request):
 @pytest.fixture(scope="function")
 def jp_serverapp(jp_ensure_app_fixture, jp_server_config, jp_argv, jp_configurable_serverapp):
     """Starts a Jupyter Server instance based on the established configuration values."""
-    app = jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
-    yield app
-    app.remove_server_info_file()
-    app.remove_browser_open_files()
+    return jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
 
 
 @pytest.fixture
@@ -473,54 +475,11 @@ def jp_create_notebook(jp_root_dir):
     return inner
 
 
-@pytest.fixture(autouse=True)
-def jp_server_cleanup():
-    yield
-    ServerApp.clear_instance()
-
-
 @pytest.fixture
 def jp_cleanup_subprocesses(jp_serverapp):
     """Clean up subprocesses started by a Jupyter Server, i.e. kernels and terminal."""
 
     async def _():
-        term_manager = jp_serverapp.web_app.settings.get("terminal_manager")
-        if term_manager:
-            terminal_cleanup = term_manager.terminate_all
-        else:
-            terminal_cleanup = lambda: None  # noqa
-
-        kernel_cleanup = jp_serverapp.kernel_manager.shutdown_all
-
-        async def kernel_cleanup_steps():
-            # Try a graceful shutdown with a timeout
-            try:
-                await asyncio.wait_for(kernel_cleanup(), timeout=15.0)
-            except asyncio.TimeoutError:
-                # Now force a shutdown
-                try:
-                    await asyncio.wait_for(kernel_cleanup(now=True), timeout=15.0)
-                except asyncio.TimeoutError:
-                    print(Exception("Kernel never shutdown!"))
-            except Exception as e:
-                print(e)
-
-        if asyncio.iscoroutinefunction(terminal_cleanup):
-            try:
-                await terminal_cleanup()
-            except Exception as e:
-                print(e)
-        else:
-            try:
-                terminal_cleanup()
-            except Exception as e:
-                print(e)
-        if asyncio.iscoroutinefunction(kernel_cleanup):
-            await kernel_cleanup_steps()
-        else:
-            try:
-                kernel_cleanup()
-            except Exception as e:
-                print(e)
+        pass
 
     return _
