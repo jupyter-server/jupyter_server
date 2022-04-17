@@ -245,8 +245,8 @@ class MappingKernelManager(MultiKernelManager):
         if hasattr(km, "ready"):
             try:
                 await km.ready
-            except Exception:
-                self.log.exception(km.ready.exception())
+            except Exception as e:
+                self.log.exception(e)
                 return
 
         self._kernel_ports[kernel_id] = km.ports

@@ -284,7 +284,6 @@ def jp_configurable_serverapp(
     app: ServerApp = ServerApp.instance()
     loop = asyncio.get_event_loop_policy().get_event_loop()
     loop.run_until_complete(app._stop())
-    ServerApp.clear_instance()
 
 
 @pytest.fixture
@@ -473,6 +472,12 @@ def jp_create_notebook(jp_root_dir):
         nbpath.write_text(nbtext)
 
     return inner
+
+
+@pytest.fixture(autouse=True)
+def jp_server_cleanup():
+    yield
+    ServerApp.clear_instance()
 
 
 @pytest.fixture
