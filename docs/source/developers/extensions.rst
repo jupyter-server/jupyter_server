@@ -5,7 +5,7 @@ Server Extensions
 A Jupyter Server extension is typically a module or package that extends to Server’s REST API/endpoints—i.e. adds extra request handlers to Server’s Tornado Web Application.
 
 You can check some simple examples on the `examples folder
-<https://github.com/jupyter/jupyter_server/tree/main/examples/simple>`_ in the GitHub jupyter_server repository.
+<https://github.com/jupyter/jupyter_server/tree/1.x/examples/simple>`_ in the GitHub jupyter_server repository.
 
 Authoring a basic server extension
 ==================================

@@ -1,9 +1,9 @@
 name: Jupyter Server Integration Tests [Linux]
 on:
   push:
-    branches: ["main"]
+    branches: ["1.x"]
   pull_request:
-    branches: ["*"]
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}

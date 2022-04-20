@@ -1,7 +1,7 @@
 name: Jupyter Server Tests
 on:
   push:
-    branches: ["main"]
+    branches: ["1.x"]
   pull_request:
   schedule:
     - cron: "0 8 * * *"
