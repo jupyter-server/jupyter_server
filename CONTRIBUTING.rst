@@ -104,12 +104,11 @@ Building the Docs
 To build the documentation you'll need `Sphinx <http://www.sphinx-doc.org/en/master/>`_,
 `pandoc <https://pandoc.org/>`_ and a few other packages.
 
-To install (and activate) a `conda environment`_ named ``server_docs``
+To install (and activate) a `conda environment`_ named ``jupyter_server_docs``
 containing all the necessary packages (except pandoc), use::
 
     conda env create -f docs/environment.yml
-    source activate server_docs  # Linux and OS X
-    activate server_docs         # Windows
+    conda activate jupyter_server_docs
 
 .. _conda environment:
     https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file

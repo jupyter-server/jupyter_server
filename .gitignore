@@ -35,6 +35,9 @@ config.rst
 # copied changelog file
 docs/source/other/changelog.md
 
+# full config is generated on demand
+docs/source/other/full-config.rst
+
 # jetbrains ide stuff
 *.iml
 .idea/
