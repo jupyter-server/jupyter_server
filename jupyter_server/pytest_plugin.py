@@ -472,11 +472,11 @@ def jp_create_notebook(jp_root_dir):
 
 
 @pytest.fixture(autouse=True)
-def jp_server_cleanup():
+def jp_server_cleanup(io_loop):
     yield
     app: ServerApp = ServerApp.instance()
-    loop = asyncio.get_event_loop_policy().get_event_loop()
-    loop.run_until_complete(app._stop())
+    loop = io_loop.asyncio_loop
+    loop.run_until_complete(app._cleanup())
     ServerApp.clear_instance()
 
 
