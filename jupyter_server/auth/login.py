@@ -152,7 +152,7 @@ class LoginHandler(JupyterHandler):
         """
         if getattr(handler, "_user_id", None) is None:
             # ensure get_user has been called, so we know if we're token-authenticated
-            handler.get_current_user()
+            handler.current_user
         return getattr(handler, "_token_authenticated", False)
 
     @classmethod

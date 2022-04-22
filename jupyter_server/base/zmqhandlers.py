@@ -313,7 +313,7 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
         the websocket finishes completing.
         """
         # authenticate the request before opening the websocket
-        user = self.get_current_user()
+        user = self.current_user
         if user is None:
             self.log.warning("Couldn't authenticate WebSocket connection")
             raise web.HTTPError(403)

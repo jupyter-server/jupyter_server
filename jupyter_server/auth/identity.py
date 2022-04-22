@@ -95,6 +95,8 @@ class IdentityProvider(LoggingConfigurable):
     """
     Interface for providing identity
 
+    _may_ be a coroutine.
+
     Two principle methods:
 
     - :meth:`~.IdentityProvider.get_user` returns a :class:`~.User` object

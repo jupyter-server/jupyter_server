@@ -3,6 +3,7 @@
 # Distributed under the terms of the Modified BSD License.
 import datetime
 import functools
+import inspect
 import ipaddress
 import json
 import mimetypes
@@ -134,7 +135,21 @@ class AuthenticatedHandler(web.RequestHandler):
             self.force_clear_cookie(self.cookie_name)
 
     def get_current_user(self):
-        return self.identity_provider.get_user(self)
+        clsname = self.__class__.__name__
+        msg = (
+            f"Calling `{clsname}.get_current_user()` directly is deprecated in jupyter-server 2.0."
+            " Use `self.current_user` instead (works in all versions)."
+        )
+        if hasattr(self, "_jupyter_current_user"):
+            # backward-compat: return _jupyter_current_user
+            warnings.warn(
+                msg,
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return self._jupyter_current_user
+        # haven't called get_user in prepare, raise
+        raise RuntimeError(msg)
 
     def skip_check_origin(self):
         """Ask my login_handler if I should skip the origin_check
@@ -164,7 +179,7 @@ class AuthenticatedHandler(web.RequestHandler):
     @property
     def logged_in(self):
         """Is a user currently logged in?"""
-        user = self.get_current_user()
+        user = self.current_user
         return user and not user == "anonymous"
 
     @property
@@ -346,6 +361,13 @@ class JupyterHandler(AuthenticatedHandler):
     def set_default_headers(self):
         """Add CORS headers, if defined"""
         super().set_default_headers()
+
+    def set_cors_headers(self):
+        """Add CORS headers, if defined
+
+        Now that current_user is async (jupyter-server 2.0),
+        must be called at the end of prepare(), instead of in set_default_headers.
+        """
         if self.allow_origin:
             self.set_header("Access-Control-Allow-Origin", self.allow_origin)
         elif self.allow_origin_pat:
@@ -484,6 +506,9 @@ class JupyterHandler(AuthenticatedHandler):
 
     def check_xsrf_cookie(self):
         """Bypass xsrf cookie checks when token-authenticated"""
+        if not hasattr(self, "_jupyter_current_user"):
+            # Called too early, will be checked later
+            return
         if self.token_authenticated or self.settings.get("disable_check_xsrf", False):
             # Token-authenticated requests do not need additional XSRF-check
             # Servers without authentication are vulnerable to XSRF
@@ -543,9 +568,40 @@ class JupyterHandler(AuthenticatedHandler):
             )
         return allow
 
-    def prepare(self):
+    async def prepare(self):
         if not self.check_host():
             raise web.HTTPError(403)
+
+        from jupyter_server.auth import IdentityProvider
+
+        if (
+            type(self.identity_provider) is IdentityProvider
+            and inspect.getmodule(self.get_current_user).__name__ != __name__
+        ):
+            # check for overridden get_current_user + default IdentityProvider
+            # deprecated way to override auth (e.g. JupyterHub < 3.0)
+            # allow deprecated, overridden get_current_user
+            warnings.warn(
+                "Overriding JupyterHandler.get_current_user is deprecated in jupyter-server 2.0."
+                " Use an IdentityProvider class.",
+                DeprecationWarning,
+                # stacklevel not useful here
+            )
+            user = self.get_current_user()
+        else:
+            user = self.identity_provider.get_user(self)
+            if inspect.isawaitable(user):
+                # IdentityProvider.get_user _may_ be async
+                user = await user
+
+        # self.current_user for tornado's @web.authenticated
+        # self._jupyter_current_user for backward-compat in deprecated get_current_user calls
+        # and our own private checks for whether .current_user has been set
+        self.current_user = self._jupyter_current_user = user
+        # complete initial steps which require auth to resolve first:
+        self.set_cors_headers()
+        if self.request.method not in {"GET", "HEAD", "OPTIONS"}:
+            self.check_xsrf_cookie()
         return super().prepare()
 
     # ---------------------------------------------------------------
@@ -638,10 +694,10 @@ class JupyterHandler(AuthenticatedHandler):
 class APIHandler(JupyterHandler):
     """Base class for API handlers"""
 
-    def prepare(self):
+    async def prepare(self):
+        await super().prepare()
         if not self.check_origin():
             raise web.HTTPError(404)
-        return super().prepare()
 
     def write_error(self, status_code, **kwargs):
         """APIHandler errors are JSON, not human pages"""
@@ -662,14 +718,6 @@ class APIHandler(JupyterHandler):
                 reply["traceback"] = "".join(traceback.format_exception(*exc_info))
         self.log.warning(reply["message"])
         self.finish(json.dumps(reply))
-
-    def get_current_user(self):
-        """Raise 403 on API handlers instead of redirecting to human login page"""
-        # preserve _user_cache so we don't raise more than once
-        if hasattr(self, "_user_cache"):
-            return self._user_cache
-        self._user_cache = user = super().get_current_user()
-        return user
 
     def get_login_url(self):
         # if get_login_url is invoked in an API handler,
