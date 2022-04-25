@@ -346,7 +346,9 @@ def fetch(urlstring, method="GET", body=None, headers=None):
     Send a HTTP, HTTPS, or HTTP+UNIX request
     to a Tornado Web Server. Returns a tornado HTTPResponse.
     """
-    with _request_for_tornado_client(urlstring) as request:
+    with _request_for_tornado_client(
+        urlstring, method=method, body=body, headers=headers
+    ) as request:
         response = HTTPClient(AsyncHTTPClient).fetch(request)
     return response
 
@@ -356,7 +358,9 @@ async def async_fetch(urlstring, method="GET", body=None, headers=None, io_loop=
     Send an asynchronous HTTP, HTTPS, or HTTP+UNIX request
     to a Tornado Web Server. Returns a tornado HTTPResponse.
     """
-    with _request_for_tornado_client(urlstring) as request:
+    with _request_for_tornado_client(
+        urlstring, method=method, body=body, headers=headers
+    ) as request:
         response = await AsyncHTTPClient(io_loop).fetch(request)
     return response
 
