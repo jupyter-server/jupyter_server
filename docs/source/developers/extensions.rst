@@ -1,3 +1,5 @@
+.. _extensions:
+
 =================
 Server Extensions
 =================

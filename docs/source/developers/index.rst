@@ -8,6 +8,7 @@ These pages target people writing Jupyter Web applications and server extensions
    :maxdepth: 1
    :name: developers
 
+   architecture
    dependency
    rest-api
    extensions
