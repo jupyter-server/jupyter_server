@@ -1605,7 +1605,9 @@ class ServerApp(JupyterApp):
         # preferred_dir must be equal or a subdir of root_dir
         if not value.startswith(self.root_dir):
             raise TraitError(
-                trans.gettext("preferred_dir '%r' must be equal or a subdir of root_dir: '%r'")
+                trans.gettext(
+                    "preferred_dir must be equal or a subdir of root_dir. preferred_dir: '%r' root_dir: '%r'"
+                )
                 % (value, self.root_dir)
             )
 
