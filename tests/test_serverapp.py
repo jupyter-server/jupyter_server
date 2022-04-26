@@ -309,7 +309,7 @@ def test_invalid_preferred_dir_not_root_subdir(tmp_path, jp_configurable_servera
     with pytest.raises(TraitError) as error:
         app = jp_configurable_serverapp(root_dir=path, preferred_dir=not_subdir_path)
 
-    assert "preferred_dir must be equal or a subdir of root_dir:" in str(error)
+    assert "preferred_dir must be equal or a subdir of root_dir. " in str(error)
 
 
 def test_invalid_preferred_dir_not_root_subdir_set(tmp_path, jp_configurable_serverapp):
@@ -321,7 +321,7 @@ def test_invalid_preferred_dir_not_root_subdir_set(tmp_path, jp_configurable_ser
     with pytest.raises(TraitError) as error:
         app.preferred_dir = not_subdir_path
 
-    assert "preferred_dir must be equal or a subdir of root_dir:" in str(error)
+    assert "preferred_dir must be equal or a subdir of root_dir. " in str(error)
 
 
 def test_observed_root_dir_updates_preferred_dir(tmp_path, jp_configurable_serverapp):
