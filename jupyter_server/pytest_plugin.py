@@ -8,7 +8,6 @@ import shutil
 import sys
 import urllib.parse
 from binascii import hexlify
-from concurrent.futures import wait
 
 import jupyter_core.paths
 import nbformat
