@@ -493,7 +493,7 @@ def shutdown_server(server_info, timeout=5, log=None):
     if log:
         log.debug("POST request to %sapi/shutdown", url)
 
-    fetch(url, method="POST", headers={"Authorization": "token " + server_info["token"]})
+    fetch(url, method="POST", body=b"", headers={"Authorization": "token " + server_info["token"]})
     # Poll to see if it shut down.
     for _ in range(timeout * 10):
         if not check_pid(pid):
