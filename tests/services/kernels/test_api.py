@@ -67,7 +67,7 @@ async def test_no_kernels(jp_fetch):
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_default_kernels(jp_fetch, jp_base_url, jp_cleanup_subprocesses):
+async def test_default_kernels(jp_fetch, jp_base_url):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
     assert r.headers["location"] == url_path_join(jp_base_url, "/api/kernels/", kernel["id"])
@@ -79,13 +79,10 @@ async def test_default_kernels(jp_fetch, jp_base_url, jp_cleanup_subprocesses):
         ["frame-ancestors 'self'", "report-uri " + report_uri, "default-src 'none'"]
     )
     assert r.headers["Content-Security-Policy"] == expected_csp
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_main_kernel_handler(
-    jp_fetch, jp_base_url, jp_cleanup_subprocesses, jp_serverapp, pending_kernel_is_ready
-):
+async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_kernel_is_ready):
     # Start the first kernel
     r = await jp_fetch(
         "api", "kernels", method="POST", body=json.dumps({"name": NATIVE_KERNEL_NAME})
@@ -158,11 +155,10 @@ async def test_main_kernel_handler(
     )
     kernel3 = json.loads(r.body.decode())
     assert isinstance(kernel3, dict)
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_kernel_handler(jp_fetch, jp_cleanup_subprocesses, pending_kernel_is_ready):
+async def test_kernel_handler(jp_fetch, pending_kernel_is_ready):
     # Create a kernel
     r = await jp_fetch(
         "api", "kernels", method="POST", body=json.dumps({"name": NATIVE_KERNEL_NAME})
@@ -206,13 +202,10 @@ async def test_kernel_handler(jp_fetch, jp_cleanup_subprocesses, pending_kernel_
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch("api", "kernels", bad_id, method="DELETE")
     assert expected_http_error(e, 404, "Kernel does not exist: " + bad_id)
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_kernel_handler_startup_error(
-    jp_fetch, jp_cleanup_subprocesses, jp_serverapp, jp_kernelspecs
-):
+async def test_kernel_handler_startup_error(jp_fetch, jp_serverapp, jp_kernelspecs):
     if getattr(jp_serverapp.kernel_manager, "use_pending_kernels", False):
         return
 
@@ -223,7 +216,7 @@ async def test_kernel_handler_startup_error(
 
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_kernel_handler_startup_error_pending(
-    jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, jp_serverapp, jp_kernelspecs
+    jp_fetch, jp_ws_fetch, jp_serverapp, jp_kernelspecs
 ):
     if not getattr(jp_serverapp.kernel_manager, "use_pending_kernels", False):
         return
@@ -238,9 +231,7 @@ async def test_kernel_handler_startup_error_pending(
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_connection(
-    jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header, jp_cleanup_subprocesses
-):
+async def test_connection(jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header):
     # Create kernel
     r = await jp_fetch(
         "api", "kernels", method="POST", body=json.dumps({"name": NATIVE_KERNEL_NAME})
@@ -274,4 +265,3 @@ async def test_connection(
     r = await jp_fetch("api", "kernels", kid, method="GET")
     model = json.loads(r.body.decode())
     assert model["connections"] == 0
-    await jp_cleanup_subprocesses()

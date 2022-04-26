@@ -482,7 +482,7 @@ def jp_server_cleanup(io_loop):
 
 @pytest.fixture
 def jp_cleanup_subprocesses(jp_serverapp):
-    """Clean up subprocesses started by a Jupyter Server, i.e. kernels and terminal."""
+    """DEPRECATED: The jp_server_cleanup fixture automatically cleans up the singleton ServerApp class"""
 
     async def _():
         pass

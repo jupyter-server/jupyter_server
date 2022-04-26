@@ -211,7 +211,7 @@ def assert_session_equality(actual, expected):
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_create(session_client, jp_base_url, jp_cleanup_subprocesses, jp_serverapp):
+async def test_create(session_client, jp_base_url, jp_serverapp):
     # Make sure no sessions exist.
     resp = await session_client.list()
     sessions = j(resp)
@@ -251,14 +251,9 @@ async def test_create(session_client, jp_base_url, jp_cleanup_subprocesses, jp_s
     got = j(resp)
     assert_session_equality(got, new_session)
 
-    # Need to find a better solution to this.
-    await jp_cleanup_subprocesses()
-
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_create_bad(
-    session_client, jp_base_url, jp_cleanup_subprocesses, jp_serverapp, jp_kernelspecs
-):
+async def test_create_bad(session_client, jp_base_url, jp_serverapp, jp_kernelspecs):
     if getattr(jp_serverapp.kernel_manager, "use_pending_kernels", False):
         return
 
@@ -272,16 +267,12 @@ async def test_create_bad(
     with pytest.raises(HTTPClientError):
         await session_client.create("foo/nb1.ipynb")
 
-    # Need to find a better solution to this.
-    await jp_cleanup_subprocesses()
-
 
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_create_bad_pending(
     session_client,
     jp_base_url,
     jp_ws_fetch,
-    jp_cleanup_subprocesses,
     jp_serverapp,
     jp_kernelspecs,
 ):
@@ -310,14 +301,9 @@ async def test_create_bad_pending(
     if os.name != "nt":
         assert "non_existent_path" in session["kernel"]["reason"]
 
-    # Need to find a better solution to this.
-    await jp_cleanup_subprocesses()
-
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_create_file_session(
-    session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
-):
+async def test_create_file_session(session_client, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.py", type="file")
     assert resp.code == 201
     newsession = j(resp)
@@ -325,41 +311,31 @@ async def test_create_file_session(
     assert newsession["type"] == "file"
     sid = newsession["id"]
     await session_is_ready(sid)
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_create_console_session(
-    session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
-):
+async def test_create_console_session(session_client, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/abc123", type="console")
     assert resp.code == 201
     newsession = j(resp)
     assert newsession["path"] == "foo/abc123"
     assert newsession["type"] == "console"
-    # Need to find a better solution to this.
     sid = newsession["id"]
     await session_is_ready(sid)
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_create_deprecated(session_client, jp_cleanup_subprocesses, jp_serverapp):
+async def test_create_deprecated(session_client, jp_serverapp):
     resp = await session_client.create_deprecated("foo/nb1.ipynb")
     assert resp.code == 201
     newsession = j(resp)
     assert newsession["path"] == "foo/nb1.ipynb"
     assert newsession["type"] == "notebook"
     assert newsession["notebook"]["path"] == "foo/nb1.ipynb"
-    # Need to find a better solution to this.
-    sid = newsession["id"]
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_create_with_kernel_id(
-    session_client, jp_fetch, jp_base_url, jp_cleanup_subprocesses, jp_serverapp
-):
+async def test_create_with_kernel_id(session_client, jp_fetch, jp_base_url, jp_serverapp):
     # create a new kernel
     resp = await jp_fetch("api/kernels", method="POST", allow_nonstandard_methods=True)
     kernel = j(resp)
@@ -384,14 +360,10 @@ async def test_create_with_kernel_id(
     resp = await session_client.get(sid)
     got = j(resp)
     assert_session_equality(got, new_session)
-    # Need to find a better solution to this.
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_create_with_bad_kernel_id(
-    session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
-):
+async def test_create_with_bad_kernel_id(session_client, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.py", type="file")
     assert resp.code == 201
     newsession = j(resp)
@@ -401,11 +373,10 @@ async def test_create_with_bad_kernel_id(
     # TODO
     assert newsession["path"] == "foo/nb1.py"
     assert newsession["type"] == "file"
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_delete(session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready):
+async def test_delete(session_client, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.ipynb")
 
     newsession = j(resp)
@@ -422,12 +393,10 @@ async def test_delete(session_client, jp_cleanup_subprocesses, jp_serverapp, ses
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await session_client.get(sid)
     assert expected_http_error(e, 404)
-    # Need to find a better solution to this.
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_modify_path(session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready):
+async def test_modify_path(session_client, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.ipynb")
     newsession = j(resp)
     sid = newsession["id"]
@@ -437,14 +406,10 @@ async def test_modify_path(session_client, jp_cleanup_subprocesses, jp_serverapp
     changed = j(resp)
     assert changed["id"] == sid
     assert changed["path"] == "nb2.ipynb"
-    # Need to find a better solution to this.
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_modify_path_deprecated(
-    session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
-):
+async def test_modify_path_deprecated(session_client, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.ipynb")
     newsession = j(resp)
     sid = newsession["id"]
@@ -454,12 +419,10 @@ async def test_modify_path_deprecated(
     changed = j(resp)
     assert changed["id"] == sid
     assert changed["notebook"]["path"] == "nb2.ipynb"
-    # Need to find a better solution to this.
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_modify_type(session_client, jp_cleanup_subprocesses, jp_serverapp, session_is_ready):
+async def test_modify_type(session_client, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.ipynb")
     newsession = j(resp)
     sid = newsession["id"]
@@ -469,14 +432,10 @@ async def test_modify_type(session_client, jp_cleanup_subprocesses, jp_serverapp
     changed = j(resp)
     assert changed["id"] == sid
     assert changed["type"] == "console"
-    # Need to find a better solution to this.
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_modify_kernel_name(
-    session_client, jp_fetch, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
-):
+async def test_modify_kernel_name(session_client, jp_fetch, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.ipynb")
     before = j(resp)
     sid = before["id"]
@@ -497,14 +456,9 @@ async def test_modify_kernel_name(
     if not getattr(jp_serverapp.kernel_manager, "use_pending_kernels", False):
         assert kernel_list == [after["kernel"]]
 
-    # Need to find a better solution to this.
-    await jp_cleanup_subprocesses()
-
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_modify_kernel_id(
-    session_client, jp_fetch, jp_cleanup_subprocesses, jp_serverapp, session_is_ready
-):
+async def test_modify_kernel_id(session_client, jp_fetch, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.ipynb")
     before = j(resp)
     sid = before["id"]
@@ -532,14 +486,9 @@ async def test_modify_kernel_id(
     if not getattr(jp_serverapp.kernel_manager, "use_pending_kernels", False):
         assert kernel_list == [kernel]
 
-    # Need to find a better solution to this.
-    await jp_cleanup_subprocesses()
-
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_restart_kernel(
-    session_client, jp_base_url, jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses, session_is_ready
-):
+async def test_restart_kernel(session_client, jp_base_url, jp_fetch, jp_ws_fetch, session_is_ready):
     # Create a session.
     resp = await session_client.create("foo/nb1.ipynb")
     assert resp.code == 201
@@ -596,6 +545,3 @@ async def test_restart_kernel(
     r = await jp_fetch("api", "kernels", kid, method="GET")
     model = json.loads(r.body.decode())
     assert model["connections"] == 1
-
-    # Need to find a better solution to this.
-    await jp_cleanup_subprocesses()
