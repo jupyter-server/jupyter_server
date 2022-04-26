@@ -71,3 +71,95 @@ Jupyter Server contains the following components:
   - **Kernel Spec Manager** parses files with JSON specification for a Kernels,
     and provides a list of available Kernel configurations. To learn about
     Kernel Spec, check `the Jupyter Client guide <https://jupyter-client.readthedocs.io/en/stable/kernels.html#kernel-specs>`_.
+
+Create Session Workflow
+-----------------------
+
+The create Session workflow can be seen in figure below:
+
+.. image:: ../images/session-create.drawio.png
+   :alt: Create Session Workflow
+   :width: 90%
+   :align: center
+
+When a user starts a new Kernel, the following steps process:
+
+#. The Notebook client sends |create_session|_ request to Jupyter Server. This
+   request has all necessary data, such as Notebook name, type, path, and Kernel
+   name.
+
+#. **Session Manager** asks **Contents Manager** for the Kernel file system path
+   based on the input data.
+
+#. **Session Manager** sends Kernel path to **Mapping Kernel Manager**.
+
+#. **Mapping Kernel Manager** starts the Kernel create process by using
+   **Multi Kernel Manager** and **Kernel Manager**. You can learn more about
+   **Multi Kernel Manager** in
+   `the Jupyter Client APIs <https://jupyter-client.readthedocs.io/en/latest/api/manager.html#multikernelmanager-controlling-multiple-kernels>`_.
+
+#. **Kernel Manager** uses provisioner layer to launch a new Kernel.
+
+#. **Kernel Provisioner** is responsible for launching Kernels based on the
+   Kernel specification. If Kernel specification doesn't define provisioner,
+   it uses `Local Provisioner <https://jupyter-client.readthedocs.io/en/latest/api/provisioners.html#jupyter_client.provisioning.local_provisioner.LocalProvisioner>`_
+   to launch the Kernel. You can use
+   `Kernel Provisioner Base <https://jupyter-client.readthedocs.io/en/latest/api/provisioners.html#jupyter_client.provisioning.provisioner_base.KernelProvisionerBase>`_
+   and
+   `Kernel Provisioner Factory <https://jupyter-client.readthedocs.io/en/latest/api/provisioners.html#jupyter_client.provisioning.factory.KernelProvisionerFactory>`_
+   to create custom provisioners.
+
+#. **Kernel Spec Manager** gets the Kernel specification from the JSON file.
+   The specification is located in ``kernel.json`` file.
+
+#. Once **Kernel Provisioner** launches the Kernel,
+   **Kernel Manager** generates the new Kernel ID for **Session Manager**.
+
+#. **Session Manager** saves the new Session data to the SQLite3 DataBase
+   (Session ID, Notebook path, Notebook name, Notebook type, and Kernel ID).
+
+#. Notebook client receives the created Session data.
+
+.. _create_session: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/jupyter_server/master/jupyter_server/services/api/api.yaml#/sessions/post_api_sessions
+
+.. |create_session| replace:: the *POST /api/sessions*
+
+Delete Session Workflow
+-----------------------
+
+The delete Session workflow can be seen in figure below:
+
+.. image:: ../images/session-delete.drawio.png
+   :alt: Delete Session Workflow
+   :width: 80%
+   :align: center
+
+When a user stops a Kernel, the following steps process:
+
+#. The Notebook client sends |delete_session|_ request to Jupyter Server. This
+   request has the Session ID that Kernel is currently using.
+
+#. **Session Manager** gets the Session data from the SQLite3 DataBase and sends
+   the Kernel ID to **Mapping Kernel Manager**.
+
+#. **Mapping Kernel Manager** starts the Kernel shutdown process by using
+   **Multi Kernel Manager** and **Kernel Manager**.
+
+#. **Kernel Manager** receives interrupt mode from **Kernel Spec Manager**.
+   **Kernel Manager** supports ``Signal`` and ``Message`` interrupt modes.
+   By default, the ``Signal`` interrupt mode is being used.
+
+   - When interrupt mode is ``Signal``, **Kernel Provisioner** kills the Kernel
+     with ``SIGINT`` operating system signal.
+
+   - When interrupt mode is ``Message``, **Session** sends
+     the ``interrupt_request`` message on the control channel. Check the
+     `messaging in Jupyter guide <https://jupyter-client.readthedocs.io/en/latest/messaging.html#msging-interrupt>`_
+     to know more about it.
+
+#. When Kernel is shutdown, **Session Manager** deletes the Session data from
+   the SQLite3 DataBase and responses 204 Status Code to the Notebook client.
+
+.. _delete_session: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/jupyter_server/master/jupyter_server/services/api/api.yaml#/sessions/delete_api_sessions__session_
+
+.. |delete_session| replace:: the *DELETE /api/sessions/{session_id}*
