@@ -168,7 +168,7 @@ When a user stops a kernel, the following steps occur:
    operating system signal (or provisioner equivalent) to ensure the kernel's
    termination.
 
-#. **Kernel Manager** clean up the kernel resources. It removes kernel's interprocess
+#. **Kernel Manager** cleans up the kernel resources. It removes kernel's interprocess
    communication ports, closes control socket, and releases Shell, IOPub, StdIn,
    Control, and Heartbeat ports.
 
