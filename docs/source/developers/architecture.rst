@@ -54,7 +54,7 @@ Jupyter Server contains the following components:
   a new Session ID. Each opened Notebook has a separate Session, but different
   Notebook kernels can use the same Session. That is useful if the user wants to
   share data across various opened Notebooks. Session Manager uses SQLite3
-  DataBase to store the Session information. The database is stored in memory by
+  database to store the Session information. The database is stored in memory by
   default, but can be configured to save to disk.
 
 - **Mapping Kernel Manager** is responsible for managing the lifecycles of the
@@ -115,7 +115,7 @@ When a user starts a new kernel, the following steps occur:
 #. Once **Kernel Provisioner** launches the kernel,
    **Kernel Manager** generates the new kernel ID for **Session Manager**.
 
-#. **Session Manager** saves the new Session data to the SQLite3 DataBase
+#. **Session Manager** saves the new Session data to the SQLite3 database
    (Session ID, Notebook path, Notebook name, Notebook type, and kernel ID).
 
 #. Notebook client receives the created Session data.
@@ -139,15 +139,15 @@ When a user stops a kernel, the following steps occur:
 #. The Notebook client sends |delete_session|_ request to Jupyter Server. This
    request has the Session ID that kernel is currently using.
 
-#. **Session Manager** gets the Session data from the SQLite3 DataBase and sends
+#. **Session Manager** gets the Session data from the SQLite3 database and sends
    the kernel ID to **Mapping Kernel Manager**.
 
 #. **Mapping Kernel Manager** starts the kernel shutdown process by using
    **Multi Kernel Manager** and **Kernel Manager**.
 
-#. **Kernel Manager** receives interrupt mode from **Kernel Spec Manager**.
-   **Kernel Manager** supports ``Signal`` and ``Message`` interrupt modes.
-   By default, the ``Signal`` interrupt mode is being used.
+#. **Kernel Manager** determines the mode of interrupt from the
+   **Kernel Spec Manager**. It supports ``Signal`` and ``Message``
+   interrupt modes. By default, the ``Signal`` interrupt mode is being used.
 
    - When the interrupt mode is ``Signal``, the **Kernel Provisioner**
      interrupts the kernel with the ``SIGINT`` operating system signal
@@ -160,15 +160,20 @@ When a user stops a kernel, the following steps occur:
 #. After interrupting kernel, Session sends the `"shutdown_request" <https://jupyter-client.readthedocs.io/en/latest/messaging.html#kernel-shutdown>`_
    message on the control channel.
 
-#. **Kernel Manager** waits for the kernel shutdown. After the timeout,
-   **Kernel Manager** interrupts the kernel with ``SIGTERM`` operating system signal.
+#. **Kernel Manager** waits for the kernel shutdown. After the timeout, and if
+   it detects the kernel process is still running, the **Kernel Manager**
+   terminates the kernel sending a ``SIGTERM`` operating system signal
+   (or provisioner equivalent). If it finds the kernel process has
+   not terminated, the **Kernel Manager** will follow up with a ``SIGKILL``
+   operating system signal (or provisioner equivalent) to ensure the kernel's
+   termination.
 
 #. **Kernel Manager** clean up the kernel resources. It removes kernel's interprocess
    communication ports, closes control socket, and releases Shell, IOPub, StdIn,
    Control, and Heartbeat ports.
 
 #. When shutdown is finished, **Session Manager** deletes the Session data from
-   the SQLite3 DataBase and responses 204 Status Code to the Notebook client.
+   the SQLite3 database and responses 204 status code to the Notebook client.
 
 .. _delete_session: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/jupyter_server/master/jupyter_server/services/api/api.yaml#/sessions/delete_api_sessions__session_
 
