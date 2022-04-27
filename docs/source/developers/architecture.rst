@@ -101,7 +101,7 @@ When a user starts a new kernel, the following steps occur:
 #. **Kernel Manager** uses the provisioner layer to launch a new kernel.
 
 #. **Kernel Provisioner** is responsible for launching kernels based on the
-   kernel specification. If kernel specification doesn't define provisioner,
+   kernel specification. If the kernel specification doesn't define a provisioner,
    it uses `Local Provisioner <https://jupyter-client.readthedocs.io/en/latest/api/provisioners.html#jupyter_client.provisioning.local_provisioner.LocalProvisioner>`_
    to launch the kernel. You can use
    `Kernel Provisioner Base <https://jupyter-client.readthedocs.io/en/latest/api/provisioners.html#jupyter_client.provisioning.provisioner_base.KernelProvisionerBase>`_
