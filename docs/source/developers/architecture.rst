@@ -98,7 +98,7 @@ When a user starts a new kernel, the following steps occur:
    **Multi Kernel Manager** in
    `the Jupyter Client APIs <https://jupyter-client.readthedocs.io/en/latest/api/manager.html#multikernelmanager-controlling-multiple-kernels>`_.
 
-#. **Kernel Manager** uses provisioner layer to launch a new kernel.
+#. **Kernel Manager** uses the provisioner layer to launch a new kernel.
 
 #. **Kernel Provisioner** is responsible for launching kernels based on the
    kernel specification. If kernel specification doesn't define provisioner,
