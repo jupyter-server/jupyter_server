@@ -29,7 +29,7 @@ def generate_kernelspec(name):
             "metadata": {},
         }
     }
-    kernelspec_stanza = {"name": name, "spec": spec_stanza, "resources": {}}
+    kernelspec_stanza = {"name": name, "spec": spec_stanza, "resources": {}, "resource_dir": ""}
     return kernelspec_stanza
 
 

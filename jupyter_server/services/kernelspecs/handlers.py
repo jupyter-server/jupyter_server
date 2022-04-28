@@ -22,7 +22,7 @@ AUTH_RESOURCE = "kernelspecs"
 
 def kernelspec_model(handler, name, spec_dict, resource_dir):
     """Load a KernelSpec by name and return the REST API model"""
-    d = {"name": name, "spec": spec_dict, "resources": {}}
+    d = {"name": name, "spec": spec_dict, "resources": {}, "resource_dir": resource_dir}
 
     # Add resource files if they exist
     resource_dir = resource_dir
@@ -45,6 +45,7 @@ def is_kernelspec_model(spec_dict):
         and "name" in spec_dict
         and "spec" in spec_dict
         and "resources" in spec_dict
+        and "resource_dir" in spec_dict
     )
 
 

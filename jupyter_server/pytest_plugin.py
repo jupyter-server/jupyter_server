@@ -418,12 +418,13 @@ sample_kernel_json = {
     "argv": ["cat", "{connection_file}"],
     "display_name": "Test kernel",
 }
+sample_script = "cat"
 
 
 @pytest.fixture
 def jp_kernelspecs(jp_data_dir):
     """Configures some sample kernelspecs in the Jupyter data directory."""
-    spec_names = ["sample", "sample2", "bad"]
+    spec_names = ["sample", "sample2", "bad", "resource_dir"]
     for name in spec_names:
         sample_kernel_dir = jp_data_dir.joinpath("kernels", name)
         sample_kernel_dir.mkdir(parents=True)
@@ -432,6 +433,11 @@ def jp_kernelspecs(jp_data_dir):
         kernel_json = sample_kernel_json.copy()
         if name == "bad":
             kernel_json["argv"] = ["non_existent_path"]
+        elif name == "resource_dir":
+            sample_script_file = sample_kernel_dir.joinpath("sample.sh")
+            sample_script_file.write_text(sample_script)
+            sample_script_file.chmod(500)
+            kernel_json["argv"] = ["{resource_dir}/sample.sh"]
         sample_kernel_file.write_text(json.dumps(kernel_json))
         # Create resources text
         sample_kernel_resources = sample_kernel_dir.joinpath("resource.txt")
