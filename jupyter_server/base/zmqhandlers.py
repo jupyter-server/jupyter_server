@@ -19,8 +19,6 @@ from jupyter_client.session import Session
 from tornado import ioloop, web
 from tornado.websocket import WebSocketHandler
 
-from jupyter_server.auth.utils import warn_disabled_authorization
-
 from .handlers import JupyterHandler
 
 
@@ -321,10 +319,7 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
             raise web.HTTPError(403)
 
         # authorize the user.
-        if not self.authorizer:
-            # Warn if there is not authorizer.
-            warn_disabled_authorization()
-        elif not self.authorizer.is_authorized(self, user, "execute", "kernels"):
+        if not self.authorizer.is_authorized(self, user, "execute", "kernels"):
             raise web.HTTPError(403)
 
         if self.get_argument("session_id", False):
