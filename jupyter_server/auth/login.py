@@ -12,10 +12,10 @@ from ..base.handlers import JupyterHandler
 from .security import passwd_check, set_password
 
 
-class LoginHandler(JupyterHandler):
+class LoginFormHandler(JupyterHandler):
     """The basic tornado login handler
 
-    authenticates with a hashed password from the configuration.
+    accepts login form, passed to IdentityProvider.process_login_form.
     """
 
     def _render(self, message=None):
@@ -66,6 +66,26 @@ class LoginHandler(JupyterHandler):
         else:
             self._render()
 
+    def post(self):
+        user = self.current_user = self.identity_provider.process_login_form(self)
+        if user is None:
+            self.set_status(401)
+            self._render(message={"error": "Invalid credentials"})
+            return
+
+        self.log.info(f"User {user.username} logged in.")
+        self.identity_provider.set_login_cookie(self, user)
+        next_url = self.get_argument("next", default=self.base_url)
+        self._redirect_safe(next_url)
+
+
+class LegacyLoginHandler(LoginFormHandler):
+    """Legacy LoginHandler, implementing most custom auth configuration.
+
+    Deprecated in jupyter-server 2.0.
+    Login configuration has moved to IdentityProvider.
+    """
+
     @property
     def hashed_password(self):
         return self.password_from_settings(self.settings)
@@ -74,6 +94,7 @@ class LoginHandler(JupyterHandler):
         return passwd_check(a, b)
 
     def post(self):
+
         typed_password = self.get_argument("password", default="")
         new_password = self.get_argument("new_password", default="")
 
@@ -130,26 +151,12 @@ class LoginHandler(JupyterHandler):
 
     @classmethod
     def should_check_origin(cls, handler):
-        """Should the Handler check for CORS origin validation?
-
-        Origin check should be skipped for token-authenticated requests.
-
-        Returns:
-        - True, if Handler must check for valid CORS origin.
-        - False, if Handler should skip origin check since requests are token-authenticated.
-        """
+        """DEPRECATED in 2.0, use IdentityProvider API"""
         return not cls.is_token_authenticated(handler)
 
     @classmethod
     def is_token_authenticated(cls, handler):
-        """Returns True if handler has been token authenticated. Otherwise, False.
-
-        Login with a token is used to signal certain things, such as:
-
-        - permit access to REST API
-        - xsrf protection
-        - skip origin-checks for scripts
-        """
+        """DEPRECATED in 2.0, use IdentityProvider API"""
         if getattr(handler, "_user_id", None) is None:
             # ensure get_user has been called, so we know if we're token-authenticated
             handler.current_user
@@ -157,10 +164,7 @@ class LoginHandler(JupyterHandler):
 
     @classmethod
     def get_user(cls, handler):
-        """Called by handlers.get_current_user for identifying the current user.
-
-        See tornado.web.RequestHandler.get_current_user for details.
-        """
+        """DEPRECATED in 2.0, use IdentityProvider API"""
         # Can't call this get_current_user because it will collide when
         # called on LoginHandler itself.
         if getattr(handler, "_user_id", None):
@@ -197,7 +201,7 @@ class LoginHandler(JupyterHandler):
 
     @classmethod
     def get_user_cookie(cls, handler):
-        """Get user-id from a cookie"""
+        """DEPRECATED in 2.0, use IdentityProvider API"""
         get_secure_cookie_kwargs = handler.settings.get("get_secure_cookie_kwargs", {})
         user_id = handler.get_secure_cookie(handler.cookie_name, **get_secure_cookie_kwargs)
         if user_id:
@@ -206,12 +210,7 @@ class LoginHandler(JupyterHandler):
 
     @classmethod
     def get_user_token(cls, handler):
-        """Identify the user based on a token in the URL or Authorization header
-
-        Returns:
-        - uuid if authenticated
-        - None if not
-        """
+        """DEPRECATED in 2.0, use IdentityProvider API"""
         token = handler.token
         if not token:
             return
@@ -243,10 +242,7 @@ class LoginHandler(JupyterHandler):
 
     @classmethod
     def validate_security(cls, app, ssl_options=None):
-        """Check the application's security.
-
-        Show messages, or abort if necessary, based on the security configuration.
-        """
+        """DEPRECATED in 2.0, use IdentityProvider API"""
         if not app.ip:
             warning = "WARNING: The Jupyter server is listening on all IP addresses"
             if ssl_options is None:
@@ -265,13 +261,15 @@ class LoginHandler(JupyterHandler):
 
     @classmethod
     def password_from_settings(cls, settings):
-        """Return the hashed password from the tornado settings.
-
-        If there is no configured password, an empty string will be returned.
-        """
+        """DEPRECATED in 2.0, use IdentityProvider API"""
         return settings.get("password", "")
 
     @classmethod
     def get_login_available(cls, settings):
-        """Whether this LoginHandler is needed - and therefore whether the login page should be displayed."""
+        """DEPRECATED in 2.0, use IdentityProvider API"""
+
         return bool(cls.password_from_settings(settings) or settings.get("token"))
+
+
+# deprecated import, so deprecated implementations get the Legacy class instead
+LoginHandler = LegacyLoginHandler

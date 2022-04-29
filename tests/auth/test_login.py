@@ -39,7 +39,7 @@ async def _login(jp_serverapp, http_server_client, jp_base_url, next):
             method="POST",
             body=urlencode(
                 {
-                    "password": jp_serverapp.token,
+                    "password": jp_serverapp.identity_provider.token,
                     "_xsrf": cookies.get("_xsrf", ""),
                 }
             ),
@@ -97,7 +97,7 @@ async def test_next_ok(login, jp_base_url, next_path):
 
 
 async def test_token_cookie_user_id(jp_serverapp, jp_fetch):
-    token = jp_serverapp.token
+    token = jp_serverapp.identity_provider.token
 
     # first request with token, sets cookie with user-id
     resp = await jp_fetch("/")

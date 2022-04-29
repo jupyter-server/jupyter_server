@@ -251,6 +251,7 @@ def jp_configurable_serverapp(
         c = Config(config)
         c.NotebookNotary.db_file = ":memory:"
         token = hexlify(os.urandom(4)).decode("ascii")
+        c.IdentityProvider.token = token
 
         # Allow tests to configure root_dir via a file, argv, or its
         # default (cwd) by specifying a value of None.
@@ -266,7 +267,6 @@ def jp_configurable_serverapp(
             base_url=base_url,
             config=c,
             allow_root=True,
-            token=token,
             **kwargs,
         )
 
@@ -329,7 +329,7 @@ def jp_web_app(jp_serverapp):
 @pytest.fixture
 def jp_auth_header(jp_serverapp):
     """Configures an authorization header using the token from the serverapp fixture."""
-    return {"Authorization": f"token {jp_serverapp.token}"}
+    return {"Authorization": f"token {jp_serverapp.identity_provider.token}"}
 
 
 @pytest.fixture

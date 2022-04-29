@@ -160,16 +160,12 @@ class AuthenticatedHandler(web.RequestHandler):
         if self.request.method == "OPTIONS":
             # no origin-check on options requests, which are used to check origins!
             return True
-        if self.login_handler is None or not hasattr(self.login_handler, "should_check_origin"):
-            return False
-        return not self.login_handler.should_check_origin(self)
+        return not self.identity_provider.should_check_origin(self)
 
     @property
     def token_authenticated(self):
         """Have I been authenticated with a token?"""
-        if self.login_handler is None or not hasattr(self.login_handler, "is_token_authenticated"):
-            return False
-        return self.login_handler.is_token_authenticated(self)
+        return self.identity_provider.is_token_authenticated(self)
 
     @property
     def cookie_name(self):
@@ -185,12 +181,19 @@ class AuthenticatedHandler(web.RequestHandler):
     @property
     def login_handler(self):
         """Return the login handler for this application, if any."""
-        return self.settings.get("login_handler_class", None)
+        warnings.warn(
+            """JupyterHandler.login_handler is deprecated in 2.0,
+            use JupyterHandler.identity_provider.
+            """,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.identity_provider.login_handler_class
 
     @property
     def token(self):
         """Return the login token for this application, if any."""
-        return self.settings.get("token", None)
+        return self.identity_provider.token
 
     @property
     def login_available(self):
@@ -200,9 +203,7 @@ class AuthenticatedHandler(web.RequestHandler):
         whether the user is already logged in or not.
 
         """
-        if self.login_handler is None:
-            return False
-        return bool(self.login_handler.get_login_available(self.settings))
+        return self.identity_provider.login_available
 
     @property
     def authorizer(self):
@@ -628,8 +629,9 @@ class JupyterHandler(AuthenticatedHandler):
             default_url=self.default_url,
             ws_url=self.ws_url,
             logged_in=self.logged_in,
-            allow_password_change=self.settings.get("allow_password_change"),
-            login_available=self.login_available,
+            allow_password_change=getattr(self.identity_provider, "allow_password_change", False),
+            auth_enabled=self.identity_provider.auth_enabled,
+            login_available=self.identity_provider.login_available,
             token_available=bool(self.token),
             static_url=self.static_url,
             sys_info=json_sys_info(),
