@@ -152,7 +152,7 @@ class LoginHandler(JupyterHandler):
         """
         if getattr(handler, "_user_id", None) is None:
             # ensure get_user has been called, so we know if we're token-authenticated
-            handler.get_current_user()
+            handler.current_user
         return getattr(handler, "_token_authenticated", False)
 
     @classmethod
@@ -165,17 +165,20 @@ class LoginHandler(JupyterHandler):
         # called on LoginHandler itself.
         if getattr(handler, "_user_id", None):
             return handler._user_id
-        user_id = cls.get_user_token(handler)
-        if user_id is None:
-            get_secure_cookie_kwargs = handler.settings.get("get_secure_cookie_kwargs", {})
-            user_id = handler.get_secure_cookie(handler.cookie_name, **get_secure_cookie_kwargs)
-            if user_id:
-                user_id = user_id.decode()
-        else:
-            cls.set_login_cookie(handler, user_id)
+        token_user_id = cls.get_user_token(handler)
+        cookie_user_id = cls.get_user_cookie(handler)
+        # prefer token to cookie if both given,
+        # because token is always explicit
+        user_id = token_user_id or cookie_user_id
+        if token_user_id:
+            # if token-authenticated, persist user_id in cookie
+            # if it hasn't already been stored there
+            if user_id != cookie_user_id:
+                cls.set_login_cookie(handler, user_id)
             # Record that the current request has been authenticated with a token.
             # Used in is_token_authenticated above.
             handler._token_authenticated = True
+
         if user_id is None:
             # If an invalid cookie was sent, clear it to prevent unnecessary
             # extra warnings. But don't do this on a request with *no* cookie,
@@ -190,6 +193,15 @@ class LoginHandler(JupyterHandler):
 
         # cache value for future retrievals on the same request
         handler._user_id = user_id
+        return user_id
+
+    @classmethod
+    def get_user_cookie(cls, handler):
+        """Get user-id from a cookie"""
+        get_secure_cookie_kwargs = handler.settings.get("get_secure_cookie_kwargs", {})
+        user_id = handler.get_secure_cookie(handler.cookie_name, **get_secure_cookie_kwargs)
+        if user_id:
+            user_id = user_id.decode()
         return user_id
 
     @classmethod
@@ -215,7 +227,17 @@ class LoginHandler(JupyterHandler):
             authenticated = True
 
         if authenticated:
-            return uuid.uuid4().hex
+            # token does not correspond to user-id,
+            # which is stored in a cookie.
+            # still check the cookie for the user id
+            user_id = cls.get_user_cookie(handler)
+            if user_id is None:
+                # no cookie, generate new random user_id
+                user_id = uuid.uuid4().hex
+                handler.log.info(
+                    f"Generating new user_id for token-authenticated request: {user_id}"
+                )
+            return user_id
         else:
             return None
 

@@ -33,6 +33,16 @@ parameters:
     in: path
     description: file path
     type: string
+  permissions:
+    name: permissions
+    type: string
+    required: false
+    in: query
+    description: |
+      JSON-serialized dictionary of `{"resource": ["action",]}`
+      (dict of lists of strings) to check.
+      The same dictionary structure will be returned,
+      containing only the actions for which the user is authorized.
   checkpoint_id:
     name: checkpoint_id
     required: true
@@ -616,7 +626,42 @@ paths:
           description: Forbidden to access
         404:
           description: Not found
-
+  /api/me:
+    get:
+      summary: |
+        Get the identity of the currently authenticated user.
+        If present, a `permissions` argument may be specified
+        to check what actions the user currently is authorized to take.
+      tags:
+        - identity
+      parameters:
+        - $ref: "#/parameters/permissions"
+      responses:
+        200:
+          description: The user's identity and permissions
+          schema:
+            type: object
+            properties:
+              identity:
+                $ref: "#/definitions/Identity"
+              permissions:
+                $ref: "#/definitions/Permissions"
+            example:
+              identity:
+                username: minrk
+                name: Min Ragan-Kelley
+                display_name: Min RK
+                initials: MRK
+                avatar_url: null
+                color: null
+              permissions:
+                contents:
+                  - read
+                  - write
+                kernels:
+                  - read
+                  - write
+                  - execute
   /api/status:
     get:
       summary: Get the current status/activity of the server.
@@ -663,6 +708,53 @@ definitions:
         type: number
         description: |
           The total number of running kernels.
+  Identity:
+    description: The identity of the currently authenticated user
+    properties:
+      username:
+        type: string
+        description: |
+          Unique string identifying the user
+      name:
+        type: string
+        description: |
+          For-humans name of the user.
+          May be the same as `username` in systems where
+          only usernames are available.
+      display_name:
+        type: string
+        description: |
+          Alternate rendering of name for display.
+          Often the same as `name`.
+      initials:
+        type: string
+        description: |
+          Short string of initials.
+          Initials should not be derived automatically due to localization issues.
+          May be `null` if unavailable.
+      avatar_url:
+        type: string
+        description: |
+          URL of an avatar to be used for the user.
+          May be `null` if unavailable.
+      color:
+        type: string
+        description: |
+          A CSS color string to use as a preferred color,
+          such as for collaboration cursors.
+          May be `null` if unavailable.
+  Permissions:
+    type: object
+    description: |
+      A dict of the form: `{"resource": ["action",]}`
+      containing only the AUTHORIZED subset of resource+actions
+      from the permissions specified in the request.
+      If no permission checks were made in the request,
+      this will be empty.
+    additionalProperties:
+      type: array
+      items:
+        type: string
   KernelSpec:
     description: Kernel spec (contents of kernel.json)
     properties:

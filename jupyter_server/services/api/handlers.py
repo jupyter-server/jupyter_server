@@ -3,6 +3,7 @@
 # Distributed under the terms of the Modified BSD License.
 import json
 import os
+from typing import Dict, List
 
 from tornado import web
 
@@ -55,7 +56,49 @@ class APIStatusHandler(APIHandler):
         self.finish(json.dumps(model, sort_keys=True))
 
 
+class IdentityHandler(APIHandler):
+    """Get the current user's identity model"""
+
+    @web.authenticated
+    def get(self):
+        permissions_json: str = self.get_argument("permissions", "")
+        bad_permissions_msg = f'permissions should be a JSON dict of {{"resource": ["action",]}}, got {permissions_json!r}'
+        if permissions_json:
+            try:
+                permissions_to_check = json.loads(permissions_json)
+            except ValueError:
+                raise web.HTTPError(400, bad_permissions_msg)
+            if not isinstance(permissions_to_check, dict):
+                raise web.HTTPError(400, bad_permissions_msg)
+        else:
+            permissions_to_check = {}
+
+        permissions: Dict[str, List[str]] = {}
+        user = self.current_user
+
+        for resource, actions in permissions_to_check.items():
+            if (
+                not isinstance(resource, str)
+                or not isinstance(actions, list)
+                or not all(isinstance(action, str) for action in actions)
+            ):
+                raise web.HTTPError(400, bad_permissions_msg)
+
+            allowed = permissions[resource] = []
+            for action in actions:
+                if self.authorizer.is_authorized(self, user=user, resource=resource, action=action):
+                    allowed.append(action)
+
+        identity: Dict = self.identity_provider.identity_model(user)
+        model = {
+            "identity": identity,
+            "permissions": permissions,
+        }
+        self.write(json.dumps(model))
+
+
 default_handlers = [
     (r"/api/spec.yaml", APISpecHandler),
     (r"/api/status", APIStatusHandler),
+    (r"/api/me", IdentityHandler),
 ]

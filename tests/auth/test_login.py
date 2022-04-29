@@ -1,4 +1,5 @@
 """Tests for login redirects"""
+import json
 from functools import partial
 from urllib.parse import urlencode
 
@@ -92,3 +93,26 @@ async def test_next_ok(login, jp_base_url, next_path):
     expected = jp_base_url + next_path
     actual = await login(next=expected)
     assert actual == expected
+
+
+async def test_token_cookie_user_id(jp_serverapp, jp_fetch):
+    token = jp_serverapp.token
+
+    # first request with token, sets cookie with user-id
+    resp = await jp_fetch("/")
+    assert resp.code == 200
+    set_cookie = resp.headers["set-cookie"]
+    headers = {"Cookie": set_cookie}
+
+    # subsequent requests with cookie and no token
+    # receive same user-id
+    resp = await jp_fetch("/api/me", headers=headers)
+    user_id = json.loads(resp.body.decode("utf8"))
+    resp = await jp_fetch("/api/me", headers=headers)
+    user_id2 = json.loads(resp.body.decode("utf8"))
+    assert user_id["identity"] == user_id2["identity"]
+
+    # new request, just token -> new user_id
+    resp = await jp_fetch("/api/me")
+    user_id3 = json.loads(resp.body.decode("utf8"))
+    assert user_id["identity"] != user_id3["identity"]
