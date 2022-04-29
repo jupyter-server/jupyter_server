@@ -8,6 +8,12 @@ factory = "jupyter_packaging.npm_builder"
 [tool.check-manifest]
 ignore = ["tbump.toml", ".*", "*.yml", "package-lock.json", "bootstrap*", "conftest.py"]
 
+[tool.black]
+line_length = 100
+
+[tool.isort]
+profile = "black"
+
 [tool.pytest.ini_options]
 addopts = "-raXs --durations 10 --color=yes --doctest-modules"
 testpaths = [
