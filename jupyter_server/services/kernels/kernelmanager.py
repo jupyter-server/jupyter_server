@@ -398,10 +398,9 @@ class MappingKernelManager(MultiKernelManager):
         if kernel_id in self._pending_kernel_tasks:
             task = self._pending_kernel_tasks.pop(kernel_id)
             task.cancel()
-            return
-
-        self.stop_watching_activity(kernel_id)
-        self.stop_buffering(kernel_id)
+        else:
+            self.stop_watching_activity(kernel_id)
+            self.stop_buffering(kernel_id)
 
         self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
 
@@ -661,10 +660,9 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
         if kernel_id in self._pending_kernel_tasks:
             task = self._pending_kernel_tasks.pop(kernel_id)
             task.cancel()
-            return
-
-        self.stop_watching_activity(kernel_id)
-        self.stop_buffering(kernel_id)
+        else:
+            self.stop_watching_activity(kernel_id)
+            self.stop_buffering(kernel_id)
 
         # Finish shutting down the kernel before clearing state to avoid a race condition.
         return await self.pinned_superclass.shutdown_kernel(

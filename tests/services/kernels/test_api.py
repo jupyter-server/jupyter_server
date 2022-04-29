@@ -158,7 +158,7 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_kernel_handler(jp_fetch, pending_kernel_is_ready):
+async def test_kernel_handler(jp_fetch, jp_serverapp, pending_kernel_is_ready):
     # Create a kernel
     r = await jp_fetch(
         "api", "kernels", method="POST", body=json.dumps({"name": NATIVE_KERNEL_NAME})
