@@ -66,7 +66,7 @@ async def test_no_terminals(jp_fetch):
     assert len(data) == 0
 
 
-async def test_terminal_create(jp_fetch, jp_cleanup_subprocesses):
+async def test_terminal_create(jp_fetch):
     resp = await jp_fetch(
         "api",
         "terminals",
@@ -87,12 +87,9 @@ async def test_terminal_create(jp_fetch, jp_cleanup_subprocesses):
 
     assert len(data) == 1
     assert data[0]["name"] == term["name"]
-    await jp_cleanup_subprocesses()
 
 
-async def test_terminal_create_with_kwargs(
-    jp_fetch, jp_ws_fetch, terminal_path, jp_cleanup_subprocesses
-):
+async def test_terminal_create_with_kwargs(jp_fetch, jp_ws_fetch, terminal_path):
     resp_create = await jp_fetch(
         "api",
         "terminals",
@@ -115,12 +112,9 @@ async def test_terminal_create_with_kwargs(
     data = json.loads(resp_get.body.decode())
 
     assert data["name"] == term_name
-    await jp_cleanup_subprocesses()
 
 
-async def test_terminal_create_with_cwd(
-    jp_fetch, jp_ws_fetch, terminal_path, jp_cleanup_subprocesses
-):
+async def test_terminal_create_with_cwd(jp_fetch, jp_ws_fetch, terminal_path):
     resp = await jp_fetch(
         "api",
         "terminals",
@@ -151,12 +145,11 @@ async def test_terminal_create_with_cwd(
     ws.close()
 
     assert os.path.basename(terminal_path) in message_stdout
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.skip(reason="Not yet working")
 async def test_terminal_create_with_relative_cwd(
-    jp_fetch, jp_ws_fetch, jp_root_dir, terminal_root_dir, jp_cleanup_subprocesses
+    jp_fetch, jp_ws_fetch, jp_root_dir, terminal_root_dir
 ):
     resp = await jp_fetch(
         "api",
@@ -189,11 +182,10 @@ async def test_terminal_create_with_relative_cwd(
 
     expected = terminal_root_dir.name if sys.platform == "win32" else str(terminal_root_dir)
     assert expected in message_stdout
-    await jp_cleanup_subprocesses()
 
 
 @pytest.mark.skip(reason="Not yet working")
-async def test_terminal_create_with_bad_cwd(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses):
+async def test_terminal_create_with_bad_cwd(jp_fetch, jp_ws_fetch):
     non_existing_path = "/tmp/path/to/nowhere"
     resp = await jp_fetch(
         "api",
@@ -225,7 +217,6 @@ async def test_terminal_create_with_bad_cwd(jp_fetch, jp_ws_fetch, jp_cleanup_su
     ws.close()
 
     assert non_existing_path not in message_stdout
-    await jp_cleanup_subprocesses()
 
 
 async def test_culling_config(jp_server_config, jp_configurable_serverapp):
@@ -237,7 +228,7 @@ async def test_culling_config(jp_server_config, jp_configurable_serverapp):
     assert terminal_mgr_settings.cull_interval == CULL_INTERVAL
 
 
-async def test_culling(jp_server_config, jp_fetch, jp_cleanup_subprocesses):
+async def test_culling(jp_server_config, jp_fetch):
     # POST request
     resp = await jp_fetch(
         "api",
@@ -267,4 +258,3 @@ async def test_culling(jp_server_config, jp_fetch, jp_cleanup_subprocesses):
             await asyncio.sleep(1)
 
     assert culled
-    await jp_cleanup_subprocesses()

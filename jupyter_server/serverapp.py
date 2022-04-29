@@ -2389,6 +2389,8 @@ class ServerApp(JupyterApp):
         The kernels will shutdown themselves when this process no longer exists,
         but explicit shutdown allows the KernelManagers to cleanup the connection files.
         """
+        if not getattr(self, "kernel_manager", None):
+            return
         n_kernels = len(self.kernel_manager.list_kernel_ids())
         kernel_msg = trans.ngettext(
             "Shutting down %d kernel", "Shutting down %d kernels", n_kernels
@@ -2398,6 +2400,8 @@ class ServerApp(JupyterApp):
 
     async def cleanup_extensions(self):
         """Call shutdown hooks in all extensions."""
+        if not getattr(self, "extension_manager", None):
+            return
         n_extensions = len(self.extension_manager.extension_apps)
         extension_msg = trans.ngettext(
             "Shutting down %d extension", "Shutting down %d extensions", n_extensions
@@ -2676,6 +2680,8 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
+        if getattr(self, "session_manager", None):
+            self.session_manager.close()
 
     def start_ioloop(self):
         """Start the IO Loop."""
@@ -2704,7 +2710,8 @@ class ServerApp(JupyterApp):
     async def _stop(self):
         """Cleanup resources and stop the IO Loop."""
         await self._cleanup()
-        self.io_loop.stop()
+        if getattr(self, "io_loop", None):
+            self.io_loop.stop()
 
     def stop(self, from_signal=False):
         """Cleanup resources and stop the server."""
