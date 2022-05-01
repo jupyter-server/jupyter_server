@@ -1571,6 +1571,7 @@ class ServerApp(JupyterApp):
 
     event_bus = Instance(
         EventBus,
+        allow_none=True,
         help="An EventBus for emitting structured event data from Jupyter Server and extensions.",
     )
 
