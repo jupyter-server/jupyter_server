@@ -2781,6 +2781,8 @@ class ServerApp(JupyterApp):
         await self.cleanup_kernels()
         if getattr(self, "session_manager", None):
             self.session_manager.close()
+        if getattr(self, "event_bus", None):
+            self.event_bus.clear_instance()
 
     def start_ioloop(self):
         """Start the IO Loop."""
