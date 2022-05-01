@@ -30,6 +30,7 @@ skip = ["check-links"]
 
 [tool.jupyter-releaser.options]
 post-version-spec = "dev"
+pydist_resource_paths = ["bootstrap.min.css", "bootstrap-theme.min.css"]
 
 [tool.tbump.version]
 current = "1.16.1.dev0"
