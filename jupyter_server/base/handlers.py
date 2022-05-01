@@ -576,10 +576,10 @@ class JupyterHandler(AuthenticatedHandler):
 
         from jupyter_server.auth import IdentityProvider
 
-        if (
-            type(self.identity_provider) is IdentityProvider
-            and inspect.getmodule(self.get_current_user).__name__ != __name__
-        ):
+        mod_obj = inspect.getmodule(self.get_current_user)
+        assert mod_obj is not None
+
+        if type(self.identity_provider) is IdentityProvider and mod_obj.__name__ != __name__:
             # check for overridden get_current_user + default IdentityProvider
             # deprecated way to override auth (e.g. JupyterHub < 3.0)
             # allow deprecated, overridden get_current_user

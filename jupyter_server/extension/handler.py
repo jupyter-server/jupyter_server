@@ -34,7 +34,7 @@ class ExtensionHandlerMixin:
     def initialize(self, name, *args, **kwargs):
         self.name = name
         try:
-            super().initialize(*args, **kwargs)
+            super().initialize(*args, **kwargs)  # type:ignore[misc]
         except TypeError:
             pass
 

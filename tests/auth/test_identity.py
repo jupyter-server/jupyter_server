@@ -46,7 +46,7 @@ def test_identity_model(old_user, expected):
     idp = IdentityProvider()
     identity = idp.identity_model(user)
     print(identity)
-    identity_subset = {key: identity[key] for key in expected}
+    identity_subset = {key: identity[key] for key in expected}  # type:ignore[union-attr]
     print(type(identity), type(identity_subset), type(expected))
     assert identity_subset == expected
 
@@ -92,8 +92,8 @@ def test_user_defaults(fields, expected):
     user = User(**fields)
 
     # check expected fields
-    for key in expected:
-        assert getattr(user, key) == expected[key]
+    for key in expected:  # type:ignore[union-attr]
+        assert getattr(user, key) == expected[key]  # type:ignore[index]
 
     # check types
     for key in ("username", "name", "display_name"):
