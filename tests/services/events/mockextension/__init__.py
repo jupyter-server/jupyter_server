@@ -1,4 +1,4 @@
-from .mock_extension import _load_jupyter_server_extension
+from .mock_extension import _load_jupyter_server_extension  # noqa: F401
 
 # Function that makes these extensions discoverable
 # by the test functions.
