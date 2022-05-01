@@ -1,6 +1,10 @@
+from .mock_extension import _load_jupyter_server_extension
+
 # Function that makes these extensions discoverable
 # by the test functions.
+
+
 def _jupyter_server_extension_points():
     return [
-        {"module": "tests.events.mock_extension"},
+        {"module": "tests.services.events.mockextension"},
     ]

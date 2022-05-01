@@ -10,13 +10,13 @@ class MockEventHandler(JupyterHandler):
         self.event_bus.record_event(
             schema_name="event.mockextension.jupyter.com/message",
             version=1,
-            event={"message": "Hello world, from mock extension!"},
+            event={"event_message": "Hello world, from mock extension!"},
         )
 
 
 def _load_jupyter_server_extension(serverapp):
     # Register a schema with the EventBus
-    schema_file = pathlib.Path(__file__).parent / "mock_event_schema.yaml"
+    schema_file = pathlib.Path(__file__).parent / "mock_extension_event.yaml"
     serverapp.event_bus.register_schema_file(schema_file)
     serverapp.web_app.add_handlers(
         ".*$", [(url_path_join(serverapp.base_url, "/mock/event"), MockEventHandler)]
