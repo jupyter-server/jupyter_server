@@ -1,12 +1,75 @@
 [build-system]
-requires = ["jupyter_packaging~=0.9", "pre-commit"]
-build-backend = "jupyter_packaging.build_api"
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
 
-[tool.jupyter-packaging.builder]
-factory = "jupyter_packaging.npm_builder"
+[project]
+name = "jupyter_server"
+description = "The backend—i.e. core services, APIs, and REST endpoints—to Jupyter web applications."
+authors = [{name = "Jupyter Development Team", email = "jupyter@googlegroups.com"}]
+keywords = ["ipython", "jupyter"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: Jupyter",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "anyio>=3.1.0,<4",
+    "argon2-cffi",
+    "jinja2",
+    "jupyter_client>=6.1.12",
+    "jupyter_core>=4.7.0",
+    "jupyter_server_terminals",
+    "nbconvert>=6.4.4",
+    "nbformat>=5.2.0",
+    "packaging",
+    "prometheus_client",
+    "pywinpty;os_name=='nt'",
+    "pyzmq>=17",
+    "Send2Trash",
+    "terminado>=0.8.3",
+    "tornado>=6.1.0",
+    "traitlets>=5.1",
+    "websocket-client",
+]
+dynamic = ["version"]
 
-[tool.check-manifest]
-ignore = ["tbump.toml", ".*", "*.yml", "package-lock.json", "bootstrap*", "conftest.py"]
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://jupyter-server.readthedocs.io"
+Documentation = "https://jupyter-server.readthedocs.io"
+Funding = "https://numfocus.org/donate"
+Source = "https://github.com/jupyter-server/jupyter_server"
+Tracker = "https://github.com/jupyter-server/jupyter_server/issues"
+
+[project.optional-dependencies]
+test = [
+    "coverage",
+    "ipykernel",
+    "pre-commit",
+    "pytest-console-scripts",
+    "pytest-cov",
+    "pytest-timeout",
+    "pytest-tornasync",
+    "pytest>=6.0",
+    "requests",
+]
+
+[project.scripts]
+jupyter-server = "jupyter_server.serverapp:main"
 
 [tool.pytest.ini_options]
 addopts = "-raXs --durations 10 --color=yes --doctest-modules"
@@ -25,11 +88,15 @@ filterwarnings = [
   "ignore:run_pre_save_hook is deprecated:DeprecationWarning"
 ]
 
+[tool.flit.sdist]
+include = ["tests/"]
+
 [tool.jupyter-releaser]
 skip = ["check-links"]
 
 [tool.jupyter-releaser.options]
 post-version-spec = "dev"
+pydist_resource_paths = ["jupyter_server/static/style/bootstrap.min.css", "jupyter_server/static/style/bootstrap-theme.min.css"]
 
 [tool.tbump.version]
 current = "1.16.1.dev0"

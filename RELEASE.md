@@ -14,6 +14,8 @@ To create a manual release, perform the following steps:
 pip install tbump twine build
 git pull origin $(git branch --show-current)
 git clean -dffx
+npm install
+npm run build
 ```
 
 ### Update the version and apply the tag
