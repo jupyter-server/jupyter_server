@@ -313,14 +313,14 @@ def test_preferred_dir_validation(
     if root_dir_loc == "cli":
         argv.append(f"--ServerApp.root_dir={expected_root_dir}")
     if root_dir_loc == "config":
-        config_lines.append(f"c.ServerApp.root_dir = '{expected_root_dir}'")
+        config_lines.append(f'c.ServerApp.root_dir = r"{expected_root_dir}"')
     if root_dir_loc == "default":
         expected_root_dir = os.getcwd()
 
     if preferred_dir_loc == "cli":
         argv.append(f"--ServerApp.preferred_dir={expected_preferred_dir}")
     if preferred_dir_loc == "config":
-        config_lines.append(f"c.ServerApp.preferred_dir = '{expected_preferred_dir}'")
+        config_lines.append(f'c.ServerApp.preferred_dir = r"{expected_preferred_dir}"')
     if preferred_dir_loc == "default":
         expected_preferred_dir = expected_root_dir
 
