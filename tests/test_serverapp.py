@@ -281,6 +281,65 @@ def test_valid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverapp)
     assert "No such preferred dir:" in str(error)
 
 
+@pytest.mark.parametrize(
+    "root_dir_loc,preferred_dir_loc",
+    [
+        ("cli", "cli"),
+        ("cli", "config"),
+        ("cli", "default"),
+        ("config", "cli"),
+        ("config", "config"),
+        ("config", "default"),
+        ("default", "cli"),
+        ("default", "config"),
+        ("default", "default"),
+    ],
+)
+def test_preferred_dir_validation(
+    root_dir_loc, preferred_dir_loc, tmp_path, jp_config_dir, jp_configurable_serverapp
+):
+    expected_root_dir = str(tmp_path)
+    expected_preferred_dir = str(tmp_path / "subdir")
+    os.makedirs(expected_preferred_dir, exist_ok=True)
+
+    argv = []
+    kwargs = {"root_dir": None}
+
+    config_lines = []
+    config_file = None
+    if root_dir_loc == "config" or preferred_dir_loc == "config":
+        config_file = jp_config_dir.joinpath("jupyter_server_config.py")
+
+    if root_dir_loc == "cli":
+        argv.append(f"--ServerApp.root_dir={expected_root_dir}")
+    if root_dir_loc == "config":
+        config_lines.append(f"c.ServerApp.root_dir = '{expected_root_dir}'")
+    if root_dir_loc == "default":
+        expected_root_dir = os.getcwd()
+
+    if preferred_dir_loc == "cli":
+        argv.append(f"--ServerApp.preferred_dir={expected_preferred_dir}")
+    if preferred_dir_loc == "config":
+        config_lines.append(f"c.ServerApp.preferred_dir = '{expected_preferred_dir}'")
+    if preferred_dir_loc == "default":
+        expected_preferred_dir = expected_root_dir
+
+    if config_file is not None:
+        config_file.write_text("\n".join(config_lines))
+
+    if argv:
+        kwargs["argv"] = argv
+
+    if root_dir_loc == "default" and preferred_dir_loc != "default":  # error expected
+        with pytest.raises(SystemExit):
+            jp_configurable_serverapp(**kwargs)
+    else:
+        app = jp_configurable_serverapp(**kwargs)
+        assert app.root_dir == expected_root_dir
+        assert app.preferred_dir == expected_preferred_dir
+        assert app.preferred_dir.startswith(app.root_dir)
+
+
 def test_invalid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path)
     path_subdir = str(tmp_path / "subdir")

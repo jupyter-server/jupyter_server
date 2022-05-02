@@ -249,13 +249,18 @@ def jp_configurable_serverapp(
         c = Config(config)
         c.NotebookNotary.db_file = ":memory:"
         token = hexlify(os.urandom(4)).decode("ascii")
+
+        # Allow tests to configure root_dir via a file, argv, or its
+        # default (cwd) by specifying a value of None.
+        if root_dir is not None:
+            kwargs["root_dir"] = str(root_dir)
+
         app = ServerApp.instance(
             # Set the log level to debug for testing purposes
             log_level="DEBUG",
             port=http_port,
             port_retries=0,
             open_browser=False,
-            root_dir=str(root_dir),
             base_url=base_url,
             config=c,
             allow_root=True,
