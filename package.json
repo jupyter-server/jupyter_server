@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "license": "BSD",
   "scripts": {
-    "build": "copyfiles -f node_modules/bootstrap/dist/css/*.min.* jupyter_server/static/style"
+    "build": "copyfiles -f node_modules/bootstrap/dist/css/*.min.* jupyter_server/static/style",
+    "postinstall": "npm run build"
   },
   "dependencies": {
     "bootstrap": "^3.4.0",
