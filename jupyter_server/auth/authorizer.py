@@ -7,11 +7,12 @@ allows all authenticated requests
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from traitlets import Instance
 from traitlets.config import LoggingConfigurable
 
 from jupyter_server.base.handlers import JupyterHandler
 
-from .identity import User
+from .identity import IdentityProvider, User
 
 
 class Authorizer(LoggingConfigurable):
@@ -33,6 +34,8 @@ class Authorizer(LoggingConfigurable):
 
     .. versionadded:: 2.0
     """
+
+    identity_provider = Instance(IdentityProvider)
 
     def is_authorized(
         self, handler: JupyterHandler, user: User, action: str, resource: str

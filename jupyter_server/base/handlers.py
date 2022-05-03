@@ -220,7 +220,8 @@ class AuthenticatedHandler(web.RequestHandler):
             from jupyter_server.auth import AllowAllAuthorizer
 
             self.settings["authorizer"] = AllowAllAuthorizer(
-                config=self.settings.get("config", None)
+                config=self.settings.get("config", None),
+                identity_provider=self.identity_provider,
             )
 
         return self.settings.get("authorizer")

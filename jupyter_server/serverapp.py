@@ -217,15 +217,6 @@ class ServerWebApplication(web.Application):
         authorizer=None,
         identity_provider=None,
     ):
-        if authorizer is None:
-            warnings.warn(
-                "authorizer unspecified. Using permissive AllowAllAuthorizer."
-                " Specify an authorizer to avoid this message.",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-            authorizer = AllowAllAuthorizer(parent=jupyter_app)
-
         if identity_provider is None:
             warnings.warn(
                 "identity_provider unspecified. Using default IdentityProvider."
@@ -234,6 +225,15 @@ class ServerWebApplication(web.Application):
                 stacklevel=2,
             )
             identity_provider = IdentityProvider(parent=jupyter_app)
+
+        if authorizer is None:
+            warnings.warn(
+                "authorizer unspecified. Using permissive AllowAllAuthorizer."
+                " Specify an authorizer to avoid this message.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            authorizer = AllowAllAuthorizer(parent=jupyter_app, identity_provider=identity_provider)
 
         settings = self.init_settings(
             jupyter_app,
@@ -1861,8 +1861,10 @@ class ServerApp(JupyterApp):
             parent=self,
             log=self.log,
         )
-        self.authorizer = self.authorizer_class(parent=self, log=self.log)
         self.identity_provider = self.identity_provider_class(parent=self, log=self.log)
+        self.authorizer = self.authorizer_class(
+            parent=self, log=self.log, identity_provider=self.identity_provider
+        )
 
     def init_logging(self):
         # This prevents double log messages because tornado use a root logger that
