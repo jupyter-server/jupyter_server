@@ -74,6 +74,12 @@ test = [
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
 
+[tool.black]
+line_length = 100
+
+[tool.isort]
+profile = "black"
+
 [tool.pytest.ini_options]
 addopts = "-raXs --durations 10 --color=yes --doctest-modules"
 testpaths = [
