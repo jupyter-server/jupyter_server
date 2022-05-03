@@ -16,6 +16,9 @@ from jupyter_server.services.sessions.sessionmanager import (
 
 
 class DummyKernel:
+    execution_state: str
+    last_activity: str
+
     def __init__(self, kernel_name="python"):
         self.kernel_name = kernel_name
 
@@ -132,7 +135,7 @@ def test_kernel_record_list():
     # Test .get()
     r_ = records.get(r)
     assert r == r_
-    r_ = records.get(r.kernel_id)
+    r_ = records.get(r.kernel_id or "")
     assert r == r_
 
     with pytest.raises(ValueError):

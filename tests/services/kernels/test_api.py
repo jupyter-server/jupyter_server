@@ -27,7 +27,7 @@ def pending_kernel_is_ready(jp_serverapp):
     return _
 
 
-configs = [
+configs: list = [
     {
         "ServerApp": {
             "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager"

@@ -328,7 +328,7 @@ def test_preferred_dir_validation(
         config_file.write_text("\n".join(config_lines))
 
     if argv:
-        kwargs["argv"] = argv
+        kwargs["argv"] = argv  # type:ignore
 
     if root_dir_loc == "default" and preferred_dir_loc != "default":  # error expected
         with pytest.raises(SystemExit):

@@ -52,7 +52,8 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
             self.log.warning("Couldn't authenticate WebSocket connection")
             raise web.HTTPError(403)
 
-        if self.get_argument("session_id", False):
+        if self.get_argument("session_id", None):
+            assert self.session is not None
             self.session.session = self.get_argument("session_id")
         else:
             self.log.warning("No session ID specified")
@@ -79,6 +80,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
         self.ping_callback = PeriodicCallback(self.send_ping, GATEWAY_WS_PING_INTERVAL_SECS * 1000)
         self.ping_callback.start()
 
+        assert self.gateway is not None
         self.gateway.on_open(
             kernel_id=kernel_id,
             message_callback=self.write_message,
@@ -87,6 +89,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
     def on_message(self, message):
         """Forward message to gateway web socket handler."""
+        assert self.gateway is not None
         self.gateway.on_message(message)
 
     def write_message(self, message, binary=False):
@@ -105,6 +108,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
     def on_close(self):
         self.log.debug("Closing websocket connection %s", self.request.path)
+        assert self.gateway is not None
         self.gateway.on_close()
         super().on_close()
 
@@ -137,7 +141,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         super().__init__(**kwargs)
         self.kernel_id = None
         self.ws = None
-        self.ws_future = Future()
+        self.ws_future: Future = Future()
         self.disconnected = False
         self.retry = 0
 
@@ -152,7 +156,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
             "channels",
         )
         self.log.info(f"Connecting to {ws_url}")
-        kwargs = {}
+        kwargs: dict = {}
         kwargs = GatewayClient.instance().load_connection_args(**kwargs)
 
         request = HTTPRequest(ws_url, **kwargs)
@@ -269,7 +273,8 @@ class GatewayResourceHandler(APIHandler):
                 " resource serving.".format(path, kernel_name)
             )
         else:
-            self.set_header("Content-Type", mimetypes.guess_type(path)[0])
+            mimetype = mimetypes.guess_type(path)[0] or "text/plain"
+            self.set_header("Content-Type", mimetype)
         self.finish(kernel_spec_res)
 
 

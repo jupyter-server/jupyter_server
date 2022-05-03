@@ -53,3 +53,46 @@ default = ""
 [[tool.tbump.field]]
 name = "release"
 default = ""
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+pretty = true
+show_error_context = true
+show_error_codes = true
+strict_equality = true
+warn_unused_configs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+exclude = [
+    "examples/simple/setup.py",
+]
+
+
+[[tool.mypy.overrides]]
+module = [
+    "traitlets",
+    "traitlets.config",
+    "traitlets.config.application",
+    "traitlets.config.configurable",
+    "traitlets.tests.utils",
+    "traitlets.utils.importstring",
+    "traitlets.traitlets",
+    "traitlets.utils.descriptions",
+    "jupyter_core",
+    "jupyter_core.application",
+    "jupyter_core.paths",
+    "jupyter_core.utils",
+    "nbconvert.exporters",
+    "nbconvert.exporters.base",
+    "nbformat",
+    "nbformat.sign",
+    "nbformat.v4",
+    "pysqlite2",
+    "_frozen_importlib_external",
+    "send2trash",
+    "terminado",
+    "websocket"
+]
+ignore_missing_imports = true

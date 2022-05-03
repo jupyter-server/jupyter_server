@@ -6,7 +6,7 @@ import os
 from logging import Logger
 from queue import Queue
 from threading import Thread
-from typing import Dict
+from typing import Any, Dict, Optional
 
 import websocket
 from jupyter_client.asynchronous.client import AsyncKernelClient
@@ -454,6 +454,7 @@ class GatewayKernelManager(AsyncKernelManager):
     async def restart_kernel(self, **kw):
         """Restarts a kernel via HTTP."""
         if self.has_kernel:
+            assert self.kernel_url is not None
             kernel_url = self.kernel_url + "/restart"
             self.log.debug("Request restart kernel at: %s", kernel_url)
             response = await gateway_request(kernel_url, method="POST", body=json_encode({}))
@@ -462,6 +463,7 @@ class GatewayKernelManager(AsyncKernelManager):
     async def interrupt_kernel(self):
         """Interrupts the kernel via an HTTP request."""
         if self.has_kernel:
+            assert self.kernel_url is not None
             kernel_url = self.kernel_url + "/interrupt"
             self.log.debug("Request interrupt kernel at: %s", kernel_url)
             response = await gateway_request(kernel_url, method="POST", body=json_encode({}))
@@ -486,7 +488,7 @@ KernelManagerABC.register(GatewayKernelManager)
 
 class ChannelQueue(Queue):
 
-    channel_name: str = None
+    channel_name: Optional[str] = None
 
     def __init__(self, channel_name: str, channel_socket: websocket.WebSocket, log: Logger):
         super().__init__()
@@ -494,7 +496,7 @@ class ChannelQueue(Queue):
         self.channel_socket = channel_socket
         self.log = log
 
-    async def get_msg(self, *args, **kwargs) -> dict:
+    async def get_msg(self, *args: Any, **kwargs: Any) -> dict:
         timeout = kwargs.get("timeout", 1)
         msg = self.get(timeout=timeout)
         self.log.debug(
@@ -516,7 +518,7 @@ class ChannelQueue(Queue):
 
     @staticmethod
     def serialize_datetime(dt):
-        if isinstance(dt, (datetime.date, datetime.datetime)):
+        if isinstance(dt, (datetime.datetime)):
             return dt.timestamp()
         return None
 
@@ -572,13 +574,18 @@ class GatewayKernelClient(AsyncKernelClient):
     # flag for whether execute requests should be allowed to call raw_input:
     allow_stdin = False
     _channels_stopped = False
-    _channel_queues = {}
+    _channel_queues: Optional[dict] = {}
+    _control_channel: Optional[ChannelQueue]
+    _hb_channel: Optional[ChannelQueue]
+    _stdin_channel: Optional[ChannelQueue]
+    _iopub_channel: Optional[ChannelQueue]
+    _shell_channel: Optional[ChannelQueue]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.kernel_id = kwargs["kernel_id"]
-        self.channel_socket = None
-        self.response_router = None
+        self.channel_socket: Optional[websocket.WebSocket] = None
+        self.response_router: Optional[Thread] = None
 
     # --------------------------------------------------------------------------
     # Channel management methods
@@ -627,7 +634,9 @@ class GatewayKernelClient(AsyncKernelClient):
         self._channels_stopped = True
         self.log.debug("Closing websocket connection")
 
+        assert self.channel_socket is not None
         self.channel_socket.close()
+        assert self.response_router is not None
         self.response_router.join()
 
         if self._channel_queues:
@@ -641,7 +650,9 @@ class GatewayKernelClient(AsyncKernelClient):
         """Get the shell channel object for this kernel."""
         if self._shell_channel is None:
             self.log.debug("creating shell channel queue")
+            assert self.channel_socket is not None
             self._shell_channel = ChannelQueue("shell", self.channel_socket, self.log)
+            assert self._channel_queues is not None
             self._channel_queues["shell"] = self._shell_channel
         return self._shell_channel
 
@@ -650,7 +661,9 @@ class GatewayKernelClient(AsyncKernelClient):
         """Get the iopub channel object for this kernel."""
         if self._iopub_channel is None:
             self.log.debug("creating iopub channel queue")
+            assert self.channel_socket is not None
             self._iopub_channel = ChannelQueue("iopub", self.channel_socket, self.log)
+            assert self._channel_queues is not None
             self._channel_queues["iopub"] = self._iopub_channel
         return self._iopub_channel
 
@@ -659,7 +672,9 @@ class GatewayKernelClient(AsyncKernelClient):
         """Get the stdin channel object for this kernel."""
         if self._stdin_channel is None:
             self.log.debug("creating stdin channel queue")
+            assert self.channel_socket is not None
             self._stdin_channel = ChannelQueue("stdin", self.channel_socket, self.log)
+            assert self._channel_queues is not None
             self._channel_queues["stdin"] = self._stdin_channel
         return self._stdin_channel
 
@@ -668,7 +683,9 @@ class GatewayKernelClient(AsyncKernelClient):
         """Get the hb channel object for this kernel."""
         if self._hb_channel is None:
             self.log.debug("creating hb channel queue")
+            assert self.channel_socket is not None
             self._hb_channel = HBChannelQueue("hb", self.channel_socket, self.log)
+            assert self._channel_queues is not None
             self._channel_queues["hb"] = self._hb_channel
         return self._hb_channel
 
@@ -677,7 +694,9 @@ class GatewayKernelClient(AsyncKernelClient):
         """Get the control channel object for this kernel."""
         if self._control_channel is None:
             self.log.debug("creating control channel queue")
+            assert self.channel_socket is not None
             self._control_channel = ChannelQueue("control", self.channel_socket, self.log)
+            assert self._channel_queues is not None
             self._channel_queues["control"] = self._control_channel
         return self._control_channel
 
@@ -691,11 +710,13 @@ class GatewayKernelClient(AsyncKernelClient):
         """
         try:
             while not self._channels_stopped:
+                assert self.channel_socket is not None
                 raw_message = self.channel_socket.recv()
                 if not raw_message:
                     break
                 response_message = json_decode(utf8(raw_message))
                 channel = response_message["channel"]
+                assert self._channel_queues is not None
                 self._channel_queues[channel].put_nowait(response_message)
 
         except websocket.WebSocketConnectionClosedException:

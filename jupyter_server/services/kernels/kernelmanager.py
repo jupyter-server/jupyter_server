@@ -411,7 +411,7 @@ class MappingKernelManager(MultiKernelManager):
         kernel = self.get_kernel(kernel_id)
         # return a Future that will resolve when the kernel has successfully restarted
         channel = kernel.connect_shell()
-        future = Future()
+        future: Future = Future()
 
         def finish():
             """Common cleanup when restart finishes/fails for any reason."""

@@ -16,7 +16,7 @@ import os.path as osp
 import shutil
 import sys
 
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 
 HERE = osp.abspath(osp.dirname(__file__))
 

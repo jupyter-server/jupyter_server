@@ -137,7 +137,7 @@ class ExtensionApp(JupyterApp):
     # A useful class property that subclasses can override to
     # configure the underlying Jupyter Server when this extension
     # is launched directly (using its `launch_instance` method).
-    serverapp_config = {}
+    serverapp_config: dict = {}
 
     # Some subclasses will likely override this trait to flip
     # the default value to False if they don't offer a browser
@@ -165,7 +165,7 @@ class ExtensionApp(JupyterApp):
     # file, jupyter_{name}_config.
     # This should also match the jupyter subcommand used to launch
     # this extension from the CLI, e.g. `jupyter {name}`.
-    name = None
+    name = "ExtensionApp"
 
     @classmethod
     def get_extension_package(cls):
@@ -318,7 +318,7 @@ class ExtensionApp(JupyterApp):
             handler = handler_items[1]
 
             # Get handler kwargs, if given
-            kwargs = {}
+            kwargs: dict = {}
             if issubclass(handler, ExtensionHandlerMixin):
                 kwargs["name"] = self.name
 

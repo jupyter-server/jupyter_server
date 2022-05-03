@@ -4,6 +4,7 @@
 import json
 import mimetypes
 from base64 import decodebytes
+from typing import List
 
 from tornado import web
 
@@ -57,7 +58,7 @@ class FilesHandler(JupyterHandler):
 
         model = await ensure_async(cm.get(path, type="file", content=include_body))
 
-        if self.get_argument("download", False):
+        if self.get_argument("download", None):
             self.set_attachment_header(name)
 
         # get mimetype from filename
@@ -91,4 +92,4 @@ class FilesHandler(JupyterHandler):
             self.flush()
 
 
-default_handlers = []
+default_handlers: List[JupyterHandler] = []
