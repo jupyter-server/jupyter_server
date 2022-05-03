@@ -39,9 +39,9 @@ def get_regex_to_resource_map():
     from jupyter_server.serverapp import JUPYTER_SERVICE_HANDLERS
 
     modules = []
-    for mod in JUPYTER_SERVICE_HANDLERS.values():
-        if mod:
-            modules.extend(mod)
+    for mod_name in JUPYTER_SERVICE_HANDLERS.values():
+        if mod_name:
+            modules.extend(mod_name)
     resource_map = {}
     for handler_module in modules:
         mod = importlib.import_module(handler_module)

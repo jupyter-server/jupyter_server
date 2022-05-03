@@ -3,9 +3,9 @@ import os
 from pathlib import Path
 
 import pytest
-import tornado
 from nbformat import writes
 from nbformat.v4 import new_code_cell, new_markdown_cell, new_notebook, new_output
+from tornado.httpclient import HTTPClientError
 
 from .utils import expected_http_error
 
@@ -28,7 +28,7 @@ async def fetch_expect_200(jp_fetch, *path_parts):
 
 
 async def fetch_expect_404(jp_fetch, *path_parts):
-    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+    with pytest.raises(HTTPClientError) as e:
         await jp_fetch("files", *path_parts, method="GET")
     assert expected_http_error(e, 404), [path_parts, e]
 

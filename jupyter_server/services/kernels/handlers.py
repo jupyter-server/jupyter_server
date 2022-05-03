@@ -114,7 +114,10 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     # class-level registry of open sessions
     # allows checking for conflict on session-id,
     # which is used as a zmq identity and must be unique.
-    _open_sessions = {}
+    _open_sessions: dict = {}
+
+    _kernel_info_future: Future
+    _close_future: Future
 
     @property
     def kernel_info_timeout(self):
@@ -177,7 +180,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         # establishing its zmq subscriptions before processing the next request.
         if getattr(kernel, "execution_state", None) == "busy":
             self.log.debug("Nudge: not nudging busy kernel %s", self.kernel_id)
-            f = Future()
+            f: Future = Future()
             f.set_result(None)
             return f
         # Use a transient shell channel to prevent leaking
@@ -189,8 +192,8 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         # The IOPub used by the client, whose subscriptions we are verifying.
         iopub_channel = self.channels["iopub"]
 
-        info_future = Future()
-        iopub_future = Future()
+        info_future: Future = Future()
+        iopub_future: Future = Future()
         both_done = gen.multi([info_future, iopub_future])
 
         def finish(_=None):
@@ -203,7 +206,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
 
         def cleanup(_=None):
             """Common cleanup"""
-            loop.remove_timeout(nudge_handle)
+            loop.remove_timeout(nudge_handle)  # type:ignore[has-type]
             iopub_channel.stop_on_recv()
             if not shell_channel.closed():
                 shell_channel.close()
@@ -271,7 +274,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 log(f"Nudge: attempt {count} on kernel {self.kernel_id}")
                 self.session.send(shell_channel, "kernel_info_request")
                 self.session.send(control_channel, "kernel_info_request")
-                nonlocal nudge_handle
+                nonlocal nudge_handle  # type:ignore[misc]
                 nudge_handle = loop.call_later(0.5, nudge, count)
 
         nudge_handle = loop.call_later(0, nudge, count=0)
@@ -293,8 +296,9 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             self.log.debug("Requesting kernel info from %s", self.kernel_id)
             # Create a kernel_info channel to query the kernel protocol version.
             # This channel will be closed after the kernel_info reply is received.
-            if self.kernel_info_channel is None:
+            if self.kernel_info_channel is None:  # type:ignore[has-type]
                 self.kernel_info_channel = km.connect_shell(self.kernel_id)
+            assert self.kernel_info_channel is not None
             self.kernel_info_channel.on_recv(self._handle_kernel_info_reply)
             self.session.send(self.kernel_info_channel, "kernel_info_request")
             # store the future on the kernel, so only one request is sent
@@ -512,6 +516,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         ignore_msg = False
         if am:
             msg["header"] = self.get_part("header", msg["header"], msg_list)
+            assert msg["header"] is not None
             if msg["header"]["msg_type"] not in am:
                 self.log.warning(
                     'Received message of type "%s", which is not allowed. Ignoring.'

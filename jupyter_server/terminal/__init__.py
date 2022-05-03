@@ -20,7 +20,7 @@ def initialize(webapp, root_dir, connection_url, settings):
     if os.name == "nt":
         default_shell = "powershell.exe"
     else:
-        default_shell = which("sh")
+        default_shell = which("sh")  # type:ignore[assignment]
     shell_override = settings.get("shell_command")
     shell = [os.environ.get("SHELL") or default_shell] if shell_override is None else shell_override
     # When the notebook server is not running in a terminal (e.g. when

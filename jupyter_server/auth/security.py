@@ -64,9 +64,9 @@ def passwd(passphrase=None, algorithm="argon2"):
             time_cost=10,
             parallelism=8,
         )
-        h = ph.hash(passphrase)
+        h_ph = ph.hash(passphrase)
 
-        return ":".join((algorithm, h))
+        return ":".join((algorithm, h_ph))
 
     h = hashlib.new(algorithm)
     salt = ("%0" + str(salt_len) + "x") % random.getrandbits(4 * salt_len)

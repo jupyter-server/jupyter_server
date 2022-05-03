@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from traitlets.config import Config
 
@@ -78,7 +80,7 @@ def test_extensionapp_no_parent():
     assert app.serverapp is not None
 
 
-OPEN_BROWSER_COMBINATIONS = (
+OPEN_BROWSER_COMBINATIONS: Any = (
     (True, {}),
     (True, {"ServerApp": {"open_browser": True}}),
     (False, {"ServerApp": {"open_browser": False}}),

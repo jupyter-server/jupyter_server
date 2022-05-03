@@ -32,7 +32,7 @@ try:
     import resource
 except ImportError:
     # Windows
-    resource = None
+    resource = None  # type:ignore[assignment]
 
 from jinja2 import Environment, FileSystemLoader
 from jupyter_core.paths import secure_write
@@ -275,7 +275,7 @@ class ServerWebApplication(web.Application):
             _template_path = (_template_path,)
         template_path = [os.path.expanduser(path) for path in _template_path]
 
-        jenv_opt = {"autoescape": True}
+        jenv_opt: dict = {"autoescape": True}
         jenv_opt.update(jinja_env_options if jinja_env_options else {})
 
         env = Environment(
@@ -1036,7 +1036,7 @@ class ServerApp(JupyterApp):
             return os.getenv("JUPYTER_TOKEN")
         if os.getenv("JUPYTER_TOKEN_FILE"):
             self._token_generated = False
-            with open(os.getenv("JUPYTER_TOKEN_FILE")) as token_file:
+            with open(os.getenv("JUPYTER_TOKEN_FILE", "")) as token_file:
                 return token_file.read()
         if self.password:
             # no token if password is enabled
@@ -1191,10 +1191,10 @@ class ServerApp(JupyterApp):
         except ValueError:
             # Address is a hostname
             for info in socket.getaddrinfo(self.ip, self.port, 0, socket.SOCK_STREAM):
-                addr = info[4][0]
+                addr = info[4][0]  # type:ignore[assignment]
 
                 try:
-                    parsed = ipaddress.ip_address(addr.split("%")[0])
+                    parsed = ipaddress.ip_address(addr.split("%")[0])  # type:ignore[union-attr]
                 except ValueError:
                     self.log.warning("Unrecognised IP address: %r", addr)
                     continue
@@ -1202,7 +1202,10 @@ class ServerApp(JupyterApp):
                 # Macs map localhost to 'fe80::1%lo0', a link local address
                 # scoped to the loopback interface. For now, we'll assume that
                 # any scoped link-local address is effectively local.
-                if not (parsed.is_loopback or (("%" in addr) and parsed.is_link_local)):
+                if not (
+                    parsed.is_loopback
+                    or (("%" in addr) and parsed.is_link_local)  # type:ignore[operator]
+                ):
                     return True
             return False
         else:
@@ -2015,12 +2018,7 @@ class ServerApp(JupyterApp):
                 query = urllib.parse.urlencode({"token": token})
         # Build the URL Parts to dump.
         urlparts = urllib.parse.ParseResult(
-            scheme=scheme,
-            netloc=netloc,
-            path=path,
-            params=None,
-            query=query,
-            fragment=None,
+            scheme=scheme, netloc=netloc, path=path, query=query or "", params="", fragment=""
         )
         return urlparts
 
@@ -2678,6 +2676,7 @@ class ServerApp(JupyterApp):
         assembled_url, _ = self._prepare_browser_open()
 
         def target():
+            assert browser is not None
             browser.open(assembled_url, new=self.webbrowser_open_new)
 
         threading.Thread(target=target).start()
