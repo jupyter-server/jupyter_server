@@ -18,7 +18,7 @@ class AuthorizerforTesting(Authorizer):
     # Set these class attributes from within a test
     # to verify that they match the arguments passed
     # by the REST API.
-    permissions = {}
+    permissions: dict = {}
 
     def normalize_url(self, path):
         """Drop the base URL and make sure path leads with a /"""
@@ -205,7 +205,6 @@ async def test_authorized_requests(
     send_request,
     tmp_path,
     jp_serverapp,
-    jp_cleanup_subprocesses,
     method,
     url,
     body,
@@ -275,5 +274,3 @@ async def test_authorized_requests(
 
     code = await send_request(url, body=body, method=method)
     assert code in expected_codes
-
-    await jp_cleanup_subprocesses()

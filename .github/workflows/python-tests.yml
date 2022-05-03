@@ -19,7 +19,7 @@ jobs:
           - os: windows-latest
             python-version: "3.9"
           - os: ubuntu-latest
-            python-version: "pypy-3.7"
+            python-version: "pypy-3.8"
           - os: macos-latest
             python-version: "3.8"
     steps:
@@ -137,6 +137,8 @@ jobs:
     steps:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - uses: jupyterlab/maintainer-tools/.github/actions/test-sdist@v1
+        with:
+          test_command: pytest -vv || pytest -vv --lf
 
   python_tests_check: # This job does nothing and is only used for the branch protection
     if: always()

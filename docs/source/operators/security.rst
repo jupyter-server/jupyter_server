@@ -77,16 +77,128 @@ but this is **NOT RECOMMENDED**, unless authentication or access restrictions ar
     c.ServerApp.token = ''
     c.ServerApp.password = ''
 
-Authorization
--------------
+
+Authentication and Authorization
+--------------------------------
 
 .. versionadded:: 2.0
+
+There are two steps to deciding whether to allow a given request to be happen.
+
+The first step is "Authentication" (identifying who is making the request).
+This is handled by the :class:`.IdentityProvider`.
+
+Whether a given user is allowed to take a specific action is called "Authorization",
+and is handled separately, by an :class:`.Authorizer`.
+
+These two classes may work together,
+as the information returned by the IdentityProvider is given to the Authorizer when it makes its decisions.
+
+Authentication always takes precedence because if no user is authenticated,
+no authorization checks need to be made,
+as all requests requiring _authorization_ must first complete _authentication_.
+
+Identity Providers
+******************
+
+The :class:`.IdentityProvider` class is responsible for the "authorization" step,
+identifying the user making the request,
+and constructing information about them.
+
+It principally implements two methods.
+
+.. autoclass:: jupyter_server.auth.IdentityProvider
+
+  .. automethod:: get_user
+  .. automethod:: identity_model
+
+The first is :meth:`.IdentityProvider.get_user`.
+This method is given a RequestHandler, and is responsible for deciding whether there is an authenticated user making the request.
+If the request is authenticated, it should return a :class:`.jupyter_server.auth.User` object representing the authenticated user.
+It should return None if the request is not authenticated.
+
+The default implementation accepts token or password authentication.
+
+This User object will be available as `self.current_user` in any request handler.
+Request methods decorated with tornado's `@web.authenticated` decorator
+will only be allowed if this method returns something.
+
+The User object will be a Python :py:class:`dataclasses.dataclass`, `jupyter_server.auth.User`:
+
+.. autoclass:: jupyter_server.auth.User
+
+A custom IdentityProvider _may_ return a custom subclass.
+
+
+The next method an identity provider has is :meth:`~.IdentityProvider.identity_model`.
+`identity_model(user)` is responsible for transforming the user object returned from `.get_user()`
+into a standard identity model dictionary,
+for use in the `/api/me` endpoint.
+
+If your user object is a simple username string or a dict with a `username` field,
+you may not need to implement this method, as the default implementation will suffice.
+
+Any required fields missing from the dict returned by this method will be filled-out with defaults.
+Only `username` is strictly required, if that is all the information the identity provider has available.
+
+Missing will be derived according to:
+
+- if `name` is missing, use `username`
+- if `display_name` is missing, use `name`
+
+Other required fields will be filled with `None`.
+
+
+Identity Model
+^^^^^^^^^^^^^^
+
+The identity model is the model accessed at `/api/me`,
+and describes the currently authenticated user.
+
+It has the following fields:
+
+username
+  (string)
+  Unique string identifying the user.
+  Must be non-empty.
+name
+  (string)
+  For-humans name of the user.
+  May be the same as `username` in systems where only usernames are available.
+display_name
+  (string)
+  Alternate rendering of name for display, such as a nickname.
+  Often the same as `name`.
+initials
+  (string or null)
+  Short string of initials.
+  Initials should not be derived automatically due to localization issues.
+  May be `null` if unavailable.
+avatar_url
+  (string or null)
+  URL of an avatar image to be used for the user.
+  May be `null` if unavailable.
+color
+  (string or null)
+  A CSS color string to use as a preferred color,
+  such as for collaboration cursors.
+  May be `null` if unavailable.
+
+Authorization
+*************
+
+Authorization is the second step in allowing an action,
+after a user has been _authenticated_ by the IdentityProvider.
 
 Authorization in Jupyter Server serves to provide finer grained control of access to its
 API resources. With authentication, requests are accepted if the current user is known by
 the server. Thus it can restrain access to specific users, but there is no way to give allowed
 users more or less permissions. Jupyter Server provides a thin and extensible authorization layer
 which checks if the current user is authorized to make a specific request.
+
+.. autoclass:: jupyter_server.auth.Authorizer
+
+  .. automethod:: is_authorized
 
 This is done by calling a ``is_authorized(handler, user, action, resource)`` method before each
 request handler. Each request is labeled as either a "read", "write", or "execute" ``action``:
@@ -232,6 +344,7 @@ follows:
 The ``is_authorized()`` method will automatically be called whenever a handler is decorated with
 ``@authorized`` (from ``jupyter_server.auth``), similarly to the
 ``@authenticated`` decorator for authorization (from ``tornado.web``).
+
 
 Security in notebook documents
 ==============================

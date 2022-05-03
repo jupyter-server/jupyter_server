@@ -3,7 +3,7 @@ import json
 import os
 import uuid
 from datetime import datetime
-from io import StringIO
+from io import BytesIO
 from unittest.mock import patch
 
 import pytest
@@ -34,7 +34,7 @@ def generate_kernelspec(name):
 
 
 # We'll mock up two kernelspecs - kspec_foo and kspec_bar
-kernelspecs = {
+kernelspecs: dict = {
     "default": "kspec_foo",
     "kernelspecs": {
         "kspec_foo": generate_kernelspec("kspec_foo"),
@@ -72,16 +72,17 @@ async def mock_gateway_request(url, **kwargs):
 
     # Fetch all kernelspecs
     if endpoint.endswith("/api/kernelspecs") and method == "GET":
-        response_buf = StringIO(json.dumps(kernelspecs))
+        response_buf = BytesIO(json.dumps(kernelspecs).encode("utf-8"))
         response = await ensure_async(HTTPResponse(request, 200, buffer=response_buf))
         return response
 
     # Fetch named kernelspec
     if endpoint.rfind("/api/kernelspecs/") >= 0 and method == "GET":
         requested_kernelspec = endpoint.rpartition("/")[2]
-        kspecs = kernelspecs.get("kernelspecs")
+        kspecs: dict = kernelspecs["kernelspecs"]
         if requested_kernelspec in kspecs:
-            response_buf = StringIO(json.dumps(kspecs.get(requested_kernelspec)))
+            response_str = json.dumps(kspecs.get(requested_kernelspec))
+            response_buf = BytesIO(response_str.encode("utf-8"))
             response = await ensure_async(HTTPResponse(request, 200, buffer=response_buf))
             return response
         else:
@@ -96,7 +97,7 @@ async def mock_gateway_request(url, **kwargs):
         assert name == kspec_name  # Ensure that KERNEL_ env values get propagated
         model = generate_model(name)
         running_kernels[model.get("id")] = model  # Register model as a running kernel
-        response_buf = StringIO(json.dumps(model))
+        response_buf = BytesIO(json.dumps(model).encode("utf-8"))
         response = await ensure_async(HTTPResponse(request, 201, buffer=response_buf))
         return response
 
@@ -106,7 +107,7 @@ async def mock_gateway_request(url, **kwargs):
         for kernel_id in running_kernels.keys():
             model = running_kernels.get(kernel_id)
             kernels.append(model)
-        response_buf = StringIO(json.dumps(kernels))
+        response_buf = BytesIO(json.dumps(kernels).encode("utf-8"))
         response = await ensure_async(HTTPResponse(request, 200, buffer=response_buf))
         return response
 
@@ -122,7 +123,8 @@ async def mock_gateway_request(url, **kwargs):
                 raise HTTPError(404, message="Kernel does not exist: %s" % requested_kernel_id)
         elif action == "restart":
             if requested_kernel_id in running_kernels:
-                response_buf = StringIO(json.dumps(running_kernels.get(requested_kernel_id)))
+                response_str = json.dumps(running_kernels.get(requested_kernel_id))
+                response_buf = BytesIO(response_str.encode("utf-8"))
                 response = await ensure_async(HTTPResponse(request, 204, buffer=response_buf))
                 return response
             else:
@@ -143,7 +145,8 @@ async def mock_gateway_request(url, **kwargs):
     if endpoint.rfind("/api/kernels/") >= 0 and method == "GET":
         requested_kernel_id = endpoint.rpartition("/")[2]
         if requested_kernel_id in running_kernels:
-            response_buf = StringIO(json.dumps(running_kernels.get(requested_kernel_id)))
+            response_str = json.dumps(running_kernels.get(requested_kernel_id))
+            response_buf = BytesIO(response_str.encode("utf-8"))
             response = await ensure_async(HTTPResponse(request, 200, buffer=response_buf))
             return response
         else:
@@ -313,6 +316,7 @@ async def create_session(root_dir, jp_fetch, kernel_name):
         kernel_id = model.get("kernel").get("id")
         # ensure its in the running_kernels and name matches.
         running_kernel = running_kernels.get(kernel_id)
+        assert running_kernel is not None
         assert kernel_id == running_kernel.get("id")
         assert model.get("kernel").get("name") == running_kernel.get("name")
         session_id = model.get("id")
@@ -359,6 +363,7 @@ async def create_kernel(jp_fetch, kernel_name):
         kernel_id = model.get("id")
         # ensure its in the running_kernels and name matches.
         running_kernel = running_kernels.get(kernel_id)
+        assert running_kernel is not None
         assert kernel_id == running_kernel.get("id")
         assert model.get("name") == kernel_name
 
@@ -398,6 +403,7 @@ async def restart_kernel(jp_fetch, kernel_id):
         restarted_kernel_id = model.get("id")
         # ensure its in the running_kernels and name matches.
         running_kernel = running_kernels.get(restarted_kernel_id)
+        assert running_kernel is not None
         assert restarted_kernel_id == running_kernel.get("id")
         assert model.get("name") == running_kernel.get("name")
 

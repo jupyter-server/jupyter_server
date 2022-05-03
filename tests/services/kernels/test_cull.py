@@ -43,7 +43,7 @@ CULL_INTERVAL = 1
         ),
     ],
 )
-async def test_cull_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses):
+async def test_cull_idle(jp_fetch, jp_ws_fetch):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
     kid = kernel["id"]
@@ -59,7 +59,6 @@ async def test_cull_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses):
     ws.close()
     culled = await get_cull_status(kid, jp_fetch)  # not connected, should be culled
     assert culled
-    await jp_cleanup_subprocesses()
 
 
 # Pending kernels was released in Jupyter Client 7.1
@@ -89,9 +88,7 @@ async def test_cull_idle(jp_fetch, jp_ws_fetch, jp_cleanup_subprocesses):
     ],
 )
 @pytest.mark.timeout(30)
-async def test_cull_dead(
-    jp_fetch, jp_ws_fetch, jp_serverapp, jp_cleanup_subprocesses, jp_kernelspecs
-):
+async def test_cull_dead(jp_fetch, jp_ws_fetch, jp_serverapp, jp_kernelspecs):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
     kid = kernel["id"]
@@ -105,7 +102,6 @@ async def test_cull_dead(
     assert model["connections"] == 0
     culled = await get_cull_status(kid, jp_fetch)  # connected, should not be culled
     assert culled
-    await jp_cleanup_subprocesses()
 
 
 async def get_cull_status(kid, jp_fetch):

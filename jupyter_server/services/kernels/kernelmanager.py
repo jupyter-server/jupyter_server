@@ -149,6 +149,7 @@ class MappingKernelManager(MultiKernelManager):
 
     def __init__(self, **kwargs):
         self.pinned_superclass = MultiKernelManager
+        self._pending_kernel_tasks = {}
         self.pinned_superclass.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
 
@@ -216,9 +217,11 @@ class MappingKernelManager(MultiKernelManager):
                 kwargs["kernel_id"] = kernel_id
             kernel_id = await ensure_async(self.pinned_superclass.start_kernel(self, **kwargs))
             self._kernel_connections[kernel_id] = 0
-            fut = asyncio.ensure_future(self._finish_kernel_start(kernel_id))
+            task = asyncio.create_task(self._finish_kernel_start(kernel_id))
             if not getattr(self, "use_pending_kernels", None):
-                await fut
+                await task
+            else:
+                self._pending_kernel_tasks[kernel_id] = task
             # add busy/activity markers:
             kernel = self.get_kernel(kernel_id)
             kernel.execution_state = "starting"
@@ -245,8 +248,8 @@ class MappingKernelManager(MultiKernelManager):
         if hasattr(km, "ready"):
             try:
                 await km.ready
-            except Exception:
-                self.log.exception(km.ready.exception())
+            except Exception as e:
+                self.log.exception(e)
                 return
 
         self._kernel_ports[kernel_id] = km.ports
@@ -372,7 +375,7 @@ class MappingKernelManager(MultiKernelManager):
         buffer_info = self._kernel_buffers.pop(kernel_id)
         # close buffering streams
         for stream in buffer_info["channels"].values():
-            if not stream.closed():
+            if not stream.socket.closed:
                 stream.on_recv(None)
                 stream.close()
 
@@ -387,12 +390,17 @@ class MappingKernelManager(MultiKernelManager):
     def shutdown_kernel(self, kernel_id, now=False, restart=False):
         """Shutdown a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
-        self.stop_watching_activity(kernel_id)
-        self.stop_buffering(kernel_id)
 
         # Decrease the metric of number of kernels
         # running for the relevant kernel type by 1
         KERNEL_CURRENTLY_RUNNING_TOTAL.labels(type=self._kernels[kernel_id].kernel_name).dec()
+
+        if kernel_id in self._pending_kernel_tasks:
+            task = self._pending_kernel_tasks.pop(kernel_id)
+            task.cancel()
+        else:
+            self.stop_watching_activity(kernel_id)
+            self.stop_buffering(kernel_id)
 
         self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
 
@@ -403,7 +411,7 @@ class MappingKernelManager(MultiKernelManager):
         kernel = self.get_kernel(kernel_id)
         # return a Future that will resolve when the kernel has successfully restarted
         channel = kernel.connect_shell()
-        future = Future()
+        future: Future = Future()
 
         def finish():
             """Common cleanup when restart finishes/fails for any reason."""
@@ -533,7 +541,8 @@ class MappingKernelManager(MultiKernelManager):
         """Stop watching IOPub messages on a kernel for activity."""
         kernel = self._kernels[kernel_id]
         if getattr(kernel, "_activity_stream", None):
-            kernel._activity_stream.close()
+            if not kernel._activity_stream.socket.closed:
+                kernel._activity_stream.close()
             kernel._activity_stream = None
 
     def initialize_culler(self):
@@ -638,19 +647,24 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
         self.pinned_superclass = AsyncMultiKernelManager
         self.pinned_superclass.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
+        self._pending_kernel_tasks = {}
 
     async def shutdown_kernel(self, kernel_id, now=False, restart=False):
         """Shutdown a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
-        self.stop_watching_activity(kernel_id)
-        self.stop_buffering(kernel_id)
 
         # Decrease the metric of number of kernels
         # running for the relevant kernel type by 1
         KERNEL_CURRENTLY_RUNNING_TOTAL.labels(type=self._kernels[kernel_id].kernel_name).dec()
 
+        if kernel_id in self._pending_kernel_tasks:
+            task = self._pending_kernel_tasks.pop(kernel_id)
+            task.cancel()
+        else:
+            self.stop_watching_activity(kernel_id)
+            self.stop_buffering(kernel_id)
+
         # Finish shutting down the kernel before clearing state to avoid a race condition.
-        ret = await self.pinned_superclass.shutdown_kernel(
+        return await self.pinned_superclass.shutdown_kernel(
             self, kernel_id, now=now, restart=restart
         )
-        return ret

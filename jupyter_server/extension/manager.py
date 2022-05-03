@@ -167,7 +167,7 @@ class ExtensionPackage(HasTraits):
         self._linked_points = {}
         super().__init__(*args, **kwargs)
 
-    _linked_points = {}
+    _linked_points: dict = {}
 
     @validate_trait("name")
     def _validate_name(self, proposed):

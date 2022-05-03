@@ -3,9 +3,9 @@ from base64 import encodebytes
 from shutil import which
 
 import pytest
-import tornado
 from nbformat import writes
 from nbformat.v4 import new_code_cell, new_markdown_cell, new_notebook, new_output
+from tornado.httpclient import HTTPClientError
 
 from ..utils import expected_http_error
 
@@ -75,7 +75,7 @@ async def test_from_file(jp_fetch, notebook):
 
 
 async def test_from_file_404(jp_fetch, notebook):
-    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+    with pytest.raises(HTTPClientError) as e:
         await jp_fetch(
             "nbconvert",
             "html",

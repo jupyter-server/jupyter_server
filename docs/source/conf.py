@@ -16,7 +16,7 @@ import os.path as osp
 import shutil
 import sys
 
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 
 HERE = osp.abspath(osp.dirname(__file__))
 
@@ -73,6 +73,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
+    "sphinx.ext.napoleon",
     "IPython.sphinxext.ipython_console_highlighting",
     "sphinxcontrib_github_alt",
     "sphinxcontrib.openapi",
@@ -131,7 +132,7 @@ language = None
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
-# default_role = None
+default_role = "literal"
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 # add_function_parentheses = True
@@ -360,6 +361,7 @@ intersphinx_mapping = {
     "nbconvert": ("https://nbconvert.readthedocs.io/en/latest/", None),
     "nbformat": ("https://nbformat.readthedocs.io/en/latest/", None),
     "jupyter": ("https://jupyter.readthedocs.io/en/latest/", None),
+    "tornado": ("https://www.tornadoweb.org/en/stable/", None),
 }
 
 spelling_lang = "en_US"

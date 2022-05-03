@@ -95,7 +95,7 @@ class BaseJSONConfigManager(LoggingConfigurable):
             section_name,
             "\n\t".join(paths),
         )
-        data = {}
+        data: dict = {}
         for path in paths:
             if os.path.isfile(path):
                 with open(path, encoding="utf-8") as f:

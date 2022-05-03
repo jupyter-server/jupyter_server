@@ -32,7 +32,7 @@ try:
     import resource
 except ImportError:
     # Windows
-    resource = None
+    resource = None  # type:ignore[assignment]
 
 from jinja2 import Environment, FileSystemLoader
 from jupyter_core.paths import secure_write
@@ -91,6 +91,7 @@ from jupyter_server import (
 from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
 from jupyter_server.auth.authorizer import AllowAllAuthorizer, Authorizer
+from jupyter_server.auth.identity import IdentityProvider
 from jupyter_server.auth.login import LoginHandler
 from jupyter_server.auth.logout import LogoutHandler
 from jupyter_server.base.handlers import (
@@ -212,7 +213,9 @@ class ServerWebApplication(web.Application):
         default_url,
         settings_overrides,
         jinja_env_options,
+        *,
         authorizer=None,
+        identity_provider=None,
     ):
         if authorizer is None:
             warnings.warn(
@@ -221,7 +224,16 @@ class ServerWebApplication(web.Application):
                 RuntimeWarning,
                 stacklevel=2,
             )
-            authorizer = AllowAllAuthorizer(jupyter_app)
+            authorizer = AllowAllAuthorizer(parent=jupyter_app)
+
+        if identity_provider is None:
+            warnings.warn(
+                "identity_provider unspecified. Using default IdentityProvider."
+                " Specify an identity_provider to avoid this message.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            identity_provider = IdentityProvider(parent=jupyter_app)
 
         settings = self.init_settings(
             jupyter_app,
@@ -237,6 +249,7 @@ class ServerWebApplication(web.Application):
             settings_overrides,
             jinja_env_options,
             authorizer=authorizer,
+            identity_provider=identity_provider,
         )
         handlers = self.init_handlers(default_services, settings)
 
@@ -256,7 +269,9 @@ class ServerWebApplication(web.Application):
         default_url,
         settings_overrides,
         jinja_env_options=None,
+        *,
         authorizer=None,
+        identity_provider=None,
     ):
 
         _template_path = settings_overrides.get(
@@ -267,7 +282,7 @@ class ServerWebApplication(web.Application):
             _template_path = (_template_path,)
         template_path = [os.path.expanduser(path) for path in _template_path]
 
-        jenv_opt = {"autoescape": True}
+        jenv_opt: dict = {"autoescape": True}
         jenv_opt.update(jinja_env_options if jinja_env_options else {})
 
         env = Environment(
@@ -338,6 +353,7 @@ class ServerWebApplication(web.Application):
             kernel_spec_manager=kernel_spec_manager,
             config_manager=config_manager,
             authorizer=authorizer,
+            identity_provider=identity_provider,
             # handlers
             extra_services=extra_services,
             # Jupyter stuff
@@ -395,6 +411,8 @@ class ServerWebApplication(web.Application):
 
         # Add extra handlers from contents manager.
         handlers.extend(settings["contents_manager"].get_extra_handlers())
+        # And from identity provider
+        handlers.extend(settings["identity_provider"].get_handlers())
 
         # If gateway mode is enabled, replace appropriate handlers to perform redirection
         if GatewayClient.instance().gateway_enabled:
@@ -1023,7 +1041,7 @@ class ServerApp(JupyterApp):
             return os.getenv("JUPYTER_TOKEN")
         if os.getenv("JUPYTER_TOKEN_FILE"):
             self._token_generated = False
-            with open(os.getenv("JUPYTER_TOKEN_FILE")) as token_file:
+            with open(os.getenv("JUPYTER_TOKEN_FILE", "")) as token_file:
                 return token_file.read()
         if self.password:
             # no token if password is enabled
@@ -1178,10 +1196,10 @@ class ServerApp(JupyterApp):
         except ValueError:
             # Address is a hostname
             for info in socket.getaddrinfo(self.ip, self.port, 0, socket.SOCK_STREAM):
-                addr = info[4][0]
+                addr = info[4][0]  # type:ignore[assignment]
 
                 try:
-                    parsed = ipaddress.ip_address(addr.split("%")[0])
+                    parsed = ipaddress.ip_address(addr.split("%")[0])  # type:ignore[union-attr]
                 except ValueError:
                     self.log.warning("Unrecognised IP address: %r", addr)
                     continue
@@ -1189,7 +1207,10 @@ class ServerApp(JupyterApp):
                 # Macs map localhost to 'fe80::1%lo0', a link local address
                 # scoped to the loopback interface. For now, we'll assume that
                 # any scoped link-local address is effectively local.
-                if not (parsed.is_loopback or (("%" in addr) and parsed.is_link_local)):
+                if not (
+                    parsed.is_loopback
+                    or (("%" in addr) and parsed.is_link_local)  # type:ignore[operator]
+                ):
                     return True
             return False
         else:
@@ -1488,6 +1509,13 @@ class ServerApp(JupyterApp):
         help=_i18n("The authorizer class to use."),
     )
 
+    identity_provider_class = Type(
+        default_value=IdentityProvider,
+        klass=IdentityProvider,
+        config=True,
+        help=_i18n("The identity provider class to use."),
+    )
+
     trust_xheaders = Bool(
         False,
         config=True,
@@ -1580,11 +1608,22 @@ class ServerApp(JupyterApp):
             value = os.path.abspath(value)
         return value
 
+    # Because the validation of preferred_dir depends on root_dir and validation
+    # occurs when the trait is loaded, there are times when we should defer the
+    # validation of preferred_dir (e.g., when preferred_dir is defined via CLI
+    # and root_dir is defined via a config file).
+    _defer_preferred_dir_validation = False
+
     @validate("root_dir")
     def _root_dir_validate(self, proposal):
         value = self._normalize_dir(proposal["value"])
         if not os.path.isdir(value):
             raise TraitError(trans.gettext("No such directory: '%r'") % value)
+
+        if self._defer_preferred_dir_validation:
+            # If we're here, then preferred_dir is configured on the CLI and
+            # root_dir is configured in a file
+            self._preferred_dir_validation(self.preferred_dir, value)
         return value
 
     preferred_dir = Unicode(
@@ -1602,16 +1641,28 @@ class ServerApp(JupyterApp):
         if not os.path.isdir(value):
             raise TraitError(trans.gettext("No such preferred dir: '%r'") % value)
 
-        # preferred_dir must be equal or a subdir of root_dir
-        if not value.startswith(self.root_dir):
+        # Before we validate against root_dir, check if this trait is defined on the CLI
+        # and root_dir is not.  If that's the case, we'll defer it's further validation
+        # until root_dir is validated or the server is starting (the latter occurs when
+        # the default root_dir (cwd) is used).
+        cli_config = self.cli_config.get("ServerApp", {})
+        if "preferred_dir" in cli_config and "root_dir" not in cli_config:
+            self._defer_preferred_dir_validation = True
+
+        if not self._defer_preferred_dir_validation:  # Validate now
+            self._preferred_dir_validation(value, self.root_dir)
+        return value
+
+    def _preferred_dir_validation(self, preferred_dir: str, root_dir: str) -> None:
+        """Validate preferred dir relative to root_dir - preferred_dir must be equal or a subdir of root_dir"""
+        if not preferred_dir.startswith(root_dir):
             raise TraitError(
                 trans.gettext(
                     "preferred_dir must be equal or a subdir of root_dir. preferred_dir: '%r' root_dir: '%r'"
                 )
-                % (value, self.root_dir)
+                % (preferred_dir, root_dir)
             )
-
-        return value
+        self._defer_preferred_dir_validation = False
 
     @observe("root_dir")
     def _root_dir_changed(self, change):
@@ -1811,6 +1862,7 @@ class ServerApp(JupyterApp):
             log=self.log,
         )
         self.authorizer = self.authorizer_class(parent=self, log=self.log)
+        self.identity_provider = self.identity_provider_class(parent=self, log=self.log)
 
     def init_logging(self):
         # This prevents double log messages because tornado use a root logger that
@@ -1898,6 +1950,7 @@ class ServerApp(JupyterApp):
             self.tornado_settings,
             self.jinja_environment_options,
             authorizer=self.authorizer,
+            identity_provider=self.identity_provider,
         )
         if self.certfile:
             self.ssl_options["certfile"] = self.certfile
@@ -1974,12 +2027,7 @@ class ServerApp(JupyterApp):
                 query = urllib.parse.urlencode({"token": token})
         # Build the URL Parts to dump.
         urlparts = urllib.parse.ParseResult(
-            scheme=scheme,
-            netloc=netloc,
-            path=path,
-            params=None,
-            query=query,
-            fragment=None,
+            scheme=scheme, netloc=netloc, path=path, query=query or "", params="", fragment=""
         )
         return urlparts
 
@@ -2350,6 +2398,10 @@ class ServerApp(JupyterApp):
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
         super().initialize(argv=argv)
+        if self._defer_preferred_dir_validation:
+            # If we're here, then preferred_dir is configured on the CLI and
+            # root_dir has the default value (cwd)
+            self._preferred_dir_validation(self.preferred_dir, self.root_dir)
         if self._dispatching:
             return
         # Then, use extensions' config loading mechanism to
@@ -2389,6 +2441,8 @@ class ServerApp(JupyterApp):
         The kernels will shutdown themselves when this process no longer exists,
         but explicit shutdown allows the KernelManagers to cleanup the connection files.
         """
+        if not getattr(self, "kernel_manager", None):
+            return
         n_kernels = len(self.kernel_manager.list_kernel_ids())
         kernel_msg = trans.ngettext(
             "Shutting down %d kernel", "Shutting down %d kernels", n_kernels
@@ -2398,6 +2452,8 @@ class ServerApp(JupyterApp):
 
     async def cleanup_extensions(self):
         """Call shutdown hooks in all extensions."""
+        if not getattr(self, "extension_manager", None):
+            return
         n_extensions = len(self.extension_manager.extension_apps)
         extension_msg = trans.ngettext(
             "Shutting down %d extension", "Shutting down %d extensions", n_extensions
@@ -2592,6 +2648,7 @@ class ServerApp(JupyterApp):
         assembled_url, _ = self._prepare_browser_open()
 
         def target():
+            assert browser is not None
             browser.open(assembled_url, new=self.webbrowser_open_new)
 
         threading.Thread(target=target).start()
@@ -2676,6 +2733,8 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
+        if getattr(self, "session_manager", None):
+            self.session_manager.close()
 
     def start_ioloop(self):
         """Start the IO Loop."""
@@ -2704,7 +2763,8 @@ class ServerApp(JupyterApp):
     async def _stop(self):
         """Cleanup resources and stop the IO Loop."""
         await self._cleanup()
-        self.io_loop.stop()
+        if getattr(self, "io_loop", None):
+            self.io_loop.stop()
 
     def stop(self, from_signal=False):
         """Cleanup resources and stop the server."""
