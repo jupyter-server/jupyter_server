@@ -102,7 +102,7 @@ post-version-spec = "dev"
 pydist_resource_paths = ["jupyter_server/static/style/bootstrap.min.css", "jupyter_server/static/style/bootstrap-theme.min.css"]
 
 [tool.tbump.version]
-current = "1.16.1.dev0"
+current = "2.0.0a0"
 regex = '''
   (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)
   ((?P<channel>a|b|rc|.dev)(?P<release>\d+))?
