@@ -48,6 +48,9 @@ dynamic = ["version"]
 file = "README.md"
 content-type = "text/markdown"
 
+[project.license]
+file = 'COPYING.md'
+
 [project.urls]
 Homepage = "https://jupyter-server.readthedocs.io"
 Documentation = "https://jupyter-server.readthedocs.io"
