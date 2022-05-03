@@ -149,7 +149,7 @@ def _check_pid_win32(pid):
 
     # OpenProcess returns 0 if no such process (of ours) exists
     # positive int otherwise
-    return bool(ctypes.windll.kernel32.OpenProcess(1, 0, pid))
+    return bool(ctypes.windll.kernel32.OpenProcess(1, 0, pid))  # type:ignore[attr-defined]
 
 
 def _check_pid_posix(pid):

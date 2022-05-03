@@ -331,7 +331,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path)
 
         if content:
-            validation_error = {}
+            validation_error: dict = {}
             nb = self._read_notebook(
                 os_path, as_version=4, capture_validation_error=validation_error
             )
@@ -412,7 +412,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path)
         self.log.debug("Saving %s", os_path)
 
-        validation_error = {}
+        validation_error: dict = {}
         try:
             if model["type"] == "notebook":
                 nb = nbformat.from_dict(model["content"])
@@ -657,7 +657,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         os_path = self._get_os_path(path)
 
         if content:
-            validation_error = {}
+            validation_error: dict = {}
             nb = await self._read_notebook(
                 os_path, as_version=4, capture_validation_error=validation_error
             )
@@ -738,7 +738,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         os_path = self._get_os_path(path)
         self.log.debug("Saving %s", os_path)
 
-        validation_error = {}
+        validation_error: dict = {}
         try:
             if model["type"] == "notebook":
                 nb = nbformat.from_dict(model["content"])

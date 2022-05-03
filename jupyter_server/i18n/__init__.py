@@ -15,7 +15,7 @@ I18N_DIR = dirname(__file__)
 #     ...
 #   }
 # }}
-TRANSLATIONS_CACHE = {"nbjs": {}}
+TRANSLATIONS_CACHE: dict = {"nbjs": {}}
 
 
 _accept_lang_re = re.compile(
@@ -87,7 +87,7 @@ def combine_translations(accept_language, domain="nbjs"):
     Returns data re-packaged in jed1.x format.
     """
     lang_codes = parse_accept_lang_header(accept_language)
-    combined = {}
+    combined: dict = {}
     for language in lang_codes:
         if language == "en":
             # en is default, all translations are in frontend.

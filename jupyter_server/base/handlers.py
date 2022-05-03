@@ -115,7 +115,7 @@ class AuthenticatedHandler(web.RequestHandler):
         name = escape.native_str(name)
         expires = datetime.datetime.utcnow() - datetime.timedelta(days=365)
 
-        morsel = Morsel()
+        morsel: Morsel = Morsel()
         morsel.set(name, "", '""')
         morsel["expires"] = httputil.format_timestamp(expires)
         morsel["path"] = path
@@ -292,7 +292,7 @@ class JupyterHandler(AuthenticatedHandler):
         return self.settings.get("mathjax_config", "TeX-AMS-MML_HTMLorMML-full,Safe")
 
     @property
-    def base_url(self):
+    def base_url(self) -> str:
         return self.settings.get("base_url", "/")
 
     @property
@@ -537,7 +537,9 @@ class JupyterHandler(AuthenticatedHandler):
             return True
 
         # Remove port (e.g. ':8888') from host
-        host = re.match(r"^(.*?)(:\d+)?$", self.request.host).group(1)
+        match = re.match(r"^(.*?)(:\d+)?$", self.request.host)
+        assert match is not None
+        host = match.group(1)
 
         # Browsers format IPv6 addresses like [::1]; we need to remove the []
         if host.startswith("[") and host.endswith("]"):
@@ -574,10 +576,10 @@ class JupyterHandler(AuthenticatedHandler):
 
         from jupyter_server.auth import IdentityProvider
 
-        if (
-            type(self.identity_provider) is IdentityProvider
-            and inspect.getmodule(self.get_current_user).__name__ != __name__
-        ):
+        mod_obj = inspect.getmodule(self.get_current_user)
+        assert mod_obj is not None
+
+        if type(self.identity_provider) is IdentityProvider and mod_obj.__name__ != __name__:
             # check for overridden get_current_user + default IdentityProvider
             # deprecated way to override auth (e.g. JupyterHub < 3.0)
             # allow deprecated, overridden get_current_user
@@ -659,7 +661,7 @@ class JupyterHandler(AuthenticatedHandler):
         exc_info = kwargs.get("exc_info")
         message = ""
         status_message = responses.get(status_code, "Unknown HTTP Error")
-        exception = "(unknown)"
+
         if exc_info:
             exception = exc_info[1]
             # get the custom message, if defined
@@ -672,6 +674,8 @@ class JupyterHandler(AuthenticatedHandler):
             reason = getattr(exception, "reason", "")
             if reason:
                 status_message = reason
+        else:
+            exception = "(unknown)"
 
         # build template namespace
         ns = dict(
@@ -703,7 +707,7 @@ class APIHandler(JupyterHandler):
         """APIHandler errors are JSON, not human pages"""
         self.set_header("Content-Type", "application/json")
         message = responses.get(status_code, "Unknown HTTP Error")
-        reply = {
+        reply: dict = {
             "message": message,
         }
         exc_info = kwargs.get("exc_info")
@@ -817,13 +821,14 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
 
     @web.authenticated
     def get(self, path):
-        if os.path.splitext(path)[1] == ".ipynb" or self.get_argument("download", False):
+        if os.path.splitext(path)[1] == ".ipynb" or self.get_argument("download", None):
             name = path.rsplit("/", 1)[-1]
             self.set_attachment_header(name)
 
         return web.StaticFileHandler.get(self, path)
 
     def get_content_type(self):
+        assert self.absolute_path is not None
         path = self.absolute_path.strip("/")
         if "/" in path:
             _, name = path.rsplit("/", 1)
@@ -902,7 +907,8 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
     """subclass of StaticFileHandler for serving files from a search path"""
 
     # cache search results, don't search for files more than once
-    _static_paths = {}
+    _static_paths: dict = {}
+    root: tuple
 
     def set_headers(self):
         super().set_headers()
@@ -966,6 +972,7 @@ class TrailingSlashHandler(web.RequestHandler):
     """
 
     def get(self):
+        assert self.request.uri is not None
         path, *rest = self.request.uri.partition("?")
         # trim trailing *and* leading /
         # to avoid misinterpreting repeated '//'

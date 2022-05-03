@@ -8,7 +8,7 @@ try:
     import sqlite3
 except ImportError:
     # fallback on pysqlite2 if Python was build without sqlite
-    from pysqlite2 import dbapi2 as sqlite3
+    from pysqlite2 import dbapi2 as sqlite3  # type:ignore[no-redef]
 
 from dataclasses import dataclass, fields
 from typing import Union
@@ -41,7 +41,7 @@ class KernelSessionRecord:
     session_id: Union[None, str] = None
     kernel_id: Union[None, str] = None
 
-    def __eq__(self, other: "KernelSessionRecord") -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, KernelSessionRecord):
             condition1 = self.kernel_id and self.kernel_id == other.kernel_id
             condition2 = all(
@@ -103,7 +103,7 @@ class KernelSessionRecordList:
     def __str__(self):
         return str(self._records)
 
-    def __contains__(self, record: Union[KernelSessionRecord, str]):
+    def __contains__(self, record: Union[KernelSessionRecord, str]) -> bool:
         """Search for records by kernel_id and session_id"""
         if isinstance(record, KernelSessionRecord) and record in self._records:
             return True

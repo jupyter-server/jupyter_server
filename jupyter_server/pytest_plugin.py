@@ -34,7 +34,9 @@ pytest_plugins = [
 import asyncio
 
 if os.name == "nt" and sys.version_info >= (3, 7):
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    asyncio.set_event_loop_policy(
+        asyncio.WindowsSelectorEventLoopPolicy()  # type:ignore[attr-defined]
+    )
 
 
 # ============ Move to Jupyter Core =============

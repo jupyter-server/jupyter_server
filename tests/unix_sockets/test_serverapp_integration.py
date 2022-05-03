@@ -35,6 +35,7 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
     )
 
     complete = False
+    assert p.stderr is not None
     for line in iter(p.stderr.readline, b""):
         if url in line:
             complete = True

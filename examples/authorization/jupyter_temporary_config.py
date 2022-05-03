@@ -11,4 +11,4 @@ class TemporaryServerPersonality(Authorizer):
         return True
 
 
-c.ServerApp.authorizer_class = TemporaryServerPersonality
+c.ServerApp.authorizer_class = TemporaryServerPersonality  # type:ignore[name-defined]

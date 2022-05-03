@@ -8,6 +8,8 @@ from traitlets.utils.descriptions import describe
 class TypeFromClasses(ClassBasedTraitType):
     """A trait whose value must be a subclass of a class in a specified list of classes."""
 
+    default_value: Undefined
+
     def __init__(self, default_value=Undefined, klasses=None, **kwargs):
         """Construct a Type trait
         A Type trait specifies that its values must be subclasses of
@@ -181,6 +183,7 @@ class InstanceFromClasses(ClassBasedTraitType):
 
     def info(self):
         result = "an instance of "
+        assert self.klasses is not None
         for klass in self.klasses:
             if isinstance(klass, str):
                 result += klass
@@ -199,6 +202,7 @@ class InstanceFromClasses(ClassBasedTraitType):
     def _resolve_classes(self):
         # Resolve all string names to actual classes.
         self.importable_klasses = []
+        assert self.klasses is not None
         for klass in self.klasses:
             if isinstance(klass, str):
                 # Try importing the classes to compare. Silently, ignore if not importable.

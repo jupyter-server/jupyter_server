@@ -5,6 +5,7 @@ import json
 import re
 import struct
 import sys
+from typing import Optional, no_type_check
 from urllib.parse import urlparse
 
 import tornado
@@ -17,6 +18,7 @@ except ImportError:
 from jupyter_client.jsonutil import extract_dates
 from jupyter_client.session import Session
 from tornado import ioloop, web
+from tornado.iostream import IOStream
 from tornado.websocket import WebSocketHandler
 
 from .handlers import JupyterHandler
@@ -91,7 +93,7 @@ def serialize_msg_to_ws_v1(msg_or_list, channel, pack=None):
     else:
         msg_list = msg_or_list
     channel = channel.encode("utf-8")
-    offsets = []
+    offsets: list = []
     offsets.append(8 * (1 + 1 + len(msg_list) + 1))
     offsets.append(len(channel) + offsets[-1])
     for msg in msg_list:
@@ -120,9 +122,9 @@ class WebSocketMixin:
     """Mixin for common websocket options"""
 
     ping_callback = None
-    last_ping = 0
-    last_pong = 0
-    stream = None
+    last_ping = 0.0
+    last_pong = 0.0
+    stream = None  # type: Optional[IOStream]
 
     @property
     def ping_interval(self):
@@ -130,7 +132,7 @@ class WebSocketMixin:
 
         Set ws_ping_interval = 0 to disable pings.
         """
-        return self.settings.get("ws_ping_interval", WS_PING_INTERVAL)
+        return self.settings.get("ws_ping_interval", WS_PING_INTERVAL)  # type:ignore[attr-defined]
 
     @property
     def ping_timeout(self):
@@ -138,9 +140,12 @@ class WebSocketMixin:
         close the websocket connection (VPNs, etc. can fail to cleanly close ws connections).
         Default is max of 3 pings or 30 seconds.
         """
-        return self.settings.get("ws_ping_timeout", max(3 * self.ping_interval, WS_PING_INTERVAL))
+        return self.settings.get(  # type:ignore[attr-defined]
+            "ws_ping_timeout", max(3 * self.ping_interval, WS_PING_INTERVAL)
+        )
 
-    def check_origin(self, origin=None):
+    @no_type_check
+    def check_origin(self, origin: Optional[str] = None) -> bool:
         """Check Origin == Host or Access-Control-Allow-Origin.
 
         Tornado >= 4 calls this method automatically, raising 403 if it returns False.
@@ -186,6 +191,7 @@ class WebSocketMixin:
         """meaningless for websockets"""
         pass
 
+    @no_type_check
     def open(self, *args, **kwargs):
         self.log.debug("Opening websocket %s", self.request.path)
 
@@ -201,6 +207,7 @@ class WebSocketMixin:
             self.ping_callback.start()
         return super().open(*args, **kwargs)
 
+    @no_type_check
     def send_ping(self):
         """send a ping to keep the websocket alive"""
         if self.ws_connection is None and self.ping_callback is not None:
@@ -322,7 +329,7 @@ class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
         if not self.authorizer.is_authorized(self, user, "execute", "kernels"):
             raise web.HTTPError(403)
 
-        if self.get_argument("session_id", False):
+        if self.get_argument("session_id", None):
             self.session.session = self.get_argument("session_id")
         else:
             self.log.warning("No session ID specified")
