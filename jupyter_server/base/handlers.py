@@ -573,6 +573,7 @@ class JupyterHandler(AuthenticatedHandler):
 
     async def prepare(self):
         if not self.check_host():
+            self.current_user = self._jupyter_current_user = None
             raise web.HTTPError(403)
 
         from jupyter_server.auth import IdentityProvider
@@ -802,7 +803,8 @@ class APIHandler(JupyterHandler):
 class Template404(JupyterHandler):
     """Render our 404 template"""
 
-    def prepare(self):
+    async def prepare(self):
+        await super().prepare()
         raise web.HTTPError(404)
 
 
