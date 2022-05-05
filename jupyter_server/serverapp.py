@@ -1456,17 +1456,27 @@ class ServerApp(JupyterApp):
             )
 
     kernel_manager_class = Type(
-        default_value=AsyncMappingKernelManager,
         klass=MappingKernelManager,
         config=True,
         help=_i18n("The kernel manager class to use."),
     )
 
+    @default("kernel_manager_class")
+    def _default_kernel_manager_class(self):
+        if self.gateway_config.gateway_enabled:
+            return "jupyter_server.gateway.managers.GatewayMappingKernelManager"
+        return AsyncMappingKernelManager
+
     session_manager_class = Type(
-        default_value=SessionManager,
         config=True,
         help=_i18n("The session manager class to use."),
     )
+
+    @default("session_manager_class")
+    def _default_session_manager_class(self):
+        if self.gateway_config.gateway_enabled:
+            return "jupyter_server.gateway.managers.GatewaySessionManager"
+        return SessionManager
 
     config_manager_class = Type(
         default_value=ConfigManager,
@@ -1477,7 +1487,6 @@ class ServerApp(JupyterApp):
     kernel_spec_manager = Instance(KernelSpecManager, allow_none=True)
 
     kernel_spec_manager_class = Type(
-        default_value=KernelSpecManager,
         config=True,
         help="""
         The kernel spec manager class to use. Should be a subclass
@@ -1487,6 +1496,12 @@ class ServerApp(JupyterApp):
         without warning between this version of Jupyter and the next stable one.
         """,
     )
+
+    @default("kernel_spec_manager_class")
+    def _default_kernel_spec_manager_class(self):
+        if self.gateway_config.gateway_enabled:
+            return "jupyter_server.gateway.managers.GatewayKernelSpecManager"
+        return KernelSpecManager
 
     login_handler_class = Type(
         default_value=LoginHandler,
@@ -1828,15 +1843,6 @@ class ServerApp(JupyterApp):
         # If gateway server is configured, replace appropriate managers to perform redirection.  To make
         # this determination, instantiate the GatewayClient config singleton.
         self.gateway_config = GatewayClient.instance(parent=self)
-
-        if self.gateway_config.gateway_enabled:
-            self.kernel_manager_class = (
-                "jupyter_server.gateway.managers.GatewayMappingKernelManager"
-            )
-            self.session_manager_class = "jupyter_server.gateway.managers.GatewaySessionManager"
-            self.kernel_spec_manager_class = (
-                "jupyter_server.gateway.managers.GatewayKernelSpecManager"
-            )
 
         self.kernel_spec_manager = self.kernel_spec_manager_class(
             parent=self,
