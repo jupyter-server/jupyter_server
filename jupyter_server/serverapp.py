@@ -501,10 +501,29 @@ def shutdown_server(server_info, timeout=5, log=None):
     url = server_info["url"]
     pid = server_info["pid"]
 
-    if log:
-        log.debug("POST request to %sapi/shutdown", url)
+    try:
+        shutdown_url = urljoin(url, "api/shutdown")
+        if log:
+            log.debug("POST request to %s", shutdown_url)
+        fetch(
+            shutdown_url,
+            method="POST",
+            body=b"",
+            headers={"Authorization": "token " + server_info["token"]},
+        )
+    except Exception as ex:
+        if not str(ex) == "Unknown URL scheme.":
+            raise ex
+        if log:
+            log.debug("Was not a HTTP scheme. Treating as socket instead.")
+            log.debug("POST request to %s", url)
+        fetch(
+            url,
+            method="POST",
+            body=b"",
+            headers={"Authorization": "token " + server_info["token"]},
+        )
 
-    fetch(url, method="POST", body=b"", headers={"Authorization": "token " + server_info["token"]})
     # Poll to see if it shut down.
     for _ in range(timeout * 10):
         if not check_pid(pid):
