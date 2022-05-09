@@ -6,6 +6,10 @@ on:
   schedule:
     - cron: "0 8 * * *"
 
+defaults:
+  run:
+    shell: bash -eux {0}
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -113,8 +117,7 @@ jobs:
           python_version: "3.11.0-beta - 3.11.0"
       - name: Install the Python dependencies
         run: |
-          pip install --pre pyzmq
-          pip install --no-deps -e .
+          pip install --no-deps -v -e .
           pip install --pre --upgrade "jupyter_server[test]"
       - name: List installed packages
         run: |
