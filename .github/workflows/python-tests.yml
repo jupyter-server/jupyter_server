@@ -117,8 +117,9 @@ jobs:
           python_version: "3.11.0-beta - 3.11.0"
       - name: Install the Python dependencies
         run: |
-          pip install --no-deps -v -e .
-          pip install --pre --upgrade "jupyter_server[test]"
+          pip install build
+          python -m build --sdist .
+          pip install --pre --upgrade dist/*.tar.gz
       - name: List installed packages
         run: |
           pip freeze
