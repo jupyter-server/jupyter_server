@@ -8,14 +8,16 @@ to be used in combination with Authorizer for _authorization_.
 from __future__ import annotations
 
 import binascii
+import datetime
 import os
 import re
 import sys
 import uuid
 from dataclasses import asdict, dataclass
+from http.cookies import Morsel
 from typing import TYPE_CHECKING, Any, Awaitable
 
-from tornado import web
+from tornado import escape, httputil, web
 from traitlets import Bool, Dict, Type, Unicode, default
 from traitlets.config import LoggingConfigurable
 
@@ -27,6 +29,8 @@ from .security import passwd_check, set_password
 if TYPE_CHECKING:
     from jupyter_server.base.handlers import JupyterHandler
     from jupyter_server.serverapp import ServerApp
+
+_non_alphanum = re.compile(r"[^A-Za-z0-9]")
 
 
 @dataclass
@@ -120,7 +124,37 @@ class IdentityProvider(LoggingConfigurable):
     .. versionadded:: 2.0
     """
 
-    cookie_name = Unicode(config=True)
+    cookie_name = Unicode(
+        "",
+        config=True,
+        help=_i18n("Name of the cookie to set for persisting login. Default: username-${Host}."),
+    )
+
+    cookie_options = Dict(
+        config=True,
+        help=_i18n(
+            "Extra keyword arguments to pass to `set_secure_cookie`."
+            " See tornado's set_secure_cookie docs for details."
+        ),
+    )
+
+    secure_cookie = Bool(
+        None,
+        allow_none=True,
+        config=True,
+        help=_i18n(
+            "Specify whether login cookie should have the `secure` property (HTTPS-only)."
+            "Only needed when protocol-detection gives the wrong answer due to proxies."
+        ),
+    )
+
+    get_secure_cookie_kwargs = Dict(
+        config=True,
+        help=_i18n(
+            "Extra keyword arguments to pass to `get_secure_cookie`."
+            " See tornado's get_secure_cookie docs for details."
+        ),
+    )
 
     token = Unicode(
         "<generated>",
@@ -219,9 +253,11 @@ class IdentityProvider(LoggingConfigurable):
             # If an invalid cookie was sent, clear it to prevent unnecessary
             # extra warnings. But don't do this on a request with *no* cookie,
             # because that can erroneously log you out (see gh-3365)
-            if handler.get_cookie(handler.cookie_name) is not None:
-                handler.log.warning("Clearing invalid/expired login cookie %s", handler.cookie_name)
-                handler.clear_login_cookie()
+            cookie_name = self.get_cookie_name(handler)
+            cookie = handler.get_cookie(cookie_name)
+            if cookie is not None:
+                self.log.warning(f"Clearing invalid/expired login cookie {cookie_name}")
+                self.clear_login_cookie(handler)
             if not self.auth_enabled:
                 # Completely insecure! No authentication at all.
                 # No need to warn here, though; validate_security will have already done that.
@@ -260,24 +296,84 @@ class IdentityProvider(LoggingConfigurable):
         """Inverse of user_to_cookie"""
         return User(username=cookie_value)
 
+    def get_cookie_name(self, handler: JupyterHandler) -> str:
+        """Return the login cookie name
+
+        Uses IdentityProvider.cookie_name, if defined.
+        Default is to generate a string taking host into account to avoid
+        collisions for multiple servers on one hostname with different ports.
+        """
+        if self.cookie_name:
+            return self.cookie_name
+        else:
+            return _non_alphanum.sub("-", f"username-{handler.request.host}")
+
     def set_login_cookie(self, handler: JupyterHandler, user: User) -> None:
         """Call this on handlers to set the login cookie for success"""
-        cookie_options = handler.settings.get("cookie_options", {})
+        cookie_options = {}
+        cookie_options.update(self.cookie_options)
         cookie_options.setdefault("httponly", True)
         # tornado <4.2 has a bug that considers secure==True as soon as
         # 'secure' kwarg is passed to set_secure_cookie
-        if handler.settings.get("secure_cookie", handler.request.protocol == "https"):
+        secure_cookie = self.secure_cookie
+        if secure_cookie is None:
+            secure_cookie = handler.request.protocol == "https"
+        if secure_cookie:
             cookie_options.setdefault("secure", True)
         cookie_options.setdefault("path", handler.base_url)
-        handler.set_secure_cookie(handler.cookie_name, self.user_to_cookie(user), **cookie_options)
+        cookie_name = self.get_cookie_name(handler)
+        handler.set_secure_cookie(cookie_name, self.user_to_cookie(user), **cookie_options)
+
+    def _force_clear_cookie(
+        self, handler: JupyterHandler, name: str, path: str = "/", domain: str | None = None
+    ) -> None:
+        """Deletes the cookie with the given name.
+
+        Tornado's cookie handling currently (Jan 2018) stores cookies in a dict
+        keyed by name, so it can only modify one cookie with a given name per
+        response. The browser can store multiple cookies with the same name
+        but different domains and/or paths. This method lets us clear multiple
+        cookies with the same name.
+
+        Due to limitations of the cookie protocol, you must pass the same
+        path and domain to clear a cookie as were used when that cookie
+        was set (but there is no way to find out on the server side
+        which values were used for a given cookie).
+        """
+        name = escape.native_str(name)
+        expires = datetime.datetime.utcnow() - datetime.timedelta(days=365)
+
+        morsel: Morsel = Morsel()
+        morsel.set(name, "", '""')
+        morsel["expires"] = httputil.format_timestamp(expires)
+        morsel["path"] = path
+        if domain:
+            morsel["domain"] = domain
+        handler.add_header("Set-Cookie", morsel.OutputString())
+
+    def clear_login_cookie(self, handler: JupyterHandler) -> None:
+        """Clear the login cookie, effectively logging out the session."""
+        cookie_options = {}
+        cookie_options.update(self.cookie_options)
+        path = cookie_options.setdefault("path", self.base_url)
+        cookie_name = self.get_cookie_name(handler)
+        handler.clear_cookie(cookie_name, path=path)
+        if path and path != "/":
+            # also clear cookie on / to ensure old cookies are cleared
+            # after the change in path behavior.
+            # N.B. This bypasses the normal cookie handling, which can't update
+            # two cookies with the same name. See the method above.
+            self._force_clear_cookie(handler, cookie_name)
 
     def get_user_cookie(self, handler: JupyterHandler) -> User | None | Awaitable[User | None]:
         """Get user from a cookie
 
         Calls user_from_cookie to deserialize cookie value
         """
-        get_secure_cookie_kwargs = handler.settings.get("get_secure_cookie_kwargs", {})
-        _user_cookie = handler.get_secure_cookie(handler.cookie_name, **get_secure_cookie_kwargs)
+        _user_cookie = handler.get_secure_cookie(
+            self.get_cookie_name(handler),
+            **self.get_secure_cookie_kwargs,
+        )
         if not _user_cookie:
             return None
         user_cookie = _user_cookie.decode()

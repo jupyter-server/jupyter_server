@@ -1143,12 +1143,8 @@ class ServerApp(JupyterApp):
     def _deprecated_password(self, change):
         self._warn_deprecated_config(change, "PasswordIdentityProvider", new_name="hashed_password")
 
-    @observe("password_required")
-    def _deprecated_password_required(self, change):
-        self._warn_deprecated_config(change, "PasswordIdentityProvider")
-
-    @observe("allow_password_change")
-    def _deprecated_password_change(self, change):
+    @observe("password_required", "allow_password_change")
+    def _deprecated_password_config(self, change):
         self._warn_deprecated_config(change, "PasswordIdentityProvider")
 
     disable_check_xsrf = Bool(
@@ -1318,18 +1314,17 @@ class ServerApp(JupyterApp):
 
     cookie_options = Dict(
         config=True,
-        help=_i18n(
-            "Extra keyword arguments to pass to `set_secure_cookie`."
-            " See tornado's set_secure_cookie docs for details."
-        ),
+        help=_i18n("DEPRECATED. Use IdentityProvider.cookie_options"),
     )
     get_secure_cookie_kwargs = Dict(
         config=True,
-        help=_i18n(
-            "Extra keyword arguments to pass to `get_secure_cookie`."
-            " See tornado's get_secure_cookie docs for details."
-        ),
+        help=_i18n("DEPRECATED. Use IdentityProvider.get_secure_cookie_kwargs"),
     )
+
+    @observe("cookie_options", "get_secure_cookie_kwargs")
+    def _deprecated_cookie_config(self, change):
+        self._warn_deprecated_config(change, "IdentityProvider")
+
     ssl_options = Dict(
         allow_none=True,
         config=True,
@@ -1947,8 +1942,12 @@ class ServerApp(JupyterApp):
             self.tornado_settings["allow_origin_pat"] = re.compile(self.allow_origin_pat)
         self.tornado_settings["allow_credentials"] = self.allow_credentials
         self.tornado_settings["autoreload"] = self.autoreload
-        self.tornado_settings["cookie_options"] = self.cookie_options
-        self.tornado_settings["get_secure_cookie_kwargs"] = self.get_secure_cookie_kwargs
+
+        # deprecate accessing these directly, in favor of identity_provider?
+        self.tornado_settings["cookie_options"] = self.identity_provider.cookie_options
+        self.tornado_settings[
+            "get_secure_cookie_kwargs"
+        ] = self.identity_provider.get_secure_cookie_kwargs
         self.tornado_settings["token"] = self.identity_provider.token
 
         # ensure default_url starts with base_url
