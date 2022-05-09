@@ -355,7 +355,7 @@ class IdentityProvider(LoggingConfigurable):
         """Clear the login cookie, effectively logging out the session."""
         cookie_options = {}
         cookie_options.update(self.cookie_options)
-        path = cookie_options.setdefault("path", self.base_url)
+        path = cookie_options.setdefault("path", handler.base_url)
         cookie_name = self.get_cookie_name(handler)
         handler.clear_cookie(cookie_name, path=path)
         if path and path != "/":
