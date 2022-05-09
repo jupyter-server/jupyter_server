@@ -95,8 +95,8 @@ def test_server_password(tmp_path, jp_configurable_serverapp):
         app.start()
         sv = jp_configurable_serverapp()
         sv.load_config_file()
-        assert sv.password != ""
-        passwd_check(sv.password, password)
+        assert sv.identity_provider.hashed_password != ""
+        passwd_check(sv.identity_provider.hashed_password, password)
 
 
 def test_list_running_servers(jp_serverapp, jp_web_app):

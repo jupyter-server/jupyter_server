@@ -1123,15 +1123,21 @@ class ServerApp(JupyterApp):
     def _warn_deprecated_config(self, change, clsname, new_name=None):
         if new_name is None:
             new_name = change.name
-        if (
-            clsname not in self.config
-            or change.name not in self.config[clsname]
-            or self.config[clsname][change.name] != change.new
-        ):
+        if clsname not in self.config or new_name not in self.config[clsname]:
+            # Deprecated config used, new config not used.
+            # Use deprecated config, warn about new name.
             self.log.warning(
                 f"ServerApp.{change.name} config is deprecated in 2.0. Use {clsname}.{new_name}."
             )
-            self.config[clsname][change.name] = change.new
+            self.config[clsname][new_name] = change.new
+        else:
+            # Deprecated config used, new config also used.
+            # Warn only if the values differ.
+            # If the values are the same, assume intentional backward-compatible config.
+            if self.config[clsname][new_name] != change.new:
+                self.log.warning(
+                    f"Ignoring deprecated ServerApp.{change.name} config. Using {clsname}.{new_name}."
+                )
 
     @observe("password")
     def _deprecated_password(self, change):
@@ -1898,6 +1904,7 @@ class ServerApp(JupyterApp):
         if self.identity_provider_class is LegacyIdentityProvider:
             # legacy config stored the password in tornado_settings
             self.tornado_settings["password"] = self.identity_provider.hashed_password
+            self.tornado_settings["token"] = self.identity_provider.token
 
         if self._token_set:
             self.log.warning(

@@ -13,7 +13,7 @@ import re
 import sys
 import uuid
 from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING, Any, Awaitable, cast
+from typing import TYPE_CHECKING, Any, Awaitable
 
 from tornado import web
 from traitlets import Bool, Dict, Type, Unicode, default
@@ -175,7 +175,7 @@ class IdentityProvider(LoggingConfigurable):
 
     need_token = Bool(True)
 
-    async def get_user(self, handler: JupyterHandler) -> User | None:
+    def get_user(self, handler: JupyterHandler) -> User | None | Awaitable[User | None]:
         """Get the authenticated user for a request
 
         Must return a :class:`.jupyter_server.auth.User`,
@@ -185,6 +185,12 @@ class IdentityProvider(LoggingConfigurable):
 
         _may_ be a coroutine
         """
+        return self._get_user(handler)
+
+    # not sure how to have optional-async type signature
+    # on base class with `async def` without splitting it into two methods
+
+    async def _get_user(self, handler: JupyterHandler) -> User | None:
         if getattr(handler, "_jupyter_current_user", None):
             # already authenticated
             return handler._jupyter_current_user
@@ -200,11 +206,11 @@ class IdentityProvider(LoggingConfigurable):
         # because token is always explicit
         user = token_user or cookie_user
 
-        if token_user:
+        if user is not None and token_user is not None:
             # if token-authenticated, persist user_id in cookie
             # if it hasn't already been stored there
             if user != cookie_user:
-                self.set_login_cookie(handler, cast(User, user))
+                self.set_login_cookie(handler, user)
             # Record that the current request has been authenticated with a token.
             # Used in is_token_authenticated above.
             handler._token_authenticated = True
@@ -522,7 +528,7 @@ class PasswordIdentityProvider(IdentityProvider):
             if new_password and self.allow_password_change:
                 config_dir = handler.settings.get("config_dir", "")
                 config_file = os.path.join(config_dir, "jupyter_server_config.json")
-                set_password(new_password, config_file=config_file)
+                self.hashed_password = set_password(new_password, config_file=config_file)
                 self.log.info(_i18n(f"Wrote hashed password to {config_file}"))
 
         return user
@@ -552,6 +558,13 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
     # settings must be passed for
     settings = Dict()
 
+    @default("settings")
+    def _default_settings(self):
+        return {
+            "token": self.token,
+            "password": self.hashed_password,
+        }
+
     @default("login_handler_class")
     def _default_login_handler_class(self):
         from .login import LegacyLoginHandler
@@ -562,12 +575,15 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
     def auth_enabled(self):
         return self.login_available
 
-    def get_user(self, handler):
-        return _backward_compat_user(self.login_handler_class.get_user(handler))
+    def get_user(self, handler: JupyterHandler) -> User | None:
+        user = self.login_handler_class.get_user(handler)
+        if user is None:
+            return None
+        return _backward_compat_user(user)
 
     @property
     def login_available(self):
-        return self.login_handler_class.login_available(self.settings)
+        return self.login_handler_class.get_login_available(self.settings)
 
     def should_check_origin(self, handler: JupyterHandler) -> bool:
         return self.login_handler_class.should_check_origin(handler)
