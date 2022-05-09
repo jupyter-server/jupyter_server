@@ -1,6 +1,8 @@
 """Base Tornado handlers for the Jupyter server."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import datetime
 import functools
 import inspect
@@ -14,6 +16,7 @@ import types
 import warnings
 from http.client import responses
 from http.cookies import Morsel
+from typing import TYPE_CHECKING, Awaitable
 from urllib.parse import urlparse
 
 import prometheus_client
@@ -36,6 +39,9 @@ from jupyter_server.utils import (
     url_path_join,
     urldecode_unix_socket_path,
 )
+
+if TYPE_CHECKING:
+    from jupyter_server.auth.identity import User
 
 # -----------------------------------------------------------------------------
 # Top-level handlers
@@ -581,6 +587,7 @@ class JupyterHandler(AuthenticatedHandler):
 
         mod_obj = inspect.getmodule(self.get_current_user)
         assert mod_obj is not None
+        user: User | None = None
 
         if type(self.identity_provider) is IdentityProvider and mod_obj.__name__ != __name__:
             # check for overridden get_current_user + default IdentityProvider
@@ -594,10 +601,11 @@ class JupyterHandler(AuthenticatedHandler):
             )
             user = self.get_current_user()
         else:
-            user = self.identity_provider.get_user(self)
-            if inspect.isawaitable(user):
+            _user = self.identity_provider.get_user(self)
+            if isinstance(_user, Awaitable):
                 # IdentityProvider.get_user _may_ be async
-                user = await user
+                _user = await _user
+            user = _user
 
         # self.current_user for tornado's @web.authenticated
         # self._jupyter_current_user for backward-compat in deprecated get_current_user calls

@@ -13,7 +13,7 @@ import re
 import sys
 import uuid
 from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Awaitable, cast
 
 from tornado import web
 from traitlets import Bool, Dict, Type, Unicode, default
@@ -175,7 +175,7 @@ class IdentityProvider(LoggingConfigurable):
 
     need_token = Bool(True)
 
-    def get_user(self, handler: JupyterHandler) -> User | None:
+    async def get_user(self, handler: JupyterHandler) -> User | None:
         """Get the authenticated user for a request
 
         Must return a :class:`.jupyter_server.auth.User`,
@@ -188,11 +188,18 @@ class IdentityProvider(LoggingConfigurable):
         if getattr(handler, "_jupyter_current_user", None):
             # already authenticated
             return handler._jupyter_current_user
-        token_user = self.get_user_token(handler)
-        cookie_user = self.get_user_cookie(handler)
+        _token_user: User | None | Awaitable[User | None] = self.get_user_token(handler)
+        if isinstance(_token_user, Awaitable):
+            _token_user = await _token_user
+        token_user: User | None = _token_user  # need second variable name to collapse type
+        _cookie_user = self.get_user_cookie(handler)
+        if isinstance(_cookie_user, Awaitable):
+            _cookie_user = await _cookie_user
+        cookie_user: User | None = _cookie_user
         # prefer token to cookie if both given,
         # because token is always explicit
         user = token_user or cookie_user
+
         if token_user:
             # if token-authenticated, persist user_id in cookie
             # if it hasn't already been stored there
@@ -258,16 +265,16 @@ class IdentityProvider(LoggingConfigurable):
         cookie_options.setdefault("path", handler.base_url)
         handler.set_secure_cookie(handler.cookie_name, self.user_to_cookie(user), **cookie_options)
 
-    def get_user_cookie(self, handler: JupyterHandler) -> User | None:
+    def get_user_cookie(self, handler: JupyterHandler) -> User | None | Awaitable[User | None]:
         """Get user from a cookie
 
         Calls user_from_cookie to deserialize cookie value
         """
         get_secure_cookie_kwargs = handler.settings.get("get_secure_cookie_kwargs", {})
-        user_cookie = handler.get_secure_cookie(handler.cookie_name, **get_secure_cookie_kwargs)
-        if not user_cookie:
+        _user_cookie = handler.get_secure_cookie(handler.cookie_name, **get_secure_cookie_kwargs)
+        if not _user_cookie:
             return None
-        user_cookie = user_cookie.decode()
+        user_cookie = _user_cookie.decode()
         # TODO: try/catch in case of change in config?
         try:
             return self.user_from_cookie(user_cookie)
@@ -296,7 +303,7 @@ class IdentityProvider(LoggingConfigurable):
                 user_token = m.group(2)
         return user_token
 
-    def get_user_token(self, handler: JupyterHandler) -> User | None:
+    async def get_user_token(self, handler: JupyterHandler) -> User | None:
         """Identify the user based on a token in the URL or Authorization header
 
         Returns:
@@ -321,7 +328,10 @@ class IdentityProvider(LoggingConfigurable):
             # token does not correspond to user-id,
             # which is stored in a cookie.
             # still check the cookie for the user id
-            user = self.get_user_cookie(handler)
+            _user = self.get_user_cookie(handler)
+            if isinstance(_user, Awaitable):
+                _user = await _user
+            user: User | None = _user
             if user is None:
                 user = self.generate_anonymous_user(handler)
             return user
