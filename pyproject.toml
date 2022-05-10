@@ -4,6 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "jupyter_server"
+version = "2.1.0.dev0"
 description = "The backend—i.e. core services, APIs, and REST endpoints—to Jupyter web applications."
 authors = [{name = "Jupyter Development Team", email = "jupyter@googlegroups.com"}]
 keywords = ["ipython", "jupyter"]
@@ -42,7 +43,6 @@ dependencies = [
     "traitlets>=5.1",
     "websocket-client",
 ]
-dynamic = ["version"]
 
 [project.readme]
 file = "README.md"
@@ -121,6 +121,15 @@ tag_template = "v{new_version}"
 [[tool.tbump.file]]
 src = "jupyter_server/_version.py"
 version_template = '({major}, {minor}, {patch}, "{channel}", "{release}")'
+
+[[tool.tbump.file]]
+src = "pyproject.toml"
+version_template = "{major}.{minor}.{patch}{channel}{release}"
+
+[[tool.tbump.file]]
+src = "docs/source/conf.py"
+version_template = "{major}.{minor}.{patch}{channel}{release}"
+
 
 [[tool.tbump.field]]
 name = "channel"
