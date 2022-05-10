@@ -635,7 +635,7 @@ class PasswordIdentityProvider(IdentityProvider):
         ssl_options: dict | None = None,
     ) -> None:
         super().validate_security(app, ssl_options)
-        if self.password_required and (not self.password):
+        if self.password_required and (not self.hashed_password):
             self.log.critical(
                 _i18n("Jupyter servers are configured to only be run with a password.")
             )

@@ -103,7 +103,7 @@ class LegacyLoginHandler(LoginFormHandler):
                 self.set_login_cookie(self, uuid.uuid4().hex)
             elif self.token and self.token == typed_password:
                 self.set_login_cookie(self, uuid.uuid4().hex)
-                if new_password and self.settings.get("allow_password_change"):
+                if new_password and getattr(self.identity_provider, "allow_password_change", False):
                     config_dir = self.settings.get("config_dir", "")
                     config_file = os.path.join(config_dir, "jupyter_server_config.json")
                     self.identity_provider.hashed_password = self.settings[

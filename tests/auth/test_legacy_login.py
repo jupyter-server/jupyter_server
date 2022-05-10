@@ -3,39 +3,30 @@ Test legacy login config via ServerApp.login_handler_class
 """
 
 import json
-from functools import wraps
-from urllib.parse import urlencode
 
 import pytest
-from tornado.httpclient import HTTPClientError
-from tornado.httputil import parse_cookie
 from traitlets.config import Config
 
 from jupyter_server.auth.identity import LegacyIdentityProvider
 from jupyter_server.auth.login import LoginHandler
 from jupyter_server.auth.security import passwd
 from jupyter_server.serverapp import ServerApp
-from jupyter_server.utils import url_path_join
+
+# re-run some login tests with legacy login config
+from .test_identity import test_password_required, test_validate_security  # noqa
+from .test_login import (  # noqa
+    login,
+    test_change_password,
+    test_login_cookie,
+    test_logout,
+)
 
 # Don't raise on deprecation warnings in this module testing deprecated behavior
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 
-def record_calls(f):
-    """Decorator to record call history"""
-    f._calls = []
-
-    @wraps(f)
-    def wrapped_f(*args, **kwargs):
-        f._calls.append((args, kwargs))
-        return f(*args, **kwargs)
-
-    return wrapped_f
-
-
 class CustomLoginHandler(LoginHandler):
     @classmethod
-    @record_calls
     def get_user(cls, handler):
         header_user = handler.request.headers.get("test-user")
         if header_user:
@@ -47,10 +38,21 @@ class CustomLoginHandler(LoginHandler):
 
 
 @pytest.fixture
+def login_headers():
+    return {"test-user": "super"}
+
+
+@pytest.fixture
 def jp_server_config():
     cfg = Config()
     cfg.ServerApp.login_handler_class = CustomLoginHandler
     return cfg
+
+
+@pytest.fixture
+def identity_provider_class():
+    # for tests imported from test_identity.py
+    return LegacyIdentityProvider
 
 
 def test_legacy_identity_config(jp_serverapp):
@@ -87,48 +89,6 @@ async def test_legacy_base_class(jp_serverapp, jp_fetch):
     model2 = json.loads(response.body.decode("utf8"))
     # second request, should trigger cookie auth
     assert model2["identity"] == model["identity"]
-
-
-async def test_legacy_login(jp_serverapp, http_server_client, jp_base_url, jp_fetch):
-    login_url = url_path_join(jp_base_url, "login")
-    first = await http_server_client.fetch(login_url)
-    cookie_header = first.headers["Set-Cookie"]
-    xsrf = parse_cookie(cookie_header).get("_xsrf", "")
-    new_password = "super-secret"
-
-    async def login(form_fields):
-        form = {"_xsrf": xsrf}
-        form.update(form_fields)
-        try:
-            resp = await http_server_client.fetch(
-                login_url,
-                method="POST",
-                body=urlencode(form),
-                headers={"Cookie": cookie_header},
-                follow_redirects=False,
-            )
-        except HTTPClientError as e:
-            resp = e.response
-        assert resp.code == 302, "Should have returned a redirect!"
-        return resp
-
-    resp = await login(
-        dict(password=jp_serverapp.identity_provider.token, new_password=new_password)
-    )
-    cookie = resp.headers["Set-Cookie"]
-    id_resp = await jp_fetch("/api/me", headers={"test-user": "super", "Cookie": cookie})
-    assert id_resp.code == 200
-    model = json.loads(id_resp.body.decode("utf8"))
-    user_id = model["identity"]["username"]  # a random uuid
-
-    # verify password change with second login
-    resp2 = await login(dict(password=new_password))
-    cookie = resp.headers["Set-Cookie"]
-    id_resp = await jp_fetch("/api/me", headers={"test-user": "super", "Cookie": cookie})
-    assert id_resp.code == 200
-    model = json.loads(id_resp.body.decode("utf8"))
-    user_id2 = model["identity"]["username"]  # a random uuid
-    assert user_id2 == user_id
 
 
 def test_deprecated_config():
