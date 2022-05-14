@@ -105,7 +105,6 @@ skip = ["check-links"]
 
 [tool.jupyter-releaser.options]
 post-version-spec = "dev"
-pydist_resource_paths = ["jupyter_server/static/style/bootstrap.min.css", "jupyter_server/static/style/bootstrap-theme.min.css"]
 
 [tool.tbump.version]
 current = "2.1.0.dev0"
@@ -129,7 +128,6 @@ version_template = "{major}.{minor}.{patch}{channel}{release}"
 [[tool.tbump.file]]
 src = "docs/source/conf.py"
 version_template = "{major}.{minor}.{patch}{channel}{release}"
-
 
 [[tool.tbump.field]]
 name = "channel"
