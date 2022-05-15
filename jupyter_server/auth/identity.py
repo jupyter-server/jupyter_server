@@ -692,4 +692,11 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
         app: ServerApp,
         ssl_options: dict | None = None,
     ) -> None:
+        if self.password_required and (not self.hashed_password):
+            self.log.critical(
+                _i18n("Jupyter servers are configured to only be run with a password.")
+            )
+            self.log.critical(_i18n("Hint: run the following command to set a password"))
+            self.log.critical(_i18n("\t$ python -m jupyter_server.auth password"))
+            sys.exit(1)
         return self.login_handler_class.validate_security(app, ssl_options)

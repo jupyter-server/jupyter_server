@@ -7,7 +7,6 @@ import pytest
 from tornado.httpclient import HTTPClientError
 from tornado.httputil import parse_cookie, url_concat
 
-from jupyter_server.serverapp import ServerApp
 from jupyter_server.utils import url_path_join
 
 
