@@ -1,6 +1,6 @@
 [build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
+requires = ["hatchling >=0.25"]
+build-backend = "hatchling.build"
 
 [project]
 name = "jupyter_server"
@@ -74,6 +74,9 @@ test = [
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
 
+[tool.hatch.build]
+artifacts = ["jupyter_server/static/style/*.*"]
+
 [tool.black]
 line_length = 100
 
@@ -96,9 +99,6 @@ filterwarnings = [
   "ignore:unclosed event loop:ResourceWarning",
   "ignore:run_pre_save_hook is deprecated:DeprecationWarning"
 ]
-
-[tool.flit.sdist]
-include = ["tests/"]
 
 [tool.jupyter-releaser]
 skip = ["check-links"]
