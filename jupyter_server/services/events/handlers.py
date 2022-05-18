@@ -29,7 +29,7 @@ class SubscribeWebsocket(
     JupyterHandler,
     websocket.WebSocketHandler,
 ):
-    """Websocket Handler for listening to eve"""
+    """Websocket handler for subscribing to events"""
 
     auth_resource = AUTH_RESOURCE
 
