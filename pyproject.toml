@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling >=0.25"]
+requires = ["hatchling >=1.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -62,7 +62,6 @@ Tracker = "https://github.com/jupyter-server/jupyter_server/issues"
 test = [
     "coverage",
     "ipykernel",
-    "pre-commit",
     "pytest-console-scripts",
     "pytest-cov",
     "pytest-timeout",
@@ -70,12 +69,24 @@ test = [
     "pytest>=6.0",
     "requests",
 ]
+dev = [
+  "pre-commit"
+]
 
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
 
 [tool.hatch.build]
 artifacts = ["jupyter_server/static/style/*.*"]
+
+[tool.hatch.build.hooks.jupyter-builder]
+dependencies = ["hatch-jupyter-builder"]
+build-function = "hatch_jupyter_builder.npm_builder"
+ensured-targets = [
+  "jupyter_server/static/style/bootstrap.min.css",
+  "jupyter_server/static/style/bootstrap-theme.min.css"
+]
+install-pre-commit-hook = true
 
 [tool.black]
 line_length = 100
