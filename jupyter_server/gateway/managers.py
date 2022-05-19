@@ -573,8 +573,8 @@ class GatewayKernelClient(AsyncKernelClient):
 
     # flag for whether execute requests should be allowed to call raw_input:
     allow_stdin = False
-    _channels_stopped = False
-    _channel_queues: Optional[dict] = {}
+    _channels_stopped: bool
+    _channel_queues: Optional[dict]
     _control_channel: Optional[ChannelQueue]
     _hb_channel: Optional[ChannelQueue]
     _stdin_channel: Optional[ChannelQueue]
@@ -586,6 +586,8 @@ class GatewayKernelClient(AsyncKernelClient):
         self.kernel_id = kwargs["kernel_id"]
         self.channel_socket: Optional[websocket.WebSocket] = None
         self.response_router: Optional[Thread] = None
+        self._channels_stopped = False
+        self._channel_queues = {}
 
     # --------------------------------------------------------------------------
     # Channel management methods
