@@ -13,11 +13,11 @@ from jupyter_server.base.handlers import JupyterHandler
 AUTH_RESOURCE = "events"
 
 
-class TornadoWebSocketLoggingHandler(logging.Handler):
+class WebSocketLoggingHandler(logging.Handler):
     """Python logging handler that routes records to a Tornado websocket."""
 
-    def __init__(self, websocket):
-        super().__init__()
+    def __init__(self, websocket, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.websocket = websocket
 
     def emit(self, record):
@@ -62,7 +62,7 @@ class SubscribeWebsocket(
         """Routes events that are emitted by Jupyter Server's
         EventBus to a WebSocket client in the browser.
         """
-        self.logging_handler = TornadoWebSocketLoggingHandler(self)
+        self.logging_handler = WebSocketLoggingHandler(self)
         # Add a JSON formatter to the handler.
         formatter = jsonlogger.JsonFormatter(json_serializer=_skip_message)
         self.logging_handler.setFormatter(formatter)
@@ -72,6 +72,7 @@ class SubscribeWebsocket(
 
     def on_close(self):
         self.event_bus.log.removeHandler(self.logging_handler)
+        self.event_bus.handlers.remove(self.logging_handler)
 
 
 default_handlers = [
