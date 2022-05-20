@@ -76,7 +76,7 @@ test = [
 jupyter-server = "jupyter_server.serverapp:main"
 
 [tool.hatch.build]
-artifacts = ["jupyter_server/static/style/*.*"]
+artifacts = ["jupyter_server/static/style"]
 
 [tool.black]
 line_length = 100
