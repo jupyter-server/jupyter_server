@@ -76,7 +76,7 @@ test = [
 jupyter-server = "jupyter_server.serverapp:main"
 
 [tool.hatch.build]
-artifacts = ["jupyter_server/static/style/*.*"]
+artifacts = ["jupyter_server/static/style"]
 
 [tool.black]
 line_length = 100
@@ -103,6 +103,9 @@ filterwarnings = [
 
 [tool.jupyter-releaser]
 skip = ["check-links"]
+
+[tool.jupyter-releaser.hooks]
+before-build-python = ["npm install", "npm run build"]
 
 [tool.jupyter-releaser.options]
 post-version-spec = "dev"
