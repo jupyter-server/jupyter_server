@@ -42,6 +42,7 @@ dependencies = [
     "tornado>=6.1.0",
     "traitlets>=5.1",
     "websocket-client",
+    "jupyter_telemetry"
 ]
 
 [project.readme]
