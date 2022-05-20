@@ -44,3 +44,4 @@ docs/source/other/changelog.md
 .history
 .vscode/*
 !.vscode/*.template
+!.vscode/launch.json
