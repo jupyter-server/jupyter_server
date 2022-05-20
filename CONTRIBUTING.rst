@@ -41,14 +41,14 @@ Setting up the debugger
 -----------------------
 
 Use the built-in Python debugger
-================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Adding the ``breakpoint()`` statment inside the code and starting the server ``jupyter server``
 will cause the debugger to pause at the next statement. See the `pdb <https://docs.python.org/3/library/pdb.html>`_
 documentation for more information.
 
 Use the "ipdb" debugger
-=======================
+~~~~~~~~~~~~~~~~~~~~~~~
 
 ipdb is a drop-in replacement for the built-in pdb debugger but provides
 a richer debugging experience by adding features like tab completion,
@@ -58,7 +58,7 @@ Install ipdb ``pip install ipdb``, and set the env variable ``PYTHONBREAKPOINT=i
 Adding ``breakpoint()`` inside the code will cause the debugger to pause at the next statement.
 
 Use the debugger interface in Visual Studio Code
-================================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Add this configuration to your ``.vscode/launch.json`` file  to setup the debugger::
 
