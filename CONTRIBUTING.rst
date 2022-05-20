@@ -63,15 +63,15 @@ Use the debugger interface in Visual Studio Code
 Add this configuration to your ``.vscode/launch.json`` file  to setup the debugger::
 
     {
-    "version": "0.2.0",
-    "configurations": [
-        {
-        "name": "Debug Jupyter Server",
-        "type": "python",
-        "request": "launch",
-        "program": "${workspaceRoot}/jupyter_server/debug.py"
-        }
-    ]
+        "version": "0.2.0",
+        "configurations": [
+            {
+            "name": "Debug Jupyter Server",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceRoot}/jupyter_server/debug.py"
+            }
+        ]
     }
 
 To use this, open the "Run and Debug Panel" and run the "Debug Jupyter Server"
