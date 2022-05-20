@@ -37,6 +37,47 @@ from any directory in your system with::
 
     jupyter server
 
+Setting up the debugger
+-----------------------
+
+Use the built-in Python debugger
+================================
+
+Adding the ``breakpoint()`` statment inside the code and starting the server ``jupyter server``
+will cause the debugger to pause at the next statement. See the `pdb <https://docs.python.org/3/library/pdb.html>`_
+documentation for more information.
+
+Use the "ipdb" debugger
+=======================
+
+ipdb is a drop-in replacement for the built-in pdb debugger but provides
+a richer debugging experience by adding features like tab completion,
+syntax highlighting, better tracebacks and better introspection.
+
+Install ipdb ``pip install ipdb``, and set the env variable ``PYTHONBREAKPOINT=ipdb.set_trace``.
+Adding ``breakpoint()`` inside the code will cause the debugger to pause at the next statement.
+
+Use the debugger interface in Visual Studio Code
+================================================
+
+Add this configuration to your ``.vscode/launch.json`` file  to setup the debugger::
+
+    {
+    "version": "0.2.0",
+    "configurations": [
+        {
+        "name": "Debug Jupyter Server",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceRoot}/jupyter_server/debug.py"
+        }
+    ]
+    }
+
+To use this, open the "Run and Debug Panel" and run the "Debug Jupyter Server"
+button on the top. This will launch the jupyter server and bring the debugger
+interface to any breakpoints present in the code.
+
 
 Code Styling
 -----------------------------
@@ -135,31 +176,3 @@ Windows users can find ``make.bat`` in the ``docs`` folder.
 You should also have a look at the `Project Jupyter Documentation Guide`__.
 
 __ https://jupyter.readthedocs.io/en/latest/contributing/content-contributor.html
-
-
-Debugging the code
-------------------
-
-Use the built-in Python debugger
-================================
-
-Adding the ``breakpoint()`` statment inside the code and starting the server ``jupyter server``
-will cause the debugger to pause at the next statement. See the `pdb <https://docs.python.org/3/library/pdb.html>`_
-documentation for more information.
-
-Use the "ipdb" debugger
-=======================
-
-ipdb is a drop-in replacement for the built-in pdb debugger but provides
-a richer debugging experience by adding features like tab completion,
-syntax highlighting, better tracebacks and better introspection.
-
-Install ipdb ``pip install ipdb``, and set the env variable ``PYTHONBREAKPOINT=ipdb.set_trace``.
-Adding ``breakpoint()`` inside the code will cause the debugger to pause at the next statement.
-
-Use the debugger interface in Visual Studio Code
-================================================
-The jupyter server repository provides a ``launch.json`` configuration that works
-out of the box within visual studio code. To use this, open the "Run and Debug Panel"
-and run the "Debug Jupyter Server" button on the top. This will launch the jupyter server
-and bring the debugger interface to any breakpoints present in the code.
