@@ -76,7 +76,7 @@ payload_4 = """\
 
 async def test_post_event(jp_fetch, event_bus):
     r = await jp_fetch("api", "events", method="POST", body=payload_1)
-    assert r.code == 201
+    assert r.code == 204
 
 
 @pytest.mark.parametrize("payload", [payload_2, payload_3, payload_4])

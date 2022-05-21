@@ -108,7 +108,7 @@ class EventHandler(APIHandler):
                 event=payload["event"],
                 timestamp_override=timestamp,
             )
-            self.set_status(201)
+            self.set_status(204)
             self.finish()
         except KeyError as ke:
             prop = str(ke).split(":")[-1].strip()
