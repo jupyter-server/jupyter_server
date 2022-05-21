@@ -8,7 +8,10 @@ from jupyter_telemetry.eventlog import _skip_message
 from pythonjsonlogger import jsonlogger
 from tornado import web, websocket
 
+from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import JupyterHandler
+
+from ...base.handlers import APIHandler
 
 AUTH_RESOURCE = "events"
 
@@ -75,6 +78,40 @@ class SubscribeWebsocket(
         self.event_bus.handlers.remove(self.logging_handler)
 
 
+class EventHandler(APIHandler):
+    """REST handler for events"""
+
+    auth_resource = AUTH_RESOURCE
+
+    @property
+    def event_bus(self):
+        """Jupyter Server's event bus that emits structured event data."""
+        return self.settings["event_bus"]
+
+    @web.authenticated
+    @authorized
+    async def post(self):
+        payload = self.get_json_body()
+        if payload is None:
+            raise web.HTTPError(400, "No JSON data provided")
+
+        try:
+            self.event_bus.record(
+                schema_name=payload["schema_name"],
+                version=payload["version"],
+                event=payload["event"],
+                timestamp_override=payload.get("timestamp", None),
+            )
+            self.set_status(201)
+            self.finish()
+        except KeyError as ke:
+            prop = str(ke).split(":")[-1]
+            raise web.HTTPError(400, f"{prop} missing in JSON data") from ke
+        except Exception as e:
+            raise web.HTTPError(500, str(e)) from e
+
+
 default_handlers = [
+    (r"/api/events", EventHandler),
     (r"/api/events/subscribe", SubscribeWebsocket),
 ]
