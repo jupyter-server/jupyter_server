@@ -3,6 +3,7 @@
 .. versionadded:: 2.0
 """
 import logging
+from datetime import datetime
 
 from jupyter_telemetry.eventlog import _skip_message
 from pythonjsonlogger import jsonlogger
@@ -79,7 +80,7 @@ class SubscribeWebsocket(
 
 
 class EventHandler(APIHandler):
-    """REST handler for events"""
+    """REST api handler for events"""
 
     auth_resource = AUTH_RESOURCE
 
@@ -96,16 +97,21 @@ class EventHandler(APIHandler):
             raise web.HTTPError(400, "No JSON data provided")
 
         try:
-            self.event_bus.record(
+            if "timestamp" in payload:
+                timestamp = datetime.strptime(payload["timestamp"], "%Y-%m-%d %H:%M:%S")
+            else:
+                timestamp = None
+
+            self.event_bus.record_event(
                 schema_name=payload["schema_name"],
                 version=payload["version"],
                 event=payload["event"],
-                timestamp_override=payload.get("timestamp", None),
+                timestamp_override=timestamp,
             )
             self.set_status(201)
             self.finish()
         except KeyError as ke:
-            prop = str(ke).split(":")[-1]
+            prop = str(ke).split(":")[-1].strip()
             raise web.HTTPError(400, f"{prop} missing in JSON data") from ke
         except Exception as e:
             raise web.HTTPError(500, str(e)) from e
