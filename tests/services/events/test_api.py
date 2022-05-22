@@ -11,7 +11,7 @@ def event_bus(jp_serverapp):
     schema_file = pathlib.Path(__file__).parent / "mock_event.yaml"
     event_bus.register_schema_file(schema_file)
     #
-    event_bus.allowed_schemas = ["event.mock.jupyter.com/message"]
+    event_bus.allowed_schemas = ["event.mock.jupyter.org/message"]
     return event_bus
 
 
@@ -20,7 +20,7 @@ async def test_subscribe_websocket(jp_ws_fetch, event_bus):
     ws = await jp_ws_fetch("/api/events/subscribe")
 
     event_bus.record_event(
-        schema_name="event.mock.jupyter.com/message",
+        schema_name="event.mock.jupyter.org/message",
         version=1,
         event={"event_message": "Hello, world!"},
     )

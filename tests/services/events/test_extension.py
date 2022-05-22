@@ -9,7 +9,7 @@ def jp_server_config():
         "ServerApp": {
             "jpserver_extensions": {"tests.services.events.mockextension": True},
         },
-        "EventBus": {"allowed_schemas": ["event.mockextension.jupyter.com/message"]},
+        "EventBus": {"allowed_schemas": ["event.mockextension.jupyter.org/message"]},
     }
     return config
 

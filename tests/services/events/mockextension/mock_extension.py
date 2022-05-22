@@ -8,7 +8,7 @@ class MockEventHandler(JupyterHandler):
     def get(self):
         # Emit an event.
         self.event_bus.record_event(
-            schema_name="event.mockextension.jupyter.com/message",
+            schema_name="event.mockextension.jupyter.org/message",
             version=1,
             event={"event_message": "Hello world, from mock extension!"},
         )
