@@ -60,6 +60,20 @@ payload_1 = """\
 }
 """
 
+
+async def test_post_event(jp_fetch, eventbus_sink):
+    event_bus, sink = eventbus_sink
+
+    r = await jp_fetch("api", "events", method="POST", body=payload_1)
+    assert r.code == 204
+
+    output = sink.getvalue()
+    assert output
+    input = json.loads(payload_1)
+    data = json.loads(output)
+    assert input["event"]["event_message"] == data["event_message"]
+
+
 payload_2 = """\
 {
     "schema_name": "event.mock.jupyter.org/message",
@@ -84,19 +98,6 @@ payload_4 = """\
     "version": 1
 }
 """
-
-
-async def test_post_event(jp_fetch, eventbus_sink):
-    event_bus, sink = eventbus_sink
-
-    r = await jp_fetch("api", "events", method="POST", body=payload_1)
-    assert r.code == 204
-
-    output = sink.getvalue()
-    assert output
-    input = json.loads(payload_1)
-    data = json.loads(output)
-    assert input["event"]["event_message"] == data["event_message"]
 
 
 @pytest.mark.parametrize("payload", [payload_2, payload_3, payload_4])
