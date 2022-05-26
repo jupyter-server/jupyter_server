@@ -57,11 +57,6 @@ class SubscribeWebsocket(
         res = super().get(*args, **kwargs)
         await res
 
-    @property
-    def event_bus(self):
-        """Jupyter Server's event bus that emits structured event data."""
-        return self.settings["event_bus"]
-
     def open(self):
         """Routes events that are emitted by Jupyter Server's
         EventBus to a WebSocket client in the browser.
@@ -83,11 +78,6 @@ class EventHandler(APIHandler):
     """REST api handler for events"""
 
     auth_resource = AUTH_RESOURCE
-
-    @property
-    def event_bus(self):
-        """Jupyter Server's event bus that emits structured event data."""
-        return self.settings["event_bus"]
 
     @web.authenticated
     @authorized
