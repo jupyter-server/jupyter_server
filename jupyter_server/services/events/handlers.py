@@ -98,7 +98,7 @@ class EventHandler(APIHandler):
 
         try:
             if "timestamp" in payload:
-                timestamp = datetime.strptime(payload["timestamp"], "%Y-%m-%d %H:%M:%S")
+                timestamp = datetime.strptime(payload["timestamp"], "%Y-%m-%d %H:%M:%S.%f %z")
             else:
                 timestamp = None
 
