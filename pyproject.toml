@@ -44,6 +44,7 @@ dependencies = [
     "tornado>=6.1.0",
     "traitlets>=5.1",
     "websocket-client",
+    "jupyter_telemetry"
 ]
 
 [project.urls]
@@ -72,7 +73,7 @@ dev = [
 jupyter-server = "jupyter_server.serverapp:main"
 
 [tool.hatch.build]
-artifacts = ["jupyter_server/static/style/*.*"]
+artifacts = ["jupyter_server/static/style"]
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.3.3"]
@@ -108,6 +109,9 @@ filterwarnings = [
 
 [tool.jupyter-releaser]
 skip = ["check-links"]
+
+[tool.jupyter-releaser.hooks]
+before-build-python = ["npm install", "npm run build"]
 
 [tool.jupyter-releaser.options]
 post-version-spec = "dev"
