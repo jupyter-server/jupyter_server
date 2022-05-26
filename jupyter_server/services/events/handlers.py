@@ -102,6 +102,15 @@ class EventHandler(APIHandler):
             else:
                 timestamp = None
 
+            if "schema_name" not in payload:
+                raise web.HTTPError(400, f"'schema_name' missing in JSON data")
+
+            if "version" not in payload:
+                raise web.HTTPError(400, f"'version' missing in JSON data")
+
+            if "event" not in payload:
+                raise web.HTTPError(400, f"'event' missing in JSON data")
+
             self.event_bus.record_event(
                 schema_name=payload["schema_name"],
                 version=payload["version"],
@@ -110,9 +119,6 @@ class EventHandler(APIHandler):
             )
             self.set_status(204)
             self.finish()
-        except KeyError as ke:
-            prop = str(ke).split(":")[-1].strip()
-            raise web.HTTPError(400, f"{prop} missing in JSON data") from ke
         except Exception as e:
             raise web.HTTPError(500, str(e)) from e
 
