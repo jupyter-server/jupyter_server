@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import pathlib
+from datetime import datetime
 
 import pytest
 import tornado
@@ -56,36 +57,42 @@ payload_1 = """\
     "version": 1,
     "event": {
         "event_message": "Hello, world!"
-    }
+    },
+    "timestamp": "2022-05-26T12:50:00+00:00Z"
 }
 """
-
-
-async def test_post_event(jp_fetch, eventbus_sink):
-    event_bus, sink = eventbus_sink
-
-    r = await jp_fetch("api", "events", method="POST", body=payload_1)
-    assert r.code == 204
-
-    output = sink.getvalue()
-    assert output
-    input = json.loads(payload_1)
-    data = json.loads(output)
-    assert input["event"]["event_message"] == data["event_message"]
-
 
 payload_2 = """\
 {
     "schema_name": "event.mock.jupyter.org/message",
+    "version": 1,
     "event": {
         "event_message": "Hello, world!"
     }
 }
 """
 
+
+@pytest.mark.parametrize("payload", [payload_1, payload_2])
+async def test_post_event(jp_fetch, eventbus_sink, payload):
+    event_bus, sink = eventbus_sink
+
+    r = await jp_fetch("api", "events", method="POST", body=payload)
+    assert r.code == 204
+
+    output = sink.getvalue()
+    assert output
+    input = json.loads(payload)
+    data = json.loads(output)
+    assert input["event"]["event_message"] == data["event_message"]
+    assert data["__timestamp__"]
+    if "timestamp" in input:
+        assert input["timestamp"] == data["__timestamp__"]
+
+
 payload_3 = """\
 {
-    "version": 1,
+    "schema_name": "event.mock.jupyter.org/message",
     "event": {
         "event_message": "Hello, world!"
     }
@@ -94,13 +101,33 @@ payload_3 = """\
 
 payload_4 = """\
 {
+    "version": 1,
+    "event": {
+        "event_message": "Hello, world!"
+    }
+}
+"""
+
+payload_5 = """\
+{
     "schema_name": "event.mock.jupyter.org/message",
     "version": 1
 }
 """
 
+payload_6 = """\
+{
+    "schema_name": "event.mock.jupyter.org/message",
+    "version": 1,
+    "event": {
+        "event_message": "Hello, world!"
+    },
+    "timestamp": "2022-05-26 12:50:00"
+}
+"""
 
-@pytest.mark.parametrize("payload", [payload_2, payload_3, payload_4])
+
+@pytest.mark.parametrize("payload", [payload_3, payload_4, payload_5, payload_6])
 async def test_post_event_400(jp_fetch, event_bus, payload):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch("api", "events", method="POST", body=payload)
@@ -108,7 +135,7 @@ async def test_post_event_400(jp_fetch, event_bus, payload):
     expected_http_error(e, 400)
 
 
-payload_5 = """\
+payload_7 = """\
 {
     "schema_name": "event.mock.jupyter.org/message",
     "version": 1,
@@ -118,7 +145,7 @@ payload_5 = """\
 }
 """
 
-payload_6 = """\
+payload_8 = """\
 {
     "schema_name": "event.mock.jupyter.org/message",
     "version": 2,
@@ -129,7 +156,7 @@ payload_6 = """\
 """
 
 
-@pytest.mark.parametrize("payload", [payload_5, payload_6])
+@pytest.mark.parametrize("payload", [payload_7, payload_8])
 async def test_post_event_500(jp_fetch, event_bus, payload):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch("api", "events", method="POST", body=payload)
