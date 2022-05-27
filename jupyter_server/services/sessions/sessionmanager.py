@@ -1,6 +1,7 @@
 """A base class session manager."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import os
 import pathlib
 import uuid
 
@@ -274,7 +275,7 @@ class SessionManager(LoggingConfigurable):
         kernel_id = await self.kernel_manager.start_kernel(
             path=kernel_path,
             kernel_name=kernel_name,
-            env={"JPY_SESSION_NAME": path},
+            env={**os.environ, "JPY_SESSION_NAME": path},
         )
         return kernel_id
 
