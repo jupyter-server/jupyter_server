@@ -2,7 +2,6 @@ import io
 import json
 import logging
 import pathlib
-from datetime import datetime
 
 import pytest
 import tornado
@@ -58,7 +57,7 @@ payload_1 = """\
     "event": {
         "event_message": "Hello, world!"
     },
-    "timestamp": "2022-05-26T12:50:00+00:00Z"
+    "timestamp": "2022-05-26T12:50:00+06:00Z"
 }
 """
 

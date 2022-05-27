@@ -4,7 +4,7 @@
 """
 import logging
 from datetime import datetime
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from jupyter_telemetry.eventlog import _skip_message
 from pythonjsonlogger import jsonlogger
@@ -90,7 +90,7 @@ def get_timestamp(data: Dict[str, Any]) -> Optional[datetime]:
             timestamp = datetime.strptime(data["timestamp"], "%Y-%m-%dT%H:%M:%S%zZ")
         else:
             timestamp = None
-    except Exception as e:
+    except Exception:
         raise web.HTTPError(
             400,
             """Failed to parse timestamp from JSON request body,
