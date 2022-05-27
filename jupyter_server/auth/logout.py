@@ -11,7 +11,7 @@ class LogoutHandler(JupyterHandler):
         if self.login_available:
             message = {"info": "Successfully logged out."}
         else:
-            message = {"warning": "Cannot log out. Jupyter Server authentication " "is disabled."}
+            message = {"warning": "Cannot log out. Jupyter Server authentication is disabled."}
         self.write(self.render_template("logout.html", message=message))
 
 

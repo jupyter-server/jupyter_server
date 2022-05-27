@@ -1,16 +1,16 @@
 name: Jupyter Server Integration Tests [Linux]
 on:
   push:
-    branches: "main"
+    branches: ["main"]
   pull_request:
-    branches: "*"
+    branches: ["*"]
 jobs:
   build:
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu]
+        os: [ubuntu-latest]
         python-version: ["3.7", "3.8", "3.9", "3.10", "pypy-3.7"]
     steps:
       - name: Checkout
@@ -20,10 +20,22 @@ jobs:
       - name: Install the Python dependencies
         run: |
           pip install -e ".[test]"
+          pip install pytest-github-actions-annotate-failures
       - name: List installed packages
         run: |
           pip freeze
           pip check
       - name: Run the tests
         run: |
-          pytest -vv --integration_tests=true jupyter_server
+          pytest -vv --integration_tests=true tests
+
+  integration_check: # This job does nothing and is only used for the branch protection
+    if: always()
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}

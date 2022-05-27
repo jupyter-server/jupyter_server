@@ -2,25 +2,18 @@ import logging
 import re
 import sys
 
-from jinja2 import Environment
-from jinja2 import FileSystemLoader
-from jupyter_core.application import JupyterApp
-from jupyter_core.application import NoStart
+from jinja2 import Environment, FileSystemLoader
+from jupyter_core.application import JupyterApp, NoStart
 from tornado.log import LogFormatter
 from tornado.web import RedirectHandler
-from traitlets import Bool
-from traitlets import default
-from traitlets import Dict
-from traitlets import HasTraits
-from traitlets import List
-from traitlets import Unicode
+from traitlets import Any, Bool, Dict, HasTraits, List, Unicode, default
 from traitlets.config import Config
 
-from .handler import ExtensionHandlerMixin
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.transutils import _i18n
-from jupyter_server.utils import is_namespace_package
-from jupyter_server.utils import url_path_join
+from jupyter_server.utils import is_namespace_package, url_path_join
+
+from .handler import ExtensionHandlerMixin
 
 # -----------------------------------------------------------------------------
 # Util functions and classes.
@@ -96,18 +89,18 @@ class ExtensionAppJinjaMixin(HasTraits):
         self.initialize_templates()
         # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
-            self.settings.update({"{}_template_paths".format(self.name): self.template_paths})
+            self.settings.update({f"{self.name}_template_paths": self.template_paths})
 
         # Create a jinja environment for logging html templates.
         self.jinja2_env = Environment(
             loader=FileSystemLoader(self.template_paths),
             extensions=["jinja2.ext.i18n"],
             autoescape=True,
-            **self.jinja2_options
+            **self.jinja2_options,
         )
 
         # Add the jinja2 environment for this extension to the tornado settings.
-        self.settings.update({"{}_jinja2_env".format(self.name): self.jinja2_env})
+        self.settings.update({f"{self.name}_jinja2_env": self.jinja2_env})
 
 
 # -----------------------------------------------------------------------------
@@ -144,7 +137,7 @@ class ExtensionApp(JupyterApp):
     # A useful class property that subclasses can override to
     # configure the underlying Jupyter Server when this extension
     # is launched directly (using its `launch_instance` method).
-    serverapp_config = {}
+    serverapp_config: dict = {}
 
     # Some subclasses will likely override this trait to flip
     # the default value to False if they don't offer a browser
@@ -162,11 +155,17 @@ class ExtensionApp(JupyterApp):
     def _default_open_browser(self):
         return self.serverapp.config["ServerApp"].get("open_browser", True)
 
+    @property
+    def config_file_paths(self):
+        """Look on the same path as our parent for config files"""
+        # rely on parent serverapp, which should control all config loading
+        return self.serverapp.config_file_paths
+
     # The extension name used to name the jupyter config
     # file, jupyter_{name}_config.
     # This should also match the jupyter subcommand used to launch
     # this extension from the CLI, e.g. `jupyter {name}`.
-    name = None
+    name = "ExtensionApp"
 
     @classmethod
     def get_extension_package(cls):
@@ -200,7 +199,21 @@ class ExtensionApp(JupyterApp):
     ]
 
     # A ServerApp is not defined yet, but will be initialized below.
-    serverapp = None
+    serverapp = Any()
+
+    @default("serverapp")
+    def _default_serverapp(self):
+        # load the current global instance, if any
+        if ServerApp.initialized():
+            try:
+                return ServerApp.instance()
+            except Exception:
+                # error retrieving instance, e.g. MultipleInstanceError
+                pass
+
+        # serverapp accessed before it was defined,
+        # declare an empty one
+        return ServerApp()
 
     _log_formatter_cls = LogFormatter
 
@@ -211,7 +224,9 @@ class ExtensionApp(JupyterApp):
     @default("log_format")
     def _default_log_format(self):
         """override default log format to include date & time"""
-        return u"%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
+        return (
+            "%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
+        )
 
     static_url_prefix = Unicode(
         help="""Url where the static assets for the extension are served."""
@@ -219,7 +234,7 @@ class ExtensionApp(JupyterApp):
 
     @default("static_url_prefix")
     def _default_static_url_prefix(self):
-        static_url = "static/{name}/".format(name=self.name)
+        static_url = f"static/{self.name}/"
         return url_path_join(self.serverapp.base_url, static_url)
 
     static_paths = List(
@@ -268,7 +283,7 @@ class ExtensionApp(JupyterApp):
         """
         traits = self.class_own_traits().keys()
         self.extension_config = Config({t: getattr(self, t) for t in traits})
-        self.settings["{}_config".format(self.name)] = self.extension_config
+        self.settings[f"{self.name}_config"] = self.extension_config
 
     def _prepare_settings(self):
         # Make webapp settings accessible to initialize_settings method
@@ -278,8 +293,8 @@ class ExtensionApp(JupyterApp):
         # Add static and template paths to settings.
         self.settings.update(
             {
-                "{}_static_paths".format(self.name): self.static_paths,
-                "{}".format(self.name): self,
+                f"{self.name}_static_paths": self.static_paths,
+                f"{self.name}": self,
             }
         )
 
@@ -303,7 +318,7 @@ class ExtensionApp(JupyterApp):
             handler = handler_items[1]
 
             # Get handler kwargs, if given
-            kwargs = {}
+            kwargs: dict = {}
             if issubclass(handler, ExtensionHandlerMixin):
                 kwargs["name"] = self.name
 
@@ -333,7 +348,7 @@ class ExtensionApp(JupyterApp):
     def _prepare_templates(self):
         # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
-            self.settings.update({"{}_template_paths".format(self.name): self.template_paths})
+            self.settings.update({f"{self.name}_template_paths": self.template_paths})
         self.initialize_templates()
 
     def _jupyter_server_config(self):
@@ -410,9 +425,13 @@ class ExtensionApp(JupyterApp):
 
         Server should be started after extension is initialized.
         """
-        super(ExtensionApp, self).start()
+        super().start()
         # Start the server.
         self.serverapp.start()
+
+    def current_activity(self):
+        """Return a list of activity happening in this extension."""
+        return
 
     async def stop_extension(self):
         """Cleanup any resources managed by this extension."""
@@ -495,7 +514,8 @@ class ExtensionApp(JupyterApp):
                     RedirectHandler,
                     {
                         "url": url_path_join(
-                            serverapp.base_url, "static/base/images/favicon-notebook.ico"
+                            serverapp.base_url,
+                            "static/base/images/favicon-notebook.ico",
                         )
                     },
                 ),
@@ -504,7 +524,8 @@ class ExtensionApp(JupyterApp):
                     RedirectHandler,
                     {
                         "url": url_path_join(
-                            serverapp.base_url, "static/base/images/favicon-terminal.ico"
+                            serverapp.base_url,
+                            "static/base/images/favicon-terminal.ico",
                         )
                     },
                 ),
@@ -518,7 +539,7 @@ class ExtensionApp(JupyterApp):
         extension.initialize()
 
     @classmethod
-    def initialize_server(cls, argv=[], load_other_extensions=True, **kwargs):
+    def initialize_server(cls, argv=None, load_other_extensions=True, **kwargs):
         """Creates an instance of ServerApp and explicitly sets
         this extension to enabled=True (i.e. superceding disabling
         found in other config from files).
@@ -535,7 +556,7 @@ class ExtensionApp(JupyterApp):
         serverapp = ServerApp.instance(jpserver_extensions=jpserver_extensions, **kwargs)
         serverapp.aliases.update(cls.aliases)
         serverapp.initialize(
-            argv=argv,
+            argv=argv or [],
             starter_extension=cls.name,
             find_extensions=find_extensions,
         )

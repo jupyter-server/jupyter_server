@@ -12,8 +12,12 @@ pjoin = os.path.join
 
 from tornado import web
 
+from jupyter_server.auth import authorized
+
 from ...base.handlers import APIHandler
 from ...utils import ensure_async, url_path_join, url_unescape
+
+AUTH_RESOURCE = "kernelspecs"
 
 
 def kernelspec_model(handler, name, spec_dict, resource_dir):
@@ -44,8 +48,13 @@ def is_kernelspec_model(spec_dict):
     )
 
 
-class MainKernelSpecHandler(APIHandler):
+class KernelSpecsAPIHandler(APIHandler):
+    auth_resource = AUTH_RESOURCE
+
+
+class MainKernelSpecHandler(KernelSpecsAPIHandler):
     @web.authenticated
+    @authorized
     async def get(self):
         ksm = self.kernel_spec_manager
         km = self.kernel_manager
@@ -59,7 +68,10 @@ class MainKernelSpecHandler(APIHandler):
                     d = kernel_info
                 else:
                     d = kernelspec_model(
-                        self, kernel_name, kernel_info["spec"], kernel_info["resource_dir"]
+                        self,
+                        kernel_name,
+                        kernel_info["spec"],
+                        kernel_info["resource_dir"],
                     )
             except Exception:
                 self.log.error("Failed to load kernel spec: '%s'", kernel_name, exc_info=True)
@@ -69,15 +81,16 @@ class MainKernelSpecHandler(APIHandler):
         self.finish(json.dumps(model))
 
 
-class KernelSpecHandler(APIHandler):
+class KernelSpecHandler(KernelSpecsAPIHandler):
     @web.authenticated
+    @authorized
     async def get(self, kernel_name):
         ksm = self.kernel_spec_manager
         kernel_name = url_unescape(kernel_name)
         try:
             spec = await ensure_async(ksm.get_kernel_spec(kernel_name))
         except KeyError as e:
-            raise web.HTTPError(404, u"Kernel spec %s not found" % kernel_name) from e
+            raise web.HTTPError(404, "Kernel spec %s not found" % kernel_name) from e
         if is_kernelspec_model(spec):
             model = spec
         else:

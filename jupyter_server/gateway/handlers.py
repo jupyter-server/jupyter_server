@@ -6,22 +6,16 @@ import mimetypes
 import os
 import random
 
-from ipython_genutils.py3compat import cast_unicode
 from jupyter_client.session import Session
 from tornado import web
 from tornado.concurrent import Future
-from tornado.escape import json_decode
-from tornado.escape import url_escape
-from tornado.escape import utf8
+from tornado.escape import json_decode, url_escape, utf8
 from tornado.httpclient import HTTPRequest
-from tornado.ioloop import IOLoop
-from tornado.ioloop import PeriodicCallback
-from tornado.websocket import websocket_connect
-from tornado.websocket import WebSocketHandler
+from tornado.ioloop import IOLoop, PeriodicCallback
+from tornado.websocket import WebSocketHandler, websocket_connect
 from traitlets.config.configurable import LoggingConfigurable
 
-from ..base.handlers import APIHandler
-from ..base.handlers import JupyterHandler
+from ..base.handlers import APIHandler, JupyterHandler
 from ..utils import url_path_join
 from .managers import GatewayClient
 
@@ -54,12 +48,13 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
         the websocket finishes completing.
         """
         # authenticate the request before opening the websocket
-        if self.get_current_user() is None:
+        if self.current_user is None:
             self.log.warning("Couldn't authenticate WebSocket connection")
             raise web.HTTPError(403)
 
-        if self.get_argument("session_id", False):
-            self.session.session = cast_unicode(self.get_argument("session_id"))
+        if self.get_argument("session_id", None):
+            assert self.session is not None
+            self.session.session = self.get_argument("session_id")
         else:
             self.log.warning("No session ID specified")
 
@@ -70,8 +65,8 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
     async def get(self, kernel_id, *args, **kwargs):
         self.authenticate()
-        self.kernel_id = cast_unicode(kernel_id, "ascii")
-        await super(WebSocketChannelsHandler, self).get(kernel_id=kernel_id, *args, **kwargs)
+        self.kernel_id = kernel_id
+        await super().get(kernel_id=kernel_id, *args, **kwargs)
 
     def send_ping(self):
         if self.ws_connection is None and self.ping_callback is not None:
@@ -81,10 +76,11 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
         self.ping(b"")
 
     def open(self, kernel_id, *args, **kwargs):
-        """Handle web socket connection open to notebook server and delegate to gateway web socket handler """
+        """Handle web socket connection open to notebook server and delegate to gateway web socket handler"""
         self.ping_callback = PeriodicCallback(self.send_ping, GATEWAY_WS_PING_INTERVAL_SECS * 1000)
         self.ping_callback.start()
 
+        assert self.gateway is not None
         self.gateway.on_open(
             kernel_id=kernel_id,
             message_callback=self.write_message,
@@ -93,6 +89,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
     def on_message(self, message):
         """Forward message to gateway web socket handler."""
+        assert self.gateway is not None
         self.gateway.on_message(message)
 
     def write_message(self, message, binary=False):
@@ -100,7 +97,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
         if self.ws_connection:  # prevent WebSocketClosedError
             if isinstance(message, bytes):
                 binary = True
-            super(WebSocketChannelsHandler, self).write_message(message, binary=binary)
+            super().write_message(message, binary=binary)
         elif self.log.isEnabledFor(logging.DEBUG):
             msg_summary = WebSocketChannelsHandler._get_message_summary(json_decode(utf8(message)))
             self.log.debug(
@@ -111,14 +108,15 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
     def on_close(self):
         self.log.debug("Closing websocket connection %s", self.request.path)
+        assert self.gateway is not None
         self.gateway.on_close()
-        super(WebSocketChannelsHandler, self).on_close()
+        super().on_close()
 
     @staticmethod
     def _get_message_summary(message):
         summary = []
         message_type = message["msg_type"]
-        summary.append("type: {}".format(message_type))
+        summary.append(f"type: {message_type}")
 
         if message_type == "status":
             summary.append(", state: {}".format(message["content"]["execution_state"]))
@@ -140,10 +138,10 @@ class GatewayWebSocketClient(LoggingConfigurable):
     """Proxy web socket connection to a kernel/enterprise gateway."""
 
     def __init__(self, **kwargs):
-        super(GatewayWebSocketClient, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.kernel_id = None
         self.ws = None
-        self.ws_future = Future()
+        self.ws_future: Future = Future()
         self.disconnected = False
         self.retry = 0
 
@@ -157,8 +155,8 @@ class GatewayWebSocketClient(LoggingConfigurable):
             url_escape(kernel_id),
             "channels",
         )
-        self.log.info("Connecting to {}".format(ws_url))
-        kwargs = {}
+        self.log.info(f"Connecting to {ws_url}")
+        kwargs: dict = {}
         kwargs = GatewayClient.instance().load_connection_args(**kwargs)
 
         request = HTTPRequest(ws_url, **kwargs)
@@ -174,7 +172,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         ):  # prevent concurrent.futures._base.CancelledError
             self.ws = fut.result()
             self.retry = 0
-            self.log.debug("Connection is ready: ws: {}".format(self.ws))
+            self.log.debug(f"Connection is ready: ws: {self.ws}")
         else:
             self.log.warning(
                 "Websocket connection has been closed via client disconnect or due to error.  "
@@ -191,9 +189,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         elif not self.ws_future.done():
             # Cancel pending connection.  Since future.cancel() is a noop on tornado, we'll track cancellation locally
             self.ws_future.cancel()
-            self.log.debug(
-                "_disconnect: future cancelled, disconnected: {}".format(self.disconnected)
-            )
+            self.log.debug(f"_disconnect: future cancelled, disconnected: {self.disconnected}")
 
     async def _read_messages(self, callback):
         """Read messages from gateway server."""
@@ -204,11 +200,11 @@ class GatewayWebSocketClient(LoggingConfigurable):
                     message = await self.ws.read_message()
                 except Exception as e:
                     self.log.error(
-                        "Exception reading message from websocket: {}".format(e)
+                        f"Exception reading message from websocket: {e}"
                     )  # , exc_info=True)
                 if message is None:
                     if not self.disconnected:
-                        self.log.warning("Lost connection to Gateway: {}".format(self.kernel_id))
+                        self.log.warning(f"Lost connection to Gateway: {self.kernel_id}")
                     break
                 callback(
                     message
@@ -221,7 +217,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
             jitter = random.randint(10, 100) * 0.01
             retry_interval = (
                 min(
-                    GatewayClient.instance().gateway_retry_interval * (2 ** self.retry),
+                    GatewayClient.instance().gateway_retry_interval * (2**self.retry),
                     GatewayClient.instance().gateway_retry_interval_max,
                 )
                 + jitter
@@ -257,9 +253,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
             if not self.disconnected and self.ws is not None:
                 self.ws.write_message(message)
         except Exception as e:
-            self.log.error(
-                "Exception writing message to websocket: {}".format(e)
-            )  # , exc_info=True)
+            self.log.error(f"Exception writing message to websocket: {e}")  # , exc_info=True)
 
     def on_close(self):
         """Web socket closed event."""
@@ -279,7 +273,8 @@ class GatewayResourceHandler(APIHandler):
                 " resource serving.".format(path, kernel_name)
             )
         else:
-            self.set_header("Content-Type", mimetypes.guess_type(path)[0])
+            mimetype = mimetypes.guess_type(path)[0] or "text/plain"
+            self.set_header("Content-Type", mimetype)
         self.finish(kernel_spec_res)
 
 

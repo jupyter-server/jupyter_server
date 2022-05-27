@@ -4,14 +4,21 @@ import json
 from anyio.to_thread import run_sync
 from tornado import web
 
+from jupyter_server.auth import authorized
+
 from ...base.handlers import APIHandler
+
+AUTH_RESOURCE = "nbconvert"
 
 
 LOCK = asyncio.Lock()
 
 
 class NbconvertRootHandler(APIHandler):
+    auth_resource = AUTH_RESOURCE
+
     @web.authenticated
+    @authorized
     async def get(self):
         try:
             from nbconvert.exporters import base

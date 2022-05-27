@@ -1,1 +1,1 @@
-from jupyter_server.conftest import *  # noqa
+pytest_plugins = ["jupyter_server.pytest_plugin"]

@@ -27,7 +27,7 @@ steps::
     pip install --upgrade setuptools pip
     git clone https://github.com/jupyter/jupyter_server
     cd jupyter_server
-    pip install -e .
+    pip install -e ".[test]"
 
 If you are using a system-wide Python installation and you only want to install the server for you,
 you can add ``--user`` to the install commands.
@@ -44,7 +44,10 @@ Code Styling
 need to worry too much about your code style.
 As long as your code is valid,
 the pre-commit hook should take care of how it should look.
-To install `pre-commit`, run the following::
+`pre-commit` and its associated hooks will automatically be installed when
+you run ``pip install -e ".[test]"``
+
+To install ``pre-commit`` manually, run the following::
 
     pip install pre-commit
     pre-commit install
@@ -56,13 +59,16 @@ You can invoke the pre-commit hook by hand at any time with::
 
 which should run any autoformatting on your code
 and tell you about any errors it couldn't fix automatically.
-You may also install [black integration](https://github.com/psf/black#editor-integration)
+You may also install `black integration <https://github.com/psf/black#editor-integration>`_
 into your text editor to format code automatically.
 
 If you have already committed files before setting up the pre-commit
 hook with ``pre-commit install``, you can fix everything up using
 ``pre-commit run --all-files``. You need to make the fixing commit
 yourself after that.
+
+Some of the hooks only run on CI by default, but you can invoke them by
+running with the ``--hook-stage manual`` argument.
 
 Troubleshooting the Installation
 --------------------------------
@@ -89,7 +95,7 @@ Install dependencies::
 
 To run the Python tests, use::
 
-    pytest jupyter_server
+    pytest
     pytest examples/simple  # to test the examples
 
 Building the Docs
@@ -98,12 +104,11 @@ Building the Docs
 To build the documentation you'll need `Sphinx <http://www.sphinx-doc.org/en/master/>`_,
 `pandoc <https://pandoc.org/>`_ and a few other packages.
 
-To install (and activate) a `conda environment`_ named ``server_docs``
+To install (and activate) a `conda environment`_ named ``jupyter_server_docs``
 containing all the necessary packages (except pandoc), use::
 
     conda env create -f docs/environment.yml
-    source activate server_docs  # Linux and OS X
-    activate server_docs         # Windows
+    conda activate jupyter_server_docs
 
 .. _conda environment:
     https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file

@@ -4,11 +4,9 @@ Utilities for file-based Contents/Checkpoints managers.
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import errno
-import io
 import os
 import shutil
-from base64 import decodebytes
-from base64 import encodebytes
+from base64 import decodebytes, encodebytes
 from contextlib import contextmanager
 from functools import partial
 
@@ -18,8 +16,7 @@ from tornado.web import HTTPError
 from traitlets import Bool
 from traitlets.config import Configurable
 
-from jupyter_server.utils import to_api_path
-from jupyter_server.utils import to_os_path
+from jupyter_server.utils import to_api_path, to_os_path
 
 
 def replace_file(src, dst):
@@ -107,13 +104,13 @@ def atomic_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     if text:
         # Make sure that text files have Unix linefeeds by default
         kwargs.setdefault("newline", "\n")
-        fileobj = io.open(path, "w", encoding=encoding, **kwargs)
+        fileobj = open(path, "w", encoding=encoding, **kwargs)
     else:
-        fileobj = io.open(path, "wb", **kwargs)
+        fileobj = open(path, "wb", **kwargs)
 
     try:
         yield fileobj
-    except:
+    except BaseException:
         # Failed! Move the backup file back to the real path to avoid corruption
         fileobj.close()
         replace_file(tmp_path, path)
@@ -155,13 +152,13 @@ def _simple_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     if text:
         # Make sure that text files have Unix linefeeds by default
         kwargs.setdefault("newline", "\n")
-        fileobj = io.open(path, "w", encoding=encoding, **kwargs)
+        fileobj = open(path, "w", encoding=encoding, **kwargs)
     else:
-        fileobj = io.open(path, "wb", **kwargs)
+        fileobj = open(path, "wb", **kwargs)
 
     try:
         yield fileobj
-    except:
+    except BaseException:
         fileobj.close()
         raise
 
@@ -198,7 +195,7 @@ class FileManagerMixin(Configurable):
     def open(self, os_path, *args, **kwargs):
         """wrapper around io.open that turns permission errors into 403"""
         with self.perm_to_403(os_path):
-            with io.open(os_path, *args, **kwargs) as f:
+            with open(os_path, *args, **kwargs) as f:
                 yield f
 
     @contextmanager
@@ -207,11 +204,12 @@ class FileManagerMixin(Configurable):
         Depending on flag 'use_atomic_writing', the wrapper perform an actual atomic writing or
         simply writes the file (whatever an old exists or not)"""
         with self.perm_to_403(os_path):
+            kwargs["log"] = self.log
             if self.use_atomic_writing:
-                with atomic_writing(os_path, *args, log=self.log, **kwargs) as f:
+                with atomic_writing(os_path, *args, **kwargs) as f:
                     yield f
             else:
-                with _simple_writing(os_path, *args, log=self.log, **kwargs) as f:
+                with _simple_writing(os_path, *args, **kwargs) as f:
                     yield f
 
     @contextmanager
@@ -219,7 +217,7 @@ class FileManagerMixin(Configurable):
         """context manager for turning permission errors into 403."""
         try:
             yield
-        except (OSError, IOError) as e:
+        except OSError as e:
             if e.errno in {errno.EPERM, errno.EACCES}:
                 # make 403 error message without root prefix
                 # this may not work perfectly on unicode paths on Python 2,
@@ -227,7 +225,7 @@ class FileManagerMixin(Configurable):
                 if not os_path:
                     os_path = e.filename or "unknown file"
                 path = to_api_path(os_path, root=self.root_dir)
-                raise HTTPError(403, u"Permission denied: %s" % path) from e
+                raise HTTPError(403, "Permission denied: %s" % path) from e
             else:
                 raise
 
@@ -261,11 +259,13 @@ class FileManagerMixin(Configurable):
             raise HTTPError(404, "%s is outside root contents directory" % path)
         return os_path
 
-    def _read_notebook(self, os_path, as_version=4):
+    def _read_notebook(self, os_path, as_version=4, capture_validation_error=None):
         """Read a notebook from an os path."""
         with self.open(os_path, "r", encoding="utf-8") as f:
             try:
-                return nbformat.read(f, as_version=as_version)
+                return nbformat.read(
+                    f, as_version=as_version, capture_validation_error=capture_validation_error
+                )
             except Exception as e:
                 e_orig = e
 
@@ -277,19 +277,26 @@ class FileManagerMixin(Configurable):
             if not self.use_atomic_writing or not os.path.exists(tmp_path):
                 raise HTTPError(
                     400,
-                    u"Unreadable Notebook: %s %r" % (os_path, e_orig),
+                    f"Unreadable Notebook: {os_path} {e_orig!r}",
                 )
 
             # Move the bad file aside, restore the intermediate, and try again.
             invalid_file = path_to_invalid(os_path)
             replace_file(os_path, invalid_file)
             replace_file(tmp_path, os_path)
-            return self._read_notebook(os_path, as_version)
+            return self._read_notebook(
+                os_path, as_version, capture_validation_error=capture_validation_error
+            )
 
-    def _save_notebook(self, os_path, nb):
+    def _save_notebook(self, os_path, nb, capture_validation_error=None):
         """Save a notebook to an os_path."""
         with self.atomic_writing(os_path, encoding="utf-8") as f:
-            nbformat.write(nb, f, version=nbformat.NO_CONVERT)
+            nbformat.write(
+                nb,
+                f,
+                version=nbformat.NO_CONVERT,
+                capture_validation_error=capture_validation_error,
+            )
 
     def _read_file(self, os_path, format):
         """Read a non-notebook file.
@@ -334,7 +341,7 @@ class FileManagerMixin(Configurable):
                 b64_bytes = content.encode("ascii")
                 bcontent = decodebytes(b64_bytes)
         except Exception as e:
-            raise HTTPError(400, u"Encoding error saving %s: %s" % (os_path, e)) from e
+            raise HTTPError(400, f"Encoding error saving {os_path}: {e}") from e
 
         with self.atomic_writing(os_path, text=False) as f:
             f.write(bcontent)
@@ -352,11 +359,18 @@ class AsyncFileManagerMixin(FileManagerMixin):
         """
         await async_copy2_safe(src, dest, log=self.log)
 
-    async def _read_notebook(self, os_path, as_version=4):
+    async def _read_notebook(self, os_path, as_version=4, capture_validation_error=None):
         """Read a notebook from an os path."""
         with self.open(os_path, "r", encoding="utf-8") as f:
             try:
-                return await run_sync(partial(nbformat.read, as_version=as_version), f)
+                return await run_sync(
+                    partial(
+                        nbformat.read,
+                        as_version=as_version,
+                        capture_validation_error=capture_validation_error,
+                    ),
+                    f,
+                )
             except Exception as e:
                 e_orig = e
 
@@ -368,19 +382,29 @@ class AsyncFileManagerMixin(FileManagerMixin):
             if not self.use_atomic_writing or not os.path.exists(tmp_path):
                 raise HTTPError(
                     400,
-                    u"Unreadable Notebook: %s %r" % (os_path, e_orig),
+                    f"Unreadable Notebook: {os_path} {e_orig!r}",
                 )
 
             # Move the bad file aside, restore the intermediate, and try again.
             invalid_file = path_to_invalid(os_path)
             await async_replace_file(os_path, invalid_file)
             await async_replace_file(tmp_path, os_path)
-            return await self._read_notebook(os_path, as_version)
+            return await self._read_notebook(
+                os_path, as_version, capture_validation_error=capture_validation_error
+            )
 
-    async def _save_notebook(self, os_path, nb):
+    async def _save_notebook(self, os_path, nb, capture_validation_error=None):
         """Save a notebook to an os_path."""
         with self.atomic_writing(os_path, encoding="utf-8") as f:
-            await run_sync(partial(nbformat.write, version=nbformat.NO_CONVERT), nb, f)
+            await run_sync(
+                partial(
+                    nbformat.write,
+                    version=nbformat.NO_CONVERT,
+                    capture_validation_error=capture_validation_error,
+                ),
+                nb,
+                f,
+            )
 
     async def _read_file(self, os_path, format):
         """Read a non-notebook file.
@@ -425,7 +449,7 @@ class AsyncFileManagerMixin(FileManagerMixin):
                 b64_bytes = content.encode("ascii")
                 bcontent = decodebytes(b64_bytes)
         except Exception as e:
-            raise HTTPError(400, u"Encoding error saving %s: %s" % (os_path, e)) from e
+            raise HTTPError(400, f"Encoding error saving {os_path}: {e}") from e
 
         with self.atomic_writing(os_path, text=False) as f:
             await run_sync(f.write, bcontent)

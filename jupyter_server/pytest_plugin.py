@@ -22,7 +22,6 @@ from jupyter_server.services.contents.filemanager import FileContentsManager
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
 from jupyter_server.utils import url_path_join
 
-
 # List of dependencies needed for this plugin.
 pytest_plugins = [
     "pytest_tornasync",
@@ -35,7 +34,9 @@ pytest_plugins = [
 import asyncio
 
 if os.name == "nt" and sys.version_info >= (3, 7):
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    asyncio.set_event_loop_policy(
+        asyncio.WindowsSelectorEventLoopPolicy()  # type:ignore[attr-defined]
+    )
 
 
 # ============ Move to Jupyter Core =============
@@ -109,7 +110,7 @@ def jp_environ(
     jp_env_jupyter_path,
     jp_env_config_path,
 ):
-    """Configures a temporary environment based on Jupyter-specific environment variables. """
+    """Configures a temporary environment based on Jupyter-specific environment variables."""
     monkeypatch.setenv("HOME", str(jp_home_dir))
     monkeypatch.setenv("PYTHONPATH", os.pathsep.join(sys.path))
     # monkeypatch.setenv("JUPYTER_NO_CONFIG", "1")
@@ -127,8 +128,12 @@ def jp_environ(
 
 @pytest.fixture
 def jp_server_config():
-    """Allows tests to setup their specific configuration values. """
-    return {}
+    """Allows tests to setup their specific configuration values."""
+    return Config(
+        {
+            "jpserver_extensions": {"jupyter_server_terminals": True},
+        }
+    )
 
 
 @pytest.fixture
@@ -145,7 +150,7 @@ def jp_template_dir(tmp_path):
 
 @pytest.fixture
 def jp_argv():
-    """Allows tests to setup specific argv values. """
+    """Allows tests to setup specific argv values."""
     return []
 
 
@@ -157,7 +162,7 @@ def jp_extension_environ(jp_env_config_path, monkeypatch):
 
 @pytest.fixture
 def jp_http_port(http_server_port):
-    """Returns the port value from the http_server_port fixture. """
+    """Returns the port value from the http_server_port fixture."""
     return http_server_port[-1]
 
 
@@ -226,6 +231,13 @@ def jp_configurable_serverapp(
     """
     ServerApp.clear_instance()
 
+    # Inject jupyter_server_terminals into config unless it was
+    # explicitly put in config.
+    serverapp_config = jp_server_config.setdefault("ServerApp", {})
+    exts = serverapp_config.setdefault("jpserver_extensions", {})
+    if "jupyter_server_terminals" not in exts:
+        exts["jupyter_server_terminals"] = True
+
     def _configurable_serverapp(
         config=jp_server_config,
         base_url=jp_base_url,
@@ -234,23 +246,28 @@ def jp_configurable_serverapp(
         http_port=jp_http_port,
         tmp_path=tmp_path,
         root_dir=jp_root_dir,
-        **kwargs
+        **kwargs,
     ):
         c = Config(config)
         c.NotebookNotary.db_file = ":memory:"
         token = hexlify(os.urandom(4)).decode("ascii")
+
+        # Allow tests to configure root_dir via a file, argv, or its
+        # default (cwd) by specifying a value of None.
+        if root_dir is not None:
+            kwargs["root_dir"] = str(root_dir)
+
         app = ServerApp.instance(
             # Set the log level to debug for testing purposes
             log_level="DEBUG",
             port=http_port,
             port_retries=0,
             open_browser=False,
-            root_dir=str(root_dir),
             base_url=base_url,
             config=c,
             allow_root=True,
             token=token,
-            **kwargs
+            **kwargs,
         )
 
         app.init_signal = lambda: None
@@ -300,10 +317,7 @@ def jp_ensure_app_fixture(request):
 @pytest.fixture(scope="function")
 def jp_serverapp(jp_ensure_app_fixture, jp_server_config, jp_argv, jp_configurable_serverapp):
     """Starts a Jupyter Server instance based on the established configuration values."""
-    app = jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
-    yield app
-    app.remove_server_info_file()
-    app.remove_browser_open_files()
+    return jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
 
 
 @pytest.fixture
@@ -315,7 +329,7 @@ def jp_web_app(jp_serverapp):
 @pytest.fixture
 def jp_auth_header(jp_serverapp):
     """Configures an authorization header using the token from the serverapp fixture."""
-    return {"Authorization": "token {token}".format(token=jp_serverapp.token)}
+    return {"Authorization": f"token {jp_serverapp.token}"}
 
 
 @pytest.fixture
@@ -394,7 +408,7 @@ def jp_ws_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_http_port, 
         # Handle URL strings
         path_url = url_escape(url_path_join(*parts), plus=False)
         base_path_url = url_path_join(jp_base_url, path_url)
-        urlparts = urllib.parse.urlparse("ws://localhost:{}".format(jp_http_port))
+        urlparts = urllib.parse.urlparse(f"ws://localhost:{jp_http_port}")
         urlparts = urlparts._replace(path=base_path_url, query=urllib.parse.urlencode(params))
         url = urlparts.geturl()
         # Add auth keys to header
@@ -406,7 +420,7 @@ def jp_ws_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_http_port, 
     return client_fetch
 
 
-some_resource = u"The very model of a modern major general"
+some_resource = "The very model of a modern major general"
 sample_kernel_json = {
     "argv": ["cat", "{connection_file}"],
     "display_name": "Test kernel",
@@ -416,7 +430,7 @@ sample_kernel_json = {
 @pytest.fixture
 def jp_kernelspecs(jp_data_dir):
     """Configures some sample kernelspecs in the Jupyter data directory."""
-    spec_names = ["sample", "sample 2", "bad"]
+    spec_names = ["sample", "sample2", "bad"]
     for name in spec_names:
         sample_kernel_dir = jp_data_dir.joinpath("kernels", name)
         sample_kernel_dir.mkdir(parents=True)
@@ -464,37 +478,19 @@ def jp_create_notebook(jp_root_dir):
 
 
 @pytest.fixture(autouse=True)
-def jp_server_cleanup():
+def jp_server_cleanup(io_loop):
     yield
+    app: ServerApp = ServerApp.instance()
+    loop = io_loop.asyncio_loop
+    loop.run_until_complete(app._cleanup())
     ServerApp.clear_instance()
 
 
 @pytest.fixture
 def jp_cleanup_subprocesses(jp_serverapp):
-    """Clean up subprocesses started by a Jupyter Server, i.e. kernels and terminal."""
+    """DEPRECATED: The jp_server_cleanup fixture automatically cleans up the singleton ServerApp class"""
 
     async def _():
-        terminal_cleanup = jp_serverapp.web_app.settings["terminal_manager"].terminate_all
-        kernel_cleanup = jp_serverapp.kernel_manager.shutdown_all
-        if asyncio.iscoroutinefunction(terminal_cleanup):
-            try:
-                await terminal_cleanup()
-            except Exception as e:
-                print(e)
-        else:
-            try:
-                await terminal_cleanup()
-            except Exception as e:
-                print(e)
-        if asyncio.iscoroutinefunction(kernel_cleanup):
-            try:
-                await kernel_cleanup()
-            except Exception as e:
-                print(e)
-        else:
-            try:
-                kernel_cleanup()
-            except Exception as e:
-                print(e)
+        pass
 
     return _

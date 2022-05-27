@@ -8,35 +8,35 @@
 import asyncio
 import os
 from collections import defaultdict
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from functools import partial
 
-from jupyter_client.multikernelmanager import AsyncMultiKernelManager
-from jupyter_client.multikernelmanager import MultiKernelManager
+from jupyter_client.multikernelmanager import (
+    AsyncMultiKernelManager,
+    MultiKernelManager,
+)
 from jupyter_client.session import Session
 from jupyter_core.paths import exists
 from tornado import web
 from tornado.concurrent import Future
-from tornado.ioloop import IOLoop
-from tornado.ioloop import PeriodicCallback
-from traitlets import Any
-from traitlets import Bool
-from traitlets import default
-from traitlets import Dict
-from traitlets import Float
-from traitlets import Instance
-from traitlets import Integer
-from traitlets import List
-from traitlets import TraitError
-from traitlets import Unicode
-from traitlets import validate
+from tornado.ioloop import IOLoop, PeriodicCallback
+from traitlets import (
+    Any,
+    Bool,
+    Dict,
+    Float,
+    Instance,
+    Integer,
+    List,
+    TraitError,
+    Unicode,
+    default,
+    validate,
+)
 
-from jupyter_server._tz import isoformat
-from jupyter_server._tz import utcnow
+from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
-from jupyter_server.utils import ensure_async
-from jupyter_server.utils import to_os_path
+from jupyter_server.utils import ensure_async, to_os_path
 
 
 class MappingKernelManager(MultiKernelManager):
@@ -143,11 +143,13 @@ class MappingKernelManager(MultiKernelManager):
         return defaultdict(lambda: {"buffer": [], "session_key": "", "channels": {}})
 
     last_kernel_activity = Instance(
-        datetime, help="The last activity on any kernel, including shutting down a kernel"
+        datetime,
+        help="The last activity on any kernel, including shutting down a kernel",
     )
 
     def __init__(self, **kwargs):
         self.pinned_superclass = MultiKernelManager
+        self._pending_kernel_tasks = {}
         self.pinned_superclass.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
 
@@ -187,6 +189,11 @@ class MappingKernelManager(MultiKernelManager):
             os_path = os.path.dirname(os_path)
         return os_path
 
+    async def _remove_kernel_when_ready(self, kernel_id, kernel_awaitable):
+        await super()._remove_kernel_when_ready(kernel_id, kernel_awaitable)
+        self._kernel_connections.pop(kernel_id, None)
+        self._kernel_ports.pop(kernel_id, None)
+
     async def start_kernel(self, kernel_id=None, path=None, **kwargs):
         """Start a kernel for a session and return its kernel_id.
 
@@ -210,9 +217,11 @@ class MappingKernelManager(MultiKernelManager):
                 kwargs["kernel_id"] = kernel_id
             kernel_id = await ensure_async(self.pinned_superclass.start_kernel(self, **kwargs))
             self._kernel_connections[kernel_id] = 0
-            fut = asyncio.ensure_future(self._finish_kernel_start(kernel_id))
+            task = asyncio.create_task(self._finish_kernel_start(kernel_id))
             if not getattr(self, "use_pending_kernels", None):
-                await fut
+                await task
+            else:
+                self._pending_kernel_tasks[kernel_id] = task
             # add busy/activity markers:
             kernel = self.get_kernel(kernel_id)
             kernel.execution_state = "starting"
@@ -239,8 +248,8 @@ class MappingKernelManager(MultiKernelManager):
         if hasattr(km, "ready"):
             try:
                 await km.ready
-            except Exception:
-                self.log.exception(km.ready.exception())
+            except Exception as e:
+                self.log.exception(e)
                 return
 
         self._kernel_ports[kernel_id] = km.ports
@@ -302,7 +311,7 @@ class MappingKernelManager(MultiKernelManager):
         """
 
         if not self.buffer_offline_messages:
-            for channel, stream in channels.items():
+            for _, stream in channels.items():
                 stream.close()
             return
 
@@ -366,7 +375,7 @@ class MappingKernelManager(MultiKernelManager):
         buffer_info = self._kernel_buffers.pop(kernel_id)
         # close buffering streams
         for stream in buffer_info["channels"].values():
-            if not stream.closed():
+            if not stream.socket.closed:
                 stream.on_recv(None)
                 stream.close()
 
@@ -381,21 +390,19 @@ class MappingKernelManager(MultiKernelManager):
     def shutdown_kernel(self, kernel_id, now=False, restart=False):
         """Shutdown a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
-        self.stop_watching_activity(kernel_id)
-        self.stop_buffering(kernel_id)
-        self._kernel_connections.pop(kernel_id, None)
 
         # Decrease the metric of number of kernels
         # running for the relevant kernel type by 1
         KERNEL_CURRENTLY_RUNNING_TOTAL.labels(type=self._kernels[kernel_id].kernel_name).dec()
 
+        if kernel_id in self._pending_kernel_tasks:
+            task = self._pending_kernel_tasks.pop(kernel_id)
+            task.cancel()
+        else:
+            self.stop_watching_activity(kernel_id)
+            self.stop_buffering(kernel_id)
+
         self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
-        # Unlike its async sibling method in AsyncMappingKernelManager, removing the kernel_id
-        # from the connections dictionary isn't as problematic before the shutdown since the
-        # method is synchronous.  However, we'll keep the relative call orders the same from
-        # a maintenance perspective.
-        self._kernel_connections.pop(kernel_id, None)
-        self._kernel_ports.pop(kernel_id, None)
 
     async def restart_kernel(self, kernel_id, now=False):
         """Restart a kernel by kernel_id"""
@@ -404,7 +411,7 @@ class MappingKernelManager(MultiKernelManager):
         kernel = self.get_kernel(kernel_id)
         # return a Future that will resolve when the kernel has successfully restarted
         channel = kernel.connect_shell()
-        future = Future()
+        future: Future = Future()
 
         def finish():
             """Common cleanup when restart finishes/fails for any reason."""
@@ -513,13 +520,17 @@ class MappingKernelManager(MultiKernelManager):
             self.last_kernel_activity = kernel.last_activity = utcnow()
 
             idents, fed_msg_list = session.feed_identities(msg_list)
-            msg = session.deserialize(fed_msg_list)
+            msg = session.deserialize(fed_msg_list, content=False)
 
             msg_type = msg["header"]["msg_type"]
             if msg_type == "status":
+                msg = session.deserialize(fed_msg_list)
                 kernel.execution_state = msg["content"]["execution_state"]
                 self.log.debug(
-                    "activity on %s: %s (%s)", kernel_id, msg_type, kernel.execution_state
+                    "activity on %s: %s (%s)",
+                    kernel_id,
+                    msg_type,
+                    kernel.execution_state,
                 )
             else:
                 self.log.debug("activity on %s: %s", kernel_id, msg_type)
@@ -530,7 +541,8 @@ class MappingKernelManager(MultiKernelManager):
         """Stop watching IOPub messages on a kernel for activity."""
         kernel = self._kernels[kernel_id]
         if getattr(kernel, "_activity_stream", None):
-            kernel._activity_stream.close()
+            if not kernel._activity_stream.socket.closed:
+                kernel._activity_stream.close()
             kernel._activity_stream = None
 
     def initialize_culler(self):
@@ -540,7 +552,7 @@ class MappingKernelManager(MultiKernelManager):
         """
         if not self._initialized_culler and self.cull_idle_timeout > 0:
             if self._culler_callback is None:
-                loop = IOLoop.current()
+                _ = IOLoop.current()
                 if self.cull_interval <= 0:  # handle case where user set invalid value
                     self.log.warning(
                         "Invalid value for 'cull_interval' detected (%s) - using default value (%s).",
@@ -584,7 +596,7 @@ class MappingKernelManager(MultiKernelManager):
     async def cull_kernel_if_idle(self, kernel_id):
         kernel = self._kernels[kernel_id]
 
-        if getattr(kernel, "execution_state") == "dead":
+        if getattr(kernel, "execution_state", None) == "dead":
             self.log.warning(
                 "Culling '%s' dead kernel '%s' (%s).",
                 kernel.execution_state,
@@ -635,21 +647,24 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
         self.pinned_superclass = AsyncMultiKernelManager
         self.pinned_superclass.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
+        self._pending_kernel_tasks = {}
 
     async def shutdown_kernel(self, kernel_id, now=False, restart=False):
         """Shutdown a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
-        self.stop_watching_activity(kernel_id)
-        self.stop_buffering(kernel_id)
 
         # Decrease the metric of number of kernels
         # running for the relevant kernel type by 1
         KERNEL_CURRENTLY_RUNNING_TOTAL.labels(type=self._kernels[kernel_id].kernel_name).dec()
 
+        if kernel_id in self._pending_kernel_tasks:
+            task = self._pending_kernel_tasks.pop(kernel_id)
+            task.cancel()
+        else:
+            self.stop_watching_activity(kernel_id)
+            self.stop_buffering(kernel_id)
+
         # Finish shutting down the kernel before clearing state to avoid a race condition.
-        ret = await self.pinned_superclass.shutdown_kernel(
+        return await self.pinned_superclass.shutdown_kernel(
             self, kernel_id, now=now, restart=restart
         )
-        self._kernel_connections.pop(kernel_id, None)
-        self._kernel_ports.pop(kernel_id, None)
-        return ret

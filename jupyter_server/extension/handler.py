@@ -1,3 +1,5 @@
+from typing import no_type_check
+
 from jinja2.exceptions import TemplateNotFound
 
 from jupyter_server.base.handlers import FileFindHandler
@@ -8,10 +10,11 @@ class ExtensionHandlerJinjaMixin:
     template rendering.
     """
 
+    @no_type_check
     def get_template(self, name):
         """Return the jinja template object for a given name"""
         try:
-            env = "{}_jinja2_env".format(self.name)
+            env = f"{self.name}_jinja2_env"
             return self.settings[env].get_template(name)
         except TemplateNotFound:
             return super().get_template(name)
@@ -28,22 +31,26 @@ class ExtensionHandlerMixin:
     other extensions.
     """
 
-    def initialize(self, name):
+    def initialize(self, name, *args, **kwargs):
         self.name = name
+        try:
+            super().initialize(*args, **kwargs)  # type:ignore[misc]
+        except TypeError:
+            pass
 
     @property
     def extensionapp(self):
-        return self.settings[self.name]
+        return self.settings[self.name]  # type:ignore[attr-defined]
 
     @property
     def serverapp(self):
         key = "serverapp"
-        return self.settings[key]
+        return self.settings[key]  # type:ignore[attr-defined]
 
     @property
     def log(self):
         if not hasattr(self, "name"):
-            return super().log
+            return super().log  # type:ignore[misc]
         # Attempt to pull the ExtensionApp's log, otherwise fall back to ServerApp.
         try:
             return self.extensionapp.log
@@ -52,15 +59,15 @@ class ExtensionHandlerMixin:
 
     @property
     def config(self):
-        return self.settings["{}_config".format(self.name)]
+        return self.settings[f"{self.name}_config"]  # type:ignore[attr-defined]
 
     @property
     def server_config(self):
-        return self.settings["config"]
+        return self.settings["config"]  # type:ignore[attr-defined]
 
     @property
-    def base_url(self):
-        return self.settings.get("base_url", "/")
+    def base_url(self) -> str:
+        return self.settings.get("base_url", "/")  # type:ignore[attr-defined]
 
     @property
     def static_url_prefix(self):
@@ -68,7 +75,7 @@ class ExtensionHandlerMixin:
 
     @property
     def static_path(self):
-        return self.settings["{}_static_paths".format(self.name)]
+        return self.settings[f"{self.name}_static_paths"]  # type:ignore[attr-defined]
 
     def static_url(self, path, include_host=None, **kwargs):
         """Returns a static URL for the given relative static file path.
@@ -87,11 +94,11 @@ class ExtensionHandlerMixin:
         that value will be used as the default for all `static_url`
         calls that do not pass ``include_host`` as a keyword argument.
         """
-        key = "{}_static_paths".format(self.name)
+        key = f"{self.name}_static_paths"
         try:
-            self.require_setting(key, "static_url")
+            self.require_setting(key, "static_url")  # type:ignore[attr-defined]
         except Exception as e:
-            if key in self.settings:
+            if key in self.settings:  # type:ignore[attr-defined]
                 raise Exception(
                     "This extension doesn't have any static paths listed. Check that the "
                     "extension's `static_paths` trait is set."
@@ -99,18 +106,23 @@ class ExtensionHandlerMixin:
             else:
                 raise e
 
-        get_url = self.settings.get("static_handler_class", FileFindHandler).make_static_url
+        get_url = self.settings.get(  # type:ignore[attr-defined]
+            "static_handler_class", FileFindHandler
+        ).make_static_url
 
         if include_host is None:
             include_host = getattr(self, "include_host", False)
 
         if include_host:
-            base = self.request.protocol + "://" + self.request.host
+            base = self.request.protocol + "://" + self.request.host  # type:ignore[attr-defined]
         else:
             base = ""
 
         # Hijack settings dict to send extension templates to extension
         # static directory.
-        settings = {"static_path": self.static_path, "static_url_prefix": self.static_url_prefix}
+        settings = {
+            "static_path": self.static_path,
+            "static_url_prefix": self.static_url_prefix,
+        }
 
         return base + get_url(settings, path, **kwargs)

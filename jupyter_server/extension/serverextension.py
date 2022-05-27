@@ -1,4 +1,3 @@
-# coding: utf-8
 """Utilities for installing extensions"""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
@@ -6,16 +5,13 @@ import os
 import sys
 
 from jupyter_core.application import JupyterApp
-from jupyter_core.paths import ENV_CONFIG_PATH
-from jupyter_core.paths import jupyter_config_dir
-from jupyter_core.paths import SYSTEM_CONFIG_PATH
+from jupyter_core.paths import ENV_CONFIG_PATH, SYSTEM_CONFIG_PATH, jupyter_config_dir
 from tornado.log import LogFormatter
 from traitlets import Bool
 
 from jupyter_server._version import __version__
 from jupyter_server.extension.config import ExtensionConfigManager
-from jupyter_server.extension.manager import ExtensionManager
-from jupyter_server.extension.manager import ExtensionPackage
+from jupyter_server.extension.manager import ExtensionManager, ExtensionPackage
 
 
 def _get_config_dir(user=False, sys_prefix=False):
@@ -245,15 +241,15 @@ class ToggleServerExtensionApp(BaseExtensionApp):
             user=self.user, sys_prefix=self.sys_prefix
         )
         try:
-            self.log.info("{}: {}".format(self._toggle_pre_message.capitalize(), import_name))
-            self.log.info("- Writing config: {}".format(config_dir))
+            self.log.info(f"{self._toggle_pre_message.capitalize()}: {import_name}")
+            self.log.info(f"- Writing config: {config_dir}")
             # Validate the server extension.
-            self.log.info("    - Validating {}...".format(import_name))
+            self.log.info(f"    - Validating {import_name}...")
             # Interface with the Extension Package and validate.
             extpkg = ExtensionPackage(name=import_name)
             extpkg.validate()
             version = extpkg.version
-            self.log.info("      {} {} {}".format(import_name, version, GREEN_OK))
+            self.log.info(f"      {import_name} {version} {GREEN_OK}")
 
             # Toggle extension config.
             config = extension_manager.config_manager
@@ -263,9 +259,9 @@ class ToggleServerExtensionApp(BaseExtensionApp):
                 config.disable(import_name)
 
             # If successful, let's log.
-            self.log.info("    - Extension successfully {}.".format(self._toggle_post_message))
+            self.log.info(f"    - Extension successfully {self._toggle_post_message}.")
         except Exception as err:
-            self.log.info("     {} Validation failed: {}".format(RED_X, err))
+            self.log.info(f"     {RED_X} Validation failed: {err}")
 
     def start(self):
         """Perform the App's actions as configured"""
@@ -325,19 +321,19 @@ class ListServerExtensionsApp(BaseExtensionApp):
 
         for option in configurations:
             config_dir, ext_manager = _get_extmanager_for_context(**option)
-            self.log.info("Config dir: {}".format(config_dir))
+            self.log.info(f"Config dir: {config_dir}")
             for name, extension in ext_manager.extensions.items():
                 enabled = extension.enabled
                 # Attempt to get extension metadata
-                self.log.info(u"    {} {}".format(name, GREEN_ENABLED if enabled else RED_DISABLED))
+                self.log.info(f"    {name} {GREEN_ENABLED if enabled else RED_DISABLED}")
                 try:
-                    self.log.info("    - Validating {}...".format(name))
+                    self.log.info(f"    - Validating {name}...")
                     if not extension.validate():
                         raise ValueError("validation failed")
                     version = extension.version
-                    self.log.info("      {} {} {}".format(name, version, GREEN_OK))
+                    self.log.info(f"      {name} {version} {GREEN_OK}")
                 except Exception as err:
-                    self.log.warn("      {} {}".format(RED_X, err))
+                    self.log.warning(f"      {RED_X} {err}")
             # Add a blank line between paths.
             self.log.info("")
 
@@ -369,7 +365,7 @@ class ServerExtensionApp(BaseExtensionApp):
 
     def start(self):
         """Perform the App's actions as configured"""
-        super(ServerExtensionApp, self).start()
+        super().start()
 
         # The above should have called a subcommand and raised NoStart; if we
         # get here, it didn't, so we should self.log.info a message.

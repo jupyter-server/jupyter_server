@@ -8,18 +8,143 @@ try:
     import sqlite3
 except ImportError:
     # fallback on pysqlite2 if Python was build without sqlite
-    from pysqlite2 import dbapi2 as sqlite3
+    from pysqlite2 import dbapi2 as sqlite3  # type:ignore[no-redef]
+
+from dataclasses import dataclass, fields
+from typing import Union
 
 from tornado import web
-
+from traitlets import Instance, TraitError, Unicode, validate
 from traitlets.config.configurable import LoggingConfigurable
-from traitlets import Instance
-from traitlets import Unicode
-from traitlets import validate
-from traitlets import TraitError
 
-from jupyter_server.utils import ensure_async
 from jupyter_server.traittypes import InstanceFromClasses
+from jupyter_server.utils import ensure_async
+
+
+class KernelSessionRecordConflict(Exception):
+    """Exception class to use when two KernelSessionRecords cannot
+    merge because of conflicting data.
+    """
+
+    pass
+
+
+@dataclass
+class KernelSessionRecord:
+    """A record object for tracking a Jupyter Server Kernel Session.
+
+    Two records that share a session_id must also share a kernel_id, while
+    kernels can have multiple session (and thereby) session_ids
+    associated with them.
+    """
+
+    session_id: Union[None, str] = None
+    kernel_id: Union[None, str] = None
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, KernelSessionRecord):
+            condition1 = self.kernel_id and self.kernel_id == other.kernel_id
+            condition2 = all(
+                [
+                    self.session_id == other.session_id,
+                    self.kernel_id is None or other.kernel_id is None,
+                ]
+            )
+            if any([condition1, condition2]):
+                return True
+            # If two records share session_id but have different kernels, this is
+            # and ill-posed expression. This should never be true. Raise an exception
+            # to inform the user.
+            if all(
+                [
+                    self.session_id,
+                    self.session_id == other.session_id,
+                    self.kernel_id != other.kernel_id,
+                ]
+            ):
+                raise KernelSessionRecordConflict(
+                    "A single session_id can only have one kernel_id "
+                    "associated with. These two KernelSessionRecords share the same "
+                    "session_id but have different kernel_ids. This should "
+                    "not be possible and is likely an issue with the session "
+                    "records."
+                )
+        return False
+
+    def update(self, other: "KernelSessionRecord") -> None:
+        """Updates in-place a kernel from other (only accepts positive updates"""
+        if not isinstance(other, KernelSessionRecord):
+            raise TypeError("'other' must be an instance of KernelSessionRecord.")
+
+        if other.kernel_id and self.kernel_id and other.kernel_id != self.kernel_id:
+            raise KernelSessionRecordConflict(
+                "Could not update the record from 'other' because the two records conflict."
+            )
+
+        for field in fields(self):
+            if hasattr(other, field.name) and getattr(other, field.name):
+                setattr(self, field.name, getattr(other, field.name))
+
+
+class KernelSessionRecordList:
+    """An object for storing and managing a list of KernelSessionRecords.
+
+    When adding a record to the list, the KernelSessionRecordList
+    first checks if the record already exists in the list. If it does,
+    the record will be updated with the new information; otherwise,
+    it will be appended.
+    """
+
+    def __init__(self, *records):
+        self._records = []
+        for record in records:
+            self.update(record)
+
+    def __str__(self):
+        return str(self._records)
+
+    def __contains__(self, record: Union[KernelSessionRecord, str]) -> bool:
+        """Search for records by kernel_id and session_id"""
+        if isinstance(record, KernelSessionRecord) and record in self._records:
+            return True
+
+        if isinstance(record, str):
+            for r in self._records:
+                if record in [r.session_id, r.kernel_id]:
+                    return True
+        return False
+
+    def __len__(self):
+        return len(self._records)
+
+    def get(self, record: Union[KernelSessionRecord, str]) -> KernelSessionRecord:
+        """Return a full KernelSessionRecord from a session_id, kernel_id, or
+        incomplete KernelSessionRecord.
+        """
+        if isinstance(record, str):
+            for r in self._records:
+                if record == r.kernel_id or record == r.session_id:
+                    return r
+        elif isinstance(record, KernelSessionRecord):
+            for r in self._records:
+                if record == r:
+                    return record
+        raise ValueError(f"{record} not found in KernelSessionRecordList.")
+
+    def update(self, record: KernelSessionRecord) -> None:
+        """Update a record in-place or append it if not in the list."""
+        try:
+            idx = self._records.index(record)
+            self._records[idx].update(record)
+        except ValueError:
+            self._records.append(record)
+
+    def remove(self, record: KernelSessionRecord) -> None:
+        """Remove a record if its found in the list. If it's not found,
+        do nothing.
+        """
+        if record in self._records:
+            self._records.remove(record)
 
 
 class SessionManager(LoggingConfigurable):
@@ -27,7 +152,7 @@ class SessionManager(LoggingConfigurable):
     database_filepath = Unicode(
         default_value=":memory:",
         help=(
-            "Th filesystem path to SQLite Database file "
+            "The filesystem path to SQLite Database file "
             "(e.g. /path/to/session_database.db). By default, the session "
             "database is stored in-memory (i.e. `:memory:` setting from sqlite3) "
             "and does not persist when the current Jupyter Server shuts down."
@@ -61,6 +186,10 @@ class SessionManager(LoggingConfigurable):
             "notebook.services.contents.manager.ContentsManager",
         ]
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._pending_sessions = KernelSessionRecordList()
 
     # Session database initialized below
     _cursor = None
@@ -122,15 +251,20 @@ class SessionManager(LoggingConfigurable):
     ):
         """Creates a session and returns its model"""
         session_id = self.new_session_id()
+        record = KernelSessionRecord(session_id=session_id)
+        self._pending_sessions.update(record)
         if kernel_id is not None and kernel_id in self.kernel_manager:
             pass
         else:
             kernel_id = await self.start_kernel_for_session(
                 session_id, path, name, type, kernel_name
             )
+        record.kernel_id = kernel_id
+        self._pending_sessions.update(record)
         result = await self.save_session(
             session_id, path=path, name=name, type=type, kernel_id=kernel_id
         )
+        self._pending_sessions.remove(record)
         return result
 
     async def start_kernel_for_session(self, session_id, path, name, type, kernel_name):
@@ -170,7 +304,8 @@ class SessionManager(LoggingConfigurable):
             a dictionary of the session model
         """
         self.cursor.execute(
-            "INSERT INTO session VALUES (?,?,?,?,?)", (session_id, path, name, type, kernel_id)
+            "INSERT INTO session VALUES (?,?,?,?,?)",
+            (session_id, path, name, type, kernel_id),
         )
         result = await self.get_session(session_id=session_id)
         return result
@@ -214,14 +349,14 @@ class SessionManager(LoggingConfigurable):
         if row is None:
             q = []
             for key, value in kwargs.items():
-                q.append("%s=%r" % (key, value))
+                q.append(f"{key}={value!r}")
 
-            raise web.HTTPError(404, u"Session not found: %s" % (", ".join(q)))
+            raise web.HTTPError(404, "Session not found: %s" % (", ".join(q)))
 
         try:
             model = await self.row_to_model(row)
         except KeyError as e:
-            raise web.HTTPError(404, u"Session not found: %s" % str(e))
+            raise web.HTTPError(404, "Session not found: %s" % str(e))
         return model
 
     async def update_session(self, session_id, **kwargs):
@@ -254,7 +389,7 @@ class SessionManager(LoggingConfigurable):
         self.cursor.execute(query, list(kwargs.values()) + [session_id])
 
     def kernel_culled(self, kernel_id):
-        """Checks if the kernel is still considered alive and returns true if its not found. """
+        """Checks if the kernel is still considered alive and returns true if its not found."""
         return kernel_id not in self.kernel_manager
 
     async def row_to_model(self, row, tolerate_culled=False):
@@ -276,7 +411,7 @@ class SessionManager(LoggingConfigurable):
                 )
             )
             if tolerate_culled:
-                self.log.warning(msg + "  Continuing...")
+                self.log.warning(f"{msg}  Continuing...")
                 return
             raise KeyError(msg)
 
@@ -310,6 +445,9 @@ class SessionManager(LoggingConfigurable):
 
     async def delete_session(self, session_id):
         """Deletes the row in the session database with given session_id"""
+        record = KernelSessionRecord(session_id=session_id)
+        self._pending_sessions.update(record)
         session = await self.get_session(session_id=session_id)
         await ensure_async(self.kernel_manager.shutdown_kernel(session["kernel"]["id"]))
         self.cursor.execute("DELETE FROM session WHERE session_id=?", (session_id,))
+        self._pending_sessions.remove(record)

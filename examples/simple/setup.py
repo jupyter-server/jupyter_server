@@ -3,7 +3,6 @@ import os
 from jupyter_packaging import create_cmdclass
 from setuptools import setup
 
-
 VERSION = "0.0.1"
 
 

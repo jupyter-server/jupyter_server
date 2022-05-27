@@ -3,7 +3,9 @@
 Configuring Extensions
 ======================
 
-Some Jupyter Server extensions are also configurable applications. There are two ways to configure such extensions: i) pass arguments to the extension's entry point or ii) list configurable options in a Jupyter config file.
+Some Jupyter Server extensions are also configurable applications. There are
+two ways to configure such extensions: i) pass arguments to the extension's
+entry point or ii) list configurable options in a Jupyter config file.
 
 Jupyter Server looks for an extension's config file in a set of specific paths. Use the ``jupyter`` entry point to list these paths:
 
@@ -45,7 +47,9 @@ A Jupyter Server will automatically load config for each enabled extension. You 
 Extension config on the command line
 ------------------------------------
 
-Server extension applications can also be configured from the command line, and multiple extension can be configured at the same time. Simply pass the traits (with their appropriate prefix) to the ``jupyter server`` entrypoint, e.g.:
+Server extension applications can also be configured from the command line, and
+multiple extension can be configured at the same time. Simply pass the traits
+(with their appropriate prefix) to the ``jupyter server`` entrypoint, e.g.:
 
 .. code-block:: console
 

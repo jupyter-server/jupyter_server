@@ -37,8 +37,8 @@ enter::
 """
 try:
     destination = os.path.join(os.path.dirname(__file__), "source/other/full-config.rst")
-except:
-    destination = os.path.join(os.getcwd(), "full-config.rst")
+except BaseException:
+    destination = os.path.join(os.getcwd(), "other/full-config.rst")
 
 with open(destination, "w") as f:
     f.write(header)

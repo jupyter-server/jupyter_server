@@ -1,14 +1,14 @@
 import inspect
 from ast import literal_eval
 
-from traitlets import ClassBasedTraitType
-from traitlets import TraitError
-from traitlets import Undefined
+from traitlets import ClassBasedTraitType, TraitError, Undefined
 from traitlets.utils.descriptions import describe
 
 
 class TypeFromClasses(ClassBasedTraitType):
     """A trait whose value must be a subclass of a class in a specified list of classes."""
+
+    default_value: Undefined
 
     def __init__(self, default_value=Undefined, klasses=None, **kwargs):
         """Construct a Type trait
@@ -85,7 +85,7 @@ class TypeFromClasses(ClassBasedTraitType):
                 klass = klass.__module__ + "." + klass.__name__
             result += f"{klass} or "
         # Strip the last "or"
-        result = result.strip(" or ")
+        result = result.strip(" or ")  # noqa B005
         if self.allow_none:
             return result + " or None"
         return result
@@ -103,7 +103,7 @@ class TypeFromClasses(ClassBasedTraitType):
                 try:
                     klass = self._resolve_string(klass)
                     self.importable_klasses.append(klass)
-                except:
+                except Exception:
                     pass
             else:
                 self.importable_klasses.append(klass)
@@ -169,7 +169,7 @@ class InstanceFromClasses(ClassBasedTraitType):
         self.default_args = args
         self.default_kwargs = kw
 
-        super(InstanceFromClasses, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def instance_from_importable_klasses(self, value):
         "Check that a given class is a subclasses found in the klasses list."
@@ -183,13 +183,14 @@ class InstanceFromClasses(ClassBasedTraitType):
 
     def info(self):
         result = "an instance of "
+        assert self.klasses is not None
         for klass in self.klasses:
             if isinstance(klass, str):
                 result += klass
             else:
                 result += describe("a", klass)
             result += " or "
-        result = result.strip(" or ")
+        result = result.strip(" or ")  # noqa B005
         if self.allow_none:
             result += " or None"
         return result
@@ -201,13 +202,14 @@ class InstanceFromClasses(ClassBasedTraitType):
     def _resolve_classes(self):
         # Resolve all string names to actual classes.
         self.importable_klasses = []
+        assert self.klasses is not None
         for klass in self.klasses:
             if isinstance(klass, str):
                 # Try importing the classes to compare. Silently, ignore if not importable.
                 try:
                     klass = self._resolve_string(klass)
                     self.importable_klasses.append(klass)
-                except:
+                except Exception:
                     pass
             else:
                 self.importable_klasses.append(klass)

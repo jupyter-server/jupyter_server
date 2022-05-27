@@ -1,0 +1,13 @@
+$id: event.mock.jupyter.org/message
+version: 1
+title: Message
+description: |
+  Emit a message
+type: object
+properties:
+  event_message:
+    title: Event Messages
+    description: |
+      Mock event message to read.
+required:
+  - event_message

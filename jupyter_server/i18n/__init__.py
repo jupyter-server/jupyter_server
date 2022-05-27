@@ -1,7 +1,6 @@
 """Server functions for loading translations
 """
 import errno
-import io
 import json
 import re
 from collections import defaultdict
@@ -16,7 +15,7 @@ I18N_DIR = dirname(__file__)
 #     ...
 #   }
 # }}
-TRANSLATIONS_CACHE = {"nbjs": {}}
+TRANSLATIONS_CACHE: dict = {"nbjs": {}}
 
 
 _accept_lang_re = re.compile(
@@ -52,7 +51,7 @@ def parse_accept_lang_header(accept_lang):
         by_q[qvalue].append(lang)
 
     res = []
-    for qvalue, langs in sorted(by_q.items()):
+    for _, langs in sorted(by_q.items()):
         res.extend(sorted(langs))
     return res
 
@@ -60,8 +59,8 @@ def parse_accept_lang_header(accept_lang):
 def load(language, domain="nbjs"):
     """Load translations from an nbjs.json file"""
     try:
-        f = io.open(pjoin(I18N_DIR, language, "LC_MESSAGES", "nbjs.json"), encoding="utf-8")
-    except IOError as e:
+        f = open(pjoin(I18N_DIR, language, "LC_MESSAGES", "nbjs.json"), encoding="utf-8")
+    except OSError as e:
         if e.errno != errno.ENOENT:
             raise
         return {}
@@ -88,7 +87,7 @@ def combine_translations(accept_language, domain="nbjs"):
     Returns data re-packaged in jed1.x format.
     """
     lang_codes = parse_accept_lang_header(accept_language)
-    combined = {}
+    combined: dict = {}
     for language in lang_codes:
         if language == "en":
             # en is default, all translations are in frontend.

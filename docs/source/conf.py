@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # Jupyter Server documentation build configuration file, created by
 # sphinx-quickstart on Mon Apr 13 09:51:11 2015.
@@ -17,8 +16,7 @@ import os.path as osp
 import shutil
 import sys
 
-from pkg_resources import parse_version
-
+from packaging.version import parse as parse_version
 
 HERE = osp.abspath(osp.dirname(__file__))
 
@@ -75,6 +73,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
+    "sphinx.ext.napoleon",
     "IPython.sphinxext.ipython_console_highlighting",
     "sphinxcontrib_github_alt",
     "sphinxcontrib.openapi",
@@ -109,7 +108,7 @@ github_project_url = "https://github.com/jupyter/jupyter_server"
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-__version__ = "1.14.0.dev0"
+__version__ = "2.1.0.dev0"
 # The short X.Y version.
 version_parsed = parse_version(__version__)
 version = f"{version_parsed.major}.{version_parsed.minor}"
@@ -133,7 +132,7 @@ language = None
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
-# default_role = None
+default_role = "literal"
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 # add_function_parentheses = True
@@ -279,17 +278,6 @@ htmlhelp_basename = "JupyterServerdoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #'papersize': 'letterpaper',
-    # The font size ('10pt', '11pt' or '12pt').
-    #'pointsize': '10pt',
-    # Additional stuff for the LaTeX preamble.
-    #'preamble': '',
-    # Latex figure (float) alignment
-    #'figure_align': 'htbp',
-}
-
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
@@ -373,6 +361,7 @@ intersphinx_mapping = {
     "nbconvert": ("https://nbconvert.readthedocs.io/en/latest/", None),
     "nbformat": ("https://nbformat.readthedocs.io/en/latest/", None),
     "jupyter": ("https://jupyter.readthedocs.io/en/latest/", None),
+    "tornado": ("https://www.tornadoweb.org/en/stable/", None),
 }
 
 spelling_lang = "en_US"

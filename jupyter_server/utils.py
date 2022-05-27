@@ -8,21 +8,14 @@ import inspect
 import os
 import socket
 import sys
-from _frozen_importlib_external import _NamespacePath
 from contextlib import contextmanager
-from urllib.parse import quote
-from urllib.parse import SplitResult
-from urllib.parse import unquote
 from urllib.parse import urljoin  # noqa: F401
-from urllib.parse import urlparse
-from urllib.parse import urlsplit
-from urllib.parse import urlunsplit
+from urllib.parse import SplitResult, quote, unquote, urlparse, urlsplit, urlunsplit
 from urllib.request import pathname2url  # noqa: F401
 
+from _frozen_importlib_external import _NamespacePath
 from packaging.version import Version
-from tornado.httpclient import AsyncHTTPClient
-from tornado.httpclient import HTTPClient
-from tornado.httpclient import HTTPRequest
+from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest
 from tornado.netutil import Resolver
 
 
@@ -156,7 +149,7 @@ def _check_pid_win32(pid):
 
     # OpenProcess returns 0 if no such process (of ours) exists
     # positive int otherwise
-    return bool(ctypes.windll.kernel32.OpenProcess(1, 0, pid))
+    return bool(ctypes.windll.kernel32.OpenProcess(1, 0, pid))  # type:ignore[attr-defined]
 
 
 def _check_pid_posix(pid):
@@ -217,6 +210,7 @@ def run_sync(maybe_async):
         # that was not something async, just return it
         return maybe_async
     # it is async, we need to run it in an event loop
+
     def wrapped():
         create_new_event_loop = False
         try:
@@ -288,7 +282,7 @@ def unix_socket_in_use(socket_path):
     try:
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.connect(socket_path)
-    except socket.error:
+    except OSError:
         return False
     else:
         return True
@@ -352,7 +346,9 @@ def fetch(urlstring, method="GET", body=None, headers=None):
     Send a HTTP, HTTPS, or HTTP+UNIX request
     to a Tornado Web Server. Returns a tornado HTTPResponse.
     """
-    with _request_for_tornado_client(urlstring) as request:
+    with _request_for_tornado_client(
+        urlstring, method=method, body=body, headers=headers
+    ) as request:
         response = HTTPClient(AsyncHTTPClient).fetch(request)
     return response
 
@@ -362,7 +358,9 @@ async def async_fetch(urlstring, method="GET", body=None, headers=None, io_loop=
     Send an asynchronous HTTP, HTTPS, or HTTP+UNIX request
     to a Tornado Web Server. Returns a tornado HTTPResponse.
     """
-    with _request_for_tornado_client(urlstring) as request:
+    with _request_for_tornado_client(
+        urlstring, method=method, body=body, headers=headers
+    ) as request:
         response = await AsyncHTTPClient(io_loop).fetch(request)
     return response
 
@@ -385,3 +383,99 @@ def is_namespace_package(namespace):
         # e.g. module not installed
         return None
     return isinstance(spec.submodule_search_locations, _NamespacePath)
+
+
+def filefind(filename, path_dirs=None):
+    """Find a file by looking through a sequence of paths.
+    This iterates through a sequence of paths looking for a file and returns
+    the full, absolute path of the first occurence of the file.  If no set of
+    path dirs is given, the filename is tested as is, after running through
+    :func:`expandvars` and :func:`expanduser`.  Thus a simple call::
+        filefind('myfile.txt')
+    will find the file in the current working dir, but::
+        filefind('~/myfile.txt')
+    Will find the file in the users home directory.  This function does not
+    automatically try any paths, such as the cwd or the user's home directory.
+    Parameters
+    ----------
+    filename : str
+        The filename to look for.
+    path_dirs : str, None or sequence of str
+        The sequence of paths to look for the file in.  If None, the filename
+        need to be absolute or be in the cwd.  If a string, the string is
+        put into a sequence and the searched.  If a sequence, walk through
+        each element and join with ``filename``, calling :func:`expandvars`
+        and :func:`expanduser` before testing for existence.
+    Returns
+    -------
+    Raises :exc:`IOError` or returns absolute path to file.
+    """
+
+    # If paths are quoted, abspath gets confused, strip them...
+    filename = filename.strip('"').strip("'")
+    # If the input is an absolute path, just check it exists
+    if os.path.isabs(filename) and os.path.isfile(filename):
+        return filename
+
+    if path_dirs is None:
+        path_dirs = ("",)
+    elif isinstance(path_dirs, str):
+        path_dirs = (path_dirs,)
+
+    for path in path_dirs:
+        if path == ".":
+            path = os.getcwd()
+        testname = expand_path(os.path.join(path, filename))
+        if os.path.isfile(testname):
+            return os.path.abspath(testname)
+
+    raise OSError(f"File {filename!r} does not exist in any of the search paths: {path_dirs!r}")
+
+
+def expand_path(s):
+    """Expand $VARS and ~names in a string, like a shell
+    :Examples:
+       In [2]: os.environ['FOO']='test'
+       In [3]: expand_path('variable FOO is $FOO')
+       Out[3]: 'variable FOO is test'
+    """
+    # This is a pretty subtle hack. When expand user is given a UNC path
+    # on Windows (\\server\share$\%username%), os.path.expandvars, removes
+    # the $ to get (\\server\share\%username%). I think it considered $
+    # alone an empty var. But, we need the $ to remains there (it indicates
+    # a hidden share).
+    if os.name == "nt":
+        s = s.replace("$\\", "IPYTHON_TEMP")
+    s = os.path.expandvars(os.path.expanduser(s))
+    if os.name == "nt":
+        s = s.replace("IPYTHON_TEMP", "$\\")
+    return s
+
+
+def import_item(name):
+    """Import and return ``bar`` given the string ``foo.bar``.
+    Calling ``bar = import_item("foo.bar")`` is the functional equivalent of
+    executing the code ``from foo import bar``.
+    Parameters
+    ----------
+    name : string
+      The fully qualified name of the module/package being imported.
+    Returns
+    -------
+    mod : module object
+       The module that was imported.
+    """
+
+    parts = name.rsplit(".", 1)
+    if len(parts) == 2:
+        # called with 'foo.bar....'
+        package, obj = parts
+        module = __import__(package, fromlist=[obj])
+        try:
+            pak = getattr(module, obj)
+        except AttributeError:
+            raise ImportError("No module named %s" % obj)
+        return pak
+    else:
+        # called with un-dotted string
+        return __import__(parts[0])

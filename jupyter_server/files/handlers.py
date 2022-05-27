@@ -4,11 +4,15 @@
 import json
 import mimetypes
 from base64 import decodebytes
+from typing import List
 
 from tornado import web
 
+from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.utils import ensure_async
+
+AUTH_RESOURCE = "contents"
 
 
 class FilesHandler(JupyterHandler):
@@ -20,19 +24,23 @@ class FilesHandler(JupyterHandler):
     a subclass of StaticFileHandler.
     """
 
+    auth_resource = AUTH_RESOURCE
+
     @property
     def content_security_policy(self):
         # In case we're serving HTML/SVG, confine any Javascript to a unique
         # origin so it can't interact with the notebook server.
-        return super(FilesHandler, self).content_security_policy + "; sandbox allow-scripts"
+        return super().content_security_policy + "; sandbox allow-scripts"
 
     @web.authenticated
+    @authorized
     def head(self, path):
         self.get(path, include_body=False)
         self.check_xsrf_cookie()
         return self.get(path, include_body=False)
 
     @web.authenticated
+    @authorized
     async def get(self, path, include_body=True):
         # /files/ requests must originate from the same site
         self.check_xsrf_cookie()
@@ -50,16 +58,21 @@ class FilesHandler(JupyterHandler):
 
         model = await ensure_async(cm.get(path, type="file", content=include_body))
 
-        if self.get_argument("download", False):
+        if self.get_argument("download", None):
             self.set_attachment_header(name)
 
         # get mimetype from filename
         if name.lower().endswith(".ipynb"):
             self.set_header("Content-Type", "application/x-ipynb+json")
         else:
-            cur_mime = mimetypes.guess_type(name)[0]
+            cur_mime, encoding = mimetypes.guess_type(name)
             if cur_mime == "text/plain":
                 self.set_header("Content-Type", "text/plain; charset=UTF-8")
+            # RFC 6713
+            if encoding == "gzip":
+                self.set_header("Content-Type", "application/gzip")
+            elif encoding is not None:
+                self.set_header("Content-Type", "application/octet-stream")
             elif cur_mime is not None:
                 self.set_header("Content-Type", cur_mime)
             else:
@@ -79,4 +92,4 @@ class FilesHandler(JupyterHandler):
             self.flush()
 
 
-default_handlers = []
+default_handlers: List[JupyterHandler] = []

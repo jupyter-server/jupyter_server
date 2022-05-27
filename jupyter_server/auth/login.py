@@ -9,8 +9,7 @@ from urllib.parse import urlparse
 from tornado.escape import url_escape
 
 from ..base.handlers import JupyterHandler
-from .security import passwd_check
-from .security import set_password
+from .security import passwd_check, set_password
 
 
 class LoginHandler(JupyterHandler):
@@ -48,7 +47,7 @@ class LoginHandler(JupyterHandler):
             # OR pass our cross-origin check
             if parsed.netloc:
                 # if full URL, run our cross-origin check:
-                origin = "%s://%s" % (parsed.scheme, parsed.netloc)
+                origin = f"{parsed.scheme}://{parsed.netloc}"
                 origin = origin.lower()
                 if self.allow_origin:
                     allow = self.allow_origin == origin
@@ -75,8 +74,8 @@ class LoginHandler(JupyterHandler):
         return passwd_check(a, b)
 
     def post(self):
-        typed_password = self.get_argument("password", default=u"")
-        new_password = self.get_argument("new_password", default=u"")
+        typed_password = self.get_argument("password", default="")
+        new_password = self.get_argument("new_password", default="")
 
         if self.get_login_available(self.settings):
             if self.passwd_check(self.hashed_password, typed_password) and not new_password:
@@ -84,7 +83,7 @@ class LoginHandler(JupyterHandler):
             elif self.token and self.token == typed_password:
                 self.set_login_cookie(self, uuid.uuid4().hex)
                 if new_password and self.settings.get("allow_password_change"):
-                    config_dir = self.settings.get("config_dir")
+                    config_dir = self.settings.get("config_dir", "")
                     config_file = os.path.join(config_dir, "jupyter_server_config.json")
                     set_password(new_password, config_file=config_file)
                     self.log.info("Wrote hashed password to %s" % config_file)
@@ -153,7 +152,7 @@ class LoginHandler(JupyterHandler):
         """
         if getattr(handler, "_user_id", None) is None:
             # ensure get_user has been called, so we know if we're token-authenticated
-            handler.get_current_user()
+            handler.current_user
         return getattr(handler, "_token_authenticated", False)
 
     @classmethod
@@ -166,17 +165,20 @@ class LoginHandler(JupyterHandler):
         # called on LoginHandler itself.
         if getattr(handler, "_user_id", None):
             return handler._user_id
-        user_id = cls.get_user_token(handler)
-        if user_id is None:
-            get_secure_cookie_kwargs = handler.settings.get("get_secure_cookie_kwargs", {})
-            user_id = handler.get_secure_cookie(handler.cookie_name, **get_secure_cookie_kwargs)
-            if user_id:
-                user_id = user_id.decode()
-        else:
-            cls.set_login_cookie(handler, user_id)
+        token_user_id = cls.get_user_token(handler)
+        cookie_user_id = cls.get_user_cookie(handler)
+        # prefer token to cookie if both given,
+        # because token is always explicit
+        user_id = token_user_id or cookie_user_id
+        if token_user_id:
+            # if token-authenticated, persist user_id in cookie
+            # if it hasn't already been stored there
+            if user_id != cookie_user_id:
+                cls.set_login_cookie(handler, user_id)
             # Record that the current request has been authenticated with a token.
             # Used in is_token_authenticated above.
             handler._token_authenticated = True
+
         if user_id is None:
             # If an invalid cookie was sent, clear it to prevent unnecessary
             # extra warnings. But don't do this on a request with *no* cookie,
@@ -191,6 +193,15 @@ class LoginHandler(JupyterHandler):
 
         # cache value for future retrievals on the same request
         handler._user_id = user_id
+        return user_id
+
+    @classmethod
+    def get_user_cookie(cls, handler):
+        """Get user-id from a cookie"""
+        get_secure_cookie_kwargs = handler.settings.get("get_secure_cookie_kwargs", {})
+        user_id = handler.get_secure_cookie(handler.cookie_name, **get_secure_cookie_kwargs)
+        if user_id:
+            user_id = user_id.decode()
         return user_id
 
     @classmethod
@@ -210,12 +221,23 @@ class LoginHandler(JupyterHandler):
         if user_token == token:
             # token-authenticated, set the login cookie
             handler.log.debug(
-                "Accepting token-authenticated connection from %s", handler.request.remote_ip
+                "Accepting token-authenticated connection from %s",
+                handler.request.remote_ip,
             )
             authenticated = True
 
         if authenticated:
-            return uuid.uuid4().hex
+            # token does not correspond to user-id,
+            # which is stored in a cookie.
+            # still check the cookie for the user id
+            user_id = cls.get_user_cookie(handler)
+            if user_id is None:
+                # no cookie, generate new random user_id
+                user_id = uuid.uuid4().hex
+                handler.log.info(
+                    f"Generating new user_id for token-authenticated request: {user_id}"
+                )
+            return user_id
         else:
             return None
 
@@ -228,10 +250,10 @@ class LoginHandler(JupyterHandler):
         if not app.ip:
             warning = "WARNING: The Jupyter server is listening on all IP addresses"
             if ssl_options is None:
-                app.log.warning(warning + " and not using encryption. This " "is not recommended.")
+                app.log.warning(f"{warning} and not using encryption. This is not recommended.")
             if not app.password and not app.token:
                 app.log.warning(
-                    warning + " and not using authentication. "
+                    f"{warning} and not using authentication. "
                     "This is highly insecure and not recommended."
                 )
         else:
@@ -247,7 +269,7 @@ class LoginHandler(JupyterHandler):
 
         If there is no configured password, an empty string will be returned.
         """
-        return settings.get("password", u"")
+        return settings.get("password", "")
 
     @classmethod
     def get_login_available(cls, settings):

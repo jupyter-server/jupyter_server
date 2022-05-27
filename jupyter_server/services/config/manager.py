@@ -4,17 +4,11 @@
 # Distributed under the terms of the Modified BSD License.
 import os.path
 
-from jupyter_core.paths import jupyter_config_dir
-from jupyter_core.paths import jupyter_config_path
-from traitlets import default
-from traitlets import Instance
-from traitlets import List
-from traitlets import observe
-from traitlets import Unicode
+from jupyter_core.paths import jupyter_config_dir, jupyter_config_path
+from traitlets import Instance, List, Unicode, default, observe
 from traitlets.config import LoggingConfigurable
 
-from jupyter_server.config_manager import BaseJSONConfigManager
-from jupyter_server.config_manager import recursive_update
+from jupyter_server.config_manager import BaseJSONConfigManager, recursive_update
 
 
 class ConfigManager(LoggingConfigurable):
@@ -28,7 +22,7 @@ class ConfigManager(LoggingConfigurable):
 
     def get(self, section_name):
         """Get the config from all config sections."""
-        config = {}
+        config: dict = {}
         # step through back to front, to ensure front of the list is top priority
         for p in self.read_config_path[::-1]:
             cm = BaseJSONConfigManager(config_dir=p)

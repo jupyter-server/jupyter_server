@@ -82,3 +82,15 @@ A post-save hook to make a script equivalent whenever the notebook is saved
 
 This could be a simple call to ``jupyter nbconvert --to script``, but spawning
 the subprocess every time is quite slow.
+
+.. note::
+   Assigning a new hook to e.g. ``c.FileContentsManager.pre_save_hook`` will override any existing one.
+
+If you want to add new hooks and keep existing ones, you should use e.g.:
+
+.. code-block:: python
+
+    contents_manager.register_pre_save_hook(script_pre_save)
+    contents_manager.register_post_save_hook(script_post_save)
+
+Hooks will then be called in the order they were registered.
