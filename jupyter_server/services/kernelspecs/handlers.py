@@ -65,7 +65,7 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
         for kernel_name, kernel_info in kspecs.items():
             try:
                 if is_kernelspec_model(kernel_info):
-                    d = kernel_info
+                    d = kernel_info["spec"]
                 else:
                     d = kernelspec_model(
                         self,
