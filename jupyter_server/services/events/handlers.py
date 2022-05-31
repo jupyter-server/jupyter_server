@@ -3,12 +3,17 @@
 .. versionadded:: 2.0
 """
 import logging
+from datetime import datetime
+from typing import Any, Dict, Optional
 
 from jupyter_telemetry.eventlog import _skip_message
 from pythonjsonlogger import jsonlogger
 from tornado import web, websocket
 
+from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import JupyterHandler
+
+from ...base.handlers import APIHandler
 
 AUTH_RESOURCE = "events"
 
@@ -53,11 +58,6 @@ class SubscribeWebsocket(
         res = super().get(*args, **kwargs)
         await res
 
-    @property
-    def event_bus(self):
-        """Jupyter Server's event bus that emits structured event data."""
-        return self.settings["event_bus"]
-
     def open(self):
         """Routes events that are emitted by Jupyter Server's
         EventBus to a WebSocket client in the browser.
@@ -75,6 +75,59 @@ class SubscribeWebsocket(
         self.event_bus.handlers.remove(self.logging_handler)
 
 
+def validate_model(data: Dict[str, Any]) -> None:
+    """Validates for required fields in the JSON request body"""
+    required_keys = {"schema_name", "version", "event"}
+    for key in required_keys:
+        if key not in data:
+            raise web.HTTPError(400, f"Missing `{key}` in the JSON request body.")
+
+
+def get_timestamp(data: Dict[str, Any]) -> Optional[datetime]:
+    """Parses timestamp from the JSON request body"""
+    try:
+        if "timestamp" in data:
+            timestamp = datetime.strptime(data["timestamp"], "%Y-%m-%dT%H:%M:%S%zZ")
+        else:
+            timestamp = None
+    except Exception:
+        raise web.HTTPError(
+            400,
+            """Failed to parse timestamp from JSON request body,
+            an ISO format datetime string with UTC offset is expected,
+            for example, 2022-05-26T13:50:00+05:00Z""",
+        )
+
+    return timestamp
+
+
+class EventHandler(APIHandler):
+    """REST api handler for events"""
+
+    auth_resource = AUTH_RESOURCE
+
+    @web.authenticated
+    @authorized
+    async def post(self):
+        payload = self.get_json_body()
+        if payload is None:
+            raise web.HTTPError(400, "No JSON data provided")
+
+        try:
+            validate_model(payload)
+            self.event_bus.record_event(
+                schema_name=payload.get("schema_name"),
+                version=payload.get("version"),
+                event=payload.get("event"),
+                timestamp_override=get_timestamp(payload),
+            )
+            self.set_status(204)
+            self.finish()
+        except Exception as e:
+            raise web.HTTPError(500, str(e)) from e
+
+
 default_handlers = [
+    (r"/api/events", EventHandler),
     (r"/api/events/subscribe", SubscribeWebsocket),
 ]
