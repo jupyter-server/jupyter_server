@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from jupyter_telemetry.eventlog import _skip_message
+from jupyter_events.logger import _skip_message
 from pythonjsonlogger import jsonlogger
 from tornado import web, websocket
 
@@ -66,7 +66,7 @@ class SubscribeWebsocket(
         # Add a JSON formatter to the handler.
         formatter = jsonlogger.JsonFormatter(json_serializer=_skip_message)
         self.logging_handler.setFormatter(formatter)
-        # To do: add an eventlog.add_handler method to jupyter_telemetry.
+        # To do: add an eventlog.add_handler method to jupyter_events.
         self.event_bus.log.addHandler(self.logging_handler)
         self.event_bus.handlers.append(self.logging_handler)
 

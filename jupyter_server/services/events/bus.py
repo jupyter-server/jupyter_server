@@ -4,11 +4,11 @@
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-from jupyter_telemetry.eventlog import EventLog
+from jupyter_events.logger import EventLogger
 from traitlets.config import SingletonConfigurable
 
 
-class EventBus(EventLog, SingletonConfigurable):
+class EventBus(EventLogger, SingletonConfigurable):
     """A singleton eventlog that behaves as an event
     bus for emitting Jupyter Server (and extension)
     event data.

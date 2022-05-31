@@ -5,7 +5,7 @@ import pathlib
 
 import pytest
 import tornado
-from jupyter_telemetry.eventlog import _skip_message
+from jupyter_events.logger import _skip_message
 from pythonjsonlogger import jsonlogger
 
 from tests.utils import expected_http_error
@@ -18,14 +18,13 @@ def eventbus_sink(jp_serverapp):
     schema_file = pathlib.Path(__file__).parent / "mock_event.yaml"
     event_bus.register_schema_file(schema_file)
     event_bus.allowed_schemas = ["event.mock.jupyter.org/message"]
-
+    event_bus.allowed_categories = ["category.jupyter.org/unrestricted"]
     sink = io.StringIO()
     formatter = jsonlogger.JsonFormatter(json_serializer=_skip_message)
     handler = logging.StreamHandler(sink)
     handler.setFormatter(formatter)
     event_bus.handlers = [handler]
     event_bus.log.addHandler(handler)
-
     return event_bus, sink
 
 
