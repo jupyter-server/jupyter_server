@@ -188,6 +188,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path)
         info = os.lstat(os_path)
 
+        four_o_four = "file or directory does not exist: %r" % path
+
+        if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+            self.log.info("Refusing to serve hidden file or directory %r, via 404 Error", os_path)
+            raise web.HTTPError(404, four_o_four)
+
         try:
             # size of file
             size = info.st_size
@@ -365,11 +371,16 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             of the file or directory as well.
         """
         path = path.strip("/")
+        os_path = self._get_os_path(path)
+        four_o_four = "file or directory does not exist: %r" % path
 
         if not self.exists(path):
-            raise web.HTTPError(404, "No such file or directory: %s" % path)
+            raise web.HTTPError(404, four_o_four)
 
-        os_path = self._get_os_path(path)
+        if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+            self.log.info("Refusing to serve hidden file or directory %r, via 404 Error", os_path)
+            raise web.HTTPError(404, four_o_four)
+
         if os.path.isdir(os_path):
             if type not in (None, "directory"):
                 raise web.HTTPError(
@@ -389,7 +400,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
     def _save_directory(self, os_path, model, path=""):
         """create a directory"""
         if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
-            raise web.HTTPError(400, "Cannot create hidden directory %r" % os_path)
+            raise web.HTTPError(400, "Cannot create directory %r" % os_path)
         if not os.path.exists(os_path):
             with self.perm_to_403():
                 os.mkdir(os_path)
@@ -410,6 +421,10 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             raise web.HTTPError(400, "No file content provided")
 
         os_path = self._get_os_path(path)
+
+        if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+            raise web.HTTPError(400, f"Cannot create file or directory {os_path!r}")
+
         self.log.debug("Saving %s", os_path)
 
         validation_error: dict = {}
@@ -452,8 +467,13 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         path = path.strip("/")
         os_path = self._get_os_path(path)
         rm = os.unlink
-        if not os.path.exists(os_path):
-            raise web.HTTPError(404, "File or directory does not exist: %s" % os_path)
+        four_o_four = "file or directory does not exist: %r" % path
+
+        if not self.exists(path):
+            raise web.HTTPError(404, four_o_four)
+
+        if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+            raise web.HTTPError(400, f"Cannot delete file or directory {os_path!r}")
 
         def _check_trash(os_path):
             if sys.platform in {"win32", "darwin"}:
@@ -517,6 +537,11 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         new_os_path = self._get_os_path(new_path)
         old_os_path = self._get_os_path(old_path)
+
+        if (
+            is_hidden(old_os_path, self.root_dir) or is_hidden(new_os_path, self.root_dir)
+        ) and not self.allow_hidden:
+            raise web.HTTPError(400, f"Cannot rename file or directory {old_os_path!r}")
 
         # Should we proceed with the move?
         if os.path.exists(new_os_path) and not samefile(old_os_path, new_os_path):
