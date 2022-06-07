@@ -230,6 +230,36 @@ async def test_get_text_file_contents(jp_fetch, contents, path, name):
         )
     assert expected_http_error(e, 400)
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Disabled retrieving hidden files on Windows")
+async def test_get_404_hidden(jp_fetch, contents, contents_dir):
+    # Create text files
+    hidden_dir = contents_dir / '.hidden'
+    hidden_dir.mkdir(parents=True, exist_ok=True)
+    txt = f"visible text file in hidden dir"
+    txtname = hidden_dir.joinpath(f"visible.txt")
+    txtname.write_text(txt, encoding="utf-8")
+
+    txt2 = f"hidden text file"
+    txtname2 = contents_dir.joinpath(f".hidden.txt")
+    txtname2.write_text(txt2, encoding="utf-8")
+   
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch(
+            "api",
+            "contents",
+            ".hidden/visible.txt",
+            method="GET",
+        )
+    assert expected_http_error(e, 404)
+
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch(
+            "api",
+            "contents",
+            ".hidden.txt",
+            method="GET",
+        )
+    assert expected_http_error(e, 404)
 
 @pytest.mark.parametrize("path,name", dirs)
 async def test_get_binary_file_contents(jp_fetch, contents, path, name):
@@ -408,6 +438,55 @@ async def test_upload_txt(jp_fetch, contents, contents_dir, _check_created):
     assert model["content"] == body
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Disabled uploading hidden files on Windows")
+async def test_upload_txt_hidden(jp_fetch, contents, contents_dir):
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        body = 'ünicode téxt'
+        model = {
+            'content' : body,
+            'format'  : 'text',
+            'type'    : 'file',
+        }
+        path = '.hidden/Upload tést.txt'
+        await jp_fetch("api", "contents", path, method="PUT", body=json.dumps(model))
+    assert expected_http_error(e, 400)
+
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        body = 'ünicode téxt'
+        model = {
+            'content' : body,
+            'format'  : 'text',
+            'type'    : 'file',
+            'path': '.hidden/test.txt'
+        }
+        path = 'Upload tést.txt'
+        await jp_fetch("api", "contents", path, method="PUT", body=json.dumps(model))
+    assert expected_http_error(e, 400)
+
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        body = 'ünicode téxt'
+        model = {
+            'content' : body,
+            'format'  : 'text',
+            'type'    : 'file',
+        }
+        path = '.hidden.txt'
+        await jp_fetch("api", "contents", path, method="PUT", body=json.dumps(model))
+    assert expected_http_error(e, 400)
+
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        body = 'ünicode téxt'
+        model = {
+            'content' : body,
+            'format'  : 'text',
+            'type'    : 'file',
+            'path': '.hidden.txt'
+        }
+        path = 'Upload tést.txt'
+        await jp_fetch("api", "contents", path, method="PUT", body=json.dumps(model))
+    assert expected_http_error(e, 400)
+
+
 async def test_upload_b64(jp_fetch, contents, contents_dir, _check_created):
     body = b"\xFFblob"
     b64body = encodebytes(body).decode("ascii")
@@ -501,6 +580,49 @@ async def test_copy_put_400(jp_fetch, contents, contents_dir, _check_created):
     assert expected_http_error(e, 400)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Disabled copying hidden files on Windows")
+async def test_copy_put_400_hidden(jp_fetch, contents, contents_dir,):
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch(
+            "api",
+            "contents",
+            ".hidden/old.txt",
+            method="PUT",
+            body=json.dumps({"copy_from": "new.txt"}),
+        )
+    assert expected_http_error(e, 400)
+    
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch(
+            "api",
+            "contents",
+            "old.txt",
+            method="PUT",
+            body=json.dumps({"copy_from": ".hidden/new.txt"}),
+        )
+    assert expected_http_error(e, 400)
+    
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch(
+            "api",
+            "contents",
+            ".hidden.txt",
+            method="PUT",
+            body=json.dumps({"copy_from": "new.txt"}),
+        )
+    assert expected_http_error(e, 400)
+    
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch(
+            "api",
+            "contents",
+            "old.txt",
+            method="PUT",
+            body=json.dumps({"copy_from": ".hidden.txt"}),
+        )
+    assert expected_http_error(e, 400)
+
+
 async def test_copy_dir_400(jp_fetch, contents, contents_dir, _check_created):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch(
@@ -511,6 +633,63 @@ async def test_copy_dir_400(jp_fetch, contents, contents_dir, _check_created):
             body=json.dumps({"copy_from": "å b"}),
         )
     assert expected_http_error(e, 400)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Disabled copying hidden files on Windows")
+async def test_copy_400_hidden(jp_fetch, contents, contents_dir,):
+
+    # Create text files
+    hidden_dir = contents_dir / '.hidden'
+    hidden_dir.mkdir(parents=True, exist_ok=True)
+    txt = f"visible text file in hidden dir"
+    txtname = hidden_dir.joinpath(f"new.txt")
+    txtname.write_text(txt, encoding="utf-8")
+
+    paths = ['new.txt', '.hidden.txt']
+    for name in paths:
+        txt = f"{name} text file"
+        txtname = contents_dir.joinpath(f"{name}.txt")
+        txtname.write_text(txt, encoding="utf-8")
+
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch(
+            "api",
+            "contents",
+            ".hidden/old.txt",
+            method="POST",
+            body=json.dumps({"copy_from": "new.txt"}),
+        )
+    assert expected_http_error(e, 400)
+    
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch(
+            "api",
+            "contents",
+            "old.txt",
+            method="POST",
+            body=json.dumps({"copy_from": ".hidden/new.txt"}),
+        )
+    assert expected_http_error(e, 400)
+
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch(
+            "api",
+            "contents",
+            ".hidden.txt",
+            method="POST",
+            body=json.dumps({"copy_from": "new.txt"}),
+        )
+    assert expected_http_error(e, 400)
+
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch(
+            "api",
+            "contents",
+            "old.txt",
+            method="POST",
+            body=json.dumps({"copy_from": ".hidden.txt"}),
+        )
+    assert expected_http_error(e, 400)    
 
 
 @pytest.mark.parametrize("path,name", dirs)
@@ -550,6 +729,24 @@ async def test_delete_non_empty_dir(jp_fetch, contents):
         await jp_fetch("api", "contents", "å b", method="GET")
     assert expected_http_error(e, 404)
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Disabled deleting hidden dirs on Windows")
+async def test_delete_hidden_dir(jp_fetch, contents):
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch("api", "contents", ".hidden", method="DELETE")
+    assert expected_http_error(e, 400)
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Disabled deleting hidden dirs on Windows")
+async def test_delete_hidden_file(jp_fetch, contents):
+    #Test deleting file in a hidden directory
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch("api", "contents", ".hidden/test.txt", method="DELETE")
+    assert expected_http_error(e, 400)
+
+    #Test deleting a hidden file
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch("api", "contents", ".hidden.txt", method="DELETE")
+    assert expected_http_error(e, 400)
+
 
 async def test_rename(jp_fetch, jp_base_url, contents, contents_dir):
     path = "foo"
@@ -580,6 +777,60 @@ async def test_rename(jp_fetch, jp_base_url, contents, contents_dir):
     nbnames = [name["name"] for name in listing["content"]]
     assert "z.ipynb" in nbnames
     assert "a.ipynb" not in nbnames
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Disabled copying hidden files on Windows")
+async def test_rename_400_hidden(jp_fetch, jp_base_url, contents, contents_dir):
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        old_path = '.hidden/old.txt'
+        new_path = 'new.txt'
+        # Rename the file
+        r = await jp_fetch(
+            "api",
+            "contents",
+            old_path,
+            method="PATCH",
+            body=json.dumps({"path": new_path}),
+        )
+    assert expected_http_error(e, 400)
+        
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        old_path = 'old.txt'
+        new_path = '.hidden/new.txt'
+        # Rename the file
+        r = await jp_fetch(
+            "api",
+            "contents",
+            old_path,
+            method="PATCH",
+            body=json.dumps({"path": new_path}),
+        )
+    assert expected_http_error(e, 400)
+        
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        old_path = '.hidden.txt'
+        new_path = 'new.txt'
+        # Rename the file
+        r = await jp_fetch(
+            "api",
+            "contents",
+            old_path,
+            method="PATCH",
+            body=json.dumps({"path": new_path}),
+        )
+    assert expected_http_error(e, 400)
+
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        old_path = 'old.txt'
+        new_path = '.hidden.txt'
+        # Rename the file
+        r = await jp_fetch(
+            "api",
+            "contents",
+            old_path,
+            method="PATCH",
+            body=json.dumps({"path": new_path}),
+        )
+    assert expected_http_error(e, 400)
 
 
 async def test_checkpoints_follow_file(jp_fetch, contents):

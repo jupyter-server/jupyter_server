@@ -95,6 +95,8 @@ class ContentsHandler(ContentsAPIHandler):
         of the files and directories it contains.
         """
         path = path or ""
+        cm = self.contents_manager
+
         type = self.get_query_argument("type", default=None)
         if type not in {None, "directory", "file", "notebook"}:
             raise web.HTTPError(400, "Type %r is invalid" % type)
@@ -106,6 +108,9 @@ class ContentsHandler(ContentsAPIHandler):
         if content_str not in {"0", "1"}:
             raise web.HTTPError(400, "Content %r is invalid" % content_str)
         content = int(content_str or "")
+
+        if await ensure_async(cm.is_hidden(path)) and not cm.allow_hidden:
+            raise web.HTTPError(404, f"file or directory {path!r} does not exist")
 
         model = await ensure_async(
             self.contents_manager.get(
@@ -126,6 +131,17 @@ class ContentsHandler(ContentsAPIHandler):
         model = self.get_json_body()
         if model is None:
             raise web.HTTPError(400, "JSON body missing")
+
+        old_path = model.get("path")
+        if (
+            old_path
+            and (
+                await ensure_async(cm.is_hidden(path)) or await ensure_async(cm.is_hidden(old_path))
+            )
+            and not cm.allow_hidden
+        ):
+            raise web.HTTPError(400, f"Cannot rename file or directory {path!r}")
+
         model = await ensure_async(cm.update(model, path))
         validate_model(model, expect_content=False)
         self._finish_model(model)
@@ -191,6 +207,16 @@ class ContentsHandler(ContentsAPIHandler):
             raise web.HTTPError(400, "Cannot POST to files, use PUT instead.")
 
         model = self.get_json_body()
+        copy_from = model.get("copy_from")
+        if (
+            copy_from
+            and (
+                await ensure_async(cm.is_hidden(path))
+                or await ensure_async(cm.is_hidden(copy_from))
+            )
+            and not cm.allow_hidden
+        ):
+            raise web.HTTPError(400, f"Cannot copy file or directory {path!r}")
 
         if model is not None:
             copy_from = model.get("copy_from")
@@ -217,9 +243,17 @@ class ContentsHandler(ContentsAPIHandler):
           create a new empty notebook.
         """
         model = self.get_json_body()
+        cm = self.contents_manager
+
         if model:
             if model.get("copy_from"):
                 raise web.HTTPError(400, "Cannot copy with PUT, only POST")
+            if (
+                (model.get("path") and await ensure_async(cm.is_hidden(model.get("path"))))
+                or await ensure_async(cm.is_hidden(path))
+            ) and not cm.allow_hidden:
+                raise web.HTTPError(400, f"Cannot create file or directory {path!r}")
+
             exists = await ensure_async(self.contents_manager.file_exists(path))
             if exists:
                 await self._save(model, path)
@@ -233,6 +267,10 @@ class ContentsHandler(ContentsAPIHandler):
     async def delete(self, path=""):
         """delete a file in the given path"""
         cm = self.contents_manager
+
+        if await ensure_async(cm.is_hidden(path)) and not cm.allow_hidden:
+            raise web.HTTPError(400, f"Cannot delete file or directory {path!r}")
+
         self.log.warning("delete %s", path)
         await ensure_async(cm.delete(path))
         self.set_status(204)
