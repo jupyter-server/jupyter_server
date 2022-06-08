@@ -27,7 +27,7 @@ repos:
         files: \.py$
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.950
+    rev: v0.960
     hooks:
       - id: mypy
         additional_dependencies: [types-requests]
@@ -44,7 +44,7 @@ repos:
         args: [--py37-plus]
 
   - repo: https://github.com/PyCQA/doc8
-    rev: 0.11.1
+    rev: 0.11.2
     hooks:
       - id: doc8
         args: [--max-line-length=200]
@@ -64,13 +64,13 @@ repos:
         stages: [manual]
 
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.15.0
+    rev: v8.17.0
     hooks:
       - id: eslint
         stages: [manual]
 
   - repo: https://github.com/sirosen/check-jsonschema
-    rev: 0.15.0
+    rev: 0.16.0
     hooks:
       - id: check-jsonschema
         name: "Check GitHub Workflows"

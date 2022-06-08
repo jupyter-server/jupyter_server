@@ -1,10 +1,12 @@
 [build-system]
-requires = ["hatchling >=0.25"]
+requires = ["hatchling >=1.0"]
 build-backend = "hatchling.build"
 
 [project]
 name = "jupyter_server"
 version = "2.1.0.dev0"
+readme = "README.md"
+license = { file = "COPYING.md" }
 description = "The backend—i.e. core services, APIs, and REST endpoints—to Jupyter web applications."
 authors = [{name = "Jupyter Development Team", email = "jupyter@googlegroups.com"}]
 keywords = ["ipython", "jupyter"]
@@ -42,14 +44,8 @@ dependencies = [
     "tornado>=6.1.0",
     "traitlets>=5.1",
     "websocket-client",
+    "jupyter_telemetry"
 ]
-
-[project.readme]
-file = "README.md"
-content-type = "text/markdown"
-
-[project.license]
-file = 'COPYING.md'
 
 [project.urls]
 Homepage = "https://jupyter-server.readthedocs.io"
@@ -60,22 +56,33 @@ Tracker = "https://github.com/jupyter-server/jupyter_server/issues"
 
 [project.optional-dependencies]
 test = [
-    "coverage",
     "ipykernel",
-    "pre-commit",
     "pytest-console-scripts",
-    "pytest-cov",
     "pytest-timeout",
     "pytest-tornasync",
     "pytest>=6.0",
     "requests",
+]
+dev = [
+  "coverage",
+  "pre-commit",
+  "pytest-cov",
 ]
 
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
 
 [tool.hatch.build]
-artifacts = ["jupyter_server/static/style/*.*"]
+artifacts = ["jupyter_server/static/style"]
+
+[tool.hatch.build.hooks.jupyter-builder]
+dependencies = ["hatch-jupyter-builder>=0.3.3"]
+build-function = "hatch_jupyter_builder.npm_builder"
+ensured-targets = [
+  "jupyter_server/static/style/bootstrap.min.css",
+  "jupyter_server/static/style/bootstrap-theme.min.css"
+]
+install-pre-commit-hook = true
 
 [tool.black]
 line_length = 100
@@ -102,6 +109,9 @@ filterwarnings = [
 
 [tool.jupyter-releaser]
 skip = ["check-links"]
+
+[tool.jupyter-releaser.hooks]
+before-build-python = ["npm install", "npm run build"]
 
 [tool.jupyter-releaser.options]
 post-version-spec = "dev"
@@ -130,7 +140,6 @@ version_template = "{major}.{minor}.{patch}{channel}{release}"
 src = "docs/source/conf.py"
 version_template = "{major}.{minor}.{patch}{channel}{release}"
 
-
 [[tool.tbump.field]]
 name = "channel"
 default = ""
@@ -156,27 +165,9 @@ namespace_packages = true
 
 [[tool.mypy.overrides]]
 module = [
-    "traitlets",
-    "traitlets.config",
-    "traitlets.config.application",
-    "traitlets.config.configurable",
-    "traitlets.tests.utils",
-    "traitlets.utils.importstring",
-    "traitlets.traitlets",
-    "traitlets.utils.descriptions",
-    "jupyter_core",
-    "jupyter_core.application",
-    "jupyter_core.paths",
-    "jupyter_core.utils",
-    "nbconvert.exporters",
-    "nbconvert.exporters.base",
-    "nbformat",
-    "nbformat.sign",
-    "nbformat.v4",
     "pysqlite2",
     "_frozen_importlib_external",
     "send2trash",
-    "terminado",
     "websocket"
 ]
 ignore_missing_imports = true
