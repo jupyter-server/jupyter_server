@@ -65,7 +65,9 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
         for kernel_name, kernel_info in kspecs.items():
             try:
                 if is_kernelspec_model(kernel_info):
-                    d = kernel_info["spec"]
+                    d = kernel_info
+                    # provides resource_dir template filled spec
+                    raise Exception(f"{kernel_name}, {kernel_info}")
                 else:
                     d = kernelspec_model(
                         self,
