@@ -236,12 +236,12 @@ async def test_get_404_hidden(jp_fetch, contents, contents_dir):
     # Create text files
     hidden_dir = contents_dir / ".hidden"
     hidden_dir.mkdir(parents=True, exist_ok=True)
-    txt = f"visible text file in hidden dir"
-    txtname = hidden_dir.joinpath(f"visible.txt")
+    txt = "visible text file in hidden dir"
+    txtname = hidden_dir.joinpath("visible.txt")
     txtname.write_text(txt, encoding="utf-8")
 
-    txt2 = f"hidden text file"
-    txtname2 = contents_dir.joinpath(f".hidden.txt")
+    txt2 = "hidden text file"
+    txtname2 = contents_dir.joinpath(".hidden.txt")
     txtname2.write_text(txt2, encoding="utf-8")
 
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
@@ -641,8 +641,8 @@ async def test_copy_400_hidden(
     # Create text files
     hidden_dir = contents_dir / ".hidden"
     hidden_dir.mkdir(parents=True, exist_ok=True)
-    txt = f"visible text file in hidden dir"
-    txtname = hidden_dir.joinpath(f"new.txt")
+    txt = "visible text file in hidden dir"
+    txtname = hidden_dir.joinpath("new.txt")
     txtname.write_text(txt, encoding="utf-8")
 
     paths = ["new.txt", ".hidden.txt"]
