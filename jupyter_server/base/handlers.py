@@ -619,6 +619,13 @@ class JupyterHandler(AuthenticatedHandler):
         self.write(html)
 
 
+class IPythonHandler(JupyterHandler):
+    """The IPythonHandler ensure backwards compatibility
+    for the notebook extensions running on nbclassic.
+    """
+    pass
+
+
 class APIHandler(JupyterHandler):
     """Base class for API handlers"""
 
