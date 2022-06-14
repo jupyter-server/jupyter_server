@@ -88,7 +88,7 @@ websocket client that connects to the kernel.
 .. note::
 
     TODO
-    
+
     Document the session URL parameter used in kernel connections. Is that
     created every time we request a kernel with a post request? Is it tied to
     just creating new sessions with the session rest api?
