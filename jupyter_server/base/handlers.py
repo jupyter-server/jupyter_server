@@ -623,6 +623,7 @@ class IPythonHandler(JupyterHandler):
     """The IPythonHandler ensure backwards compatibility
     for the notebook extensions running on nbclassic.
     """
+
     pass
 
 
