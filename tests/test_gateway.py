@@ -135,6 +135,9 @@ async def mock_gateway_request(url, **kwargs):
     # Shutdown existing kernel
     if endpoint.rfind("/api/kernels/") >= 0 and method == "DELETE":
         requested_kernel_id = endpoint.rpartition("/")[2]
+        if requested_kernel_id not in running_kernels:
+            raise HTTPError(404, message="Kernel does not exist: %s" % requested_kernel_id)
+
         running_kernels.pop(
             requested_kernel_id
         )  # Simulate shutdown by removing kernel from running set
@@ -290,6 +293,29 @@ async def test_gateway_kernel_lifecycle(init_gateway, jp_fetch):
     # delete
     await delete_kernel(jp_fetch, kernel_id)
     assert await is_kernel_running(jp_fetch, kernel_id) is False
+
+
+@pytest.mark.parametrize("missing_kernel", [True, False])
+async def test_gateway_shutdown(init_gateway, jp_serverapp, jp_fetch, missing_kernel):
+    # Validate server shutdown when multiple gateway kernels are present or
+    # we've lost track of at least one (missing) kernel
+
+    # create two kernels
+    k1 = await create_kernel(jp_fetch, "kspec_bar")
+    k2 = await create_kernel(jp_fetch, "kspec_bar")
+
+    # ensure they're considered running
+    assert await is_kernel_running(jp_fetch, k1) is True
+    assert await is_kernel_running(jp_fetch, k2) is True
+
+    if missing_kernel:
+        running_kernels.pop(k1)  # "terminate" kernel w/o our knowledge
+
+    with mocked_gateway:
+        await jp_serverapp.kernel_manager.shutdown_all()
+
+    assert await is_kernel_running(jp_fetch, k1) is False
+    assert await is_kernel_running(jp_fetch, k2) is False
 
 
 #
