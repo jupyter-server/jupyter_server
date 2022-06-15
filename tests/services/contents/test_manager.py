@@ -259,80 +259,81 @@ async def test_403(jp_file_contents_manager_class, tmp_path):
     except HTTPError as e:
         assert e.status_code == 403
 
-@pytest.mark.skipif(sys.platform.startswith('win'), reason="Can't test hidden files on Windows")
+
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Can't test hidden files on Windows")
 async def test_400(jp_file_contents_manager_class, tmp_path):
-    #Test Delete behavior
-    #Test delete of file in hidden directory
+    # Test Delete behavior
+    # Test delete of file in hidden directory
     with pytest.raises(HTTPError) as excinfo:
         td = str(tmp_path)
         cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = '.hidden'
-        file_in_hidden_path = os.path.join(hidden_dir,'visible.txt')
+        hidden_dir = ".hidden"
+        file_in_hidden_path = os.path.join(hidden_dir, "visible.txt")
         _make_dir(cm, hidden_dir)
         model = await ensure_async(cm.new(path=file_in_hidden_path))
-        os_path = cm._get_os_path(model['path'])
+        os_path = cm._get_os_path(model["path"])
 
         try:
             result = await ensure_async(cm.delete_file(os_path))
         except HTTPError as e:
             assert e.status_code == 400
 
-    #Test delete hidden file in visible directory
+    # Test delete hidden file in visible directory
     with pytest.raises(HTTPError) as excinfo:
         td = str(tmp_path)
         cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = 'visible'
-        file_in_hidden_path = os.path.join(hidden_dir,'.hidden.txt')
+        hidden_dir = "visible"
+        file_in_hidden_path = os.path.join(hidden_dir, ".hidden.txt")
         _make_dir(cm, hidden_dir)
         model = await ensure_async(cm.new(path=file_in_hidden_path))
-        os_path = cm._get_os_path(model['path'])
+        os_path = cm._get_os_path(model["path"])
 
         try:
             result = await ensure_async(cm.delete_file(os_path))
         except HTTPError as e:
             assert e.status_code == 400
 
-    #Test Save behavior
-    #Test save of file in hidden directory
+    # Test Save behavior
+    # Test save of file in hidden directory
     with pytest.raises(HTTPError) as excinfo:
         td = str(tmp_path)
         cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = '.hidden'
-        file_in_hidden_path = os.path.join(hidden_dir,'visible.txt')
+        hidden_dir = ".hidden"
+        file_in_hidden_path = os.path.join(hidden_dir, "visible.txt")
         _make_dir(cm, hidden_dir)
         model = await ensure_async(cm.new(path=file_in_hidden_path))
-        os_path = cm._get_os_path(model['path'])
+        os_path = cm._get_os_path(model["path"])
 
         try:
-            result = await ensure_async(cm.save(model,path=os_path))
+            result = await ensure_async(cm.save(model, path=os_path))
         except HTTPError as e:
             assert e.status_code == 400
 
-    #Test save hidden file in visible directory
+    # Test save hidden file in visible directory
     with pytest.raises(HTTPError) as excinfo:
         td = str(tmp_path)
         cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = 'visible'
-        file_in_hidden_path = os.path.join(hidden_dir,'.hidden.txt')
+        hidden_dir = "visible"
+        file_in_hidden_path = os.path.join(hidden_dir, ".hidden.txt")
         _make_dir(cm, hidden_dir)
         model = await ensure_async(cm.new(path=file_in_hidden_path))
-        os_path = cm._get_os_path(model['path'])
+        os_path = cm._get_os_path(model["path"])
 
         try:
-            result = await ensure_async(cm.save(model,path=os_path))
+            result = await ensure_async(cm.save(model, path=os_path))
         except HTTPError as e:
             assert e.status_code == 400
 
-    #Test rename behavior
-    #Test rename with source file in hidden directory
+    # Test rename behavior
+    # Test rename with source file in hidden directory
     with pytest.raises(HTTPError) as excinfo:
         td = str(tmp_path)
         cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = '.hidden'
-        file_in_hidden_path = os.path.join(hidden_dir,'visible.txt')
+        hidden_dir = ".hidden"
+        file_in_hidden_path = os.path.join(hidden_dir, "visible.txt")
         _make_dir(cm, hidden_dir)
         model = await ensure_async(cm.new(path=file_in_hidden_path))
-        old_path = cm._get_os_path(model['path'])
+        old_path = cm._get_os_path(model["path"])
         new_path = "new.txt"
 
         try:
@@ -340,15 +341,15 @@ async def test_400(jp_file_contents_manager_class, tmp_path):
         except HTTPError as e:
             assert e.status_code == 400
 
-    #Test rename of dest file in hidden directory
+    # Test rename of dest file in hidden directory
     with pytest.raises(HTTPError) as excinfo:
         td = str(tmp_path)
         cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = '.hidden'
-        file_in_hidden_path = os.path.join(hidden_dir,'visible.txt')
+        hidden_dir = ".hidden"
+        file_in_hidden_path = os.path.join(hidden_dir, "visible.txt")
         _make_dir(cm, hidden_dir)
         model = await ensure_async(cm.new(path=file_in_hidden_path))
-        new_path = cm._get_os_path(model['path'])
+        new_path = cm._get_os_path(model["path"])
         old_path = "old.txt"
 
         try:
@@ -356,15 +357,15 @@ async def test_400(jp_file_contents_manager_class, tmp_path):
         except HTTPError as e:
             assert e.status_code == 400
 
-    #Test rename with hidden source file in visible directory
+    # Test rename with hidden source file in visible directory
     with pytest.raises(HTTPError) as excinfo:
         td = str(tmp_path)
         cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = 'visible'
-        file_in_hidden_path = os.path.join(hidden_dir,'.hidden.txt')
+        hidden_dir = "visible"
+        file_in_hidden_path = os.path.join(hidden_dir, ".hidden.txt")
         _make_dir(cm, hidden_dir)
         model = await ensure_async(cm.new(path=file_in_hidden_path))
-        old_path = cm._get_os_path(model['path'])
+        old_path = cm._get_os_path(model["path"])
         new_path = "new.txt"
 
         try:
@@ -372,15 +373,15 @@ async def test_400(jp_file_contents_manager_class, tmp_path):
         except HTTPError as e:
             assert e.status_code == 400
 
-    #Test rename with hidden dest file in visible directory
+    # Test rename with hidden dest file in visible directory
     with pytest.raises(HTTPError) as excinfo:
         td = str(tmp_path)
         cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = 'visible'
-        file_in_hidden_path = os.path.join(hidden_dir,'.hidden.txt')
+        hidden_dir = "visible"
+        file_in_hidden_path = os.path.join(hidden_dir, ".hidden.txt")
         _make_dir(cm, hidden_dir)
         model = await ensure_async(cm.new(path=file_in_hidden_path))
-        new_path = cm._get_os_path(model['path'])
+        new_path = cm._get_os_path(model["path"])
         old_path = "old.txt"
 
         try:
@@ -388,37 +389,39 @@ async def test_400(jp_file_contents_manager_class, tmp_path):
         except HTTPError as e:
             assert e.status_code == 400
 
-@pytest.mark.skipif(sys.platform.startswith('win'), reason="Can't test hidden files on Windows")
+
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Can't test hidden files on Windows")
 async def test_404(jp_file_contents_manager_class, tmp_path):
-    #Test visible file in hidden folder
+    # Test visible file in hidden folder
     with pytest.raises(HTTPError) as excinfo:
         td = str(tmp_path)
         cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = '.hidden'
-        file_in_hidden_path = os.path.join(hidden_dir,'visible.txt')
+        hidden_dir = ".hidden"
+        file_in_hidden_path = os.path.join(hidden_dir, "visible.txt")
         _make_dir(cm, hidden_dir)
         model = await ensure_async(cm.new(path=file_in_hidden_path))
-        os_path = cm._get_os_path(model['path'])
+        os_path = cm._get_os_path(model["path"])
 
         try:
-            result = await ensure_async(cm.get(os_path, 'w'))
+            result = await ensure_async(cm.get(os_path, "w"))
         except HTTPError as e:
             assert e.status_code == 404
 
-    #Test hidden file in visible folder
+    # Test hidden file in visible folder
     with pytest.raises(HTTPError) as excinfo:
         td = str(tmp_path)
         cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = 'visible'
-        file_in_hidden_path = os.path.join(hidden_dir,'.hidden.txt')
+        hidden_dir = "visible"
+        file_in_hidden_path = os.path.join(hidden_dir, ".hidden.txt")
         _make_dir(cm, hidden_dir)
         model = await ensure_async(cm.new(path=file_in_hidden_path))
-        os_path = cm._get_os_path(model['path'])
+        os_path = cm._get_os_path(model["path"])
 
         try:
-            result = await ensure_async(cm.get(os_path, 'w'))
+            result = await ensure_async(cm.get(os_path, "w"))
         except HTTPError as e:
             assert e.status_code == 404
+
 
 async def test_escape_root(jp_file_contents_manager_class, tmp_path):
     td = str(tmp_path)
