@@ -1850,6 +1850,14 @@ class ServerApp(JupyterApp):
         """Get the Extension that started this server."""
         return self._starter_app
 
+    io_loop = Instance(
+        ioloop.IOLoop,
+    )
+
+    @default("io_loop")
+    def _default_io_loop(self):
+        return ioloop.IOLoop(make_current=False)
+
     def parse_command_line(self, argv=None):
 
         super().parse_command_line(argv)
@@ -2475,7 +2483,6 @@ class ServerApp(JupyterApp):
         self.init_components()
         self.init_webapp()
         self.init_signal()
-        self.init_ioloop()
         self.load_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
@@ -2798,8 +2805,11 @@ class ServerApp(JupyterApp):
             self.log.info(_i18n("Interrupted..."))
 
     def init_ioloop(self):
-        """init self.io_loop so that an extension can use it by io_loop.call_later() to create background tasks"""
-        self.io_loop = ioloop.IOLoop.current()
+        warnings.warn(
+            "init_ioloop is deprecated. serverapp.ioloop is already initialized",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     def start(self):
         """Start the Jupyter server app, after initialization

@@ -14,6 +14,7 @@ import nbformat
 import pytest
 import tornado
 from tornado.escape import url_escape
+from tornado.ioloop import IOLoop
 from traitlets.config import Config
 
 from jupyter_server.extension import serverextension
@@ -37,6 +38,13 @@ if os.name == "nt" and sys.version_info >= (3, 7):
     asyncio.set_event_loop_policy(
         asyncio.WindowsSelectorEventLoopPolicy()  # type:ignore[attr-defined]
     )
+
+
+@pytest.fixture
+def io_loop():
+    io_loop = IOLoop(make_current=False)
+    yield io_loop
+    io_loop.close(all_fds=True)
 
 
 # ============ Move to Jupyter Core =============
@@ -267,6 +275,7 @@ def jp_configurable_serverapp(
             config=c,
             allow_root=True,
             token=token,
+            io_loop=io_loop,
             **kwargs,
         )
 
