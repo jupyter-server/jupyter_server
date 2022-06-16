@@ -175,10 +175,10 @@ class ExtensionPackage(HasTraits):
         self._extension_points = {}
         try:
             self._module, self._metadata = get_metadata(name)
-        except ImportError:
+        except ImportError as e:
             raise ExtensionModuleNotFound(
-                "The module '{name}' could not be found. Are you "
-                "sure the extension is installed?".format(name=name)
+                "The module '{name}' could not be found ({e}). Are you "
+                "sure the extension is installed?".format(name=name, e=e)
             )
         # Create extension point interfaces for each extension path.
         for m in self._metadata:
