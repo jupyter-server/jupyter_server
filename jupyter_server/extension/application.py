@@ -6,7 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 from jupyter_core.application import JupyterApp, NoStart
 from tornado.log import LogFormatter
 from tornado.web import RedirectHandler
-from traitlets import Any, Bool, Dict, HasTraits, List, Unicode, default
+from traitlets import Any, Bool, Dict, HasTraits, List, Type, Unicode, default
 from traitlets.config import Config
 
 from jupyter_server.serverapp import ServerApp
@@ -538,6 +538,16 @@ class ExtensionApp(JupyterApp):
         )
         extension.initialize()
 
+    serverapp_class = ServerApp
+
+    @classmethod
+    def make_serverapp(cls, **kwargs):
+        """Instantiate the ServerApp
+
+        Override to customize the ServerApp before it loads any configuration
+        """
+        return cls.serverapp_class.instance(**kwargs)
+
     @classmethod
     def initialize_server(cls, argv=None, load_other_extensions=True, **kwargs):
         """Creates an instance of ServerApp and explicitly sets
@@ -553,7 +563,7 @@ class ExtensionApp(JupyterApp):
             jpserver_extensions.update(cls.serverapp_config["jpserver_extensions"])
             cls.serverapp_config["jpserver_extensions"] = jpserver_extensions
             find_extensions = False
-        serverapp = ServerApp.instance(jpserver_extensions=jpserver_extensions, **kwargs)
+        serverapp = cls.make_serverapp(jpserver_extensions=jpserver_extensions, **kwargs)
         serverapp.aliases.update(cls.aliases)
         serverapp.initialize(
             argv=argv or [],
