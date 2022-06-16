@@ -99,7 +99,7 @@ timeout = 300
 # Restore this setting to debug failures
 # timeout_method = "thread"
 filterwarnings = [
-  "error",
+  "error:::jupyter.*",
   "ignore:There is no current event loop:DeprecationWarning",
   "ignore:Passing a schema to Validator.iter_errors:DeprecationWarning",
   "ignore:unclosed <socket.socket:ResourceWarning",
