@@ -324,7 +324,7 @@ class ExtensionManager(LoggingConfigurable):
             return True
         # Raise a warning if the extension cannot be loaded.
         except Exception as e:
-            if self.serverapp.reraise_server_extension_failures:
+            if self.serverapp and self.serverapp.reraise_server_extension_failures:
                 raise
             self.log.warning(e)
         return False
@@ -339,7 +339,7 @@ class ExtensionManager(LoggingConfigurable):
                 self.linked_extensions[name] = True
                 self.log.info(f"{name} | extension was successfully linked.")
             except Exception as e:
-                if self.serverapp.reraise_server_extension_failures:
+                if self.serverapp and self.serverapp.reraise_server_extension_failures:
                     raise
                 self.log.warning(e)
 
@@ -350,7 +350,7 @@ class ExtensionManager(LoggingConfigurable):
             try:
                 extension.load_all_points(self.serverapp)
             except Exception as e:
-                if self.serverapp.reraise_server_extension_failures:
+                if self.serverapp and self.serverapp.reraise_server_extension_failures:
                     raise
                 self.log.debug("".join(traceback.format_exception(*sys.exc_info())))
                 self.log.warning(
