@@ -4,13 +4,42 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.18.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.17.1...a625db91efc4927c4b6fed4bf67ab995e479c36d))
+
+### Enhancements made
+
+- Show import error when faiing to load an extension [#878](https://github.com/jupyter-server/jupyter_server/pull/878) ([@minrk](https://github.com/minrk))
+
+### Bugs fixed
+
+- Fix gateway kernel shutdown [#874](https://github.com/jupyter-server/jupyter_server/pull/874) ([@kevin-bates](https://github.com/kevin-bates))
+
+### Maintenance and upkeep improvements
+
+- suppress tornado deprecation warnings [#882](https://github.com/jupyter-server/jupyter_server/pull/882) ([@minrk](https://github.com/minrk))
+- Normalize os_path [#886](https://github.com/jupyter-server/jupyter_server/pull/886) ([@martinRenou](https://github.com/martinRenou))
+- Fix lint [#867](https://github.com/jupyter-server/jupyter_server/pull/867) ([@blink1073](https://github.com/blink1073))
+- Fix sphinx 5.0 support [#865](https://github.com/jupyter-server/jupyter_server/pull/865) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Add changelog entry for 1.17.1 [#871](https://github.com/jupyter-server/jupyter_server/pull/871) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-06-07&to=2022-06-23&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-06-07..2022-06-23&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-06-07..2022-06-23&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2022-06-07..2022-06-23&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-06-07..2022-06-23&type=Issues) | [@meeseeksmachine](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksmachine+updated%3A2022-06-07..2022-06-23&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.17.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.17.0...v1.17.1)
 
 - Address security advisory [GHSA-q874-g24w-4q9g](https://github.com/jupyter-server/jupyter_server/security/advisories/GHSA-q874-g24w-4q9g).
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.17.0
 
