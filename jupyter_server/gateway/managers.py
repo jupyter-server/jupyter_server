@@ -8,6 +8,7 @@ from logging import Logger
 from queue import Empty, Queue
 from threading import Thread
 from typing import Any, Dict, Optional
+from time import monotonic
 
 import websocket
 from jupyter_client.asynchronous.client import AsyncKernelClient
@@ -504,22 +505,24 @@ class ChannelQueue(Queue):
         self.channel_socket = channel_socket
         self.log = log
 
-    async def _async_get(self):
+    async def _async_get(self, timeout=None):
+        if timeout is None:
+            timeout = float("inf")
+        elif timeout < 0:
+            raise ValueError("'timeout' must be a non-negative number")
+        end_time = monotonic() + timeout
+
         while True:
             try:
                 return self.get(block=False)
             except Empty:
+                if monotonic() > end_time:
+                    raise Empty
                 await asyncio.sleep(0)
-
-    async def _async_get_with_timeout(self, timeout=None):
-        try:
-            return await asyncio.wait_for(self._async_get(), timeout)
-        except asyncio.TimeoutError:
-            raise Empty
 
     async def get_msg(self, *args: Any, **kwargs: Any) -> dict:
         timeout = kwargs.get("timeout", 1)
-        msg = await self._async_get_with_timeout(timeout=timeout)
+        msg = await self._async_get(timeout=timeout)
         self.log.debug(
             "Received message on channel: {}, msg_id: {}, msg_type: {}".format(
                 self.channel_name, msg["msg_id"], msg["msg_type"] if msg else "null"
