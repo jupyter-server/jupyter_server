@@ -525,10 +525,7 @@ class ContentsManager(LoggingConfigurable):
         if model is None:
             model = {}
 
-        if path.endswith(".ipynb"):
-            model.setdefault("type", "notebook")
-        else:
-            model.setdefault("type", "file")
+        model.setdefault("type", "file")
 
         # no content, not a directory, so fill out new-file model
         if "content" not in model and model["type"] != "directory":

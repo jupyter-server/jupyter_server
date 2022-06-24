@@ -2,12 +2,11 @@ import json
 import pathlib
 import sys
 from base64 import decodebytes, encodebytes
-from unicodedata import normalize
 
 import pytest
 import tornado
-from nbformat import from_dict, writes
-from nbformat.v4 import new_markdown_cell, new_notebook
+from nbformat import writes
+from nbformat.v4 import new_notebook
 
 from jupyter_server.utils import url_path_join
 
@@ -90,21 +89,6 @@ def folders():
 
 
 @pytest.mark.parametrize("path,name", dirs)
-async def test_list_notebooks(jp_fetch, contents, path, name):
-    response = await jp_fetch(
-        "api",
-        "contents",
-        path,
-        method="GET",
-    )
-    data = json.loads(response.body.decode())
-    nbs = notebooks_only(data)
-    assert len(nbs) > 0
-    assert name + ".ipynb" in [normalize("NFC", n["name"]) for n in nbs]
-    assert url_path_join(path, name + ".ipynb") in [normalize("NFC", n["path"]) for n in nbs]
-
-
-@pytest.mark.parametrize("path,name", dirs)
 async def test_get_dir_no_contents(jp_fetch, contents, path, name):
     response = await jp_fetch(
         "api",
@@ -130,61 +114,6 @@ async def test_list_nonexistant_dir(jp_fetch, contents):
             "nonexistant",
             method="GET",
         )
-
-
-@pytest.mark.parametrize("path,name", dirs)
-async def test_get_nb_contents(jp_fetch, contents, path, name):
-    nbname = name + ".ipynb"
-    nbpath = (path + "/" + nbname).lstrip("/")
-    r = await jp_fetch("api", "contents", nbpath, method="GET", params=dict(content="1"))
-    model = json.loads(r.body.decode())
-    assert model["name"] == nbname
-    assert model["path"] == nbpath
-    assert model["type"] == "notebook"
-    assert "content" in model
-    assert model["format"] == "json"
-    assert "metadata" in model["content"]
-    assert isinstance(model["content"]["metadata"], dict)
-
-
-@pytest.mark.parametrize("path,name", dirs)
-async def test_get_nb_no_contents(jp_fetch, contents, path, name):
-    nbname = name + ".ipynb"
-    nbpath = (path + "/" + nbname).lstrip("/")
-    r = await jp_fetch("api", "contents", nbpath, method="GET", params=dict(content="0"))
-    model = json.loads(r.body.decode())
-    assert model["name"] == nbname
-    assert model["path"] == nbpath
-    assert model["type"] == "notebook"
-    assert "content" in model
-    assert model["content"] is None
-
-
-async def test_get_nb_invalid(contents_dir, jp_fetch, contents):
-    nb = {
-        "nbformat": 4,
-        "metadata": {},
-        "cells": [
-            {
-                "cell_type": "wrong",
-                "metadata": {},
-            }
-        ],
-    }
-    nbpath = "å b/Validate tést.ipynb"
-    (contents_dir / nbpath).write_text(json.dumps(nb))
-    r = await jp_fetch(
-        "api",
-        "contents",
-        nbpath,
-        method="GET",
-    )
-    model = json.loads(r.body.decode())
-    assert model["path"] == nbpath
-    assert model["type"] == "notebook"
-    assert "content" in model
-    assert "message" in model
-    assert "validation failed" in model["message"].lower()
 
 
 async def test_get_contents_no_such_file(jp_fetch):
@@ -316,7 +245,7 @@ async def test_get_bad_type(jp_fetch, contents):
 
 @pytest.fixture
 def _check_created(jp_base_url):
-    def _inner(r, contents_dir, path, name, type="notebook"):
+    def _inner(r, contents_dir, path, name, type="file"):
         fpath = path + "/" + name
         assert r.code == 201
         location = jp_base_url + "api/contents/" + tornado.escape.url_escape(fpath, plus=False)
@@ -338,16 +267,16 @@ async def test_create_untitled(jp_fetch, contents, contents_dir, _check_created)
     path = "å b"
     name = "Untitled.ipynb"
     r = await jp_fetch("api", "contents", path, method="POST", body=json.dumps({"ext": ".ipynb"}))
-    _check_created(r, str(contents_dir), path, name, type="notebook")
+    _check_created(r, str(contents_dir), path, name, type="file")
 
     name = "Untitled1.ipynb"
     r = await jp_fetch("api", "contents", path, method="POST", body=json.dumps({"ext": ".ipynb"}))
-    _check_created(r, str(contents_dir), path, name, type="notebook")
+    _check_created(r, str(contents_dir), path, name, type="file")
 
     path = "foo/bar"
     name = "Untitled.ipynb"
     r = await jp_fetch("api", "contents", path, method="POST", body=json.dumps({"ext": ".ipynb"}))
-    _check_created(r, str(contents_dir), path, name, type="notebook")
+    _check_created(r, str(contents_dir), path, name, type="file")
 
 
 async def test_create_untitled_txt(jp_fetch, contents, contents_dir, _check_created):
@@ -364,8 +293,8 @@ async def test_create_untitled_txt(jp_fetch, contents, contents_dir, _check_crea
 
 
 async def test_upload(jp_fetch, contents, contents_dir, _check_created):
-    nb = new_notebook()
-    nbmodel = {"content": nb, "type": "notebook"}
+    nb = json.dumps(new_notebook())
+    nbmodel = {"content": nb, "type": "file", "format": "text"}
     path = "å b"
     name = "Upload tést.ipynb"
     r = await jp_fetch("api", "contents", path, name, method="PUT", body=json.dumps(nbmodel))
@@ -511,7 +440,7 @@ async def test_copy(jp_fetch, contents, contents_dir, _check_created):
         method="POST",
         body=json.dumps({"copy_from": path + "/" + name}),
     )
-    _check_created(r, str(contents_dir), path, copy, type="notebook")
+    _check_created(r, str(contents_dir), path, copy)
 
     # Copy the same file name
     copy2 = "ç d-Copy2.ipynb"
@@ -522,7 +451,7 @@ async def test_copy(jp_fetch, contents, contents_dir, _check_created):
         method="POST",
         body=json.dumps({"copy_from": path + "/" + name}),
     )
-    _check_created(r, str(contents_dir), path, copy2, type="notebook")
+    _check_created(r, str(contents_dir), path, copy2)
 
     # copy a copy.
     copy3 = "ç d-Copy3.ipynb"
@@ -533,7 +462,7 @@ async def test_copy(jp_fetch, contents, contents_dir, _check_created):
         method="POST",
         body=json.dumps({"copy_from": path + "/" + copy2}),
     )
-    _check_created(r, str(contents_dir), path, copy3, type="notebook")
+    _check_created(r, str(contents_dir), path, copy3)
 
 
 async def test_copy_path(jp_fetch, contents, contents_dir, _check_created):
@@ -548,7 +477,7 @@ async def test_copy_path(jp_fetch, contents, contents_dir, _check_created):
         method="POST",
         body=json.dumps({"copy_from": path1 + "/" + name}),
     )
-    _check_created(r, str(contents_dir), path2, name, type="notebook")
+    _check_created(r, str(contents_dir), path2, name)
 
     r = await jp_fetch(
         "api",
@@ -557,7 +486,7 @@ async def test_copy_path(jp_fetch, contents, contents_dir, _check_created):
         method="POST",
         body=json.dumps({"copy_from": path1 + "/" + name}),
     )
-    _check_created(r, str(contents_dir), path2, copy, type="notebook")
+    _check_created(r, str(contents_dir), path2, copy)
 
 
 async def test_copy_put_400(jp_fetch, contents, contents_dir, _check_created):
@@ -836,53 +765,6 @@ async def test_rename_400_hidden(jp_fetch, jp_base_url, contents, contents_dir):
     assert expected_http_error(e, 400)
 
 
-async def test_checkpoints_follow_file(jp_fetch, contents):
-    path = "foo"
-    name = "a.ipynb"
-
-    # Read initial file.
-    r = await jp_fetch("api", "contents", path, name, method="GET")
-    model = json.loads(r.body.decode())
-
-    # Create a checkpoint of initial state
-    r = await jp_fetch(
-        "api",
-        "contents",
-        path,
-        name,
-        "checkpoints",
-        method="POST",
-        allow_nonstandard_methods=True,
-    )
-    cp1 = json.loads(r.body.decode())
-
-    # Modify file and save.
-    nbcontent = model["content"]
-    nb = from_dict(nbcontent)
-    hcell = new_markdown_cell("Created by test")
-    nb.cells.append(hcell)
-    nbmodel = {"content": nb, "type": "notebook"}
-    await jp_fetch("api", "contents", path, name, method="PUT", body=json.dumps(nbmodel))
-
-    # List checkpoints
-    r = await jp_fetch(
-        "api",
-        "contents",
-        path,
-        name,
-        "checkpoints",
-        method="GET",
-    )
-    cps = json.loads(r.body.decode())
-    assert cps == [cp1]
-
-    r = await jp_fetch("api", "contents", path, name, method="GET")
-    model = json.loads(r.body.decode())
-    nbcontent = model["content"]
-    nb = from_dict(nbcontent)
-    assert nb.cells[0].source == "Created by test"
-
-
 async def test_rename_existing(jp_fetch, contents):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         path = "foo"
@@ -903,152 +785,12 @@ async def test_rename_existing(jp_fetch, contents):
 async def test_save(jp_fetch, contents):
     r = await jp_fetch("api", "contents", "foo/a.ipynb", method="GET")
     model = json.loads(r.body.decode())
-    nbmodel = model["content"]
-    nb = from_dict(nbmodel)
-    nb.cells.append(new_markdown_cell("Created by test ³"))
-    nbmodel = {"content": nb, "type": "notebook"}
+    nb = model["content"]
+    nb += "\nCreated by test ³"
+    nbmodel = {"content": nb, "type": "file"}
     await jp_fetch("api", "contents", "foo/a.ipynb", method="PUT", body=json.dumps(nbmodel))
     # Round trip.
     r = await jp_fetch("api", "contents", "foo/a.ipynb", method="GET")
     model = json.loads(r.body.decode())
-    newnb = from_dict(model["content"])
-    assert newnb.cells[0].source == "Created by test ³"
-
-
-async def test_checkpoints(jp_fetch, contents):
-    path = "foo/a.ipynb"
-    resp = await jp_fetch("api", "contents", path, method="GET")
-    model = json.loads(resp.body.decode())
-    r = await jp_fetch(
-        "api",
-        "contents",
-        path,
-        "checkpoints",
-        method="POST",
-        allow_nonstandard_methods=True,
-    )
-    assert r.code == 201
-    cp1 = json.loads(r.body.decode())
-    assert set(cp1) == {"id", "last_modified"}
-    assert r.headers["Location"].split("/")[-1] == cp1["id"]
-
-    # Modify it.
-    nbcontent = model["content"]
-    nb = from_dict(nbcontent)
-    hcell = new_markdown_cell("Created by test")
-    nb.cells.append(hcell)
-
-    # Save it.
-    nbmodel = {"content": nb, "type": "notebook"}
-    await jp_fetch("api", "contents", path, method="PUT", body=json.dumps(nbmodel))
-
-    # List checkpoints
-    r = await jp_fetch("api", "contents", path, "checkpoints", method="GET")
-    cps = json.loads(r.body.decode())
-    assert cps == [cp1]
-
-    r = await jp_fetch("api", "contents", path, method="GET")
-    nbcontent = json.loads(r.body.decode())["content"]
-    nb = from_dict(nbcontent)
-    assert nb.cells[0].source == "Created by test"
-
-    # Restore Checkpoint cp1
-    r = await jp_fetch(
-        "api",
-        "contents",
-        path,
-        "checkpoints",
-        cp1["id"],
-        method="POST",
-        allow_nonstandard_methods=True,
-    )
-    assert r.code == 204
-
-    r = await jp_fetch("api", "contents", path, method="GET")
-    nbcontent = json.loads(r.body.decode())["content"]
-    nb = from_dict(nbcontent)
-    assert nb.cells == []
-
-    # Delete cp1
-    r = await jp_fetch("api", "contents", path, "checkpoints", cp1["id"], method="DELETE")
-    assert r.code == 204
-
-    r = await jp_fetch("api", "contents", path, "checkpoints", method="GET")
-    cps = json.loads(r.body.decode())
-    assert cps == []
-
-
-async def test_file_checkpoints(jp_fetch, contents):
-    path = "foo/a.txt"
-    resp = await jp_fetch("api", "contents", path, method="GET")
-    orig_content = json.loads(resp.body.decode())["content"]
-    r = await jp_fetch(
-        "api",
-        "contents",
-        path,
-        "checkpoints",
-        method="POST",
-        allow_nonstandard_methods=True,
-    )
-    assert r.code == 201
-    cp1 = json.loads(r.body.decode())
-    assert set(cp1) == {"id", "last_modified"}
-    assert r.headers["Location"].split("/")[-1] == cp1["id"]
-
-    # Modify it.
-    new_content = orig_content + "\nsecond line"
-    model = {
-        "content": new_content,
-        "type": "file",
-        "format": "text",
-    }
-
-    # Save it.
-    await jp_fetch("api", "contents", path, method="PUT", body=json.dumps(model))
-
-    # List checkpoints
-    r = await jp_fetch("api", "contents", path, "checkpoints", method="GET")
-    cps = json.loads(r.body.decode())
-    assert cps == [cp1]
-
-    r = await jp_fetch("api", "contents", path, method="GET")
-    content = json.loads(r.body.decode())["content"]
-    assert content == new_content
-
-    # Restore Checkpoint cp1
-    r = await jp_fetch(
-        "api",
-        "contents",
-        path,
-        "checkpoints",
-        cp1["id"],
-        method="POST",
-        allow_nonstandard_methods=True,
-    )
-    assert r.code == 204
-
-    r = await jp_fetch("api", "contents", path, method="GET")
-    restored_content = json.loads(r.body.decode())["content"]
-    assert restored_content == orig_content
-
-    # Delete cp1
-    r = await jp_fetch("api", "contents", path, "checkpoints", cp1["id"], method="DELETE")
-    assert r.code == 204
-
-    r = await jp_fetch("api", "contents", path, "checkpoints", method="GET")
-    cps = json.loads(r.body.decode())
-    assert cps == []
-
-
-async def test_trust(jp_fetch, contents):
-    # It should be able to trust a notebook that exists
-    for path in contents["notebooks"]:
-        r = await jp_fetch(
-            "api",
-            "contents",
-            str(path),
-            "trust",
-            method="POST",
-            allow_nonstandard_methods=True,
-        )
-        assert r.code == 201
+    newnb = model["content"]
+    assert newnb.splitlines()[-1] == "Created by test ³"

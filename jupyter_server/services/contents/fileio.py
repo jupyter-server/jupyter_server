@@ -289,6 +289,7 @@ class FileManagerMixin(Configurable):
 
     def _save_file(self, os_path, content, format):
         """Save content of a generic file."""
+        format = format or "text"
         if format not in {"json", "text", "base64"}:
             raise HTTPError(
                 400,
@@ -352,6 +353,7 @@ class AsyncFileManagerMixin(FileManagerMixin):
 
     async def _save_file(self, os_path, content, format):
         """Save content of a generic file."""
+        format = format or "text"
         if format not in {"json", "text", "base64"}:
             raise HTTPError(
                 400,
