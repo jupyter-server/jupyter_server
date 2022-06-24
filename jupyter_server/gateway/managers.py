@@ -7,8 +7,8 @@ import os
 from logging import Logger
 from queue import Empty, Queue
 from threading import Thread
-from typing import Any, Dict, Optional
 from time import monotonic
+from typing import Any, Dict, Optional
 
 import websocket
 from jupyter_client.asynchronous.client import AsyncKernelClient
