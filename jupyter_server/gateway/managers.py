@@ -5,7 +5,7 @@ import datetime
 import json
 import os
 from logging import Logger
-from queue import Queue, Empty
+from queue import Empty, Queue
 from threading import Thread
 from typing import Any, Dict, Optional
 
