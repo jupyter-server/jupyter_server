@@ -98,7 +98,9 @@ class ContentsHandler(ContentsAPIHandler):
         cm = self.contents_manager
 
         type = self.get_query_argument("type", default=None)
-        if type not in {None, "directory", "file", "notebook"}:
+        if type == "notebook":
+            type = "file"
+        if type not in {None, "directory", "file"}:
             raise web.HTTPError(400, "Type %r is invalid" % type)
 
         format = self.get_query_argument("format", default=None)

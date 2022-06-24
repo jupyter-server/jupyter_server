@@ -2,13 +2,10 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import itertools
-import json
 import re
 import warnings
 from fnmatch import fnmatch
 
-from nbformat import ValidationError, sign
-from nbformat import validate as validate_nb
 from nbformat.v4 import new_notebook
 from tornado.web import HTTPError, RequestHandler
 from traitlets import (
@@ -37,9 +34,8 @@ copy_pat = re.compile(r"\-Copy\d*\.")
 class ContentsManager(LoggingConfigurable):
     """Base class for serving files and directories.
 
-    This serves any text or binary file,
-    as well as directories,
-    with special handling for JSON notebook documents.
+    This serves any JSON, text or binary file,
+    as well as directories.
 
     Most APIs take a path argument,
     which is always an API-style unicode path,
@@ -56,11 +52,6 @@ class ContentsManager(LoggingConfigurable):
     root_dir = Unicode("/", config=True)
 
     allow_hidden = Bool(False, config=True, help="Allow access to hidden files")
-
-    notary = Instance(sign.NotebookNotary)
-
-    def _notary_default(self):
-        return sign.NotebookNotary(parent=self)
 
     hide_globs = List(
         Unicode(),
@@ -487,27 +478,6 @@ class ContentsManager(LoggingConfigurable):
                 break
         return name
 
-    def validate_notebook_model(self, model, validation_error=None):
-        """Add failed-validation message to model"""
-        try:
-            # If we're given a validation_error dictionary, extract the exception
-            # from it and raise the exception, else call nbformat's validate method
-            # to determine if the notebook is valid.  This 'else' condition may
-            # pertain to server extension not using the server's notebook read/write
-            # functions.
-            if validation_error is not None:
-                e = validation_error.get("ValidationError")
-                if isinstance(e, ValidationError):
-                    raise e
-            else:
-                validate_nb(model["content"])
-        except ValidationError as e:
-            model["message"] = "Notebook validation failed: {}:\n{}".format(
-                str(e),
-                json.dumps(e.instance, indent=1, default=lambda obj: "<UNKNOWN>"),
-            )
-        return model
-
     def new_untitled(self, path="", type="", ext=""):
         """Create a new untitled file or directory in path
 
@@ -620,54 +590,6 @@ class ContentsManager(LoggingConfigurable):
 
     def log_info(self):
         self.log.info(self.info_string())
-
-    def trust_notebook(self, path):
-        """Explicitly trust a notebook
-
-        Parameters
-        ----------
-        path : string
-            The path of a notebook
-        """
-        model = self.get(path)
-        nb = model["content"]
-        self.log.warning("Trusting notebook %s", path)
-        self.notary.mark_cells(nb, True)
-        self.check_and_sign(nb, path)
-
-    def check_and_sign(self, nb, path=""):
-        """Check for trusted cells, and sign the notebook.
-
-        Called as a part of saving notebooks.
-
-        Parameters
-        ----------
-        nb : dict
-            The notebook dict
-        path : string
-            The notebook's path (for logging)
-        """
-        if self.notary.check_cells(nb):
-            self.notary.sign(nb)
-        else:
-            self.log.warning("Notebook %s is not trusted", path)
-
-    def mark_trusted_cells(self, nb, path=""):
-        """Mark cells as trusted if the notebook signature matches.
-
-        Called as a part of loading notebooks.
-
-        Parameters
-        ----------
-        nb : dict
-            The notebook object (in current nbformat)
-        path : string
-            The notebook's path (for logging)
-        """
-        trusted = self.notary.check_signature(nb)
-        if not trusted:
-            self.log.warning("Notebook %s is not trusted", path)
-        self.notary.mark_cells(nb, trusted)
 
     def should_list(self, name):
         """Should this file/directory name be displayed in a listing?"""
@@ -986,20 +908,6 @@ class AsyncContentsManager(ContentsManager):
 
         model = await self.save(model, to_path)
         return model
-
-    async def trust_notebook(self, path):
-        """Explicitly trust a notebook
-
-        Parameters
-        ----------
-        path : string
-            The path of a notebook
-        """
-        model = await self.get(path)
-        nb = model["content"]
-        self.log.warning("Trusting notebook %s", path)
-        self.notary.mark_cells(nb, True)
-        self.check_and_sign(nb, path)
 
     # Part 3: Checkpoints API
     async def create_checkpoint(self, path):

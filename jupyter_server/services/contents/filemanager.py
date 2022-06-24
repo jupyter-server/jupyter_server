@@ -9,7 +9,6 @@ import stat
 import sys
 from datetime import datetime
 
-import nbformat
 from anyio.to_thread import run_sync
 from jupyter_core.paths import exists, is_file_hidden, is_hidden
 from send2trash import send2trash
@@ -326,28 +325,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         return model
 
-    def _notebook_model(self, path, content=True):
-        """Build a notebook model
-
-        if content is requested, the notebook content will be populated
-        as a JSON structure (not double-serialized)
-        """
-        model = self._base_model(path)
-        model["type"] = "notebook"
-        os_path = self._get_os_path(path)
-
-        if content:
-            validation_error: dict = {}
-            nb = self._read_notebook(
-                os_path, as_version=4, capture_validation_error=validation_error
-            )
-            self.mark_trusted_cells(nb, path)
-            model["content"] = nb
-            model["format"] = "json"
-            self.validate_notebook_model(model, validation_error)
-
-        return model
-
     def get(self, path, content=True, type=None, format=None):
         """Takes a path for an entity and returns its model
 
@@ -358,11 +335,11 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         content : bool
             Whether to include the contents in the reply
         type : str, optional
-            The requested type - 'file', 'notebook', or 'directory'.
+            The requested type - 'file' or 'directory'.
             Will raise HTTPError 400 if the content doesn't match.
         format : str, optional
             The requested format for file contents. 'text' or 'base64'.
-            Ignored if this returns a notebook or directory model.
+            Ignored if this returns a directory model.
 
         Returns
         -------
@@ -389,8 +366,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                     reason="bad type",
                 )
             model = self._dir_model(path, content=content)
-        elif type == "notebook" or (type is None and path.endswith(".ipynb")):
-            model = self._notebook_model(path, content=content)
         else:
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
@@ -427,20 +402,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         self.log.debug("Saving %s", os_path)
 
-        validation_error: dict = {}
         try:
-            if model["type"] == "notebook":
-                nb = nbformat.from_dict(model["content"])
-                self.check_and_sign(nb, path)
-                self._save_notebook(os_path, nb, capture_validation_error=validation_error)
-                # One checkpoint should always exist for notebooks.
-                if not self.checkpoints.list_checkpoints(path):
-                    self.create_checkpoint(path)
-            elif model["type"] == "file":
+            if model["type"] == "directory":
+                self._save_directory(os_path, model, path)
+            elif model["type"] in ("file", "notebook"):  # keep notebook for backwards compatibility
                 # Missing format will be handled internally by _save_file.
                 self._save_file(os_path, model["content"], model.get("format"))
-            elif model["type"] == "directory":
-                self._save_directory(os_path, model, path)
             else:
                 raise web.HTTPError(400, "Unhandled contents type: %s" % model["type"])
         except web.HTTPError:
@@ -449,14 +416,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             self.log.error("Error while saving file: %s %s", path, e, exc_info=True)
             raise web.HTTPError(500, f"Unexpected error while saving file: {path} {e}") from e
 
-        validation_message = None
-        if model["type"] == "notebook":
-            self.validate_notebook_model(model, validation_error=validation_error)
-            validation_message = model.get("message", None)
-
         model = self.get(path, content=False)
-        if validation_message:
-            model["message"] = validation_message
 
         self.run_post_save_hooks(model=model, os_path=os_path)
 
@@ -671,28 +631,6 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         return model
 
-    async def _notebook_model(self, path, content=True):
-        """Build a notebook model
-
-        if content is requested, the notebook content will be populated
-        as a JSON structure (not double-serialized)
-        """
-        model = self._base_model(path)
-        model["type"] = "notebook"
-        os_path = self._get_os_path(path)
-
-        if content:
-            validation_error: dict = {}
-            nb = await self._read_notebook(
-                os_path, as_version=4, capture_validation_error=validation_error
-            )
-            self.mark_trusted_cells(nb, path)
-            model["content"] = nb
-            model["format"] = "json"
-            self.validate_notebook_model(model, validation_error)
-
-        return model
-
     async def get(self, path, content=True, type=None, format=None):
         """Takes a path for an entity and returns its model
 
@@ -703,11 +641,11 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         content : bool
             Whether to include the contents in the reply
         type : str, optional
-            The requested type - 'file', 'notebook', or 'directory'.
+            The requested type - 'file' or 'directory'.
             Will raise HTTPError 400 if the content doesn't match.
         format : str, optional
             The requested format for file contents. 'text' or 'base64'.
-            Ignored if this returns a notebook or directory model.
+            Ignored if this returns directory model.
 
         Returns
         -------
@@ -729,8 +667,6 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                     reason="bad type",
                 )
             model = await self._dir_model(path, content=content)
-        elif type == "notebook" or (type is None and path.endswith(".ipynb")):
-            model = await self._notebook_model(path, content=content)
         else:
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
@@ -763,20 +699,12 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         os_path = self._get_os_path(path)
         self.log.debug("Saving %s", os_path)
 
-        validation_error: dict = {}
         try:
-            if model["type"] == "notebook":
-                nb = nbformat.from_dict(model["content"])
-                self.check_and_sign(nb, path)
-                await self._save_notebook(os_path, nb, capture_validation_error=validation_error)
-                # One checkpoint should always exist for notebooks.
-                if not (await self.checkpoints.list_checkpoints(path)):
-                    await self.create_checkpoint(path)
-            elif model["type"] == "file":
+            if model["type"] == "directory":
+                await self._save_directory(os_path, model, path)
+            elif model["type"] in ("file", "notebook"):  # keep notebook for backwards compatibility
                 # Missing format will be handled internally by _save_file.
                 await self._save_file(os_path, model["content"], model.get("format"))
-            elif model["type"] == "directory":
-                await self._save_directory(os_path, model, path)
             else:
                 raise web.HTTPError(400, "Unhandled contents type: %s" % model["type"])
         except web.HTTPError:
@@ -785,14 +713,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             self.log.error("Error while saving file: %s %s", path, e, exc_info=True)
             raise web.HTTPError(500, f"Unexpected error while saving file: {path} {e}") from e
 
-        validation_message = None
-        if model["type"] == "notebook":
-            self.validate_notebook_model(model, validation_error=validation_error)
-            validation_message = model.get("message", None)
-
         model = await self.get(path, content=False)
-        if validation_message:
-            model["message"] = validation_message
 
         self.run_post_save_hooks(model=model, os_path=os_path)
 

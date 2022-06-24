@@ -62,7 +62,6 @@ from jupyter_client.kernelspec import KernelSpecManager
 from jupyter_client.session import Session
 from jupyter_core.application import JupyterApp, base_aliases, base_flags
 from jupyter_core.paths import jupyter_runtime_dir
-from nbformat.sign import NotebookNotary
 from traitlets import (
     Any,
     Bool,
@@ -769,7 +768,6 @@ class ServerApp(JupyterApp):
         FileContentsManager,
         AsyncContentsManager,
         AsyncFileContentsManager,
-        NotebookNotary,
         GatewayMappingKernelManager,
         GatewayKernelSpecManager,
         GatewaySessionManager,
