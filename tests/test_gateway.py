@@ -1,17 +1,20 @@
 """Test GatewayClient"""
+import asyncio
 import json
+import logging
 import os
 import uuid
 from datetime import datetime
 from io import BytesIO
-from unittest.mock import patch
+from queue import Empty
+from unittest.mock import MagicMock, patch
 
 import pytest
 import tornado
 from tornado.httpclient import HTTPRequest, HTTPResponse
 from tornado.web import HTTPError
 
-from jupyter_server.gateway.managers import GatewayClient
+from jupyter_server.gateway.managers import ChannelQueue, GatewayClient
 from jupyter_server.utils import ensure_async
 
 from .utils import expected_http_error
@@ -316,6 +319,37 @@ async def test_gateway_shutdown(init_gateway, jp_serverapp, jp_fetch, missing_ke
 
     assert await is_kernel_running(jp_fetch, k1) is False
     assert await is_kernel_running(jp_fetch, k2) is False
+
+
+async def test_channel_queue_get_msg_with_invalid_timeout():
+    queue = ChannelQueue("iopub", MagicMock(), logging.getLogger())
+
+    with pytest.raises(ValueError):
+        await queue.get_msg(timeout=-1)
+
+
+async def test_channel_queue_get_msg_raises_empty_after_timeout():
+    queue = ChannelQueue("iopub", MagicMock(), logging.getLogger())
+
+    with pytest.raises(Empty):
+        await asyncio.wait_for(queue.get_msg(timeout=0.1), 2)
+
+
+async def test_channel_queue_get_msg_without_timeout():
+    queue = ChannelQueue("iopub", MagicMock(), logging.getLogger())
+
+    with pytest.raises(asyncio.TimeoutError):
+        await asyncio.wait_for(queue.get_msg(timeout=None), 1)
+
+
+async def test_channel_queue_get_msg_with_existing_item():
+    sent_message = {"msg_id": 1, "msg_type": 2}
+    queue = ChannelQueue("iopub", MagicMock(), logging.getLogger())
+    queue.put_nowait(sent_message)
+
+    received_message = await asyncio.wait_for(queue.get_msg(timeout=None), 1)
+
+    assert received_message == sent_message
 
 
 #

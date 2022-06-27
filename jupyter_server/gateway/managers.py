@@ -1,11 +1,13 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import asyncio
 import datetime
 import json
 import os
 from logging import Logger
-from queue import Queue
+from queue import Empty, Queue
 from threading import Thread
+from time import monotonic
 from typing import Any, Dict, Optional
 
 import websocket
@@ -503,9 +505,24 @@ class ChannelQueue(Queue):
         self.channel_socket = channel_socket
         self.log = log
 
+    async def _async_get(self, timeout=None):
+        if timeout is None:
+            timeout = float("inf")
+        elif timeout < 0:
+            raise ValueError("'timeout' must be a non-negative number")
+        end_time = monotonic() + timeout
+
+        while True:
+            try:
+                return self.get(block=False)
+            except Empty:
+                if monotonic() > end_time:
+                    raise
+                await asyncio.sleep(0)
+
     async def get_msg(self, *args: Any, **kwargs: Any) -> dict:
         timeout = kwargs.get("timeout", 1)
-        msg = self.get(timeout=timeout)
+        msg = await self._async_get(timeout=timeout)
         self.log.debug(
             "Received message on channel: {}, msg_id: {}, msg_type: {}".format(
                 self.channel_name, msg["msg_id"], msg["msg_type"] if msg else "null"
