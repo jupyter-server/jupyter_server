@@ -517,7 +517,7 @@ class ChannelQueue(Queue):
                 return self.get(block=False)
             except Empty:
                 if monotonic() > end_time:
-                    raise Empty
+                    raise
                 await asyncio.sleep(0)
 
     async def get_msg(self, *args: Any, **kwargs: Any) -> dict:
