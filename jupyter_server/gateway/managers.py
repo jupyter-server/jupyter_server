@@ -602,7 +602,7 @@ class GatewayKernelClient(AsyncKernelClient):
     # flag for whether execute requests should be allowed to call raw_input:
     allow_stdin = False
     _channels_stopped: bool
-    _channel_queues: Optional[dict[str, ChannelQueue]]
+    _channel_queues: Optional[dict[str, Type[ChannelQueue]]]
     _control_channel: Optional[ChannelQueue]
     _hb_channel: Optional[ChannelQueue]
     _stdin_channel: Optional[ChannelQueue]
