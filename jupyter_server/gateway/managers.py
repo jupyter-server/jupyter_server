@@ -609,9 +609,9 @@ class GatewayKernelClient(AsyncKernelClient):
     _iopub_channel: Optional[ChannelQueue]
     _shell_channel: Optional[ChannelQueue]
 
-    def __init__(self, **kwargs):
+    def __init__(self, kernel_id, **kwargs):
         super().__init__(**kwargs)
-        self.kernel_id = kwargs["kernel_id"]
+        self.kernel_id = kernel_id
         self.channel_socket: Optional[websocket.WebSocket] = None
         self.response_router: Optional[Thread] = None
         self._channels_stopped = False
