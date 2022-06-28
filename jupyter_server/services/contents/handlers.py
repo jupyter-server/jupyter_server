@@ -99,7 +99,8 @@ class ContentsHandler(ContentsAPIHandler):
 
         type = self.get_query_argument("type", default=None)
         if type not in {None, "directory", "file", "notebook"}:
-            raise web.HTTPError(400, "Type %r is invalid" % type)
+            # fall back to file if unknown type
+            type = "file"
 
         format = self.get_query_argument("format", default=None)
         if format not in {None, "text", "base64"}:
@@ -222,6 +223,9 @@ class ContentsHandler(ContentsAPIHandler):
             copy_from = model.get("copy_from")
             ext = model.get("ext", "")
             type = model.get("type", "")
+            if type not in {None, "", "directory", "file", "notebook"}:
+                # fall back to file if unknown type
+                type = "file"
             if copy_from:
                 await self._copy(copy_from, path)
             else:
