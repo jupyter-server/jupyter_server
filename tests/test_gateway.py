@@ -170,10 +170,8 @@ mock_http_user = "alice"
 
 def mock_websocket_create_connection(recv_side_effect=None):
     def helper(*args, **kwargs):
-        mock_class = MagicMock()
-        mock = mock_class.return_value
+        mock = MagicMock()
         mock.recv = MagicMock(side_effect=recv_side_effect)
-        mock.close = MagicMock()
         return mock
 
     return helper
