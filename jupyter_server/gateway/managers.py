@@ -498,12 +498,14 @@ KernelManagerABC.register(GatewayKernelManager)
 class ChannelQueue(Queue):
 
     channel_name: Optional[str] = None
+    response_router_finished: bool
 
     def __init__(self, channel_name: str, channel_socket: websocket.WebSocket, log: Logger):
         super().__init__()
         self.channel_name = channel_name
         self.channel_socket = channel_socket
         self.log = log
+        self.response_router_finished = False
 
     async def _async_get(self, timeout=None):
         if timeout is None:
@@ -516,6 +518,8 @@ class ChannelQueue(Queue):
             try:
                 return self.get(block=False)
             except Empty:
+                if self.response_router_finished:
+                    raise RuntimeError("Response router had finished")
                 if monotonic() > end_time:
                     raise
                 await asyncio.sleep(0)
@@ -598,7 +602,7 @@ class GatewayKernelClient(AsyncKernelClient):
     # flag for whether execute requests should be allowed to call raw_input:
     allow_stdin = False
     _channels_stopped: bool
-    _channel_queues: Optional[dict]
+    _channel_queues: Optional[dict[str, ChannelQueue]]
     _control_channel: Optional[ChannelQueue]
     _hb_channel: Optional[ChannelQueue]
     _stdin_channel: Optional[ChannelQueue]
@@ -644,12 +648,13 @@ class GatewayKernelClient(AsyncKernelClient):
             enable_multithread=True,
             sslopt=ssl_options,
         )
-        self.response_router = Thread(target=self._route_responses)
-        self.response_router.start()
 
         await ensure_async(
             super().start_channels(shell=shell, iopub=iopub, stdin=stdin, hb=hb, control=control)
         )
+
+        self.response_router = Thread(target=self._route_responses)
+        self.response_router.start()
 
     def stop_channels(self):
         """Stops all the running channels for this kernel.
@@ -752,6 +757,11 @@ class GatewayKernelClient(AsyncKernelClient):
         except BaseException as be:
             if not self._channels_stopped:
                 self.log.warning(f"Unexpected exception encountered ({be})")
+
+        # Notify channel queues that this thread had finished and no more messages are being received
+        assert self._channel_queues is not None
+        for channel_queue in self._channel_queues.values():
+            channel_queue.response_router_finished = True
 
         self.log.debug("Response router thread exiting...")
 

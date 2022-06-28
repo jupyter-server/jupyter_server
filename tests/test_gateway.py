@@ -352,6 +352,14 @@ async def test_channel_queue_get_msg_with_existing_item():
     assert received_message == sent_message
 
 
+async def test_channel_queue_get_msg_when_response_router_had_finished():
+    queue = ChannelQueue("iopub", MagicMock(), logging.getLogger())
+    queue.response_router_finished = True
+
+    with pytest.raises(RuntimeError):
+        await queue.get_msg()
+
+
 #
 # Test methods below...
 #
