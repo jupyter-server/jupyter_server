@@ -335,7 +335,7 @@ async def test_gateway_shutdown(init_gateway, jp_serverapp, jp_fetch, missing_ke
 
 
 @patch("websocket.create_connection", mock_websocket_create_connection(recv_side_effect=Exception))
-async def test_kernel_client_response_router_notifies_when_finished(
+async def test_kernel_client_response_router_notifies_channel_queue_when_finished(
     init_gateway, jp_serverapp, jp_fetch
 ):
     # create
