@@ -614,6 +614,8 @@ class GatewayKernelClient(AsyncKernelClient):
         self.kernel_id = kernel_id
         self.channel_socket: Optional[websocket.WebSocket] = None
         self.response_router: Optional[Thread] = None
+        self._channels_stopped = False
+        self._channel_queues = {}
 
     # --------------------------------------------------------------------------
     # Channel management methods
