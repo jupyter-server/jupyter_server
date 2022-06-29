@@ -14,7 +14,11 @@ import tornado
 from tornado.httpclient import HTTPRequest, HTTPResponse
 from tornado.web import HTTPError
 
-from jupyter_server.gateway.managers import ChannelQueue, GatewayClient
+from jupyter_server.gateway.managers import (
+    ChannelQueue,
+    GatewayClient,
+    GatewayKernelManager,
+)
 from jupyter_server.utils import ensure_async
 
 from .utils import expected_http_error
@@ -162,6 +166,15 @@ async def mock_gateway_request(url, **kwargs):
 mocked_gateway = patch("jupyter_server.gateway.managers.gateway_request", mock_gateway_request)
 mock_gateway_url = "http://mock-gateway-server:8889"
 mock_http_user = "alice"
+
+
+def mock_websocket_create_connection(recv_side_effect=None):
+    def helper(*args, **kwargs):
+        mock = MagicMock()
+        mock.recv = MagicMock(side_effect=recv_side_effect)
+        return mock
+
+    return helper
 
 
 @pytest.fixture
@@ -321,6 +334,39 @@ async def test_gateway_shutdown(init_gateway, jp_serverapp, jp_fetch, missing_ke
     assert await is_kernel_running(jp_fetch, k2) is False
 
 
+@patch("websocket.create_connection", mock_websocket_create_connection(recv_side_effect=Exception))
+async def test_kernel_client_response_router_notifies_channel_queue_when_finished(
+    init_gateway, jp_serverapp, jp_fetch
+):
+    # create
+    kernel_id = await create_kernel(jp_fetch, "kspec_bar")
+
+    # get kernel manager
+    km: GatewayKernelManager = jp_serverapp.kernel_manager.get_kernel(kernel_id)
+
+    # create kernel client
+    kc = km.client()
+
+    await ensure_async(kc.start_channels())
+
+    with pytest.raises(RuntimeError):
+        await kc.iopub_channel.get_msg(timeout=10)
+
+    all_channels = [
+        kc.shell_channel,
+        kc.iopub_channel,
+        kc.stdin_channel,
+        kc.hb_channel,
+        kc.control_channel,
+    ]
+    assert all(channel.response_router_finished if True else False for channel in all_channels)
+
+    await ensure_async(kc.stop_channels())
+
+    # delete
+    await delete_kernel(jp_fetch, kernel_id)
+
+
 async def test_channel_queue_get_msg_with_invalid_timeout():
     queue = ChannelQueue("iopub", MagicMock(), logging.getLogger())
 
@@ -350,6 +396,14 @@ async def test_channel_queue_get_msg_with_existing_item():
     received_message = await asyncio.wait_for(queue.get_msg(timeout=None), 1)
 
     assert received_message == sent_message
+
+
+async def test_channel_queue_get_msg_when_response_router_had_finished():
+    queue = ChannelQueue("iopub", MagicMock(), logging.getLogger())
+    queue.response_router_finished = True
+
+    with pytest.raises(RuntimeError):
+        await queue.get_msg()
 
 
 #
