@@ -2,12 +2,49 @@
 # Distributed under the terms of the Modified BSD License.
 import json
 import os
+from abc import ABC, ABCMeta, abstractmethod
 from socket import gaierror
+from typing import Any
 
 from tornado import web
 from tornado.httpclient import AsyncHTTPClient, HTTPError
-from traitlets import Bool, Float, Int, TraitError, Unicode, default, validate
-from traitlets.config import SingletonConfigurable
+from traitlets import Bool, Float, Int, TraitError, Type, Unicode, default, validate
+from traitlets.config import LoggingConfigurable, SingletonConfigurable
+
+from ..transutils import _i18n
+
+
+class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore
+    """The metaclass necessary for proper ABC behavior in a Configurable."""
+
+    pass
+
+
+class GatewayTokenRenewerBase(ABC, LoggingConfigurable, metaclass=GatewayTokenRenewerMeta):
+    """
+    Abstract base class for refreshing tokens used between this server and a Gateway
+    server.  Implementations requiring additional configuration can extend their class
+    with appropriate configuration values or convey those values via appropriate
+    environment variables relative to the implementation.
+    """
+
+    @abstractmethod
+    def renew_token(self, auth_scheme: str, auth_token: str, **kwargs: Any) -> str:
+        """
+        Given the current authorization scheme and token, this method returns
+        a (potentially) renewed token for use against the Gateway server.
+        """
+        pass
+
+
+class GatewayStaticTokenRenewer(GatewayTokenRenewerBase):
+    """GatewayStaticTokenRenewer is the default value to the GatewayClient trait
+    `gateway_token_renewer` and merely returns the provided token.
+    """
+
+    def renew_token(self, auth_scheme: str, auth_token: str, **kwargs: Any) -> str:
+        """This implementation simply returns the current authorization token."""
+        return auth_token
 
 
 class GatewayClient(SingletonConfigurable):
@@ -222,6 +259,7 @@ class GatewayClient(SingletonConfigurable):
     def _headers_default(self):
         return os.environ.get(self.headers_env, self.headers_default_value)
 
+    auth_token_default_value = ""
     auth_token = Unicode(
         default_value=None,
         allow_none=True,
@@ -238,10 +276,10 @@ class GatewayClient(SingletonConfigurable):
 
     @default("auth_token")
     def _auth_token_default(self):
-        return os.environ.get(self.auth_token_env, "")
+        return os.environ.get(self.auth_token_env, self.auth_token_default_value)
 
+    auth_scheme_default_value = "token"  # This value is purely for backwards compatibility
     auth_scheme = Unicode(
-        default_value=None,
         allow_none=True,
         config=True,
         help="""The auth scheme, added as a prefix to the authorization token used in the HTTP headers.
@@ -249,9 +287,9 @@ class GatewayClient(SingletonConfigurable):
     )
     auth_scheme_env = "JUPYTER_GATEWAY_AUTH_SCHEME"
 
-    @default("auth_scheme")
+    @default("auth_scheme_key")
     def _auth_scheme_default(self):
-        return os.environ.get(self.auth_scheme_env, "token")
+        return os.environ.get(self.auth_scheme_env, self.auth_scheme_default_value)
 
     validate_cert_default_value = True
     validate_cert_env = "JUPYTER_GATEWAY_VALIDATE_CERT"
@@ -268,10 +306,6 @@ class GatewayClient(SingletonConfigurable):
             os.environ.get(self.validate_cert_env, str(self.validate_cert_default_value))
             not in ["no", "false"]
         )
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._static_args = {}  # initialized on first use
 
     env_whitelist_default_value = ""
     env_whitelist_env = "JUPYTER_GATEWAY_ENV_WHITELIST"
@@ -341,6 +375,19 @@ class GatewayClient(SingletonConfigurable):
             os.environ.get("JUPYTER_GATEWAY_RETRY_MAX", self.gateway_retry_max_default_value)
         )
 
+    gateway_token_renewer_class_default_value = (
+        "jupyter_server.gateway.gateway_client.GatewayStaticTokenRenewer"
+    )
+    gateway_token_renewer_class = Type(
+        klass=GatewayTokenRenewerBase,
+        config=True,
+        help=_i18n("The class to use for Gateway token renewal."),
+    )
+
+    @default("gateway_token_renewer_class")
+    def gateway_token_renewer_class_default(self):
+        return self.gateway_token_renewer_class_default_value
+
     @property
     def gateway_enabled(self):
         return bool(self.url is not None and len(self.url) > 0)
@@ -348,10 +395,18 @@ class GatewayClient(SingletonConfigurable):
     # Ensure KERNEL_LAUNCH_TIMEOUT has a default value.
     KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", 40))
 
-    def init_static_args(self):
-        """Initialize arguments used on every request.  Since these are static values, we'll
-        perform this operation once.
+    _connection_args: dict  # initialized on first use
 
+    gateway_token_renewer: GatewayTokenRenewerBase
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._connection_args = {}  # initialized on first use
+        self.gateway_token_renewer = self.gateway_token_renewer_class(parent=self, log=self.log)
+
+    def init_connection_args(self):
+        """Initialize arguments used on every request.  Since these are primarily static values,
+        we'll perform this operation once.
         """
         # Ensure that request timeout and KERNEL_LAUNCH_TIMEOUT are the same, taking the
         #  greater value of the two.
@@ -362,33 +417,52 @@ class GatewayClient(SingletonConfigurable):
         # Ensure any adjustments are reflected in env.
         os.environ["KERNEL_LAUNCH_TIMEOUT"] = str(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
 
-        self._static_args["headers"] = json.loads(self.headers)
-        if "Authorization" not in self._static_args["headers"].keys():
-            self._static_args["headers"].update(
+        self._connection_args["headers"] = json.loads(self.headers)
+        if "Authorization" not in self._connection_args["headers"].keys():
+            self._connection_args["headers"].update(
                 {"Authorization": f"{self.auth_scheme} {self.auth_token}"}
             )
-        self._static_args["connect_timeout"] = self.connect_timeout
-        self._static_args["request_timeout"] = self.request_timeout
-        self._static_args["validate_cert"] = self.validate_cert
+        self._connection_args["connect_timeout"] = self.connect_timeout
+        self._connection_args["request_timeout"] = self.request_timeout
+        self._connection_args["validate_cert"] = self.validate_cert
         if self.client_cert:
-            self._static_args["client_cert"] = self.client_cert
-            self._static_args["client_key"] = self.client_key
+            self._connection_args["client_cert"] = self.client_cert
+            self._connection_args["client_key"] = self.client_key
             if self.ca_certs:
-                self._static_args["ca_certs"] = self.ca_certs
+                self._connection_args["ca_certs"] = self.ca_certs
         if self.http_user:
-            self._static_args["auth_username"] = self.http_user
+            self._connection_args["auth_username"] = self.http_user
         if self.http_pwd:
-            self._static_args["auth_password"] = self.http_pwd
+            self._connection_args["auth_password"] = self.http_pwd
 
     def load_connection_args(self, **kwargs):
         """Merges the static args relative to the connection, with the given keyword arguments.  If statics
         have yet to be initialized, we'll do that here.
 
         """
-        if len(self._static_args) == 0:
-            self.init_static_args()
+        if len(self._connection_args) == 0:
+            self.init_connection_args()
 
-        kwargs.update(self._static_args)
+        # Give token renewal a shot at renewing the token
+        prev_auth_token = self.auth_token
+        try:
+            self.auth_token = self.gateway_token_renewer.renew_token(
+                self.auth_scheme, self.auth_token
+            )
+        except Exception as ex:
+            self.log.error(
+                f"An exception occurred attempting to renew the "
+                f"Gateway authorization token using an instance of class "
+                f"'{self.gateway_token_renewer_class}'.  The request will "
+                f"proceed using the current token value.  Exception was: {ex}"
+            )
+            self.auth_token = prev_auth_token
+
+        self._connection_args["headers"].update(
+            {"Authorization": f"{self.auth_scheme} {self.auth_token}"}
+        )
+
+        kwargs.update(self._connection_args)
         return kwargs
 
 
