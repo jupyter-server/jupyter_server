@@ -17,6 +17,8 @@ from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler, path_regex
 from jupyter_server.utils import ensure_async, url_escape, url_path_join
 
+from .ydoc import YDocWebSocketHandler
+
 AUTH_RESOURCE = "contents"
 
 
@@ -367,4 +369,5 @@ default_handlers = [
     (r"/api/contents%s/trust" % path_regex, TrustNotebooksHandler),
     (r"/api/contents%s" % path_regex, ContentsHandler),
     (r"/api/notebooks/?(.*)", NotebooksRedirectHandler),
+    (r"/api/yjs/(.*)", YDocWebSocketHandler),
 ]

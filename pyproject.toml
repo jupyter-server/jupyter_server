@@ -44,7 +44,9 @@ dependencies = [
     "tornado>=6.1.0",
     "traitlets>=5.1",
     "websocket-client",
-    "jupyter_telemetry"
+    "jupyter_telemetry",
+    "jupyter_ydoc==0.1.10",
+    "ypy-websocket"
 ]
 
 [project.urls]
