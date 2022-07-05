@@ -4,13 +4,48 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0a1...bd1e7d70b64716097c6b064b2fd5dc67e23d2320))
+
+### Enhancements made
+
+- Show import error when faiing to load an extension [#878](https://github.com/jupyter-server/jupyter_server/pull/878) ([@minrk](https://github.com/minrk))
+
+### Bugs fixed
+
+- Notify ChannelQueue that the response router thread is finishing [#896](https://github.com/jupyter-server/jupyter_server/pull/896) ([@CiprianAnton](https://github.com/CiprianAnton))
+- Make ChannelQueue.get_msg true async [#892](https://github.com/jupyter-server/jupyter_server/pull/892) ([@CiprianAnton](https://github.com/CiprianAnton))
+- Fix gateway kernel shutdown [#874](https://github.com/jupyter-server/jupyter_server/pull/874) ([@kevin-bates](https://github.com/kevin-bates))
+
+### Maintenance and upkeep improvements
+
+- [pre-commit.ci] pre-commit autoupdate [#902](https://github.com/jupyter-server/jupyter_server/pull/902) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- [pre-commit.ci] pre-commit autoupdate [#894](https://github.com/jupyter-server/jupyter_server/pull/894) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Normalize os_path [#886](https://github.com/jupyter-server/jupyter_server/pull/886) ([@martinRenou](https://github.com/martinRenou))
+- [pre-commit.ci] pre-commit autoupdate [#885](https://github.com/jupyter-server/jupyter_server/pull/885) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- suppress tornado deprecation warnings [#882](https://github.com/jupyter-server/jupyter_server/pull/882) ([@minrk](https://github.com/minrk))
+- Fix lint [#867](https://github.com/jupyter-server/jupyter_server/pull/867) ([@blink1073](https://github.com/blink1073))
+- [pre-commit.ci] pre-commit autoupdate [#866](https://github.com/jupyter-server/jupyter_server/pull/866) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Fix sphinx 5.0 support [#865](https://github.com/jupyter-server/jupyter_server/pull/865) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Add changelog for 2.0.0a1 [#870](https://github.com/jupyter-server/jupyter_server/pull/870) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-06-07&to=2022-07-05&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-06-07..2022-07-05&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2022-06-07..2022-07-05&type=Issues) | [@CiprianAnton](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACiprianAnton+updated%3A2022-06-07..2022-07-05&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-06-07..2022-07-05&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2022-06-07..2022-07-05&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2022-06-07..2022-07-05&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-06-07..2022-07-05&type=Issues) | [@martinRenou](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AmartinRenou+updated%3A2022-06-07..2022-07-05&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2022-06-07..2022-07-05&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2022-06-07..2022-07-05&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.0a1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0a0...v2.0.0a1)
 
 - Address security advisory [GHSA-q874-g24w-4q9g](https://github.com/jupyter-server/jupyter_server/security/advisories/GHSA-q874-g24w-4q9g).
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.0a0
 
