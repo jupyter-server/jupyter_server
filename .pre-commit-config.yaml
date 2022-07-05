@@ -16,7 +16,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 22.6.0
     hooks:
       - id: black
 
@@ -65,7 +65,7 @@ repos:
         stages: [manual]
 
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.18.0
+    rev: v8.19.0
     hooks:
       - id: eslint
         stages: [manual]
