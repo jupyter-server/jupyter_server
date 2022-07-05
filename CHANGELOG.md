@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
-## 2.0.1
+## 2.0.0a2
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0a1...bd1e7d70b64716097c6b064b2fd5dc67e23d2320))
 
