@@ -18,6 +18,7 @@ from traitlets.config import Config
 
 from jupyter_server.extension import serverextension
 from jupyter_server.serverapp import ServerApp
+from jupyter_server.services.contents.fileidmanager import FileIdManager
 from jupyter_server.services.contents.filemanager import FileContentsManager
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
 from jupyter_server.utils import url_path_join
@@ -455,6 +456,27 @@ def jp_contents_manager(request, tmp_path):
 def jp_large_contents_manager(tmp_path):
     """Returns a LargeFileManager instance."""
     return LargeFileManager(root_dir=str(tmp_path))
+
+
+@pytest.fixture
+def fid_db_path(jp_data_dir):
+    """Fixture that returns the file ID DB path used for tests."""
+    return str(jp_data_dir / "fileidmanager_test.db")
+
+
+@pytest.fixture(autouse=True)
+def delete_db(fid_db_path):
+    """Fixture that automatically deletes the DB file before each test."""
+    try:
+        os.remove(fid_db_path)
+    except OSError:
+        pass
+
+
+@pytest.fixture
+def fid_manager(fid_db_path):
+    """Fixture returning a test-configured instance of `FileIdManager`."""
+    return FileIdManager(db_path=fid_db_path)
 
 
 @pytest.fixture
