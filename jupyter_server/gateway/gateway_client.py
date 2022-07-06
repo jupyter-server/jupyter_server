@@ -341,13 +341,6 @@ class GatewayClient(SingletonConfigurable):
             os.environ.get("JUPYTER_GATEWAY_RETRY_MAX", self.gateway_retry_max_default_value)
         )
 
-    @property
-    def gateway_enabled(self):
-        return bool(self.url is not None and len(self.url) > 0)
-
-    # Ensure KERNEL_LAUNCH_TIMEOUT has a default value.
-    KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", 40))
-
     kernel_launch_timeout_pad_default_value = 0
     kernel_launch_timeout_pad_env = "JUPYTER_GATEWAY_KERNEL_LAUNCH_TIMEOUT_PAD"
     kernel_launch_timeout_pad = Int(
@@ -365,6 +358,13 @@ class GatewayClient(SingletonConfigurable):
                 self.kernel_launch_timeout_pad_default_value,
             )
         )
+
+    @property
+    def gateway_enabled(self):
+        return bool(self.url is not None and len(self.url) > 0)
+
+    # Ensure KERNEL_LAUNCH_TIMEOUT has a default value.
+    KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", 40))
 
     def init_static_args(self):
         """Initialize arguments used on every request.  Since these are static values, we'll
