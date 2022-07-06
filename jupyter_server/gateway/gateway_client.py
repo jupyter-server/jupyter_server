@@ -348,17 +348,40 @@ class GatewayClient(SingletonConfigurable):
     # Ensure KERNEL_LAUNCH_TIMEOUT has a default value.
     KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", 40))
 
+    kernel_launch_timeout_pad_default_value = 0
+    kernel_launch_timeout_pad_env = "JUPYTER_GATEWAY_KERNEL_LAUNCH_TIMEOUT_PAD"
+    kernel_launch_timeout_pad = Int(
+        default_value=kernel_launch_timeout_pad_default_value,
+        config=True,
+        help="""Timeout pad to be ensured between KERNEL_LAUNCH_TIMEOUT and request_timeout. 
+        (JUPYTER_GATEWAY_KERNEL_LAUNCH_TIMEOUT_PAD env var)""",
+    )
+
+    @default("kernel_launch_timeout_pad")
+    def kernel_launch_timeout_pad_default(self):
+        return int(
+            os.environ.get(
+                "JUPYTER_GATEWAY_KERNEL_LAUNCH_TIMEOUT_PAD", self.kernel_launch_timeout_pad_default_value
+            )
+        )
+
     def init_static_args(self):
         """Initialize arguments used on every request.  Since these are static values, we'll
         perform this operation once.
 
         """
-        # Ensure that request timeout and KERNEL_LAUNCH_TIMEOUT are the same, taking the
-        #  greater value of the two.
-        if self.request_timeout < float(GatewayClient.KERNEL_LAUNCH_TIMEOUT):
-            self.request_timeout = float(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
-        elif self.request_timeout > float(GatewayClient.KERNEL_LAUNCH_TIMEOUT):
-            GatewayClient.KERNEL_LAUNCH_TIMEOUT = int(self.request_timeout)
+        # Ensure that request timeout and KERNEL_LAUNCH_TIMEOUT are in sync, taking the
+        #  greater value of the two and taking into account the following relation:
+        #  request_timeout = KERNEL_LAUNCH_TIME + padding
+        minimum_request_timeout = (
+            float(GatewayClient.KERNEL_LAUNCH_TIMEOUT) + self.kernel_launch_timeout_pad
+        )
+        if self.request_timeout < minimum_request_timeout:
+            self.request_timeout = minimum_request_timeout
+        elif self.request_timeout > minimum_request_timeout:
+            GatewayClient.KERNEL_LAUNCH_TIMEOUT = (
+                int(self.request_timeout) - self.kernel_launch_timeout_pad
+            )
         # Ensure any adjustments are reflected in env.
         os.environ["KERNEL_LAUNCH_TIMEOUT"] = str(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
 
