@@ -346,7 +346,8 @@ class GatewayClient(SingletonConfigurable):
     kernel_launch_timeout_pad = Int(
         default_value=kernel_launch_timeout_pad_default_value,
         config=True,
-        help="""Timeout pad to be ensured between KERNEL_LAUNCH_TIMEOUT and request_timeout.
+        help="""Timeout pad to be ensured between KERNEL_LAUNCH_TIMEOUT and request_timeout
+        such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + timeout_pad.
         (JUPYTER_GATEWAY_KERNEL_LAUNCH_TIMEOUT_PAD env var)""",
     )
 
