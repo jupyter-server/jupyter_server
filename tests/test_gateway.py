@@ -244,7 +244,7 @@ async def test_gateway_request_timeout_pad_option(
 ):
     argv = [
         f"--GatewayClient.request_timeout={request_timeout}",
-        "--GatewayClient.kernel_launch_timeout_pad=5"
+        "--GatewayClient.kernel_launch_timeout_pad=5",
     ]
 
     GatewayClient.clear_instance()
