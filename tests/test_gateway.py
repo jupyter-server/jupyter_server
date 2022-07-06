@@ -186,7 +186,7 @@ def init_gateway(monkeypatch):
     monkeypatch.setenv("JUPYTER_GATEWAY_HTTP_USER", mock_http_user)
     monkeypatch.setenv("JUPYTER_GATEWAY_REQUEST_TIMEOUT", "44.4")
     monkeypatch.setenv("JUPYTER_GATEWAY_CONNECT_TIMEOUT", "44.4")
-    monkeypatch.setenv("JUPYTER_GATEWAY_KERNEL_LAUNCH_TIMEOUT_PAD", "1")
+    monkeypatch.setenv("JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD", "1")
     yield
     GatewayClient.clear_instance()
 
@@ -199,7 +199,7 @@ async def test_gateway_env_options(init_gateway, jp_serverapp):
         jp_serverapp.gateway_config.connect_timeout == jp_serverapp.gateway_config.request_timeout
     )
     assert jp_serverapp.gateway_config.connect_timeout == 44.4
-    assert jp_serverapp.gateway_config.kernel_launch_timeout_pad == 1
+    assert jp_serverapp.gateway_config.launch_timeout_pad == 1
 
     GatewayClient.instance().init_static_args()
     assert GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == 43
@@ -211,7 +211,7 @@ async def test_gateway_cli_options(jp_configurable_serverapp):
         "--GatewayClient.http_user=" + mock_http_user,
         "--GatewayClient.connect_timeout=44.4",
         "--GatewayClient.request_timeout=96.0",
-        "--GatewayClient.kernel_launch_timeout_pad=2",
+        "--GatewayClient.launch_timeout_pad=6",
     ]
 
     GatewayClient.clear_instance()
@@ -222,11 +222,11 @@ async def test_gateway_cli_options(jp_configurable_serverapp):
     assert app.gateway_config.http_user == mock_http_user
     assert app.gateway_config.connect_timeout == 44.4
     assert app.gateway_config.request_timeout == 96.0
-    assert app.gateway_config.kernel_launch_timeout_pad == 2
+    assert app.gateway_config.launch_timeout_pad == 6
     GatewayClient.instance().init_static_args()
     assert (
-        GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == 94
-    )  # Ensure KLT gets set from request-timeout - kernel_launch_timeout_pad
+        GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == 90
+    )  # Ensure KLT gets set from request-timeout - launch_timeout_pad
     GatewayClient.clear_instance()
 
 
@@ -244,7 +244,7 @@ async def test_gateway_request_timeout_pad_option(
 ):
     argv = [
         f"--GatewayClient.request_timeout={request_timeout}",
-        "--GatewayClient.kernel_launch_timeout_pad=5",
+        "--GatewayClient.launch_timeout_pad=5",
     ]
 
     GatewayClient.clear_instance()
