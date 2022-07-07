@@ -128,7 +128,7 @@ class GatewayClient(SingletonConfigurable):
             os.environ.get("JUPYTER_GATEWAY_CONNECT_TIMEOUT", self.connect_timeout_default_value)
         )
 
-    request_timeout_default_value = 40.0
+    request_timeout_default_value = 42.0
     request_timeout_env = "JUPYTER_GATEWAY_REQUEST_TIMEOUT"
     request_timeout = Float(
         default_value=request_timeout_default_value,
@@ -341,6 +341,25 @@ class GatewayClient(SingletonConfigurable):
             os.environ.get("JUPYTER_GATEWAY_RETRY_MAX", self.gateway_retry_max_default_value)
         )
 
+    launch_timeout_pad_default_value = 2.0
+    launch_timeout_pad_env = "JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD"
+    launch_timeout_pad = Float(
+        default_value=launch_timeout_pad_default_value,
+        config=True,
+        help="""Timeout pad to be ensured between KERNEL_LAUNCH_TIMEOUT and request_timeout
+        such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
+        (JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD env var)""",
+    )
+
+    @default("launch_timeout_pad")
+    def launch_timeout_pad_default(self):
+        return float(
+            os.environ.get(
+                "JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD",
+                self.launch_timeout_pad_default_value,
+            )
+        )
+
     @property
     def gateway_enabled(self):
         return bool(self.url is not None and len(self.url) > 0)
@@ -353,12 +372,18 @@ class GatewayClient(SingletonConfigurable):
         perform this operation once.
 
         """
-        # Ensure that request timeout and KERNEL_LAUNCH_TIMEOUT are the same, taking the
-        #  greater value of the two.
-        if self.request_timeout < float(GatewayClient.KERNEL_LAUNCH_TIMEOUT):
-            self.request_timeout = float(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
-        elif self.request_timeout > float(GatewayClient.KERNEL_LAUNCH_TIMEOUT):
-            GatewayClient.KERNEL_LAUNCH_TIMEOUT = int(self.request_timeout)
+        # Ensure that request timeout and KERNEL_LAUNCH_TIMEOUT are in sync, taking the
+        #  greater value of the two and taking into account the following relation:
+        #  request_timeout = KERNEL_LAUNCH_TIME + padding
+        minimum_request_timeout = (
+            float(GatewayClient.KERNEL_LAUNCH_TIMEOUT) + self.launch_timeout_pad
+        )
+        if self.request_timeout < minimum_request_timeout:
+            self.request_timeout = minimum_request_timeout
+        elif self.request_timeout > minimum_request_timeout:
+            GatewayClient.KERNEL_LAUNCH_TIMEOUT = int(
+                self.request_timeout - self.launch_timeout_pad
+            )
         # Ensure any adjustments are reflected in env.
         os.environ["KERNEL_LAUNCH_TIMEOUT"] = str(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
 
