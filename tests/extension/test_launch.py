@@ -61,7 +61,7 @@ def launch_instance(request, port, token):
                     fid.close()
 
         if add_token:
-            f'--ServerApp.token="{token}"',
+            argv.append(f'--IdentityProvider.token="{token}"')
 
         root = Path(HERE).parent.parent
 

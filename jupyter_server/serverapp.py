@@ -1,7 +1,6 @@
 """A tornado based Jupyter server."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-import binascii
 import datetime
 import errno
 import gettext
@@ -91,7 +90,11 @@ from jupyter_server import (
 from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
 from jupyter_server.auth.authorizer import AllowAllAuthorizer, Authorizer
-from jupyter_server.auth.identity import IdentityProvider
+from jupyter_server.auth.identity import (
+    IdentityProvider,
+    LegacyIdentityProvider,
+    PasswordIdentityProvider,
+)
 from jupyter_server.auth.login import LoginHandler
 from jupyter_server.auth.logout import LogoutHandler
 from jupyter_server.base.handlers import (
@@ -333,7 +336,7 @@ class ServerWebApplication(web.Application):
                 "no_cache_paths": [url_path_join(base_url, "static", "custom")],
             },
             version_hash=version_hash,
-            # kernel message protocol over websoclet
+            # kernel message protocol over websocket
             kernel_ws_protocol=jupyter_app.kernel_ws_protocol,
             # rate limits
             limit_rate=jupyter_app.limit_rate,
@@ -343,9 +346,6 @@ class ServerWebApplication(web.Application):
             # authentication
             cookie_secret=jupyter_app.cookie_secret,
             login_url=url_path_join(base_url, "/login"),
-            login_handler_class=jupyter_app.login_handler_class,
-            logout_handler_class=jupyter_app.logout_handler_class,
-            password=jupyter_app.password,
             xsrf_cookies=True,
             disable_check_xsrf=jupyter_app.disable_check_xsrf,
             allow_remote_access=jupyter_app.allow_remote_access,
@@ -393,11 +393,6 @@ class ServerWebApplication(web.Application):
         # load extra services specified by users before default handlers
         for service in settings["extra_services"]:
             handlers.extend(load_handlers(service))
-
-        # Add auth services.
-        if "auth" in default_services:
-            handlers.extend([(r"/login", settings["login_handler_class"])])
-            handlers.extend([(r"/logout", settings["logout_handler_class"])])
 
         # Load default services. Raise exception if service not
         # found in JUPYTER_SERVICE_HANLDERS.
@@ -1043,40 +1038,24 @@ class ServerApp(JupyterApp):
                 e,
             )
 
-    token = Unicode(
-        "<generated>",
-        help=_i18n(
-            """Token used for authenticating first-time connections to the server.
+    _token_set = False
 
-        The token can be read from the file referenced by JUPYTER_TOKEN_FILE or set directly
-        with the JUPYTER_TOKEN environment variable.
+    token = Unicode("<DEPRECATED>", help=_i18n("""DEPRECATED. Use IdentityProvider.token""")).tag(
+        config=True
+    )
 
-        When no password is enabled,
-        the default is to generate a new, random token.
-
-        Setting to an empty string disables authentication altogether, which is NOT RECOMMENDED.
-        """
-        ),
-    ).tag(config=True)
-
-    _token_generated = True
+    @observe("token")
+    def _deprecated_token(self, change):
+        self._warn_deprecated_config(change, "IdentityProvider")
 
     @default("token")
-    def _token_default(self):
-        if os.getenv("JUPYTER_TOKEN"):
-            self._token_generated = False
-            return os.getenv("JUPYTER_TOKEN")
-        if os.getenv("JUPYTER_TOKEN_FILE"):
-            self._token_generated = False
-            with open(os.getenv("JUPYTER_TOKEN_FILE", "")) as token_file:
-                return token_file.read()
-        if self.password:
-            # no token if password is enabled
-            self._token_generated = False
-            return ""
-        else:
-            self._token_generated = True
-            return binascii.hexlify(os.urandom(24)).decode("ascii")
+    def _deprecated_token_access(self):
+        warnings.warn(
+            "ServerApp.token config is deprecated in jupyter-server 2.0. Use IdentityProvider.token",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        return self.identity_provider.token
 
     min_open_files_limit = Integer(
         config=True,
@@ -1131,48 +1110,50 @@ class ServerApp(JupyterApp):
         """,
     )
 
-    @observe("token")
-    def _token_changed(self, change):
-        self._token_generated = False
-
     password = Unicode(
         "",
         config=True,
-        help="""Hashed password to use for web authentication.
-
-                      To generate, type in a python/IPython shell:
-
-                        from jupyter_server.auth import passwd; passwd()
-
-                      The string should be of the form type:salt:hashed-password.
-                      """,
+        help="""DEPRECATED in 2.0. Use PasswordIdentityProvider.hashed_password""",
     )
 
     password_required = Bool(
         False,
         config=True,
-        help="""Forces users to use a password for the Jupyter server.
-                      This is useful in a multi user environment, for instance when
-                      everybody in the LAN can access each other's machine through ssh.
-
-                      In such a case, serving on localhost is not secure since
-                      any user can connect to the Jupyter server via ssh.
-
-                      """,
+        help="""DEPRECATED in 2.0. Use PasswordIdentityProvider.password_required""",
     )
 
     allow_password_change = Bool(
         True,
         config=True,
-        help="""Allow password to be changed at login for the Jupyter server.
-
-                    While logging in with a token, the Jupyter server UI will give the opportunity to
-                    the user to enter a new password at the same time that will replace
-                    the token login mechanism.
-
-                    This can be set to false to prevent changing password from the UI/API.
-                    """,
+        help="""DEPRECATED in 2.0. Use PasswordIdentityProvider.allow_password_change""",
     )
+
+    def _warn_deprecated_config(self, change, clsname, new_name=None):
+        if new_name is None:
+            new_name = change.name
+        if clsname not in self.config or new_name not in self.config[clsname]:
+            # Deprecated config used, new config not used.
+            # Use deprecated config, warn about new name.
+            self.log.warning(
+                f"ServerApp.{change.name} config is deprecated in 2.0. Use {clsname}.{new_name}."
+            )
+            self.config[clsname][new_name] = change.new
+        else:
+            # Deprecated config used, new config also used.
+            # Warn only if the values differ.
+            # If the values are the same, assume intentional backward-compatible config.
+            if self.config[clsname][new_name] != change.new:
+                self.log.warning(
+                    f"Ignoring deprecated ServerApp.{change.name} config. Using {clsname}.{new_name}."
+                )
+
+    @observe("password")
+    def _deprecated_password(self, change):
+        self._warn_deprecated_config(change, "PasswordIdentityProvider", new_name="hashed_password")
+
+    @observe("password_required", "allow_password_change")
+    def _deprecated_password_config(self, change):
+        self._warn_deprecated_config(change, "PasswordIdentityProvider")
 
     disable_check_xsrf = Bool(
         False,
@@ -1341,18 +1322,17 @@ class ServerApp(JupyterApp):
 
     cookie_options = Dict(
         config=True,
-        help=_i18n(
-            "Extra keyword arguments to pass to `set_secure_cookie`."
-            " See tornado's set_secure_cookie docs for details."
-        ),
+        help=_i18n("DEPRECATED. Use IdentityProvider.cookie_options"),
     )
     get_secure_cookie_kwargs = Dict(
         config=True,
-        help=_i18n(
-            "Extra keyword arguments to pass to `get_secure_cookie`."
-            " See tornado's get_secure_cookie docs for details."
-        ),
+        help=_i18n("DEPRECATED. Use IdentityProvider.get_secure_cookie_kwargs"),
     )
+
+    @observe("cookie_options", "get_secure_cookie_kwargs")
+    def _deprecated_cookie_config(self, change):
+        self._warn_deprecated_config(change, "IdentityProvider")
+
     ssl_options = Dict(
         allow_none=True,
         config=True,
@@ -1533,6 +1513,7 @@ class ServerApp(JupyterApp):
     login_handler_class = Type(
         default_value=LoginHandler,
         klass=web.RequestHandler,
+        allow_none=True,
         config=True,
         help=_i18n("The login handler class to use."),
     )
@@ -1540,9 +1521,11 @@ class ServerApp(JupyterApp):
     logout_handler_class = Type(
         default_value=LogoutHandler,
         klass=web.RequestHandler,
+        allow_none=True,
         config=True,
         help=_i18n("The logout handler class to use."),
     )
+    # TODO: detect deprecated login handler config
 
     authorizer_class = Type(
         default_value=AllowAllAuthorizer,
@@ -1552,7 +1535,7 @@ class ServerApp(JupyterApp):
     )
 
     identity_provider_class = Type(
-        default_value=IdentityProvider,
+        default_value=PasswordIdentityProvider,
         klass=IdentityProvider,
         config=True,
         help=_i18n("The identity provider class to use."),
@@ -1900,7 +1883,52 @@ class ServerApp(JupyterApp):
             parent=self,
             log=self.log,
         )
-        self.identity_provider = self.identity_provider_class(parent=self, log=self.log)
+        identity_provider_kwargs = dict(parent=self, log=self.log)
+
+        if (
+            self.login_handler_class is not LoginHandler
+            and self.identity_provider_class is PasswordIdentityProvider
+        ):
+            # default identity provider, non-default LoginHandler
+            # this indicates legacy custom LoginHandler config.
+            # enable LegacyIdentityProvider, which defers to the LoginHandler for pre-2.0 behavior.
+            self.identity_provider_class = LegacyIdentityProvider
+            self.log.warning(
+                f"Customizing authentication via ServerApp.login_handler_class={self.login_handler_class}"
+                " is deprecated in Jupyter Server 2.0."
+                " Use ServerApp.identity_provider_class."
+                " Falling back on legacy authentication.",
+            )
+            identity_provider_kwargs["login_handler_class"] = self.login_handler_class
+            if self.logout_handler_class:
+                identity_provider_kwargs["logout_handler_class"] = self.logout_handler_class
+        elif self.login_handler_class is not LoginHandler:
+            # non-default login handler ignored because also explicitly set identity provider
+            self.log.warning(
+                f"Ignoring deprecated config ServerApp.login_handler_class={self.login_handler_class}."
+                " Superceded by ServerApp.identity_provider_class={self.identity_provider_class}."
+            )
+        self.identity_provider = self.identity_provider_class(**identity_provider_kwargs)
+
+        if self.identity_provider_class is LegacyIdentityProvider:
+            # legacy config stored the password in tornado_settings
+            self.tornado_settings["password"] = self.identity_provider.hashed_password
+            self.tornado_settings["token"] = self.identity_provider.token
+
+        if self._token_set:
+            self.log.warning(
+                "ServerApp.token config is deprecated in jupyter-server 2.0. Use IdentityProvider.token"
+            )
+            if self.identity_provider.token_generated:
+                # default behavior: generated default token
+                # preserve deprecated ServerApp.token config
+                self.identity_provider.token_generated = False
+                self.identity_provider.token = self.token
+            else:
+                # identity_provider didn't generate a default token,
+                # that means it has some config that should take higher priority than deprecated ServerApp.token
+                self.log.warning("Ignoring deprecated ServerApp.token config")
+
         self.authorizer = self.authorizer_class(
             parent=self, log=self.log, identity_provider=self.identity_provider
         )
@@ -1932,21 +1960,17 @@ class ServerApp(JupyterApp):
             self.tornado_settings["allow_origin_pat"] = re.compile(self.allow_origin_pat)
         self.tornado_settings["allow_credentials"] = self.allow_credentials
         self.tornado_settings["autoreload"] = self.autoreload
-        self.tornado_settings["cookie_options"] = self.cookie_options
-        self.tornado_settings["get_secure_cookie_kwargs"] = self.get_secure_cookie_kwargs
-        self.tornado_settings["token"] = self.token
+
+        # deprecate accessing these directly, in favor of identity_provider?
+        self.tornado_settings["cookie_options"] = self.identity_provider.cookie_options
+        self.tornado_settings[
+            "get_secure_cookie_kwargs"
+        ] = self.identity_provider.get_secure_cookie_kwargs
+        self.tornado_settings["token"] = self.identity_provider.token
 
         # ensure default_url starts with base_url
         if not self.default_url.startswith(self.base_url):
             self.default_url = url_path_join(self.base_url, self.default_url)
-
-        if self.password_required and (not self.password):
-            self.log.critical(
-                _i18n("Jupyter servers are configured to only be run with a password.")
-            )
-            self.log.critical(_i18n("Hint: run the following command to set a password"))
-            self.log.critical(_i18n("\t$ python -m jupyter_server.auth password"))
-            sys.exit(1)
 
         # Socket options validation.
         if self.sock:
@@ -2020,7 +2044,11 @@ class ServerApp(JupyterApp):
             if self.ssl_options.get("ca_certs", False):
                 self.ssl_options.setdefault("cert_reqs", ssl.CERT_REQUIRED)
 
-        self.login_handler_class.validate_security(self, ssl_options=self.ssl_options)
+        self.identity_provider.validate_security(self, ssl_options=self.ssl_options)
+
+        if isinstance(self.identity_provider, LegacyIdentityProvider):
+            # LegacyIdentityProvider needs access to the tornado settings dict
+            self.identity_provider.settings = self.web_app.settings
 
     def init_resources(self):
         """initialize system resources"""
@@ -2068,8 +2096,12 @@ class ServerApp(JupyterApp):
             path = self.default_url
         query = None
         if include_token:
-            if self.token:  # Don't log full token if it came from config
-                token = self.token if self._token_generated else "..."
+            if self.identity_provider.token:  # Don't log full token if it came from config
+                token = (
+                    self.identity_provider.token
+                    if self.identity_provider.token_generated
+                    else "..."
+                )
                 query = urllib.parse.urlencode({"token": token})
         # Build the URL Parts to dump.
         urlparts = urllib.parse.ParseResult(
@@ -2538,7 +2570,7 @@ class ServerApp(JupyterApp):
             "sock": self.sock,
             "secure": bool(self.certfile),
             "base_url": self.base_url,
-            "token": self.token,
+            "token": self.identity_provider.token,
             "root_dir": os.path.abspath(self.root_dir),
             "password": bool(self.password),
             "pid": os.getpid(),
@@ -2596,8 +2628,8 @@ class ServerApp(JupyterApp):
         self.exit(1)
 
     def _write_browser_open_file(self, url, fh):
-        if self.token:
-            url = url_concat(url, {"token": self.token})
+        if self.identity_provider.token:
+            url = url_concat(url, {"token": self.identity_provider.token})
         url = url_path_join(self.connection_url, url)
 
         jinja2_env = self.web_app.settings["jinja2_env"]
@@ -2664,8 +2696,8 @@ class ServerApp(JupyterApp):
         if not self.use_redirect_file:
             uri = self.default_url[len(self.base_url) :]
 
-            if self.token:
-                uri = url_concat(uri, {"token": self.token})
+            if self.identity_provider.token:
+                uri = url_concat(uri, {"token": self.identity_provider.token})
 
         if self.file_to_run:
             # Create a separate, temporary open-browser-file
@@ -2740,7 +2772,7 @@ class ServerApp(JupyterApp):
         if self.open_browser and not self.sock:
             self.launch_browser()
 
-        if self.token and self._token_generated:
+        if self.identity_provider.token and self.identity_provider.token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
             # with auth info.
             if self.sock:

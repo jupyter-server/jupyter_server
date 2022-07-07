@@ -33,7 +33,6 @@ repos:
     rev: v0.961
     hooks:
       - id: mypy
-        exclude: examples/simple/setup.py
         additional_dependencies: [types-requests]
 
   - repo: https://github.com/pre-commit/mirrors-prettier
