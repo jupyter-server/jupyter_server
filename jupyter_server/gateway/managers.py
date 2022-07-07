@@ -1,11 +1,13 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import asyncio
 import datetime
 import json
 import os
 from logging import Logger
-from queue import Queue
+from queue import Empty, Queue
 from threading import Thread
+from time import monotonic
 from typing import Any, Dict, Optional
 
 import websocket
@@ -496,16 +498,35 @@ KernelManagerABC.register(GatewayKernelManager)
 class ChannelQueue(Queue):
 
     channel_name: Optional[str] = None
+    response_router_finished: bool
 
     def __init__(self, channel_name: str, channel_socket: websocket.WebSocket, log: Logger):
         super().__init__()
         self.channel_name = channel_name
         self.channel_socket = channel_socket
         self.log = log
+        self.response_router_finished = False
+
+    async def _async_get(self, timeout=None):
+        if timeout is None:
+            timeout = float("inf")
+        elif timeout < 0:
+            raise ValueError("'timeout' must be a non-negative number")
+        end_time = monotonic() + timeout
+
+        while True:
+            try:
+                return self.get(block=False)
+            except Empty:
+                if self.response_router_finished:
+                    raise RuntimeError("Response router had finished")
+                if monotonic() > end_time:
+                    raise
+                await asyncio.sleep(0)
 
     async def get_msg(self, *args: Any, **kwargs: Any) -> dict:
         timeout = kwargs.get("timeout", 1)
-        msg = self.get(timeout=timeout)
+        msg = await self._async_get(timeout=timeout)
         self.log.debug(
             "Received message on channel: {}, msg_id: {}, msg_type: {}".format(
                 self.channel_name, msg["msg_id"], msg["msg_type"] if msg else "null"
@@ -581,16 +602,16 @@ class GatewayKernelClient(AsyncKernelClient):
     # flag for whether execute requests should be allowed to call raw_input:
     allow_stdin = False
     _channels_stopped: bool
-    _channel_queues: Optional[dict]
+    _channel_queues: Optional[Dict[str, ChannelQueue]]
     _control_channel: Optional[ChannelQueue]
     _hb_channel: Optional[ChannelQueue]
     _stdin_channel: Optional[ChannelQueue]
     _iopub_channel: Optional[ChannelQueue]
     _shell_channel: Optional[ChannelQueue]
 
-    def __init__(self, **kwargs):
+    def __init__(self, kernel_id, **kwargs):
         super().__init__(**kwargs)
-        self.kernel_id = kwargs["kernel_id"]
+        self.kernel_id = kernel_id
         self.channel_socket: Optional[websocket.WebSocket] = None
         self.response_router: Optional[Thread] = None
         self._channels_stopped = False
@@ -627,12 +648,13 @@ class GatewayKernelClient(AsyncKernelClient):
             enable_multithread=True,
             sslopt=ssl_options,
         )
-        self.response_router = Thread(target=self._route_responses)
-        self.response_router.start()
 
         await ensure_async(
             super().start_channels(shell=shell, iopub=iopub, stdin=stdin, hb=hb, control=control)
         )
+
+        self.response_router = Thread(target=self._route_responses)
+        self.response_router.start()
 
     def stop_channels(self):
         """Stops all the running channels for this kernel.
@@ -735,6 +757,11 @@ class GatewayKernelClient(AsyncKernelClient):
         except BaseException as be:
             if not self._channels_stopped:
                 self.log.warning(f"Unexpected exception encountered ({be})")
+
+        # Notify channel queues that this thread had finished and no more messages are being received
+        assert self._channel_queues is not None
+        for channel_queue in self._channel_queues.values():
+            channel_queue.response_router_finished = True
 
         self.log.debug("Response router thread exiting...")
 
