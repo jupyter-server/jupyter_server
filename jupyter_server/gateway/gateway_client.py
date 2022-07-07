@@ -341,7 +341,7 @@ class GatewayClient(SingletonConfigurable):
             os.environ.get("JUPYTER_GATEWAY_RETRY_MAX", self.gateway_retry_max_default_value)
         )
 
-    launch_timeout_pad_default_value = 2
+    launch_timeout_pad_default_value = 2.0
     launch_timeout_pad_env = "JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD"
     launch_timeout_pad = Float(
         default_value=launch_timeout_pad_default_value,
