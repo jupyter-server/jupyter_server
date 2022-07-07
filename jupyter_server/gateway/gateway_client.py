@@ -343,7 +343,7 @@ class GatewayClient(SingletonConfigurable):
 
     launch_timeout_pad_default_value = 2
     launch_timeout_pad_env = "JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD"
-    launch_timeout_pad = Int(
+    launch_timeout_pad = Float(
         default_value=launch_timeout_pad_default_value,
         config=True,
         help="""Timeout pad to be ensured between KERNEL_LAUNCH_TIMEOUT and request_timeout
@@ -353,7 +353,7 @@ class GatewayClient(SingletonConfigurable):
 
     @default("launch_timeout_pad")
     def launch_timeout_pad_default(self):
-        return int(
+        return float(
             os.environ.get(
                 "JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD",
                 self.launch_timeout_pad_default_value,
@@ -382,7 +382,7 @@ class GatewayClient(SingletonConfigurable):
             self.request_timeout = minimum_request_timeout
         elif self.request_timeout > minimum_request_timeout:
             GatewayClient.KERNEL_LAUNCH_TIMEOUT = (
-                int(self.request_timeout) - self.launch_timeout_pad
+                int(self.request_timeout - self.launch_timeout_pad)
             )
         # Ensure any adjustments are reflected in env.
         os.environ["KERNEL_LAUNCH_TIMEOUT"] = str(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
