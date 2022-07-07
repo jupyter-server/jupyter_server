@@ -381,8 +381,8 @@ class GatewayClient(SingletonConfigurable):
         if self.request_timeout < minimum_request_timeout:
             self.request_timeout = minimum_request_timeout
         elif self.request_timeout > minimum_request_timeout:
-            GatewayClient.KERNEL_LAUNCH_TIMEOUT = (
-                int(self.request_timeout - self.launch_timeout_pad)
+            GatewayClient.KERNEL_LAUNCH_TIMEOUT = int(
+                self.request_timeout - self.launch_timeout_pad
             )
         # Ensure any adjustments are reflected in env.
         os.environ["KERNEL_LAUNCH_TIMEOUT"] = str(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
