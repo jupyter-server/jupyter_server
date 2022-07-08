@@ -25,7 +25,7 @@ from traitlets.config import LoggingConfigurable
 from jupyter_server.transutils import _i18n
 
 from .security import passwd_check, set_password
-from .utils import get_anonymous_username, get_random_color
+from .utils import get_anonymous_username
 
 # circular imports for type checking
 if TYPE_CHECKING:
@@ -468,7 +468,7 @@ class IdentityProvider(LoggingConfigurable):
         moon = get_anonymous_username()
         name = display_name = f"Anonymous {moon}"
         initials = f"A{moon[0]}"
-        color = get_random_color()
+        color = None
         handler.log.info(f"Generating new user for token-authenticated request: {user_id}")
         return User(user_id, name, display_name, initials, None, color)
 

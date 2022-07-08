@@ -167,20 +167,3 @@ def get_anonymous_username() -> str:
     This function returns names like "Anonymous Io" or "Anonymous Metis".
     """
     return moons_of_jupyter[random.randint(0, len(moons_of_jupyter) - 1)]
-
-
-# Using JupyterLab CSS variable because the colors may change with the theme
-user_colors = [
-    "var(--jp-collaborator-color1)",
-    "var(--jp-collaborator-color2)",
-    "var(--jp-collaborator-color3)",
-    "var(--jp-collaborator-color4)",
-    "var(--jp-collaborator-color5)",
-    "var(--jp-collaborator-color6)",
-    "var(--jp-collaborator-color7)",
-]
-
-
-def get_random_color() -> str:
-    """Get a random color from the list of colors."""
-    return user_colors[random.randint(0, len(user_colors) - 1)]
