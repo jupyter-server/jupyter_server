@@ -3,9 +3,9 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import importlib
-import re
 import math
 import random
+import re
 import warnings
 
 
@@ -77,107 +77,111 @@ def match_url_to_resource(url, regex_mapping=None):
         if pattern.fullmatch(url):
             return auth_resource
 
+
 # From https://en.wikipedia.org/wiki/Moons_of_Jupiter
 moons_of_jupyter = [
-    'Metis',
-    'Adrastea',
-    'Amalthea',
-    'Thebe',
-    'Io',
-    'Europa',
-    'Ganymede',
-    'Callisto',
-    'Themisto',
-    'Leda',
-    'Ersa',
-    'Pandia',
-    'Himalia',
-    'Lysithea',
-    'Elara',
-    'Dia',
-    'Carpo',
-    'Valetudo',
-    'Euporie',
-    'Eupheme',
+    "Metis",
+    "Adrastea",
+    "Amalthea",
+    "Thebe",
+    "Io",
+    "Europa",
+    "Ganymede",
+    "Callisto",
+    "Themisto",
+    "Leda",
+    "Ersa",
+    "Pandia",
+    "Himalia",
+    "Lysithea",
+    "Elara",
+    "Dia",
+    "Carpo",
+    "Valetudo",
+    "Euporie",
+    "Eupheme",
     # 'S/2003 J 18',
     # 'S/2010 J 2',
-    'Helike',
+    "Helike",
     # 'S/2003 J 16',
     # 'S/2003 J 2',
-    'Euanthe',
+    "Euanthe",
     # 'S/2017 J 7',
-    'Hermippe',
-    'Praxidike',
-    'Thyone',
-    'Thelxinoe',
+    "Hermippe",
+    "Praxidike",
+    "Thyone",
+    "Thelxinoe",
     # 'S/2017 J 3',
-    'Ananke',
-    'Mneme',
+    "Ananke",
+    "Mneme",
     # 'S/2016 J 1',
-    'Orthosie',
-    'Harpalyke',
-    'Iocaste',
+    "Orthosie",
+    "Harpalyke",
+    "Iocaste",
     # 'S/2017 J 9',
     # 'S/2003 J 12',
     # 'S/2003 J 4',
-    'Erinome',
-    'Aitne',
-    'Herse',
-    'Taygete',
+    "Erinome",
+    "Aitne",
+    "Herse",
+    "Taygete",
     # 'S/2017 J 2',
     # 'S/2017 J 6',
-    'Eukelade',
-    'Carme',
+    "Eukelade",
+    "Carme",
     # 'S/2003 J 19',
-    'Isonoe',
+    "Isonoe",
     # 'S/2003 J 10',
-    'Autonoe',
-    'Philophrosyne',
-    'Cyllene',
-    'Pasithee',
+    "Autonoe",
+    "Philophrosyne",
+    "Cyllene",
+    "Pasithee",
     # 'S/2010 J 1',
-    'Pasiphae',
-    'Sponde',
+    "Pasiphae",
+    "Sponde",
     # 'S/2017 J 8',
-    'Eurydome',
+    "Eurydome",
     # 'S/2017 J 5',
-    'Kalyke',
-    'Hegemone',
-    'Kale',
-    'Kallichore',
+    "Kalyke",
+    "Hegemone",
+    "Kale",
+    "Kallichore",
     # 'S/2011 J 1',
     # 'S/2017 J 1',
-    'Chaldene',
-    'Arche',
-    'Eirene',
-    'Kore',
+    "Chaldene",
+    "Arche",
+    "Eirene",
+    "Kore",
     # 'S/2011 J 2',
     # 'S/2003 J 9',
-    'Megaclite',
-    'Aoede',
+    "Megaclite",
+    "Aoede",
     # 'S/2003 J 23',
-    'Callirrhoe',
-    'Sinope'
+    "Callirrhoe",
+    "Sinope",
 ]
+
 
 def get_anonymous_username() -> str:
     """
     Get a random user-name based on the moons of Jupyter.
     This function returns names like "Anonymous Io" or "Anonymous Metis".
     """
-    return moons_of_jupyter[random.randint(0, len(moons_of_jupyter)-1)]
+    return moons_of_jupyter[random.randint(0, len(moons_of_jupyter) - 1)]
+
 
 # Using JupyterLab CSS variable because the colors may change with the theme
 user_colors = [
-    'var(--jp-collaborator-color1)',
-    'var(--jp-collaborator-color2)',
-    'var(--jp-collaborator-color3)',
-    'var(--jp-collaborator-color4)',
-    'var(--jp-collaborator-color5)',
-    'var(--jp-collaborator-color6)',
-    'var(--jp-collaborator-color7)'
+    "var(--jp-collaborator-color1)",
+    "var(--jp-collaborator-color2)",
+    "var(--jp-collaborator-color3)",
+    "var(--jp-collaborator-color4)",
+    "var(--jp-collaborator-color5)",
+    "var(--jp-collaborator-color6)",
+    "var(--jp-collaborator-color7)",
 ]
 
+
 def get_random_color() -> str:
-    """ Get a random color from the list of colors. """
-    return user_colors[random.randint(0, len(user_colors)-1)];
+    """Get a random color from the list of colors."""
+    return user_colors[random.randint(0, len(user_colors) - 1)]

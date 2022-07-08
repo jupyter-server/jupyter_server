@@ -292,19 +292,28 @@ class IdentityProvider(LoggingConfigurable):
         Default is just the user's username.
         """
         # default: username is enough
-        cookie = json.dumps({
-            'username': user.username,
-            'name': user.name,
-            'display_name': user.display_name,
-            'initials': user.initials,
-            'color': user.color
-        })
+        cookie = json.dumps(
+            {
+                "username": user.username,
+                "name": user.name,
+                "display_name": user.display_name,
+                "initials": user.initials,
+                "color": user.color,
+            }
+        )
         return cookie
 
     def user_from_cookie(self, cookie_value: str) -> User | None:
         """Inverse of user_to_cookie"""
         user = json.loads(cookie_value)
-        return User(user['username'], user['name'], user['display_name'], user['initials'], None, user['color'])
+        return User(
+            user["username"],
+            user["name"],
+            user["display_name"],
+            user["initials"],
+            None,
+            user["color"],
+        )
 
     def get_cookie_name(self, handler: JupyterHandler) -> str:
         """Return the login cookie name
@@ -457,8 +466,8 @@ class IdentityProvider(LoggingConfigurable):
         """
         user_id = uuid.uuid4().hex
         moon = get_anonymous_username()
-        name = display_name = "Anonymous {}".format(moon)
-        initials = "A{}".format(moon[0])
+        name = display_name = f"Anonymous {moon}"
+        initials = f"A{moon[0]}"
         color = get_random_color()
         handler.log.info(f"Generating new user for token-authenticated request: {user_id}")
         return User(user_id, name, display_name, initials, None, color)
