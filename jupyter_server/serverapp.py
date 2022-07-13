@@ -111,6 +111,7 @@ from jupyter_server.gateway.managers import (
 )
 from jupyter_server.log import log_request
 from jupyter_server.services.config import ConfigManager
+from jupyter_server.services.contents.fileidmanager import FileIdManager
 from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
     FileContentsManager,
@@ -1886,9 +1887,9 @@ class ServerApp(JupyterApp):
             connection_dir=self.runtime_dir,
             kernel_spec_manager=self.kernel_spec_manager,
         )
+        self.file_id_manager = FileIdManager(parent=self, log=self.log)
         self.contents_manager = self.contents_manager_class(
-            parent=self,
-            log=self.log,
+            parent=self, log=self.log, file_id_manager=self.file_id_manager
         )
         self.session_manager = self.session_manager_class(
             parent=self,
@@ -2508,6 +2509,11 @@ class ServerApp(JupyterApp):
         self.log.info(extension_msg % n_extensions)
         await run_sync_in_loop(self.extension_manager.stop_all_extensions())
 
+    def cleanup_file_id_manager(self):
+        if not getattr(self, "file_id_manager", None):
+            return
+        self.file_id_manager._cleanup()
+
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
         info = self.contents_manager.info_string() + "\n"
@@ -2780,6 +2786,7 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
+        self.cleanup_file_id_manager()
         if getattr(self, "session_manager", None):
             self.session_manager.close()
         if getattr(self, "event_bus", None):

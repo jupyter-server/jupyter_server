@@ -2,7 +2,7 @@ import os
 import sys
 import time
 from itertools import combinations
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 from unittest.mock import patch
 
 import pytest
@@ -28,14 +28,25 @@ from ...utils import expected_http_error
         (AsyncFileContentsManager, False),
     ]
 )
-def jp_contents_manager(request, tmp_path):
+def jp_contents_manager(request, tmp_path, fid_manager):
     contents_manager, use_atomic_writing = request.param
-    return contents_manager(root_dir=str(tmp_path), use_atomic_writing=use_atomic_writing)
+    return contents_manager(
+        root_dir=str(tmp_path), use_atomic_writing=use_atomic_writing, file_id_manager=fid_manager
+    )
 
 
 @pytest.fixture(params=[FileContentsManager, AsyncFileContentsManager])
-def jp_file_contents_manager_class(request, tmp_path):
-    return request.param
+def jp_file_contents_manager_class(request, tmp_path, fid_manager):
+    # mypy bugs out with dynamic base class
+    # https://github.com/python/mypy/issues/5865
+    Klass: Any = request.param
+
+    class WrappedKlass(Klass):
+        file_id_manager = fid_manager
+        # def __init__(self, *args, **kwargs):
+        #     return Klass(*args, file_id_manager=fid_manager, **kwargs)
+
+    return WrappedKlass
 
 
 # -------------- Functions ----------------------------

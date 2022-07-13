@@ -395,6 +395,10 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
             model = self._file_model(path, content=content, format=format)
+
+        # append file ID to model
+        model["id"] = self.file_id_manager.index(path)
+
         return model
 
     def _save_directory(self, os_path, model, path=""):

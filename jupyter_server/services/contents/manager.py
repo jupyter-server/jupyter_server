@@ -30,6 +30,7 @@ from jupyter_server.utils import ensure_async, import_item
 
 from ...files.handlers import FilesHandler
 from .checkpoints import AsyncCheckpoints, Checkpoints
+from .fileidmanager import FileIdManager
 
 copy_pat = re.compile(r"\-Copy\d*\.")
 
@@ -58,6 +59,10 @@ class ContentsManager(LoggingConfigurable):
     allow_hidden = Bool(False, config=True, help="Allow access to hidden files")
 
     notary = Instance(sign.NotebookNotary)
+
+    file_id_manager = Instance(
+        FileIdManager, args=(), help="File ID manager instance to use. Defaults to `FileIdManager`."
+    )
 
     def _notary_default(self):
         return sign.NotebookNotary(parent=self)
@@ -414,12 +419,16 @@ class ContentsManager(LoggingConfigurable):
         path = path.strip("/")
         if not path:
             raise HTTPError(400, "Can't delete root")
+        is_dir = self.dir_exists(path)
         self.delete_file(path)
+        self.file_id_manager.delete(path, recursive=is_dir)
         self.checkpoints.delete_all_checkpoints(path)
 
     def rename(self, old_path, new_path):
         """Rename a file and any checkpoints associated with that file."""
+        is_dir = self.dir_exists(old_path)
         self.rename_file(old_path, new_path)
+        self.file_id_manager.move(old_path, new_path, recursive=is_dir)
         self.checkpoints.rename_all_checkpoints(old_path, new_path)
 
     def update(self, model, path):
@@ -615,7 +624,9 @@ class ContentsManager(LoggingConfigurable):
         else:
             raise HTTPError(404, "No such directory: %s" % to_path)
 
+        is_dir = self.dir_exists(from_path)
         model = self.save(model, to_path)
+        self.file_id_manager.copy(from_path, to_path, recursive=is_dir)
         return model
 
     def log_info(self):
@@ -817,12 +828,16 @@ class AsyncContentsManager(ContentsManager):
         if not path:
             raise HTTPError(400, "Can't delete root")
 
+        is_dir = await ensure_async(self.dir_exists(path))
         await self.delete_file(path)
+        self.file_id_manager.delete(path, recursive=is_dir)
         await self.checkpoints.delete_all_checkpoints(path)
 
     async def rename(self, old_path, new_path):
         """Rename a file and any checkpoints associated with that file."""
+        is_dir = await ensure_async(self.dir_exists(old_path))
         await self.rename_file(old_path, new_path)
+        self.file_id_manager.move(old_path, new_path, recursive=is_dir)
         await self.checkpoints.rename_all_checkpoints(old_path, new_path)
 
     async def update(self, model, path):
@@ -984,7 +999,9 @@ class AsyncContentsManager(ContentsManager):
         else:
             raise HTTPError(404, "No such directory: %s" % to_path)
 
+        is_dir = await ensure_async(self.dir_exists(from_path))
         model = await self.save(model, to_path)
+        self.file_id_manager.copy(from_path, to_path, recursive=is_dir)
         return model
 
     async def trust_notebook(self, path):

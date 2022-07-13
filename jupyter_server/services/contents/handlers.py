@@ -271,7 +271,7 @@ class ContentsHandler(ContentsAPIHandler):
         if await ensure_async(cm.is_hidden(path)) and not cm.allow_hidden:
             raise web.HTTPError(400, f"Cannot delete file or directory {path!r}")
 
-        self.log.warning("delete %s", path)
+        self.log.warning("Deleting file at %s", path)
         await ensure_async(cm.delete(path))
         self.set_status(204)
         self.finish()
