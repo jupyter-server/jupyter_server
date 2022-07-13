@@ -163,10 +163,10 @@ def test_stop_extension(jp_serverapp, caplog):
     run_sync(jp_serverapp.cleanup_extensions())
     assert {msg for *_, msg in caplog.record_tuples} == {
         "Shutting down 2 extensions",
-        'jupyter_server_terminals | extension app "jupyter_server_terminals" stopping',
-        f'{extension_name} | extension app "mockextension" stopping',
-        'jupyter_server_terminals | extension app "jupyter_server_terminals" stopped',
-        f'{extension_name} | extension app "mockextension" stopped',
+        "jupyter_server_terminals | extension app 'jupyter_server_terminals' stopping",
+        f"{extension_name} | extension app 'mockextension' stopping",
+        "jupyter_server_terminals | extension app 'jupyter_server_terminals' stopped",
+        f"{extension_name} | extension app 'mockextension' stopped",
     }
 
     # check the shutdown method was called twice
