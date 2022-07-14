@@ -1,6 +1,4 @@
 import importlib
-import sys
-import traceback
 
 from tornado.gen import multi
 from traitlets import Any, Bool, Dict, HasTraits, Instance, Unicode, default, observe
@@ -326,7 +324,13 @@ class ExtensionManager(LoggingConfigurable):
         except Exception as e:
             if self.serverapp.reraise_server_extension_failures:
                 raise
-            self.log.warning(e)
+            self.log.warning(
+                "%s | error adding extension (enabled: %s): %s",
+                extension_name,
+                enabled,
+                e,
+                exc_info=True,
+            )
         return False
 
     def link_extension(self, name):
@@ -337,11 +341,11 @@ class ExtensionManager(LoggingConfigurable):
                 # Link extension and store links
                 extension.link_all_points(self.serverapp)
                 self.linked_extensions[name] = True
-                self.log.info(f"{name} | extension was successfully linked.")
+                self.log.info("%s | extension was successfully linked.", name)
             except Exception as e:
                 if self.serverapp.reraise_server_extension_failures:
                     raise
-                self.log.warning(e)
+                self.log.warning("%s | error linking extension: %s", name, e, exc_info=True)
 
     def load_extension(self, name):
         extension = self.extensions.get(name)
@@ -352,21 +356,17 @@ class ExtensionManager(LoggingConfigurable):
             except Exception as e:
                 if self.serverapp.reraise_server_extension_failures:
                     raise
-                self.log.debug("".join(traceback.format_exception(*sys.exc_info())))
-                self.log.warning(
-                    "{name} | extension failed loading with message: {error}".format(
-                        name=name, error=str(e)
-                    )
-                )
+                self.log.warning("%s | extension failed loading with message: %s", name, e)
+                self.log.exception("%s | stack trace", name)
             else:
-                self.log.info(f"{name} | extension was successfully loaded.")
+                self.log.info("%s | extension was successfully loaded.", name)
 
     async def stop_extension(self, name, apps):
         """Call the shutdown hooks in the specified apps."""
         for app in apps:
-            self.log.debug(f'{name} | extension app "{app.name}" stopping')
+            self.log.debug("%s | extension app %r stopping", name, app.name)
             await app.stop_extension()
-            self.log.debug(f'{name} | extension app "{app.name}" stopped')
+            self.log.debug("%s | extension app %r stopped", name, app.name)
 
     def link_all_extensions(self):
         """Link all enabled extensions

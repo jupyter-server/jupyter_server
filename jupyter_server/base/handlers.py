@@ -95,7 +95,7 @@ class AuthenticatedHandler(web.RequestHandler):
                 # tornado raise Exception (not a subclass)
                 # if method is unsupported (websocket and Access-Control-Allow-Origin
                 # for example, so just ignore)
-                self.log.debug(e)
+                self.log.exception("Could not set default headers: %s", e)
 
     def force_clear_cookie(self, name, path="/", domain=None):
         """Deletes the cookie with the given name.
@@ -646,7 +646,7 @@ class APIHandler(JupyterHandler):
                 reply["message"] = "Unhandled error"
                 reply["reason"] = None
                 reply["traceback"] = "".join(traceback.format_exception(*exc_info))
-        self.log.warning(reply["message"])
+        self.log.warning("wrote error: %r", reply["message"])
         self.finish(json.dumps(reply))
 
     def get_current_user(self):
