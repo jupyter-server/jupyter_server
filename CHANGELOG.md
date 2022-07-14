@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.0b0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0a2...cb9c5edff77c2146d0e66425a82c7b6125b5039e))
+
+### Enhancements made
+
+- Make it easier for extensions to customize the ServerApp [#879](https://github.com/jupyter-server/jupyter_server/pull/879) ([@minrk](https://github.com/minrk))
+- consolidate auth config on IdentityProvider [#825](https://github.com/jupyter-server/jupyter_server/pull/825) ([@minrk](https://github.com/minrk))
+
+### Bugs fixed
+
+- Fix c.GatewayClient.url snippet syntax [#917](https://github.com/jupyter-server/jupyter_server/pull/917) ([@rickwierenga](https://github.com/rickwierenga))
+- Add back support for kernel launch timeout pad [#910](https://github.com/jupyter-server/jupyter_server/pull/910) ([@CiprianAnton](https://github.com/CiprianAnton))
+
+### Maintenance and upkeep improvements
+
+- Improve logging of bare exceptions and other cleanups. [#922](https://github.com/jupyter-server/jupyter_server/pull/922) ([@thetorpedodog](https://github.com/thetorpedodog))
+- Use more explicit version template for pyproject [#919](https://github.com/jupyter-server/jupyter_server/pull/919) ([@blink1073](https://github.com/blink1073))
+- [pre-commit.ci] pre-commit autoupdate [#916](https://github.com/jupyter-server/jupyter_server/pull/916) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Fix handling of dev version [#913](https://github.com/jupyter-server/jupyter_server/pull/913) ([@blink1073](https://github.com/blink1073))
+- Fix owasp link [#908](https://github.com/jupyter-server/jupyter_server/pull/908) ([@blink1073](https://github.com/blink1073))
+- default to system node version in precommit [#906](https://github.com/jupyter-server/jupyter_server/pull/906) ([@dlqqq](https://github.com/dlqqq))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-07-05&to=2022-07-14&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-07-05..2022-07-14&type=Issues) | [@CiprianAnton](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACiprianAnton+updated%3A2022-07-05..2022-07-14&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-07-05..2022-07-14&type=Issues) | [@dlqqq](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adlqqq+updated%3A2022-07-05..2022-07-14&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2022-07-05..2022-07-14&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2022-07-05..2022-07-14&type=Issues) | [@rickwierenga](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Arickwierenga+updated%3A2022-07-05..2022-07-14&type=Issues) | [@thetorpedodog](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Athetorpedodog+updated%3A2022-07-05..2022-07-14&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-07-05..2022-07-14&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-07-05..2022-07-14&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.0a2
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0a1...bd1e7d70b64716097c6b064b2fd5dc67e23d2320))
@@ -38,8 +69,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-06-07&to=2022-07-05&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-06-07..2022-07-05&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2022-06-07..2022-07-05&type=Issues) | [@CiprianAnton](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACiprianAnton+updated%3A2022-06-07..2022-07-05&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-06-07..2022-07-05&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2022-06-07..2022-07-05&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2022-06-07..2022-07-05&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-06-07..2022-07-05&type=Issues) | [@martinRenou](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AmartinRenou+updated%3A2022-06-07..2022-07-05&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2022-06-07..2022-07-05&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2022-06-07..2022-07-05&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.0a1
 
