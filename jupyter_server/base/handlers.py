@@ -99,7 +99,7 @@ class AuthenticatedHandler(web.RequestHandler):
                 # tornado raise Exception (not a subclass)
                 # if method is unsupported (websocket and Access-Control-Allow-Origin
                 # for example, so just ignore)
-                self.log.debug(e)
+                self.log.exception("Could not set default headers: %s", e)
 
     @property
     def cookie_name(self):
@@ -723,7 +723,7 @@ class APIHandler(JupyterHandler):
                 reply["message"] = "Unhandled error"
                 reply["reason"] = None
                 reply["traceback"] = "".join(traceback.format_exception(*exc_info))
-        self.log.warning(reply["message"])
+        self.log.warning("wrote error: %r", reply["message"])
         self.finish(json.dumps(reply))
 
     def get_login_url(self):
