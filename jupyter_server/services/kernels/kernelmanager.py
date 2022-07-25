@@ -227,15 +227,15 @@ class MappingKernelManager(MultiKernelManager):
             kernel.execution_state = "starting"
             kernel.reason = ""
             kernel.last_activity = utcnow()
-            self.log.info("Kernel started: %s" % kernel_id)
-            self.log.debug("Kernel args: %r" % kwargs)
+            self.log.info("Kernel started: %s", kernel_id)
+            self.log.debug("Kernel args: %r", kwargs)
 
             # Increase the metric of number of kernels running
             # for the relevant kernel type by 1
             KERNEL_CURRENTLY_RUNNING_TOTAL.labels(type=self._kernels[kernel_id].kernel_name).inc()
 
         else:
-            self.log.info("Using existing kernel: %s" % kernel_id)
+            self.log.info("Using existing kernel: %s", kernel_id)
 
         # Initialize culling if not already
         if not self._initialized_culler:
@@ -248,8 +248,8 @@ class MappingKernelManager(MultiKernelManager):
         if hasattr(km, "ready"):
             try:
                 await km.ready
-            except Exception as e:
-                self.log.exception(e)
+            except Exception:
+                self.log.exception("Error waiting for kernel manager ready")
                 return
 
         self._kernel_ports[kernel_id] = km.ports
@@ -276,7 +276,7 @@ class MappingKernelManager(MultiKernelManager):
         changed_ports = self._get_changed_ports(kernel_id)
         if changed_ports:
             # If changed, update captured ports and return True, else return False.
-            self.log.debug(f"Port change detected for kernel: {kernel_id}")
+            self.log.debug("Port change detected for kernel: %s", kernel_id)
             self._kernel_ports[kernel_id] = changed_ports
             return True
         return False

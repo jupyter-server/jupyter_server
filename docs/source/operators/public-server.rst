@@ -180,7 +180,7 @@ compliant self-signed certificate that will not raise warnings, it is possible
 certificate and follow the steps in :ref:`using-lets-encrypt` to set up a
 public server.
 
-.. _OWASP: https://www.owasp.org/index.php/Main_Page
+.. _OWASP: https://owasp.org/sitemap/
 .. _tutorial: https://arstechnica.com/information-technology/2009/12/how-to-get-set-with-a-secure-sertificate-for-free/
 
 .. _jupyter_public_server:
@@ -364,7 +364,7 @@ or in :file:`jupyter_notebook_config.py`:
 
    .. code-block:: python
 
-      c.GatewayClient.url = http://my-gateway-server:8888
+      c.GatewayClient.url = 'http://my-gateway-server:8888'
 
 When provided, all kernel specifications will be retrieved from the specified Gateway server and all
 kernels will be managed by that server.  This option enables the ability to target kernel processes

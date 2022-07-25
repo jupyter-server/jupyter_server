@@ -1,7 +1,8 @@
 """Base Tornado handlers for the Jupyter server."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-import datetime
+from __future__ import annotations
+
 import functools
 import inspect
 import ipaddress
@@ -13,13 +14,13 @@ import traceback
 import types
 import warnings
 from http.client import responses
-from http.cookies import Morsel
+from typing import TYPE_CHECKING, Awaitable
 from urllib.parse import urlparse
 
 import prometheus_client
 from jinja2 import TemplateNotFound
 from jupyter_core.paths import is_hidden
-from tornado import escape, httputil, web
+from tornado import web
 from tornado.log import app_log
 from traitlets.config import Application
 
@@ -37,10 +38,12 @@ from jupyter_server.utils import (
     urldecode_unix_socket_path,
 )
 
+if TYPE_CHECKING:
+    from jupyter_server.auth.identity import User
+
 # -----------------------------------------------------------------------------
 # Top-level handlers
 # -----------------------------------------------------------------------------
-non_alphanum = re.compile(r"[^A-Za-z0-9]")
 
 _sys_info_cache = None
 
@@ -96,43 +99,38 @@ class AuthenticatedHandler(web.RequestHandler):
                 # tornado raise Exception (not a subclass)
                 # if method is unsupported (websocket and Access-Control-Allow-Origin
                 # for example, so just ignore)
-                self.log.debug(e)
+                self.log.exception("Could not set default headers: %s", e)
+
+    @property
+    def cookie_name(self):
+        warnings.warn(
+            """JupyterHandler.login_handler is deprecated in 2.0,
+            use JupyterHandler.identity_provider.
+            """,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.identity_provider.get_cookie_name(self)
 
     def force_clear_cookie(self, name, path="/", domain=None):
-        """Deletes the cookie with the given name.
-
-        Tornado's cookie handling currently (Jan 2018) stores cookies in a dict
-        keyed by name, so it can only modify one cookie with a given name per
-        response. The browser can store multiple cookies with the same name
-        but different domains and/or paths. This method lets us clear multiple
-        cookies with the same name.
-
-        Due to limitations of the cookie protocol, you must pass the same
-        path and domain to clear a cookie as were used when that cookie
-        was set (but there is no way to find out on the server side
-        which values were used for a given cookie).
-        """
-        name = escape.native_str(name)
-        expires = datetime.datetime.utcnow() - datetime.timedelta(days=365)
-
-        morsel: Morsel = Morsel()
-        morsel.set(name, "", '""')
-        morsel["expires"] = httputil.format_timestamp(expires)
-        morsel["path"] = path
-        if domain:
-            morsel["domain"] = domain
-        self.add_header("Set-Cookie", morsel.OutputString())
+        warnings.warn(
+            """JupyterHandler.login_handler is deprecated in 2.0,
+            use JupyterHandler.identity_provider.
+            """,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.identity_provider._force_clear_cookie(self, name, path=path, domain=domain)
 
     def clear_login_cookie(self):
-        cookie_options = self.settings.get("cookie_options", {})
-        path = cookie_options.setdefault("path", self.base_url)
-        self.clear_cookie(self.cookie_name, path=path)
-        if path and path != "/":
-            # also clear cookie on / to ensure old cookies are cleared
-            # after the change in path behavior.
-            # N.B. This bypasses the normal cookie handling, which can't update
-            # two cookies with the same name. See the method above.
-            self.force_clear_cookie(self.cookie_name)
+        warnings.warn(
+            """JupyterHandler.login_handler is deprecated in 2.0,
+            use JupyterHandler.identity_provider.
+            """,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.identity_provider.clear_login_cookie(self)
 
     def get_current_user(self):
         clsname = self.__class__.__name__
@@ -160,21 +158,12 @@ class AuthenticatedHandler(web.RequestHandler):
         if self.request.method == "OPTIONS":
             # no origin-check on options requests, which are used to check origins!
             return True
-        if self.login_handler is None or not hasattr(self.login_handler, "should_check_origin"):
-            return False
-        return not self.login_handler.should_check_origin(self)
+        return not self.identity_provider.should_check_origin(self)
 
     @property
     def token_authenticated(self):
         """Have I been authenticated with a token?"""
-        if self.login_handler is None or not hasattr(self.login_handler, "is_token_authenticated"):
-            return False
-        return self.login_handler.is_token_authenticated(self)
-
-    @property
-    def cookie_name(self):
-        default_cookie_name = non_alphanum.sub("-", f"username-{self.request.host}")
-        return self.settings.get("cookie_name", default_cookie_name)
+        return self.identity_provider.is_token_authenticated(self)
 
     @property
     def logged_in(self):
@@ -185,12 +174,19 @@ class AuthenticatedHandler(web.RequestHandler):
     @property
     def login_handler(self):
         """Return the login handler for this application, if any."""
-        return self.settings.get("login_handler_class", None)
+        warnings.warn(
+            """JupyterHandler.login_handler is deprecated in 2.0,
+            use JupyterHandler.identity_provider.
+            """,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.identity_provider.login_handler_class
 
     @property
     def token(self):
         """Return the login token for this application, if any."""
-        return self.settings.get("token", None)
+        return self.identity_provider.token
 
     @property
     def login_available(self):
@@ -200,9 +196,7 @@ class AuthenticatedHandler(web.RequestHandler):
         whether the user is already logged in or not.
 
         """
-        if self.login_handler is None:
-            return False
-        return bool(self.login_handler.get_login_available(self.settings))
+        return self.identity_provider.login_available
 
     @property
     def authorizer(self):
@@ -584,6 +578,7 @@ class JupyterHandler(AuthenticatedHandler):
 
         mod_obj = inspect.getmodule(self.get_current_user)
         assert mod_obj is not None
+        user: User | None = None
 
         if type(self.identity_provider) is IdentityProvider and mod_obj.__name__ != __name__:
             # check for overridden get_current_user + default IdentityProvider
@@ -597,10 +592,11 @@ class JupyterHandler(AuthenticatedHandler):
             )
             user = self.get_current_user()
         else:
-            user = self.identity_provider.get_user(self)
-            if inspect.isawaitable(user):
+            _user = self.identity_provider.get_user(self)
+            if isinstance(_user, Awaitable):
                 # IdentityProvider.get_user _may_ be async
-                user = await user
+                _user = await _user
+            user = _user
 
         # self.current_user for tornado's @web.authenticated
         # self._jupyter_current_user for backward-compat in deprecated get_current_user calls
@@ -632,8 +628,9 @@ class JupyterHandler(AuthenticatedHandler):
             default_url=self.default_url,
             ws_url=self.ws_url,
             logged_in=self.logged_in,
-            allow_password_change=self.settings.get("allow_password_change"),
-            login_available=self.login_available,
+            allow_password_change=getattr(self.identity_provider, "allow_password_change", False),
+            auth_enabled=self.identity_provider.auth_enabled,
+            login_available=self.identity_provider.login_available,
             token_available=bool(self.token),
             static_url=self.static_url,
             sys_info=json_sys_info(),
@@ -726,7 +723,7 @@ class APIHandler(JupyterHandler):
                 reply["message"] = "Unhandled error"
                 reply["reason"] = None
                 reply["traceback"] = "".join(traceback.format_exception(*exc_info))
-        self.log.warning(reply["message"])
+        self.log.warning("wrote error: %r", reply["message"])
         self.finish(json.dumps(reply))
 
     def get_login_url(self):
