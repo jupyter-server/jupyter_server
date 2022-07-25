@@ -66,8 +66,6 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
             try:
                 if is_kernelspec_model(kernel_info):
                     d = kernel_info
-                    # provides resource_dir template filled spec
-                    raise Exception(f"{kernel_name}, {kernel_info}")
                 else:
                     d = kernelspec_model(
                         self,
@@ -75,6 +73,10 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
                         kernel_info["spec"],
                         kernel_info["resource_dir"],
                     )
+                spec_str = json.dumps(d["spec"])
+                if spec_str.find("{resource_dir}") > -1 and "resource_dir" in kernel_info:
+                    spec_str = spec_str.replace("{resource_dir}", kernel_info["resource_dir"])
+                    d["spec"] = json.loads(spec_str)
             except Exception:
                 self.log.error("Failed to load kernel spec: '%s'", kernel_name, exc_info=True)
                 continue
