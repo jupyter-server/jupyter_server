@@ -106,6 +106,16 @@ def test_get_id_oob_move(fid_manager, old_path, new_path):
     assert fid_manager.get_id(new_path) == id
 
 
+def test_get_id_oob_move_recursive(fid_manager, old_path, old_path_child, new_path, new_path_child):
+    parent_id = fid_manager.index(old_path)
+    child_id = fid_manager.index(old_path_child)
+
+    os.rename(old_path, new_path)
+
+    assert fid_manager.get_id(new_path) == parent_id
+    assert fid_manager.get_id(new_path_child) == child_id
+
+
 def test_get_path_oob_move(fid_manager, old_path, new_path):
     id = fid_manager.index(old_path)
     os.rename(old_path, new_path)
@@ -134,6 +144,8 @@ def test_move_indexed(fid_manager, old_path, new_path):
     assert fid_manager.get_path(old_id) == new_path
 
 
+# test for disjoint move handling
+# disjoint move: any out-of-band move that does not preserve stat info
 def test_disjoint_move_indexed(fid_manager, old_path, new_path):
     old_id = fid_manager.index(old_path)
 
@@ -145,11 +157,13 @@ def test_disjoint_move_indexed(fid_manager, old_path, new_path):
 
 
 def test_move_recursive(fid_manager, old_path, old_path_child, new_path, new_path_child):
-    os.rename(old_path, new_path)
-    fid_manager.index(old_path)
+    parent_id = fid_manager.index(old_path)
     child_id = fid_manager.index(old_path_child)
+
+    os.rename(old_path, new_path)
     fid_manager.move(old_path, new_path, recursive=True)
 
+    assert fid_manager.get_id(new_path) == parent_id
     assert fid_manager.get_id(new_path_child) == child_id
 
 

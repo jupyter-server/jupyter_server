@@ -69,6 +69,34 @@ class FileIdManager(LoggingConfigurable):
             if entry.is_dir():
                 self._index_dirs(entry.path)
 
+    def _detect_move(self, path, stat_info):
+        """Detects whether the file at path was a previously indexed file moved
+        out-of-band. Returns the file ID and updates the record with the new
+        path if an out-of-band move is indicated. Returns None otherwise."""
+        src = self.con.execute(
+            "SELECT id, crtime, mtime FROM Files WHERE ino = ?", (stat_info.ino,)
+        ).fetchone()
+
+        # if no record with matching ino, then return None
+        if not src:
+            return None
+
+        id, src_crtime, src_mtime = src
+        src_timestamp = src_crtime if src_crtime is not None else src_mtime
+        dst_timestamp = stat_info.crtime if stat_info.crtime is not None else stat_info.mtime
+
+        # if record has identical ino and crtime/mtime to an existing record,
+        # update it with new destination path and stat info, returning its id
+        if src_timestamp == dst_timestamp:
+            self._update(id, stat_info, path)
+            return id
+
+        # otherwise delete the existing record with identical `ino`, since inos
+        # must be unique. then return None
+        self.con.execute("DELETE FROM Files WHERE id = ?", (id,))
+        self.con.commit()
+        return None
+
     def _normalize_path(self, path):
         """Normalizes a given file path."""
         if not os.path.isabs(path):
@@ -77,10 +105,13 @@ class FileIdManager(LoggingConfigurable):
         path = os.path.normpath(path)
         return path
 
-    def _stat(self, path, stat_info=StatStruct()):
+    def _stat(self, path, stat_info=None):
         """Returns stat info on a path in a StatStruct object. Writes to
         `stat_info` StatStruct arg if passed. Returns None if file does not
         exist at path."""
+        if stat_info is None:
+            stat_info = StatStruct()
+
         try:
             raw_stat = os.stat(path)
         except OSError:
@@ -140,7 +171,7 @@ class FileIdManager(LoggingConfigurable):
         self.con.commit()
         return cursor.lastrowid
 
-    def get_id(self, path, stat_info=StatStruct()):
+    def get_id(self, path, stat_info=None):
         """Retrieves the file ID associated with a file path. Tracks out-of-band
         moves by searching the table for a record with an identical `ino` and
         `crtime` (falling back to `mtime` if `crtime` is not supported on the
@@ -160,27 +191,7 @@ class FileIdManager(LoggingConfigurable):
             return existing_id
 
         # then check if file at path was indexed but moved out-of-band
-        src = self.con.execute(
-            "SELECT id, crtime, mtime FROM Files WHERE ino = ?", (stat_info.ino,)
-        ).fetchone()
-
-        ## if no matching ino, then return None
-        if not src:
-            return None
-
-        id, src_crtime, src_mtime = src
-        src_timestamp = src_crtime if src_crtime is not None else src_mtime
-        dst_timestamp = stat_info.crtime if stat_info.crtime is not None else stat_info.mtime
-
-        ## if identical ino and crtime/mtime to an existing record, update it with new destination path and stat info, returning its id
-        if src_timestamp == dst_timestamp:
-            self._update(id, stat_info, path)
-            return id
-
-        ## otherwise delete the existing record with identical `ino`, since inos must be unique. then return None
-        self.con.execute("DELETE FROM Files WHERE id = ?", (id,))
-        self.con.commit()
-        return None
+        return self._detect_move(path, stat_info)
 
     def get_path(self, id):
         """Retrieves the file path associated with a file ID. Returns None if
@@ -212,18 +223,18 @@ class FileIdManager(LoggingConfigurable):
                     continue
                 id, old_recpath = record
                 new_recpath = os.path.join(new_path, os.path.basename(old_recpath))
-                stat_info = self._stat(new_recpath)
-                if not stat_info:
+                rec_stat_info = self._stat(new_recpath)
+                if not rec_stat_info:
                     continue
                 self.con.execute(
                     "UPDATE Files SET path = ?, mtime = ? WHERE id = ?",
-                    (new_recpath, stat_info.mtime, id),
+                    (new_recpath, rec_stat_info.mtime, id),
                 )
             self.con.commit()
 
         # attempt to fetch ID associated with old path
         # we avoid using get_id() here since that will always return None as file no longer exists at old path
-        row = self.con.execute("SELECT id FROM Files where path = ?", (old_path,)).fetchone()
+        row = self.con.execute("SELECT id FROM Files WHERE path = ?", (old_path,)).fetchone()
         if row is None:
             # if no existing record, create a new one
             # TODO: pass stat info to avoid useless syscall
