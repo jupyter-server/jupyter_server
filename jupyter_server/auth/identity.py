@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import binascii
 import datetime
+import json
 import os
 import re
 import sys
@@ -24,6 +25,7 @@ from traitlets.config import LoggingConfigurable
 from jupyter_server.transutils import _i18n
 
 from .security import passwd_check, set_password
+from .utils import get_anonymous_username
 
 # circular imports for type checking
 if TYPE_CHECKING:
@@ -290,11 +292,28 @@ class IdentityProvider(LoggingConfigurable):
         Default is just the user's username.
         """
         # default: username is enough
-        return user.username
+        cookie = json.dumps(
+            {
+                "username": user.username,
+                "name": user.name,
+                "display_name": user.display_name,
+                "initials": user.initials,
+                "color": user.color,
+            }
+        )
+        return cookie
 
     def user_from_cookie(self, cookie_value: str) -> User | None:
         """Inverse of user_to_cookie"""
-        return User(username=cookie_value)
+        user = json.loads(cookie_value)
+        return User(
+            user["username"],
+            user["name"],
+            user["display_name"],
+            user["initials"],
+            None,
+            user["color"],
+        )
 
     def get_cookie_name(self, handler: JupyterHandler) -> str:
         """Return the login cookie name
@@ -396,7 +415,6 @@ class IdentityProvider(LoggingConfigurable):
         - in URL parameters: ?token=<token>
         - in header: Authorization: token <token>
         """
-
         user_token = handler.get_argument("token", "")
         if not user_token:
             # get it from Authorization header
@@ -447,8 +465,12 @@ class IdentityProvider(LoggingConfigurable):
         but does not identify a user.
         """
         user_id = uuid.uuid4().hex
+        moon = get_anonymous_username()
+        name = display_name = f"Anonymous {moon}"
+        initials = f"A{moon[0]}"
+        color = None
         handler.log.info(f"Generating new user for token-authenticated request: {user_id}")
-        return User(user_id)
+        return User(user_id, name, display_name, initials, None, color)
 
     def should_check_origin(self, handler: JupyterHandler) -> bool:
         """Should the Handler check for CORS origin validation?
