@@ -61,7 +61,10 @@ class ContentsManager(LoggingConfigurable):
     notary = Instance(sign.NotebookNotary)
 
     file_id_manager = Instance(
-        FileIdManager, args=(), help="File ID manager instance to use. Defaults to `FileIdManager`."
+        FileIdManager,
+        args=(),
+        kw={"root_dir": root_dir},
+        help="File ID manager instance to use. Defaults to `FileIdManager`.",
     )
 
     def _notary_default(self):

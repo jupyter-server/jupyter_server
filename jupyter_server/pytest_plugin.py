@@ -465,8 +465,9 @@ def fid_db_path(jp_data_dir):
 
 
 @pytest.fixture(autouse=True)
-def delete_db(fid_db_path):
-    """Fixture that automatically deletes the DB file before each test."""
+def delete_fid_db(fid_db_path):
+    """Fixture that automatically deletes the DB file after each test."""
+    yield
     try:
         os.remove(fid_db_path)
     except OSError:
@@ -474,9 +475,9 @@ def delete_db(fid_db_path):
 
 
 @pytest.fixture
-def fid_manager(fid_db_path):
+def fid_manager(fid_db_path, tmp_path):
     """Fixture returning a test-configured instance of `FileIdManager`."""
-    return FileIdManager(db_path=fid_db_path)
+    return FileIdManager(db_path=fid_db_path, root_dir=str(tmp_path))
 
 
 @pytest.fixture

@@ -1887,7 +1887,7 @@ class ServerApp(JupyterApp):
             connection_dir=self.runtime_dir,
             kernel_spec_manager=self.kernel_spec_manager,
         )
-        self.file_id_manager = FileIdManager(parent=self, log=self.log)
+        self.file_id_manager = FileIdManager(parent=self, log=self.log, root_dir=self.root_dir)
         self.contents_manager = self.contents_manager_class(
             parent=self, log=self.log, file_id_manager=self.file_id_manager
         )
