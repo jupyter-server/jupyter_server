@@ -1,9 +1,10 @@
 import os
 import sqlite3
+import stat
 from typing import Optional
 
 from jupyter_core.paths import jupyter_data_dir
-from traitlets import Unicode
+from traitlets import TraitError, Unicode, validate
 from traitlets.config.configurable import LoggingConfigurable
 
 
@@ -12,10 +13,13 @@ class StatStruct:
     ino: int
     crtime: Optional[int]
     mtime: int
+    is_dir: bool
 
 
 class FileIdManager(LoggingConfigurable):
-    root_dir = Unicode(help=("The root being served by Jupyter server."), config=True)
+    root_dir = Unicode(
+        help=("The root being served by Jupyter server. Must be an absolute path."), config=True
+    )
 
     db_path = Unicode(
         default_value=os.path.join(jupyter_data_dir(), "file_id_manager.db"),
@@ -31,22 +35,44 @@ class FileIdManager(LoggingConfigurable):
         super().__init__(*args, **kwargs)
         # initialize connection with db
         self.con = sqlite3.connect(self.db_path)
-        self.log.debug("Creating File ID tables and indices")
+        self.log.debug("FileIdManager : Creating File ID tables and indices")
         self.con.execute(
             "CREATE TABLE IF NOT EXISTS Files("
             "id INTEGER PRIMARY KEY AUTOINCREMENT, "
             "path TEXT NOT NULL UNIQUE, "
             "ino INTEGER NOT NULL UNIQUE, "
             "crtime INTEGER, "
-            "mtime INTEGER NOT NULL"
+            "mtime INTEGER NOT NULL, "
+            "is_dir TINYINT NOT NULL"
             ")"
         )
-        self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_path ON FILES (path)")
-        self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_ino ON FILES (ino)")
+        self._index_dirs(self.root_dir)
+        self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_path ON Files (path)")
+        self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_ino ON Files (ino)")
+        self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_is_dir ON Files (is_dir)")
         self.con.commit()
+
+    @validate("root_dir", "db_path")
+    def _validate_abspath_traits(self, proposal):
+        if proposal["value"] is None:
+            raise TraitError("FileIdManager : %s must not be None" % proposal["trait"].name)
+        if not os.path.isabs(proposal["value"]):
+            raise TraitError("FileIdManager : %s must be an absolute path" % proposal["trait"].name)
+        return self._normalize_path(proposal["value"])
+
+    def _index_dirs(self, dir_path):
+        """Recursively indexes all directories under a given path. Used in
+        __init__() to recursively index all directories under the server
+        root."""
+        self.index(dir_path)
+        for entry in os.scandir(dir_path):
+            if entry.is_dir():
+                self._index_dirs(entry.path)
 
     def _normalize_path(self, path):
         """Normalizes a given file path."""
+        if not os.path.isabs(path):
+            path = os.path.join(self.root_dir, path)
         path = os.path.normcase(path)
         path = os.path.normpath(path)
         return path
@@ -70,8 +96,28 @@ class FileIdManager(LoggingConfigurable):
             else None
         )
         stat_info.mtime = raw_stat.st_mtime
+        stat_info.is_dir = stat.S_ISDIR(raw_stat.st_mode)
 
         return stat_info
+
+    def _update(self, id, stat_info, path=None):
+        """Updates stat info associated with a ID."""
+        if path is not None:
+            self.con.execute(
+                "UPDATE Files SET path = ?, ino = ?, crtime = ?, mtime = ? WHERE id = ?",
+                (path, stat_info.ino, stat_info.crtime, stat_info.mtime, id),
+            )
+        else:
+            self.con.execute(
+                # updating `ino` and `crtime` is a conscious design decision because
+                # this method is called by `move()`. these values are only preserved
+                # by fs moves done via the `rename()` syscall, like `mv`. we don't
+                # care how the contents manager moves a file; it could be deleting
+                # and creating a new file (which will change both values).
+                "UPDATE Files SET ino = ?, crtime = ?, mtime = ? WHERE id = ?",
+                (stat_info.ino, stat_info.crtime, stat_info.mtime, id),
+            )
+        self.con.commit()
 
     def index(self, path):
         """Returns the file ID for the file at `path`, creating a new file ID if
@@ -88,8 +134,8 @@ class FileIdManager(LoggingConfigurable):
         # if path does not exist in the DB and an out-of-band move is not indicated, create a new record
         path = self._normalize_path(path)
         cursor = self.con.execute(
-            "INSERT INTO Files (path, ino, crtime, mtime) VALUES (?, ?, ?, ?)",
-            (path, stat_info.ino, stat_info.crtime, stat_info.mtime),
+            "INSERT INTO Files (path, ino, crtime, mtime, is_dir) VALUES (?, ?, ?, ?, ?)",
+            (path, stat_info.ino, stat_info.crtime, stat_info.mtime, stat_info.is_dir),
         )
         self.con.commit()
         return cursor.lastrowid
@@ -106,15 +152,11 @@ class FileIdManager(LoggingConfigurable):
         if not stat_info:
             return None
 
-        # if id already exists, just update the stat info and return id
+        # if file at already exists, just update the stat info and return id
         row = self.con.execute("SELECT id FROM Files WHERE path = ?", (path,)).fetchone()
         if row:
             (existing_id,) = row
-            self.con.execute(
-                "UPDATE Files SET ino = ?, crtime = ?, mtime = ? WHERE id = ?",
-                (stat_info.ino, stat_info.crtime, stat_info.mtime, existing_id),
-            )
-            self.con.commit()
+            self._update(existing_id, stat_info)
             return existing_id
 
         # then check if file at path was indexed but moved out-of-band
@@ -132,11 +174,7 @@ class FileIdManager(LoggingConfigurable):
 
         ## if identical ino and crtime/mtime to an existing record, update it with new destination path and stat info, returning its id
         if src_timestamp == dst_timestamp:
-            self.con.execute(
-                "UPDATE Files SET path = ?, crtime = ?, mtime = ? WHERE id = ?",
-                (path, stat_info.crtime, stat_info.mtime, id),
-            )
-            self.con.commit()
+            self._update(id, stat_info, path)
             return id
 
         ## otherwise delete the existing record with identical `ino`, since inos must be unique. then return None
@@ -146,16 +184,23 @@ class FileIdManager(LoggingConfigurable):
 
     def get_path(self, id):
         """Retrieves the file path associated with a file ID. Returns None if
-        the ID does not exist in the Files table."""
+        the ID does not exist in the Files table or if the corresponding path no
+        longer has a file."""
         row = self.con.execute("SELECT path FROM Files WHERE id = ?", (id,)).fetchone()
         return row[0] if row else None
 
     def move(self, old_path, new_path, recursive=False):
         """Handles file moves by updating the file path of the associated file
-        ID.  Returns the file ID."""
+        ID.  Returns the file ID. Returns None if file does not exist at new_path."""
         old_path = self._normalize_path(old_path)
         new_path = self._normalize_path(new_path)
-        self.log.debug(f"Moving file from ${old_path} to ${new_path}")
+
+        # verify file exists at new_path
+        stat_info = self._stat(new_path)
+        if stat_info is None:
+            return None
+
+        self.log.debug(f"FileIdManager : Moving file from ${old_path} to ${new_path}")
 
         if recursive:
             old_path_glob = os.path.join(old_path, "*")
@@ -172,16 +217,22 @@ class FileIdManager(LoggingConfigurable):
                     continue
                 self.con.execute(
                     "UPDATE Files SET path = ?, mtime = ? WHERE id = ?",
-                    (id, stat_info.mtime, new_recpath),
+                    (new_recpath, stat_info.mtime, id),
                 )
             self.con.commit()
 
-        id = self.get_id(old_path)
-        if id is None:
+        # attempt to fetch ID associated with old path
+        # we avoid using get_id() here since that will always return None as file no longer exists at old path
+        row = self.con.execute("SELECT id FROM Files where path = ?", (old_path,)).fetchone()
+        if row is None:
+            # if no existing record, create a new one
+            # TODO: pass stat info to avoid useless syscall
             return self.index(new_path)
         else:
-            self.con.execute("UPDATE Files SET path = ? WHERE id = ?", (new_path, id))
-            self.con.commit()
+            # update existing record with new path and stat info
+            # TODO: make sure is_dir for existing record matches that of file at new_path
+            id = row[0]
+            self._update(id, stat_info, new_path)
             return id
 
     def copy(self, from_path, to_path, recursive=False):
@@ -192,7 +243,7 @@ class FileIdManager(LoggingConfigurable):
         the new file ID."""
         from_path = self._normalize_path(from_path)
         to_path = self._normalize_path(to_path)
-        self.log.debug(f"Copying file from ${from_path} to ${to_path}")
+        self.log.debug(f"FileIdManager : Copying file from ${from_path} to ${to_path}")
 
         if recursive:
             from_path_glob = os.path.join(from_path, "*")
@@ -208,8 +259,14 @@ class FileIdManager(LoggingConfigurable):
                 if not stat_info:
                     continue
                 self.con.execute(
-                    "INSERT INTO FILES (path, ino, crtime, mtime) VALUES (?, ?, ?, ?)",
-                    (to_recpath, stat_info.ino, stat_info.crtime, stat_info.mtime),
+                    "INSERT INTO FILES (path, ino, crtime, mtime, is_dir) VALUES (?, ?, ?, ?, ?)",
+                    (
+                        to_recpath,
+                        stat_info.ino,
+                        stat_info.crtime,
+                        stat_info.mtime,
+                        stat_info.is_dir,
+                    ),
                 )
             self.con.commit()
 
@@ -220,7 +277,7 @@ class FileIdManager(LoggingConfigurable):
         """Handles file deletions by deleting the associated record in the File
         table. Returns None."""
         path = self._normalize_path(path)
-        self.log.debug(f"Deleting file {path}")
+        self.log.debug(f"FileIdManager : Deleting file {path}")
 
         if recursive:
             path_glob = os.path.join(path, "*")
