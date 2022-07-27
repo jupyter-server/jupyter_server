@@ -116,6 +116,25 @@ def test_get_id_oob_move_recursive(fid_manager, old_path, old_path_child, new_pa
     assert fid_manager.get_id(new_path_child) == child_id
 
 
+# make sure that out-of-band moves are detected even when a new file is created
+# at the old path.  this is what forces relaxation of the UNIQUE constraint on
+# path column, since we need to keep records of deleted files that used to
+# occupy a path, which is possibly occupied by a new file.
+def test_get_id_oob_move_new_file_at_old_path(fid_manager, old_path, new_path, jp_root_dir):
+    old_id = fid_manager.index(old_path)
+    other_path = os.path.join(jp_root_dir, "other_path")
+
+    os.rename(old_path, new_path)
+    Path(old_path).touch()
+    other_id = fid_manager.index(old_path)
+    os.rename(old_path, other_path)
+
+    assert other_id != old_id
+    assert fid_manager.get_id(new_path) == old_id
+    assert fid_manager.get_path(old_id) == new_path
+    assert fid_manager.get_id(other_path) == other_id
+
+
 def test_get_path_oob_move(fid_manager, old_path, new_path):
     id = fid_manager.index(old_path)
     os.rename(old_path, new_path)

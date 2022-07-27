@@ -39,7 +39,9 @@ class FileIdManager(LoggingConfigurable):
         self.con.execute(
             "CREATE TABLE IF NOT EXISTS Files("
             "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-            "path TEXT NOT NULL UNIQUE, "
+            # uniqueness constraint relaxed here because we need to keep records
+            # of deleted files which may occupy same path
+            "path TEXT NOT NULL, "
             "ino INTEGER NOT NULL UNIQUE, "
             "crtime INTEGER, "
             "mtime INTEGER NOT NULL, "
@@ -120,13 +122,14 @@ class FileIdManager(LoggingConfigurable):
         stat_info.empty = False
         stat_info.ino = raw_stat.st_ino
         stat_info.crtime = (
-            raw_stat.st_ctime
+            raw_stat.st_ctime_ns
             if os.name == "nt"
-            else raw_stat.st_birthtime  # type: ignore
+            # st_birthtime_ns is not supported, so we have to compute it manually
+            else int(raw_stat.st_birthtime * 1e9)  # type: ignore
             if hasattr(raw_stat, "st_birthtime")
             else None
         )
-        stat_info.mtime = raw_stat.st_mtime
+        stat_info.mtime = raw_stat.st_mtime_ns
         stat_info.is_dir = stat.S_ISDIR(raw_stat.st_mode)
 
         return stat_info
@@ -144,7 +147,7 @@ class FileIdManager(LoggingConfigurable):
                 # this method is called by `move()`. these values are only preserved
                 # by fs moves done via the `rename()` syscall, like `mv`. we don't
                 # care how the contents manager moves a file; it could be deleting
-                # and creating a new file (which will change both values).
+                # and creating a new file (which will change the stat info).
                 "UPDATE Files SET ino = ?, crtime = ?, mtime = ? WHERE id = ?",
                 (stat_info.ino, stat_info.crtime, stat_info.mtime, id),
             )
@@ -182,13 +185,6 @@ class FileIdManager(LoggingConfigurable):
         stat_info = self._stat(path, stat_info)
         if not stat_info:
             return None
-
-        # if file at already exists, just update the stat info and return id
-        row = self.con.execute("SELECT id FROM Files WHERE path = ?", (path,)).fetchone()
-        if row:
-            (existing_id,) = row
-            self._update(existing_id, stat_info)
-            return existing_id
 
         # then check if file at path was indexed but moved out-of-band
         return self._detect_move(path, stat_info)
