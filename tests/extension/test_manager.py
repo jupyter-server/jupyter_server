@@ -104,7 +104,7 @@ def test_extension_manager_fail_add(jp_serverapp, has_app):
     manager.add_extension(name, enabled=True)  # should only warn
     jp_serverapp.reraise_server_extension_failures = True
     with pytest.raises(ExtensionModuleNotFound) if has_app else nullcontext():
-        assert manager.add_extension(name, enabled=True) == False
+        assert manager.add_extension(name, enabled=True) is False
 
 
 @pytest.mark.parametrize("has_app", [True, False])
