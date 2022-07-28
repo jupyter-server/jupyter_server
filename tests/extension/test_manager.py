@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 import os
 import unittest.mock as mock
 
@@ -96,39 +97,42 @@ def test_extension_manager_linked_extensions(jp_serverapp):
     assert name in manager.linked_extensions
 
 
-def test_extension_manager_fail_add(jp_serverapp):
+@pytest.mark.parametrize("has_app", [True, False])
+def test_extension_manager_fail_add(jp_serverapp, has_app):
     name = "tests.extension.notanextension"
-    manager = ExtensionManager(serverapp=jp_serverapp)
+    manager = ExtensionManager(serverapp=jp_serverapp if has_app else None)
     manager.add_extension(name, enabled=True)  # should only warn
     jp_serverapp.reraise_server_extension_failures = True
-    with pytest.raises(ExtensionModuleNotFound):
-        manager.add_extension(name, enabled=True)
+    with pytest.raises(ExtensionModuleNotFound) if has_app else nullcontext():
+        assert manager.add_extension(name, enabled=True) == False
 
 
-def test_extension_manager_fail_link(jp_serverapp):
+@pytest.mark.parametrize("has_app", [True, False])
+def test_extension_manager_fail_link(jp_serverapp, has_app):
     name = "tests.extension.mockextensions.app"
     with mock.patch(
         "tests.extension.mockextensions.app.MockExtensionApp.parse_command_line",
         side_effect=RuntimeError,
     ):
-        manager = ExtensionManager(serverapp=jp_serverapp)
+        manager = ExtensionManager(serverapp=jp_serverapp if has_app else None)
         manager.add_extension(name, enabled=True)
         manager.link_extension(name)  # should only warn
         jp_serverapp.reraise_server_extension_failures = True
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) if has_app else nullcontext():
             manager.link_extension(name)
 
 
-def test_extension_manager_fail_load(jp_serverapp):
+@pytest.mark.parametrize("has_app", [True, False])
+def test_extension_manager_fail_load(jp_serverapp, has_app):
     name = "tests.extension.mockextensions.app"
     with mock.patch(
         "tests.extension.mockextensions.app.MockExtensionApp.initialize_handlers",
         side_effect=RuntimeError,
     ):
-        manager = ExtensionManager(serverapp=jp_serverapp)
+        manager = ExtensionManager(serverapp=jp_serverapp if has_app else None)
         manager.add_extension(name, enabled=True)
         manager.link_extension(name)
         manager.load_extension(name)  # should only warn
         jp_serverapp.reraise_server_extension_failures = True
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) if has_app else nullcontext():
             manager.load_extension(name)
