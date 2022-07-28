@@ -53,7 +53,9 @@ def update_kernelspec_model(spec_dict):
     model = spec_dict
     if "resource_dir" in spec_dict:
         spec_str = json.dumps(spec_dict["spec"])
-        if "{resource_dir}" in spec_str:
+        template_found = "{resource_dir}" in spec_str
+        resource_dir_exists = os.path.exists(spec_dict["resource_dir"])
+        if template_found and resource_dir_exists:
             spec_str = spec_str.replace("{resource_dir}", spec_dict["resource_dir"])
             model["spec"] = json.loads(spec_str)
     return model
