@@ -48,6 +48,17 @@ def is_kernelspec_model(spec_dict):
     )
 
 
+def update_kernelspec_model(spec_dict):
+    """Returns the original kernelspec unless template substitutions are available."""
+    model = spec_dict
+    if "resource_dir" in spec_dict:
+        spec_str = json.dumps(spec_dict["spec"])
+        if "{resource_dir}" in spec_str:
+            spec_str = spec_str.replace("{resource_dir}", spec_dict["resource_dir"])
+            model["spec"] = json.loads(spec_str)
+    return model
+
+
 class KernelSpecsAPIHandler(APIHandler):
     auth_resource = AUTH_RESOURCE
 
@@ -73,10 +84,7 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
                         kernel_info["spec"],
                         kernel_info["resource_dir"],
                     )
-                spec_str = json.dumps(d["spec"])
-                if spec_str.find("{resource_dir}") > -1 and "resource_dir" in kernel_info:
-                    spec_str = spec_str.replace("{resource_dir}", kernel_info["resource_dir"])
-                    d["spec"] = json.loads(spec_str)
+                d = update_kernelspec_model(d)
             except Exception:
                 self.log.error("Failed to load kernel spec: '%s'", kernel_name, exc_info=True)
                 continue
@@ -99,6 +107,7 @@ class KernelSpecHandler(KernelSpecsAPIHandler):
             model = spec
         else:
             model = kernelspec_model(self, kernel_name, spec.to_dict(), spec.resource_dir)
+        model = update_kernelspec_model(model)
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(model))
 

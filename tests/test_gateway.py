@@ -47,14 +47,8 @@ def generate_kernelspec_with_resourcedir(name, spec_dir):
         resource_dir_script.write(contents)
     argv_stanza = ["{resource_dir}/launcher.sh"]
     kernelspec_stanza = generate_kernelspec(name)
-    kernelspec_stanza["spec"]["argv"] = argv_stanza
+    kernelspec_stanza["spec"]["spec"]["argv"] = argv_stanza
     kernelspec_stanza["resource_dir"] = str(spec_dir)
-    return kernelspec_stanza
-
-
-def generate_bad_kernelspec(name):
-    kernelspec_stanza = generate_kernelspec(name)
-    del kernelspec_stanza["resources"]
     return kernelspec_stanza
 
 
@@ -69,6 +63,9 @@ def init_kernelspecs(jp_data_dir):
     if not spec_dir.exists():
         spec_dir.mkdir(parents=True)
 
+    missing_rdir = generate_kernelspec_with_resourcedir("kspec_resourcedir_missing", spec_dir)
+    del missing_rdir["resource_dir"]
+
     # mock kernelspecs
     kernelspecs = {
         "default": "kspec_foo",
@@ -78,6 +75,7 @@ def init_kernelspecs(jp_data_dir):
             "kspec_resourcedir": generate_kernelspec_with_resourcedir(
                 "kspec_resourcedir", spec_dir
             ),
+            "kspec_resourcedir_missing": missing_rdir,
         },
     }
 
@@ -305,19 +303,28 @@ async def test_gateway_get_kernelspecs(init_gateway, jp_fetch):
         assert r.code == 200
         content = json.loads(r.body.decode("utf-8"))
         kspecs = content.get("kernelspecs")
-        assert len(kspecs) == 3
+        assert len(kspecs) == 4
         assert kspecs.get("kspec_bar").get("name") == "kspec_bar"
 
 
-async def test_gateway_get_kernelspecs_resource_dir(init_gateway, jp_fetch):
-    # Validate that kernelspecs come from gateway.
+async def test_gateway_get_kernelspec_filled_resource_dir(init_gateway, jp_fetch):
+    # Validate that kernelspec with resource_dir filled came from gateway.
     with mocked_gateway:
-        r = await jp_fetch("api", "kernelspecs", method="GET")
+        r = await jp_fetch("api", "kernelspecs", "kspec_resourcedir", method="GET")
         assert r.code == 200
-        content = json.loads(r.body.decode("utf-8"))
-        kspecs = content.get("kernelspecs")
-        assert len(kspecs) == 3
-        assert kspecs.get("kspec_resourcedir").get("name") == "kspec_resourcedir"
+        kspec_resourcedir = json.loads(r.body.decode("utf-8"))
+        assert kspec_resourcedir.get("name") == "kspec_resourcedir"
+        assert "{resource_dir}" not in json.dumps(kspec_resourcedir.get("spec"))
+
+
+async def test_gateway_get_kernelspec_unfilled_resource_dir(init_gateway, jp_fetch):
+    # Validate that kernelspec with resource_dir unfilled came from gateway.
+    with mocked_gateway:
+        r = await jp_fetch("api", "kernelspecs", "kspec_resourcedir_missing", method="GET")
+        assert r.code == 200
+        kspec_resourcedir_missing = json.loads(r.body.decode("utf-8"))
+        assert kspec_resourcedir_missing.get("name") == "kspec_resourcedir_missing"
+        assert "{resource_dir}" in json.dumps(kspec_resourcedir_missing.get("spec"))
 
 
 async def test_gateway_get_named_kernelspec(init_gateway, jp_fetch):
@@ -386,7 +393,7 @@ async def test_gateway_kernel_lifecycle(init_gateway, jp_fetch):
 
 
 async def test_gateway_kernel_lifecycle_resource_dir(init_gateway, jp_fetch):
-    # Validate kernel lifecycle functions; create, interrupt, restart and delete.
+    # Validate kernel lifecycle functions; create, interrupt, restart and delete for resource_dir template use.
 
     # create
     kernel_id = await create_kernel(jp_fetch, "kspec_resourcedir")
