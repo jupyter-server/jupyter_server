@@ -444,7 +444,7 @@ def jp_kernelspecs(jp_data_dir):
             sample_script_file = sample_kernel_dir.joinpath("sample.sh")
             sample_script_file.write_text(sample_script)
             sample_script_file.chmod(500)
-            kernel_json["argv"] = ["{resource_dir}/sample.sh"]
+            kernel_json["argv"] = [os.path.join("{resource_dir}", "sample.sh")]
         sample_kernel_file.write_text(json.dumps(kernel_json))
         # Create resources text
         sample_kernel_resources = sample_kernel_dir.joinpath("resource.txt")

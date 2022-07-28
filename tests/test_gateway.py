@@ -45,7 +45,7 @@ def generate_kernelspec_with_resourcedir(name, spec_dir):
     contents = "python -m ipykernel_launcher -f {connection_file}"
     with open(spec_dir.joinpath("launcher.sh"), "w") as resource_dir_script:
         resource_dir_script.write(contents)
-    argv_stanza = ["{resource_dir}/launcher.sh"]
+    argv_stanza = [os.path.join("{resource_dir}", "launcher.sh")]
     kernelspec_stanza = generate_kernelspec(name)
     kernelspec_stanza["spec"]["spec"]["argv"] = argv_stanza
     kernelspec_stanza["resource_dir"] = str(spec_dir)
