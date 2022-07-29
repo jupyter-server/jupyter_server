@@ -48,7 +48,7 @@ class FileIdManager(LoggingConfigurable):
             "is_dir TINYINT NOT NULL"
             ")"
         )
-        self._index_dirs(self.root_dir)
+        self._index_all_dirs()
         self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_path ON Files (path)")
         self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_ino ON Files (ino)")
         self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_is_dir ON Files (is_dir)")
@@ -62,16 +62,64 @@ class FileIdManager(LoggingConfigurable):
             raise TraitError("FileIdManager : %s must be an absolute path" % proposal["trait"].name)
         return self._normalize_path(proposal["value"])
 
-    def _index_dirs(self, dir_path):
+    def _index_all_dirs(self):
+        """Recursively indexes all directories under the server root."""
+        self._index_dir_recursively(self.root_dir)
+        self.con.commit()
+
+    def _index_dir_recursively(self, dir_path):
         """Recursively indexes all directories under a given path. Used in
         __init__() to recursively index all directories under the server
         root."""
         self.index(dir_path)
-        for entry in os.scandir(dir_path):
-            if entry.is_dir():
-                self._index_dirs(entry.path)
+        with os.scandir(dir_path) as scan_iter:
+            for entry in scan_iter:
+                if entry.is_dir():
+                    self._index_dir_recursively(entry.path)
+        scan_iter.close()
 
-    def _detect_move(self, path, stat_info):
+    def _sync_all(self):
+        """Syncs Files table (the index being referred to by this method) with
+        the filesystem and ensures that the correct path is associated with each
+        file ID. Does so by traversing the file tree recursively, looking for
+        dirty directories. A dirty directory is a directory that possibly
+        contains previously indexed files which were moved into it.  An
+        unindexed directory is always dirty, whereas an indexed directory is
+        dirty only if the `mtime` in the record and the current `mtime`
+        differ."""
+        cursor = self.con.execute("SELECT id, path, mtime FROM Files WHERE is_dir = 1")
+        for dir in cursor:
+            id, path, old_mtime = dir
+            stat_info = self._stat(path)
+
+            # ignore directories that no longer exist
+            if stat_info is None:
+                continue
+
+            new_mtime = stat_info.mtime
+            dir_dirty = new_mtime != old_mtime
+            if dir_dirty:
+                self._sync_dir(path)
+                self._update(id, stat_info)
+        self.con.commit()
+
+    def _sync_dir(self, dir_path):
+        """Syncs the contents of a directory. Indexes previously unindexed
+        directories and recursively syncs their contents."""
+        with os.scandir(dir_path) as scan_iter:
+            for entry in scan_iter:
+                stat_info = self._parse_raw_stat(entry.stat())
+                id = self._sync_file(entry.path, stat_info)
+
+                # treat unindexed directories as dirty. create a new record and
+                # recursive sync dir contents.
+                if stat_info.is_dir and id is None:
+                    # commits transactions in _sync_all()
+                    self._create(entry.path, stat_info)
+                    self._sync_dir(entry.path)
+        scan_iter.close()
+
+    def _sync_file(self, path, stat_info):
         """Detects whether the file at path was a previously indexed file moved
         out-of-band. Returns the file ID and updates the record with the new
         path if an out-of-band move is indicated. Returns None otherwise."""
@@ -107,6 +155,27 @@ class FileIdManager(LoggingConfigurable):
         path = os.path.normpath(path)
         return path
 
+    def _parse_raw_stat(self, raw_stat, stat_info=None):
+        """Accepts an `os.stat_result` object and returns a `StatStruct`
+        object. Writes to `stat_info` argument if passed."""
+        if stat_info is None:
+            stat_info = StatStruct()
+
+        stat_info.empty = False
+        stat_info.ino = raw_stat.st_ino
+        stat_info.crtime = (
+            raw_stat.st_ctime_ns
+            if os.name == "nt"
+            # st_birthtime_ns is not supported, so we have to compute it manually
+            else int(raw_stat.st_birthtime * 1e9)
+            if hasattr(raw_stat, "st_birthtime")
+            else None
+        )
+        stat_info.mtime = raw_stat.st_mtime_ns
+        stat_info.is_dir = stat.S_ISDIR(raw_stat.st_mode)
+
+        return stat_info
+
     def _stat(self, path, stat_info=None):
         """Returns stat info on a path in a StatStruct object. Writes to
         `stat_info` StatStruct arg if passed. Returns None if file does not
@@ -119,23 +188,22 @@ class FileIdManager(LoggingConfigurable):
         except OSError:
             return None
 
-        stat_info.empty = False
-        stat_info.ino = raw_stat.st_ino
-        stat_info.crtime = (
-            raw_stat.st_ctime_ns
-            if os.name == "nt"
-            # st_birthtime_ns is not supported, so we have to compute it manually
-            else int(raw_stat.st_birthtime * 1e9)  # type: ignore
-            if hasattr(raw_stat, "st_birthtime")
-            else None
-        )
-        stat_info.mtime = raw_stat.st_mtime_ns
-        stat_info.is_dir = stat.S_ISDIR(raw_stat.st_mode)
+        return self._parse_raw_stat(raw_stat, stat_info)
 
-        return stat_info
+    def _create(self, path, stat_info):
+        """Creates a record given its stat info and path. Returns the new file
+        ID."""
+        cursor = self.con.execute(
+            "INSERT INTO Files (path, ino, crtime, mtime, is_dir) VALUES (?, ?, ?, ?, ?)",
+            (path, stat_info.ino, stat_info.crtime, stat_info.mtime, stat_info.is_dir),
+        )
+
+        self.con.commit()
+
+        return cursor.lastrowid
 
     def _update(self, id, stat_info, path=None):
-        """Updates stat info associated with a ID."""
+        """Updates a record given its file ID."""
         if path is not None:
             self.con.execute(
                 "UPDATE Files SET path = ?, ino = ?, crtime = ?, mtime = ? WHERE id = ?",
@@ -167,12 +235,7 @@ class FileIdManager(LoggingConfigurable):
 
         # if path does not exist in the DB and an out-of-band move is not indicated, create a new record
         path = self._normalize_path(path)
-        cursor = self.con.execute(
-            "INSERT INTO Files (path, ino, crtime, mtime, is_dir) VALUES (?, ?, ?, ?, ?)",
-            (path, stat_info.ino, stat_info.crtime, stat_info.mtime, stat_info.is_dir),
-        )
-        self.con.commit()
-        return cursor.lastrowid
+        return self._create(path, stat_info)
 
     def get_id(self, path, stat_info=None):
         """Retrieves the file ID associated with a file path. Tracks out-of-band
@@ -187,12 +250,13 @@ class FileIdManager(LoggingConfigurable):
             return None
 
         # then check if file at path was indexed but moved out-of-band
-        return self._detect_move(path, stat_info)
+        return self._sync_file(path, stat_info)
 
     def get_path(self, id):
         """Retrieves the file path associated with a file ID. Returns None if
         the ID does not exist in the Files table or if the corresponding path no
         longer has a file."""
+        self._sync_all()
         row = self.con.execute("SELECT path FROM Files WHERE id = ?", (id,)).fetchone()
         return row[0] if row else None
 
