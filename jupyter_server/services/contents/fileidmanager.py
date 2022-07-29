@@ -63,7 +63,7 @@ class FileIdManager(LoggingConfigurable):
             "is_dir TINYINT NOT NULL"
             ")"
         )
-        self._index_dir_recursively(self.root_dir)
+        self._index_all()
         self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_path ON Files (path)")
         self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_ino ON Files (ino)")
         self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_is_dir ON Files (is_dir)")
@@ -77,15 +77,18 @@ class FileIdManager(LoggingConfigurable):
             raise TraitError("FileIdManager : %s must be an absolute path" % proposal["trait"].name)
         return self._normalize_path(proposal["value"])
 
-    def _index_dir_recursively(self, dir_path):
-        """Recursively indexes all directories under a given path. Used in
-        __init__() to recursively index all directories under the server
-        root."""
-        self.index(dir_path)
+    def _index_all(self):
+        """Recursively indexes all directories under the server root."""
+        self._index_dir_recursively(self.root_dir, self._stat(self.root_dir))
+
+    def _index_dir_recursively(self, dir_path, stat_info):
+        """Recursively indexes all directories under a given path."""
+        self.index(dir_path, stat_info=stat_info, commit=False)
+
         with os.scandir(dir_path) as scan_iter:
             for entry in scan_iter:
                 if entry.is_dir():
-                    self._index_dir_recursively(entry.path)
+                    self._index_dir_recursively(entry.path, self._parse_raw_stat(entry.stat()))
         scan_iter.close()
 
     def _sync_all(self):
@@ -183,12 +186,11 @@ class FileIdManager(LoggingConfigurable):
 
         return stat_info
 
-    def _stat(self, path, stat_info=None):
+    def _stat(self, path):
         """Returns stat info on a path in a StatStruct object. Writes to
         `stat_info` StatStruct arg if passed. Returns None if file does not
         exist at path."""
-        if stat_info is None:
-            stat_info = StatStruct()
+        stat_info = StatStruct()
 
         try:
             raw_stat = os.stat(path)
@@ -225,11 +227,11 @@ class FileIdManager(LoggingConfigurable):
                 (stat_info.ino, stat_info.crtime, stat_info.mtime, id),
             )
 
-    def index(self, path):
+    def index(self, path, stat_info=None, commit=True):
         """Returns the file ID for the file at `path`, creating a new file ID if
         one does not exist. Returns None only if file does not exist at path."""
         path = self._normalize_path(path)
-        stat_info = self._stat(path)
+        stat_info = stat_info or self._stat(path)
         if not stat_info:
             return None
 
@@ -240,7 +242,8 @@ class FileIdManager(LoggingConfigurable):
 
         # otherwise, create a new record and return the file ID
         id = self._create(path, stat_info)
-        self.con.commit()
+        if commit:
+            self.con.commit()
         return id
 
     def get_id(self, path):
