@@ -349,6 +349,10 @@ async def test_create_untitled(jp_fetch, contents, contents_dir, _check_created)
     r = await jp_fetch("api", "contents", path, method="POST", body=json.dumps({"ext": ".ipynb"}))
     _check_created(r, str(contents_dir), path, name, type="notebook")
 
+    name = "untitled"
+    r = await jp_fetch("api", "contents", path, method="POST", allow_nonstandard_methods=True)
+    _check_created(r, str(contents_dir), path, name=name, type="file")
+
 
 async def test_create_untitled_txt(jp_fetch, contents, contents_dir, _check_created):
     name = "untitled.txt"
