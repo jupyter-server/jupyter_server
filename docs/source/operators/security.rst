@@ -101,7 +101,7 @@ as all requests requiring _authorization_ must first complete _authentication_.
 Identity Providers
 ******************
 
-The :class:`.IdentityProvider` class is responsible for the "authorization" step,
+The :class:`.IdentityProvider` class is responsible for the "authentication" step,
 identifying the user making the request,
 and constructing information about them.
 
