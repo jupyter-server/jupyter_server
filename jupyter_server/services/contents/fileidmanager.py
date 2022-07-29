@@ -17,6 +17,21 @@ class StatStruct:
 
 
 class FileIdManager(LoggingConfigurable):
+    """
+    Manager that supports tracks files across their lifetime by associating
+    each with a unique file ID, which is maintained across filesystem operations.
+
+    Notes
+    -----
+
+    All private helper methods prefixed with an underscore (except `__init__()`)
+    do NOT commit their SQL statements in a transaction via `self.con.commit()`.
+    This responsibility is delegated to the public method calling them to
+    increase performance. Committing multiple SQL transactions in serial is much
+    slower than committing a single SQL transaction wrapping all SQL statements
+    performed during a method's procedure body.
+    """
+
     root_dir = Unicode(
         help=("The root being served by Jupyter server. Must be an absolute path."), config=True
     )
@@ -48,7 +63,7 @@ class FileIdManager(LoggingConfigurable):
             "is_dir TINYINT NOT NULL"
             ")"
         )
-        self._index_all_dirs()
+        self._index_dir_recursively(self.root_dir)
         self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_path ON Files (path)")
         self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_ino ON Files (ino)")
         self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_is_dir ON Files (is_dir)")
@@ -62,11 +77,6 @@ class FileIdManager(LoggingConfigurable):
             raise TraitError("FileIdManager : %s must be an absolute path" % proposal["trait"].name)
         return self._normalize_path(proposal["value"])
 
-    def _index_all_dirs(self):
-        """Recursively indexes all directories under the server root."""
-        self._index_dir_recursively(self.root_dir)
-        self.con.commit()
-
     def _index_dir_recursively(self, dir_path):
         """Recursively indexes all directories under a given path. Used in
         __init__() to recursively index all directories under the server
@@ -79,14 +89,13 @@ class FileIdManager(LoggingConfigurable):
         scan_iter.close()
 
     def _sync_all(self):
-        """Syncs Files table (the index being referred to by this method) with
-        the filesystem and ensures that the correct path is associated with each
-        file ID. Does so by traversing the file tree recursively, looking for
-        dirty directories. A dirty directory is a directory that possibly
-        contains previously indexed files which were moved into it.  An
-        unindexed directory is always dirty, whereas an indexed directory is
-        dirty only if the `mtime` in the record and the current `mtime`
-        differ."""
+        """Syncs Files table with the filesystem and ensures that the correct
+        path is associated with each file ID. Does so by traversing the file
+        tree recursively, looking for dirty directories. A dirty directory is a
+        directory that possibly contains previously indexed files which were
+        moved into it.  An unindexed directory is always dirty, whereas an
+        indexed directory is dirty only if the `mtime` in the record and the
+        current `mtime` differ."""
         cursor = self.con.execute("SELECT id, path, mtime FROM Files WHERE is_dir = 1")
         for dir in cursor:
             id, path, old_mtime = dir
@@ -101,7 +110,6 @@ class FileIdManager(LoggingConfigurable):
             if dir_dirty:
                 self._sync_dir(path)
                 self._update(id, stat_info)
-        self.con.commit()
 
     def _sync_dir(self, dir_path):
         """Syncs the contents of a directory. Indexes previously unindexed
@@ -114,15 +122,15 @@ class FileIdManager(LoggingConfigurable):
                 # treat unindexed directories as dirty. create a new record and
                 # recursive sync dir contents.
                 if stat_info.is_dir and id is None:
-                    # commits transactions in _sync_all()
                     self._create(entry.path, stat_info)
                     self._sync_dir(entry.path)
         scan_iter.close()
 
     def _sync_file(self, path, stat_info):
-        """Detects whether the file at path was a previously indexed file moved
-        out-of-band. Returns the file ID and updates the record with the new
-        path if an out-of-band move is indicated. Returns None otherwise."""
+        """Syncs the file at path with the Files table by detecting whether the
+        file was previously indexed but moved. Updates the record with the new
+        path and returns the file ID if the file was previously indexed. Returns
+        None otherwise."""
         src = self.con.execute(
             "SELECT id, crtime, mtime FROM Files WHERE ino = ?", (stat_info.ino,)
         ).fetchone()
@@ -144,7 +152,6 @@ class FileIdManager(LoggingConfigurable):
         # otherwise delete the existing record with identical `ino`, since inos
         # must be unique. then return None
         self.con.execute("DELETE FROM Files WHERE id = ?", (id,))
-        self.con.commit()
         return None
 
     def _normalize_path(self, path):
@@ -198,8 +205,6 @@ class FileIdManager(LoggingConfigurable):
             (path, stat_info.ino, stat_info.crtime, stat_info.mtime, stat_info.is_dir),
         )
 
-        self.con.commit()
-
         return cursor.lastrowid
 
     def _update(self, id, stat_info, path=None):
@@ -219,38 +224,38 @@ class FileIdManager(LoggingConfigurable):
                 "UPDATE Files SET ino = ?, crtime = ?, mtime = ? WHERE id = ?",
                 (stat_info.ino, stat_info.crtime, stat_info.mtime, id),
             )
-        self.con.commit()
 
     def index(self, path):
         """Returns the file ID for the file at `path`, creating a new file ID if
-        one does not exist. Returns None only if file does not exist at path.
-        Note that this essentially just wraps `get_id()` and creates a new
-        record if it returns None and the file exists."""
-        stat_info = StatStruct()
-        existing_id = self.get_id(path, stat_info)
-        if existing_id is not None:
-            return existing_id
-        if stat_info.empty:
-            return None
-
-        # if path does not exist in the DB and an out-of-band move is not indicated, create a new record
+        one does not exist. Returns None only if file does not exist at path."""
         path = self._normalize_path(path)
-        return self._create(path, stat_info)
-
-    def get_id(self, path, stat_info=None):
-        """Retrieves the file ID associated with a file path. Tracks out-of-band
-        moves by searching the table for a record with an identical `ino` and
-        `crtime` (falling back to `mtime` if `crtime` is not supported on the
-        current platform). Updates the file's stat info on invocation and caches
-        this in the `stat_info` arg if passed.  Returns None if the file has not
-        yet been indexed or does not exist at the given path."""
-        path = self._normalize_path(path)
-        stat_info = self._stat(path, stat_info)
+        stat_info = self._stat(path)
         if not stat_info:
             return None
 
-        # then check if file at path was indexed but moved out-of-band
-        return self._sync_file(path, stat_info)
+        # sync file at path and return file ID if it exists
+        id = self._sync_file(path, stat_info)
+        if id is not None:
+            return id
+
+        # otherwise, create a new record and return the file ID
+        id = self._create(path, stat_info)
+        self.con.commit()
+        return id
+
+    def get_id(self, path):
+        """Retrieves the file ID associated with a file path. Returns None if
+        the file has not yet been indexed or does not exist at the given
+        path."""
+        path = self._normalize_path(path)
+        stat_info = self._stat(path)
+        if not stat_info:
+            return None
+
+        # then sync file at path and retrieve id, if any
+        id = self._sync_file(path, stat_info)
+        self.con.commit()
+        return id
 
     def get_path(self, id):
         """Retrieves the file path associated with a file ID. Returns None if
@@ -290,20 +295,21 @@ class FileIdManager(LoggingConfigurable):
                     "UPDATE Files SET path = ?, mtime = ? WHERE id = ?",
                     (new_recpath, rec_stat_info.mtime, id),
                 )
-            self.con.commit()
 
         # attempt to fetch ID associated with old path
         # we avoid using get_id() here since that will always return None as file no longer exists at old path
         row = self.con.execute("SELECT id FROM Files WHERE path = ?", (old_path,)).fetchone()
         if row is None:
             # if no existing record, create a new one
-            # TODO: pass stat info to avoid useless syscall
-            return self.index(new_path)
+            id = self._create(new_path, stat_info)
+            self.con.commit()
+            return id
         else:
             # update existing record with new path and stat info
             # TODO: make sure is_dir for existing record matches that of file at new_path
             id = row[0]
             self._update(id, stat_info, new_path)
+            self.con.commit()
             return id
 
     def copy(self, from_path, to_path, recursive=False):
@@ -339,8 +345,8 @@ class FileIdManager(LoggingConfigurable):
                         stat_info.is_dir,
                     ),
                 )
-            self.con.commit()
 
+        # transaction committed in index()
         self.index(from_path)
         return self.index(to_path)
 
@@ -353,7 +359,6 @@ class FileIdManager(LoggingConfigurable):
         if recursive:
             path_glob = os.path.join(path, "*")
             self.con.execute("DELETE FROM Files WHERE path GLOB ?", (path_glob,))
-            self.con.commit()
 
         self.con.execute("DELETE FROM Files WHERE path = ?", (path,))
         self.con.commit()
