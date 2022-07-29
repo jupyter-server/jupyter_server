@@ -2341,7 +2341,8 @@ class ServerApp(JupyterApp):
             max_buffer_size=self.max_buffer_size,
         )
 
-        success = self._bind_http_server()
+        # binding sockets must be called from inside an event loop
+        success = self.io_loop.run_sync(self._bind_http_server)
         if not success:
             self.log.critical(
                 _i18n(
@@ -2482,6 +2483,9 @@ class ServerApp(JupyterApp):
             self._preferred_dir_validation(self.preferred_dir, self.root_dir)
         if self._dispatching:
             return
+        # initialize io loop as early as possible,
+        # so configurables, extensions may reference the event loop
+        self.init_ioloop()
         # Then, use extensions' config loading mechanism to
         # update config. ServerApp config takes precedence.
         if find_extensions:
@@ -2507,7 +2511,6 @@ class ServerApp(JupyterApp):
         self.init_components()
         self.init_webapp()
         self.init_signal()
-        self.init_ioloop()
         self.load_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
