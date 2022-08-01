@@ -92,13 +92,25 @@ class FileIdManager(LoggingConfigurable):
         scan_iter.close()
 
     def _sync_all(self):
-        """Syncs Files table with the filesystem and ensures that the correct
-        path is associated with each file ID. Does so by traversing the file
-        tree recursively, looking for dirty directories. A dirty directory is a
-        directory that possibly contains previously indexed files which were
-        moved into it.  An unindexed directory is always dirty, whereas an
-        indexed directory is dirty only if the `mtime` in the record and the
-        current `mtime` differ."""
+        """
+        Syncs Files table with the filesystem and ensures that the correct path
+        is associated with each file ID. Does so by iterating through all
+        indexed directories and syncing the contents of all dirty directories.
+
+        Notes
+        -----
+        A dirty directory is a directory that is either:
+        - unindexed
+        - indexed but moved
+        - indexed but with different `mtime`
+
+        Dirty directories contain possibly indexed but moved files as children.
+        Hence we need to call _sync_file() on their contents via _sync_dir().
+        Indexed directories that are dirty solely because of mtime difference
+        are included in the below SELECT query. Unindexed or indexed-but-moved
+        dirty directories are not included in the query, and hence must be
+        handled in _sync_dir().
+        """
         cursor = self.con.execute("SELECT id, path, mtime FROM Files WHERE is_dir = 1")
         for dir in cursor:
             id, path, old_mtime = dir
@@ -115,34 +127,58 @@ class FileIdManager(LoggingConfigurable):
                 self._update(id, stat_info)
 
     def _sync_dir(self, dir_path):
-        """Syncs the contents of a directory. Indexes previously unindexed
-        directories and recursively syncs their contents."""
+        """
+        Syncs the contents of a directory. If a child directory is dirty because
+        it is either unindexed or indexed-but-moved, then the contents of that
+        child directory are synced. See _sync_all() for more on dirty
+        directories.
+        """
         with os.scandir(dir_path) as scan_iter:
             for entry in scan_iter:
                 stat_info = self._parse_raw_stat(entry.stat())
-                id = self._sync_file(entry.path, stat_info)
+                id, is_dirty_dir = self._sync_file(entry.path, stat_info)
 
-                # treat unindexed directories as dirty. create a new record and
-                # recursive sync dir contents.
-                if stat_info.is_dir and id is None:
+                if id is None:
                     self._create(entry.path, stat_info)
+
+                # sync dirty dir contents if it is either unindexed or
+                # indexed-but-moved
+                if is_dirty_dir:
                     self._sync_dir(entry.path)
+
         scan_iter.close()
 
     def _sync_file(self, path, stat_info):
-        """Syncs the file at path with the Files table by detecting whether the
+        """
+        Syncs the file at `path` with the Files table by detecting whether the
         file was previously indexed but moved. Updates the record with the new
-        path and returns the file ID if the file was previously indexed. Returns
-        None otherwise."""
+        path. This ensures that the file at path is associated with the correct
+        file ID. This method does nothing if the file at `path` was not
+        previously indexed.
+
+        Returns
+        -------
+        Returns a two-tuple containing the elements
+
+        id : int, optional
+            ID of the file if it was previously indexed. None otherwise.
+
+        dir_dirty: bool
+            Whether the file is a dirty directory and should be traversed by
+            _sync_dir(). Not necessarily true even if the `mtime` differs, since
+            directories which are dirty only because of `mtime` difference are
+            included in the query run by _sync_all(). See _sync_all() for more
+            on dirty directories.
+        """
         src = self.con.execute(
-            "SELECT id, crtime, mtime FROM Files WHERE ino = ?", (stat_info.ino,)
+            "SELECT id, path, crtime, mtime FROM Files WHERE ino = ?", (stat_info.ino,)
         ).fetchone()
 
         # if no record with matching ino, then return None
         if not src:
-            return None
+            return None, stat_info.is_dir
 
-        id, src_crtime, src_mtime = src
+        id, old_path, src_crtime, src_mtime = src
         src_timestamp = src_crtime if src_crtime is not None else src_mtime
         dst_timestamp = stat_info.crtime if stat_info.crtime is not None else stat_info.mtime
 
@@ -150,12 +186,12 @@ class FileIdManager(LoggingConfigurable):
         # update it with new destination path and stat info, returning its id
         if src_timestamp == dst_timestamp:
             self._update(id, stat_info, path)
-            return id
+            return id, stat_info.is_dir and old_path != path
 
         # otherwise delete the existing record with identical `ino`, since inos
         # must be unique. then return None
         self.con.execute("DELETE FROM Files WHERE id = ?", (id,))
-        return None
+        return None, stat_info.is_dir
 
     def _normalize_path(self, path):
         """Normalizes a given file path."""
@@ -187,9 +223,8 @@ class FileIdManager(LoggingConfigurable):
         return stat_info
 
     def _stat(self, path):
-        """Returns stat info on a path in a StatStruct object. Writes to
-        `stat_info` StatStruct arg if passed. Returns None if file does not
-        exist at path."""
+        """Returns stat info on a path in a StatStruct object.Returns None if
+        file does not exist at path."""
         stat_info = StatStruct()
 
         try:
@@ -200,7 +235,7 @@ class FileIdManager(LoggingConfigurable):
         return self._parse_raw_stat(raw_stat, stat_info)
 
     def _create(self, path, stat_info):
-        """Creates a record given its stat info and path. Returns the new file
+        """Creates a record given its path and stat info. Returns the new file
         ID."""
         cursor = self.con.execute(
             "INSERT INTO Files (path, ino, crtime, mtime, is_dir) VALUES (?, ?, ?, ?, ?)",
@@ -210,7 +245,7 @@ class FileIdManager(LoggingConfigurable):
         return cursor.lastrowid
 
     def _update(self, id, stat_info, path=None):
-        """Updates a record given its file ID."""
+        """Updates a record given its file ID, stat info, and possibly path."""
         if path is not None:
             self.con.execute(
                 "UPDATE Files SET path = ?, ino = ?, crtime = ?, mtime = ? WHERE id = ?",
@@ -236,7 +271,7 @@ class FileIdManager(LoggingConfigurable):
             return None
 
         # sync file at path and return file ID if it exists
-        id = self._sync_file(path, stat_info)
+        id, _ = self._sync_file(path, stat_info)
         if id is not None:
             return id
 
@@ -256,7 +291,7 @@ class FileIdManager(LoggingConfigurable):
             return None
 
         # then sync file at path and retrieve id, if any
-        id = self._sync_file(path, stat_info)
+        id, _ = self._sync_file(path, stat_info)
         self.con.commit()
         return id
 

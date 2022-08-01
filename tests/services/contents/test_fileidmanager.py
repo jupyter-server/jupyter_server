@@ -141,6 +141,30 @@ def test_get_path_oob_move(fid_manager, old_path, new_path):
     assert fid_manager.get_path(id) == new_path
 
 
+def test_get_path_oob_move_recursive(
+    fid_manager, old_path, old_path_child, new_path, new_path_child
+):
+    id = fid_manager.index(old_path)
+    child_id = fid_manager.index(old_path_child)
+
+    os.rename(old_path, new_path)
+
+    assert fid_manager.get_path(id) == new_path
+    assert fid_manager.get_path(child_id) == new_path_child
+
+
+def test_get_path_oob_move_into_unindexed(
+    fid_manager, old_path, old_path_child, new_path, new_path_child
+):
+    fid_manager.index(old_path)
+    id = fid_manager.index(old_path_child)
+
+    os.mkdir(new_path)
+    os.rename(old_path_child, new_path_child)
+
+    assert fid_manager.get_path(id) == new_path_child
+
+
 def test_move_unindexed(fid_manager, old_path, new_path):
     os.rename(old_path, new_path)
     id = fid_manager.move(old_path, new_path)
