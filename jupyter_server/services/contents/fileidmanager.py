@@ -87,7 +87,7 @@ class FileIdManager(LoggingConfigurable):
         with os.scandir(dir_path) as scan_iter:
             for entry in scan_iter:
                 if entry.is_dir():
-                    self._index_dir_recursively(entry.path, self._parse_raw_stat(entry.stat()))
+                    self._index_dir_recursively(entry.path, self._stat(entry.path))
         scan_iter.close()
 
     def _sync_all(self):
@@ -134,7 +134,7 @@ class FileIdManager(LoggingConfigurable):
         """
         with os.scandir(dir_path) as scan_iter:
             for entry in scan_iter:
-                stat_info = self._parse_raw_stat(entry.stat())
+                stat_info = self._stat(entry.path)
                 id, is_dirty_dir = self._sync_file(entry.path, stat_info)
 
                 # if entry is unindexed directory, create new record
