@@ -9,7 +9,6 @@ from traitlets.config.configurable import LoggingConfigurable
 
 
 class StatStruct:
-    empty = True
     ino: int
     crtime: Optional[int]
     mtime: int
@@ -64,8 +63,8 @@ class FileIdManager(LoggingConfigurable):
             ")"
         )
         self._index_all()
+        # no need to index ino as it is autoindexed by sqlite via UNIQUE constraint
         self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_path ON Files (path)")
-        self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_ino ON Files (ino)")
         self.con.execute("CREATE INDEX IF NOT EXISTS ix_Files_is_dir ON Files (is_dir)")
         self.con.commit()
 
@@ -138,7 +137,8 @@ class FileIdManager(LoggingConfigurable):
                 stat_info = self._parse_raw_stat(entry.stat())
                 id, is_dirty_dir = self._sync_file(entry.path, stat_info)
 
-                if id is None:
+                # if entry is unindexed directory, create new record
+                if stat_info.is_dir and id is None:
                     self._create(entry.path, stat_info)
 
                 # sync dirty dir contents if it is either unindexed or
@@ -201,13 +201,11 @@ class FileIdManager(LoggingConfigurable):
         path = os.path.normpath(path)
         return path
 
-    def _parse_raw_stat(self, raw_stat, stat_info=None):
+    def _parse_raw_stat(self, raw_stat):
         """Accepts an `os.stat_result` object and returns a `StatStruct`
-        object. Writes to `stat_info` argument if passed."""
-        if stat_info is None:
-            stat_info = StatStruct()
+        object."""
+        stat_info = StatStruct()
 
-        stat_info.empty = False
         stat_info.ino = raw_stat.st_ino
         stat_info.crtime = (
             raw_stat.st_ctime_ns
@@ -225,14 +223,12 @@ class FileIdManager(LoggingConfigurable):
     def _stat(self, path):
         """Returns stat info on a path in a StatStruct object.Returns None if
         file does not exist at path."""
-        stat_info = StatStruct()
-
         try:
             raw_stat = os.stat(path)
         except OSError:
             return None
 
-        return self._parse_raw_stat(raw_stat, stat_info)
+        return self._parse_raw_stat(raw_stat)
 
     def _create(self, path, stat_info):
         """Creates a record given its path and stat info. Returns the new file
@@ -300,6 +296,7 @@ class FileIdManager(LoggingConfigurable):
         the ID does not exist in the Files table or if the corresponding path no
         longer has a file."""
         self._sync_all()
+        self.con.commit()
         row = self.con.execute("SELECT path FROM Files WHERE id = ?", (id,)).fetchone()
         return row[0] if row else None
 
