@@ -44,9 +44,9 @@ class FileIdManager(LoggingConfigurable):
         config=True,
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         # pass args and kwargs to parent Configurable
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         # initialize connection with db
         self.con = sqlite3.connect(self.db_path)
         self.log.debug("FileIdManager : Creating File ID tables and indices")
