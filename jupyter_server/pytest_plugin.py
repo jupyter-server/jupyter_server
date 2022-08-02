@@ -477,7 +477,12 @@ def delete_fid_db(fid_db_path):
 @pytest.fixture
 def fid_manager(fid_db_path, tmp_path):
     """Fixture returning a test-configured instance of `FileIdManager`."""
-    return FileIdManager(db_path=fid_db_path, root_dir=str(tmp_path))
+    fid_manager = FileIdManager(db_path=fid_db_path, root_dir=str(tmp_path))
+    # disable journal so no temp journal file is created under `tmp_path`.
+    # reduces test flakiness since sometimes journal file has same ino and
+    # crtime as a deleted file, so FID manager detects it wrongly as a move
+    fid_manager.con.execute("PRAGMA journal_mode = OFF")
+    return fid_manager
 
 
 @pytest.fixture

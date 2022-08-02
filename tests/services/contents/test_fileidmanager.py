@@ -68,15 +68,18 @@ def test_index_already_indexed(fid_manager, test_path):
     assert id == fid_manager.index(test_path)
 
 
+# test out-of-band move detection for FIM.index()
+def test_index_oob_move(fid_manager, old_path, new_path):
+    id = fid_manager.index(old_path)
+    os.rename(old_path, new_path)
+    assert fid_manager.index(new_path) == id
+
+
 def test_getters_indexed(fid_manager, test_path):
     id = fid_manager.index(test_path)
 
     assert fid_manager.get_id(test_path) == id
     assert fid_manager.get_path(id) == test_path
-
-
-def test_get_id_unindexed(fid_manager, test_path_child):
-    assert fid_manager.get_id(test_path_child) == None
 
 
 def test_getters_nonnormalized(fid_manager, test_path):
@@ -92,11 +95,17 @@ def test_getters_nonnormalized(fid_manager, test_path):
     assert fid_manager.get_id(path3) == id
 
 
-# test out-of-band move detection for FIM.index()
-def test_index_oob_move(fid_manager, old_path, new_path):
-    id = fid_manager.index(old_path)
-    os.rename(old_path, new_path)
-    assert fid_manager.index(new_path) == id
+def test_getters_oob_delete(fid_manager, test_path):
+    id = fid_manager.index(test_path)
+    os.rmdir(test_path)
+    print(fid_manager.con.execute("select * from Files").fetchall())
+    assert id is not None
+    assert fid_manager.get_id(test_path) == None
+    assert fid_manager.get_path(id) == None
+
+
+def test_get_id_unindexed(fid_manager, test_path_child):
+    assert fid_manager.get_id(test_path_child) == None
 
 
 # test out-of-band move detection for FIM.get_id()

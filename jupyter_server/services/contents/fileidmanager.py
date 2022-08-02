@@ -298,7 +298,13 @@ class FileIdManager(LoggingConfigurable):
         self._sync_all()
         self.con.commit()
         row = self.con.execute("SELECT path FROM Files WHERE id = ?", (id,)).fetchone()
-        return row[0] if row else None
+        path = row and row[0]
+
+        # if no record associated with ID or if file no longer exists at path, return None
+        if path is None or self._stat(path) is None:
+            return None
+
+        return path
 
     def move(self, old_path, new_path, recursive=False):
         """Handles file moves by updating the file path of the associated file
