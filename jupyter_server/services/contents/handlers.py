@@ -218,13 +218,13 @@ class ContentsHandler(ContentsAPIHandler):
                     raise web.HTTPError(400, f"Cannot copy file or directory {path!r}")
                 else:
                     await self._copy(copy_from, path)
-
-            ext = model.get("ext", "")
-            type = model.get("type", "")
-            if type not in {None, "", "directory", "file", "notebook"}:
-                # fall back to file if unknown type
-                type = "file"
-            await self._new_untitled(path, type=type, ext=ext)
+            else:
+                ext = model.get("ext", "")
+                type = model.get("type", "")
+                if type not in {None, "", "directory", "file", "notebook"}:
+                    # fall back to file if unknown type
+                    type = "file"
+                await self._new_untitled(path, type=type, ext=ext)
         else:
             await self._new_untitled(path)
 
