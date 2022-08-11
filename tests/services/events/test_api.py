@@ -5,7 +5,6 @@ import pathlib
 
 import pytest
 import tornado
-from pythonjsonlogger import jsonlogger
 
 from tests.utils import expected_http_error
 

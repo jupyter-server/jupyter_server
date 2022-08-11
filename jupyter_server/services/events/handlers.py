@@ -6,7 +6,6 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from pythonjsonlogger import jsonlogger
 from tornado import web, websocket
 
 from jupyter_server.auth import authorized
