@@ -6,7 +6,6 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from jupyter_events.logger import _skip_message
 from pythonjsonlogger import jsonlogger
 from tornado import web, websocket
 
@@ -63,21 +62,16 @@ class SubscribeWebsocket(
         EventBus to a WebSocket client in the browser.
         """
         self.logging_handler = WebSocketLoggingHandler(self)
-        # Add a JSON formatter to the handler.
-        formatter = jsonlogger.JsonFormatter(json_serializer=_skip_message)
-        self.logging_handler.setFormatter(formatter)
         # To do: add an eventlog.add_handler method to jupyter_events.
-        self.event_bus.log.addHandler(self.logging_handler)
-        self.event_bus.handlers.append(self.logging_handler)
+        self.event_logger.register_handler(self.logging_handler)
 
     def on_close(self):
-        self.event_bus.log.removeHandler(self.logging_handler)
-        self.event_bus.handlers.remove(self.logging_handler)
+        self.event_logger.remove_handler(self.logging_handler)
 
 
 def validate_model(data: Dict[str, Any]) -> None:
     """Validates for required fields in the JSON request body"""
-    required_keys = {"schema_name", "version", "event"}
+    required_keys = {"schema_id", "version", "event"}
     for key in required_keys:
         if key not in data:
             raise web.HTTPError(400, f"Missing `{key}` in the JSON request body.")
@@ -115,10 +109,10 @@ class EventHandler(APIHandler):
 
         try:
             validate_model(payload)
-            self.event_bus.record_event(
-                schema_name=payload.get("schema_name"),
+            self.event_logger.emit(
+                schema_id=payload.get("schema_id"),
                 version=payload.get("version"),
-                event=payload.get("event"),
+                data=payload.get("event"),
                 timestamp_override=get_timestamp(payload),
             )
             self.set_status(204)

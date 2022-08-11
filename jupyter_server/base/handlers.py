@@ -335,8 +335,8 @@ class JupyterHandler(AuthenticatedHandler):
         return self.settings["config_manager"]
 
     @property
-    def event_bus(self):
-        return self.settings["event_bus"]
+    def event_logger(self):
+        return self.settings["event_logger"]
 
     # ---------------------------------------------------------------
     # CORS
