@@ -70,7 +70,7 @@ class SubscribeWebsocket(
 
 def validate_model(data: Dict[str, Any]) -> None:
     """Validates for required fields in the JSON request body"""
-    required_keys = {"schema_id", "version", "event"}
+    required_keys = {"schema_id", "version", "data"}
     for key in required_keys:
         if key not in data:
             raise web.HTTPError(400, f"Missing `{key}` in the JSON request body.")
@@ -111,7 +111,7 @@ class EventHandler(APIHandler):
             self.event_logger.emit(
                 schema_id=payload.get("schema_id"),
                 version=payload.get("version"),
-                data=payload.get("event"),
+                data=payload.get("data"),
                 timestamp_override=get_timestamp(payload),
             )
             self.set_status(204)

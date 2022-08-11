@@ -46,7 +46,7 @@ payload_1 = """\
 {
     "schema_id": "event.mock.jupyter.org/message",
     "version": 1,
-    "event": {
+    "data": {
         "event_message": "Hello, world!"
     },
     "timestamp": "2022-05-26T12:50:00+06:00Z"
@@ -57,7 +57,7 @@ payload_2 = """\
 {
     "schema_id": "event.mock.jupyter.org/message",
     "version": 1,
-    "event": {
+    "data": {
         "event_message": "Hello, world!"
     }
 }
@@ -75,7 +75,7 @@ async def test_post_event(jp_fetch, event_logger_sink, payload):
     assert output
     input = json.loads(payload)
     data = json.loads(output)
-    assert input["event"]["event_message"] == data["event_message"]
+    assert input["data"]["event_message"] == data["event_message"]
     assert data["__timestamp__"]
     if "timestamp" in input:
         assert input["timestamp"] == data["__timestamp__"]
@@ -84,7 +84,7 @@ async def test_post_event(jp_fetch, event_logger_sink, payload):
 payload_3 = """\
 {
     "schema_id": "event.mock.jupyter.org/message",
-    "event": {
+    "data": {
         "event_message": "Hello, world!"
     }
 }
@@ -93,7 +93,7 @@ payload_3 = """\
 payload_4 = """\
 {
     "version": 1,
-    "event": {
+    "data": {
         "event_message": "Hello, world!"
     }
 }
@@ -110,7 +110,7 @@ payload_6 = """\
 {
     "schema_id": "event.mock.jupyter.org/message",
     "version": 1,
-    "event": {
+    "data": {
         "event_message": "Hello, world!"
     },
     "timestamp": "2022-05-26 12:50:00"
@@ -130,7 +130,7 @@ payload_7 = """\
 {
     "schema_id": "event.mock.jupyter.org/message",
     "version": 1,
-    "event": {
+    "data": {
         "message": "Hello, world!"
     }
 }
@@ -140,7 +140,7 @@ payload_8 = """\
 {
     "schema_id": "event.mock.jupyter.org/message",
     "version": 2,
-    "event": {
+    "data": {
         "message": "Hello, world!"
     }
 }
