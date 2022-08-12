@@ -271,7 +271,7 @@ class SessionManager(LoggingConfigurable):
     async def start_kernel_for_session(self, session_id, path, name, type, kernel_name):
         """Start a new kernel for a given session."""
         # allow contents manager to specify kernels cwd
-        kernel_path = self.contents_manager.get_kernel_path(path=path)
+        kernel_path = await ensure_async(self.contents_manager.get_kernel_path(path=path))
         kernel_id = await self.kernel_manager.start_kernel(
             path=kernel_path,
             kernel_name=kernel_name,
