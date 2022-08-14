@@ -430,10 +430,7 @@ class RetryableHTTPClient:
     MAX_RETRIES_DEFAULT = 2
     MAX_RETRIES_CAP = 10  # The upper limit to max_retries value.
     max_retries: int = int(os.getenv("JUPYTER_GATEWAY_MAX_REQUEST_RETRIES", MAX_RETRIES_DEFAULT))
-    if max_retries < 0:
-        max_retries = 0
-    elif max_retries > MAX_RETRIES_CAP:
-        max_retries = MAX_RETRIES_CAP
+    max_retries = max(0, min(max_retries, MAX_RETRIES_CAP))  # Enforce boundaries
     retried_methods: ty.Set[str] = {"GET", "DELETE"}
     retried_errors: ty.Set[int] = {502, 503, 504, 599}
     retried_exceptions: ty.Set[type] = {ConnectionError}
