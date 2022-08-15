@@ -1,11 +1,14 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import asyncio
 import json
+import logging
 import os
+import typing as ty
 from socket import gaierror
 
 from tornado import web
-from tornado.httpclient import AsyncHTTPClient, HTTPError
+from tornado.httpclient import AsyncHTTPClient, HTTPClientError, HTTPResponse
 from traitlets import Bool, Float, Int, TraitError, Unicode, default, validate
 from traitlets.config import SingletonConfigurable
 
@@ -417,40 +420,101 @@ class GatewayClient(SingletonConfigurable):
         return kwargs
 
 
-async def gateway_request(endpoint, **kwargs):
+class RetryableHTTPClient:
+    """
+    Inspired by urllib.util.Retry (https://urllib3.readthedocs.io/en/stable/reference/urllib3.util.html),
+    this class is initialized with desired retry characteristics, uses a recursive method `fetch()` against an instance
+    of `AsyncHTTPClient` which tracks the current retry count across applicable request retries.
+    """
+
+    MAX_RETRIES_DEFAULT = 2
+    MAX_RETRIES_CAP = 10  # The upper limit to max_retries value.
+    max_retries: int = int(os.getenv("JUPYTER_GATEWAY_MAX_REQUEST_RETRIES", MAX_RETRIES_DEFAULT))
+    max_retries = max(0, min(max_retries, MAX_RETRIES_CAP))  # Enforce boundaries
+    retried_methods: ty.Set[str] = {"GET", "DELETE"}
+    retried_errors: ty.Set[int] = {502, 503, 504, 599}
+    retried_exceptions: ty.Set[type] = {ConnectionError}
+    backoff_factor: float = 0.1
+
+    def __init__(self):
+        self.retry_count: int = 0
+        self.client: AsyncHTTPClient = AsyncHTTPClient()
+
+    async def fetch(self, endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
+        """
+        Retryable AsyncHTTPClient.fetch() method.  When the request fails, this method will
+        recurse up to max_retries times if the condition deserves a retry.
+        """
+        self.retry_count = 0
+        return await self._fetch(endpoint, **kwargs)
+
+    async def _fetch(self, endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
+        """
+        Performs the fetch against the contained AsyncHTTPClient instance and determines
+        if retry is necessary on any exceptions.  If so, retry is performed recursively.
+        """
+        try:
+            response: HTTPResponse = await self.client.fetch(endpoint, **kwargs)
+        except Exception as e:
+            is_retryable: bool = await self._is_retryable(kwargs["method"], e)
+            if not is_retryable:
+                raise e
+            logging.getLogger("ServerApp").info(
+                f"Attempting retry ({self.retry_count}) against "
+                f"endpoint '{endpoint}'.  Retried error: '{repr(e)}'"
+            )
+            response = await self._fetch(endpoint, **kwargs)
+        return response
+
+    async def _is_retryable(self, method: str, exception: Exception) -> bool:
+        """Determines if the given exception is retryable based on object's configuration."""
+
+        if method not in self.retried_methods:
+            return False
+        if self.retry_count == self.max_retries:
+            return False
+
+        # Determine if error is retryable...
+        if isinstance(exception, HTTPClientError):
+            hce: HTTPClientError = exception
+            if hce.code not in self.retried_errors:
+                return False
+        elif not any(isinstance(exception, error) for error in self.retried_exceptions):
+            return False
+
+        # Is retryable, wait for backoff, then increment count
+        await asyncio.sleep(self.backoff_factor * (2**self.retry_count))
+        self.retry_count += 1
+        return True
+
+
+async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
     """Make an async request to kernel gateway endpoint, returns a response"""
-    client = AsyncHTTPClient()
     kwargs = GatewayClient.instance().load_connection_args(**kwargs)
+    rhc = RetryableHTTPClient()
     try:
-        response = await client.fetch(endpoint, **kwargs)
+        response = await rhc.fetch(endpoint, **kwargs)
     # Trap a set of common exceptions so that we can inform the user that their Gateway url is incorrect
     # or the server is not running.
-    # NOTE: We do this here since this handler is called during the Notebook's startup and subsequent refreshes
+    # NOTE: We do this here since this handler is called during the server's startup and subsequent refreshes
     # of the tree view.
-    except ConnectionRefusedError as e:
-        raise web.HTTPError(
-            503,
-            "Connection refused from Gateway server url '{}'.  "
-            "Check to be sure the Gateway instance is running.".format(
-                GatewayClient.instance().url
-            ),
-        ) from e
-    except HTTPError as e:
-        # This can occur if the host is valid (e.g., foo.com) but there's nothing there.
+    except HTTPClientError as e:
         raise web.HTTPError(
             e.code,
-            "Error attempting to connect to Gateway server url '{}'.  "
-            "Ensure gateway url is valid and the Gateway instance is running.".format(
-                GatewayClient.instance().url
-            ),
+            f"Error attempting to connect to Gateway server url '{GatewayClient.instance().url}'.  "
+            "Ensure gateway url is valid and the Gateway instance is running.",
+        ) from e
+    except ConnectionError as e:
+        raise web.HTTPError(
+            503,
+            f"ConnectionError was received from Gateway server url '{GatewayClient.instance().url}'.  "
+            "Check to be sure the Gateway instance is running.",
         ) from e
     except gaierror as e:
         raise web.HTTPError(
             404,
-            "The Gateway server specified in the gateway_url '{}' doesn't appear to be valid.  "
-            "Ensure gateway url is valid and the Gateway instance is running.".format(
-                GatewayClient.instance().url
-            ),
+            f"The Gateway server specified in the gateway_url '{GatewayClient.instance().url}' doesn't "
+            f"appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
 
     return response
