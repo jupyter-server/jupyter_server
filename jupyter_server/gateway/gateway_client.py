@@ -442,8 +442,16 @@ class RetryableHTTPClient:
 
     async def fetch(self, endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
         """
-        Retryable AsyncHTTPClient.fetch method.  When the request fails, this method will
+        Retryable AsyncHTTPClient.fetch() method.  When the request fails, this method will
         recurse up to max_retries times if the condition deserves a retry.
+        """
+        self.retry_count = 0
+        return await self._fetch(endpoint, **kwargs)
+
+    async def _fetch(self, endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
+        """
+        Performs the fetch against the contained AsyncHTTPClient instance and determines
+        if retry is necessary on any exceptions.  If so, retry is performed recursively.
         """
         try:
             response: HTTPResponse = await self.client.fetch(endpoint, **kwargs)
@@ -455,7 +463,7 @@ class RetryableHTTPClient:
                 f"Attempting retry ({self.retry_count}) against "
                 f"endpoint '{endpoint}'.  Retried error: '{repr(e)}'"
             )
-            response = await self.fetch(endpoint, **kwargs)
+            response = await self._fetch(endpoint, **kwargs)
         return response
 
     async def _is_retryable(self, method: str, exception: Exception) -> bool:
