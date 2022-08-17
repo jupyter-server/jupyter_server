@@ -329,12 +329,12 @@ _checkpoint_id_regex = r"(?P<checkpoint_id>[\w-]+)"
 
 
 default_handlers = [
-    (r"/api/contents%s/checkpoints" % path_regex, CheckpointsHandler),
+    (r"/api/checkpoint%s/checkpoints" % path_regex, CheckpointsHandler),
     (
-        r"/api/contents%s/checkpoints/%s" % (path_regex, _checkpoint_id_regex),
+        r"/api/checkpoint%s/checkpoints/%s" % (path_regex, _checkpoint_id_regex),
         ModifyCheckpointsHandler,
     ),
-    (r"/api/contents%s/trust" % path_regex, TrustNotebooksHandler),
+    (r"/api/trust%s/trust" % path_regex, TrustNotebooksHandler),
     (r"/api/contents%s" % path_regex, ContentsHandler),
     (r"/api/notebooks/?(.*)", NotebooksRedirectHandler),
 ]
