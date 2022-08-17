@@ -33,7 +33,14 @@ def old_path(jp_root_dir):
 @pytest.fixture
 def old_path_child(old_path):
     path = os.path.join(old_path, "child")
-    Path(path).touch()
+    os.mkdir(path)
+    return path
+
+
+@pytest.fixture
+def old_path_grandchild(old_path_child):
+    path = os.path.join(old_path_child, "grandchild")
+    os.mkdir(path)
     return path
 
 
@@ -46,6 +53,21 @@ def new_path(jp_root_dir):
 @pytest.fixture
 def new_path_child(new_path):
     return os.path.join(new_path, "child")
+
+
+@pytest.fixture
+def new_path_grandchild(new_path_child):
+    return os.path.join(new_path_child, "grandchild")
+
+
+def get_id_nosync(fid_manager, path):
+    row = fid_manager.con.execute("SELECT id FROM Files WHERE path = ?", (path,)).fetchone()
+    return row and row[0]
+
+
+def get_path_nosync(fid_manager, id):
+    row = fid_manager.con.execute("SELECT path FROM Files WHERE id = ?", (id,)).fetchone()
+    return row and row[0]
 
 
 def test_validates_root_dir(fid_db_path):
@@ -68,11 +90,52 @@ def test_index_already_indexed(fid_manager, test_path):
     assert id == fid_manager.index(test_path)
 
 
+def test_index_symlink(fid_manager, test_path, jp_root_dir):
+    link_path = os.path.join(jp_root_dir, "link_path")
+    os.symlink(test_path, link_path)
+    id = fid_manager.index(link_path)
+
+    # we want to assert that the "real path" is the only path associated with an
+    # ID. get_path() *sometimes* returns the real path if _sync_file() happens
+    # to be called on the real path after the symlink path when _sync_all() is
+    # run, causing this test to flakily pass when it shouldn't.
+    assert get_path_nosync(fid_manager, id) == test_path
+
+
 # test out-of-band move detection for FIM.index()
 def test_index_oob_move(fid_manager, old_path, new_path):
     id = fid_manager.index(old_path)
     os.rename(old_path, new_path)
     assert fid_manager.index(new_path) == id
+
+
+@pytest.fixture
+def stub_stat_crtime(fid_manager, request):
+    """Fixture that stubs the _stat() method on fid_manager to always return a
+    StatStruct with a fixed crtime."""
+    if hasattr(request, "param") and not request.param:
+        return False
+
+    stat_real = fid_manager._stat
+
+    def stat_stub(path):
+        stat = stat_real(path)
+        if stat:
+            stat.crtime = 123456789
+        return stat
+
+    fid_manager._stat = stat_stub
+    return True
+
+
+# sync file should work even after directory mtime changes when children are
+# added/removed/renamed on platforms supporting crtime
+def test_index_crtime(fid_manager, test_path, stub_stat_crtime):
+    stat = os.stat(test_path)
+    id = fid_manager.index(test_path)
+    os.utime(test_path, ns=(stat.st_atime_ns, stat.st_mtime_ns + 1000))
+
+    assert fid_manager.index(test_path) == id
 
 
 def test_getters_indexed(fid_manager, test_path):
@@ -98,7 +161,6 @@ def test_getters_nonnormalized(fid_manager, test_path):
 def test_getters_oob_delete(fid_manager, test_path):
     id = fid_manager.index(test_path)
     os.rmdir(test_path)
-    print(fid_manager.con.execute("select * from Files").fetchall())
     assert id is not None
     assert fid_manager.get_id(test_path) == None
     assert fid_manager.get_path(id) == None
@@ -174,6 +236,49 @@ def test_get_path_oob_move_into_unindexed(
     assert fid_manager.get_path(id) == new_path_child
 
 
+# move file into an indexed-but-moved directory
+# this test should work regardless of whether crtime is supported on platform
+@pytest.mark.parametrize("stub_stat_crtime", [True, False], indirect=["stub_stat_crtime"])
+def test_get_path_oob_move_nested(fid_manager, old_path, new_path, jp_root_dir, stub_stat_crtime):
+    old_test_path = os.path.join(jp_root_dir, "test_path")
+    new_test_path = os.path.join(new_path, "test_path")
+    Path(old_test_path).touch()
+    stat = os.stat(old_test_path)
+    fid_manager.index(old_path)
+    id = fid_manager.index(old_test_path)
+
+    os.rename(old_path, new_path)
+    os.rename(old_test_path, new_test_path)
+    # ensure new_path has different mtime after moving test_path. moving a file
+    # into an indexed-but-moved dir has a chance of not changing the dir's
+    # mtime. since we fallback to mtime, this makes the dir look unindexed and
+    # causes this test to flakily pass when it should not.
+    os.utime(new_path, ns=(stat.st_atime_ns, stat.st_mtime_ns + 1000))
+
+    assert fid_manager.get_path(id) == new_test_path
+
+
+# move file into directory within an indexed-but-moved directory
+# this test should work regardless of whether crtime is supported on platform
+@pytest.mark.parametrize("stub_stat_crtime", [True, False], indirect=["stub_stat_crtime"])
+def test_get_path_oob_move_deeply_nested(
+    fid_manager, old_path, new_path, old_path_child, new_path_child, jp_root_dir, stub_stat_crtime
+):
+    old_test_path = os.path.join(jp_root_dir, "test_path")
+    new_test_path = os.path.join(new_path_child, "test_path")
+    Path(old_test_path).touch()
+    stat = os.stat(old_test_path)
+    fid_manager.index(old_path)
+    fid_manager.index(old_path_child)
+    id = fid_manager.index(old_test_path)
+
+    os.rename(old_path, new_path)
+    os.rename(old_test_path, new_test_path)
+    os.utime(new_path_child, ns=(stat.st_atime_ns, stat.st_mtime_ns + 1000))
+
+    assert fid_manager.get_path(id) == new_test_path
+
+
 def test_move_unindexed(fid_manager, old_path, new_path):
     os.rename(old_path, new_path)
     id = fid_manager.move(old_path, new_path)
@@ -208,15 +313,27 @@ def test_disjoint_move_indexed(fid_manager, old_path, new_path):
     assert old_id == new_id
 
 
-def test_move_recursive(fid_manager, old_path, old_path_child, new_path, new_path_child):
+def test_move_recursive(
+    fid_manager,
+    old_path,
+    old_path_child,
+    old_path_grandchild,
+    new_path,
+    new_path_child,
+    new_path_grandchild,
+):
     parent_id = fid_manager.index(old_path)
     child_id = fid_manager.index(old_path_child)
+    grandchild_id = fid_manager.index(old_path_grandchild)
 
     os.rename(old_path, new_path)
     fid_manager.move(old_path, new_path, recursive=True)
 
-    assert fid_manager.get_id(new_path) == parent_id
-    assert fid_manager.get_id(new_path_child) == child_id
+    # we avoid using get_id() here as it auto-corrects wrong path updates via
+    # its out-of-band move detection logic. too smart for its own good!
+    assert get_id_nosync(fid_manager, new_path) == parent_id
+    assert get_id_nosync(fid_manager, new_path_child) == child_id
+    assert get_id_nosync(fid_manager, new_path_grandchild) == grandchild_id
 
 
 def test_copy(fid_manager, old_path, new_path):
