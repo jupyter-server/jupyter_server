@@ -1318,6 +1318,7 @@ class ServerApp(JupyterApp):
         ),
     )
     terminado_settings = Dict(
+        List(),
         config=True,
         help=_i18n('Supply overrides for terminado. Currently only supports "shell_command".'),
     )
