@@ -31,9 +31,15 @@ class GatewayTokenRenewerBase(ABC, LoggingConfigurable, metaclass=GatewayTokenRe
     """
 
     @abstractmethod
-    def renew_token(self, auth_scheme: str, auth_token: str, **kwargs: ty.Any) -> str:
+    def renew_token(
+        self,
+        auth_header_key: str,
+        auth_scheme: ty.Union[str, None],
+        auth_token: str,
+        **kwargs: ty.Any,
+    ) -> str:
         """
-        Given the current authorization scheme and token, this method returns
+        Given the current authorization header key, scheme, and token, this method returns
         a (potentially) renewed token for use against the Gateway server.
         """
         pass
@@ -44,7 +50,13 @@ class GatewayStaticTokenRenewer(GatewayTokenRenewerBase):
     `gateway_token_renewer` and merely returns the provided token.
     """
 
-    def renew_token(self, auth_scheme: str, auth_token: str, **kwargs: ty.Any) -> str:
+    def renew_token(
+        self,
+        auth_header_key: str,
+        auth_scheme: ty.Union[str, None],
+        auth_token: str,
+        **kwargs: ty.Any,
+    ) -> str:
         """This implementation simply returns the current authorization token."""
         return auth_token
 
@@ -261,6 +273,25 @@ class GatewayClient(SingletonConfigurable):
     def _headers_default(self):
         return os.environ.get(self.headers_env, self.headers_default_value)
 
+    auth_header_key_default_value = "Authorization"
+    auth_header_key = Unicode(
+        config=True,
+        help="""The authorization header's key name (typically 'Authorization') used in the HTTP headers. The
+            header will be formatted as::
+            {
+                '{auth_header_key}': '{auth_scheme} {auth_token}'
+            }
+            if the authorization header key takes a single value, `auth_scheme` should be set to None and
+            'auth_token' should be configured to use the appropriate value.
+
+        (JUPYTER_GATEWAY_AUTH_HEADER_KEY env var)""",
+    )
+    auth_header_key_env = "JUPYTER_GATEWAY_AUTH_HEADER_KEY"
+
+    @default("auth_header_key")
+    def _auth_header_key_default(self):
+        return os.environ.get(self.auth_header_key_env, self.auth_header_key_default_value)
+
     auth_token_default_value = ""
     auth_token = Unicode(
         default_value=None,
@@ -269,7 +300,7 @@ class GatewayClient(SingletonConfigurable):
         help="""The authorization token used in the HTTP headers. The header will be formatted as::
 
             {
-                'Authorization': '{auth_scheme} {auth_token}'
+                '{auth_header_key}': '{auth_scheme} {auth_token}'
             }
 
         (JUPYTER_GATEWAY_AUTH_TOKEN env var)""",
@@ -445,9 +476,9 @@ class GatewayClient(SingletonConfigurable):
         os.environ["KERNEL_LAUNCH_TIMEOUT"] = str(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
 
         self._connection_args["headers"] = json.loads(self.headers)
-        if "Authorization" not in self._connection_args["headers"].keys():
+        if self.auth_header_key not in self._connection_args["headers"].keys():
             self._connection_args["headers"].update(
-                {"Authorization": f"{self.auth_scheme} {self.auth_token}"}
+                {f"{self.auth_header_key}": f"{self.auth_scheme} {self.auth_token}"}
             )
         self._connection_args["connect_timeout"] = self.connect_timeout
         self._connection_args["request_timeout"] = self.request_timeout
@@ -474,7 +505,7 @@ class GatewayClient(SingletonConfigurable):
         prev_auth_token = self.auth_token
         try:
             self.auth_token = self.gateway_token_renewer.renew_token(
-                self.auth_scheme, self.auth_token
+                self.auth_header_key, self.auth_scheme, self.auth_token
             )
         except Exception as ex:
             self.log.error(
@@ -486,7 +517,7 @@ class GatewayClient(SingletonConfigurable):
             self.auth_token = prev_auth_token
 
         self._connection_args["headers"].update(
-            {"Authorization": f"{self.auth_scheme} {self.auth_token}"}
+            {f"{self.auth_header_key}": f"{self.auth_scheme} {self.auth_token}"}
         )
 
         kwargs.update(self._connection_args)
