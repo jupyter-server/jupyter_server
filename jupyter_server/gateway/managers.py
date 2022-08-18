@@ -326,7 +326,8 @@ class GatewayKernelManager(AsyncKernelManager):
         self.kernels_url = url_path_join(
             GatewayClient.instance().url, GatewayClient.instance().kernels_endpoint
         )
-        self.kernel_url = self.kernel = self.kernel_id = None
+        self.kernel_url: str
+        self.kernel = self.kernel_id = None
         # simulate busy/activity markers:
         self.execution_state = self.last_activity = None
 
