@@ -95,8 +95,8 @@ def test_server_password(tmp_path, jp_configurable_serverapp):
         app.start()
         sv = jp_configurable_serverapp()
         sv.load_config_file()
-        assert sv.password != ""
-        passwd_check(sv.password, password)
+        assert sv.identity_provider.hashed_password != ""
+        passwd_check(sv.identity_provider.hashed_password, password)
 
 
 def test_list_running_servers(jp_serverapp, jp_web_app):
@@ -239,12 +239,14 @@ def test_urls(config, public_url, local_url, connection_url):
     # Verify we're working with a clean instance.
     ServerApp.clear_instance()
     serverapp = ServerApp.instance(**config)
+    serverapp.init_configurables()
+    token = serverapp.identity_provider.token
     # If a token is generated (not set by config), update
     # expected_url with token.
-    if serverapp._token_generated:
-        public_url = public_url.replace("<generated>", serverapp.token)
-        local_url = local_url.replace("<generated>", serverapp.token)
-        connection_url = connection_url.replace("<generated>", serverapp.token)
+    if serverapp.identity_provider.token_generated:
+        public_url = public_url.replace("<generated>", token)
+        local_url = local_url.replace("<generated>", token)
+        connection_url = connection_url.replace("<generated>", token)
     assert serverapp.public_url == public_url
     assert serverapp.local_url == local_url
     assert serverapp.connection_url == connection_url

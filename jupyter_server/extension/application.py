@@ -538,6 +538,16 @@ class ExtensionApp(JupyterApp):
         )
         extension.initialize()
 
+    serverapp_class = ServerApp
+
+    @classmethod
+    def make_serverapp(cls, **kwargs):
+        """Instantiate the ServerApp
+
+        Override to customize the ServerApp before it loads any configuration
+        """
+        return cls.serverapp_class.instance(**kwargs)
+
     @classmethod
     def initialize_server(cls, argv=None, load_other_extensions=True, **kwargs):
         """Creates an instance of ServerApp and explicitly sets
@@ -553,7 +563,7 @@ class ExtensionApp(JupyterApp):
             jpserver_extensions.update(cls.serverapp_config["jpserver_extensions"])
             cls.serverapp_config["jpserver_extensions"] = jpserver_extensions
             find_extensions = False
-        serverapp = ServerApp.instance(jpserver_extensions=jpserver_extensions, **kwargs)
+        serverapp = cls.make_serverapp(jpserver_extensions=jpserver_extensions, **kwargs)
         serverapp.aliases.update(cls.aliases)
         serverapp.initialize(
             argv=argv or [],

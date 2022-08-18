@@ -99,7 +99,8 @@ class ContentsHandler(ContentsAPIHandler):
 
         type = self.get_query_argument("type", default=None)
         if type not in {None, "directory", "file", "notebook"}:
-            raise web.HTTPError(400, "Type %r is invalid" % type)
+            # fall back to file if unknown type
+            type = "file"
 
         format = self.get_query_argument("format", default=None)
         if format not in {None, "text", "base64"}:
@@ -207,24 +208,22 @@ class ContentsHandler(ContentsAPIHandler):
             raise web.HTTPError(400, "Cannot POST to files, use PUT instead.")
 
         model = self.get_json_body()
-        copy_from = model.get("copy_from")
-        if (
-            copy_from
-            and (
-                await ensure_async(cm.is_hidden(path))
-                or await ensure_async(cm.is_hidden(copy_from))
-            )
-            and not cm.allow_hidden
-        ):
-            raise web.HTTPError(400, f"Cannot copy file or directory {path!r}")
-
-        if model is not None:
+        if model:
             copy_from = model.get("copy_from")
-            ext = model.get("ext", "")
-            type = model.get("type", "")
             if copy_from:
-                await self._copy(copy_from, path)
+                if not cm.allow_hidden and (
+                    await ensure_async(cm.is_hidden(path))
+                    or await ensure_async(cm.is_hidden(copy_from))
+                ):
+                    raise web.HTTPError(400, f"Cannot copy file or directory {path!r}")
+                else:
+                    await self._copy(copy_from, path)
             else:
+                ext = model.get("ext", "")
+                type = model.get("type", "")
+                if type not in {None, "", "directory", "file", "notebook"}:
+                    # fall back to file if unknown type
+                    type = "file"
                 await self._new_untitled(path, type=type, ext=ext)
         else:
             await self._new_untitled(path)

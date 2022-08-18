@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List
+from typing import Awaitable, Dict, List
 from unittest import mock
 
 import pytest
@@ -37,10 +37,13 @@ class MockUser(User):
 class MockIdentityProvider(IdentityProvider):
     mock_user: MockUser
 
-    def get_user(self, handler):
+    async def get_user(self, handler):
         # super returns a UUID
         # return our mock user instead, as long as the request is authorized
-        authenticated = super().get_user(handler)
+        _authenticated = super().get_user(handler)
+        if isinstance(_authenticated, Awaitable):
+            _authenticated = await _authenticated
+        authenticated = _authenticated
         if isinstance(self.mock_user, dict):
             self.mock_user = MockUser(**self.mock_user)
         if authenticated:

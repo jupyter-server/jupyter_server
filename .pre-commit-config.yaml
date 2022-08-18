@@ -1,3 +1,6 @@
+default_language_version:
+  node: system
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.3.0
@@ -16,7 +19,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 22.6.0
     hooks:
       - id: black
 
@@ -27,10 +30,9 @@ repos:
         files: \.py$
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.961
+    rev: v0.971
     hooks:
       - id: mypy
-        exclude: examples/simple/setup.py
         additional_dependencies: [types-requests]
 
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -39,13 +41,13 @@ repos:
       - id: prettier
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.34.0
+    rev: v2.37.3
     hooks:
       - id: pyupgrade
         args: [--py37-plus]
 
   - repo: https://github.com/PyCQA/doc8
-    rev: 0.11.2
+    rev: v1.0.0
     hooks:
       - id: doc8
         args: [--max-line-length=200]
@@ -53,25 +55,21 @@ repos:
         stages: [manual]
 
   - repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
+    rev: 5.0.4
     hooks:
       - id: flake8
         additional_dependencies:
-          [
-            "flake8-bugbear==20.1.4",
-            "flake8-logging-format==0.6.0",
-            "flake8-implicit-str-concat==0.2.0",
-          ]
+          ["flake8-bugbear==22.6.22", "flake8-implicit-str-concat==0.2.0"]
         stages: [manual]
 
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.18.0
+    rev: v8.22.0
     hooks:
       - id: eslint
         stages: [manual]
 
   - repo: https://github.com/sirosen/check-jsonschema
-    rev: 0.16.2
+    rev: 0.17.1
     hooks:
       - id: check-jsonschema
         name: "Check GitHub Workflows"

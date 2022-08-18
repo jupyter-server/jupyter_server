@@ -1,13 +1,15 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import asyncio
 import json
+import logging
 import os
+import typing as ty
 from abc import ABC, ABCMeta, abstractmethod
 from socket import gaierror
-from typing import Any
 
 from tornado import web
-from tornado.httpclient import AsyncHTTPClient, HTTPError
+from tornado.httpclient import AsyncHTTPClient, HTTPClientError, HTTPResponse
 from traitlets import Bool, Float, Int, TraitError, Type, Unicode, default, validate
 from traitlets.config import LoggingConfigurable, SingletonConfigurable
 
@@ -29,7 +31,7 @@ class GatewayTokenRenewerBase(ABC, LoggingConfigurable, metaclass=GatewayTokenRe
     """
 
     @abstractmethod
-    def renew_token(self, auth_scheme: str, auth_token: str, **kwargs: Any) -> str:
+    def renew_token(self, auth_scheme: str, auth_token: str, **kwargs: ty.Any) -> str:
         """
         Given the current authorization scheme and token, this method returns
         a (potentially) renewed token for use against the Gateway server.
@@ -42,7 +44,7 @@ class GatewayStaticTokenRenewer(GatewayTokenRenewerBase):
     `gateway_token_renewer` and merely returns the provided token.
     """
 
-    def renew_token(self, auth_scheme: str, auth_token: str, **kwargs: Any) -> str:
+    def renew_token(self, auth_scheme: str, auth_token: str, **kwargs: ty.Any) -> str:
         """This implementation simply returns the current authorization token."""
         return auth_token
 
@@ -165,7 +167,7 @@ class GatewayClient(SingletonConfigurable):
             os.environ.get("JUPYTER_GATEWAY_CONNECT_TIMEOUT", self.connect_timeout_default_value)
         )
 
-    request_timeout_default_value = 40.0
+    request_timeout_default_value = 42.0
     request_timeout_env = "JUPYTER_GATEWAY_REQUEST_TIMEOUT"
     request_timeout = Float(
         default_value=request_timeout_default_value,
@@ -287,7 +289,7 @@ class GatewayClient(SingletonConfigurable):
     )
     auth_scheme_env = "JUPYTER_GATEWAY_AUTH_SCHEME"
 
-    @default("auth_scheme_key")
+    @default("auth_scheme")
     def _auth_scheme_default(self):
         return os.environ.get(self.auth_scheme_env, self.auth_scheme_default_value)
 
@@ -388,6 +390,25 @@ class GatewayClient(SingletonConfigurable):
     def gateway_token_renewer_class_default(self):
         return self.gateway_token_renewer_class_default_value
 
+    launch_timeout_pad_default_value = 2.0
+    launch_timeout_pad_env = "JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD"
+    launch_timeout_pad = Float(
+        default_value=launch_timeout_pad_default_value,
+        config=True,
+        help="""Timeout pad to be ensured between KERNEL_LAUNCH_TIMEOUT and request_timeout
+        such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
+        (JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD env var)""",
+    )
+
+    @default("launch_timeout_pad")
+    def launch_timeout_pad_default(self):
+        return float(
+            os.environ.get(
+                "JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD",
+                self.launch_timeout_pad_default_value,
+            )
+        )
+
     @property
     def gateway_enabled(self):
         return bool(self.url is not None and len(self.url) > 0)
@@ -408,12 +429,18 @@ class GatewayClient(SingletonConfigurable):
         """Initialize arguments used on every request.  Since these are primarily static values,
         we'll perform this operation once.
         """
-        # Ensure that request timeout and KERNEL_LAUNCH_TIMEOUT are the same, taking the
-        #  greater value of the two.
-        if self.request_timeout < float(GatewayClient.KERNEL_LAUNCH_TIMEOUT):
-            self.request_timeout = float(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
-        elif self.request_timeout > float(GatewayClient.KERNEL_LAUNCH_TIMEOUT):
-            GatewayClient.KERNEL_LAUNCH_TIMEOUT = int(self.request_timeout)
+        # Ensure that request timeout and KERNEL_LAUNCH_TIMEOUT are in sync, taking the
+        #  greater value of the two and taking into account the following relation:
+        #  request_timeout = KERNEL_LAUNCH_TIME + padding
+        minimum_request_timeout = (
+            float(GatewayClient.KERNEL_LAUNCH_TIMEOUT) + self.launch_timeout_pad
+        )
+        if self.request_timeout < minimum_request_timeout:
+            self.request_timeout = minimum_request_timeout
+        elif self.request_timeout > minimum_request_timeout:
+            GatewayClient.KERNEL_LAUNCH_TIMEOUT = int(
+                self.request_timeout - self.launch_timeout_pad
+            )
         # Ensure any adjustments are reflected in env.
         os.environ["KERNEL_LAUNCH_TIMEOUT"] = str(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
 
@@ -466,40 +493,101 @@ class GatewayClient(SingletonConfigurable):
         return kwargs
 
 
-async def gateway_request(endpoint, **kwargs):
+class RetryableHTTPClient:
+    """
+    Inspired by urllib.util.Retry (https://urllib3.readthedocs.io/en/stable/reference/urllib3.util.html),
+    this class is initialized with desired retry characteristics, uses a recursive method `fetch()` against an instance
+    of `AsyncHTTPClient` which tracks the current retry count across applicable request retries.
+    """
+
+    MAX_RETRIES_DEFAULT = 2
+    MAX_RETRIES_CAP = 10  # The upper limit to max_retries value.
+    max_retries: int = int(os.getenv("JUPYTER_GATEWAY_MAX_REQUEST_RETRIES", MAX_RETRIES_DEFAULT))
+    max_retries = max(0, min(max_retries, MAX_RETRIES_CAP))  # Enforce boundaries
+    retried_methods: ty.Set[str] = {"GET", "DELETE"}
+    retried_errors: ty.Set[int] = {502, 503, 504, 599}
+    retried_exceptions: ty.Set[type] = {ConnectionError}
+    backoff_factor: float = 0.1
+
+    def __init__(self):
+        self.retry_count: int = 0
+        self.client: AsyncHTTPClient = AsyncHTTPClient()
+
+    async def fetch(self, endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
+        """
+        Retryable AsyncHTTPClient.fetch() method.  When the request fails, this method will
+        recurse up to max_retries times if the condition deserves a retry.
+        """
+        self.retry_count = 0
+        return await self._fetch(endpoint, **kwargs)
+
+    async def _fetch(self, endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
+        """
+        Performs the fetch against the contained AsyncHTTPClient instance and determines
+        if retry is necessary on any exceptions.  If so, retry is performed recursively.
+        """
+        try:
+            response: HTTPResponse = await self.client.fetch(endpoint, **kwargs)
+        except Exception as e:
+            is_retryable: bool = await self._is_retryable(kwargs["method"], e)
+            if not is_retryable:
+                raise e
+            logging.getLogger("ServerApp").info(
+                f"Attempting retry ({self.retry_count}) against "
+                f"endpoint '{endpoint}'.  Retried error: '{repr(e)}'"
+            )
+            response = await self._fetch(endpoint, **kwargs)
+        return response
+
+    async def _is_retryable(self, method: str, exception: Exception) -> bool:
+        """Determines if the given exception is retryable based on object's configuration."""
+
+        if method not in self.retried_methods:
+            return False
+        if self.retry_count == self.max_retries:
+            return False
+
+        # Determine if error is retryable...
+        if isinstance(exception, HTTPClientError):
+            hce: HTTPClientError = exception
+            if hce.code not in self.retried_errors:
+                return False
+        elif not any(isinstance(exception, error) for error in self.retried_exceptions):
+            return False
+
+        # Is retryable, wait for backoff, then increment count
+        await asyncio.sleep(self.backoff_factor * (2**self.retry_count))
+        self.retry_count += 1
+        return True
+
+
+async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
     """Make an async request to kernel gateway endpoint, returns a response"""
-    client = AsyncHTTPClient()
     kwargs = GatewayClient.instance().load_connection_args(**kwargs)
+    rhc = RetryableHTTPClient()
     try:
-        response = await client.fetch(endpoint, **kwargs)
+        response = await rhc.fetch(endpoint, **kwargs)
     # Trap a set of common exceptions so that we can inform the user that their Gateway url is incorrect
     # or the server is not running.
-    # NOTE: We do this here since this handler is called during the Notebook's startup and subsequent refreshes
+    # NOTE: We do this here since this handler is called during the server's startup and subsequent refreshes
     # of the tree view.
-    except ConnectionRefusedError as e:
-        raise web.HTTPError(
-            503,
-            "Connection refused from Gateway server url '{}'.  "
-            "Check to be sure the Gateway instance is running.".format(
-                GatewayClient.instance().url
-            ),
-        ) from e
-    except HTTPError as e:
-        # This can occur if the host is valid (e.g., foo.com) but there's nothing there.
+    except HTTPClientError as e:
         raise web.HTTPError(
             e.code,
-            "Error attempting to connect to Gateway server url '{}'.  "
-            "Ensure gateway url is valid and the Gateway instance is running.".format(
-                GatewayClient.instance().url
-            ),
+            f"Error attempting to connect to Gateway server url '{GatewayClient.instance().url}'.  "
+            "Ensure gateway url is valid and the Gateway instance is running.",
+        ) from e
+    except ConnectionError as e:
+        raise web.HTTPError(
+            503,
+            f"ConnectionError was received from Gateway server url '{GatewayClient.instance().url}'.  "
+            "Check to be sure the Gateway instance is running.",
         ) from e
     except gaierror as e:
         raise web.HTTPError(
             404,
-            "The Gateway server specified in the gateway_url '{}' doesn't appear to be valid.  "
-            "Ensure gateway url is valid and the Gateway instance is running.".format(
-                GatewayClient.instance().url
-            ),
+            f"The Gateway server specified in the gateway_url '{GatewayClient.instance().url}' doesn't "
+            f"appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
 
     return response

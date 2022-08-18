@@ -169,4 +169,5 @@ def set_password(password=None, config_file=None):
     hashed_password = passwd(password)
 
     with persist_config(config_file) as config:
-        config.ServerApp.password = hashed_password
+        config.IdentityProvider.hashed_password = hashed_password
+    return hashed_password
