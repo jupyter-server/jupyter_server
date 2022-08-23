@@ -5,3 +5,4 @@ dependencies:
   - pip
   - pip:
       - -r doc-requirements.txt
+      - ..
