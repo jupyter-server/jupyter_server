@@ -2,10 +2,11 @@
 
 .. versionadded:: 2.0
 """
-import logging
+import json
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+from jupyter_events import EventLogger
 from tornado import web, websocket
 
 from jupyter_server.auth import authorized
@@ -14,18 +15,6 @@ from jupyter_server.base.handlers import JupyterHandler
 from ...base.handlers import APIHandler
 
 AUTH_RESOURCE = "events"
-
-
-class WebSocketLoggingHandler(logging.Handler):
-    """Python logging handler that routes records to a Tornado websocket."""
-
-    def __init__(self, websocket, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.websocket = websocket
-
-    def emit(self, record):
-        """Emit the message across the websocket"""
-        self.websocket.write_message(record.msg)
 
 
 class SubscribeWebsocket(
@@ -56,16 +45,18 @@ class SubscribeWebsocket(
         res = super().get(*args, **kwargs)
         await res
 
+    async def event_listener(self, logger: EventLogger, schema_id: str, data: dict) -> None:
+        capsule = dict(schema_id=schema_id, **data)
+        self.write_message(json.dumps(capsule))
+
     def open(self):
         """Routes events that are emitted by Jupyter Server's
         EventBus to a WebSocket client in the browser.
         """
-        self.logging_handler = WebSocketLoggingHandler(self)
-        # To do: add an eventlog.add_handler method to jupyter_events.
-        self.event_logger.register_handler(self.logging_handler)
+        self.event_logger.add_listener(listener=self.event_listener)
 
     def on_close(self):
-        self.event_logger.remove_handler(self.logging_handler)
+        self.event_logger.remove_listener(listener=self.event_listener)
 
 
 def validate_model(data: Dict[str, Any]) -> None:
@@ -110,7 +101,6 @@ class EventHandler(APIHandler):
             validate_model(payload)
             self.event_logger.emit(
                 schema_id=payload.get("schema_id"),
-                version=payload.get("version"),
                 data=payload.get("data"),
                 timestamp_override=get_timestamp(payload),
             )

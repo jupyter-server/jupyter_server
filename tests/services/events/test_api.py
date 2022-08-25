@@ -27,14 +27,14 @@ def event_logger(event_logger_sink):
     return event_logger
 
 
-async def test_subscribe_websocket(jp_ws_fetch, event_logger):
+async def test_subscribe_websocket(event_logger, jp_ws_fetch):
     ws = await jp_ws_fetch("/api/events/subscribe")
 
     event_logger.emit(
         schema_id="event.mock.jupyter.org/message",
-        version=1,
         data={"event_message": "Hello, world!"},
     )
+    # await event_logger.gather_listeners()
     message = await ws.read_message()
     event_data = json.loads(message)
     ws.close()
