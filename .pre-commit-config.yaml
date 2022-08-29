@@ -36,7 +36,7 @@ repos:
         additional_dependencies: [types-requests]
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.7.1
+    rev: v3.0.0-alpha.0
     hooks:
       - id: prettier
 
@@ -63,13 +63,13 @@ repos:
         stages: [manual]
 
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.22.0
+    rev: v8.23.0
     hooks:
       - id: eslint
         stages: [manual]
 
   - repo: https://github.com/sirosen/check-jsonschema
-    rev: 0.17.1
+    rev: 0.18.1
     hooks:
       - id: check-jsonschema
         name: "Check GitHub Workflows"
