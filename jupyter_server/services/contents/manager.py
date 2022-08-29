@@ -67,6 +67,7 @@ class ContentsManager(LoggingConfigurable):
             logger = EventLogger()
             schema_path = DEFAULT_EVENTS_SCHEMA_PATH / "contents_service" / "v1.yaml"
             logger.register_event_schema(schema_path)
+            return logger
 
     def emit(self, data):
         """Emit event using the core event schema from Jupyter Server's Contents Manager."""
