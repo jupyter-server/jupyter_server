@@ -3,7 +3,6 @@
 # Distributed under the terms of the Modified BSD License.
 import itertools
 import json
-import pathlib
 import re
 import warnings
 from fnmatch import fnmatch
