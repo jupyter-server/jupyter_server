@@ -83,9 +83,11 @@ from traitlets.config import Config
 from traitlets.config.application import boolean_flag, catch_config_error
 
 from jupyter_server import (
+    DEFAULT_EVENTS_SCHEMA_PATH,
     DEFAULT_JUPYTER_SERVER_PORT,
     DEFAULT_STATIC_FILES_PATH,
     DEFAULT_TEMPLATE_PATH_LIST,
+    JUPYTER_SERVER_EVENTS_URI,
     __version__,
 )
 from jupyter_server._sysinfo import get_sys_info
@@ -1951,6 +1953,19 @@ class ServerApp(JupyterApp):
     def init_event_logger(self):
         """Initialize the Event Bus."""
         self.event_logger = EventLogger(parent=self)
+        # Load the core Jupyter Server event schemas
+        # All event schemas must start with Jupyter Server's
+        # events URI, `JUPYTER_SERVER_EVENTS_URI`.
+        schema_ids = [
+            "https://events.jupyter.org/jupyter_server/contents_service/v1",
+        ]
+        for schema_id in schema_ids:
+            # Get the schema path from the schema ID.
+            rel_schema_path = schema_id.lstrip(JUPYTER_SERVER_EVENTS_URI) + ".yaml"
+            schema_path = DEFAULT_EVENTS_SCHEMA_PATH / rel_schema_path
+            # Use this pathlib object to register the schema
+            # breakpoint()
+            self.event_logger.register_event_schema(schema_path)
 
     def init_webapp(self):
         """initialize tornado webapp"""

@@ -18,6 +18,8 @@ from packaging.version import Version
 from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest
 from tornado.netutil import Resolver
 
+from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH, JUPYTER_SERVER_EVENTS_URI
+
 
 def url_path_join(*pieces):
     """Join components of url into a relative url
