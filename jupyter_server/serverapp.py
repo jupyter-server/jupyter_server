@@ -1951,11 +1951,6 @@ class ServerApp(JupyterApp):
     def init_event_logger(self):
         """Initialize the Event Bus."""
         self.event_logger = EventLogger(parent=self)
-        # event_schema_paths = [
-        #     ""
-        # ]
-        # for schema_path in event_schema_paths:
-        #     self.event_logger.register_event_schema(schema_path)
 
     def init_webapp(self):
         """initialize tornado webapp"""

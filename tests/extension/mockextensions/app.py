@@ -1,5 +1,6 @@
 import os
 
+from jupyter_events.logger import EventLogger
 from traitlets import List, Unicode
 
 from jupyter_server.base.handlers import JupyterHandler
@@ -21,6 +22,9 @@ def _jupyter_server_extension_points():
 
 class MockExtensionHandler(ExtensionHandlerMixin, JupyterHandler):
     def get(self):
+        self.event_logger.emit(
+            schema_id="https://events.jupyter.org/mockapp/v1/test", data={"msg": "Hello, world!"}
+        )
         self.finish(self.config.mock_trait)
 
 
@@ -44,6 +48,19 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     @staticmethod
     def get_extension_package():
         return "tests.extension.mockextensions"
+
+    def initialize_settings(self):
+        schema = """
+        $id: https://events.jupyter.org/mockapp/v1/test
+        version: 1
+        properties:
+          msg:
+            type: string
+        required:
+        - msg
+        """
+        elogger: EventLogger = self.serverapp.event_logger
+        elogger.register_event_schema(schema)
 
     def initialize_handlers(self):
         self.handlers.append(("/mock", MockExtensionHandler))
