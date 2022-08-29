@@ -61,6 +61,7 @@ from jupyter_client.kernelspec import KernelSpecManager
 from jupyter_client.session import Session
 from jupyter_core.application import JupyterApp, base_aliases, base_flags
 from jupyter_core.paths import jupyter_runtime_dir
+from jupyter_events.logger import EventLogger
 from nbformat.sign import NotebookNotary
 from traitlets import (
     Any,
@@ -123,7 +124,6 @@ from jupyter_server.services.contents.manager import (
     AsyncContentsManager,
     ContentsManager,
 )
-from jupyter_server.services.events.bus import EventBus
 from jupyter_server.services.kernels.kernelmanager import (
     AsyncMappingKernelManager,
     MappingKernelManager,
@@ -212,7 +212,7 @@ class ServerWebApplication(web.Application):
         session_manager,
         kernel_spec_manager,
         config_manager,
-        event_bus,
+        event_logger,
         extra_services,
         log,
         base_url,
@@ -248,7 +248,7 @@ class ServerWebApplication(web.Application):
             session_manager,
             kernel_spec_manager,
             config_manager,
-            event_bus,
+            event_logger,
             extra_services,
             log,
             base_url,
@@ -270,7 +270,7 @@ class ServerWebApplication(web.Application):
         session_manager,
         kernel_spec_manager,
         config_manager,
-        event_bus,
+        event_logger,
         extra_services,
         log,
         base_url,
@@ -359,7 +359,7 @@ class ServerWebApplication(web.Application):
             config_manager=config_manager,
             authorizer=authorizer,
             identity_provider=identity_provider,
-            event_bus=event_bus,
+            event_logger=event_logger,
             # handlers
             extra_services=extra_services,
             # Jupyter stuff
@@ -770,7 +770,7 @@ class ServerApp(JupyterApp):
         GatewaySessionManager,
         GatewayClient,
         Authorizer,
-        EventBus,
+        EventLogger,
     ]
 
     subcommands = dict(
@@ -1552,10 +1552,10 @@ class ServerApp(JupyterApp):
         ),
     )
 
-    event_bus = Instance(
-        EventBus,
+    event_logger = Instance(
+        EventLogger,
         allow_none=True,
-        help="An EventBus for emitting structured event data from Jupyter Server and extensions.",
+        help="An EventLogger for emitting structured event data from Jupyter Server and extensions.",
     )
 
     info_file = Unicode()
@@ -1948,9 +1948,9 @@ class ServerApp(JupyterApp):
         logger.parent = self.log
         logger.setLevel(self.log.level)
 
-    def init_eventbus(self):
+    def init_event_logger(self):
         """Initialize the Event Bus."""
-        self.event_bus = EventBus.instance(parent=self)
+        self.event_logger = EventLogger(parent=self)
 
     def init_webapp(self):
         """initialize tornado webapp"""
@@ -2012,7 +2012,7 @@ class ServerApp(JupyterApp):
             self.session_manager,
             self.kernel_spec_manager,
             self.config_manager,
-            self.event_bus,
+            self.event_logger,
             self.extra_services,
             self.log,
             self.base_url,
@@ -2487,7 +2487,7 @@ class ServerApp(JupyterApp):
         if find_extensions:
             self.find_server_extensions()
         self.init_logging()
-        self.init_eventbus()
+        self.init_event_logger()
         self.init_server_extensions()
 
         # Special case the starter extension and load
@@ -2814,8 +2814,6 @@ class ServerApp(JupyterApp):
         await self.cleanup_kernels()
         if getattr(self, "session_manager", None):
             self.session_manager.close()
-        if getattr(self, "event_bus", None):
-            self.event_bus.clear_instance()
 
     def start_ioloop(self):
         """Start the IO Loop."""

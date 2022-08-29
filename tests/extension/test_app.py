@@ -1,3 +1,6 @@
+import json
+from io import StringIO
+from logging import StreamHandler
 from typing import Any
 
 import pytest
@@ -171,3 +174,18 @@ def test_stop_extension(jp_serverapp, caplog):
 
     # check the shutdown method was called twice
     assert calls == 2
+
+
+async def test_events(jp_serverapp, jp_fetch):
+    stream = StringIO()
+    handler = StreamHandler(stream)
+    jp_serverapp.event_logger.register_handler(handler)
+
+    await jp_fetch("mock")
+
+    handler.flush()
+    output = json.loads(stream.getvalue())
+    # Clear the sink.
+    stream.truncate(0)
+    stream.seek(0)
+    assert output["msg"] == "Hello, world!"

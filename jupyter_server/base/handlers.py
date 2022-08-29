@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 import prometheus_client
 from jinja2 import TemplateNotFound
 from jupyter_core.paths import is_hidden
+from jupyter_events import EventLogger
 from tornado import web
 from tornado.log import app_log
 from traitlets.config import Application
@@ -335,8 +336,8 @@ class JupyterHandler(AuthenticatedHandler):
         return self.settings["config_manager"]
 
     @property
-    def event_bus(self):
-        return self.settings["event_bus"]
+    def event_logger(self) -> EventLogger:
+        return self.settings["event_logger"]
 
     # ---------------------------------------------------------------
     # CORS
