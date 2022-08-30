@@ -1,5 +1,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import importlib
 import io
 import json
 import logging
@@ -14,10 +15,13 @@ import nbformat
 import pytest
 import tornado
 from tornado.escape import url_escape
-from traitlets.config import Config
+from tornado.httpclient import HTTPClientError
+from tornado.websocket import WebSocketHandler
+from traitlets.config import Config, re
 
+from jupyter_server.auth import Authorizer
 from jupyter_server.extension import serverextension
-from jupyter_server.serverapp import ServerApp
+from jupyter_server.serverapp import JUPYTER_SERVICE_HANDLERS, ServerApp
 from jupyter_server.services.contents.filemanager import FileContentsManager
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
 from jupyter_server.utils import url_path_join
@@ -492,5 +496,124 @@ def jp_cleanup_subprocesses(jp_serverapp):
 
     async def _():
         pass
+
+    return _
+
+
+@pytest.fixture
+def send_request(jp_fetch, jp_ws_fetch):
+    """Send to Jupyter Server and return response code."""
+
+    async def _(url, **fetch_kwargs):
+        if url.endswith("channels") or "/websocket/" in url:
+            fetch = jp_ws_fetch
+        else:
+            fetch = jp_fetch
+
+        try:
+            r = await fetch(url, **fetch_kwargs, allow_nonstandard_methods=True)
+            code = r.code
+        except HTTPClientError as err:
+            code = err.code
+        else:
+            if fetch is jp_ws_fetch:
+                r.close()
+
+        return code
+
+    return _
+
+
+@pytest.fixture
+def jp_server_auth_core_resources():
+    modules = []
+    for mod_name in JUPYTER_SERVICE_HANDLERS.values():
+        if mod_name:
+            modules.extend(mod_name)
+    resource_map = {}
+    for handler_module in modules:
+        mod = importlib.import_module(handler_module)
+        name = mod.AUTH_RESOURCE
+        for handler in mod.default_handlers:
+            url_regex = handler[0]
+            resource_map[url_regex] = name
+    return resource_map
+
+
+@pytest.fixture
+def jp_server_auth_resources(jp_server_auth_core_resources):
+    return jp_server_auth_core_resources
+
+
+@pytest.fixture
+def jp_server_authorizer(jp_server_auth_resources):
+    class _(Authorizer):
+
+        # Set these class attributes from within a test
+        # to verify that they match the arguments passed
+        # by the REST API.
+        permissions: dict = {}
+
+        HTTP_METHOD_TO_AUTH_ACTION = {
+            "GET": "read",
+            "HEAD": "read",
+            "OPTIONS": "read",
+            "POST": "write",
+            "PUT": "write",
+            "PATCH": "write",
+            "DELETE": "write",
+            "WEBSOCKET": "execute",
+        }
+
+        def match_url_to_resource(self, url, regex_mapping=None):
+            """Finds the JupyterHandler regex pattern that would
+            match the given URL and returns the resource name (str)
+            of that handler.
+
+            e.g.
+            /api/contents/... returns "contents"
+            """
+            if not regex_mapping:
+                regex_mapping = jp_server_auth_resources
+            for regex, auth_resource in regex_mapping.items():
+                pattern = re.compile(regex)
+                if pattern.fullmatch(url):
+                    return auth_resource
+
+        def normalize_url(self, path):
+            """Drop the base URL and make sure path leads with a /"""
+            base_url = self.parent.base_url
+            # Remove base_url
+            if path.startswith(base_url):
+                path = path[len(base_url) :]
+            # Make sure path starts with /
+            if not path.startswith("/"):
+                path = "/" + path
+            return path
+
+        def is_authorized(self, handler, user, action, resource):
+            # Parse Request
+            if isinstance(handler, WebSocketHandler):
+                method = "WEBSOCKET"
+            else:
+                method = handler.request.method
+            url = self.normalize_url(handler.request.path)
+
+            # Map request parts to expected action and resource.
+            expected_action = self.HTTP_METHOD_TO_AUTH_ACTION[method]
+            expected_resource = self.match_url_to_resource(url)
+
+            # Assert that authorization layer returns the
+            # correct action + resource.
+            assert action == expected_action
+            assert resource == expected_resource
+
+            # Now, actually apply the authorization layer.
+            return all(
+                [
+                    action in self.permissions.get("actions", []),
+                    resource in self.permissions.get("resources", []),
+                ]
+            )
 
     return _
