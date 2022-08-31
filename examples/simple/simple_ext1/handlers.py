@@ -1,3 +1,4 @@
+from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.extension.handler import (
     ExtensionHandlerJinjaMixin,
@@ -7,6 +8,9 @@ from jupyter_server.utils import url_escape
 
 
 class DefaultHandler(ExtensionHandlerMixin, JupyterHandler):
+    auth_resource = "simple_ext1:default"
+
+    @authorized
     def get(self):
         # The name of the extension to which this handler is linked.
         self.log.info(f"Extension Name in {self.name} Default Handler: {self.name}")
