@@ -1,5 +1,6 @@
 """The Jupyter Server"""
 import os
+import pathlib
 import subprocess
 import sys
 
@@ -10,6 +11,8 @@ DEFAULT_TEMPLATE_PATH_LIST = [
 ]
 
 DEFAULT_JUPYTER_SERVER_PORT = 8888
+JUPYTER_SERVER_EVENTS_URI = "https://events.jupyter.org/jupyter_server"
+DEFAULT_EVENTS_SCHEMA_PATH = pathlib.Path(__file__).parent / "event_schemas"
 
 del os
 

@@ -7,6 +7,7 @@ import re
 import warnings
 from fnmatch import fnmatch
 
+from jupyter_events import EventLogger
 from nbformat import ValidationError, sign
 from nbformat import validate as validate_nb
 from nbformat.v4 import new_notebook
@@ -25,6 +26,7 @@ from traitlets import (
 )
 from traitlets.config.configurable import LoggingConfigurable
 
+from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH, JUPYTER_SERVER_EVENTS_URI
 from jupyter_server.transutils import _i18n
 from jupyter_server.utils import ensure_async, import_item
 
@@ -52,6 +54,24 @@ class ContentsManager(LoggingConfigurable):
       indicating the root path.
 
     """
+
+    event_schema_id = JUPYTER_SERVER_EVENTS_URI + "/contents_service/v1"
+    event_logger = Instance(EventLogger).tag(config=True)
+
+    @default("event_logger")
+    def _default_event_logger(self):
+        if self.parent and hasattr(self.parent, "event_logger"):
+            return self.parent.event_logger
+        else:
+            # If parent does not have an event logger, create one.
+            logger = EventLogger()
+            schema_path = DEFAULT_EVENTS_SCHEMA_PATH / "contents_service" / "v1.yaml"
+            logger.register_event_schema(schema_path)
+            return logger
+
+    def emit(self, data):
+        """Emit event using the core event schema from Jupyter Server's Contents Manager."""
+        self.event_logger.emit(schema_id=self.event_schema_id, data=data)
 
     root_dir = Unicode("/", config=True)
 
@@ -416,11 +436,13 @@ class ContentsManager(LoggingConfigurable):
             raise HTTPError(400, "Can't delete root")
         self.delete_file(path)
         self.checkpoints.delete_all_checkpoints(path)
+        self.emit(data={"action": "delete", "path": path})
 
     def rename(self, old_path, new_path):
         """Rename a file and any checkpoints associated with that file."""
         self.rename_file(old_path, new_path)
         self.checkpoints.rename_all_checkpoints(old_path, new_path)
+        self.emit(data={"action": "rename", "path": new_path, "source_path": old_path})
 
     def update(self, model, path):
         """Update the file's path
@@ -616,6 +638,7 @@ class ContentsManager(LoggingConfigurable):
             raise HTTPError(404, "No such directory: %s" % to_path)
 
         model = self.save(model, to_path)
+        self.emit(data={"action": "copy", "path": to_path, "source_path": from_path})
         return model
 
     def log_info(self):
@@ -819,11 +842,13 @@ class AsyncContentsManager(ContentsManager):
 
         await self.delete_file(path)
         await self.checkpoints.delete_all_checkpoints(path)
+        self.emit(data={"action": "delete", "path": path})
 
     async def rename(self, old_path, new_path):
         """Rename a file and any checkpoints associated with that file."""
         await self.rename_file(old_path, new_path)
         await self.checkpoints.rename_all_checkpoints(old_path, new_path)
+        self.emit(data={"action": "rename", "path": new_path, "source_path": old_path})
 
     async def update(self, model, path):
         """Update the file's path
@@ -985,6 +1010,7 @@ class AsyncContentsManager(ContentsManager):
             raise HTTPError(404, "No such directory: %s" % to_path)
 
         model = await self.save(model, to_path)
+        self.emit(data={"action": "copy", "path": to_path, "source_path": from_path})
         return model
 
     async def trust_notebook(self, path):
