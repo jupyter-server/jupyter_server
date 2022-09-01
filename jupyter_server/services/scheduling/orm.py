@@ -1,37 +1,39 @@
-from datetime import datetime
 import json
 import os
-from sqlite3 import OperationalError
 import uuid
-from sqlalchemy.orm import registry
-from sqlalchemy import Column, Integer, String, Boolean, create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-import sqlalchemy.types as types
+from datetime import datetime
+from sqlite3 import OperationalError
 
+import sqlalchemy.types as types
 from jupyter_scheduling.models import EmailNotifications, Status
 from jupyter_scheduling.utils import create_output_filename, get_utc_timestamp
+from sqlalchemy import Boolean, Column, Integer, String, create_engine
+from sqlalchemy.orm import declarative_base, registry, sessionmaker
 
 Base = declarative_base()
+
 
 def generate_uuid():
     return str(uuid.uuid4())
 
+
 def generate_url(context) -> str:
-    job_id = context.get_current_parameters()['job_id']
+    job_id = context.get_current_parameters()["job_id"]
     return f"/jobs/{job_id}"
 
-def output_uri(context) -> str:
-    input_uri = context.get_current_parameters()['input_uri']
-    output_prefix = context.get_current_parameters()['output_prefix']
-    output_formats = context.get_current_parameters()['output_formats']
 
-    if not output_formats or 'ipynb' in output_formats:
+def output_uri(context) -> str:
+    input_uri = context.get_current_parameters()["input_uri"]
+    output_prefix = context.get_current_parameters()["output_prefix"]
+    output_formats = context.get_current_parameters()["output_formats"]
+
+    if not output_formats or "ipynb" in output_formats:
         output_filename = create_output_filename(input_uri)
     else:
         output_filename = create_output_filename(
-            os.path.splitext(input_uri)[-2] + '.' + output_formats[0]
+            os.path.splitext(input_uri)[-2] + "." + output_formats[0]
         )
-    
+
     return os.path.join(output_prefix, output_filename)
 
 
@@ -51,6 +53,7 @@ class JsonType(types.TypeDecorator):
 
         return json.loads(value)
 
+
 class EmailNotificationType(types.TypeDecorator):
     impl = String
 
@@ -59,12 +62,11 @@ class EmailNotificationType(types.TypeDecorator):
     def process_bind_param(self, value, dialect):
         if value is None:
             return None
-        
+
         if isinstance(value, EmailNotifications):
             return json.dumps(value.dict(exclude_none=True))
         else:
             return value
-        
 
     def process_result_value(self, value, dialect):
         if value is None:
@@ -72,11 +74,11 @@ class EmailNotificationType(types.TypeDecorator):
         return EmailNotifications.construct(json.loads(value))
 
 
-
 mapper_registry = registry()
 
+
 class Job(Base):
-    __tablename__ = 'jobs'
+    __tablename__ = "jobs"
     job_id = Column(String(36), primary_key=True, default=generate_uuid)
     runtime_environment_name = Column(String(256), nullable=False)
     runtime_environment_parameters = Column(JsonType(1024))
@@ -114,10 +116,10 @@ def create_tables(db_url, drop_tables=False):
         pass
     finally:
         Base.metadata.create_all(engine)
-    
+
 
 def create_session(db_url):
     engine = create_engine(db_url, echo=True)
     Session = sessionmaker(bind=engine)
-    
+
     return Session

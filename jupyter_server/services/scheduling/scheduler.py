@@ -1,19 +1,30 @@
 from abc import ABC, abstractmethod
 from multiprocessing import Process
-import psutil
 from typing import List
+
+import psutil
 from jupyter_core.paths import jupyter_data_dir
-from jupyter_scheduling.models import CountJobsQuery, CreateJob, CreateJobDefinition, DescribeJob, DescribeJobDefinition, ListJobDefinitionsQuery, ListJobsQuery, ListJobsResponse, Status, UpdateJob, SortDirection
-
-from jupyter_scheduling.utils import create_output_filename, timestamp_to_int
 from jupyter_scheduling.config import ExecutionConfig
+from jupyter_scheduling.models import (
+    CountJobsQuery,
+    CreateJob,
+    CreateJobDefinition,
+    DescribeJob,
+    DescribeJobDefinition,
+    ListJobDefinitionsQuery,
+    ListJobsQuery,
+    ListJobsResponse,
+    SortDirection,
+    Status,
+    UpdateJob,
+)
 from jupyter_scheduling.orm import Job, create_session
-
-from sqlalchemy import desc, asc, func, and_
+from jupyter_scheduling.utils import create_output_filename, timestamp_to_int
+from sqlalchemy import and_, asc, desc, func
 
 
 class BaseScheduler(ABC):
-    """Base class for schedulers. A default implementation 
+    """Base class for schedulers. A default implementation
     is provided in the `Scheduler` class, but extension creators
     can provide their own scheduler by subclassing this class.
     By implementing this class, you will replace both the service
@@ -59,11 +70,11 @@ class BaseScheduler(ABC):
     @abstractmethod
     def stop_job(self, job_id: str):
         """Stops the job, this is not analogous
-        to the REST API that will be called to 
+        to the REST API that will be called to
         stop the job. Front end will call the PUT
         API with status update to STOPPED, which will
-        call the update_job method. This method is 
-        supposed to do the work of actually stopping 
+        call the update_job method. This method is
+        supposed to do the work of actually stopping
         the process that is executing the job. In case
         of a task runner, you can assume a call to task
         runner to suspend the job.
@@ -103,9 +114,8 @@ class BaseScheduler(ABC):
         pass
 
 
-
 class Scheduler(BaseScheduler):
-    
+
     _db_session = None
 
     def __init__(self, config: ExecutionConfig = {}):
@@ -130,7 +140,7 @@ class Scheduler(BaseScheduler):
 
             p = Process(target=self.execution_manager_class(job.job_id, self.config).process)
             p.start()
-            
+
             job.pid = p.pid
             session.commit()
 
@@ -148,31 +158,27 @@ class Scheduler(BaseScheduler):
     def list_jobs(self, query: ListJobsQuery) -> ListJobsResponse:
         with self.db_session() as session:
             jobs = session.query(Job)
-            
+
             if query.status:
                 jobs = jobs.filter(Job.status == query.status)
             if query.job_definition_id:
                 jobs = jobs.filter(Job.status == query.job_definition_id)
             if query.start_time:
-                jobs = jobs.filter(Job.start_time >= query.start_time)   
+                jobs = jobs.filter(Job.start_time >= query.start_time)
             if query.name:
                 jobs = jobs.filter(Job.name.like(f"{query.name}%"))
             if query.tags:
                 jobs = jobs.filter(and_(Job.tags.contains(tag) for tag in query.tags))
-            
+
             total = jobs.count()
-            
+
             if query.sort_by:
                 for sort_field in query.sort_by:
                     direction = desc if sort_field.direction == SortDirection.desc else asc
-                    jobs = jobs.order_by(
-                        direction(
-                            getattr(Job, sort_field.name)
-                        )
-                    )
-            next_token = int(query.next_token) if query.next_token else 0                   
+                    jobs = jobs.order_by(direction(getattr(Job, sort_field.name)))
+            next_token = int(query.next_token) if query.next_token else 0
             jobs = jobs.limit(query.max_items).offset(next_token)
-            
+
             jobs = jobs.all()
 
         next_token = next_token + len(jobs)
@@ -180,23 +186,22 @@ class Scheduler(BaseScheduler):
             next_token = None
 
         list_jobs_response = ListJobsResponse(
-            jobs=[DescribeJob.from_orm(job) for job in jobs or []],
-            next_token=next_token
-        )    
-        
+            jobs=[DescribeJob.from_orm(job) for job in jobs or []], next_token=next_token
+        )
+
         return list_jobs_response
 
-    
     def count_jobs(self, query: CountJobsQuery) -> int:
         with self.db_session() as session:
-            count = session.query(func.count(Job.job_id)).filter(Job.status == query.status).scalar()
+            count = (
+                session.query(func.count(Job.job_id)).filter(Job.status == query.status).scalar()
+            )
             return count if count else 0
-
 
     def get_job(self, job_id: str) -> DescribeJob:
         with self.db_session() as session:
             job_record = session.query(Job).filter(Job.job_id == job_id).one()
-            
+
             return DescribeJob.from_orm(job_record)
 
     def delete_job(self, job_id: str):
@@ -207,25 +212,23 @@ class Scheduler(BaseScheduler):
 
             session.query(Job).filter(Job.job_id == job_id).delete()
             session.commit()
-    
+
     def stop_job(self, job_id):
         with self.db_session() as session:
             job_record = session.query(Job).filter(Job.job_id == job_id).one()
             job = DescribeJob.from_orm(job_record)
             process_id = job_record.pid
             if process_id and job.status == Status.IN_PROGRESS:
-                session.query(Job).filter(Job.job_id == job_id).update(
-                    {'status': Status.STOPPING}
-                )
+                session.query(Job).filter(Job.job_id == job_id).update({"status": Status.STOPPING})
                 session.commit()
-                
+
                 current_process = psutil.Process()
                 children = current_process.children(recursive=True)
                 for proc in children:
                     if process_id == proc.pid:
                         proc.kill()
                         session.query(Job).filter(Job.job_id == job_id).update(
-                            {'status': Status.STOPPED}
+                            {"status": Status.STOPPED}
                         )
                         session.commit()
                         break
@@ -244,6 +247,3 @@ class Scheduler(BaseScheduler):
 
     def pause_jobs(self, job_definition_id: str):
         pass
-    
-        
-

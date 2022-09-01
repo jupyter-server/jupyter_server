@@ -1,14 +1,13 @@
-
-from abc import ABC, abstractmethod
 import json
 import os
 import subprocess
+from abc import ABC, abstractmethod
 from typing import List
+
 from jupyter_scheduling.models import OutputFormat, RuntimeEnvironment
 
 
 class EnvironmentManager(ABC):
-
     @abstractmethod
     def list_environments() -> List[RuntimeEnvironment]:
         pass
@@ -20,8 +19,8 @@ class EnvironmentManager(ABC):
 
 class CondaEnvironmentManager(EnvironmentManager):
     """Provides list of system installed conda environments"""
-    
-    def list_environments(self) ->  List[RuntimeEnvironment]:
+
+    def list_environments(self) -> List[RuntimeEnvironment]:
         environments = []
 
         try:
@@ -39,16 +38,10 @@ class CondaEnvironmentManager(EnvironmentManager):
                     description=f"Conda environment: {name}",
                     file_extensions=["ipynb", "py"],
                     output_formats=[
-                        OutputFormat(
-                            name="ipynb",
-                            label="Notebook"
-                        ),
-                        OutputFormat(
-                            name="html",
-                            label="HTML"
-                        )
+                        OutputFormat(name="ipynb", label="Notebook"),
+                        OutputFormat(name="html", label="HTML"),
                     ],
-                    metadata={"path": env}
+                    metadata={"path": env},
                 )
             )
 
@@ -63,14 +56,14 @@ class StaticEnvironmentManager(EnvironmentManager):
 
     def list_environments(self) -> List[RuntimeEnvironment]:
         name = "jupyterlab-env"
-        path = os.path.join(os.environ['HOME'], name)
+        path = os.path.join(os.environ["HOME"], name)
         return [
             RuntimeEnvironment(
                 name=name,
                 label=name,
                 description=f"Virtual environment: {name}",
                 file_extensions=["ipynb", "py"],
-                metadata={"path": path}
+                metadata={"path": path},
             )
         ]
 

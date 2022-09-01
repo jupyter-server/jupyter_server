@@ -1,18 +1,15 @@
 from dataclasses import dataclass
 from enum import Enum
-
-from pydantic import BaseModel
 from typing import Dict, List, Optional, Union
 
-
+from pydantic import BaseModel
 
 Tags = List[str]
 ParameterValues = Union[int, str, float, bool]
 EnvironmentParameterValues = Union[int, str, float, bool]
 
-EMAIL_RE = ''
-SCHEDULE_RE = ''
-
+EMAIL_RE = ""
+SCHEDULE_RE = ""
 
 
 class OutputFormat(BaseModel):
@@ -52,25 +49,26 @@ class Status(str, Enum):
     def __str__(self):
         return self.value
 
-""" 
+
+"""
 A string template to use for naming the output file,
 this template will interpolate values from DescribeJob,
 filename is a special variable, because there is no
 matching attribute in DescribeJob, but probably the most
-expected in the output filename. These templates are 
+expected in the output filename. These templates are
 expecting jinja2 format for attributes. Attributes that
-don't follow valid filenames will be normalized. 
+don't follow valid filenames will be normalized.
 
 Examples of other formats:
 "{{name}}-{{timestamp}}"
-"{{runtime_environment_name}}_{{filename}}_{{job_id}}" 
+"{{runtime_environment_name}}_{{filename}}_{{job_id}}"
 """
 OUTPUT_FILENAME_TEMPLATE = "{{filename}}-{{timestamp}}"
 
 
 class CreateJob(BaseModel):
     input_uri: str
-    output_prefix: str 
+    output_prefix: str
     runtime_environment_name: str
     runtime_environment_parameters: Optional[Dict[str, EnvironmentParameterValues]]
     output_formats: Optional[List[str]] = None
@@ -86,11 +84,11 @@ class CreateJob(BaseModel):
     min_retry_interval_millis: Optional[int] = 0
     output_filename_template: Optional[str] = OUTPUT_FILENAME_TEMPLATE
     compute_type: Optional[str] = None
-    
+
 
 class DescribeJob(CreateJob):
     job_id: str
-    output_uri: str 
+    output_uri: str
     url: str
     start_time: Optional[int] = None
     end_time: Optional[int] = None
@@ -111,10 +109,7 @@ class SortField(BaseModel):
     direction: SortDirection
 
 
-DEFAULT_SORT = SortField(
-    name="start_time",
-    direction=SortDirection.desc
-)
+DEFAULT_SORT = SortField(name="start_time", direction=SortDirection.desc)
 
 
 class ListJobsQuery(BaseModel):
@@ -145,13 +140,13 @@ class UpdateJob(BaseModel):
     status: Optional[Status] = None
     status_message: str = None
     name: Optional[str] = None
-    
+
 
 class DeleteJob(BaseModel):
     job_id: str
-    
 
-class CreateJobDefinition(CreateJob): 
+
+class CreateJobDefinition(CreateJob):
     schedule: Optional[str] = None
     timezone: Optional[str] = None
 
@@ -179,7 +174,7 @@ class UpdateJobDefinition(BaseModel):
     min_retry_interval_millis: Optional[int] = 0
     retry_on_timeout: Optional[bool] = False
     url: Optional[str] = None
-    timezone: Optional[str] = None # Should be a timezone e.g., US/Eastern, Asia/Kolkata
+    timezone: Optional[str] = None  # Should be a timezone e.g., US/Eastern, Asia/Kolkata
     output_filename_template: Optional[str] = OUTPUT_FILENAME_TEMPLATE
 
 
@@ -201,4 +196,4 @@ class JobFeature(str, Enum):
     min_retry_interval_millis = "min_retry_interval_millis"
     output_filename_template = "output_filename_template"
     stop_job = "stop_job"
-    delete_job  = "delete_job"
+    delete_job = "delete_job"

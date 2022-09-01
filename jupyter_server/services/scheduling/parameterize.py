@@ -10,20 +10,15 @@ def add_parameters(nb: NotebookNode, parameters: Dict[str, ParameterValues]):
 
     for key, value in parameters.items():
         if type(value) == str:
-            content.append(
-                f"{key} = '{value}'"
-            )
+            content.append(f"{key} = '{value}'")
         else:
-            content.append(
-                f"{key} = {value}"
-            )
-
+            content.append(f"{key} = {value}")
 
     new_cell = v4.new_code_cell(source="\n".join(content))
-    new_cell.metadata['tags'] = ['injected-parameters']
+    new_cell.metadata["tags"] = ["injected-parameters"]
 
-    parameters_cell_index = find_cell_index_with_tag(nb, 'parameters')
-    injected_cell_index = find_cell_index_with_tag(nb, 'injected-parameters')
+    parameters_cell_index = find_cell_index_with_tag(nb, "parameters")
+    injected_cell_index = find_cell_index_with_tag(nb, "injected-parameters")
 
     if injected_cell_index >= 0:
         before = nb.cells[:injected_cell_index]
