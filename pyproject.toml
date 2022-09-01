@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jupyter_server"
-version = "2.0.0b1"
+version = "2.1.0.dev0"
 readme = "README.md"
 license = { file = "COPYING.md" }
 description = "The backend—i.e. core services, APIs, and REST endpoints—to Jupyter web applications."
@@ -120,7 +120,7 @@ post-version-spec = "dev"
 pydist_resource_paths = ["jupyter_server/static/style/bootstrap.min.css", "jupyter_server/static/style/bootstrap-theme.min.css"]
 
 [tool.tbump.version]
-current = "2.0.0b1"
+current = "2.1.0.dev0"
 regex = '''
   (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)
   ((?P<channel>a|b|rc|.dev)(?P<release>\d+))?
