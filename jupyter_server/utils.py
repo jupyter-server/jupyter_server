@@ -337,7 +337,7 @@ def _request_for_tornado_client(urlstring, method="GET", body=None, headers=None
 
     # Yield the request for the given client.
     url = urlunsplit(parts)
-    request = HTTPRequest(url, method=method, body=body, headers=headers)
+    request = HTTPRequest(url, method=method, body=body, headers=headers, validate_cert=False)
     yield request
 
 

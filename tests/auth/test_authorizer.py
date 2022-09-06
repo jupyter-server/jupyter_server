@@ -5,86 +5,29 @@ import pytest
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 from nbformat import writes
 from nbformat.v4 import new_notebook
-from tornado.httpclient import HTTPClientError
-from tornado.websocket import WebSocketHandler
 
-from jupyter_server.auth.authorizer import Authorizer
-from jupyter_server.auth.utils import HTTP_METHOD_TO_AUTH_ACTION, match_url_to_resource
 from jupyter_server.services.security import csp_report_uri
 
 
-class AuthorizerforTesting(Authorizer):
-
-    # Set these class attributes from within a test
-    # to verify that they match the arguments passed
-    # by the REST API.
-    permissions: dict = {}
-
-    def normalize_url(self, path):
-        """Drop the base URL and make sure path leads with a /"""
-        base_url = self.parent.base_url
-        # Remove base_url
-        if path.startswith(base_url):
-            path = path[len(base_url) :]
-        # Make sure path starts with /
-        if not path.startswith("/"):
-            path = "/" + path
-        return path
-
-    def is_authorized(self, handler, user, action, resource):
-        # Parse Request
-        if isinstance(handler, WebSocketHandler):
-            method = "WEBSOCKET"
-        else:
-            method = handler.request.method
-        url = self.normalize_url(handler.request.path)
-
-        # Map request parts to expected action and resource.
-        expected_action = HTTP_METHOD_TO_AUTH_ACTION[method]
-        expected_resource = match_url_to_resource(url)
-
-        # Assert that authorization layer returns the
-        # correct action + resource.
-        assert action == expected_action
-        assert resource == expected_resource
-
-        # Now, actually apply the authorization layer.
-        return all(
-            [
-                action in self.permissions.get("actions", []),
-                resource in self.permissions.get("resources", []),
-            ]
-        )
+@pytest.fixture
+def jp_server_config(jp_server_authorizer):
+    return {
+        "ServerApp": {"authorizer_class": jp_server_authorizer},
+        "jpserver_extensions": {"jupyter_server_terminals": True},
+    }
 
 
 @pytest.fixture
-def jp_server_config():
-    return {"ServerApp": {"authorizer_class": AuthorizerforTesting}}
-
-
-@pytest.fixture
-def send_request(jp_fetch, jp_ws_fetch):
-    """Send to Jupyter Server and return response code."""
-
-    async def _(url, **fetch_kwargs):
-        if url.endswith("channels") or "/websocket/" in url:
-            fetch = jp_ws_fetch
-        else:
-            fetch = jp_fetch
-
-        try:
-            r = await fetch(url, **fetch_kwargs, allow_nonstandard_methods=True)
-            code = r.code
-        except HTTPClientError as err:
-            code = err.code
-        else:
-            if fetch is jp_ws_fetch:
-                r.close()
-
-        print(code, url, fetch_kwargs)
-        return code
-
-    return _
+def jp_server_auth_resources(jp_server_auth_core_resources):
+    # terminal plugin doesn't have importable url patterns
+    # get these from terminal/__init__.py
+    for url_regex in [
+        r"/terminals/websocket/(\w+)",
+        "/api/terminals",
+        r"/api/terminals/(\w+)",
+    ]:
+        jp_server_auth_core_resources[url_regex] = "terminals"
+    return jp_server_auth_core_resources
 
 
 HTTP_REQUESTS = [

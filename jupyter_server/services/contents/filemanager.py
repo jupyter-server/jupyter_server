@@ -395,6 +395,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
             model = self._file_model(path, content=content, format=format)
+        self.emit(data={"action": "get", "path": path})
         return model
 
     def _save_directory(self, os_path, model, path=""):
@@ -459,7 +460,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             model["message"] = validation_message
 
         self.run_post_save_hooks(model=model, os_path=os_path)
-
+        self.emit(data={"action": "save", "path": path})
         return model
 
     def delete_file(self, path):
@@ -735,6 +736,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
             model = await self._file_model(path, content=content, format=format)
+        self.emit(data={"action": "get", "path": path})
         return model
 
     async def _save_directory(self, os_path, model, path=""):
@@ -795,7 +797,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             model["message"] = validation_message
 
         self.run_post_save_hooks(model=model, os_path=os_path)
-
+        self.emit(data={"action": "save", "path": path})
         return model
 
     async def delete_file(self, path):

@@ -516,11 +516,18 @@ class GatewayClient(SingletonConfigurable):
             )
             self.auth_token = prev_auth_token
 
-        self._connection_args["headers"].update(
-            {f"{self.auth_header_key}": f"{self.auth_scheme} {self.auth_token}"}
-        )
+        for arg, value in self._connection_args.items():
+            if arg == "headers":
+                given_value = kwargs.setdefault(arg, {})
+                if isinstance(given_value, dict):
+                    given_value.update(value)
+                    # Ensure the auth header is current
+                    given_value.update(
+                        {f"{self.auth_header_key}": f"{self.auth_scheme} {self.auth_token}"}
+                    )
+            else:
+                kwargs[arg] = value
 
-        kwargs.update(self._connection_args)
         return kwargs
 
 

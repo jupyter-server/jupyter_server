@@ -2,6 +2,7 @@ ipykernel
 jinja2
 jupyter_client
 jupyter_server
+mistune<1.0.0
 myst-parser
 nbformat
 prometheus_client
