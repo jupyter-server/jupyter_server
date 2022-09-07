@@ -73,9 +73,9 @@ class GatewayClient(SingletonConfigurable):
         allow_none=True,
         config=True,
         help="""The url of the Kernel or Enterprise Gateway server where
-        kernel specifications are defined and kernel management takes place.
-        If defined, this Notebook server acts as a proxy for all kernel
-        management and kernel specification retrieval.  (JUPYTER_GATEWAY_URL env var)
+kernel specifications are defined and kernel management takes place.
+If defined, this Notebook server acts as a proxy for all kernel
+management and kernel specification retrieval.  (JUPYTER_GATEWAY_URL env var)
         """,
     )
 
@@ -99,7 +99,7 @@ class GatewayClient(SingletonConfigurable):
         allow_none=True,
         config=True,
         help="""The websocket url of the Kernel or Enterprise Gateway server.  If not provided, this value
-        will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (JUPYTER_GATEWAY_WS_URL env var)
+will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (JUPYTER_GATEWAY_WS_URL env var)
         """,
     )
 
@@ -154,7 +154,7 @@ class GatewayClient(SingletonConfigurable):
         default_value=kernelspecs_resource_endpoint_default_value,
         config=True,
         help="""The gateway endpoint for accessing kernelspecs resources
-            (JUPYTER_GATEWAY_KERNELSPECS_RESOURCE_ENDPOINT env var)""",
+(JUPYTER_GATEWAY_KERNELSPECS_RESOURCE_ENDPOINT env var)""",
     )
 
     @default("kernelspecs_resource_endpoint")
@@ -170,7 +170,7 @@ class GatewayClient(SingletonConfigurable):
         default_value=connect_timeout_default_value,
         config=True,
         help="""The time allowed for HTTP connection establishment with the Gateway server.
-        (JUPYTER_GATEWAY_CONNECT_TIMEOUT env var)""",
+(JUPYTER_GATEWAY_CONNECT_TIMEOUT env var)""",
     )
 
     @default("connect_timeout")
@@ -273,14 +273,14 @@ class GatewayClient(SingletonConfigurable):
     auth_header_key = Unicode(
         config=True,
         help="""The authorization header's key name (typically 'Authorization') used in the HTTP headers. The
-            header will be formatted as::
-            {
-                '{auth_header_key}': '{auth_scheme} {auth_token}'
-            }
-            if the authorization header key takes a single value, `auth_scheme` should be set to None and
-            'auth_token' should be configured to use the appropriate value.
+header will be formatted as::
+{
+    '{auth_header_key}': '{auth_scheme} {auth_token}'
+}
+if the authorization header key takes a single value, `auth_scheme` should be set to None and
+'auth_token' should be configured to use the appropriate value.
 
-        (JUPYTER_GATEWAY_AUTH_HEADER_KEY env var)""",
+(JUPYTER_GATEWAY_AUTH_HEADER_KEY env var)""",
     )
     auth_header_key_env = "JUPYTER_GATEWAY_AUTH_HEADER_KEY"
 
@@ -294,12 +294,10 @@ class GatewayClient(SingletonConfigurable):
         allow_none=True,
         config=True,
         help="""The authorization token used in the HTTP headers. The header will be formatted as::
-
-            {
-                '{auth_header_key}': '{auth_scheme} {auth_token}'
-            }
-
-        (JUPYTER_GATEWAY_AUTH_TOKEN env var)""",
+{
+    '{auth_header_key}': '{auth_scheme} {auth_token}'
+}
+(JUPYTER_GATEWAY_AUTH_TOKEN env var)""",
     )
     auth_token_env = "JUPYTER_GATEWAY_AUTH_TOKEN"
 
@@ -312,7 +310,7 @@ class GatewayClient(SingletonConfigurable):
         allow_none=True,
         config=True,
         help="""The auth scheme, added as a prefix to the authorization token used in the HTTP headers.
-        (JUPYTER_GATEWAY_AUTH_SCHEME env var)""",
+(JUPYTER_GATEWAY_AUTH_SCHEME env var)""",
     )
     auth_scheme_env = "JUPYTER_GATEWAY_AUTH_SCHEME"
 
@@ -326,7 +324,7 @@ class GatewayClient(SingletonConfigurable):
         default_value=validate_cert_default_value,
         config=True,
         help="""For HTTPS requests, determines if server's certificate should be validated or not.
-        (JUPYTER_GATEWAY_VALIDATE_CERT env var)""",
+(JUPYTER_GATEWAY_VALIDATE_CERT env var)""",
     )
 
     @default("validate_cert")
@@ -342,9 +340,9 @@ class GatewayClient(SingletonConfigurable):
         default_value=env_whitelist_default_value,
         config=True,
         help="""A comma-separated list of environment variable names that will be included, along with
-         their values, in the kernel startup request.  The corresponding `env_whitelist` configuration
-         value must also be set on the Gateway server - since that configuration value indicates which
-         environmental values to make available to the kernel. (JUPYTER_GATEWAY_ENV_WHITELIST env var)""",
+their values, in the kernel startup request.  The corresponding `env_whitelist` configuration
+value must also be set on the Gateway server - since that configuration value indicates which
+environmental values to make available to the kernel. (JUPYTER_GATEWAY_ENV_WHITELIST env var)""",
     )
 
     @default("env_whitelist")
@@ -357,9 +355,9 @@ class GatewayClient(SingletonConfigurable):
         default_value=gateway_retry_interval_default_value,
         config=True,
         help="""The time allowed for HTTP reconnection with the Gateway server for the first time.
-            Next will be JUPYTER_GATEWAY_RETRY_INTERVAL multiplied by two in factor of numbers of retries
-            but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
-            (JUPYTER_GATEWAY_RETRY_INTERVAL env var)""",
+Next will be JUPYTER_GATEWAY_RETRY_INTERVAL multiplied by two in factor of numbers of retries
+but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
+(JUPYTER_GATEWAY_RETRY_INTERVAL env var)""",
     )
 
     @default("gateway_retry_interval")
@@ -377,7 +375,7 @@ class GatewayClient(SingletonConfigurable):
         default_value=gateway_retry_interval_max_default_value,
         config=True,
         help="""The maximum time allowed for HTTP reconnection retry with the Gateway server.
-            (JUPYTER_GATEWAY_RETRY_INTERVAL_MAX env var)""",
+(JUPYTER_GATEWAY_RETRY_INTERVAL_MAX env var)""",
     )
 
     @default("gateway_retry_interval_max")
@@ -395,7 +393,7 @@ class GatewayClient(SingletonConfigurable):
         default_value=gateway_retry_max_default_value,
         config=True,
         help="""The maximum retries allowed for HTTP reconnection with the Gateway server.
-            (JUPYTER_GATEWAY_RETRY_MAX env var)""",
+(JUPYTER_GATEWAY_RETRY_MAX env var)""",
     )
 
     @default("gateway_retry_max")
@@ -409,9 +407,7 @@ class GatewayClient(SingletonConfigurable):
     gateway_token_renewer_class = Type(
         klass=GatewayTokenRenewerBase,
         config=True,
-        help=_i18n(
-            "The class to use for Gateway token renewal. (JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS env var)"
-        ),
+        help="""The class to use for Gateway token renewal. (JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS env var)""",
     )
 
     @default("gateway_token_renewer_class")
@@ -426,8 +422,8 @@ class GatewayClient(SingletonConfigurable):
         default_value=launch_timeout_pad_default_value,
         config=True,
         help="""Timeout pad to be ensured between KERNEL_LAUNCH_TIMEOUT and request_timeout
-        such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
-        (JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD env var)""",
+such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
+(JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD env var)""",
     )
 
     @default("launch_timeout_pad")
