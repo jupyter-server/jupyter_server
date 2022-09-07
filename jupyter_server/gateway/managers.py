@@ -436,7 +436,12 @@ class GatewayKernelManager(AsyncKernelManager):
 
             json_body = json_encode({"name": kernel_name, "env": kernel_env})
 
-            response = await gateway_request(self.kernels_url, method="POST", body=json_body)
+            response = await gateway_request(
+                self.kernels_url,
+                method="POST",
+                headers={"Content-Type": "application/json"},
+                body=json_body,
+            )
             self.kernel = json_decode(response.body)
             self.kernel_id = self.kernel["id"]
             self.kernel_url = url_path_join(self.kernels_url, url_escape(str(self.kernel_id)))
@@ -467,7 +472,12 @@ class GatewayKernelManager(AsyncKernelManager):
             assert self.kernel_url is not None
             kernel_url = self.kernel_url + "/restart"
             self.log.debug("Request restart kernel at: %s", kernel_url)
-            response = await gateway_request(kernel_url, method="POST", body=json_encode({}))
+            response = await gateway_request(
+                kernel_url,
+                method="POST",
+                headers={"Content-Type": "application/json"},
+                body=json_encode({}),
+            )
             self.log.debug("Restart kernel response: %d %s", response.code, response.reason)
 
     async def interrupt_kernel(self):
@@ -476,7 +486,12 @@ class GatewayKernelManager(AsyncKernelManager):
             assert self.kernel_url is not None
             kernel_url = self.kernel_url + "/interrupt"
             self.log.debug("Request interrupt kernel at: %s", kernel_url)
-            response = await gateway_request(kernel_url, method="POST", body=json_encode({}))
+            response = await gateway_request(
+                kernel_url,
+                method="POST",
+                headers={"Content-Type": "application/json"},
+                body=json_encode({}),
+            )
             self.log.debug("Interrupt kernel response: %d %s", response.code, response.reason)
 
     async def is_alive(self):
