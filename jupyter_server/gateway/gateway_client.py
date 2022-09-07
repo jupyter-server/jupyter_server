@@ -13,8 +13,6 @@ from tornado.httpclient import AsyncHTTPClient, HTTPClientError, HTTPResponse
 from traitlets import Bool, Float, Int, TraitError, Type, Unicode, default, validate
 from traitlets.config import LoggingConfigurable, SingletonConfigurable
 
-from ..transutils import _i18n
-
 
 class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore
     """The metaclass necessary for proper ABC behavior in a Configurable."""
@@ -274,10 +272,10 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         config=True,
         help="""The authorization header's key name (typically 'Authorization') used in the HTTP headers. The
 header will be formatted as::
-{
-    '{auth_header_key}': '{auth_scheme} {auth_token}'
-}
-if the authorization header key takes a single value, `auth_scheme` should be set to None and
+
+{'{auth_header_key}': '{auth_scheme} {auth_token}'}
+
+If the authorization header key takes a single value, `auth_scheme` should be set to None and
 'auth_token' should be configured to use the appropriate value.
 
 (JUPYTER_GATEWAY_AUTH_HEADER_KEY env var)""",
@@ -294,9 +292,9 @@ if the authorization header key takes a single value, `auth_scheme` should be se
         allow_none=True,
         config=True,
         help="""The authorization token used in the HTTP headers. The header will be formatted as::
-{
-    '{auth_header_key}': '{auth_scheme} {auth_token}'
-}
+
+{'{auth_header_key}': '{auth_scheme} {auth_token}'}
+
 (JUPYTER_GATEWAY_AUTH_TOKEN env var)""",
     )
     auth_token_env = "JUPYTER_GATEWAY_AUTH_TOKEN"
