@@ -175,9 +175,7 @@ class GatewayClient(SingletonConfigurable):
 
     @default("connect_timeout")
     def connect_timeout_default(self):
-        return float(
-            os.environ.get("JUPYTER_GATEWAY_CONNECT_TIMEOUT", self.connect_timeout_default_value)
-        )
+        return float(os.environ.get(self.connect_timeout_env, self.connect_timeout_default_value))
 
     request_timeout_default_value = 42.0
     request_timeout_env = "JUPYTER_GATEWAY_REQUEST_TIMEOUT"
@@ -189,9 +187,7 @@ class GatewayClient(SingletonConfigurable):
 
     @default("request_timeout")
     def request_timeout_default(self):
-        return float(
-            os.environ.get("JUPYTER_GATEWAY_REQUEST_TIMEOUT", self.request_timeout_default_value)
-        )
+        return float(os.environ.get(self.request_timeout_env, self.request_timeout_default_value))
 
     client_key = Unicode(
         default_value=None,
@@ -370,7 +366,7 @@ class GatewayClient(SingletonConfigurable):
     def gateway_retry_interval_default(self):
         return float(
             os.environ.get(
-                "JUPYTER_GATEWAY_RETRY_INTERVAL",
+                self.gateway_retry_interval_env,
                 self.gateway_retry_interval_default_value,
             )
         )
@@ -388,7 +384,7 @@ class GatewayClient(SingletonConfigurable):
     def gateway_retry_interval_max_default(self):
         return float(
             os.environ.get(
-                "JUPYTER_GATEWAY_RETRY_INTERVAL_MAX",
+                self.gateway_retry_interval_max_env,
                 self.gateway_retry_interval_max_default_value,
             )
         )
@@ -404,22 +400,25 @@ class GatewayClient(SingletonConfigurable):
 
     @default("gateway_retry_max")
     def gateway_retry_max_default(self):
-        return int(
-            os.environ.get("JUPYTER_GATEWAY_RETRY_MAX", self.gateway_retry_max_default_value)
-        )
+        return int(os.environ.get(self.gateway_retry_max_env, self.gateway_retry_max_default_value))
 
     gateway_token_renewer_class_default_value = (
         "jupyter_server.gateway.gateway_client.GatewayStaticTokenRenewer"
     )
+    gateway_token_renewer_class_env = "JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS"
     gateway_token_renewer_class = Type(
         klass=GatewayTokenRenewerBase,
         config=True,
-        help=_i18n("The class to use for Gateway token renewal."),
+        help=_i18n(
+            "The class to use for Gateway token renewal. (JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS env var)"
+        ),
     )
 
     @default("gateway_token_renewer_class")
     def gateway_token_renewer_class_default(self):
-        return self.gateway_token_renewer_class_default_value
+        return os.environ.get(
+            self.gateway_token_renewer_class_env, self.gateway_token_renewer_class_default_value
+        )
 
     launch_timeout_pad_default_value = 2.0
     launch_timeout_pad_env = "JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD"
@@ -435,7 +434,7 @@ class GatewayClient(SingletonConfigurable):
     def launch_timeout_pad_default(self):
         return float(
             os.environ.get(
-                "JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD",
+                self.launch_timeout_pad_env,
                 self.launch_timeout_pad_default_value,
             )
         )
