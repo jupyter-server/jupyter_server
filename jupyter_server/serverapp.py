@@ -75,6 +75,7 @@ from traitlets import (
     TraitError,
     Type,
     Unicode,
+    Union,
     default,
     observe,
     validate,
@@ -1318,7 +1319,7 @@ class ServerApp(JupyterApp):
         ),
     )
     terminado_settings = Dict(
-        List(),
+        Union([List(), Unicode()]),
         config=True,
         help=_i18n('Supply overrides for terminado. Currently only supports "shell_command".'),
     )
