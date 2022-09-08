@@ -258,3 +258,22 @@ async def test_culling(jp_server_config, jp_fetch):
             await asyncio.sleep(1)
 
     assert culled
+
+
+@pytest.mark.parametrize(
+    "terminado_settings,expected_shell",
+    [
+        ("shell_command=['/path/to/shell', '-l']", ["/path/to/shell", "-l"]),
+    ],
+)
+def test_shell_command_override(terminado_settings, expected_shell, jp_configurable_serverapp):
+    argv = []
+    kwargs = {"root_dir": None}
+
+    argv.append(f"--ServerApp.terminado_settings={terminado_settings}")
+
+    if argv:
+        kwargs["argv"] = argv  # type:ignore
+
+        app = jp_configurable_serverapp(**kwargs)
+        assert app.web_app.settings["terminal_manager"].shell_command == expected_shell
