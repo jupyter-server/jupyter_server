@@ -5,6 +5,7 @@ import logging
 import os
 import uuid
 from datetime import datetime
+from http.cookies import SimpleCookie
 from io import BytesIO
 from queue import Empty
 from unittest.mock import MagicMock, patch
@@ -255,6 +256,44 @@ async def test_gateway_request_timeout_pad_option(
 
     assert app.gateway_config.request_timeout == expected_request_timeout
     assert GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == expected_kernel_launch_timeout
+
+    GatewayClient.clear_instance()
+
+
+@pytest.mark.parametrize(
+    "enable_stickiness,cookie_name", [(False, ""), (True, ""), (True, "SERVERID")]
+)
+async def test_gateway_request_with_stickiness_cookie(
+    jp_configurable_serverapp, enable_stickiness, cookie_name
+):
+    argv = [
+        f"--GatewayClient.use_stickiness_cookie={enable_stickiness}",
+        f"--GatewayClient.stickiness_cookie_name={cookie_name}",
+    ]
+
+    GatewayClient.clear_instance()
+    app = jp_configurable_serverapp(argv=argv)
+
+    cookie: SimpleCookie = SimpleCookie()
+    cookie.load("SERVERID=1234567; Path=/, LBID=lb-ax6dvc3j; Path=/")
+    GatewayClient.instance().update_cookies(cookie)
+    connection_args = GatewayClient.instance().load_connection_args()
+
+    expect_cookie = "SERVERID=1234567"
+    if not cookie_name:
+        expect_cookie += "; LBID=lb-ax6dvc3j"
+
+    assert app.gateway_config.use_stickiness_cookie is enable_stickiness
+    if enable_stickiness:
+        assert connection_args["headers"]["Cookie"] == expect_cookie
+
+    connection_args = GatewayClient.instance().load_connection_args(
+        headers={"Cookie": "USER_ID=abcdefg"}
+    )
+    if enable_stickiness:
+        assert connection_args["headers"]["Cookie"] == "USER_ID=abcdefg; " + expect_cookie
+    else:
+        assert connection_args["headers"]["Cookie"] == "USER_ID=abcdefg"
 
     GatewayClient.clear_instance()
 

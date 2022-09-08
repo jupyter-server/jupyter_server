@@ -5,6 +5,9 @@ import json
 import logging
 import os
 import typing as ty
+from datetime import datetime
+from email.utils import parsedate_to_datetime
+from http.cookies import Morsel, SimpleCookie
 from socket import gaierror
 
 from tornado import web
@@ -276,6 +279,9 @@ class GatewayClient(SingletonConfigurable):
         super().__init__(**kwargs)
         self._static_args = {}  # initialized on first use
 
+        # store of cookies with store time
+        self._cookies = {}  # type: ty.Dict[str, ty.Tuple[Morsel, datetime]]
+
     env_whitelist_default_value = ""
     env_whitelist_env = "JUPYTER_GATEWAY_ENV_WHITELIST"
     env_whitelist = Unicode(
@@ -363,6 +369,34 @@ class GatewayClient(SingletonConfigurable):
             )
         )
 
+    use_stickiness_cookie_value = False
+    use_stickiness_cookie_env = "JUPYTER_GATEWAY_USE_STICKINESS_COOKIE"
+    use_stickiness_cookie = Bool(
+        default_value=use_stickiness_cookie_value,
+        config=True,
+        help="Record stickiness cookie sent by the load balancer to stick to certain pod",
+    )
+
+    @default("use_stickiness_cookie")
+    def use_stickiness_cookie_default(self):
+        return bool(
+            os.environ.get(
+                self.use_stickiness_cookie_env,
+                str(self.use_stickiness_cookie_value).lower(),
+            )
+            not in ["no", "false"]
+        )
+
+    stickiness_cookie_name_env = "JUPYTER_GATEWAY_STICKINESS_COOKIE_NAME"
+    stickiness_cookie_name = Unicode(
+        config=True,
+        help="Name of stickiness cookie to store. If not supplied, will keep all cookies.",
+    )
+
+    @default("stickiness_cookie_name")
+    def stickiness_cookie_name_default(self):
+        return os.environ.get(self.stickiness_cookie_name_env) or ""
+
     @property
     def gateway_enabled(self):
         return bool(self.url is not None and len(self.url) > 0)
@@ -424,7 +458,58 @@ class GatewayClient(SingletonConfigurable):
             else:
                 kwargs[arg] = static_value
 
+        if self.use_stickiness_cookie:
+            self._update_cookie_header(kwargs)
+
         return kwargs
+
+    def update_cookies(self, cookie: SimpleCookie) -> None:
+        """Update stickiness cookies given Set-Cookie headers of the response
+        to maintain stickiness to previous service nodes"""
+        if not self.use_stickiness_cookie:
+            return
+
+        store_time = datetime.now()
+        for key, item in cookie.items():
+            if self.stickiness_cookie_name and key != self.stickiness_cookie_name:
+                continue
+
+            if key not in self._cookies:
+                self.log.info("Obtained new stickiness cookie: %s=%s", key, item.value)
+
+            if item.get("expires"):
+                expire_timedelta = parsedate_to_datetime(item["expires"]) - store_time
+                item["max-age"] = str(expire_timedelta.total_seconds())
+
+            self._cookies[key] = (item, store_time)
+
+    def _clear_expired_cookies(self) -> None:
+        check_time = datetime.now()
+        expired_keys = []
+
+        for key, (morsel, store_time) in self._cookies.items():
+            if not morsel.get("max-age"):
+                continue
+            expired_timedelta = check_time - store_time
+            max_age = float(morsel.get("max-age", 24 * 3600))
+            if expired_timedelta.total_seconds() > max_age:
+                expired_keys.append(key)
+
+        for key in expired_keys:
+            self._cookies.pop(key)
+
+    def _update_cookie_header(self, connection_args: dict) -> None:
+        self._clear_expired_cookies()
+
+        cookie_header_value = "; ".join(
+            f"{name}={morsel.coded_value}" for name, (morsel, _time) in self._cookies.items()
+        )
+        headers = connection_args.get("headers", {})
+        existing_cookie = headers.pop("Cookie", headers.pop("cookie", None))
+        if existing_cookie:
+            cookie_header_value = existing_cookie + "; " + cookie_header_value
+        headers["Cookie"] = cookie_header_value
+        connection_args["headers"] = headers
 
 
 class RetryableHTTPClient:
@@ -524,4 +609,9 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
             f"appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
 
+    cookie_values = response.headers.get("Set-Cookie")
+    if cookie_values:
+        cookie: SimpleCookie = SimpleCookie()
+        cookie.load(cookie_values)
+        GatewayClient.instance().update_cookies(cookie)
     return response
