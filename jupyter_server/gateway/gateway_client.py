@@ -463,13 +463,17 @@ class GatewayClient(SingletonConfigurable):
 
         return kwargs
 
+    @staticmethod
+    def _get_expiration_check_time() -> datetime:
+        return datetime.now()
+
     def update_cookies(self, cookie: SimpleCookie) -> None:
         """Update stickiness cookies given Set-Cookie headers of the response
         to maintain stickiness to previous service nodes"""
         if not self.use_stickiness_cookie:
             return
 
-        store_time = datetime.now()
+        store_time = self._get_expiration_check_time()
         for key, item in cookie.items():
             if self.stickiness_cookie_name and key != self.stickiness_cookie_name:
                 continue
@@ -484,7 +488,7 @@ class GatewayClient(SingletonConfigurable):
             self._cookies[key] = (item, store_time)
 
     def _clear_expired_cookies(self) -> None:
-        check_time = datetime.now()
+        check_time = self._get_expiration_check_time()
         expired_keys = []
 
         for key, (morsel, store_time) in self._cookies.items():

@@ -4,7 +4,8 @@ import json
 import logging
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
+from email.utils import format_datetime
 from http.cookies import SimpleCookie
 from io import BytesIO
 from queue import Empty
@@ -294,6 +295,38 @@ async def test_gateway_request_with_stickiness_cookie(
         assert connection_args["headers"]["Cookie"] == "USER_ID=abcdefg; " + expect_cookie
     else:
         assert connection_args["headers"]["Cookie"] == "USER_ID=abcdefg"
+
+    GatewayClient.clear_instance()
+
+
+@pytest.mark.parametrize(
+    "expire_arg,expire_param,cookie_exist",
+    [("Expires", format_datetime(datetime.now()), True), ("Max-Age", "-360", False)],
+)
+async def test_gateway_request_with_expiring_stickiness_cookie(
+    jp_configurable_serverapp, expire_arg, expire_param, cookie_exist
+):
+    argv = ["--GatewayClient.use_stickiness_cookie=true"]
+
+    GatewayClient.clear_instance()
+    jp_configurable_serverapp(argv=argv)
+
+    cookie: SimpleCookie = SimpleCookie()
+    cookie.load("SERVERID=1234567; Path=/")
+    cookie["SERVERID"][expire_arg] = expire_param
+
+    mock_now = datetime.now() - timedelta(seconds=180)
+    with patch(
+        "jupyter_server.gateway.gateway_client.GatewayClient._get_expiration_check_time",
+        new=lambda *_: mock_now,
+    ):
+        GatewayClient.instance().update_cookies(cookie)
+
+        connection_args = GatewayClient.instance().load_connection_args()
+        if cookie_exist:
+            assert "SERVERID" in connection_args["headers"].get("Cookie")
+        else:
+            assert "SERVERID" not in connection_args["headers"].get("Cookie")
 
     GatewayClient.clear_instance()
 
