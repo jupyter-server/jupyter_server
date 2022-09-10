@@ -382,10 +382,7 @@ class GatewayClient(SingletonConfigurable):
     @default("accept_cookies")
     def accept_cookies_default(self):
         return bool(
-            os.environ.get(
-                self.accept_cookies_env,
-                str(self.accept_cookies_value).lower(),
-            )
+            os.environ.get(self.accept_cookies_env, str(self.accept_cookies_value).lower())
             not in ["no", "false"]
         )
 

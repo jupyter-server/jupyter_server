@@ -189,6 +189,7 @@ def init_gateway(monkeypatch):
     monkeypatch.setenv("JUPYTER_GATEWAY_REQUEST_TIMEOUT", "44.4")
     monkeypatch.setenv("JUPYTER_GATEWAY_CONNECT_TIMEOUT", "44.4")
     monkeypatch.setenv("JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD", "1.1")
+    monkeypatch.setenv("JUPYTER_GATEWAY_ACCEPT_COOKIES", "false")
     yield
     GatewayClient.clear_instance()
 
@@ -202,6 +203,7 @@ async def test_gateway_env_options(init_gateway, jp_serverapp):
     )
     assert jp_serverapp.gateway_config.connect_timeout == 44.4
     assert jp_serverapp.gateway_config.launch_timeout_pad == 1.1
+    assert jp_serverapp.gateway_config.accept_cookies is False
 
     GatewayClient.instance().init_static_args()
     assert GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == 43
@@ -265,17 +267,23 @@ cookie_expire_time = format_datetime(datetime.now() + timedelta(seconds=180))
 
 
 @pytest.mark.parametrize(
-    "expire_arg,expire_param,existing_cookies,cookie_expired",
+    "accept_cookies,expire_arg,expire_param,existing_cookies,cookie_exists",
     [
-        (None, None, "EXISTING=1", False),
-        ("Expires", cookie_expire_time, None, False),
-        ("Max-Age", "-360", "EXISTING=1", True),
+        (False, None, None, "EXISTING=1", False),
+        (True, None, None, "EXISTING=1", True),
+        (True, "Expires", cookie_expire_time, None, True),
+        (True, "Max-Age", "-360", "EXISTING=1", False),
     ],
 )
 async def test_gateway_request_with_expiring_cookies(
-    jp_configurable_serverapp, expire_arg, expire_param, existing_cookies, cookie_expired
+    jp_configurable_serverapp,
+    accept_cookies,
+    expire_arg,
+    expire_param,
+    existing_cookies,
+    cookie_exists,
 ):
-    argv = ["--GatewayClient.accept_cookies=true"]
+    argv = [f"--GatewayClient.accept_cookies={accept_cookies}"]
 
     GatewayClient.clear_instance()
     jp_configurable_serverapp(argv=argv)
@@ -292,7 +300,7 @@ async def test_gateway_request_with_expiring_cookies(
         args["headers"] = {"Cookie": existing_cookies}
     connection_args = GatewayClient.instance().load_connection_args(**args)
 
-    if cookie_expired:
+    if not cookie_exists:
         assert "SERVERID" not in (connection_args["headers"].get("Cookie") or "")
     else:
         assert "SERVERID" in connection_args["headers"].get("Cookie")
