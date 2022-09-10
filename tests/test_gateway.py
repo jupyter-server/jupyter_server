@@ -261,72 +261,43 @@ async def test_gateway_request_timeout_pad_option(
     GatewayClient.clear_instance()
 
 
-@pytest.mark.parametrize(
-    "enable_stickiness,cookie_name", [(False, ""), (True, ""), (True, "SERVERID")]
-)
-async def test_gateway_request_with_stickiness_cookie(
-    jp_configurable_serverapp, enable_stickiness, cookie_name
-):
-    argv = [
-        f"--GatewayClient.use_stickiness_cookie={enable_stickiness}",
-        f"--GatewayClient.stickiness_cookie_name={cookie_name}",
-    ]
-
-    GatewayClient.clear_instance()
-    app = jp_configurable_serverapp(argv=argv)
-
-    cookie: SimpleCookie = SimpleCookie()
-    cookie.load("SERVERID=1234567; Path=/, LBID=lb-ax6dvc3j; Path=/")
-    GatewayClient.instance().update_cookies(cookie)
-    connection_args = GatewayClient.instance().load_connection_args()
-
-    expect_cookie = "SERVERID=1234567"
-    if not cookie_name:
-        expect_cookie += "; LBID=lb-ax6dvc3j"
-
-    assert app.gateway_config.use_stickiness_cookie is enable_stickiness
-    if enable_stickiness:
-        assert connection_args["headers"]["Cookie"] == expect_cookie
-
-    connection_args = GatewayClient.instance().load_connection_args(
-        headers={"Cookie": "USER_ID=abcdefg"}
-    )
-    if enable_stickiness:
-        assert connection_args["headers"]["Cookie"] == "USER_ID=abcdefg; " + expect_cookie
-    else:
-        assert connection_args["headers"]["Cookie"] == "USER_ID=abcdefg"
-
-    GatewayClient.clear_instance()
+cookie_expire_time = format_datetime(datetime.now() + timedelta(seconds=180))
 
 
 @pytest.mark.parametrize(
-    "expire_arg,expire_param,cookie_exist",
-    [("Expires", format_datetime(datetime.now()), True), ("Max-Age", "-360", False)],
+    "expire_arg,expire_param,existing_cookies,cookie_expired",
+    [
+        (None, None, "EXISTING=1", False),
+        ("Expires", cookie_expire_time, None, False),
+        ("Max-Age", "-360", "EXISTING=1", True),
+    ],
 )
-async def test_gateway_request_with_expiring_stickiness_cookie(
-    jp_configurable_serverapp, expire_arg, expire_param, cookie_exist
+async def test_gateway_request_with_expiring_cookies(
+    jp_configurable_serverapp, expire_arg, expire_param, existing_cookies, cookie_expired
 ):
-    argv = ["--GatewayClient.use_stickiness_cookie=true"]
+    argv = ["--GatewayClient.accept_cookies=true"]
 
     GatewayClient.clear_instance()
     jp_configurable_serverapp(argv=argv)
 
     cookie: SimpleCookie = SimpleCookie()
     cookie.load("SERVERID=1234567; Path=/")
-    cookie["SERVERID"][expire_arg] = expire_param
+    if expire_arg:
+        cookie["SERVERID"][expire_arg] = expire_param
 
-    mock_now = datetime.now() - timedelta(seconds=180)
-    with patch(
-        "jupyter_server.gateway.gateway_client.GatewayClient._get_expiration_check_time",
-        new=lambda *_: mock_now,
-    ):
-        GatewayClient.instance().update_cookies(cookie)
+    GatewayClient.instance().update_cookies(cookie)
 
-        connection_args = GatewayClient.instance().load_connection_args()
-        if cookie_exist:
-            assert "SERVERID" in connection_args["headers"].get("Cookie")
-        else:
-            assert "SERVERID" not in connection_args["headers"].get("Cookie")
+    args = {}
+    if existing_cookies:
+        args["headers"] = {"Cookie": existing_cookies}
+    connection_args = GatewayClient.instance().load_connection_args(**args)
+
+    if cookie_expired:
+        assert "SERVERID" not in (connection_args["headers"].get("Cookie") or "")
+    else:
+        assert "SERVERID" in connection_args["headers"].get("Cookie")
+    if existing_cookies:
+        assert "EXISTING" in connection_args["headers"].get("Cookie")
 
     GatewayClient.clear_instance()
 
