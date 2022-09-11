@@ -5,7 +5,7 @@ You've landed on the documentation pages for the **Jupyter Server** Project. Som
 
 * `Jupyter Server Github Repo <https://github.com/jupyter/jupyter_server>`_, the source code we describe in this code.
 * `Jupyter Notebook Github Repo <https://github.com/jupyter/notebook>`_ , the source code for the classic Notebook.
-* `JupyterLab Github Repo <https://github.com/jupyterlab/jupyterlab>`_, the JupyterLab server wich runs on the Jupyter Server.
+* `JupyterLab Github Repo <https://github.com/jupyterlab/jupyterlab>`_, the JupyterLab server which runs on the Jupyter Server.
 
 
 Introduction
