@@ -31,7 +31,7 @@ async def test_subscribe_websocket(event_logger, jp_ws_fetch):
     ws = await jp_ws_fetch("/api/events/subscribe")
 
     event_logger.emit(
-        schema_id="event.mock.jupyter.org/message",
+        schema_id="http://event.mock.jupyter.org/message",
         data={"event_message": "Hello, world!"},
     )
     # await event_logger.gather_listeners()
@@ -44,7 +44,7 @@ async def test_subscribe_websocket(event_logger, jp_ws_fetch):
 
 payload_1 = """\
 {
-    "schema_id": "event.mock.jupyter.org/message",
+    "schema_id": "http://event.mock.jupyter.org/message",
     "version": 1,
     "data": {
         "event_message": "Hello, world!"
@@ -55,7 +55,7 @@ payload_1 = """\
 
 payload_2 = """\
 {
-    "schema_id": "event.mock.jupyter.org/message",
+    "schema_id": "http://event.mock.jupyter.org/message",
     "version": 1,
     "data": {
         "event_message": "Hello, world!"
@@ -83,7 +83,7 @@ async def test_post_event(jp_fetch, event_logger_sink, payload):
 
 payload_3 = """\
 {
-    "schema_id": "event.mock.jupyter.org/message",
+    "schema_id": "http://event.mock.jupyter.org/message",
     "data": {
         "event_message": "Hello, world!"
     }
@@ -101,7 +101,7 @@ payload_4 = """\
 
 payload_5 = """\
 {
-    "schema_id": "event.mock.jupyter.org/message",
+    "schema_id": "http://event.mock.jupyter.org/message",
     "version": 1
 }
 """
@@ -128,7 +128,7 @@ async def test_post_event_400(jp_fetch, event_logger, payload):
 
 payload_7 = """\
 {
-    "schema_id": "event.mock.jupyter.org/message",
+    "schema_id": "http://event.mock.jupyter.org/message",
     "version": 1,
     "data": {
         "message": "Hello, world!"
@@ -138,7 +138,7 @@ payload_7 = """\
 
 payload_8 = """\
 {
-    "schema_id": "event.mock.jupyter.org/message",
+    "schema_id": "http://event.mock.jupyter.org/message",
     "version": 2,
     "data": {
         "message": "Hello, world!"
