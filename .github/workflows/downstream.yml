@@ -1,13 +1,13 @@
-name: Test downstream projects
+name: Downstream Tests
 
 on:
   push:
   pull_request:
 
 jobs:
-  tests:
+  nbclassic:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
@@ -21,22 +21,8 @@ jobs:
         with:
           package_name: nbclassic
 
-      - name: Test jupyterlab_server
-        uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
-        with:
-          package_name: jupyterlab_server
-
-      - name: Test jupyterlab
-        uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
-        with:
-          package_name: jupyterlab
-          test_command: "python -m jupyterlab.browser_check --no-browser-test"
-
-      - name: Test run nbclassic
+      - name: Test start nbclassic
         run: |
-          pip install nbclassic
-          pip install --force-reinstall "."
-
           # Make sure we can start and kill the nbclassic server
           jupyter nbclassic --no-browser &
           TASK_PID=$!
@@ -45,3 +31,36 @@ jobs:
           sleep 5
           kill $TASK_PID
           wait $TASK_PID
+
+  jupyterlab_server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
+      - name: Test jupyterlab_server
+        uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
+        with:
+          package_name: jupyterlab_server
+
+  jupyterlab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
+      - name: Test jupyterlab
+        uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
+        with:
+          package_name: jupyterlab
+          test_command: "python -m jupyterlab.browser_check --no-browser-test"
