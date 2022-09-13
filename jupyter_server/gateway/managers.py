@@ -421,14 +421,15 @@ class GatewayKernelManager(AsyncKernelManager):
             if os.environ.get("KERNEL_USERNAME") is None and GatewayClient.instance().http_user:
                 os.environ["KERNEL_USERNAME"] = GatewayClient.instance().http_user
 
+            payload_envs = os.environ.copy()
+            payload_envs.update(kwargs.get("env", {}))  # Add any env entries in this request
+
+            # Build the actual env payload, filtering allowed_envs and those starting with 'KERNEL_'
             kernel_env = {
                 k: v
-                for (k, v) in dict(os.environ).items()
-                if k.startswith("KERNEL_") or k in GatewayClient.instance().env_whitelist.split(",")
+                for (k, v) in payload_envs.items()
+                if k.startswith("KERNEL_") or k in GatewayClient.instance().allowed_envs.split(",")
             }
-
-            # Add any env entries in this request
-            kernel_env.update(kwargs.get("env", {}))
 
             # Convey the full path to where this notebook file is located.
             if kwargs.get("cwd") is not None and kernel_env.get("KERNEL_WORKING_DIR") is None:
