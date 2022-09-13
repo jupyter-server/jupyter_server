@@ -1,4 +1,4 @@
-$id: event.mockextension.jupyter.org/message
+$id: http://event.mockextension.jupyter.org/message
 version: 1
 title: Message
 description: |

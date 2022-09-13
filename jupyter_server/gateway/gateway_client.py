@@ -6,11 +6,24 @@ import logging
 import os
 import typing as ty
 from abc import ABC, ABCMeta, abstractmethod
+from datetime import datetime
+from email.utils import parsedate_to_datetime
+from http.cookies import Morsel, SimpleCookie
 from socket import gaierror
 
 from tornado import web
 from tornado.httpclient import AsyncHTTPClient, HTTPClientError, HTTPResponse
-from traitlets import Bool, Float, Int, TraitError, Type, Unicode, default, validate
+from traitlets import (
+    Bool,
+    Float,
+    Int,
+    TraitError,
+    Type,
+    Unicode,
+    default,
+    observe,
+    validate,
+)
 from traitlets.config import LoggingConfigurable, SingletonConfigurable
 
 
@@ -332,10 +345,10 @@ If the authorization header key takes a single value, `auth_scheme` should be se
             not in ["no", "false"]
         )
 
-    env_whitelist_default_value = ""
-    env_whitelist_env = "JUPYTER_GATEWAY_ENV_WHITELIST"
-    env_whitelist = Unicode(
-        default_value=env_whitelist_default_value,
+    allowed_envs_default_value = ""
+    allowed_envs_env = "JUPYTER_GATEWAY_ALLOWED_ENVS"
+    allowed_envs = Unicode(
+        default_value=allowed_envs_default_value,
         config=True,
         help="""A comma-separated list of environment variable names that will be included, along with
 their values, in the kernel startup request.  The corresponding `env_whitelist` configuration
@@ -343,9 +356,18 @@ value must also be set on the Gateway server - since that configuration value in
 environmental values to make available to the kernel. (JUPYTER_GATEWAY_ENV_WHITELIST env var)""",
     )
 
-    @default("env_whitelist")
-    def _env_whitelist_default(self):
-        return os.environ.get(self.env_whitelist_env, self.env_whitelist_default_value)
+    @default("allowed_envs")
+    def _allowed_envs_default(self):
+        return os.environ.get(
+            "JUPYTER_GATEWAY_ENV_WHITELIST",
+            os.environ.get(self.allowed_envs_env, self.allowed_envs_default_value),
+        )
+
+    env_whitelist = Unicode(
+        default_value=allowed_envs_default_value,
+        config=True,
+        help="""Deprecated, use `GatewayClient.allowed_envs`""",
+    )
 
     gateway_retry_interval_default_value = 1.0
     gateway_retry_interval_env = "JUPYTER_GATEWAY_RETRY_INTERVAL"
@@ -433,6 +455,52 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
             )
         )
 
+    accept_cookies_value = False
+    accept_cookies_env = "JUPYTER_GATEWAY_ACCEPT_COOKIES"
+    accept_cookies = Bool(
+        default_value=accept_cookies_value,
+        config=True,
+        help="""Accept and manage cookies sent by the service side. This is often useful
+        for load balancers to decide which backend node to use.
+        (JUPYTER_GATEWAY_ACCEPT_COOKIES env var)""",
+    )
+
+    @default("accept_cookies")
+    def accept_cookies_default(self):
+        return bool(
+            os.environ.get(self.accept_cookies_env, str(self.accept_cookies_value).lower())
+            not in ["no", "false"]
+        )
+
+    _deprecated_traits = {
+        "env_whitelist": ("allowed_envs", "2.0"),
+    }
+
+    # Method copied from
+    # https://github.com/jupyterhub/jupyterhub/blob/d1a85e53dccfc7b1dd81b0c1985d158cc6b61820/jupyterhub/auth.py#L143-L161
+    @observe(*list(_deprecated_traits))
+    def _deprecated_trait(self, change):
+        """observer for deprecated traits"""
+        old_attr = change.name
+        new_attr, version = self._deprecated_traits[old_attr]
+        new_value = getattr(self, new_attr)
+        if new_value != change.new:
+            # only warn if different
+            # protects backward-compatible config from warnings
+            # if they set the same value under both names
+            self.log.warning(
+                (
+                    "{cls}.{old} is deprecated in jupyter_server "
+                    "{version}, use {cls}.{new} instead"
+                ).format(
+                    cls=self.__class__.__name__,
+                    old=old_attr,
+                    new=new_attr,
+                    version=version,
+                )
+            )
+            setattr(self, new_attr, change.new)
+
     @property
     def gateway_enabled(self):
         return bool(self.url is not None and len(self.url) > 0)
@@ -448,6 +516,9 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         super().__init__(**kwargs)
         self._connection_args = {}  # initialized on first use
         self.gateway_token_renewer = self.gateway_token_renewer_class(parent=self, log=self.log)
+
+        # store of cookies with store time
+        self._cookies = {}  # type: ty.Dict[str, ty.Tuple[Morsel, datetime]]
 
     def init_connection_args(self):
         """Initialize arguments used on every request.  Since these are primarily static values,
@@ -521,7 +592,64 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
             else:
                 kwargs[arg] = value
 
+        if self.accept_cookies:
+            self._update_cookie_header(kwargs)
+
         return kwargs
+
+    def update_cookies(self, cookie: SimpleCookie) -> None:
+        """Update cookies from existing requests for load balancers"""
+        if not self.accept_cookies:
+            return
+
+        store_time = datetime.now()
+        for key, item in cookie.items():
+            # Convert "expires" arg into "max-age" to facilitate expiration management.
+            # As "max-age" has precedence, ignore "expires" when "max-age" exists.
+            if item.get("expires") and not item.get("max-age"):
+                expire_timedelta = parsedate_to_datetime(item["expires"]) - store_time
+                item["max-age"] = str(expire_timedelta.total_seconds())
+
+            self._cookies[key] = (item, store_time)
+
+    def _clear_expired_cookies(self) -> None:
+        check_time = datetime.now()
+        expired_keys = []
+
+        for key, (morsel, store_time) in self._cookies.items():
+            cookie_max_age = morsel.get("max-age")
+            if not cookie_max_age:
+                continue
+            expired_timedelta = check_time - store_time
+            if expired_timedelta.total_seconds() > float(cookie_max_age):
+                expired_keys.append(key)
+
+        for key in expired_keys:
+            self._cookies.pop(key)
+
+    def _update_cookie_header(self, connection_args: dict) -> None:
+        self._clear_expired_cookies()
+
+        gateway_cookie_values = "; ".join(
+            f"{name}={morsel.coded_value}" for name, (morsel, _time) in self._cookies.items()
+        )
+        if gateway_cookie_values:
+            headers = connection_args.get("headers", {})
+
+            # As headers are case-insensitive, we get existing name of cookie header,
+            #  or use "Cookie" by default.
+            cookie_header_name = next(
+                (header_key for header_key in headers if header_key.lower() == "cookie"),
+                "Cookie",
+            )
+            existing_cookie = headers.get(cookie_header_name)
+
+            # merge gateway-managed cookies with cookies already in arguments
+            if existing_cookie:
+                gateway_cookie_values = existing_cookie + "; " + gateway_cookie_values
+            headers[cookie_header_name] = gateway_cookie_values
+
+            connection_args["headers"] = headers
 
 
 class RetryableHTTPClient:
@@ -621,4 +749,11 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
             f"appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
 
+    if GatewayClient.instance().accept_cookies:
+        # Update cookies on GatewayClient from server if configured.
+        cookie_values = response.headers.get("Set-Cookie")
+        if cookie_values:
+            cookie: SimpleCookie = SimpleCookie()
+            cookie.load(cookie_values)
+            GatewayClient.instance().update_cookies(cookie)
     return response
