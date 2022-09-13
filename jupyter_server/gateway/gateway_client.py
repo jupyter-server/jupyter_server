@@ -12,7 +12,7 @@ from socket import gaierror
 
 from tornado import web
 from tornado.httpclient import AsyncHTTPClient, HTTPClientError, HTTPResponse
-from traitlets import Bool, Float, Int, TraitError, Unicode, default, validate
+from traitlets import Bool, Float, Int, TraitError, Unicode, default, observe, validate
 from traitlets.config import SingletonConfigurable
 
 
@@ -282,20 +282,29 @@ class GatewayClient(SingletonConfigurable):
         # store of cookies with store time
         self._cookies = {}  # type: ty.Dict[str, ty.Tuple[Morsel, datetime]]
 
-    env_whitelist_default_value = ""
-    env_whitelist_env = "JUPYTER_GATEWAY_ENV_WHITELIST"
-    env_whitelist = Unicode(
-        default_value=env_whitelist_default_value,
+    allowed_envs_default_value = ""
+    allowed_envs_env = "JUPYTER_GATEWAY_ALLOWED_ENVS"
+    allowed_envs = Unicode(
+        default_value=allowed_envs_default_value,
         config=True,
         help="""A comma-separated list of environment variable names that will be included, along with
-         their values, in the kernel startup request.  The corresponding `env_whitelist` configuration
+         their values, in the kernel startup request.  The corresponding `allowed_envs` configuration
          value must also be set on the Gateway server - since that configuration value indicates which
-         environmental values to make available to the kernel. (JUPYTER_GATEWAY_ENV_WHITELIST env var)""",
+         environmental values to make available to the kernel. (JUPYTER_GATEWAY_ALLOWED_ENVS env var)""",
     )
 
-    @default("env_whitelist")
-    def _env_whitelist_default(self):
-        return os.environ.get(self.env_whitelist_env, self.env_whitelist_default_value)
+    @default("allowed_envs")
+    def _allowed_envs_default(self):
+        return os.environ.get(
+            "JUPYTER_GATEWAY_ENV_WHITELIST",
+            os.environ.get(self.allowed_envs_env, self.allowed_envs_default_value),
+        )
+
+    env_whitelist = Unicode(
+        default_value=allowed_envs_default_value,
+        config=True,
+        help="""Deprecated, use `GatewayClient.allowed_envs`""",
+    )
 
     gateway_retry_interval_default_value = 1.0
     gateway_retry_interval_env = "JUPYTER_GATEWAY_RETRY_INTERVAL"
@@ -385,6 +394,35 @@ class GatewayClient(SingletonConfigurable):
             os.environ.get(self.accept_cookies_env, str(self.accept_cookies_value).lower())
             not in ["no", "false"]
         )
+
+    _deprecated_traits = {
+        "env_whitelist": ("allowed_envs", "2.0"),
+    }
+
+    # Method copied from
+    # https://github.com/jupyterhub/jupyterhub/blob/d1a85e53dccfc7b1dd81b0c1985d158cc6b61820/jupyterhub/auth.py#L143-L161
+    @observe(*list(_deprecated_traits))
+    def _deprecated_trait(self, change):
+        """observer for deprecated traits"""
+        old_attr = change.name
+        new_attr, version = self._deprecated_traits[old_attr]
+        new_value = getattr(self, new_attr)
+        if new_value != change.new:
+            # only warn if different
+            # protects backward-compatible config from warnings
+            # if they set the same value under both names
+            self.log.warning(
+                (
+                    "{cls}.{old} is deprecated in jupyter_server "
+                    "{version}, use {cls}.{new} instead"
+                ).format(
+                    cls=self.__class__.__name__,
+                    old=old_attr,
+                    new=new_attr,
+                    version=version,
+                )
+            )
+            setattr(self, new_attr, change.new)
 
     @property
     def gateway_enabled(self):

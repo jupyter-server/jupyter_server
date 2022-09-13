@@ -104,6 +104,10 @@ async def mock_gateway_request(url, **kwargs):
         env = json_body.get("env")
         kspec_name = env.get("KERNEL_KSPEC_NAME")
         assert name == kspec_name  # Ensure that KERNEL_ env values get propagated
+        # Verify env propagation is well-behaved...
+        assert "FOO" in env
+        assert "BAR" in env
+        assert "BAZ" not in env
         model = generate_model(name)
         running_kernels[model.get("id")] = model  # Register model as a running kernel
         response_buf = BytesIO(json.dumps(model).encode("utf-8"))
@@ -190,6 +194,10 @@ def init_gateway(monkeypatch):
     monkeypatch.setenv("JUPYTER_GATEWAY_CONNECT_TIMEOUT", "44.4")
     monkeypatch.setenv("JUPYTER_GATEWAY_LAUNCH_TIMEOUT_PAD", "1.1")
     monkeypatch.setenv("JUPYTER_GATEWAY_ACCEPT_COOKIES", "false")
+    monkeypatch.setenv("JUPYTER_GATEWAY_ENV_WHITELIST", "FOO,BAR")
+    monkeypatch.setenv("FOO", "foo")
+    monkeypatch.setenv("BAR", "bar")
+    monkeypatch.setenv("BAZ", "baz")
     yield
     GatewayClient.clear_instance()
 
@@ -204,18 +212,20 @@ async def test_gateway_env_options(init_gateway, jp_serverapp):
     assert jp_serverapp.gateway_config.connect_timeout == 44.4
     assert jp_serverapp.gateway_config.launch_timeout_pad == 1.1
     assert jp_serverapp.gateway_config.accept_cookies is False
+    assert jp_serverapp.gateway_config.allowed_envs == "FOO,BAR"
 
     GatewayClient.instance().init_static_args()
     assert GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == 43
 
 
-async def test_gateway_cli_options(jp_configurable_serverapp):
+async def test_gateway_cli_options(jp_configurable_serverapp, capsys):
     argv = [
         "--gateway-url=" + mock_gateway_url,
         "--GatewayClient.http_user=" + mock_http_user,
         "--GatewayClient.connect_timeout=44.4",
         "--GatewayClient.request_timeout=96.0",
         "--GatewayClient.launch_timeout_pad=5.1",
+        "--GatewayClient.env_whitelist=FOO,BAR",
     ]
 
     GatewayClient.clear_instance()
@@ -227,6 +237,12 @@ async def test_gateway_cli_options(jp_configurable_serverapp):
     assert app.gateway_config.connect_timeout == 44.4
     assert app.gateway_config.request_timeout == 96.0
     assert app.gateway_config.launch_timeout_pad == 5.1
+    assert app.gateway_config.allowed_envs == "FOO,BAR"
+    captured = capsys.readouterr()
+    assert (
+        "env_whitelist is deprecated in jupyter_server 2.0, use GatewayClient.allowed_envs"
+        in captured.err
+    )
     GatewayClient.instance().init_static_args()
     assert (
         GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == 90
