@@ -67,16 +67,3 @@ jobs:
         with:
           package_name: jupyterlab
           test_command: "python -m jupyterlab.browser_check --no-browser-test"
-
-  nbclassic:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Base Setup
-        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-
-
