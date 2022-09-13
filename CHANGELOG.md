@@ -8,9 +8,24 @@ All notable changes to this project will be documented in this file.
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0b1...90905e116a2ae49b35b49c360614b0831498477b))
 
+### New features added
+
+- Identity API at /api/me [#671](https://github.com/jupyter-server/jupyter_server/pull/671) ([@minrk](https://github.com/minrk))
+
 ### Enhancements made
 
 - Accept and manage cookies when requesting gateways [#969](https://github.com/jupyter-server/jupyter_server/pull/969) ([@wjsi](https://github.com/wjsi))
+- Emit events from the Contents Service [#954](https://github.com/jupyter-server/jupyter_server/pull/954) ([@Zsailer](https://github.com/Zsailer))
+- Retry certain errors between server and gateway [#944](https://github.com/jupyter-server/jupyter_server/pull/944) ([@kevin-bates](https://github.com/kevin-bates))
+- Allow new file types [#895](https://github.com/jupyter-server/jupyter_server/pull/895) ([@davidbrochart](https://github.com/davidbrochart))
+- Adds anonymous users [#863](https://github.com/jupyter-server/jupyter_server/pull/863) ([@hbcarlos](https://github.com/hbcarlos))
+- switch to jupyter_events [#862](https://github.com/jupyter-server/jupyter_server/pull/862) ([@Zsailer](https://github.com/Zsailer))
+- Make it easier for extensions to customize the ServerApp [#879](https://github.com/jupyter-server/jupyter_server/pull/879) ([@minrk](https://github.com/minrk))
+- consolidate auth config on IdentityProvider [#825](https://github.com/jupyter-server/jupyter_server/pull/825) ([@minrk](https://github.com/minrk))
+- Show import error when faiing to load an extension [#878](https://github.com/jupyter-server/jupyter_server/pull/878) ([@minrk](https://github.com/minrk))
+- Add the root_dir value to the logging message in case of non compliant preferred_dir [#804](https://github.com/jupyter-server/jupyter_server/pull/804) ([@echarles](https://github.com/echarles))
+- Hydrate a Kernel Manager when calling GatewayKernelManager.start_kernel with a kernel_id [#788](https://github.com/jupyter-server/jupyter_server/pull/788) ([@Zsailer](https://github.com/Zsailer))
+- Remove terminals in favor of jupyter_server_terminals extension [#651](https://github.com/jupyter-server/jupyter_server/pull/651) ([@Zsailer](https://github.com/Zsailer))
 
 ### Bugs fixed
 
@@ -18,12 +33,67 @@ All notable changes to this project will be documented in this file.
 - Correct content-type headers [#965](https://github.com/jupyter-server/jupyter_server/pull/965) ([@epignot](https://github.com/epignot))
 - Don't validate certs for when stopping server [#959](https://github.com/jupyter-server/jupyter_server/pull/959) ([@Zsailer](https://github.com/Zsailer))
 - Parse list value for `terminado_settings` [#949](https://github.com/jupyter-server/jupyter_server/pull/949) ([@krassowski](https://github.com/krassowski))
+- Fix bug in `api/contents` requests for an allowed copy [#939](https://github.com/jupyter-server/jupyter_server/pull/939) ([@kiersten-stokes](https://github.com/kiersten-stokes))
+- Fix error that prevents posting to `api/contents` endpoint with no body [#937](https://github.com/jupyter-server/jupyter_server/pull/937) ([@kiersten-stokes](https://github.com/kiersten-stokes))
+- avoid creating asyncio.Lock at import time [#935](https://github.com/jupyter-server/jupyter_server/pull/935) ([@minrk](https://github.com/minrk))
+- Fix `get_kernel_path` for `AsyncFileManager`s. [#929](https://github.com/jupyter-server/jupyter_server/pull/929) ([@thetorpedodog](https://github.com/thetorpedodog))
+- Check for serverapp for reraise flag [#887](https://github.com/jupyter-server/jupyter_server/pull/887) ([@vidartf](https://github.com/vidartf))
+- Notify ChannelQueue that the response router thread is finishing [#896](https://github.com/jupyter-server/jupyter_server/pull/896) ([@CiprianAnton](https://github.com/CiprianAnton))
+- Make ChannelQueue.get_msg true async [#892](https://github.com/jupyter-server/jupyter_server/pull/892) ([@CiprianAnton](https://github.com/CiprianAnton))
+- Fix gateway kernel shutdown [#874](https://github.com/jupyter-server/jupyter_server/pull/874) ([@kevin-bates](https://github.com/kevin-bates))
+- Defer preferred_dir validation until root_dir is set [#826](https://github.com/jupyter-server/jupyter_server/pull/826) ([@kevin-bates](https://github.com/kevin-bates))
+- missing required arguments in utils.fetch [#798](https://github.com/jupyter-server/jupyter_server/pull/798) ([@minrk](https://github.com/minrk))
 
 ### Maintenance and upkeep improvements
 
 - Run downstream tests in parallel [#973](https://github.com/jupyter-server/jupyter_server/pull/973) ([@blink1073](https://github.com/blink1073))
 - [pre-commit.ci] pre-commit autoupdate [#971](https://github.com/jupyter-server/jupyter_server/pull/971) ([@pre-commit-ci](https://github.com/pre-commit-ci))
 - [pre-commit.ci] pre-commit autoupdate [#963](https://github.com/jupyter-server/jupyter_server/pull/963) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Update pytest_plugin with fixtures to test auth in core and extensions [#956](https://github.com/jupyter-server/jupyter_server/pull/956) ([@akshaychitneni](https://github.com/akshaychitneni))
+- [pre-commit.ci] pre-commit autoupdate [#955](https://github.com/jupyter-server/jupyter_server/pull/955) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Fix docs build [#952](https://github.com/jupyter-server/jupyter_server/pull/952) ([@blink1073](https://github.com/blink1073))
+- [pre-commit.ci] pre-commit autoupdate [#945](https://github.com/jupyter-server/jupyter_server/pull/945) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- [pre-commit.ci] pre-commit autoupdate [#942](https://github.com/jupyter-server/jupyter_server/pull/942) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Fix flake8 v5 compat [#941](https://github.com/jupyter-server/jupyter_server/pull/941) ([@blink1073](https://github.com/blink1073))
+- [pre-commit.ci] pre-commit autoupdate [#938](https://github.com/jupyter-server/jupyter_server/pull/938) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- [pre-commit.ci] pre-commit autoupdate [#928](https://github.com/jupyter-server/jupyter_server/pull/928) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- [pre-commit.ci] pre-commit autoupdate [#902](https://github.com/jupyter-server/jupyter_server/pull/902) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- [pre-commit.ci] pre-commit autoupdate [#894](https://github.com/jupyter-server/jupyter_server/pull/894) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Normalize os_path [#886](https://github.com/jupyter-server/jupyter_server/pull/886) ([@martinRenou](https://github.com/martinRenou))
+- [pre-commit.ci] pre-commit autoupdate [#885](https://github.com/jupyter-server/jupyter_server/pull/885) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- suppress tornado deprecation warnings [#882](https://github.com/jupyter-server/jupyter_server/pull/882) ([@minrk](https://github.com/minrk))
+- Fix lint [#867](https://github.com/jupyter-server/jupyter_server/pull/867) ([@blink1073](https://github.com/blink1073))
+- [pre-commit.ci] pre-commit autoupdate [#866](https://github.com/jupyter-server/jupyter_server/pull/866) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Fix sphinx 5.0 support [#865](https://github.com/jupyter-server/jupyter_server/pull/865) ([@blink1073](https://github.com/blink1073))
+- Add license metadata and file [#827](https://github.com/jupyter-server/jupyter_server/pull/827) ([@blink1073](https://github.com/blink1073))
+- CI cleanup [#824](https://github.com/jupyter-server/jupyter_server/pull/824) ([@blink1073](https://github.com/blink1073))
+- Switch to flit [#823](https://github.com/jupyter-server/jupyter_server/pull/823) ([@blink1073](https://github.com/blink1073))
+- Remove unused pytest-mock dependency [#814](https://github.com/jupyter-server/jupyter_server/pull/814) ([@mgorny](https://github.com/mgorny))
+- Remove duplicate requests requirement from setup.cfg [#813](https://github.com/jupyter-server/jupyter_server/pull/813) ([@mgorny](https://github.com/mgorny))
+- [pre-commit.ci] pre-commit autoupdate [#802](https://github.com/jupyter-server/jupyter_server/pull/802) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Add helper jobs for branch protection [#797](https://github.com/jupyter-server/jupyter_server/pull/797) ([@blink1073](https://github.com/blink1073))
+- [pre-commit.ci] pre-commit autoupdate [#793](https://github.com/jupyter-server/jupyter_server/pull/793) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Centralize app cleanup [#792](https://github.com/jupyter-server/jupyter_server/pull/792) ([@blink1073](https://github.com/blink1073))
+- [pre-commit.ci] pre-commit autoupdate [#785](https://github.com/jupyter-server/jupyter_server/pull/785) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Clean up pre-commit [#782](https://github.com/jupyter-server/jupyter_server/pull/782) ([@blink1073](https://github.com/blink1073))
+- Add mypy check [#779](https://github.com/jupyter-server/jupyter_server/pull/779) ([@blink1073](https://github.com/blink1073))
+- Use new post-version-spec from jupyter_releaser [#777](https://github.com/jupyter-server/jupyter_server/pull/777) ([@blink1073](https://github.com/blink1073))
+- Give write permissions to enforce label workflow [#776](https://github.com/jupyter-server/jupyter_server/pull/776) ([@blink1073](https://github.com/blink1073))
+- [pre-commit.ci] pre-commit autoupdate [#775](https://github.com/jupyter-server/jupyter_server/pull/775) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Add explicit handling of warnings [#771](https://github.com/jupyter-server/jupyter_server/pull/771) ([@blink1073](https://github.com/blink1073))
+- Use test-sdist from maintainer-tools [#769](https://github.com/jupyter-server/jupyter_server/pull/769) ([@blink1073](https://github.com/blink1073))
+- Add pyupgrade and doc8 hooks [#768](https://github.com/jupyter-server/jupyter_server/pull/768) ([@blink1073](https://github.com/blink1073))
+- update some metadata fields, sort deps [#675](https://github.com/jupyter-server/jupyter_server/pull/675) ([@bollwyvl](https://github.com/bollwyvl))
+
+### Documentation improvements
+
+- Fix typo in IdentityProvider documentation [#915](https://github.com/jupyter-server/jupyter_server/pull/915) ([@danielyahn](https://github.com/danielyahn))
+- Add Session workflows documentation [#808](https://github.com/jupyter-server/jupyter_server/pull/808) ([@andreyvelich](https://github.com/andreyvelich))
+- Add Jupyter Server Architecture diagram [#801](https://github.com/jupyter-server/jupyter_server/pull/801) ([@andreyvelich](https://github.com/andreyvelich))
+- Fix path for full config doc [#800](https://github.com/jupyter-server/jupyter_server/pull/800) ([@andreyvelich](https://github.com/andreyvelich))
+- Fix contributing guide for building the docs [#794](https://github.com/jupyter-server/jupyter_server/pull/794) ([@andreyvelich](https://github.com/andreyvelich))
+- Update team meetings doc [#772](https://github.com/jupyter-server/jupyter_server/pull/772) ([@willingc](https://github.com/willingc))
+- Update documentation about registering file save hooks [#770](https://github.com/jupyter-server/jupyter_server/pull/770) ([@davidbrochart](https://github.com/davidbrochart))
 
 ### Other merged PRs
 
