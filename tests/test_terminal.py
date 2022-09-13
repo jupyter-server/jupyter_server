@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import shlex
 import shutil
 import sys
 
@@ -258,3 +259,19 @@ async def test_culling(jp_server_config, jp_fetch):
             await asyncio.sleep(1)
 
     assert culled
+
+
+@pytest.mark.parametrize(
+    "terminado_settings,expected_shell,min_traitlets",
+    [
+        ("shell_command=\"['/path/to/shell', '-l']\"", ["/path/to/shell", "-l"], "5.4"),
+        ('shell_command="/string/path/to/shell -l"', ["/string/path/to/shell", "-l"], "5.1"),
+    ],
+)
+def test_shell_command_override(
+    terminado_settings, expected_shell, min_traitlets, jp_configurable_serverapp
+):
+    pytest.importorskip("traitlets", minversion=min_traitlets)
+    argv = shlex.split(f"--ServerApp.terminado_settings={terminado_settings}")
+    app = jp_configurable_serverapp(argv=argv)
+    assert app.web_app.settings["terminal_manager"].shell_command == expected_shell
