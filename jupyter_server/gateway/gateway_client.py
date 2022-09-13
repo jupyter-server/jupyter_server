@@ -374,7 +374,7 @@ class GatewayClient(SingletonConfigurable):
     accept_cookies = Bool(
         default_value=accept_cookies_value,
         config=True,
-        help="""Accept and manage cookies sent by the load balancer. This is often useful
+        help="""Accept and manage cookies sent by the service side. This is often useful
         for load balancers to decide which backend node to use.
         (JUPYTER_GATEWAY_ACCEPT_COOKIES env var)""",
     )
@@ -459,8 +459,8 @@ class GatewayClient(SingletonConfigurable):
 
         store_time = datetime.now()
         for key, item in cookie.items():
-            # convert "expires" arg into "max-age" to facilitate expiration management
-            # as "max-age" has precedence, ignore "expires" when "max-age" exists
+            # Convert "expires" arg into "max-age" to facilitate expiration management.
+            # As "max-age" has precedence, ignore "expires" when "max-age" exists.
             if item.get("expires") and not item.get("max-age"):
                 expire_timedelta = parsedate_to_datetime(item["expires"]) - store_time
                 item["max-age"] = str(expire_timedelta.total_seconds())
@@ -491,7 +491,7 @@ class GatewayClient(SingletonConfigurable):
         if gateway_cookie_values:
             headers = connection_args.get("headers", {})
 
-            # as headers are case-insensitive, we get existing name of cookie header,
+            # As headers are case-insensitive, we get existing name of cookie header,
             #  or use "Cookie" by default.
             cookie_header_name = next(
                 (header_key for header_key in headers if header_key.lower() == "cookie"),
@@ -604,9 +604,11 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
             f"appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
 
-    cookie_values = response.headers.get("Set-Cookie")
-    if cookie_values:
-        cookie: SimpleCookie = SimpleCookie()
-        cookie.load(cookie_values)
-        GatewayClient.instance().update_cookies(cookie)
+    if GatewayClient.instance().accept_cookies:
+        # Update cookies on GatewayClient from server if configured.
+        cookie_values = response.headers.get("Set-Cookie")
+        if cookie_values:
+            cookie: SimpleCookie = SimpleCookie()
+            cookie.load(cookie_values)
+            GatewayClient.instance().update_cookies(cookie)
     return response
