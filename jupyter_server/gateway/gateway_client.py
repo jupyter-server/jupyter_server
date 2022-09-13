@@ -5,6 +5,9 @@ import json
 import logging
 import os
 import typing as ty
+from datetime import datetime
+from email.utils import parsedate_to_datetime
+from http.cookies import Morsel, SimpleCookie
 from socket import gaierror
 
 from tornado import web
@@ -276,6 +279,9 @@ class GatewayClient(SingletonConfigurable):
         super().__init__(**kwargs)
         self._static_args = {}  # initialized on first use
 
+        # store of cookies with store time
+        self._cookies = {}  # type: ty.Dict[str, ty.Tuple[Morsel, datetime]]
+
     env_whitelist_default_value = ""
     env_whitelist_env = "JUPYTER_GATEWAY_ENV_WHITELIST"
     env_whitelist = Unicode(
@@ -363,6 +369,23 @@ class GatewayClient(SingletonConfigurable):
             )
         )
 
+    accept_cookies_value = False
+    accept_cookies_env = "JUPYTER_GATEWAY_ACCEPT_COOKIES"
+    accept_cookies = Bool(
+        default_value=accept_cookies_value,
+        config=True,
+        help="""Accept and manage cookies sent by the service side. This is often useful
+        for load balancers to decide which backend node to use.
+        (JUPYTER_GATEWAY_ACCEPT_COOKIES env var)""",
+    )
+
+    @default("accept_cookies")
+    def accept_cookies_default(self):
+        return bool(
+            os.environ.get(self.accept_cookies_env, str(self.accept_cookies_value).lower())
+            not in ["no", "false"]
+        )
+
     @property
     def gateway_enabled(self):
         return bool(self.url is not None and len(self.url) > 0)
@@ -424,7 +447,64 @@ class GatewayClient(SingletonConfigurable):
             else:
                 kwargs[arg] = static_value
 
+        if self.accept_cookies:
+            self._update_cookie_header(kwargs)
+
         return kwargs
+
+    def update_cookies(self, cookie: SimpleCookie) -> None:
+        """Update cookies from existing requests for load balancers"""
+        if not self.accept_cookies:
+            return
+
+        store_time = datetime.now()
+        for key, item in cookie.items():
+            # Convert "expires" arg into "max-age" to facilitate expiration management.
+            # As "max-age" has precedence, ignore "expires" when "max-age" exists.
+            if item.get("expires") and not item.get("max-age"):
+                expire_timedelta = parsedate_to_datetime(item["expires"]) - store_time
+                item["max-age"] = str(expire_timedelta.total_seconds())
+
+            self._cookies[key] = (item, store_time)
+
+    def _clear_expired_cookies(self) -> None:
+        check_time = datetime.now()
+        expired_keys = []
+
+        for key, (morsel, store_time) in self._cookies.items():
+            cookie_max_age = morsel.get("max-age")
+            if not cookie_max_age:
+                continue
+            expired_timedelta = check_time - store_time
+            if expired_timedelta.total_seconds() > float(cookie_max_age):
+                expired_keys.append(key)
+
+        for key in expired_keys:
+            self._cookies.pop(key)
+
+    def _update_cookie_header(self, connection_args: dict) -> None:
+        self._clear_expired_cookies()
+
+        gateway_cookie_values = "; ".join(
+            f"{name}={morsel.coded_value}" for name, (morsel, _time) in self._cookies.items()
+        )
+        if gateway_cookie_values:
+            headers = connection_args.get("headers", {})
+
+            # As headers are case-insensitive, we get existing name of cookie header,
+            #  or use "Cookie" by default.
+            cookie_header_name = next(
+                (header_key for header_key in headers if header_key.lower() == "cookie"),
+                "Cookie",
+            )
+            existing_cookie = headers.get(cookie_header_name)
+
+            # merge gateway-managed cookies with cookies already in arguments
+            if existing_cookie:
+                gateway_cookie_values = existing_cookie + "; " + gateway_cookie_values
+            headers[cookie_header_name] = gateway_cookie_values
+
+            connection_args["headers"] = headers
 
 
 class RetryableHTTPClient:
@@ -524,4 +604,11 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
             f"appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
 
+    if GatewayClient.instance().accept_cookies:
+        # Update cookies on GatewayClient from server if configured.
+        cookie_values = response.headers.get("Set-Cookie")
+        if cookie_values:
+            cookie: SimpleCookie = SimpleCookie()
+            cookie.load(cookie_values)
+            GatewayClient.instance().update_cookies(cookie)
     return response
