@@ -2,5 +2,5 @@
 store the current version info of the server.
 
 """
-version_info = (2, 0, 0, "rc", "0")
+version_info = (2, 1, 0, ".dev", "0")
 __version__ = ".".join(map(str, version_info[:3])) + "".join(version_info[3:])
