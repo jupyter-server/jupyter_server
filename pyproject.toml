@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jupyter_server"
-version = "2.1.0.dev0"
+dynamic = ["version"]
 readme = "README.md"
 license = { file = "COPYING.md" }
 description = "The backend—i.e. core services, APIs, and REST endpoints—to Jupyter web applications."
@@ -72,6 +72,9 @@ dev = [
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
 
+[tool.hatch.version]
+path = "jupyter_server/_version.py"
+
 [tool.hatch.build]
 artifacts = ["jupyter_server/static/style"]
 
@@ -119,36 +122,6 @@ before-build-python = ["npm install", "npm run build"]
 post-version-spec = "dev"
 pydist_resource_paths = ["jupyter_server/static/style/bootstrap.min.css", "jupyter_server/static/style/bootstrap-theme.min.css"]
 
-[tool.tbump.version]
-current = "2.1.0.dev0"
-regex = '''
-  (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)
-  ((?P<channel>a|b|rc|.dev)(?P<release>\d+))?
-'''
-
-[tool.tbump.git]
-message_template = "Bump to {new_version}"
-tag_template = "v{new_version}"
-
-[[tool.tbump.file]]
-src = "jupyter_server/_version.py"
-version_template = '({major}, {minor}, {patch}, "{channel}", "{release}")'
-
-[[tool.tbump.file]]
-src = "pyproject.toml"
-version_template = "version = \"{major}.{minor}.{patch}{channel}{release}\""
-
-[[tool.tbump.file]]
-src = "docs/source/conf.py"
-version_template = "{major}.{minor}.{patch}{channel}{release}"
-
-[[tool.tbump.field]]
-name = "channel"
-default = ""
-
-[[tool.tbump.field]]
-name = "release"
-default = ""
 
 [tool.mypy]
 check_untyped_defs = true
