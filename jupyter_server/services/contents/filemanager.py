@@ -7,7 +7,9 @@ import os
 import shutil
 import stat
 import sys
+import warnings
 from datetime import datetime
+from pathlib import Path
 
 import nbformat
 from anyio.to_thread import run_sync
@@ -54,6 +56,28 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if not os.path.isdir(value):
             raise TraitError("%r is not a directory" % value)
         return value
+
+    @default("preferred_dir")
+    def _default_preferred_dir(self):
+        try:
+            value = self.parent.preferred_dir
+            if value == self.parent.root_dir:
+                value = None
+        except AttributeError:
+            pass
+        else:
+            if value is not None:
+                warnings.warn(
+                    "ServerApp.preferred_dir config is deprecated in jupyter-server 2.0. Use ContentsManager.preferred_dir with a relative path instead",
+                    FutureWarning,
+                    stacklevel=3,
+                )
+                try:
+                    path = Path(value)
+                    return "/" + path.relative_to(self.root_dir).as_posix()
+                except ValueError:
+                    raise TraitError("%s is outside root contents directory" % value)
+        return "/"
 
     @default("checkpoints_class")
     def _checkpoints_class_default(self):
