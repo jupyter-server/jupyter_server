@@ -198,7 +198,7 @@ class CustomTestTokenRenewer(GatewayTokenRenewerBase):
     config_var_1: int = Int(config=True)  # configured to: 42
     config_var_2: str = Unicode(config=True)  # configured to: "Use this token value: "
 
-    def renew_token(
+    def get_token(
         self, auth_header_key: str, auth_scheme: Union[str, None], auth_token: str, **kwargs: Any
     ) -> str:
         return f"{self.config_var_2}{self.config_var_1}"
@@ -298,13 +298,13 @@ async def test_token_renewer_config(jp_server_config, jp_configurable_serverapp,
     assert isinstance(gw_client.gateway_token_renewer, GatewayTokenRenewerBase)
     if renewer_type == "default":
         assert isinstance(gw_client.gateway_token_renewer, GatewayStaticTokenRenewer)
-        token = gw_client.gateway_token_renewer.renew_token(
+        token = gw_client.gateway_token_renewer.get_token(
             gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token
         )
         assert token == gw_client.auth_token
     else:
         assert isinstance(gw_client.gateway_token_renewer, CustomTestTokenRenewer)
-        token = gw_client.gateway_token_renewer.renew_token(
+        token = gw_client.gateway_token_renewer.get_token(
             gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token
         )
         assert token == CustomTestTokenRenewer.TEST_EXPECTED_TOKEN_VALUE

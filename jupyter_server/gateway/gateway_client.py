@@ -42,7 +42,7 @@ class GatewayTokenRenewerBase(ABC, LoggingConfigurable, metaclass=GatewayTokenRe
     """
 
     @abstractmethod
-    def renew_token(
+    def get_token(
         self,
         auth_header_key: str,
         auth_scheme: ty.Union[str, None],
@@ -51,7 +51,7 @@ class GatewayTokenRenewerBase(ABC, LoggingConfigurable, metaclass=GatewayTokenRe
     ) -> str:
         """
         Given the current authorization header key, scheme, and token, this method returns
-        a (potentially) renewed token for use against the Gateway server.
+        a (potentially renewed) token for use against the Gateway server.
         """
         pass
 
@@ -61,7 +61,7 @@ class GatewayStaticTokenRenewer(GatewayTokenRenewerBase):
     `gateway_token_renewer` and merely returns the provided token.
     """
 
-    def renew_token(
+    def get_token(
         self,
         auth_header_key: str,
         auth_scheme: ty.Union[str, None],
@@ -568,7 +568,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         # Give token renewal a shot at renewing the token
         prev_auth_token = self.auth_token
         try:
-            self.auth_token = self.gateway_token_renewer.renew_token(
+            self.auth_token = self.gateway_token_renewer.get_token(
                 self.auth_header_key, self.auth_scheme, self.auth_token
             )
         except Exception as ex:
