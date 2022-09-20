@@ -20,8 +20,8 @@ from traitlets import Int, Unicode
 from traitlets.config import Config
 
 from jupyter_server.gateway.gateway_client import (
-    GatewayStaticTokenRenewer,
     GatewayTokenRenewerBase,
+    NoOpTokenRenewer,
 )
 from jupyter_server.gateway.managers import (
     ChannelQueue,
@@ -265,7 +265,7 @@ async def test_gateway_cli_options(jp_configurable_serverapp, capsys):
     assert app.gateway_config.connect_timeout == 44.4
     assert app.gateway_config.request_timeout == 96.0
     assert app.gateway_config.launch_timeout_pad == 5.1
-    assert app.gateway_config.gateway_token_renewer_class == GatewayStaticTokenRenewer
+    assert app.gateway_config.gateway_token_renewer_class == NoOpTokenRenewer
     assert app.gateway_config.allowed_envs == "FOO,BAR"
     captured = capsys.readouterr()
     assert (
@@ -297,7 +297,7 @@ async def test_token_renewer_config(jp_server_config, jp_configurable_serverapp,
     gw_client.init_connection_args()
     assert isinstance(gw_client.gateway_token_renewer, GatewayTokenRenewerBase)
     if renewer_type == "default":
-        assert isinstance(gw_client.gateway_token_renewer, GatewayStaticTokenRenewer)
+        assert isinstance(gw_client.gateway_token_renewer, NoOpTokenRenewer)
         token = gw_client.gateway_token_renewer.get_token(
             gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token
         )

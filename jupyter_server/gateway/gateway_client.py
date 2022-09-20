@@ -56,8 +56,8 @@ class GatewayTokenRenewerBase(ABC, LoggingConfigurable, metaclass=GatewayTokenRe
         pass
 
 
-class GatewayStaticTokenRenewer(GatewayTokenRenewerBase):
-    """GatewayStaticTokenRenewer is the default value to the GatewayClient trait
+class NoOpTokenRenewer(GatewayTokenRenewerBase):
+    """NoOpTokenRenewer is the default value to the GatewayClient trait
     `gateway_token_renewer` and merely returns the provided token.
     """
 
@@ -351,16 +351,16 @@ If the authorization header key takes a single value, `auth_scheme` should be se
         default_value=allowed_envs_default_value,
         config=True,
         help="""A comma-separated list of environment variable names that will be included, along with
-their values, in the kernel startup request.  The corresponding `env_whitelist` configuration
+their values, in the kernel startup request.  The corresponding `client_envs` configuration
 value must also be set on the Gateway server - since that configuration value indicates which
-environmental values to make available to the kernel. (JUPYTER_GATEWAY_ENV_WHITELIST env var)""",
+environmental values to make available to the kernel. (JUPYTER_GATEWAY_ALLOWED_ENVS env var)""",
     )
 
     @default("allowed_envs")
     def _allowed_envs_default(self):
         return os.environ.get(
-            "JUPYTER_GATEWAY_ENV_WHITELIST",
-            os.environ.get(self.allowed_envs_env, self.allowed_envs_default_value),
+            self.allowed_envs_env,
+            os.environ.get("JUPYTER_GATEWAY_ENV_WHITELIST", self.allowed_envs_default_value),
         )
 
     env_whitelist = Unicode(
@@ -421,7 +421,7 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
         return int(os.environ.get(self.gateway_retry_max_env, self.gateway_retry_max_default_value))
 
     gateway_token_renewer_class_default_value = (
-        "jupyter_server.gateway.gateway_client.GatewayStaticTokenRenewer"
+        "jupyter_server.gateway.gateway_client.NoOpTokenRenewer"
     )
     gateway_token_renewer_class_env = "JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS"
     gateway_token_renewer_class = Type(
