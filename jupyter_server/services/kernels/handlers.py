@@ -4,6 +4,7 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import asyncio
 import json
 from textwrap import dedent
 from traceback import format_tb
@@ -15,8 +16,9 @@ try:
 except ImportError:
     from jupyter_client.jsonutil import date_default as json_default
 
+from concurrent.futures import Future
+
 from tornado import gen, web
-from tornado.concurrent import Future
 from tornado.ioloop import IOLoop
 
 from jupyter_server.auth import authorized
@@ -55,7 +57,9 @@ class MainKernelHandler(KernelsAPIHandler):
         else:
             model.setdefault("name", km.default_kernel_name)
 
-        kernel_id = await km.start_kernel(kernel_name=model["name"], path=model.get("path"))
+        kernel_id = await ensure_async(
+            km.start_kernel(kernel_name=model["name"], path=model.get("path"))
+        )
         model = await ensure_async(km.kernel_model(kernel_id))
         location = url_path_join(self.base_url, "api", "kernels", url_escape(kernel_id))
         self.set_header("Location", location)
@@ -404,7 +408,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         loop = IOLoop.current()
         loop.add_timeout(loop.time() + self.kernel_info_timeout, give_up)
         # actually wait for it
-        await future
+        await asyncio.wrap_future(future)
 
     async def get(self, kernel_id):
         self.kernel_id = kernel_id
