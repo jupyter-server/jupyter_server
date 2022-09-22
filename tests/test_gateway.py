@@ -9,13 +9,20 @@ from email.utils import format_datetime
 from http.cookies import SimpleCookie
 from io import BytesIO
 from queue import Empty
+from typing import Any, Union
 from unittest.mock import MagicMock, patch
 
 import pytest
 import tornado
 from tornado.httpclient import HTTPRequest, HTTPResponse
 from tornado.web import HTTPError
+from traitlets import Int, Unicode
+from traitlets.config import Config
 
+from jupyter_server.gateway.gateway_client import (
+    GatewayTokenRenewerBase,
+    NoOpTokenRenewer,
+)
 from jupyter_server.gateway.managers import (
     ChannelQueue,
     GatewayClient,
@@ -183,6 +190,27 @@ def mock_websocket_create_connection(recv_side_effect=None):
     return helper
 
 
+class CustomTestTokenRenewer(GatewayTokenRenewerBase):
+
+    TEST_EXPECTED_TOKEN_VALUE = "Use this token value: 42"
+
+    # The following are configured by the config test to ensure they flow
+    config_var_1: int = Int(config=True)  # configured to: 42
+    config_var_2: str = Unicode(config=True)  # configured to: "Use this token value: "
+
+    def get_token(
+        self, auth_header_key: str, auth_scheme: Union[str, None], auth_token: str, **kwargs: Any
+    ) -> str:
+        return f"{self.config_var_2}{self.config_var_1}"
+
+
+@pytest.fixture()
+def jp_server_config():
+    return Config(
+        {"CustomTestTokenRenewer": {"config_var_1": 42, "config_var_2": "Use this token value: "}}
+    )
+
+
 @pytest.fixture
 def init_gateway(monkeypatch):
     """Initializes the server for use as a gateway client."""
@@ -214,7 +242,7 @@ async def test_gateway_env_options(init_gateway, jp_serverapp):
     assert jp_serverapp.gateway_config.accept_cookies is False
     assert jp_serverapp.gateway_config.allowed_envs == "FOO,BAR"
 
-    GatewayClient.instance().init_static_args()
+    GatewayClient.instance().init_connection_args()
     assert GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == 43
 
 
@@ -237,17 +265,49 @@ async def test_gateway_cli_options(jp_configurable_serverapp, capsys):
     assert app.gateway_config.connect_timeout == 44.4
     assert app.gateway_config.request_timeout == 96.0
     assert app.gateway_config.launch_timeout_pad == 5.1
+    assert app.gateway_config.gateway_token_renewer_class == NoOpTokenRenewer
     assert app.gateway_config.allowed_envs == "FOO,BAR"
     captured = capsys.readouterr()
     assert (
         "env_whitelist is deprecated in jupyter_server 2.0, use GatewayClient.allowed_envs"
         in captured.err
     )
-    GatewayClient.instance().init_static_args()
+    gw_client = GatewayClient.instance()
+    gw_client.init_connection_args()
     assert (
-        GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == 90
+        gw_client.KERNEL_LAUNCH_TIMEOUT == 90
     )  # Ensure KLT gets set from request-timeout - launch_timeout_pad
     GatewayClient.clear_instance()
+
+
+@pytest.mark.parametrize("renewer_type", ["default", "custom"])
+async def test_token_renewer_config(jp_server_config, jp_configurable_serverapp, renewer_type):
+    argv = ["--gateway-url=" + mock_gateway_url]
+    if renewer_type == "custom":
+        argv.append(
+            "--GatewayClient.gateway_token_renewer_class=tests.test_gateway.CustomTestTokenRenewer"
+        )
+
+    GatewayClient.clear_instance()
+    app = jp_configurable_serverapp(argv=argv)
+
+    assert app.gateway_config.gateway_enabled is True
+    assert app.gateway_config.url == mock_gateway_url
+    gw_client = GatewayClient.instance()
+    gw_client.init_connection_args()
+    assert isinstance(gw_client.gateway_token_renewer, GatewayTokenRenewerBase)
+    if renewer_type == "default":
+        assert isinstance(gw_client.gateway_token_renewer, NoOpTokenRenewer)
+        token = gw_client.gateway_token_renewer.get_token(
+            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token
+        )
+        assert token == gw_client.auth_token
+    else:
+        assert isinstance(gw_client.gateway_token_renewer, CustomTestTokenRenewer)
+        token = gw_client.gateway_token_renewer.get_token(
+            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token
+        )
+        assert token == CustomTestTokenRenewer.TEST_EXPECTED_TOKEN_VALUE
 
 
 @pytest.mark.parametrize(
@@ -271,7 +331,7 @@ async def test_gateway_request_timeout_pad_option(
     app = jp_configurable_serverapp(argv=argv)
 
     monkeypatch.setattr(GatewayClient, "KERNEL_LAUNCH_TIMEOUT", kernel_launch_timeout)
-    GatewayClient.instance().init_static_args()
+    GatewayClient.instance().init_connection_args()
 
     assert app.gateway_config.request_timeout == expected_request_timeout
     assert GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == expected_kernel_launch_timeout
