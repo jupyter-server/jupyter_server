@@ -270,7 +270,7 @@ class SessionManager(LoggingConfigurable):
 
     def get_kernel_env(self, path):
         """Return the environment variables that need to be set in the kernel"""
-        return {**os.environ, "JP_SESSION_NAME": path}
+        return {**os.environ, "JPY_SESSION_NAME": path}
 
     async def start_kernel_for_session(self, session_id, path, name, type, kernel_name):
         """Start a new kernel for a given session."""
