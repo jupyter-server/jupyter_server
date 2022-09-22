@@ -6,6 +6,10 @@ on:
   schedule:
     - cron: "0 8 * * *"
 
+defaults:
+  run:
+    shell: bash -eux {0}
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -109,9 +113,11 @@ jobs:
         uses: actions/checkout@v2
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+        with:
+          python_version: "3.11.0-beta - 3.11.0"
       - name: Install the Python dependencies
         run: |
-          pip install --no-deps -e .
+          pip install --no-deps .
           pip install --pre --upgrade "jupyter_server[test]"
       - name: List installed packages
         run: |

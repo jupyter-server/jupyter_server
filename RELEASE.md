@@ -14,7 +14,7 @@ To create a manual release, perform the following steps:
 ### Set up
 
 ```bash
-pip install tbump twine build
+pip install hatchling twine build
 git pull origin $(git branch --show-current)
 git clean -dffx
 npm install
@@ -26,7 +26,8 @@ npm run build
 ```bash
 echo "Enter new version"
 read script_version
-tbump ${script_version}
+hachling version ${script_version}
+git tag -a ${script_version} -m "Release ${script_version}"
 ```
 
 ### Build the artifacts
@@ -41,7 +42,7 @@ python -m build .
 ```bash
 echo "Enter dev version"
 read dev_version
-tbump ${dev_version} --no-tag
+hatchling ${dev_version}
 git push origin $(git branch --show-current)
 ```
 
