@@ -268,14 +268,19 @@ class SessionManager(LoggingConfigurable):
         self._pending_sessions.remove(record)
         return result
 
+    def get_kernel_env(self, path):
+        """Return the environment variables that need to be set in the kernel"""
+        return {**os.environ, "JPY_SESSION_NAME": path}
+
     async def start_kernel_for_session(self, session_id, path, name, type, kernel_name):
         """Start a new kernel for a given session."""
         # allow contents manager to specify kernels cwd
         kernel_path = await ensure_async(self.contents_manager.get_kernel_path(path=path))
+        kernel_env = self.get_kernel_env(path)
         kernel_id = await self.kernel_manager.start_kernel(
             path=kernel_path,
             kernel_name=kernel_name,
-            env={**os.environ, "JPY_SESSION_NAME": path},
+            env=kernel_env,
         )
         return kernel_id
 
