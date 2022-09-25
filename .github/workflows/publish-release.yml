@@ -41,7 +41,6 @@ jobs:
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
           TWINE_USERNAME: __token__
-          TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
         uses: jupyter-server/jupyter-releaser/.github/actions/finalize-release@version2
         with:
           token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
