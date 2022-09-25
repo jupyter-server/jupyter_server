@@ -28,10 +28,6 @@ jobs:
       - name: Run the tests
         run: |
           pytest -vv --integration_tests=true tests
-      - name: Run the tests
-        run: |
-          pip install jupyter_client@https://github.com/blink1073/jupyter_client/archive/refs/heads/synchronous_managers.zip
-          pytest -vv --integration_tests=true tests
 
   integration_check: # This job does nothing and is only used for the branch protection
     if: always()
