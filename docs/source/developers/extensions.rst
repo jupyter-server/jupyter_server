@@ -399,7 +399,7 @@ Putting it all together, authors can distribute their extension following this s
 
     .. code-block:: console
 
-        jupyter server disable myextension
+        jupyter server extension disable myextension
 
     which will change the boolean value in the JSON file above.
 
