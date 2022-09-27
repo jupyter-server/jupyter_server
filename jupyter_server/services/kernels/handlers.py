@@ -186,7 +186,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             self.log.debug("Nudge: not nudging busy kernel %s", self.kernel_id)
             f: Future = Future()
             f.set_result(None)
-            return f
+            return asyncio.wrap_future(f)
         # Use a transient shell channel to prevent leaking
         # shell responses to the front-end.
         shell_channel = kernel.connect_shell()
@@ -287,7 +287,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         future = gen.with_timeout(loop.time() + self.kernel_info_timeout, both_done)
         # ensure we have no dangling resources or unresolved Futures in case of timeout
         future.add_done_callback(finish)
-        return future
+        return asyncio.wrap_future(future)
 
     def request_kernel_info(self):
         """send a request for kernel_info"""
