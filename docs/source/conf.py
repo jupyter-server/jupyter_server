@@ -107,7 +107,7 @@ github_project_url = "https://github.com/jupyter/jupyter_server"
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-__version__ = "1.20.0.dev0"
+__version__ = "1.19.1"
 # The short X.Y version.
 version_parsed = parse_version(__version__)
 version = f"{version_parsed.major}.{version_parsed.minor}"
