@@ -8,7 +8,6 @@ import asyncio
 import json
 from textwrap import dedent
 from traceback import format_tb
-from typing import Union
 
 from jupyter_client import protocol_version as client_protocol_version
 
