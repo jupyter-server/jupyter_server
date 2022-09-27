@@ -119,7 +119,6 @@ skip = ["check-links"]
 before-build-python = ["npm install", "npm run build"]
 
 [tool.jupyter-releaser.options]
-post-version-spec = "dev"
 pydist_resource_paths = ["jupyter_server/static/style/bootstrap.min.css", "jupyter_server/static/style/bootstrap-theme.min.css"]
 
 

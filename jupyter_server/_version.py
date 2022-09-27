@@ -5,8 +5,8 @@ store the current version info of the server.
 import re
 from typing import List
 
-# Version string must appear intact for tbump versioning
-__version__ = "2.1.0.dev0"
+# Version string must appear intact for automatic versioning
+__version__ = "2.0.0rc0"
 
 # Build up version_info tuple for backwards compatibility
 pattern = r"(?P<major>\d+).(?P<minor>\d+).(?P<patch>\d+)(?P<rest>.*)"
