@@ -4,6 +4,45 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.0rc1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0rc0...dd8a6937651170e2cea38a2fecbecc2a1a4f655f))
+
+### Enhancements made
+
+- [Gateway] Add support for gateway token renewal [#985](https://github.com/jupyter-server/jupyter_server/pull/985) ([@kevin-bates](https://github.com/kevin-bates))
+- Make it easier to pass custom env variables to kernel [#981](https://github.com/jupyter-server/jupyter_server/pull/981) ([@divyansshhh](https://github.com/divyansshhh))
+
+### Bugs fixed
+
+- Wrap the concurrent futures in an asyncio future [#1001](https://github.com/jupyter-server/jupyter_server/pull/1001) ([@blink1073](https://github.com/blink1073))
+- [Gateway] Fix and deprecate env whitelist handling [#979](https://github.com/jupyter-server/jupyter_server/pull/979) ([@kevin-bates](https://github.com/kevin-bates))
+
+### Maintenance and upkeep improvements
+
+- Do not use dev version yet [#999](https://github.com/jupyter-server/jupyter_server/pull/999) ([@blink1073](https://github.com/blink1073))
+- Add workflows for simplified publish [#993](https://github.com/jupyter-server/jupyter_server/pull/993) ([@blink1073](https://github.com/blink1073))
+- Remove hardcoded client install [#991](https://github.com/jupyter-server/jupyter_server/pull/991) ([@blink1073](https://github.com/blink1073))
+- Test with client 8 updates [#988](https://github.com/jupyter-server/jupyter_server/pull/988) ([@blink1073](https://github.com/blink1073))
+- Switch to using hatchling version command [#984](https://github.com/jupyter-server/jupyter_server/pull/984) ([@blink1073](https://github.com/blink1073))
+- Test python 3.11 on ubuntu [#839](https://github.com/jupyter-server/jupyter_server/pull/839) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Update server extension disable instructions [#998](https://github.com/jupyter-server/jupyter_server/pull/998) ([@3coins](https://github.com/3coins))
+
+### Deprecated features
+
+- [Gateway] Fix and deprecate env whitelist handling [#979](https://github.com/jupyter-server/jupyter_server/pull/979) ([@kevin-bates](https://github.com/kevin-bates))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-09-13&to=2022-09-27&type=c))
+
+[@3coins](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3A3coins+updated%3A2022-09-13..2022-09-27&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-09-13..2022-09-27&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-09-13..2022-09-27&type=Issues) | [@divyansshhh](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adivyansshhh+updated%3A2022-09-13..2022-09-27&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-09-13..2022-09-27&type=Issues) | [@meeseeksdev](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksdev+updated%3A2022-09-13..2022-09-27&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2022-09-13..2022-09-27&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.0rc0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0b1...90905e116a2ae49b35b49c360614b0831498477b))
@@ -104,8 +143,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-09-01&to=2022-09-13&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-09-01..2022-09-13&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-09-01..2022-09-13&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2022-09-01..2022-09-13&type=Issues) | [@epignot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aepignot+updated%3A2022-09-01..2022-09-13&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2022-09-01..2022-09-13&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2022-09-01..2022-09-13&type=Issues) | [@razrotenberg](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Arazrotenberg+updated%3A2022-09-01..2022-09-13&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-09-01..2022-09-13&type=Issues) | [@wjsi](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awjsi+updated%3A2022-09-01..2022-09-13&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-09-01..2022-09-13&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.0b1
 
