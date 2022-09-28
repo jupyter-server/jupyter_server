@@ -109,7 +109,8 @@ filterwarnings = [
   "ignore:Passing a schema to Validator.iter_errors:DeprecationWarning",
   "ignore:unclosed <socket.socket:ResourceWarning",
   "ignore:unclosed event loop:ResourceWarning",
-  "ignore:run_pre_save_hook is deprecated:DeprecationWarning"
+  "ignore:run_pre_save_hook is deprecated:DeprecationWarning",
+  "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
 ]
 
 [tool.jupyter-releaser.hooks]
