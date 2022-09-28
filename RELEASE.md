@@ -25,9 +25,9 @@ npm run build
 
 ```bash
 echo "Enter new version"
-read script_version
-hachling version ${script_version}
-git tag -a ${script_version} -m "Release ${script_version}"
+read new_version
+hatchling version ${new_version}
+git tag -a ${new_version} -m "Release ${new_version}"
 ```
 
 ### Build the artifacts
@@ -42,7 +42,7 @@ python -m build .
 ```bash
 echo "Enter dev version"
 read dev_version
-hatchling ${dev_version}
+hatchling version ${dev_version}
 git push origin $(git branch --show-current)
 ```
 
