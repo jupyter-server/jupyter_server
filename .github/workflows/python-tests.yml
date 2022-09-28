@@ -148,6 +148,15 @@ jobs:
         with:
           test_command: pytest -vv || pytest -vv --lf
 
+  check_links:
+    name: Check Links
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - uses: jupyterlab/maintainer-tools/.github/actions/check-links@v1
+
   python_tests_check: # This job does nothing and is only used for the branch protection
     if: always()
     needs:
