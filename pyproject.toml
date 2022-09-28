@@ -112,9 +112,6 @@ filterwarnings = [
   "ignore:run_pre_save_hook is deprecated:DeprecationWarning"
 ]
 
-[tool.jupyter-releaser]
-skip = ["check-links"]
-
 [tool.jupyter-releaser.hooks]
 before-build-python = ["npm install", "npm run build"]
 
