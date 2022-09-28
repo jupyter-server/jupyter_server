@@ -1,3 +1,6 @@
+# needed because m2r uses deprecated APIs
+# m2r is depended on by sphinxcontrib-openapi
+docutils<0.19
 ipykernel
 jinja2
 jupyter_client
