@@ -33,10 +33,10 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Run the tests
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: pipx run hatch env run -e cov test
+        run: pipx run hatch run cov:test
       - name: Run the tests on pypy and windows
         if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(matrix.os, 'windows') }}
-        run: pipx run hatch env run -e test test
+        run: pipx run hatch run test:test
       - name: Coverage
         run: |
           pip install codecov
@@ -68,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      - run: pipx run hatch env run -e docs build
+      - run: pipx run hatch run docs:build
 
   test_examples:
     name: Test Examples
@@ -98,7 +98,7 @@ jobs:
       - name: Install miniumum versions
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
       - name: Run the unit tests
-        run: pipx run hatch env run -e test nowarn
+        run: pipx run hatch run test:nowarn
 
   test_prereleases:
     name: Test Prereleases
@@ -143,7 +143,7 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/test-sdist@v1
         with:
           package_spec: .
-          test_command: pipx run hatch env run -e test test
+          test_command: pipx run hatch run test:test
 
   check_links:
     name: Check Links

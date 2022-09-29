@@ -95,7 +95,7 @@ build = "make -C docs html SPHINXOPTS='-W'"
 [tool.hatch.envs.test]
 features = ["test"]
 [tool.hatch.envs.test.scripts]
-test = "python -m pytest -vv || python -m pytest -vv --lf"
+test = "python -m pytest -vv"
 nowarn = "python -m pytest -vv -W default || python -m pytest -vv -W default --lf"
 
 [tool.hatch.envs.cov]
