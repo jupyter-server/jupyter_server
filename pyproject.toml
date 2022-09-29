@@ -95,8 +95,8 @@ build = "make -C docs html SPHINXOPTS='-W'"
 [tool.hatch.envs.test]
 features = ["test"]
 [tool.hatch.envs.test.scripts]
-test = "python -m pytest -vv"
-nowarn = "python -m pytest -vv -W default || python -m pytest -vv -W default --lf"
+test = "python -m pytest -vv {args}"
+nowarn = "python -m pytest -vv -W default {args}"
 
 [tool.hatch.envs.cov]
 features = ["test"]
@@ -104,7 +104,7 @@ dependencies = ["coverage", "pytest-cov"]
 [tool.hatch.envs.cov.env-vars]
 ARGS = "-vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered"
 [tool.hatch.envs.cov.scripts]
-test = "python -m pytest $ARGS --cov-fail-under 70 || python -m pytest $ARGS --lf"
+test = "python -m pytest $ARGS --cov-fail-under 70 {args}"
 
 [tool.hatch.version]
 path = "jupyter_server/_version.py"
