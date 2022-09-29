@@ -4,4 +4,4 @@ dependencies:
   - python
   - pip
   - pip:
-      - -r ..[doc]
+      - -r ..[docs]
