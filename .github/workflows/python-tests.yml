@@ -31,21 +31,14 @@ jobs:
         uses: actions/checkout@v2
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      - name: Install the Python dependencies
-        run: |
-          pip install -e ".[test,dev]" codecov
       - name: Run the tests
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: |
-          args="-vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered"
-          python -m pytest $args  --cov-fail-under 70 || python -m pytest $args --lf
+        run: pipx run hatch env run -e cov test
       - name: Run the tests on pypy and windows
         if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(matrix.os, 'windows') }}
-        run: |
-          python -m pytest -vv || python -m pytest -vv --lf
+        run: pipx run hatch env run -e test test
       - name: Coverage
-        run: |
-          codecov
+        run: codecov
 
   pre-commit:
     name: pre-commit
@@ -67,14 +60,21 @@ jobs:
           echo "or after-the-fact on already committed files with"
           echo "    pre-commit run --all-files --hook-stage=manual"
 
-  test_docs_and_examples:
-    name: Test Docs and Examples
+  test_docs:
+    name: Test Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - run: pipx run hatch env run -e docs build
+
+  test_examples:
+    name: Test Examples
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Base Setup
-        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Install the Python dependencies for the examples
         run: |
           pip install -e ".[test]"
@@ -82,11 +82,6 @@ jobs:
       - name: Run the tests for the examples
         run: |
           python -m pytest examples/simple
-      - name: Test the docs
-        run: |
-          cd docs
-          pip install -r doc-requirements.txt
-          make html SPHINXOPTS="-W"
 
   test_minimum_versions:
     name: Test Minimum Versions
@@ -101,8 +96,7 @@ jobs:
       - name: Install miniumum versions
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
       - name: Run the unit tests
-        run: |
-          pytest -vv -W default || pytest -vv -W default --lf
+        run: pipx run hatch env run -e test nowarn
 
   test_prereleases:
     name: Test Prereleases
@@ -126,7 +120,7 @@ jobs:
       - name: Run the tests
         run: |
           pip install jupyter_client@https://github.com/blink1073/jupyter_client/archive/refs/heads/synchronous_managers.zip
-          pytest -vv || pytest -vv --lf
+          pytest -vv -W default || pytest -vv -W default --lf
 
   make_sdist:
     name: Make SDist
@@ -146,7 +140,8 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - uses: jupyterlab/maintainer-tools/.github/actions/test-sdist@v1
         with:
-          test_command: pytest -vv || pytest -vv --lf
+          package_spec: .
+          test_command: pipx run hatch env run -e test test
 
   check_links:
     name: Check Links

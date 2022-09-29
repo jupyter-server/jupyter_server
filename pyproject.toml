@@ -62,15 +62,49 @@ test = [
     "pytest-tornasync",
     "pytest>=6.0",
     "requests",
+    "pre-commit"
 ]
-dev = [
-  "coverage",
-  "pre-commit",
-  "pytest-cov",
+docs = [
+    # needed because m2r uses deprecated APIs
+    # m2r is depended on by sphinxcontrib-openapi
+    "docutils<0.19",
+    "ipykernel",
+    "jinja2",
+    "jupyter_client",
+    "jupyter_server",
+    "mistune<1.0.0",
+    "myst-parser",
+    "nbformat",
+    "prometheus_client",
+    "pydata_sphinx_theme",
+    "Send2Trash",
+    "sphinxcontrib-openapi",
+    "sphinxcontrib_github_alt",
+    "sphinxemoji",
+    "tornado",
 ]
 
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
+
+[tool.hatch.envs.docs]
+features = ["docs"]
+[tool.hatch.envs.docs.scripts]
+build = "make -C docs html SPHINXOPTS='-W'"
+
+[tool.hatch.envs.test]
+features = ["test"]
+[tool.hatch.envs.test.scripts]
+test = "python -m pytest -vv || python -m pytest -vv --lf"
+nowarn = "python -m pytest -vv -W default || python -m pytest -vv -W default --lf"
+
+[tool.hatch.envs.cov]
+features = ["test"]
+dependencies = ["coverage", "pytest-cov"]
+[tool.hatch.envs.cov.env-vars]
+ARGS = "-vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered"
+[tool.hatch.envs.cov.scripts]
+test = "python -m pytest $ARGS --cov-fail-under 70 || python -m pytest $ARGS --lf"
 
 [tool.hatch.version]
 path = "jupyter_server/_version.py"
