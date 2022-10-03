@@ -3,6 +3,3 @@ dependencies:
   - nodejs
   - python
   - pip
-  - pip:
-      - -r doc-requirements.txt
-      - ..
