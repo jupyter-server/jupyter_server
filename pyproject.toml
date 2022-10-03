@@ -113,7 +113,7 @@ path = "jupyter_server/_version.py"
 artifacts = ["jupyter_server/static/style"]
 
 [tool.hatch.build.hooks.jupyter-builder]
-dependencies = ["hatch-jupyter-builder>=0.3.3"]
+dependencies = ["hatch-jupyter-builder>=0.7.1"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
   "jupyter_server/static/style/bootstrap.min.css",
