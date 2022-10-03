@@ -28,11 +28,11 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup
-        uses: jupyter-server/jupyter-releaser/.github/actions/common@version2
+        uses: jupyter-server/jupyter-releaser/.github/actions/common@v2
 
       - name: Prep Release
         id: prep-release
-        uses: jupyter-server/jupyter-releaser/.github/actions/prep-release@version2
+        uses: jupyter-server/jupyter-releaser/.github/actions/prep-release@v2
         with:
           token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
           version_spec: ${{ github.event.inputs.version_spec }}
