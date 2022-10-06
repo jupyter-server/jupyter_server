@@ -254,6 +254,9 @@ class ContentsHandler(ContentsAPIHandler):
                 raise web.HTTPError(400, f"Cannot create file or directory {path!r}")
 
             exists = await ensure_async(self.contents_manager.file_exists(path))
+            if model.get("type", "") not in {None, "", "directory", "file", "notebook"}:
+                # fall back to file if unknown type
+                model["type"] = "file"
             if exists:
                 await self._save(model, path)
             else:
