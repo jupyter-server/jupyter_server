@@ -18,6 +18,8 @@ on:
         type: boolean
 jobs:
   prep_release:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
@@ -34,7 +36,7 @@ jobs:
         id: prep-release
         uses: jupyter-server/jupyter-releaser/.github/actions/prep-release@v2
         with:
-          token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           version_spec: ${{ github.event.inputs.version_spec }}
           post_version_spec: ${{ github.event.inputs.post_version_spec }}
           target: ${{ github.repository }}

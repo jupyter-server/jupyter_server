@@ -14,6 +14,8 @@ on:
 
 jobs:
   publish_release:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
@@ -30,7 +32,7 @@ jobs:
         id: populate-release
         uses: jupyter-server/jupyter-releaser/.github/actions/populate-release@v2
         with:
-          token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           target: ${{ github.repository }}
           branch: ${{ github.event.inputs.branch }}
           release_url: ${{ github.event.inputs.release_url }}
@@ -43,7 +45,7 @@ jobs:
           TWINE_USERNAME: __token__
         uses: jupyter-server/jupyter-releaser/.github/actions/finalize-release@v2
         with:
-          token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           target: ${{ github.repository }}
           release_url: ${{ steps.populate-release.outputs.release_url }}
 
