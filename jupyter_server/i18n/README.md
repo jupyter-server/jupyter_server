@@ -29,7 +29,9 @@ if running Ubuntu 14, you should set environment variable `LANGUAGE="xx_XX"`.
 
 **All i18n-related commands are done from the related directory :**
 
-    cd notebook/i18n/
+```
+cd notebook/i18n/
+```
 
 ### Message extraction
 
@@ -69,7 +71,9 @@ pybabel compile -D nbui -f -l ${LANG} -i ${LANG}/LC_MESSAGES/nbui.po -o ${LANG}/
 
 _nbjs.po_ needs to be converted to JSON for use within the JavaScript code, with _po2json_, as follows:
 
-    po2json -p -F -f jed1.x -d nbjs ${LANG}/LC_MESSAGES/nbjs.po ${LANG}/LC_MESSAGES/nbjs.json
+```
+po2json -p -F -f jed1.x -d nbjs ${LANG}/LC_MESSAGES/nbjs.po ${LANG}/LC_MESSAGES/nbjs.json
+```
 
 When new languages get added, their language codes should be added to _notebook/i18n/nbjs.json_
 under the `supported_languages` element.
@@ -111,21 +115,25 @@ to handle these cases properly.
 
 ### Known issues and future evolutions
 
-1.  Right now there are two different places where the desired language is set. At startup time, the Jupyter console's messages pay attention to the setting of the `${LANG}` environment variable
-    as set in the shell at startup time. Unfortunately, this is also the time where the Jinja2
-    environment is set up, which means that the template stuff will always come from this setting.
-    We really want to be paying attention to the browser's settings for the stuff that happens in the
-    browser, so we need to be able to retrieve this information after the browser is started and somehow
-    communicate this back to Jinja2. So far, I haven't yet figured out how to do this, which means that if the ${LANG} at startup doesn't match the browser's settings, you could potentially get a mix
-    of languages in the UI ( never a good thing ).
+1. Right now there are two different places where the desired language is set. At startup time, the Jupyter console's messages pay attention to the setting of the `${LANG}` environment variable
+   as set in the shell at startup time. Unfortunately, this is also the time where the Jinja2
+   environment is set up, which means that the template stuff will always come from this setting.
+   We really want to be paying attention to the browser's settings for the stuff that happens in the
+   browser, so we need to be able to retrieve this information after the browser is started and somehow
+   communicate this back to Jinja2. So far, I haven't yet figured out how to do this, which means that if the ${LANG} at startup doesn't match the browser's settings, you could potentially get a mix
+   of languages in the UI ( never a good thing ).
 
-2.  We will need to decide if console messages should be translatable, and enable them if desired.
-3.  The keyboard shortcut editor was implemented after the i18n work was completed, so that portion
-    does not have translation support at this time.
-4.  Babel's documentation has instructions on how to integrate messages extraction
-    into your _setup.py_ so that eventually we can just do:
+1. We will need to decide if console messages should be translatable, and enable them if desired.
 
-        ./setup.py extract_messages
+1. The keyboard shortcut editor was implemented after the i18n work was completed, so that portion
+   does not have translation support at this time.
+
+1. Babel's documentation has instructions on how to integrate messages extraction
+   into your _setup.py_ so that eventually we can just do:
+
+   ```
+   ./setup.py extract_messages
+   ```
 
 I hope to get this working at some point in the near future. 5. The conversions from `.po` to `.mo` probably can and should be done using `setup.py install`.
 

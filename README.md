@@ -12,7 +12,9 @@ For more information, read our [documentation here](http://jupyter-server.readth
 To install the latest release locally, make sure you have
 [pip installed](https://pip.readthedocs.io/en/stable/installing/) and run:
 
-    pip install jupyter_server
+```
+pip install jupyter_server
+```
 
 Jupyter Server currently supports Python>=3.6 on Linux, OSX and Windows.
 
@@ -30,7 +32,9 @@ To see the changes between releases, checkout the [CHANGELOG](https://github.com
 
 Launch with:
 
-    jupyter server
+```
+jupyter server
+```
 
 ### Testing
 
