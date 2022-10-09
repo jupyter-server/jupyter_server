@@ -3,8 +3,8 @@
 This folder contains the following examples:
 
 1. a "read-only" Jupyter Notebook Server
-2. a read/write Server without the ability to execute code on kernels.
-3. a "temporary notebook server", i.e. read and execute notebooks but cannot save/write files.
+1. a read/write Server without the ability to execute code on kernels.
+1. a "temporary notebook server", i.e. read and execute notebooks but cannot save/write files.
 
 ## How does it work?
 
@@ -45,13 +45,13 @@ In the `jupyter_nbclassic_readonly_config.py`
 
    pip install nbclassic
 
-2. Navigate to the jupyter_authorized_server `examples/` folder.
+1. Navigate to the jupyter_authorized_server `examples/` folder.
 
-3. Launch nbclassic and load `jupyter_nbclassic_readonly_config.py`:
+1. Launch nbclassic and load `jupyter_nbclassic_readonly_config.py`:
 
    jupyter nbclassic --config=jupyter_nbclassic_readonly_config.py
 
-4. Try creating a notebook, running a notebook in a cell, etc. You should see a `403: Forbidden` error.
+1. Try creating a notebook, running a notebook in a cell, etc. You should see a `403: Forbidden` error.
 
 ### Read+Write example
 
@@ -59,13 +59,13 @@ In the `jupyter_nbclassic_readonly_config.py`
 
    pip install nbclassic
 
-2. Navigate to the jupyter_authorized_server `examples/` folder.
+1. Navigate to the jupyter_authorized_server `examples/` folder.
 
-3. Launch nbclassic and load `jupyter_nbclassic_rw_config.py`:
+1. Launch nbclassic and load `jupyter_nbclassic_rw_config.py`:
 
    jupyter nbclassic --config=jupyter_nbclassic_rw_config.py
 
-4. Try running a cell in a notebook. You should see a `403: Forbidden` error.
+1. Try running a cell in a notebook. You should see a `403: Forbidden` error.
 
 ### Temporary notebook server example
 
@@ -75,10 +75,10 @@ This configuration allows everything except saving files.
 
    pip install nbclassic
 
-2. Navigate to the jupyter_authorized_server `examples/` folder.
+1. Navigate to the jupyter_authorized_server `examples/` folder.
 
-3. Launch nbclassic and load `jupyter_temporary_config.py`:
+1. Launch nbclassic and load `jupyter_temporary_config.py`:
 
    jupyter nbclassic --config=jupyter_temporary_config.py
 
-4. Edit a notebook, run a cell, etc. Everything works fine. Then try to save your changes... you should see a `403: Forbidden` error.
+1. Edit a notebook, run a cell, etc. Everything works fine. Then try to save your changes... you should see a `403: Forbidden` error.
