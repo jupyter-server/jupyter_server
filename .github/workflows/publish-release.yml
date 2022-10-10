@@ -15,23 +15,17 @@ on:
 jobs:
   publish_release:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        python-version: ["3.10"]
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Setup
-        uses: jupyter-server/jupyter-releaser/.github/actions/common@v2
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
       - name: Populate Release
         id: populate-release
-        uses: jupyter-server/jupyter-releaser/.github/actions/populate-release@v2
+        uses: jupyter-server/jupyter_releaser/.github/actions/populate-release@v2
         with:
-          token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
-          target: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: ${{ github.event.inputs.target }}
           branch: ${{ github.event.inputs.branch }}
           release_url: ${{ github.event.inputs.release_url }}
           steps_to_skip: ${{ github.event.inputs.steps_to_skip }}
@@ -40,11 +34,13 @@ jobs:
         id: finalize-release
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+          PYPI_TOKEN_MAP: ${{ secrets.PYPI_TOKEN_MAP }}
           TWINE_USERNAME: __token__
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         uses: jupyter-server/jupyter-releaser/.github/actions/finalize-release@v2
         with:
-          token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
-          target: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: ${{ github.event.inputs.target }}
           release_url: ${{ steps.populate-release.outputs.release_url }}
 
       - name: "** Next Step **"
@@ -52,22 +48,9 @@ jobs:
         run: |
           echo "Verify the final release"
           echo ${{ steps.finalize-release.outputs.release_url }}
-          echo "## Next Step" >> $GITHUB_STEP_SUMMARY
-          echo "Verify the final release" >> $GITHUB_STEP_SUMMARY
-          echo ${{ steps.finalize-release.outputs.release_url }} >> $GITHUB_STEP_SUMMARY
-          if [ ! -z "${{ steps.finalize-release.outputs.pr_url }}" ]; then
-             echo "Merge the forwardport PR"
-             echo ${{ steps.finalize-release.outputs.pr_url }}
-             echo "Merge the forwardport PR" >> $GITHUB_STEP_SUMMARY
-             echo ${{ steps.finalize-release.outputs.pr_url }} >> $GITHUB_STEP_SUMMARY
-          fi
 
       - name: "** Failure Message **"
         if: ${{ failure() }}
         run: |
           echo "Failed to Publish the Draft Release Url:"
           echo ${{ steps.populate-release.outputs.release_url }}
-          echo "## Failure Message" >> $GITHUB_STEP_SUMMARY
-          echo ":x: Failed to Publish the Draft Release Url:" >> $GITHUB_STEP_SUMMARY
-          echo ${{ steps.populate-release.outputs.release_url }} >> $GITHUB_STEP_SUMMARY
-          echo "Fix credentials and run 'Publish Release' workflow again" >> $GITHUB_STEP_SUMMARY
