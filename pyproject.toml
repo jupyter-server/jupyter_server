@@ -121,7 +121,7 @@ ensured-targets = [
   "jupyter_server/static/style/bootstrap-theme.min.css"
 ]
 install-pre-commit-hook = true
-optional-editabl-build = true
+optional-editable-build = true
 
 [tool.black]
 line_length = 100
