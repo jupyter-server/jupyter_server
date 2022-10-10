@@ -60,7 +60,7 @@ test = [
     "pytest-console-scripts",
     "pytest-timeout",
     "pytest-tornasync",
-    "pytest>=6.0",
+    "pytest>=7.0",
     "requests",
     "pre-commit"
 ]
@@ -108,18 +108,20 @@ test = "python -m pytest $ARGS --cov-fail-under 70 {args}"
 
 [tool.hatch.version]
 path = "jupyter_server/_version.py"
+validate-bump = false
 
 [tool.hatch.build]
 artifacts = ["jupyter_server/static/style"]
 
 [tool.hatch.build.hooks.jupyter-builder]
-dependencies = ["hatch-jupyter-builder>=0.7.1"]
+dependencies = ["hatch-jupyter-builder>=0.8"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
   "jupyter_server/static/style/bootstrap.min.css",
   "jupyter_server/static/style/bootstrap-theme.min.css"
 ]
 install-pre-commit-hook = true
+optional-editable-build = true
 
 [tool.black]
 line_length = 100
@@ -152,7 +154,7 @@ before-build-python = ["npm install", "npm run build"]
 
 [tool.jupyter-releaser.options]
 pydist_resource_paths = ["jupyter_server/static/style/bootstrap.min.css", "jupyter_server/static/style/bootstrap-theme.min.css"]
-
+post-version-spec = "dev"
 
 [tool.mypy]
 check_untyped_defs = true
