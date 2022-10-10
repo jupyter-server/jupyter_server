@@ -60,7 +60,7 @@ test = [
     "pytest-console-scripts",
     "pytest-timeout",
     "pytest-tornasync",
-    "pytest>=6.0",
+    "pytest>=6.2",
     "requests",
     "pre-commit"
 ]
