@@ -246,8 +246,11 @@ class MappingKernelManager(MultiKernelManager):
     async def _finish_kernel_start(self, kernel_id):
         km = self.get_kernel(kernel_id)
         if hasattr(km, "ready"):
+            ready = km.ready
+            if not isinstance(ready, asyncio.Future):
+                ready = asyncio.wrap_future(ready)
             try:
-                await km.ready
+                await ready
             except Exception:
                 self.log.exception("Error waiting for kernel manager ready")
                 return
