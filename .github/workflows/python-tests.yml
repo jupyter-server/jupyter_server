@@ -118,6 +118,7 @@ jobs:
           pip check
       - name: Run the tests
         run: |
+          pip install jupyter_client@https://github.com/blink1073/jupyter_client/archive/refs/heads/fix-pending-kernels-again.zip
           pytest -vv -W default || pytest -vv -W default --lf
 
   make_sdist:
