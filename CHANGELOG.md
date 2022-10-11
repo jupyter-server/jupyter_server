@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.21.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.19.1...2f529bf5d1f8c68a6b7193f474c9ba025111d743))
+
+### Maintenance and upkeep improvements
+
+- Handle client 8 pending kernels [#1014](https://github.com/jupyter-server/jupyter_server/pull/1014) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Pin docutils to fix docs build [#1004](https://github.com/jupyter-server/jupyter_server/pull/1004) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-09-27&to=2022-10-11&type=c))
+
+[@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-09-27..2022-10-11&type=Issues) | [@meeseeksmachine](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksmachine+updated%3A2022-09-27..2022-10-11&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-09-27..2022-10-11&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.19.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.19.0...690d2f4131b2d65476d05b302a4b3e9a2f052650))
@@ -17,8 +37,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-09-26&to=2022-09-27&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-09-26..2022-09-27&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-09-26..2022-09-27&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.19.0
 
