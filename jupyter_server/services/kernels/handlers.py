@@ -397,8 +397,11 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         kernel = self.kernel_manager.get_kernel(self.kernel_id)
 
         if hasattr(kernel, "ready"):
+            ready = kernel.ready
+            if not isinstance(ready, asyncio.Future):
+                ready = asyncio.wrap_future(ready)
             try:
-                await kernel.ready
+                await ready
             except Exception as e:
                 kernel.execution_state = "dead"
                 kernel.reason = str(e)

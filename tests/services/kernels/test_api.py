@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import time
@@ -22,7 +23,10 @@ def pending_kernel_is_ready(jp_serverapp):
         if getattr(km, "use_pending_kernels", False):
             kernel = km.get_kernel(kernel_id)
             if getattr(kernel, "ready", None):
-                await kernel.ready
+                ready = kernel.ready
+                if not isinstance(ready, asyncio.Future):
+                    ready = asyncio.wrap_future(ready)
+                await ready
 
     return _
 
