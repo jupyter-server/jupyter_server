@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.0rc2
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0rc1...32de53beae1e9396dd3111b17222ec802b122f0b))
+
+### Bugs fixed
+
+- Fallback new file type to file for contents put [#1013](https://github.com/jupyter-server/jupyter_server/pull/1013) ([@a3626a](https://github.com/a3626a))
+- Fix some typos in release instructions [#1003](https://github.com/jupyter-server/jupyter_server/pull/1003) ([@kevin-bates](https://github.com/kevin-bates))
+
+### Maintenance and upkeep improvements
+
+- Use admin github token for releaser [#1025](https://github.com/jupyter-server/jupyter_server/pull/1025) ([@blink1073](https://github.com/blink1073))
+- CI Cleanup [#1023](https://github.com/jupyter-server/jupyter_server/pull/1023) ([@blink1073](https://github.com/blink1073))
+- Use mdformat instead of prettier [#1022](https://github.com/jupyter-server/jupyter_server/pull/1022) ([@blink1073](https://github.com/blink1073))
+- Add pyproject validation [#1020](https://github.com/jupyter-server/jupyter_server/pull/1020) ([@blink1073](https://github.com/blink1073))
+- Remove hardcoded client install in CI [#1019](https://github.com/jupyter-server/jupyter_server/pull/1019) ([@blink1073](https://github.com/blink1073))
+- Handle client 8 pending kernels [#1014](https://github.com/jupyter-server/jupyter_server/pull/1014) ([@blink1073](https://github.com/blink1073))
+- Use releaser v2 tag [#1010](https://github.com/jupyter-server/jupyter_server/pull/1010) ([@blink1073](https://github.com/blink1073))
+- Use hatch environments to simplify test, coverage, and docs build [#1007](https://github.com/jupyter-server/jupyter_server/pull/1007) ([@blink1073](https://github.com/blink1073))
+- Update to version2 releaser [#1006](https://github.com/jupyter-server/jupyter_server/pull/1006) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Fix GitHub actions badge link [#1011](https://github.com/jupyter-server/jupyter_server/pull/1011) ([@blink1073](https://github.com/blink1073))
+- Pin docutils to fix docs build [#1004](https://github.com/jupyter-server/jupyter_server/pull/1004) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-09-27&to=2022-10-11&type=c))
+
+[@a3626a](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aa3626a+updated%3A2022-09-27..2022-10-11&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-09-27..2022-10-11&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-09-27..2022-10-11&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-09-27..2022-10-11&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2022-09-27..2022-10-11&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-09-27..2022-10-11&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.0rc1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0rc0...dd8a6937651170e2cea38a2fecbecc2a1a4f655f))
@@ -40,8 +74,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-09-13&to=2022-09-27&type=c))
 
 [@3coins](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3A3coins+updated%3A2022-09-13..2022-09-27&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-09-13..2022-09-27&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-09-13..2022-09-27&type=Issues) | [@divyansshhh](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adivyansshhh+updated%3A2022-09-13..2022-09-27&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-09-13..2022-09-27&type=Issues) | [@meeseeksdev](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksdev+updated%3A2022-09-13..2022-09-27&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2022-09-13..2022-09-27&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.0rc0
 
