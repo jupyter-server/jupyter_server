@@ -114,7 +114,7 @@ validate-bump = false
 artifacts = ["jupyter_server/static/style"]
 
 [tool.hatch.build.hooks.jupyter-builder]
-dependencies = ["hatch-jupyter-builder>=0.8"]
+dependencies = ["hatch-jupyter-builder>=0.8.1"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
   "jupyter_server/static/style/bootstrap.min.css",
