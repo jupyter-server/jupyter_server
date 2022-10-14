@@ -6,6 +6,6 @@ python:
   install:
     # install itself with pip install .
     - method: pip
-      path: "-e ."
+      path: .
       extra_requirements:
         - docs
