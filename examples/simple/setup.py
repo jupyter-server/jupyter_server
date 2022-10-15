@@ -9,11 +9,15 @@ VERSION = "0.0.1"
 def get_data_files():
     """Get the data files for the package."""
     data_files = [
-        ("etc/jupyter/jupyter_server_config.d", "etc/jupyter/jupyter_server_config.d/", "*.json"),
+        (
+            "etc/jupyter/jupyter_server_config.d",
+            "etc/jupyter/jupyter_server_config.d/",
+            "*.json",
+        ),
     ]
 
     def add_data_files(path):
-        for (dirpath, dirnames, filenames) in os.walk(path):
+        for (dirpath, _, filenames) in os.walk(path):
             if filenames:
                 paths = [(dirpath, dirpath, filename) for filename in filenames]
                 data_files.extend(paths)
