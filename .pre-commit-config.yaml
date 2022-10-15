@@ -60,10 +60,11 @@ repos:
         exclude: docs/source/other/full-config.rst
         stages: [manual]
 
-  - repo: https://github.com/pycqa/flake8
-    rev: 5.0.4
+  - repo: https://github.com/john-hen/Flake8-pyproject
+    rev: 1.0.1
     hooks:
-      - id: flake8
+      - id: Flake8-pyproject
+        alias: flake8
         additional_dependencies:
           ["flake8-bugbear==22.6.22", "flake8-implicit-str-concat==0.2.0"]
         stages: [manual]
