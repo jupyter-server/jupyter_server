@@ -10,6 +10,9 @@ defaults:
   run:
     shell: bash -eux {0}
 
+env:
+  PYTHONDONTWRITEBYTECODE: 1
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -33,10 +36,10 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Run the tests
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: hatch run cov:test || hatch run cov:test --lf
+        run: hatch run cov:test -n auto || hatch run test:test --lf
       - name: Run the tests on pypy and windows
         if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(matrix.os, 'windows') }}
-        run: hatch run test:test || hatch run test:test --lf
+        run: hatch run test:test -n auto || hatch run test:test --lf
       - name: Coverage
         run: |
           pip install codecov
@@ -98,7 +101,7 @@ jobs:
       - name: Install miniumum versions
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
       - name: Run the unit tests
-        run: hatch run test:nowarn || hatch run test:nowarn --lf
+        run: pytest -vv -W -n auto default || pytest -vv -W default --lf
 
   test_prereleases:
     name: Test Prereleases
@@ -121,7 +124,7 @@ jobs:
           pip check
       - name: Run the tests
         run: |
-          pytest -vv -W default || pytest -vv -W default --lf
+          pytest -vv -W default -n auto || pytest -vv -W default --lf
 
   make_sdist:
     name: Make SDist
