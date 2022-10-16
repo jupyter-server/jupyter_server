@@ -43,7 +43,7 @@ server_config = [
 ]
 
 # Only test synchronous manager on Linux
-if sys.platform != "linux":
+if sys.platform == "linux":
     config = server_config[1:]
 
 
