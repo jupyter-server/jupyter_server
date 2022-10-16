@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import platform
+import sys
 
 import jupyter_client
 import pytest
@@ -12,37 +13,41 @@ CULL_TIMEOUT = 30 if platform.python_implementation() == "PyPy" else 5
 CULL_INTERVAL = 1
 
 
-@pytest.mark.parametrize(
-    "jp_server_config",
-    [
-        # Test the synchronous case
-        Config(
-            {
-                "ServerApp": {
-                    "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager",
-                    "MappingKernelManager": {
-                        "cull_idle_timeout": CULL_TIMEOUT,
-                        "cull_interval": CULL_INTERVAL,
-                        "cull_connected": False,
-                    },
-                }
+server_config = [
+    # Test the synchronous case
+    Config(
+        {
+            "ServerApp": {
+                "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager",
+                "MappingKernelManager": {
+                    "cull_idle_timeout": CULL_TIMEOUT,
+                    "cull_interval": CULL_INTERVAL,
+                    "cull_connected": False,
+                },
             }
-        ),
-        # Test the async case
-        Config(
-            {
-                "ServerApp": {
-                    "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
-                    "AsyncMappingKernelManager": {
-                        "cull_idle_timeout": CULL_TIMEOUT,
-                        "cull_interval": CULL_INTERVAL,
-                        "cull_connected": False,
-                    },
-                }
+        }
+    ),
+    # Test the async case
+    Config(
+        {
+            "ServerApp": {
+                "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+                "AsyncMappingKernelManager": {
+                    "cull_idle_timeout": CULL_TIMEOUT,
+                    "cull_interval": CULL_INTERVAL,
+                    "cull_connected": False,
+                },
             }
-        ),
-    ],
-)
+        }
+    ),
+]
+
+# Only test synchronous manager on Linux
+if sys.platform != "linux":
+    config = server_config[1:]
+
+
+@pytest.mark.parametrize("jp_server_config", server_config)
 async def test_cull_idle(jp_fetch, jp_ws_fetch):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
