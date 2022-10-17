@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.0rc3
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0rc2...fc0ac3236fdd92778ea765db6e8982212c8389ee))
+
+### Maintenance and upkeep improvements
+
+- Clean up config files [#1031](https://github.com/jupyter-server/jupyter_server/pull/1031) ([@blink1073](https://github.com/blink1073))
+- Make node optional [#1030](https://github.com/jupyter-server/jupyter_server/pull/1030) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-10-11&to=2022-10-17&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-10-11..2022-10-17&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-10-11..2022-10-17&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.0rc2
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0rc1...32de53beae1e9396dd3111b17222ec802b122f0b))
@@ -35,8 +52,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-09-27&to=2022-10-11&type=c))
 
 [@a3626a](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aa3626a+updated%3A2022-09-27..2022-10-11&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-09-27..2022-10-11&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-09-27..2022-10-11&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-09-27..2022-10-11&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2022-09-27..2022-10-11&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-09-27..2022-10-11&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.0rc1
 
