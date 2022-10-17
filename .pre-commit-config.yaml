@@ -47,7 +47,7 @@ repos:
       - id: mdformat
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.0.0
+    rev: v3.1.0
     hooks:
       - id: pyupgrade
         args: [--py37-plus]
@@ -61,7 +61,7 @@ repos:
         stages: [manual]
 
   - repo: https://github.com/john-hen/Flake8-pyproject
-    rev: 1.0.1
+    rev: 1.1.0.post0
     hooks:
       - id: Flake8-pyproject
         alias: flake8
