@@ -2359,7 +2359,10 @@ class ServerApp(JupyterApp):
         )
 
         # binding sockets must be called from inside an event loop
-        success = self.io_loop.run_sync(self._bind_http_server)
+        self.io_loop.add_callback(self._bind_http_server)
+
+    def _bind_http_server(self):
+        success = self._bind_http_server_unix() if self.sock else self._bind_http_server_tcp()
         if not success:
             self.log.critical(
                 _i18n(
@@ -2368,9 +2371,6 @@ class ServerApp(JupyterApp):
                 )
             )
             self.exit(1)
-
-    def _bind_http_server(self):
-        return self._bind_http_server_unix() if self.sock else self._bind_http_server_tcp()
 
     def _bind_http_server_unix(self):
         if unix_socket_in_use(self.sock):
@@ -2835,6 +2835,9 @@ class ServerApp(JupyterApp):
         await self.cleanup_kernels()
         if getattr(self, "session_manager", None):
             self.session_manager.close()
+        if hasattr(self, "http_server"):
+            # Stop a server if its set.
+            self.http_server.stop()
 
     def start_ioloop(self):
         """Start the IO Loop."""
@@ -2868,7 +2871,7 @@ class ServerApp(JupyterApp):
 
     def stop(self, from_signal=False):
         """Cleanup resources and stop the server."""
-        if hasattr(self, "_http_server"):
+        if hasattr(self, "http_server"):
             # Stop a server if its set.
             self.http_server.stop()
         if getattr(self, "io_loop", None):

@@ -120,12 +120,12 @@ OPEN_BROWSER_COMBINATIONS: Any = (
 
 
 @pytest.mark.parametrize("expected_value, config", OPEN_BROWSER_COMBINATIONS)
-def test_browser_open(monkeypatch, jp_environ, config, expected_value):
+async def test_browser_open(monkeypatch, jp_environ, config, expected_value):
     serverapp = MockExtensionApp.initialize_server(config=Config(config))
     assert serverapp.open_browser == expected_value
 
 
-def test_load_parallel_extensions(monkeypatch, jp_environ):
+async def test_load_parallel_extensions(monkeypatch, jp_environ):
     serverapp = MockExtensionApp.initialize_server()
     exts = serverapp.extension_manager.extensions
     assert "tests.extension.mockextensions.mock1" in exts

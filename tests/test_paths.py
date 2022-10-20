@@ -46,7 +46,6 @@ def test_path_regex_bad():
     ],
 )
 async def test_trailing_slash(
-    jp_ensure_app_fixture,
     uri,
     expected,
     http_server_client,
