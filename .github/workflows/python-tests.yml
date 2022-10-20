@@ -33,14 +33,31 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Run the tests
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: hatch run cov:test || hatch run cov:test --lf
+        run: hatch run cov:test -W default || hatch run cov:test -W default --lf
       - name: Run the tests on pypy and windows
         if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(matrix.os, 'windows') }}
-        run: hatch run test:test || hatch run test:test --lf
+        run: hatch run test:test  -W default || hatch run test:test  -W default --lf
       - name: Coverage
         run: |
           pip install codecov
           codecov
+
+  client8:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.10"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - run: |
+          pip install -U pre jupyter_client
+          hatch run test:test || hatch run test:test  --lf
 
   pre-commit:
     name: pre-commit

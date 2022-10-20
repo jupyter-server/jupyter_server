@@ -257,7 +257,7 @@ async def test_gateway_cli_options(jp_configurable_serverapp, capsys):
     ]
 
     GatewayClient.clear_instance()
-    app = jp_configurable_serverapp(argv=argv)
+    app = await jp_configurable_serverapp(argv=argv)
 
     assert app.gateway_config.gateway_enabled is True
     assert app.gateway_config.url == mock_gateway_url
@@ -289,7 +289,7 @@ async def test_token_renewer_config(jp_server_config, jp_configurable_serverapp,
         )
 
     GatewayClient.clear_instance()
-    app = jp_configurable_serverapp(argv=argv)
+    app = await jp_configurable_serverapp(argv=argv)
 
     assert app.gateway_config.gateway_enabled is True
     assert app.gateway_config.url == mock_gateway_url
@@ -328,7 +328,7 @@ async def test_gateway_request_timeout_pad_option(
     ]
 
     GatewayClient.clear_instance()
-    app = jp_configurable_serverapp(argv=argv)
+    app = await jp_configurable_serverapp(argv=argv)
 
     monkeypatch.setattr(GatewayClient, "KERNEL_LAUNCH_TIMEOUT", kernel_launch_timeout)
     GatewayClient.instance().init_connection_args()
@@ -362,7 +362,7 @@ async def test_gateway_request_with_expiring_cookies(
     argv = [f"--GatewayClient.accept_cookies={accept_cookies}"]
 
     GatewayClient.clear_instance()
-    jp_configurable_serverapp(argv=argv)
+    await jp_configurable_serverapp(argv=argv)
 
     cookie: SimpleCookie = SimpleCookie()
     cookie.load("SERVERID=1234567; Path=/")

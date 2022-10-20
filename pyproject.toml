@@ -135,16 +135,12 @@ testpaths = [
     "tests/"
 ]
 timeout = 300
+asyncio_mode="auto"
 # Restore this setting to debug failures
 # timeout_method = "thread"
 filterwarnings = [
   "error",
-  "module:make_current is deprecated:DeprecationWarning",
-  "module:clear_current is deprecated:DeprecationWarning",
-  "module:There is no current event loop:DeprecationWarning",
   "ignore:Passing a schema to Validator.iter_errors:DeprecationWarning",
-  "ignore:unclosed <socket.socket:ResourceWarning",
-  "ignore:unclosed event loop:ResourceWarning",
   "ignore:run_pre_save_hook is deprecated:DeprecationWarning",
   "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
 ]

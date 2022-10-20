@@ -1,5 +1,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import asyncio
 import importlib
 import io
 import json
@@ -8,14 +9,19 @@ import os
 import shutil
 import sys
 import urllib.parse
+import warnings
 from binascii import hexlify
+from contextlib import closing
+from inspect import iscoroutinefunction
 
 import jupyter_core.paths
 import nbformat
 import pytest
 import tornado
+import tornado.testing
 from tornado.escape import url_escape
 from tornado.httpclient import HTTPClientError
+from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketHandler
 from traitlets.config import Config, re
 
@@ -129,6 +135,86 @@ def jp_environ(
 
 # ================= End: Move to Jupyter core ================
 
+# Fork of pytest_tornasync
+
+
+@pytest.fixture
+async def io_loop():
+    return tornado.ioloop.IOLoop.current()
+
+
+@pytest.fixture
+def http_server_port():
+    """
+    Port used by `http_server`.
+    """
+    port = tornado.testing.bind_unused_port()
+    yield port
+    port[0].close()
+
+
+@pytest.fixture
+async def http_server(request, io_loop, http_server_port, jp_web_app):
+    """Start a tornado HTTP server that listens on all available interfaces.
+    You must create an `app` fixture, which returns
+    the `tornado.web.Application` to be tested.
+    Raises:
+        FixtureLookupError: tornado application fixture not found
+    """
+    server = tornado.httpserver.HTTPServer(jp_web_app)
+    server.add_socket(http_server_port[0])
+
+    yield server
+
+    server.stop()
+
+    if hasattr(server, "close_all_connections"):
+        await server.close_all_connections()
+
+
+class AsyncHTTPServerClient(tornado.simple_httpclient.SimpleAsyncHTTPClient):
+    def initialize(self, *, http_server=None):
+        super().initialize()
+        self._http_server = http_server
+
+    def fetch(self, path, **kwargs):
+        """
+        Fetch `path` from test server, passing `kwargs` to the `fetch`
+        of the underlying `tornado.simple_httpclient.SimpleAsyncHTTPClient`.
+        """
+        return super().fetch(self.get_url(path), **kwargs)
+
+    def get_protocol(self):
+        return "http"
+
+    def get_http_port(self):
+        for sock in self._http_server._sockets.values():
+            return sock.getsockname()[1]
+
+    def get_url(self, path):
+        return f"{self.get_protocol()}://127.0.0.1:{self.get_http_port()}{path}"
+
+
+@pytest.fixture
+async def http_server_client(http_server):
+    """
+    Create an asynchronous HTTP client that can fetch from `http_server`.
+    """
+    with closing(AsyncHTTPServerClient(http_server=http_server)) as client:
+        yield client
+
+
+@pytest.fixture
+async def http_client(http_server):
+    """
+    Create an asynchronous HTTP client that can fetch from anywhere.
+    """
+    with closing(tornado.httpclient.AsyncHTTPClient()) as client:
+        yield client
+
+
+# End of pytest_tornasync
+
 
 @pytest.fixture
 def jp_server_config():
@@ -228,9 +314,9 @@ def jp_configurable_serverapp(
 
     .. code-block:: python
 
-        def my_test(jp_configurable_serverapp):
+        async def my_test(jp_configurable_serverapp):
 
-            app = jp_configurable_serverapp(...)
+            app = await jp_configurable_serverapp(...)
             ...
     """
     ServerApp.clear_instance()
@@ -242,7 +328,7 @@ def jp_configurable_serverapp(
     if "jupyter_server_terminals" not in exts:
         exts["jupyter_server_terminals"] = True
 
-    def _configurable_serverapp(
+    async def _configurable_serverapp(
         config=jp_server_config,
         base_url=jp_base_url,
         argv=jp_argv,
@@ -286,42 +372,18 @@ def jp_configurable_serverapp(
             handler.setStream(jp_logging_stream)
         app.log.propagate = True
         app.log.handlers = []
-        # Start app without ioloop
         app.start_app()
         return app
 
     return _configurable_serverapp
 
 
-@pytest.fixture
-def jp_ensure_app_fixture(request):
-    """Ensures that the 'app' fixture used by pytest-tornasync
-    is set to `jp_web_app`, the Tornado Web Application returned
-    by the ServerApp in Jupyter Server, provided by the jp_web_app
-    fixture in this module.
-
-    Note, this hardcodes the `app_fixture` option from
-    pytest-tornasync to `jp_web_app`. If this value is configured
-    to something other than the default, it will raise an exception.
-    """
-    app_option = request.config.getoption("app_fixture")
-    if app_option not in ["app", "jp_web_app"]:
-        raise Exception(
-            "jp_serverapp requires the `app-fixture` option "
-            "to be set to 'jp_web_app`. Try rerunning the "
-            "current tests with the option `--app-fixture "
-            "jp_web_app`."
-        )
-    elif app_option == "app":
-        # Manually set the app_fixture to `jp_web_app` if it's
-        # not set already.
-        request.config.option.app_fixture = "jp_web_app"
-
-
 @pytest.fixture(scope="function")
-def jp_serverapp(jp_ensure_app_fixture, jp_server_config, jp_argv, jp_configurable_serverapp):
+def jp_serverapp(jp_server_config, jp_argv, jp_configurable_serverapp):
     """Starts a Jupyter Server instance based on the established configuration values."""
-    return jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
+    loop = asyncio.new_event_loop()
+    yield loop.run_until_complete(jp_configurable_serverapp(config=jp_server_config, argv=jp_argv))
+    loop.close()
 
 
 @pytest.fixture
@@ -343,7 +405,7 @@ def jp_base_url():
 
 
 @pytest.fixture
-def jp_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_base_url):
+async def jp_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_base_url):
     """Sends an (asynchronous) HTTP request to a test server.
 
     The fixture is a factory; it can be called like

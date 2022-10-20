@@ -7,7 +7,6 @@ import pytest
 from traitlets.config import Config
 
 from jupyter_server.serverapp import ServerApp
-from jupyter_server.utils import run_sync
 
 from .mockextensions.app import MockExtensionApp
 
@@ -137,7 +136,7 @@ def test_load_parallel_extensions(monkeypatch, jp_environ):
     assert exts["tests.extension.mockextensions"]
 
 
-def test_stop_extension(jp_serverapp, caplog):
+async def test_stop_extension(jp_serverapp, caplog):
     """Test the stop_extension method.
 
     This should be fired by ServerApp.cleanup_extensions.
@@ -163,7 +162,7 @@ def test_stop_extension(jp_serverapp, caplog):
 
     # call cleanup_extensions, check the logging is correct
     caplog.clear()
-    run_sync(jp_serverapp.cleanup_extensions())
+    await jp_serverapp.cleanup_extensions()
     assert {msg for *_, msg in caplog.record_tuples} == {
         "Shutting down 2 extensions",
         "jupyter_server_terminals | extension app 'jupyter_server_terminals' stopping",

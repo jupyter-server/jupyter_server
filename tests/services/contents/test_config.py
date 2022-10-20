@@ -49,5 +49,5 @@ async def test_async_contents_manager(jp_configurable_serverapp):
     argv = [
         "--ServerApp.contents_manager_class=jupyter_server.services.contents.manager.AsyncContentsManager"
     ]
-    app = jp_configurable_serverapp(config=config, argv=argv)
+    app = await jp_configurable_serverapp(config=config, argv=argv)
     assert isinstance(app.contents_manager, AsyncContentsManager)
