@@ -32,17 +32,6 @@ from jupyter_server.services.contents.filemanager import FileContentsManager
 from jupyter_server.services.contents.largefilemanager import LargeFileManager
 from jupyter_server.utils import url_path_join
 
-# List of dependencies needed for this plugin.
-pytest_plugins = [
-    "pytest_tornasync",
-    # Once the chunk below moves to Jupyter Core, we'll uncomment
-    # This plugin and use the fixtures directly from Jupyter Core.
-    # "jupyter_core.pytest_plugin"
-]
-
-
-import asyncio
-
 if os.name == "nt" and sys.version_info >= (3, 7):
     asyncio.set_event_loop_policy(
         asyncio.WindowsSelectorEventLoopPolicy()  # type:ignore[attr-defined]
@@ -50,6 +39,9 @@ if os.name == "nt" and sys.version_info >= (3, 7):
 
 
 # ============ Move to Jupyter Core =============
+
+# Once the chunk below moves to Jupyter Core
+# use the fixtures directly from Jupyter Core.
 
 
 def mkdir(tmp_path, *parts):
