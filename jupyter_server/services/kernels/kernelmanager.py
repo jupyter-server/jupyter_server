@@ -428,6 +428,7 @@ class MappingKernelManager(MultiKernelManager):
                 channel.close()
             loop.remove_timeout(timeout)
             kernel.remove_restart_callback(on_restart_failed, "dead")
+            kernel._pending_restart_cleanup = None
 
         def on_reply(msg):
             self.log.debug("Kernel info reply received: %s", kernel_id)
@@ -448,6 +449,7 @@ class MappingKernelManager(MultiKernelManager):
                 future.set_exception(RuntimeError("Restart failed"))
 
         kernel.add_restart_callback(on_restart_failed, "dead")
+        kernel._pending_restart_cleanup = finish
         kernel.session.send(channel, "kernel_info_request")
         channel.on_recv(on_reply)
         loop = IOLoop.current()
@@ -555,6 +557,8 @@ class MappingKernelManager(MultiKernelManager):
             if not kernel._activity_stream.socket.closed:
                 kernel._activity_stream.close()
             kernel._activity_stream = None
+        if getattr(kernel, "_pending_restart_cleanup", None):
+            kernel._pending_restart_cleanup()
 
     def initialize_culler(self):
         """Start idle culler if 'cull_idle_timeout' is greater than zero.
