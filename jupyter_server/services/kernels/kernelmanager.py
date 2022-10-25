@@ -655,29 +655,7 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
         return "jupyter_client.ioloop.AsyncIOLoopKernelManager"
 
     def __init__(self, **kwargs):
-        self.pinned_superclass = AsyncMultiKernelManager
+        self.pinned_superclass = MultiKernelManager
+        self._pending_kernel_tasks = {}
         self.pinned_superclass.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
-        self._pending_kernel_tasks = {}
-
-    async def _async_shutdown_kernel(self, kernel_id, now=False, restart=False):
-        """Shutdown a kernel by kernel_id"""
-        self._check_kernel_id(kernel_id)
-
-        # Decrease the metric of number of kernels
-        # running for the relevant kernel type by 1
-        KERNEL_CURRENTLY_RUNNING_TOTAL.labels(type=self._kernels[kernel_id].kernel_name).dec()
-
-        if kernel_id in self._pending_kernel_tasks:
-            task = self._pending_kernel_tasks.pop(kernel_id)
-            task.cancel()
-        else:
-            self.stop_watching_activity(kernel_id)
-            self.stop_buffering(kernel_id)
-
-        # Finish shutting down the kernel before clearing state to avoid a race condition.
-        return await self.pinned_superclass._async_shutdown_kernel(
-            self, kernel_id, now=now, restart=restart
-        )
-
-    shutdown_kernel = _async_shutdown_kernel
