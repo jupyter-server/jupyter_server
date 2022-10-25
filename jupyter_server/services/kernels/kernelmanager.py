@@ -194,7 +194,7 @@ class MappingKernelManager(MultiKernelManager):
         self._kernel_connections.pop(kernel_id, None)
         self._kernel_ports.pop(kernel_id, None)
 
-    async def start_kernel(self, kernel_id=None, path=None, **kwargs):
+    async def _async_start_kernel(self, kernel_id=None, path=None, **kwargs):
         """Start a kernel for a session and return its kernel_id.
 
         Parameters
@@ -215,7 +215,7 @@ class MappingKernelManager(MultiKernelManager):
                 kwargs["cwd"] = self.cwd_for_path(path)
             if kernel_id is not None:
                 kwargs["kernel_id"] = kernel_id
-            kernel_id = await ensure_async(self.pinned_superclass.start_kernel(self, **kwargs))
+            kernel_id = await self.pinned_superclass._async_start_kernel(self, **kwargs)
             self._kernel_connections[kernel_id] = 0
             task = asyncio.create_task(self._finish_kernel_start(kernel_id))
             if not getattr(self, "use_pending_kernels", None):
@@ -242,6 +242,8 @@ class MappingKernelManager(MultiKernelManager):
             self.initialize_culler()
 
         return kernel_id
+
+    start_kernel = _async_start_kernel
 
     async def _finish_kernel_start(self, kernel_id):
         km = self.get_kernel(kernel_id)
@@ -390,7 +392,7 @@ class MappingKernelManager(MultiKernelManager):
                 buffer_info["session_key"],
             )
 
-    def shutdown_kernel(self, kernel_id, now=False, restart=False):
+    async def _async_shutdown_kernel(self, kernel_id, now=False, restart=False):
         """Shutdown a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
 
@@ -405,12 +407,16 @@ class MappingKernelManager(MultiKernelManager):
             self.stop_watching_activity(kernel_id)
             self.stop_buffering(kernel_id)
 
-        self.pinned_superclass.shutdown_kernel(self, kernel_id, now=now, restart=restart)
+        return await self.pinned_superclass._async_shutdown_kernel(
+            self, kernel_id, now=now, restart=restart
+        )
 
-    async def restart_kernel(self, kernel_id, now=False):
+    shutdown_kernel = _async_shutdown_kernel
+
+    async def _async_restart_kernel(self, kernel_id, now=False):
         """Restart a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
-        await ensure_async(self.pinned_superclass.restart_kernel(self, kernel_id, now=now))
+        await self.pinned_superclass._async_restart_kernel(self, kernel_id, now=now)
         kernel = self.get_kernel(kernel_id)
         # return a Future that will resolve when the kernel has successfully restarted
         channel = kernel.connect_shell()
@@ -451,6 +457,8 @@ class MappingKernelManager(MultiKernelManager):
             self.stop_watching_activity(kernel_id)
             self.start_watching_activity(kernel_id)
         return future
+
+    restart_kernel = _async_restart_kernel
 
     def notify_connect(self, kernel_id):
         """Notice a new connection to a kernel"""
@@ -652,7 +660,7 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
         self.last_kernel_activity = utcnow()
         self._pending_kernel_tasks = {}
 
-    async def shutdown_kernel(self, kernel_id, now=False, restart=False):
+    async def _async_shutdown_kernel(self, kernel_id, now=False, restart=False):
         """Shutdown a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
 
@@ -668,6 +676,8 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
             self.stop_buffering(kernel_id)
 
         # Finish shutting down the kernel before clearing state to avoid a race condition.
-        return await self.pinned_superclass.shutdown_kernel(
+        return await self.pinned_superclass._async_shutdown_kernel(
             self, kernel_id, now=now, restart=restart
         )
+
+    shutdown_kernel = _async_shutdown_kernel
