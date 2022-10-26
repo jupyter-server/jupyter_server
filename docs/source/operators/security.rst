@@ -343,7 +343,7 @@ follows:
 
 The ``is_authorized()`` method will automatically be called whenever a handler is decorated with
 ``@authorized`` (from ``jupyter_server.auth``), similarly to the
-``@authenticated`` decorator for authorization (from ``tornado.web``).
+``@authenticated`` decorator for authentication (from ``tornado.web``).
 
 
 Security in notebook documents
