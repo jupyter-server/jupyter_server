@@ -43,7 +43,7 @@ setup_args = dict(
         "jinja2",
     ],
     extras_require={
-        "test": ["pytest"],
+        "test": ["pytest", "pytest-asyncio"],
     },
     include_package_data=True,
     cmdclass=cmdclass,

@@ -537,13 +537,10 @@ def jp_create_notebook(jp_root_dir):
 
 
 @pytest.fixture(autouse=True)
-def jp_server_cleanup(io_loop):
+async def jp_server_cleanup(io_loop):
     yield
     app: ServerApp = ServerApp.instance()
-    loop = io_loop.asyncio_loop
-    loop.run_until_complete(app._cleanup())
-    if getattr(app, "kernel_manager", None):
-        app.kernel_manager.context.destroy()
+    await app._cleanup()
     ServerApp.clear_instance()
 
 
