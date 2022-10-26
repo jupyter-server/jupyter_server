@@ -541,6 +541,8 @@ def jp_server_cleanup(io_loop):
     app: ServerApp = ServerApp.instance()
     loop = io_loop.asyncio_loop
     loop.run_until_complete(app._cleanup())
+    if getattr(app, "kernel_manager", None):
+        app.kernel_manager.context.destroy()
     ServerApp.clear_instance()
 
 

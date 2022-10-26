@@ -19,5 +19,5 @@ async def test_async_kernel_manager(jp_configurable_serverapp):
     argv = [
         "--ServerApp.kernel_manager_class=jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
     ]
-    app = jp_configurable_serverapp(argv=argv)
+    app = await jp_configurable_serverapp(argv=argv)
     assert isinstance(app.kernel_manager, AsyncMappingKernelManager)
