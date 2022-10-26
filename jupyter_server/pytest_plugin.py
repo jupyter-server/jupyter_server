@@ -332,8 +332,9 @@ def jp_configurable_serverapp(
     ):
         c = Config(config)
         c.NotebookNotary.db_file = ":memory:"
-        token = hexlify(os.urandom(4)).decode("ascii")
-        c.IdentityProvider.token = token
+        if not c.ServerApp.has_key("token") and not c.IdentityProvider.token:
+            token = hexlify(os.urandom(4)).decode("ascii")
+            c.IdentityProvider.token = token
 
         # Allow tests to configure root_dir via a file, argv, or its
         # default (cwd) by specifying a value of None.
@@ -544,16 +545,6 @@ def jp_server_cleanup(io_loop):
     if getattr(app, "kernel_manager", None):
         app.kernel_manager.context.destroy()
     ServerApp.clear_instance()
-
-
-@pytest.fixture
-def jp_cleanup_subprocesses(jp_serverapp):
-    """DEPRECATED: The jp_server_cleanup fixture automatically cleans up the singleton ServerApp class"""
-
-    async def _():
-        pass
-
-    return _
 
 
 @pytest.fixture

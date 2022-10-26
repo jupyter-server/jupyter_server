@@ -91,27 +91,23 @@ async def test_legacy_base_class(jp_serverapp, jp_fetch):
     assert model2["identity"] == model["identity"]
 
 
-def test_deprecated_config():
+async def test_deprecated_config(jp_configurable_serverapp):
     cfg = Config()
     cfg.ServerApp.token = token = "asdf"
     cfg.ServerApp.password = password = passwd("secrets")
-    app = ServerApp(config=cfg)
-    app.initialize([])
-    app.init_configurables()
+    app = await jp_configurable_serverapp(config=cfg)
     assert app.identity_provider.token == token
     assert app.token == token
     assert app.identity_provider.hashed_password == password
     assert app.password == password
 
 
-def test_deprecated_config_priority():
+async def test_deprecated_config_priority(jp_configurable_serverapp):
     cfg = Config()
     cfg.ServerApp.token = "ignored"
     cfg.IdentityProvider.token = token = "idp_token"
     cfg.ServerApp.password = passwd("ignored")
     cfg.PasswordIdentityProvider.hashed_password = password = passwd("used")
-    app = ServerApp(config=cfg)
-    app.initialize([])
-    app.init_configurables()
+    app = await jp_configurable_serverapp(config=cfg)
     assert app.identity_provider.token == token
     assert app.identity_provider.hashed_password == password
