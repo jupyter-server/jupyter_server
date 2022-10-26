@@ -403,9 +403,9 @@ class MappingKernelManager(MultiKernelManager):
         if kernel_id in self._pending_kernel_tasks:
             task = self._pending_kernel_tasks.pop(kernel_id)
             task.cancel()
-        else:
-            self.stop_watching_activity(kernel_id)
-            self.stop_buffering(kernel_id)
+
+        self.stop_watching_activity(kernel_id)
+        self.stop_buffering(kernel_id)
 
         return await self.pinned_superclass._async_shutdown_kernel(
             self, kernel_id, now=now, restart=restart
