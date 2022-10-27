@@ -37,7 +37,7 @@ setup_args = dict(
     version=VERSION,
     description="Jupyter Server Example",
     long_description=open("README.md").read(),
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=[
         "jupyter_server",
         "jinja2",

@@ -21,12 +21,3 @@ from ._version import __version__, version_info  # noqa
 
 def _cleanup():
     pass
-
-
-# patch subprocess on Windows for python<3.7
-# see https://bugs.python.org/issue37380
-# the fix for python3.7: https://github.com/python/cpython/pull/15706/files
-if sys.platform == "win32":
-    if sys.version_info < (3, 7):
-        subprocess._cleanup = _cleanup
-        subprocess._active = None
