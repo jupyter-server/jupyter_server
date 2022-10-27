@@ -9,10 +9,8 @@ import os
 import shutil
 import sys
 import urllib.parse
-import warnings
 from binascii import hexlify
 from contextlib import closing
-from inspect import iscoroutinefunction
 
 import jupyter_core.paths
 import nbformat
@@ -21,7 +19,6 @@ import tornado
 import tornado.testing
 from tornado.escape import url_escape
 from tornado.httpclient import HTTPClientError
-from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketHandler
 from traitlets.config import Config, re
 
@@ -332,7 +329,7 @@ def jp_configurable_serverapp(
     ):
         c = Config(config)
         c.NotebookNotary.db_file = ":memory:"
-        if not c.ServerApp.has_key("token") and not c.IdentityProvider.token:
+        if "token" not in c.ServerApp and not c.IdentityProvider.token:
             token = hexlify(os.urandom(4)).decode("ascii")
             c.IdentityProvider.token = token
 

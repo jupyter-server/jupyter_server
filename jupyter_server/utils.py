@@ -1,7 +1,6 @@
 """Notebook related utilities"""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-import asyncio
 import errno
 import importlib.util
 import inspect

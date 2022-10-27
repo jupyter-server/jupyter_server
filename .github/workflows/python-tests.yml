@@ -131,7 +131,7 @@ jobs:
       - name: Install the Python dependencies
         run: |
           pip install --no-deps .
-          pip install --pre --upgrade "jupyter_server[test]"
+          pip install --pre --upgrade ".[test]"
       - name: List installed packages
         run: |
           pip freeze
