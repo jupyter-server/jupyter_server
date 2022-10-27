@@ -18,8 +18,8 @@ def test_help_output():
     check_help_all_output("jupyter_server")
 
 
-async def test_server_info_file(tmp_path, jp_configurable_serverapp):
-    app = await jp_configurable_serverapp(log=logging.getLogger())
+def test_server_info_file(tmp_path, jp_configurable_serverapp):
+    app = jp_configurable_serverapp(log=logging.getLogger())
 
     app.write_server_info_file()
     servers = list(list_running_servers(app.runtime_dir))
@@ -37,8 +37,8 @@ async def test_server_info_file(tmp_path, jp_configurable_serverapp):
     app.remove_server_info_file
 
 
-async def test_root_dir(tmp_path, jp_configurable_serverapp):
-    app = await jp_configurable_serverapp(root_dir=str(tmp_path))
+def test_root_dir(tmp_path, jp_configurable_serverapp):
+    app = jp_configurable_serverapp(root_dir=str(tmp_path))
     assert app.root_dir == str(tmp_path)
 
 
@@ -52,8 +52,8 @@ def invalid_root_dir(tmp_path, request):
     return str(path)
 
 
-async def test_invalid_root_dir(invalid_root_dir, jp_configurable_serverapp):
-    app = await jp_configurable_serverapp()
+def test_invalid_root_dir(invalid_root_dir, jp_configurable_serverapp):
+    app = jp_configurable_serverapp()
     with pytest.raises(TraitError):
         app.root_dir = invalid_root_dir
 
@@ -67,8 +67,8 @@ def valid_root_dir(tmp_path, request):
     return str(path)
 
 
-async def test_valid_root_dir(valid_root_dir, jp_configurable_serverapp):
-    app = await jp_configurable_serverapp(root_dir=valid_root_dir)
+def test_valid_root_dir(valid_root_dir, jp_configurable_serverapp):
+    app = jp_configurable_serverapp(root_dir=valid_root_dir)
     root_dir = valid_root_dir
     # If nested path, the last slash should
     # be stripped by the root_dir trait.
@@ -78,14 +78,14 @@ async def test_valid_root_dir(valid_root_dir, jp_configurable_serverapp):
 
 
 async def test_generate_config(tmp_path, jp_configurable_serverapp):
-    app = await jp_configurable_serverapp(config_dir=str(tmp_path))
+    app = jp_configurable_serverapp(config_dir=str(tmp_path))
     app.initialize(["--generate-config", "--allow-root"])
     with pytest.raises(NoStart):
         app.start()
     assert tmp_path.joinpath("jupyter_server_config.py").exists()
 
 
-async def test_server_password(tmp_path, jp_configurable_serverapp):
+def test_server_password(tmp_path, jp_configurable_serverapp):
     password = "secret"
     with patch.dict("os.environ", {"JUPYTER_CONFIG_DIR": str(tmp_path)}), patch.object(
         getpass, "getpass", return_value=password
@@ -93,7 +93,7 @@ async def test_server_password(tmp_path, jp_configurable_serverapp):
         app = JupyterPasswordApp(log_level=logging.ERROR)
         app.initialize([])
         app.start()
-        sv = await jp_configurable_serverapp()
+        sv = jp_configurable_serverapp()
         sv.load_config_file()
         assert sv.identity_provider.hashed_password != ""
         passwd_check(sv.identity_provider.hashed_password, password)
@@ -256,29 +256,29 @@ def test_urls(config, public_url, local_url, connection_url):
 
 # Preferred dir tests
 # ----------------------------------------------------------------------------
-async def test_valid_preferred_dir(tmp_path, jp_configurable_serverapp):
+def test_valid_preferred_dir(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path)
-    app = await jp_configurable_serverapp(root_dir=path, preferred_dir=path)
+    app = jp_configurable_serverapp(root_dir=path, preferred_dir=path)
     assert app.root_dir == path
     assert app.preferred_dir == path
     assert app.root_dir == app.preferred_dir
 
 
-async def test_valid_preferred_dir_is_root_subdir(tmp_path, jp_configurable_serverapp):
+def test_valid_preferred_dir_is_root_subdir(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path)
     path_subdir = str(tmp_path / "subdir")
     os.makedirs(path_subdir, exist_ok=True)
-    app = await jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
+    app = jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
     assert app.root_dir == path
     assert app.preferred_dir == path_subdir
     assert app.preferred_dir.startswith(app.root_dir)
 
 
-async def test_valid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverapp):
+def test_valid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path)
     path_subdir = str(tmp_path / "subdir")
     with pytest.raises(TraitError) as error:
-        app = await jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
+        app = jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
 
     assert "No such preferred dir:" in str(error)
 
@@ -297,7 +297,7 @@ async def test_valid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serv
         ("default", "default"),
     ],
 )
-async def test_preferred_dir_validation(
+def test_preferred_dir_validation(
     root_dir_loc, preferred_dir_loc, tmp_path, jp_config_dir, jp_configurable_serverapp
 ):
     expected_root_dir = str(tmp_path)
@@ -334,70 +334,70 @@ async def test_preferred_dir_validation(
 
     if root_dir_loc == "default" and preferred_dir_loc != "default":  # error expected
         with pytest.raises(SystemExit):
-            await jp_configurable_serverapp(**kwargs)
+            jp_configurable_serverapp(**kwargs)
     else:
-        app = await jp_configurable_serverapp(**kwargs)
+        app = jp_configurable_serverapp(**kwargs)
         assert app.root_dir == expected_root_dir
         assert app.preferred_dir == expected_preferred_dir
         assert app.preferred_dir.startswith(app.root_dir)
 
 
-async def test_invalid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverapp):
+def test_invalid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path)
     path_subdir = str(tmp_path / "subdir")
     with pytest.raises(TraitError) as error:
-        app = await jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
+        app = jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
 
     assert "No such preferred dir:" in str(error)
 
 
-async def test_invalid_preferred_dir_does_not_exist_set(tmp_path, jp_configurable_serverapp):
+def test_invalid_preferred_dir_does_not_exist_set(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path)
     path_subdir = str(tmp_path / "subdir")
 
-    app = await jp_configurable_serverapp(root_dir=path)
+    app = jp_configurable_serverapp(root_dir=path)
     with pytest.raises(TraitError) as error:
         app.preferred_dir = path_subdir
 
     assert "No such preferred dir:" in str(error)
 
 
-async def test_invalid_preferred_dir_not_root_subdir(tmp_path, jp_configurable_serverapp):
+def test_invalid_preferred_dir_not_root_subdir(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path / "subdir")
     os.makedirs(path, exist_ok=True)
     not_subdir_path = str(tmp_path)
 
     with pytest.raises(TraitError) as error:
-        app = await jp_configurable_serverapp(root_dir=path, preferred_dir=not_subdir_path)
+        app = jp_configurable_serverapp(root_dir=path, preferred_dir=not_subdir_path)
 
     assert "preferred_dir must be equal or a subdir of root_dir. " in str(error)
 
 
-async def test_invalid_preferred_dir_not_root_subdir_set(tmp_path, jp_configurable_serverapp):
+def test_invalid_preferred_dir_not_root_subdir_set(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path / "subdir")
     os.makedirs(path, exist_ok=True)
     not_subdir_path = str(tmp_path)
 
-    app = await jp_configurable_serverapp(root_dir=path)
+    app = jp_configurable_serverapp(root_dir=path)
     with pytest.raises(TraitError) as error:
         app.preferred_dir = not_subdir_path
 
     assert "preferred_dir must be equal or a subdir of root_dir. " in str(error)
 
 
-async def test_observed_root_dir_updates_preferred_dir(tmp_path, jp_configurable_serverapp):
+def test_observed_root_dir_updates_preferred_dir(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path)
     new_path = str(tmp_path / "subdir")
     os.makedirs(new_path, exist_ok=True)
 
-    app = await jp_configurable_serverapp(root_dir=path, preferred_dir=path)
+    app = jp_configurable_serverapp(root_dir=path, preferred_dir=path)
     app.root_dir = new_path
     assert app.preferred_dir == new_path
 
 
-async def test_observed_root_dir_does_not_update_preferred_dir(tmp_path, jp_configurable_serverapp):
+def test_observed_root_dir_does_not_update_preferred_dir(tmp_path, jp_configurable_serverapp):
     path = str(tmp_path)
     new_path = str(tmp_path.parent)
-    app = await jp_configurable_serverapp(root_dir=path, preferred_dir=path)
+    app = jp_configurable_serverapp(root_dir=path, preferred_dir=path)
     app.root_dir = new_path
     assert app.preferred_dir == path

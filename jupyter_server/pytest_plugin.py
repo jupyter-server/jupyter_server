@@ -135,7 +135,7 @@ def jp_environ(
 # ================= End: Move to Jupyter core ================
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def asyncio_loop():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -143,7 +143,7 @@ def asyncio_loop():
     loop.close()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def io_loop(asyncio_loop):
     async def get_tornado_loop():
         return tornado.ioloop.IOLoop.current()
@@ -221,7 +221,8 @@ def jp_extension_environ(jp_env_config_path, monkeypatch):
 @pytest.fixture
 def jp_http_port(http_server_port):
     """Returns the port value from the http_server_port fixture."""
-    return http_server_port[-1]
+    yield http_server_port[-1]
+    http_server_port[0].close()
 
 
 @pytest.fixture
@@ -270,8 +271,8 @@ def jp_configurable_serverapp(
     jp_base_url,
     tmp_path,
     jp_root_dir,
-    io_loop,
     jp_logging_stream,
+    asyncio_loop,
 ):
     """Starts a Jupyter Server instance based on
     the provided configuration values.
@@ -282,9 +283,9 @@ def jp_configurable_serverapp(
 
     .. code-block:: python
 
-        async def my_test(jp_configurable_serverapp):
+        def my_test(jp_configurable_serverapp):
 
-            app = await jp_configurable_serverapp(...)
+            app = jp_configurable_serverapp(...)
             ...
     """
     ServerApp.clear_instance()
@@ -296,7 +297,7 @@ def jp_configurable_serverapp(
     if "jupyter_server_terminals" not in exts:
         exts["jupyter_server_terminals"] = True
 
-    async def _configurable_serverapp(
+    def _configurable_serverapp(
         config=jp_server_config,
         base_url=jp_base_url,
         argv=jp_argv,
@@ -333,7 +334,14 @@ def jp_configurable_serverapp(
         app.log.propagate = True
         app.log.handlers = []
         # Initialize app without httpserver
-        app.initialize(argv=argv, new_httpserver=False)
+        if asyncio_loop.is_running():
+            app.initialize(argv=argv, new_httpserver=False)
+        else:
+
+            async def initialize_app():
+                app.initialize(argv=argv, new_httpserver=False)
+
+            asyncio_loop.run_until_complete(initialize_app())
         # Reroute all logging StreamHandlers away from stdin/stdout since pytest hijacks
         # these streams and closes them at unfortunate times.
         stream_handlers = [h for h in app.log.handlers if isinstance(h, logging.StreamHandler)]
@@ -350,9 +358,7 @@ def jp_configurable_serverapp(
 @pytest.fixture(scope="function")
 def jp_serverapp(jp_server_config, jp_argv, jp_configurable_serverapp, asyncio_loop):
     """Starts a Jupyter Server instance based on the established configuration values."""
-    return asyncio_loop.run_until_complete(
-        jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
-    )
+    return jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
 
 
 @pytest.fixture

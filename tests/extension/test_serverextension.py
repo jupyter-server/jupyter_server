@@ -43,7 +43,7 @@ def test_disable(jp_env_config_path, jp_extension_environ):
     assert not config["mock1"]
 
 
-async def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extension_environ):
+def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extension_environ):
     # Toggle each extension module with a JSON config file
     # at the sys-prefix config dir.
     toggle_server_extension_python(
@@ -75,7 +75,7 @@ async def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_ex
     argv = ["--ServerApp.jpserver_extensions", f"{mockext_py}=True"]
 
     # Enable the last extension, mockext_py, using the CLI interface.
-    app = await jp_configurable_serverapp(config_dir=str(jp_env_config_path), argv=argv)
+    app = jp_configurable_serverapp(config_dir=str(jp_env_config_path), argv=argv)
     # Verify that extensions are enabled and merged in proper order.
     extensions = app.jpserver_extensions
     assert extensions["tests.extension.mockextensions.mockext_user"]

@@ -220,12 +220,12 @@ async def test_terminal_create_with_bad_cwd(jp_fetch, jp_ws_fetch):
     assert non_existing_path not in message_stdout
 
 
-async def test_culling_config(jp_server_config, jp_configurable_serverapp):
-    app = await jp_configurable_serverapp()
+def test_culling_config(jp_server_config, jp_configurable_serverapp):
+    app = jp_configurable_serverapp()
     terminal_mgr_config = app.config.ServerApp.TerminalManager
     assert terminal_mgr_config.cull_inactive_timeout == CULL_TIMEOUT
     assert terminal_mgr_config.cull_interval == CULL_INTERVAL
-    app = await jp_configurable_serverapp()
+    app = jp_configurable_serverapp()
     terminal_mgr_settings = app.web_app.settings["terminal_manager"]
     assert terminal_mgr_settings.cull_inactive_timeout == CULL_TIMEOUT
     assert terminal_mgr_settings.cull_interval == CULL_INTERVAL
@@ -270,10 +270,10 @@ async def test_culling(jp_server_config, jp_fetch):
         ('shell_command="/string/path/to/shell -l"', ["/string/path/to/shell", "-l"], "5.1"),
     ],
 )
-async def test_shell_command_override(
+def test_shell_command_override(
     terminado_settings, expected_shell, min_traitlets, jp_configurable_serverapp
 ):
     pytest.importorskip("traitlets", minversion=min_traitlets)
     argv = shlex.split(f"--ServerApp.terminado_settings={terminado_settings}")
-    app = await jp_configurable_serverapp(argv=argv)
+    app = jp_configurable_serverapp(argv=argv)
     assert app.web_app.settings["terminal_manager"].shell_command == expected_shell

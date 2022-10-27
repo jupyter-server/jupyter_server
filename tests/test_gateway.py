@@ -246,7 +246,7 @@ async def test_gateway_env_options(init_gateway, jp_serverapp):
     assert GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == 43
 
 
-async def test_gateway_cli_options(jp_configurable_serverapp, capsys):
+def test_gateway_cli_options(jp_configurable_serverapp, capsys):
     argv = [
         "--gateway-url=" + mock_gateway_url,
         "--GatewayClient.http_user=" + mock_http_user,
@@ -257,7 +257,7 @@ async def test_gateway_cli_options(jp_configurable_serverapp, capsys):
     ]
 
     GatewayClient.clear_instance()
-    app = await jp_configurable_serverapp(argv=argv)
+    app = jp_configurable_serverapp(argv=argv)
 
     assert app.gateway_config.gateway_enabled is True
     assert app.gateway_config.url == mock_gateway_url
@@ -281,7 +281,7 @@ async def test_gateway_cli_options(jp_configurable_serverapp, capsys):
 
 
 @pytest.mark.parametrize("renewer_type", ["default", "custom"])
-async def test_token_renewer_config(jp_server_config, jp_configurable_serverapp, renewer_type):
+def test_token_renewer_config(jp_server_config, jp_configurable_serverapp, renewer_type):
     argv = ["--gateway-url=" + mock_gateway_url]
     if renewer_type == "custom":
         argv.append(
@@ -289,7 +289,7 @@ async def test_token_renewer_config(jp_server_config, jp_configurable_serverapp,
         )
 
     GatewayClient.clear_instance()
-    app = await jp_configurable_serverapp(argv=argv)
+    app = jp_configurable_serverapp(argv=argv)
 
     assert app.gateway_config.gateway_enabled is True
     assert app.gateway_config.url == mock_gateway_url
@@ -314,7 +314,7 @@ async def test_token_renewer_config(jp_server_config, jp_configurable_serverapp,
     "request_timeout,kernel_launch_timeout,expected_request_timeout,expected_kernel_launch_timeout",
     [(50, 10, 50, 45), (10, 50, 55, 50)],
 )
-async def test_gateway_request_timeout_pad_option(
+def test_gateway_request_timeout_pad_option(
     jp_configurable_serverapp,
     monkeypatch,
     request_timeout,
@@ -328,7 +328,7 @@ async def test_gateway_request_timeout_pad_option(
     ]
 
     GatewayClient.clear_instance()
-    app = await jp_configurable_serverapp(argv=argv)
+    app = jp_configurable_serverapp(argv=argv)
 
     monkeypatch.setattr(GatewayClient, "KERNEL_LAUNCH_TIMEOUT", kernel_launch_timeout)
     GatewayClient.instance().init_connection_args()
@@ -351,7 +351,7 @@ cookie_expire_time = format_datetime(datetime.now() + timedelta(seconds=180))
         (True, "Max-Age", "-360", "EXISTING=1", False),
     ],
 )
-async def test_gateway_request_with_expiring_cookies(
+def test_gateway_request_with_expiring_cookies(
     jp_configurable_serverapp,
     accept_cookies,
     expire_arg,
@@ -362,7 +362,7 @@ async def test_gateway_request_with_expiring_cookies(
     argv = [f"--GatewayClient.accept_cookies={accept_cookies}"]
 
     GatewayClient.clear_instance()
-    await jp_configurable_serverapp(argv=argv)
+    _ = jp_configurable_serverapp(argv=argv)
 
     cookie: SimpleCookie = SimpleCookie()
     cookie.load("SERVERID=1234567; Path=/")
