@@ -356,7 +356,7 @@ def jp_configurable_serverapp(
 
 
 @pytest.fixture(scope="function")
-def jp_serverapp(jp_server_config, jp_argv, jp_configurable_serverapp, asyncio_loop):
+def jp_serverapp(jp_server_config, jp_argv, jp_configurable_serverapp):
     """Starts a Jupyter Server instance based on the established configuration values."""
     return jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
 
@@ -380,7 +380,7 @@ def jp_base_url():
 
 
 @pytest.fixture
-def jp_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_base_url, asyncio_loop):
+def jp_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_base_url):
     """Sends an (asynchronous) HTTP request to a test server.
 
     The fixture is a factory; it can be called like
