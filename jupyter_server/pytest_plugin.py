@@ -143,7 +143,7 @@ def asyncio_loop():
     loop.close()
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def io_loop(asyncio_loop):
     async def get_tornado_loop():
         return tornado.ioloop.IOLoop.current()
