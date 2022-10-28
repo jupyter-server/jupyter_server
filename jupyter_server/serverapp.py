@@ -2833,6 +2833,8 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
+        if getattr(self, "kernel_manager", None):
+            self.kernel_manager.__del__()
         if getattr(self, "session_manager", None):
             self.session_manager.close()
         if hasattr(self, "http_server"):
