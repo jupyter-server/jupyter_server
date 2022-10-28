@@ -6,6 +6,7 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 # Distributed under the terms of the Modified BSD License.
 import asyncio
 import json
+import weakref
 from textwrap import dedent
 from traceback import format_tb
 
@@ -128,9 +129,16 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     # allows checking for conflict on session-id,
     # which is used as a zmq identity and must be unique.
     _open_sessions: dict = {}
+    _open_sockets: weakref.WeakSet["ZMQChannelsHandler"] = weakref.WeakSet()
 
     _kernel_info_future: Future
     _close_future: Future
+
+    @classmethod
+    def close_all(cls):
+        """Tornado does not provide a way to close open sockets, so add one."""
+        for socket in cls._open_sockets:
+            socket.close()
 
     @property
     def kernel_info_timeout(self):
@@ -500,7 +508,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 stream.on_recv_stream(self._on_zmq_reply)
 
         connected.add_done_callback(subscribe)
-
+        ZMQChannelsHandler._open_sockets.add(self)
         return connected
 
     def on_message(self, ws_msg):
@@ -753,6 +761,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
 
         self.channels = {}
         self._close_future.set_result(None)
+        ZMQChannelsHandler._open_sockets.remove(self)
 
     def _send_status_message(self, status):
         iopub = self.channels.get("iopub", None)

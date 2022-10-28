@@ -36,6 +36,7 @@ except ImportError:
 from jinja2 import Environment, FileSystemLoader
 from jupyter_core.paths import secure_write
 
+from jupyter_server.services.kernels.handlers import ZMQChannelsHandler
 from jupyter_server.transutils import _i18n, trans
 from jupyter_server.utils import ensure_async, pathname2url, urljoin
 
@@ -2833,6 +2834,7 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
+        ZMQChannelsHandler.close_all()
         if getattr(self, "kernel_manager", None):
             self.kernel_manager.__del__()
         if getattr(self, "session_manager", None):
