@@ -9,6 +9,7 @@ import json
 import weakref
 from textwrap import dedent
 from traceback import format_tb
+from typing import MutableSet
 
 from jupyter_client import protocol_version as client_protocol_version
 
@@ -129,7 +130,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     # allows checking for conflict on session-id,
     # which is used as a zmq identity and must be unique.
     _open_sessions: dict = {}
-    _open_sockets: weakref.WeakSet["ZMQChannelsHandler"] = weakref.WeakSet()
+    _open_sockets: MutableSet["ZMQChannelsHandler"] = weakref.WeakSet()
 
     _kernel_info_future: Future
     _close_future: Future
