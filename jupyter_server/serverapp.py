@@ -2834,7 +2834,7 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
-        ZMQChannelsHandler.close_all()
+        await ZMQChannelsHandler.close_all()
         if getattr(self, "kernel_manager", None):
             self.kernel_manager.__del__()
         if getattr(self, "session_manager", None):

@@ -136,10 +136,10 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     _close_future: Future
 
     @classmethod
-    def close_all(cls):
+    async def close_all(cls):
         """Tornado does not provide a way to close open sockets, so add one."""
-        for socket in cls._open_sockets:
-            socket.close()
+        for socket in list(cls._open_sockets):
+            await socket.close()
 
     @property
     def kernel_info_timeout(self):
@@ -749,6 +749,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             # start buffering instead of closing if this was the last connection
             if km._kernel_connections[self.kernel_id] == 0:
                 km.start_buffering(self.kernel_id, self.session_key, self.channels)
+                ZMQChannelsHandler._open_sockets.remove(self)
                 self._close_future.set_result(None)
                 return
 
@@ -761,8 +762,11 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 stream.close()
 
         self.channels = {}
-        self._close_future.set_result(None)
-        ZMQChannelsHandler._open_sockets.remove(self)
+        try:
+            ZMQChannelsHandler._open_sockets.remove(self)
+            self._close_future.set_result(None)
+        except Exception:
+            pass
 
     def _send_status_message(self, status):
         iopub = self.channels.get("iopub", None)
