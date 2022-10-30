@@ -1,5 +1,6 @@
 """Tests for authorization"""
 import json
+import os
 
 import pytest
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
@@ -174,6 +175,8 @@ async def test_authorized_requests(
         session_id = session_model["id"]
 
     if "kernel" in url:
+        if os.name == "nt":
+            pytest.skip("Test hangs on Windows")
         kernel_id = await km.start_kernel()
         kernel = km.get_kernel(kernel_id)
         # kernels take a moment to be ready
