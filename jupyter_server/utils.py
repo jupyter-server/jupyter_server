@@ -7,6 +7,7 @@ import inspect
 import os
 import socket
 import sys
+import warnings
 from contextlib import contextmanager
 from urllib.parse import urljoin  # noqa: F401
 from urllib.parse import SplitResult, quote, unquote, urlparse, urlsplit, urlunsplit
@@ -190,26 +191,11 @@ async def ensure_async(obj):
 
 
 async def run_sync_in_loop(maybe_async):
-    """Runs a function synchronously whether it is an async function or not.
-
-    If async, runs maybe_async and blocks until it has executed.
-
-    If not async, just returns maybe_async as it is the result of something
-    that has already executed.
-
-    Parameters
-    ----------
-    maybe_async : async or non-async object
-        The object to be executed, if it is async.
-
-    Returns
-    -------
-    result
-        Whatever the async object returns, or the object itself.
-    """
-    if not inspect.isawaitable(maybe_async):
-        return maybe_async
-    return await maybe_async
+    """**DEPRECATED**: Use ``ensure_async`` instead."""
+    warnings.warn(
+        "run_sync_in_loop is deprecated, use 'ensure_async'", DeprecationWarning, stacklevel=2
+    )
+    return ensure_async(maybe_async)
 
 
 def urlencode_unix_socket_path(socket_path):
