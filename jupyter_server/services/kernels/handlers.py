@@ -9,6 +9,7 @@ import json
 import weakref
 from textwrap import dedent
 from traceback import format_tb
+from typing import MutableSet
 
 from jupyter_client import protocol_version as client_protocol_version
 
@@ -129,16 +130,16 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     # allows checking for conflict on session-id,
     # which is used as a zmq identity and must be unique.
     _open_sessions: dict = {}
-    _open_sockets: weakref.WeakSet["ZMQChannelsHandler"] = weakref.WeakSet()
+    _open_sockets: MutableSet["ZMQChannelsHandler"] = weakref.WeakSet()
 
     _kernel_info_future: Future
     _close_future: Future
 
     @classmethod
-    def close_all(cls):
+    async def close_all(cls):
         """Tornado does not provide a way to close open sockets, so add one."""
-        for socket in cls._open_sockets:
-            socket.close()
+        for socket in list(cls._open_sockets):
+            await socket.close()
 
     @property
     def kernel_info_timeout(self):
@@ -748,6 +749,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             # start buffering instead of closing if this was the last connection
             if km._kernel_connections[self.kernel_id] == 0:
                 km.start_buffering(self.kernel_id, self.session_key, self.channels)
+                ZMQChannelsHandler._open_sockets.remove(self)
                 self._close_future.set_result(None)
                 return
 
@@ -760,8 +762,11 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 stream.close()
 
         self.channels = {}
-        self._close_future.set_result(None)
-        ZMQChannelsHandler._open_sockets.remove(self)
+        try:
+            ZMQChannelsHandler._open_sockets.remove(self)
+            self._close_future.set_result(None)
+        except Exception:
+            pass
 
     def _send_status_message(self, status):
         iopub = self.channels.get("iopub", None)

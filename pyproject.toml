@@ -136,11 +136,12 @@ testpaths = [
 ]
 timeout = 100
 # Restore this setting to debug failures
-timeout_method = "thread"
+# timeout_method = "thread"
 filterwarnings = [
   "error",
   "ignore:Passing a schema to Validator.iter_errors:DeprecationWarning",
   "ignore:run_pre_save_hook is deprecated:DeprecationWarning",
+  "always:unclosed <socket.socket:ResourceWarning",
   "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
 ]
 
