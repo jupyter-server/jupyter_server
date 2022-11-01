@@ -438,13 +438,13 @@ class AsyncContentsManager(LoggingConfigurable):
             raise HTTPError(400, "Can't delete root")
 
         await self.delete_file(path)
-        await self.checkpoints.delete_all_checkpoints(path)
+        await ensure_async(self.checkpoints.delete_all_checkpoints(path))
         self.emit(data={"action": "delete", "path": path})
 
     async def rename(self, old_path, new_path):
         """Rename a file and any checkpoints associated with that file."""
         await self.rename_file(old_path, new_path)
-        await self.checkpoints.rename_all_checkpoints(old_path, new_path)
+        await ensure_async(self.checkpoints.rename_all_checkpoints(old_path, new_path))
         self.emit(data={"action": "rename", "path": new_path, "source_path": old_path})
 
     async def update(self, model, path):
@@ -627,19 +627,19 @@ class AsyncContentsManager(LoggingConfigurable):
     # Part 3: Checkpoints API
     async def create_checkpoint(self, path):
         """Create a checkpoint."""
-        return await self.checkpoints.create_checkpoint(self, path)
+        return await ensure_async(self.checkpoints.create_checkpoint(self, path))
 
     async def restore_checkpoint(self, checkpoint_id, path):
         """
         Restore a checkpoint.
         """
-        await self.checkpoints.restore_checkpoint(self, checkpoint_id, path)
+        await ensure_async(self.checkpoints.restore_checkpoint(self, checkpoint_id, path))
 
     async def list_checkpoints(self, path):
-        return await self.checkpoints.list_checkpoints(path)
+        return await ensure_async(self.checkpoints.list_checkpoints(path))
 
     async def delete_checkpoint(self, checkpoint_id, path):
-        return await self.checkpoints.delete_checkpoint(checkpoint_id, path)
+        return await ensure_async(self.checkpoints.delete_checkpoint(checkpoint_id, path))
 
     def info_string(self):
         return "Serving contents"

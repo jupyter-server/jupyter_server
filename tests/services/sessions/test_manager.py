@@ -5,7 +5,7 @@ from tornado import web
 from traitlets import TraitError
 
 from jupyter_server._tz import isoformat, utcnow
-from jupyter_server.services.contents.manager import ContentsManager
+from jupyter_server.services.contents.manager import AsyncContentsManager
 from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
 from jupyter_server.services.sessions.sessionmanager import (
     KernelSessionRecord,
@@ -63,7 +63,7 @@ class SlowStartingKernelsMKM(MockMKM):
 
 @pytest.fixture
 def session_manager():
-    return SessionManager(kernel_manager=MockMKM(), contents_manager=ContentsManager())
+    return SessionManager(kernel_manager=MockMKM(), contents_manager=AsyncContentsManager())
 
 
 def test_kernel_record_equals():
@@ -387,7 +387,7 @@ async def test_bad_database_filepath(jp_runtime_dir):
     with pytest.raises(TraitError) as err:
         SessionManager(
             kernel_manager=kernel_manager,
-            contents_manager=ContentsManager(),
+            contents_manager=AsyncContentsManager(),
             database_filepath=str(path_id_directory),
         )
 
@@ -400,7 +400,7 @@ async def test_bad_database_filepath(jp_runtime_dir):
     with pytest.raises(TraitError) as err:
         SessionManager(
             kernel_manager=kernel_manager,
-            contents_manager=ContentsManager(),
+            contents_manager=AsyncContentsManager(),
             database_filepath=str(non_db_file),
         )
 
@@ -414,7 +414,7 @@ async def test_good_database_filepath(jp_runtime_dir):
 
     session_manager = SessionManager(
         kernel_manager=kernel_manager,
-        contents_manager=ContentsManager(),
+        contents_manager=AsyncContentsManager(),
         database_filepath=str(empty_file),
     )
 
@@ -430,7 +430,7 @@ async def test_good_database_filepath(jp_runtime_dir):
     # Try writing to a file that already exists.
     session_manager = SessionManager(
         kernel_manager=kernel_manager,
-        contents_manager=ContentsManager(),
+        contents_manager=AsyncContentsManager(),
         database_filepath=str(empty_file),
     )
 
@@ -446,7 +446,7 @@ async def test_session_persistence(jp_runtime_dir):
     # This should create the session database the first time.
     session_manager = SessionManager(
         kernel_manager=kernel_manager,
-        contents_manager=ContentsManager(),
+        contents_manager=AsyncContentsManager(),
         database_filepath=str(session_db_path),
     )
 
@@ -468,7 +468,7 @@ async def test_session_persistence(jp_runtime_dir):
     # Get a new session_manager
     session_manager = SessionManager(
         kernel_manager=kernel_manager,
-        contents_manager=ContentsManager(),
+        contents_manager=AsyncContentsManager(),
         database_filepath=str(session_db_path),
     )
 
@@ -478,7 +478,7 @@ async def test_session_persistence(jp_runtime_dir):
 
 async def test_pending_kernel():
     session_manager = SessionManager(
-        kernel_manager=SlowStartingKernelsMKM(), contents_manager=ContentsManager()
+        kernel_manager=SlowStartingKernelsMKM(), contents_manager=AsyncContentsManager()
     )
     # Create a session with a slow starting kernel
     fut = session_manager.create_session(

@@ -10,13 +10,13 @@ from jupyter_server.services.contents.manager import AsyncContentsManager
 
 @pytest.fixture(params=[AsyncGenericFileCheckpoints, GenericFileCheckpoints])
 def jp_server_config(request):
-    return {"FileContentsManager": {"checkpoints_class": request.param}}
+    return {"AsyncFileContentsManager": {"checkpoints_class": request.param}}
 
 
 def test_config_did_something(jp_server_config, jp_serverapp):
     assert isinstance(
         jp_serverapp.contents_manager.checkpoints,
-        jp_server_config["FileContentsManager"]["checkpoints_class"],
+        jp_server_config["AsyncFileContentsManager"]["checkpoints_class"],
     )
 
 
@@ -32,7 +32,7 @@ def example_post_save_hook():
     "jp_server_config",
     [
         {
-            "ContentsManager": {
+            "AsyncContentsManager": {
                 "pre_save_hook": "tests.services.contents.test_config.example_pre_save_hook",
                 "post_save_hook": "tests.services.contents.test_config.example_post_save_hook",
             },
