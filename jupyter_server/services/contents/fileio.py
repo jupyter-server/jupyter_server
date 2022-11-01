@@ -165,7 +165,7 @@ def _simple_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     fileobj.close()
 
 
-class FileManagerMixin(Configurable):
+class FileManagerMixinBase(Configurable):
     """
     Mixin for ContentsAPI classes that interact with the filesystem.
 
@@ -259,6 +259,8 @@ class FileManagerMixin(Configurable):
             raise HTTPError(404, "%s is outside root contents directory" % path)
         return os_path
 
+
+class FileManagerMixin(FileManagerMixinBase):
     def _read_notebook(self, os_path, as_version=4, capture_validation_error=None):
         """Read a notebook from an os path."""
         with self.open(os_path, "r", encoding="utf-8") as f:
@@ -347,7 +349,7 @@ class FileManagerMixin(Configurable):
             f.write(bcontent)
 
 
-class AsyncFileManagerMixin(FileManagerMixin):
+class AsyncFileManagerMixin(FileManagerMixinBase):
     """
     Mixin for ContentsAPI classes that interact with the filesystem asynchronously.
     """

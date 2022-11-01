@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 import tornado
 
@@ -8,6 +10,17 @@ from jupyter_server.services.contents.largefilemanager import (
 from jupyter_server.utils import ensure_async
 
 from ...utils import expected_http_error
+
+
+@pytest.fixture(autouse=True)
+def suppress_deprecation_warnings():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="ContentsManager will become an alias",
+            category=DeprecationWarning,
+        )
+        yield
 
 
 @pytest.fixture(params=[LargeFileManager, AsyncLargeFileManager])

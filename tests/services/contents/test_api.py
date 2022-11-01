@@ -1,6 +1,7 @@
 import json
 import pathlib
 import sys
+import warnings
 from base64 import decodebytes, encodebytes
 from unicodedata import normalize
 
@@ -12,6 +13,17 @@ from nbformat.v4 import new_markdown_cell, new_notebook
 from jupyter_server.utils import url_path_join
 
 from ...utils import expected_http_error
+
+
+@pytest.fixture(autouse=True)
+def suppress_deprecation_warnings():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="ContentsManager will become an alias",
+            category=DeprecationWarning,
+        )
+        yield
 
 
 def notebooks_only(dir_model):

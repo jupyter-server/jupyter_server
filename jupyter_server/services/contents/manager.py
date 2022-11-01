@@ -641,6 +641,83 @@ class AsyncContentsManager(LoggingConfigurable):
     async def delete_checkpoint(self, checkpoint_id, path):
         return await self.checkpoints.delete_checkpoint(checkpoint_id, path)
 
+    def info_string(self):
+        return "Serving contents"
+
+    def get_kernel_path(self, path, model=None):
+        """Return the API path for the kernel
+
+        KernelManagers can turn this value into a filesystem path,
+        or ignore it altogether.
+
+        The default value here will start kernels in the directory of the
+        notebook server. FileContentsManager overrides this to use the
+        directory containing the notebook.
+        """
+        return ""
+
+    def validate_notebook_model(self, model, validation_error=None):
+        """Add failed-validation message to model"""
+        try:
+            # If we're given a validation_error dictionary, extract the exception
+            # from it and raise the exception, else call nbformat's validate method
+            # to determine if the notebook is valid.  This 'else' condition may
+            # pertain to server extension not using the server's notebook read/write
+            # functions.
+            if validation_error is not None:
+                e = validation_error.get("ValidationError")
+                if isinstance(e, ValidationError):
+                    raise e
+            else:
+                validate_nb(model["content"])
+        except ValidationError as e:
+            model["message"] = "Notebook validation failed: {}:\n{}".format(
+                str(e),
+                json.dumps(e.instance, indent=1, default=lambda obj: "<UNKNOWN>"),
+            )
+        return model
+
+    def log_info(self):
+        self.log.info(self.info_string())
+
+    def check_and_sign(self, nb, path=""):
+        """Check for trusted cells, and sign the notebook.
+
+        Called as a part of saving notebooks.
+
+        Parameters
+        ----------
+        nb : dict
+            The notebook dict
+        path : string
+            The notebook's path (for logging)
+        """
+        if self.notary.check_cells(nb):
+            self.notary.sign(nb)
+        else:
+            self.log.warning("Notebook %s is not trusted", path)
+
+    def mark_trusted_cells(self, nb, path=""):
+        """Mark cells as trusted if the notebook signature matches.
+
+        Called as a part of loading notebooks.
+
+        Parameters
+        ----------
+        nb : dict
+            The notebook object (in current nbformat)
+        path : string
+            The notebook's path (for logging)
+        """
+        trusted = self.notary.check_signature(nb)
+        if not trusted:
+            self.log.warning("Notebook %s is not trusted", path)
+        self.notary.mark_cells(nb, trusted)
+
+    def should_list(self, name):
+        """Should this file/directory name be displayed in a listing?"""
+        return not any(fnmatch(name, glob) for glob in self.hide_globs)
+
 
 class ContentsManager(AsyncContentsManager):
     """Base class for serving files and directories asynchronously."""
@@ -796,21 +873,6 @@ class ContentsManager(AsyncContentsManager):
         model = self.get(new_path, content=False)
         return model
 
-    def info_string(self):
-        return "Serving contents"
-
-    def get_kernel_path(self, path, model=None):
-        """Return the API path for the kernel
-
-        KernelManagers can turn this value into a filesystem path,
-        or ignore it altogether.
-
-        The default value here will start kernels in the directory of the
-        notebook server. FileContentsManager overrides this to use the
-        directory containing the notebook.
-        """
-        return ""
-
     def increment_filename(self, filename, path="", insert=""):
         """Increment a filename until it is unique.
 
@@ -847,27 +909,6 @@ class ContentsManager(AsyncContentsManager):
             if not self.exists(f"{path}/{name}"):
                 break
         return name
-
-    def validate_notebook_model(self, model, validation_error=None):
-        """Add failed-validation message to model"""
-        try:
-            # If we're given a validation_error dictionary, extract the exception
-            # from it and raise the exception, else call nbformat's validate method
-            # to determine if the notebook is valid.  This 'else' condition may
-            # pertain to server extension not using the server's notebook read/write
-            # functions.
-            if validation_error is not None:
-                e = validation_error.get("ValidationError")
-                if isinstance(e, ValidationError):
-                    raise e
-            else:
-                validate_nb(model["content"])
-        except ValidationError as e:
-            model["message"] = "Notebook validation failed: {}:\n{}".format(
-                str(e),
-                json.dumps(e.instance, indent=1, default=lambda obj: "<UNKNOWN>"),
-            )
-        return model
 
     def new_untitled(self, path="", type="", ext=""):
         """Create a new untitled file or directory in path
@@ -980,9 +1021,6 @@ class ContentsManager(AsyncContentsManager):
         self.emit(data={"action": "copy", "path": to_path, "source_path": from_path})
         return model
 
-    def log_info(self):
-        self.log.info(self.info_string())
-
     def trust_notebook(self, path):
         """Explicitly trust a notebook
 
@@ -996,44 +1034,6 @@ class ContentsManager(AsyncContentsManager):
         self.log.warning("Trusting notebook %s", path)
         self.notary.mark_cells(nb, True)
         self.check_and_sign(nb, path)
-
-    def check_and_sign(self, nb, path=""):
-        """Check for trusted cells, and sign the notebook.
-
-        Called as a part of saving notebooks.
-
-        Parameters
-        ----------
-        nb : dict
-            The notebook dict
-        path : string
-            The notebook's path (for logging)
-        """
-        if self.notary.check_cells(nb):
-            self.notary.sign(nb)
-        else:
-            self.log.warning("Notebook %s is not trusted", path)
-
-    def mark_trusted_cells(self, nb, path=""):
-        """Mark cells as trusted if the notebook signature matches.
-
-        Called as a part of loading notebooks.
-
-        Parameters
-        ----------
-        nb : dict
-            The notebook object (in current nbformat)
-        path : string
-            The notebook's path (for logging)
-        """
-        trusted = self.notary.check_signature(nb)
-        if not trusted:
-            self.log.warning("Notebook %s is not trusted", path)
-        self.notary.mark_cells(nb, trusted)
-
-    def should_list(self, name):
-        """Should this file/directory name be displayed in a listing?"""
-        return not any(fnmatch(name, glob) for glob in self.hide_globs)
 
     # Part 3: Checkpoints API
     def create_checkpoint(self, path):

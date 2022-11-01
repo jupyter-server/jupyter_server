@@ -1,10 +1,8 @@
 import asyncio
 import json
-import os
 import time
 import warnings
 
-import jupyter_client
 import pytest
 import tornado
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME

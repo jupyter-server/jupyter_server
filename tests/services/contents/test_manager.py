@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import warnings
 from itertools import combinations
 from typing import Dict, Optional, Tuple
 from unittest.mock import patch
@@ -18,6 +19,17 @@ from jupyter_server.services.contents.filemanager import (
 from jupyter_server.utils import ensure_async
 
 from ...utils import expected_http_error
+
+
+@pytest.fixture(autouse=True)
+def suppress_deprecation_warnings():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="ContentsManager will become an alias",
+            category=DeprecationWarning,
+        )
+        yield
 
 
 @pytest.fixture(

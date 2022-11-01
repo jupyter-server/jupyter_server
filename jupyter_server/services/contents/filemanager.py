@@ -519,7 +519,7 @@ class AsyncFileContentsManager(AsyncFileManagerMixin, AsyncContentsManager):
         return _i18n("Serving notebooks from local directory: %s") % self.root_dir
 
 
-class FileContentsManager(AsyncFileContentsManager, FileManagerMixin, ContentsManager):
+class FileContentsManager(FileManagerMixin, AsyncFileContentsManager, ContentsManager):
     @default("checkpoints_class")
     def _checkpoints_class_default(self):
         return FileCheckpoints
