@@ -15,20 +15,6 @@ CULL_INTERVAL = 1
 @pytest.mark.parametrize(
     "jp_server_config",
     [
-        # Test the synchronous case
-        Config(
-            {
-                "ServerApp": {
-                    "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager",
-                    "MappingKernelManager": {
-                        "cull_idle_timeout": CULL_TIMEOUT,
-                        "cull_interval": CULL_INTERVAL,
-                        "cull_connected": False,
-                    },
-                }
-            }
-        ),
-        # Test the async case
         Config(
             {
                 "ServerApp": {

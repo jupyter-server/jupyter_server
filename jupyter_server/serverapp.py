@@ -57,8 +57,8 @@ from tornado.log import LogFormatter, access_log, app_log, gen_log
 if not sys.platform.startswith("win"):
     from tornado.netutil import bind_unix_socket
 
-from jupyter_client import KernelManager
 from jupyter_client.kernelspec import KernelSpecManager
+from jupyter_client.manager import AsyncKernelManager, KernelManager
 from jupyter_client.session import Session
 from jupyter_core.application import JupyterApp, base_aliases, base_flags
 from jupyter_core.paths import jupyter_runtime_dir
@@ -123,7 +123,10 @@ from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
     FileContentsManager,
 )
-from jupyter_server.services.contents.largefilemanager import LargeFileManager
+from jupyter_server.services.contents.largefilemanager import (
+    AsyncLargeFileManager,
+    LargeFileManager,
+)
 from jupyter_server.services.contents.manager import (
     AsyncContentsManager,
     ContentsManager,
@@ -760,6 +763,7 @@ class ServerApp(JupyterApp):
 
     classes = [
         KernelManager,
+        AsyncKernelManager,
         Session,
         MappingKernelManager,
         KernelSpecManager,
@@ -1435,40 +1439,17 @@ class ServerApp(JupyterApp):
         help="""If True, display controls to shut down the Jupyter server, such as menu items or buttons.""",
     )
 
-    # REMOVE in VERSION 2.0
-    # Temporarily allow content managers to inherit from the 'notebook'
-    # package. We will deprecate this in the next major release.
     contents_manager_class = TypeFromClasses(
-        default_value=LargeFileManager,
+        default_value=AsyncLargeFileManager,
         klasses=[
-            "jupyter_server.services.contents.manager.ContentsManager",
-            "notebook.services.contents.manager.ContentsManager",
+            "jupyter_server.services.contents.manager.AsyncContentsManager",
         ],
         config=True,
         help=_i18n("The content manager class to use."),
     )
 
-    # Throws a deprecation warning to notebook based contents managers.
-    @observe("contents_manager_class")
-    def _observe_contents_manager_class(self, change):
-        new = change["new"]
-        # If 'new' is a class, get a string representing the import
-        # module path.
-        if inspect.isclass(new):
-            new = new.__module__
-
-        if new.startswith("notebook"):
-            self.log.warning(
-                "The specified 'contents_manager_class' class inherits a manager from the "
-                "'notebook' package. This is not guaranteed to work in future "
-                "releases of Jupyter Server. Instead, consider switching the "
-                "manager to inherit from the 'jupyter_server' managers. "
-                "Jupyter Server will temporarily allow 'notebook' managers "
-                "until its next major release (2.x)."
-            )
-
     kernel_manager_class = Type(
-        klass=MappingKernelManager,
+        klass=AsyncMappingKernelManager,
         config=True,
         help=_i18n("The kernel manager class to use."),
     )

@@ -180,11 +180,12 @@ class SessionManager(LoggingConfigurable):
                 raise TraitError("The given file is not an SQLite database file.")
         return value
 
-    kernel_manager = Instance("jupyter_server.services.kernels.kernelmanager.MappingKernelManager")
+    kernel_manager = Instance(
+        "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
+    )
     contents_manager = InstanceFromClasses(
         [
-            "jupyter_server.services.contents.manager.ContentsManager",
-            "notebook.services.contents.manager.ContentsManager",
+            "jupyter_server.services.contents.manager.AsyncContentsManager",
         ]
     )
 

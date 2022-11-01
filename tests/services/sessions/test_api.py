@@ -46,11 +46,6 @@ class NewPortsMappingKernelManager(AsyncMappingKernelManager):
 configs: list = [
     {
         "ServerApp": {
-            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager"
-        }
-    },
-    {
-        "ServerApp": {
             "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
         }
     },

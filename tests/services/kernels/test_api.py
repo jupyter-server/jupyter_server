@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import time
+import warnings
 
 import jupyter_client
 import pytest
@@ -14,6 +15,17 @@ from jupyter_server.utils import url_path_join
 from ...utils import expected_http_error
 
 TEST_TIMEOUT = 60
+
+
+@pytest.fixture(autouse=True)
+def suppress_deprecation_warnings():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="MappingKernelManager will become an alias",
+            category=DeprecationWarning,
+        )
+        yield
 
 
 @pytest.fixture
@@ -38,29 +50,21 @@ def pending_kernel_is_ready(jp_serverapp):
 configs: list = [
     {
         "ServerApp": {
-            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager"
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
         }
     },
     {
         "ServerApp": {
-            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
-        }
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager"
+        },
     },
-]
-
-
-# Pending kernels was released in Jupyter Client 7.1
-# It is currently broken on Windows (Jan 2022). When fixed, we can remove the Windows check.
-# See https://github.com/jupyter-server/jupyter_server/issues/672
-if os.name != "nt" and jupyter_client._version.version_info >= (7, 1):
-    # Add a pending kernels condition
-    c = {
+    {
         "ServerApp": {
             "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
         },
         "AsyncMappingKernelManager": {"use_pending_kernels": True},
-    }
-    configs.append(c)
+    },
+]
 
 
 @pytest.fixture(params=configs)

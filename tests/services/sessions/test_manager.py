@@ -6,7 +6,7 @@ from traitlets import TraitError
 
 from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.services.contents.manager import ContentsManager
-from jupyter_server.services.kernels.kernelmanager import MappingKernelManager
+from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
 from jupyter_server.services.sessions.sessionmanager import (
     KernelSessionRecord,
     KernelSessionRecordConflict,
@@ -27,7 +27,7 @@ dummy_date = utcnow()
 dummy_date_s = isoformat(dummy_date)
 
 
-class MockMKM(MappingKernelManager):
+class MockMKM(AsyncMappingKernelManager):
     """MappingKernelManager interface that doesn't start kernels, for testing"""
 
     def __init__(self, *args, **kwargs):

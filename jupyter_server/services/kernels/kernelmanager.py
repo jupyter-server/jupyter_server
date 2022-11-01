@@ -7,6 +7,7 @@
 # Distributed under the terms of the Modified BSD License.
 import asyncio
 import os
+import warnings
 from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import partial
@@ -39,7 +40,7 @@ from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
 from jupyter_server.utils import ensure_async, to_os_path
 
 
-class MappingKernelManager(MultiKernelManager):
+class AsyncMappingKernelManager(AsyncMultiKernelManager):
     """A KernelManager that handles
     - File mapping
     - HTTP error handling
@@ -48,7 +49,7 @@ class MappingKernelManager(MultiKernelManager):
 
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
-        return "jupyter_client.ioloop.IOLoopKernelManager"
+        return "jupyter_client.ioloop.AsyncIOLoopKernelManager"
 
     kernel_argv = List(Unicode())
 
@@ -148,7 +149,7 @@ class MappingKernelManager(MultiKernelManager):
     )
 
     def __init__(self, **kwargs):
-        self.pinned_superclass = MultiKernelManager
+        self.pinned_superclass = AsyncMultiKernelManager
         self._pending_kernel_tasks = {}
         self.pinned_superclass.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
@@ -651,14 +652,19 @@ class MappingKernelManager(MultiKernelManager):
                 await ensure_async(self.shutdown_kernel(kernel_id))
 
 
-# AsyncMappingKernelManager inherits as much as possible from MappingKernelManager,
+# MappingKernelManager inherits as much as possible from AsyncMappingKernelManager,
 # overriding only what is different.
-class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
+class MappingKernelManager(AsyncMappingKernelManager, MultiKernelManager):
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
-        return "jupyter_client.ioloop.AsyncIOLoopKernelManager"
+        return "jupyter_client.ioloop.IOLoopKernelManager"
 
     def __init__(self, **kwargs):
+        warnings.warn(
+            "MappingKernelManager will become an alias for AsyncMappingKernelManager in Jupyter Server 3.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.pinned_superclass = MultiKernelManager
         self._pending_kernel_tasks = {}
         self.pinned_superclass.__init__(self, **kwargs)
