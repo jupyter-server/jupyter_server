@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 
 from jupyter_server.services.contents.checkpoints import AsyncCheckpoints
@@ -6,6 +8,22 @@ from jupyter_server.services.contents.filecheckpoints import (
     GenericFileCheckpoints,
 )
 from jupyter_server.services.contents.manager import AsyncContentsManager
+
+
+@pytest.fixture(autouse=True)
+def suppress_deprecation_warnings():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="ContentsManager will become an alias",
+            category=DeprecationWarning,
+        )
+        warnings.filterwarnings(
+            "ignore",
+            message="Checkpoints will become an alias",
+            category=DeprecationWarning,
+        )
+        yield
 
 
 @pytest.fixture(params=[AsyncGenericFileCheckpoints, GenericFileCheckpoints])

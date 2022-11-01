@@ -229,13 +229,6 @@ class FileManagerMixinBase(Configurable):
             else:
                 raise
 
-    def _copy(self, src, dest):
-        """copy src to dest
-
-        like shutil.copy2, but log errors in copystat
-        """
-        copy2_safe(src, dest, log=self.log)
-
     def _get_os_path(self, path):
         """Given an API path, return its file system path.
 
@@ -299,6 +292,13 @@ class FileManagerMixin(FileManagerMixinBase):
                 version=nbformat.NO_CONVERT,
                 capture_validation_error=capture_validation_error,
             )
+
+    def _copy(self, src, dest):
+        """copy src to dest
+
+        like shutil.copy2, but log errors in copystat
+        """
+        copy2_safe(src, dest, log=self.log)
 
     def _read_file(self, os_path, format):
         """Read a non-notebook file.

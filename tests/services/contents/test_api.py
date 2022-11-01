@@ -23,6 +23,11 @@ def suppress_deprecation_warnings():
             message="ContentsManager will become an alias",
             category=DeprecationWarning,
         )
+        warnings.filterwarnings(
+            "ignore",
+            message="Checkpoints will become an alias",
+            category=DeprecationWarning,
+        )
         yield
 
 
