@@ -2,13 +2,13 @@ import pytest
 
 from jupyter_server.services.contents.checkpoints import AsyncCheckpoints
 from jupyter_server.services.contents.filecheckpoints import (
+    AsyncFileCheckpoints,
     AsyncGenericFileCheckpoints,
-    GenericFileCheckpoints,
 )
 from jupyter_server.services.contents.manager import AsyncContentsManager
 
 
-@pytest.fixture(params=[AsyncGenericFileCheckpoints, GenericFileCheckpoints])
+@pytest.fixture(params=[AsyncGenericFileCheckpoints, AsyncFileCheckpoints])
 def jp_server_config(request):
     return {"FileContentsManager": {"checkpoints_class": request.param}}
 
