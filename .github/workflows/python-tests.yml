@@ -18,14 +18,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.7", "3.10"]
+        python-version: ["3.8", "3.11"]
         include:
           - os: windows-latest
             python-version: "3.9"
           - os: ubuntu-latest
             python-version: "pypy-3.8"
           - os: macos-latest
-            python-version: "3.8"
+            python-version: "3.10"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -33,14 +33,31 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Run the tests
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: hatch run cov:test || hatch run cov:test --lf
+        run: hatch run cov:test -W default || hatch run cov:test -W default --lf
       - name: Run the tests on pypy and windows
         if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(matrix.os, 'windows') }}
-        run: hatch run test:test || hatch run test:test --lf
+        run: hatch run test:test  -W default || hatch run test:test  -W default --lf
       - name: Coverage
         run: |
           pip install codecov
           codecov
+
+  client8:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.10"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - run: |
+          pip install -U pre jupyter_client
+          hatch run test:test || hatch run test:test  --lf
 
   pre-commit:
     name: pre-commit
@@ -94,7 +111,7 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
-          python_version: "3.7"
+          python_version: "3.8"
       - name: Install miniumum versions
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
       - name: Run the unit tests
@@ -110,11 +127,11 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
-          python_version: "3.11.0-beta - 3.11.0"
+          python_version: "3.11"
       - name: Install the Python dependencies
         run: |
           pip install --no-deps .
-          pip install --pre --upgrade "jupyter_server[test]"
+          pip install --pre --upgrade ".[test]"
       - name: List installed packages
         run: |
           pip freeze

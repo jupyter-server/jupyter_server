@@ -19,7 +19,7 @@ from jupyter_client.jsonutil import extract_dates
 from jupyter_client.session import Session
 from tornado import ioloop, web
 from tornado.iostream import IOStream
-from tornado.websocket import WebSocketHandler
+from tornado.websocket import WebSocketClosedError, WebSocketHandler
 
 from .handlers import JupyterHandler
 
@@ -302,7 +302,10 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             except Exception:
                 self.log.critical("Malformed message: %r" % msg_list, exc_info=True)
             else:
-                self.write_message(msg, binary=isinstance(msg, bytes))
+                try:
+                    self.write_message(msg, binary=isinstance(msg, bytes))
+                except WebSocketClosedError as e:
+                    self.log.warning(str(e))
 
 
 class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):
