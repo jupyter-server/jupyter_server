@@ -57,7 +57,7 @@ if not sys.platform.startswith("win"):
     from tornado.netutil import bind_unix_socket
 
 from jupyter_client.kernelspec import KernelSpecManager
-from jupyter_client.manager import AsyncKernelManager, KernelManager
+from jupyter_client.manager import KernelManager
 from jupyter_client.session import Session
 from jupyter_core.application import JupyterApp, base_aliases, base_flags
 from jupyter_core.paths import jupyter_runtime_dir

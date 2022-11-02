@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import platform
+import warnings
 
 import jupyter_client
 import pytest
@@ -10,6 +11,17 @@ from traitlets.config import Config
 
 CULL_TIMEOUT = 30 if platform.python_implementation() == "PyPy" else 5
 CULL_INTERVAL = 1
+
+
+@pytest.fixture(autouse=True)
+def suppress_deprecation_warnings():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="The synchronous MappingKernelManager",
+            category=DeprecationWarning,
+        )
+        yield
 
 
 @pytest.mark.parametrize(
