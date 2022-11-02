@@ -36,8 +36,9 @@ except ImportError:
 from jinja2 import Environment, FileSystemLoader
 from jupyter_core.paths import secure_write
 
+from jupyter_server.services.kernels.handlers import ZMQChannelsHandler
 from jupyter_server.transutils import _i18n, trans
-from jupyter_server.utils import pathname2url, run_sync_in_loop, urljoin
+from jupyter_server.utils import ensure_async, pathname2url, urljoin
 
 # the minimum viable tornado version: needs to be kept in sync with setup.py
 MIN_TORNADO = (6, 1, 0)
@@ -2358,7 +2359,11 @@ class ServerApp(JupyterApp):
             max_buffer_size=self.max_buffer_size,
         )
 
-        success = self._bind_http_server()
+        # binding sockets must be called from inside an event loop
+        self.io_loop.add_callback(self._bind_http_server)
+
+    def _bind_http_server(self):
+        success = self._bind_http_server_unix() if self.sock else self._bind_http_server_tcp()
         if not success:
             self.log.critical(
                 _i18n(
@@ -2367,9 +2372,6 @@ class ServerApp(JupyterApp):
                 )
             )
             self.exit(1)
-
-    def _bind_http_server(self):
-        return self._bind_http_server_unix() if self.sock else self._bind_http_server_tcp()
 
     def _bind_http_server_unix(self):
         if unix_socket_in_use(self.sock):
@@ -2499,6 +2501,10 @@ class ServerApp(JupyterApp):
             self._preferred_dir_validation(self.preferred_dir, self.root_dir)
         if self._dispatching:
             return
+        # initialize io loop as early as possible,
+        # so configurables, extensions may reference the event loop
+        self.init_ioloop()
+
         # Then, use extensions' config loading mechanism to
         # update config. ServerApp config takes precedence.
         if find_extensions:
@@ -2524,7 +2530,6 @@ class ServerApp(JupyterApp):
         self.init_components()
         self.init_webapp()
         self.init_signal()
-        self.init_ioloop()
         self.load_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
@@ -2544,7 +2549,7 @@ class ServerApp(JupyterApp):
             "Shutting down %d kernel", "Shutting down %d kernels", n_kernels
         )
         self.log.info(kernel_msg % n_kernels)
-        await run_sync_in_loop(self.kernel_manager.shutdown_all())
+        await ensure_async(self.kernel_manager.shutdown_all())
 
     async def cleanup_extensions(self):
         """Call shutdown hooks in all extensions."""
@@ -2555,7 +2560,7 @@ class ServerApp(JupyterApp):
             "Shutting down %d extension", "Shutting down %d extensions", n_extensions
         )
         self.log.info(extension_msg % n_extensions)
-        await run_sync_in_loop(self.extension_manager.stop_all_extensions())
+        await ensure_async(self.extension_manager.stop_all_extensions())
 
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
@@ -2829,8 +2834,14 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
+        await ZMQChannelsHandler.close_all()
+        if getattr(self, "kernel_manager", None):
+            self.kernel_manager.__del__()
         if getattr(self, "session_manager", None):
             self.session_manager.close()
+        if hasattr(self, "http_server"):
+            # Stop a server if its set.
+            self.http_server.stop()
 
     def start_ioloop(self):
         """Start the IO Loop."""
@@ -2864,7 +2875,7 @@ class ServerApp(JupyterApp):
 
     def stop(self, from_signal=False):
         """Cleanup resources and stop the server."""
-        if hasattr(self, "_http_server"):
+        if hasattr(self, "http_server"):
             # Stop a server if its set.
             self.http_server.stop()
         if getattr(self, "io_loop", None):

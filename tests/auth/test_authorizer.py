@@ -1,5 +1,6 @@
 """Tests for authorization"""
 import json
+import os
 
 import pytest
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
@@ -170,12 +171,12 @@ async def test_authorized_requests(
     km = jp_serverapp.kernel_manager
 
     if "session" in url:
-        request.addfinalizer(lambda: io_loop.run_sync(km.shutdown_all))
         session_model = await jp_serverapp.session_manager.create_session(path="foo")
         session_id = session_model["id"]
 
     if "kernel" in url:
-        request.addfinalizer(lambda: io_loop.run_sync(km.shutdown_all))
+        if os.name == "nt":
+            pytest.skip("Test hangs on Windows")
         kernel_id = await km.start_kernel()
         kernel = km.get_kernel(kernel_id)
         # kernels take a moment to be ready
@@ -187,7 +188,6 @@ async def test_authorized_requests(
 
     if "terminal" in url:
         term_manager = jp_serverapp.web_app.settings["terminal_manager"]
-        request.addfinalizer(lambda: io_loop.run_sync(term_manager.terminate_all))
         term_model = term_manager.create()
         term_name = term_model["name"]
 

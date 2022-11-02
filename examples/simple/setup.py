@@ -37,13 +37,13 @@ setup_args = dict(
     version=VERSION,
     description="Jupyter Server Example",
     long_description=open("README.md").read(),
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=[
         "jupyter_server",
         "jinja2",
     ],
     extras_require={
-        "test": ["pytest"],
+        "test": ["pytest", "pytest-asyncio"],
     },
     include_package_data=True,
     cmdclass=cmdclass,
