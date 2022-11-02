@@ -122,7 +122,7 @@ from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
     FileContentsManager,
 )
-from jupyter_server.services.contents.largefilemanager import AsyncLargeFileManager
+from jupyter_server.services.contents.largefilemanager import LargeFileManager
 from jupyter_server.services.contents.manager import (
     AsyncContentsManager,
     ContentsManager,
@@ -1434,7 +1434,7 @@ class ServerApp(JupyterApp):
     )
 
     contents_manager_class = Type(
-        default_value=AsyncLargeFileManager,
+        default_value=LargeFileManager,
         klass=ContentsManager,
         config=True,
         help=_i18n("The content manager class to use."),
