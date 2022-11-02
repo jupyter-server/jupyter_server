@@ -180,7 +180,7 @@ class MappingKernelManager(MultiKernelManager):
         self.log.warning("Kernel %s died, removing from map.", kernel_id)
         self.remove_kernel(kernel_id)
 
-    def cwd_for_path(self, path):
+    def cwd_for_path(self, path, **kwargs):
         """Turn API path into absolute OS path."""
         os_path = to_os_path(path, self.root_dir)
         # in the case of documents and kernels not being on the same filesystem,
@@ -212,7 +212,7 @@ class MappingKernelManager(MultiKernelManager):
         """
         if kernel_id is None or kernel_id not in self:
             if path is not None:
-                kwargs["cwd"] = self.cwd_for_path(path)
+                kwargs["cwd"] = self.cwd_for_path(path, env=kwargs.get("env", {}))
             if kernel_id is not None:
                 kwargs["kernel_id"] = kernel_id
             kernel_id = await ensure_async(self.pinned_superclass.start_kernel(self, **kwargs))
