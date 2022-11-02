@@ -6,6 +6,7 @@ import errno
 import gettext
 import hashlib
 import hmac
+import inspect
 import ipaddress
 import json
 import logging
@@ -132,6 +133,7 @@ from jupyter_server.services.kernels.kernelmanager import (
     MappingKernelManager,
 )
 from jupyter_server.services.sessions.sessionmanager import SessionManager
+from jupyter_server.traittypes import TypeFromClasses
 from jupyter_server.utils import (
     check_pid,
     fetch,
@@ -1433,12 +1435,36 @@ class ServerApp(JupyterApp):
         help="""If True, display controls to shut down the Jupyter server, such as menu items or buttons.""",
     )
 
-    contents_manager_class = Type(
+    # Temporarily allow content managers to inherit from the 'notebook'
+    # package. We will deprecate this in the next major release.
+    contents_manager_class = TypeFromClasses(
         default_value=AsyncLargeFileManager,
-        klass=ContentsManager,
+        klasses=[
+            "jupyter_server.services.contents.manager.ContentsManager",
+            "notebook.services.contents.manager.ContentsManager",
+        ],
         config=True,
         help=_i18n("The content manager class to use."),
     )
+
+    # Throws a deprecation warning to notebook based contents managers.
+    @observe("contents_manager_class")
+    def _observe_contents_manager_class(self, change):
+        new = change["new"]
+        # If 'new' is a class, get a string representing the import
+        # module path.
+        if inspect.isclass(new):
+            new = new.__module__
+
+        if new.startswith("notebook"):
+            self.log.warning(
+                "The specified 'contents_manager_class' class inherits a manager from the "
+                "'notebook' package. This is not guaranteed to work in future "
+                "releases of Jupyter Server. Instead, consider switching the "
+                "manager to inherit from the 'jupyter_server' managers. "
+                "Jupyter Server will temporarily allow 'notebook' managers "
+                "until its next major release (3.x)."
+            )
 
     kernel_manager_class = Type(
         klass=MappingKernelManager,
