@@ -755,7 +755,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         """Save the file model and return the model with no content."""
         path = path.strip("/")
 
-        self.run_pre_save_hook(model=model, path=path)
+        self.run_pre_save_hooks(model=model, path=path)
 
         if "type" not in model:
             raise web.HTTPError(400, "No file type provided")

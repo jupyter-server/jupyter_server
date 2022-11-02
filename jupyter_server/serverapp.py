@@ -6,7 +6,6 @@ import errno
 import gettext
 import hashlib
 import hmac
-import inspect
 import ipaddress
 import json
 import logging
@@ -123,10 +122,7 @@ from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
     FileContentsManager,
 )
-from jupyter_server.services.contents.largefilemanager import (
-    AsyncLargeFileManager,
-    LargeFileManager,
-)
+from jupyter_server.services.contents.largefilemanager import AsyncLargeFileManager
 from jupyter_server.services.contents.manager import (
     AsyncContentsManager,
     ContentsManager,
@@ -136,7 +132,6 @@ from jupyter_server.services.kernels.kernelmanager import (
     MappingKernelManager,
 )
 from jupyter_server.services.sessions.sessionmanager import SessionManager
-from jupyter_server.traittypes import TypeFromClasses
 from jupyter_server.utils import (
     check_pid,
     fetch,
