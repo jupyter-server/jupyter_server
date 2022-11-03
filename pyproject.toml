@@ -30,8 +30,8 @@ dependencies = [
     "anyio>=3.1.0,<4",
     "argon2-cffi",
     "jinja2",
-    "jupyter_client>=6.1.12",
-    "jupyter_core>=4.7.0",
+    "jupyter_client>=7.2",
+    "jupyter_core>=4.9.2",
     "jupyter_server_terminals",
     "nbconvert>=6.4.4",
     "nbformat>=5.2.0",
@@ -136,12 +136,12 @@ testpaths = [
 ]
 timeout = 100
 # Restore this setting to debug failures
-# timeout_method = "thread"
+timeout_method = "thread"
 filterwarnings = [
   "error",
   "ignore:Passing a schema to Validator.iter_errors:DeprecationWarning",
   "ignore:run_pre_save_hook is deprecated:DeprecationWarning",
-  "always:unclosed <socket.socket:ResourceWarning",
+
   "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
 ]
 
