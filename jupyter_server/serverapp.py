@@ -6,7 +6,6 @@ import errno
 import gettext
 import hashlib
 import hmac
-import inspect
 import ipaddress
 import json
 import logging
@@ -57,8 +56,8 @@ from tornado.log import LogFormatter, access_log, app_log, gen_log
 if not sys.platform.startswith("win"):
     from tornado.netutil import bind_unix_socket
 
-from jupyter_client import KernelManager
 from jupyter_client.kernelspec import KernelSpecManager
+from jupyter_client.manager import KernelManager
 from jupyter_client.session import Session
 from jupyter_core.application import JupyterApp, base_aliases, base_flags
 from jupyter_core.paths import jupyter_runtime_dir
@@ -123,7 +122,7 @@ from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
     FileContentsManager,
 )
-from jupyter_server.services.contents.largefilemanager import LargeFileManager
+from jupyter_server.services.contents.largefilemanager import AsyncLargeFileManager
 from jupyter_server.services.contents.manager import (
     AsyncContentsManager,
     ContentsManager,
@@ -133,7 +132,6 @@ from jupyter_server.services.kernels.kernelmanager import (
     MappingKernelManager,
 )
 from jupyter_server.services.sessions.sessionmanager import SessionManager
-from jupyter_server.traittypes import TypeFromClasses
 from jupyter_server.utils import (
     check_pid,
     fetch,
@@ -1164,7 +1162,7 @@ class ServerApp(JupyterApp):
         config=True,
         help="""Disable cross-site-request-forgery protection
 
-        Jupyter notebook 4.3.1 introduces protection from cross-site request forgeries,
+        Jupyter server includes protection from cross-site request forgeries,
         requiring API requests to either:
 
         - originate from pages served by this server (validated with XSRF cookie and token), or
@@ -1435,37 +1433,12 @@ class ServerApp(JupyterApp):
         help="""If True, display controls to shut down the Jupyter server, such as menu items or buttons.""",
     )
 
-    # REMOVE in VERSION 2.0
-    # Temporarily allow content managers to inherit from the 'notebook'
-    # package. We will deprecate this in the next major release.
-    contents_manager_class = TypeFromClasses(
-        default_value=LargeFileManager,
-        klasses=[
-            "jupyter_server.services.contents.manager.ContentsManager",
-            "notebook.services.contents.manager.ContentsManager",
-        ],
+    contents_manager_class = Type(
+        default_value=AsyncLargeFileManager,
+        klass=ContentsManager,
         config=True,
         help=_i18n("The content manager class to use."),
     )
-
-    # Throws a deprecation warning to notebook based contents managers.
-    @observe("contents_manager_class")
-    def _observe_contents_manager_class(self, change):
-        new = change["new"]
-        # If 'new' is a class, get a string representing the import
-        # module path.
-        if inspect.isclass(new):
-            new = new.__module__
-
-        if new.startswith("notebook"):
-            self.log.warning(
-                "The specified 'contents_manager_class' class inherits a manager from the "
-                "'notebook' package. This is not guaranteed to work in future "
-                "releases of Jupyter Server. Instead, consider switching the "
-                "manager to inherit from the 'jupyter_server' managers. "
-                "Jupyter Server will temporarily allow 'notebook' managers "
-                "until its next major release (2.x)."
-            )
 
     kernel_manager_class = Type(
         klass=MappingKernelManager,
@@ -1864,6 +1837,20 @@ class ServerApp(JupyterApp):
         # If gateway server is configured, replace appropriate managers to perform redirection.  To make
         # this determination, instantiate the GatewayClient config singleton.
         self.gateway_config = GatewayClient.instance(parent=self)
+
+        if not issubclass(self.kernel_manager_class, AsyncMappingKernelManager):
+            warnings.warn(
+                "The synchronous MappingKernelManager class is deprecated and will not be supported in Jupyter Server 3.0",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        if not issubclass(self.contents_manager_class, AsyncContentsManager):
+            warnings.warn(
+                "The synchronous ContentsManager classes are deprecated and will not be supported in Jupyter Server 3.0",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
         self.kernel_spec_manager = self.kernel_spec_manager_class(
             parent=self,

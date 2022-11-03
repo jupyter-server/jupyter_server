@@ -26,8 +26,8 @@ from traitlets.config import Config, re
 from jupyter_server.auth import Authorizer
 from jupyter_server.extension import serverextension
 from jupyter_server.serverapp import JUPYTER_SERVICE_HANDLERS, ServerApp
-from jupyter_server.services.contents.filemanager import FileContentsManager
-from jupyter_server.services.contents.largefilemanager import LargeFileManager
+from jupyter_server.services.contents.filemanager import AsyncFileContentsManager
+from jupyter_server.services.contents.largefilemanager import AsyncLargeFileManager
 from jupyter_server.utils import url_path_join
 
 # List of dependencies needed for this plugin.
@@ -488,14 +488,14 @@ def jp_kernelspecs(jp_data_dir):
 
 @pytest.fixture(params=[True, False])
 def jp_contents_manager(request, tmp_path):
-    """Returns a FileContentsManager instance based on the use_atomic_writing parameter value."""
-    return FileContentsManager(root_dir=str(tmp_path), use_atomic_writing=request.param)
+    """Returns an AsyncFileContentsManager instance based on the use_atomic_writing parameter value."""
+    return AsyncFileContentsManager(root_dir=str(tmp_path), use_atomic_writing=request.param)
 
 
 @pytest.fixture
 def jp_large_contents_manager(tmp_path):
-    """Returns a LargeFileManager instance."""
-    return LargeFileManager(root_dir=str(tmp_path))
+    """Returns an AsyncLargeFileManager instance."""
+    return AsyncLargeFileManager(root_dir=str(tmp_path))
 
 
 @pytest.fixture

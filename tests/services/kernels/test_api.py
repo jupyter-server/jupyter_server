@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import time
+import warnings
 
 import jupyter_client
 import pytest
@@ -14,6 +15,17 @@ from jupyter_server.utils import url_path_join
 from ...utils import expected_http_error
 
 TEST_TIMEOUT = 60
+
+
+@pytest.fixture(autouse=True)
+def suppress_deprecation_warnings():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="The synchronous MappingKernelManager",
+            category=DeprecationWarning,
+        )
+        yield
 
 
 @pytest.fixture
