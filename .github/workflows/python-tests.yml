@@ -18,34 +18,46 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.7", "3.10"]
+        python-version: ["3.8", "3.11"]
         include:
           - os: windows-latest
             python-version: "3.9"
           - os: ubuntu-latest
             python-version: "pypy-3.8"
           - os: macos-latest
-            python-version: "3.8"
+            python-version: "3.10"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      - name: Install the Python dependencies
-        run: |
-          pip install -e ".[test,dev]" codecov
       - name: Run the tests
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: |
-          args="-vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered"
-          python -m pytest $args  --cov-fail-under 70 || python -m pytest $args --lf
+        run: hatch run cov:test -W default || hatch run cov:test -W default --lf
       - name: Run the tests on pypy and windows
         if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(matrix.os, 'windows') }}
-        run: |
-          python -m pytest -vv || python -m pytest -vv --lf
+        run: hatch run test:test  -W default || hatch run test:test  -W default --lf
       - name: Coverage
         run: |
+          pip install codecov
           codecov
+
+  client8:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.10"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - run: |
+          pip install -U pre jupyter_client
+          hatch run test:test || hatch run test:test  --lf
 
   pre-commit:
     name: pre-commit
@@ -67,14 +79,21 @@ jobs:
           echo "or after-the-fact on already committed files with"
           echo "    pre-commit run --all-files --hook-stage=manual"
 
-  test_docs_and_examples:
-    name: Test Docs and Examples
+  test_docs:
+    name: Test Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - run: hatch run docs:build
+
+  test_examples:
+    name: Test Examples
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Base Setup
-        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Install the Python dependencies for the examples
         run: |
           pip install -e ".[test]"
@@ -82,11 +101,6 @@ jobs:
       - name: Run the tests for the examples
         run: |
           python -m pytest examples/simple
-      - name: Test the docs
-        run: |
-          cd docs
-          pip install -r doc-requirements.txt
-          make html SPHINXOPTS="-W"
 
   test_minimum_versions:
     name: Test Minimum Versions
@@ -97,12 +111,11 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
-          python_version: "3.7"
+          python_version: "3.8"
       - name: Install miniumum versions
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
       - name: Run the unit tests
-        run: |
-          pytest -vv -W default || pytest -vv -W default --lf
+        run: hatch run test:nowarn || hatch run test:nowarn --lf
 
   test_prereleases:
     name: Test Prereleases
@@ -114,18 +127,18 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
-          python_version: "3.11.0-beta - 3.11.0"
+          python_version: "3.11"
       - name: Install the Python dependencies
         run: |
           pip install --no-deps .
-          pip install --pre --upgrade "jupyter_server[test]"
+          pip install --pre --upgrade ".[test]"
       - name: List installed packages
         run: |
           pip freeze
           pip check
       - name: Run the tests
         run: |
-          pytest -vv || pytest -vv --lf
+          pytest -vv -W default || pytest -vv -W default --lf
 
   make_sdist:
     name: Make SDist
@@ -145,7 +158,17 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - uses: jupyterlab/maintainer-tools/.github/actions/test-sdist@v1
         with:
-          test_command: pytest -vv || pytest -vv --lf
+          package_spec: .
+          test_command: hatch run test:test || hatch run test:test --lf
+
+  check_links:
+    name: Check Links
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - uses: jupyterlab/maintainer-tools/.github/actions/check-links@v1
 
   python_tests_check: # This job does nothing and is only used for the branch protection
     if: always()

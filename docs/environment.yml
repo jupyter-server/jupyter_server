@@ -1,8 +1,0 @@
-name: jupyter_server_docs
-dependencies:
-  - nodejs
-  - python
-  - pip
-  - pip:
-      - -r doc-requirements.txt
-      - ..

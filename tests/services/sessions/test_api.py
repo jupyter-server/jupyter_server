@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import shutil
@@ -163,7 +164,10 @@ def session_is_ready(jp_serverapp):
             kernel_id = session["kernel"]["id"]
             kernel = mkm.get_kernel(kernel_id)
             if getattr(kernel, "ready", None):
-                await kernel.ready
+                ready = kernel.ready
+                if not isinstance(ready, asyncio.Future):
+                    ready = asyncio.wrap_future(ready)
+                await ready
 
     return _
 

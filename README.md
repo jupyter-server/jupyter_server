@@ -1,6 +1,6 @@
 # Jupyter Server
 
-[![Build Status](https://github.com/jupyter/jupyter_server/workflows/CI/badge.svg?query=branch%3Amain++)](https://github.com/jupyter-server/jupyter_server/actions?query=branch%3Amain++)
+[![Build Status](https://github.com/jupyter-server/jupyter_server/actions/workflows/python-tests.yml/badge.svg?query=branch%3Amain++)](https://github.com/jupyter-server/jupyter_server/actions/workflows/python-tests.yml/badge.svg?query=branch%3Amain++)
 [![Documentation Status](https://readthedocs.org/projects/jupyter-server/badge/?version=latest)](http://jupyter-server.readthedocs.io/en/latest/?badge=latest)
 
 The Jupyter Server provides the backend (i.e. the core services, APIs, and REST endpoints) for Jupyter web applications like Jupyter notebook, JupyterLab, and Voila.
@@ -12,7 +12,9 @@ For more information, read our [documentation here](http://jupyter-server.readth
 To install the latest release locally, make sure you have
 [pip installed](https://pip.readthedocs.io/en/stable/installing/) and run:
 
-    pip install jupyter_server
+```
+pip install jupyter_server
+```
 
 Jupyter Server currently supports Python>=3.6 on Linux, OSX and Windows.
 
@@ -30,7 +32,9 @@ To see the changes between releases, checkout the [CHANGELOG](https://github.com
 
 Launch with:
 
-    jupyter server
+```
+jupyter server
+```
 
 ### Testing
 

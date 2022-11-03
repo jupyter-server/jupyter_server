@@ -44,7 +44,7 @@ def test_pre_post_save_hook_config(jp_serverapp, jp_server_config):
     assert jp_serverapp.contents_manager.post_save_hook.__name__ == "example_post_save_hook"
 
 
-async def test_async_contents_manager(jp_configurable_serverapp):
+def test_async_contents_manager(jp_configurable_serverapp):
     config = {"ContentsManager": {"checkpoints_class": AsyncCheckpoints}}
     argv = [
         "--ServerApp.contents_manager_class=jupyter_server.services.contents.manager.AsyncContentsManager"

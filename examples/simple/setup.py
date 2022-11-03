@@ -9,11 +9,15 @@ VERSION = "0.0.1"
 def get_data_files():
     """Get the data files for the package."""
     data_files = [
-        ("etc/jupyter/jupyter_server_config.d", "etc/jupyter/jupyter_server_config.d/", "*.json"),
+        (
+            "etc/jupyter/jupyter_server_config.d",
+            "etc/jupyter/jupyter_server_config.d/",
+            "*.json",
+        ),
     ]
 
     def add_data_files(path):
-        for (dirpath, dirnames, filenames) in os.walk(path):
+        for (dirpath, _, filenames) in os.walk(path):
             if filenames:
                 paths = [(dirpath, dirpath, filename) for filename in filenames]
                 data_files.extend(paths)
@@ -33,13 +37,13 @@ setup_args = dict(
     version=VERSION,
     description="Jupyter Server Example",
     long_description=open("README.md").read(),
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=[
         "jupyter_server",
         "jinja2",
     ],
     extras_require={
-        "test": ["pytest"],
+        "test": ["pytest", "pytest-asyncio"],
     },
     include_package_data=True,
     cmdclass=cmdclass,

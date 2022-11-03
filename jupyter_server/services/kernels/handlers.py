@@ -6,8 +6,10 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 # Distributed under the terms of the Modified BSD License.
 import asyncio
 import json
+import weakref
 from textwrap import dedent
 from traceback import format_tb
+from typing import MutableSet
 
 from jupyter_client import protocol_version as client_protocol_version
 
@@ -108,6 +110,15 @@ class KernelActionHandler(KernelsAPIHandler):
         self.finish()
 
 
+def _ensure_future(f):
+    """Wrap a concurrent future as an asyncio future if there is a running loop."""
+    try:
+        asyncio.get_running_loop()
+        return asyncio.wrap_future(f)
+    except RuntimeError:
+        return f
+
+
 class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     """There is one ZMQChannelsHandler per running kernel and it oversees all
     the sessions.
@@ -119,9 +130,16 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
     # allows checking for conflict on session-id,
     # which is used as a zmq identity and must be unique.
     _open_sessions: dict = {}
+    _open_sockets: MutableSet["ZMQChannelsHandler"] = weakref.WeakSet()
 
     _kernel_info_future: Future
     _close_future: Future
+
+    @classmethod
+    async def close_all(cls):
+        """Tornado does not provide a way to close open sockets, so add one."""
+        for socket in list(cls._open_sockets):
+            await socket.close()
 
     @property
     def kernel_info_timeout(self):
@@ -186,7 +204,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             self.log.debug("Nudge: not nudging busy kernel %s", self.kernel_id)
             f: Future = Future()
             f.set_result(None)
-            return f
+            return _ensure_future(f)
         # Use a transient shell channel to prevent leaking
         # shell responses to the front-end.
         shell_channel = kernel.connect_shell()
@@ -287,7 +305,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         future = gen.with_timeout(loop.time() + self.kernel_info_timeout, both_done)
         # ensure we have no dangling resources or unresolved Futures in case of timeout
         future.add_done_callback(finish)
-        return future
+        return _ensure_future(future)
 
     def request_kernel_info(self):
         """send a request for kernel_info"""
@@ -311,7 +329,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             if not future.done():
                 self.log.debug("Waiting for pending kernel_info request")
             future.add_done_callback(lambda f: self._finish_kernel_info(f.result()))
-        return self._kernel_info_future
+        return _ensure_future(self._kernel_info_future)
 
     def _handle_kernel_info_reply(self, msg):
         """process the kernel_info_reply
@@ -388,8 +406,11 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         kernel = self.kernel_manager.get_kernel(self.kernel_id)
 
         if hasattr(kernel, "ready"):
+            ready = kernel.ready
+            if not isinstance(ready, asyncio.Future):
+                ready = asyncio.wrap_future(ready)
             try:
-                await kernel.ready
+                await ready
             except Exception as e:
                 kernel.execution_state = "dead"
                 kernel.reason = str(e)
@@ -488,7 +509,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 stream.on_recv_stream(self._on_zmq_reply)
 
         connected.add_done_callback(subscribe)
-
+        ZMQChannelsHandler._open_sockets.add(self)
         return connected
 
     def on_message(self, ws_msg):
@@ -704,7 +725,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
 
     def close(self):
         super().close()
-        return self._close_future
+        return _ensure_future(self._close_future)
 
     def on_close(self):
         self.log.debug("Websocket closed %s", self.session_key)
@@ -728,6 +749,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             # start buffering instead of closing if this was the last connection
             if km._kernel_connections[self.kernel_id] == 0:
                 km.start_buffering(self.kernel_id, self.session_key, self.channels)
+                ZMQChannelsHandler._open_sockets.remove(self)
                 self._close_future.set_result(None)
                 return
 
@@ -740,7 +762,11 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
                 stream.close()
 
         self.channels = {}
-        self._close_future.set_result(None)
+        try:
+            ZMQChannelsHandler._open_sockets.remove(self)
+            self._close_future.set_result(None)
+        except Exception:
+            pass
 
     def _send_status_message(self, status):
         iopub = self.channels.get("iopub", None)

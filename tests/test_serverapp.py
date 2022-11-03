@@ -77,7 +77,7 @@ def test_valid_root_dir(valid_root_dir, jp_configurable_serverapp):
     assert app.root_dir == root_dir
 
 
-def test_generate_config(tmp_path, jp_configurable_serverapp):
+async def test_generate_config(tmp_path, jp_configurable_serverapp):
     app = jp_configurable_serverapp(config_dir=str(tmp_path))
     app.initialize(["--generate-config", "--allow-root"])
     with pytest.raises(NoStart):
