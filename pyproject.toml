@@ -41,7 +41,7 @@ dependencies = [
     "pyzmq>=17",
     "Send2Trash",
     "terminado>=0.8.3",
-    "tornado>=6.1.0",
+    "tornado>=6.2.0",
     "traitlets>=5.1",
     "websocket-client",
     "jupyter_events>=0.4.0"
