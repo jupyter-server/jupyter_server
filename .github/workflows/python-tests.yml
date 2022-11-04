@@ -176,8 +176,11 @@ jobs:
     needs:
       - build
       - pre-commit
+      - test_docs
+      - test_minimum_versions
       - test_prereleases
-      - make_sdist
+      - client8
+      - check_links
       - test_sdist
     runs-on: ubuntu-latest
     steps:
