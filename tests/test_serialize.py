@@ -3,7 +3,7 @@ import os
 
 from jupyter_client.session import Session
 
-from jupyter_server.base.zmqhandlers import (
+from jupyter_server.services.kernels.connection.base import (
     deserialize_binary_message,
     serialize_binary_message,
 )
