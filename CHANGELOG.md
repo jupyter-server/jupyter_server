@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.23.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.21.0...16953940a16762329ef8f26c8c6d13a91defe0d3))
+
+### Enhancements made
+
+- Backport-1046: Pass kernel environment to `cwd_for_path` method (#1046) [#1051](https://github.com/jupyter-server/jupyter_server/pull/1051) ([@divyansshhh](https://github.com/divyansshhh))
+
+### Maintenance and upkeep improvements
+
+- \[1.x\] Switch to releaser v2 and update workflows [#1052](https://github.com/jupyter-server/jupyter_server/pull/1052) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-10-11&to=2022-11-07&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-10-11..2022-11-07&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-10-11..2022-11-07&type=Issues) | [@divyansshhh](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adivyansshhh+updated%3A2022-10-11..2022-11-07&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.21.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.19.1...2f529bf5d1f8c68a6b7193f474c9ba025111d743))
@@ -21,8 +41,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-09-27&to=2022-10-11&type=c))
 
 [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-09-27..2022-10-11&type=Issues) | [@meeseeksmachine](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksmachine+updated%3A2022-09-27..2022-10-11&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-09-27..2022-10-11&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.19.1
 
