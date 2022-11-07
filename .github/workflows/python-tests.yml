@@ -14,14 +14,16 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.7", "3.10"]
+        python-version: ["3.7", "3.11"]
         include:
           - os: windows-latest
             python-version: "3.9"
           - os: ubuntu-latest
-            python-version: "pypy-3.7"
+            python-version: "pypy-3.8"
           - os: macos-latest
             python-version: "3.8"
+          - os: ubuntu-latest
+            python-version: "3.11"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -48,20 +50,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-      - uses: pre-commit/action@v2.0.0
-        with:
-          extra_args: --all-files --hook-stage=manual
-      - name: Help message if pre-commit fail
-        if: ${{ failure() }}
-        run: |
-          echo "You can install pre-commit hooks to automatically run formatting"
-          echo "on each commit with:"
-          echo "    pre-commit install"
-          echo "or you can run by hand on staged files with"
-          echo "    pre-commit run"
-          echo "or after-the-fact on already committed files with"
-          echo "    pre-commit run --all-files --hook-stage=manual"
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - uses: jupyterlab/maintainer-tools/.github/actions/pre-commit@v1
 
   test_docs_and_examples:
     name: Test Docs and Examples
@@ -120,6 +110,15 @@ jobs:
         run: |
           pytest -vv -W default || pytest -vv -W default --lf
 
+  check_links:
+    name: Make SDist
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - uses: jupyterlab/maintainer-tools/.github/actions/check-links@v1
+
   make_sdist:
     name: Make SDist
     runs-on: ubuntu-latest
@@ -146,7 +145,8 @@ jobs:
       - build
       - pre-commit
       - test_prereleases
-      - make_sdist
+      - test_docs_and_examples
+      - test_minimum_versions
       - test_sdist
     runs-on: ubuntu-latest
     steps:
