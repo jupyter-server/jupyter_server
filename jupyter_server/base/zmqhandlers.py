@@ -4,7 +4,6 @@
 import json
 import re
 import struct
-import sys
 from typing import Optional, no_type_check
 from urllib.parse import urlparse
 
