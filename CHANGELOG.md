@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.23.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.23.0...0d8a17939615eafe7a38fb417b7559f4ec6ccf03))
+
+### Maintenance and upkeep improvements
+
+- Handle jupyter core warning [#1062](https://github.com/jupyter-server/jupyter_server/pull/1062) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-11-07&to=2022-11-09&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-11-07..2022-11-09&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-11-07..2022-11-09&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.23.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.21.0...16953940a16762329ef8f26c8c6d13a91defe0d3))
@@ -21,8 +37,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-10-11&to=2022-11-07&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-10-11..2022-11-07&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-10-11..2022-11-07&type=Issues) | [@divyansshhh](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adivyansshhh+updated%3A2022-10-11..2022-11-07&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.21.0
 
