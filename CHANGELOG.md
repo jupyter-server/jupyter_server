@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.0rc4
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0rc3...f6b732c652e0b5a600ff0d3f60c6a34173d8d6a5))
+
+### Enhancements made
+
+- Pass kernel environment to `cwd_for_path` method [#1046](https://github.com/jupyter-server/jupyter_server/pull/1046) ([@divyansshhh](https://github.com/divyansshhh))
+- Better Handling of Asyncio [#1035](https://github.com/jupyter-server/jupyter_server/pull/1035) ([@blink1073](https://github.com/blink1073))
+
+### Bugs fixed
+
+- Fix min version check again [#1049](https://github.com/jupyter-server/jupyter_server/pull/1049) ([@blink1073](https://github.com/blink1073))
+
+### Maintenance and upkeep improvements
+
+- MAINT: remove python 3.4 branch [#1061](https://github.com/jupyter-server/jupyter_server/pull/1061) ([@Carreau](https://github.com/Carreau))
+- Bump actions/checkout from 2 to 3 [#1056](https://github.com/jupyter-server/jupyter_server/pull/1056) ([@dependabot](https://github.com/dependabot))
+- Bump actions/setup-python from 2 to 4 [#1055](https://github.com/jupyter-server/jupyter_server/pull/1055) ([@dependabot](https://github.com/dependabot))
+- Bump pre-commit/action from 2.0.0 to 3.0.0 [#1054](https://github.com/jupyter-server/jupyter_server/pull/1054) ([@dependabot](https://github.com/dependabot))
+- Add dependabot file [#1053](https://github.com/jupyter-server/jupyter_server/pull/1053) ([@blink1073](https://github.com/blink1073))
+- Use global env for min version check [#1048](https://github.com/jupyter-server/jupyter_server/pull/1048) ([@blink1073](https://github.com/blink1073))
+- Clean up handling of synchronous managers [#1044](https://github.com/jupyter-server/jupyter_server/pull/1044) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Fix wording [#1037](https://github.com/jupyter-server/jupyter_server/pull/1037) ([@fcollonval](https://github.com/fcollonval))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-10-17&to=2022-11-10&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-10-17..2022-11-10&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2022-10-17..2022-11-10&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-10-17..2022-11-10&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2022-10-17..2022-11-10&type=Issues) | [@divyansshhh](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adivyansshhh+updated%3A2022-10-17..2022-11-10&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afcollonval+updated%3A2022-10-17..2022-11-10&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2022-10-17..2022-11-10&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.0rc3
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0rc2...fc0ac3236fdd92778ea765db6e8982212c8389ee))
@@ -18,8 +53,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-10-11&to=2022-10-17&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-10-11..2022-10-17&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-10-11..2022-10-17&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.0rc2
 
