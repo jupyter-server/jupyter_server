@@ -46,7 +46,7 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
-      - name: Test nbclassic
+      - name: Test notebook
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
         with:
           package_name: notebook

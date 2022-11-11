@@ -62,12 +62,12 @@ def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extensio
     # when these two configs merge.
     toggle_server_extension_python(
         "tests.extension.mockextensions.mockext_both",
-        enabled=True,
+        enabled=False,
         sys_prefix=True,
     )
     toggle_server_extension_python(
         "tests.extension.mockextensions.mockext_both",
-        enabled=False,
+        enabled=True,
         user=True,
     )
 
