@@ -1,7 +1,12 @@
 from collections import OrderedDict
 
 import pytest
-from jupyter_core.version import version_info
+
+try:
+    from jupyter_core.paths import prefer_environment_over_user
+except ImportError:
+    prefer_environment_over_user = None
+
 from traitlets.tests.utils import check_help_all_output
 
 from jupyter_server.config_manager import BaseJSONConfigManager
@@ -44,7 +49,7 @@ def test_disable(jp_env_config_path, jp_extension_environ):
     assert not config["mock1"]
 
 
-@pytest.mark.skipif(version_info[0] < 5, "precedence is different on jupyter_core<5")
+@pytest.mark.skipif(prefer_environment_over_user is None, reason="Requires jupyter_core 5.0+")
 def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extension_environ):
     # Toggle each extension module with a JSON config file
     # at the sys-prefix config dir.
@@ -84,7 +89,8 @@ def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extensio
     assert extensions["tests.extension.mockextensions.mockext_sys"]
     assert extensions["tests.extension.mockextensions.mockext_py"]
     # Merging should causes this extension to be disabled.
-    assert not extensions["tests.extension.mockextensions.mockext_both"]
+    if prefer_environment_over_user():
+        assert not extensions["tests.extension.mockextensions.mockext_both"]
 
 
 @pytest.mark.parametrize(
