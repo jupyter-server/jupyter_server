@@ -67,3 +67,19 @@ jobs:
         with:
           package_name: jupyterlab
           test_command: "python -m jupyterlab.browser_check --no-browser-test"
+
+  jupyter_server_terminals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
+      - name: Test jupyter_server_terminals
+        uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
+        with:
+          package_name: jupyter_server_terminals
