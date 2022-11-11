@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import pytest
+from jupyter_core.version import version_info
 from traitlets.tests.utils import check_help_all_output
 
 from jupyter_server.config_manager import BaseJSONConfigManager
@@ -43,6 +44,7 @@ def test_disable(jp_env_config_path, jp_extension_environ):
     assert not config["mock1"]
 
 
+@pytest.mark.skipif(version_info[0] < 5, "precedence is different on jupyter_core<5")
 def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extension_environ):
     # Toggle each extension module with a JSON config file
     # at the sys-prefix config dir.

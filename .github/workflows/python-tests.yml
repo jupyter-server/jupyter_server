@@ -131,14 +131,20 @@ jobs:
           python_version: "3.11"
       - name: Install the Python dependencies
         run: |
+          # Ensure we are in a virtual env for the test so the
+          # config precedence is as expected.
+          python -m venv .venv
+          source .venv/bin/activate
           pip install --no-deps .
           pip install --pre --upgrade ".[test]"
       - name: List installed packages
         run: |
+          source .venv/bin/activate
           pip freeze
           pip check
       - name: Run the tests
         run: |
+          source .venv/bin/activate
           pytest -vv -W default || pytest -vv -W default --lf
 
   make_sdist:
