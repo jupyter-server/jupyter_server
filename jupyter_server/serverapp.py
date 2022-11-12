@@ -510,7 +510,6 @@ def shutdown_server(server_info, timeout=5, log=None):
 
     url = server_info["url"]
     pid = server_info["pid"]
-
     try:
         shutdown_url = urljoin(url, "api/shutdown")
         if log:
