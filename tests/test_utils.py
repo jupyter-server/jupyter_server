@@ -112,6 +112,7 @@ async def test_run_sync_in_loop():
         await run_sync_in_loop(foo())
 
 
+@pytest.mark.skipif(os.name != "posix", reason="Requires unix sockets")
 def test_unix_socket_in_use(tmp_path):
     server_address = os.path.join(tmp_path, "socket_file")
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
