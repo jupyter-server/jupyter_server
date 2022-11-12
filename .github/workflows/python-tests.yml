@@ -37,12 +37,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install texlive-plain-generic inkscape texlive-xetex
           sudo apt-get install xvfb x11-utils libxkbcommon-x11-0 pandoc
-      - name: Run the tests
+      - name: Run the tests on posix
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: hatch run cov:test -W default || hatch run test:test -W default --lf
-      - name: Run the tests on pypy and windows
-        if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(matrix.os, 'windows') }}
-        run: hatch run test:test  -W default || hatch run test:test  -W default --lf
+        run: hatch run cov:test --cov-fail-under 75 -W default || hatch run cov:test -W default --lf
+      - name: Run the tests on pypy
+        if: ${{ startsWith(matrix.python-version, 'pypy' }}
+        run: hatch run test:test  -W default || hatch run test:test -W default --lf
+      - name: Run the tests on windows
+        if: ${{ startsWith(matrix.python-version, 'windows' }}
+        run: hatch run cov:test -s -W default || hatch run cov:test -W default --lf
       - name: Coverage
         run: |
           pip install codecov
