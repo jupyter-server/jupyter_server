@@ -12,6 +12,16 @@ from .utils import expected_http_error
 
 @pytest.fixture(
     params=[
+        "jupyter_server.files.handlers.FilesHandler",
+        "jupyter_server.base.handlers.AuthenticatedFileHandler",
+    ]
+)
+def jp_argv(request):
+    return ["--ContentsManager.files_handler_class=" + request.param]
+
+
+@pytest.fixture(
+    params=[
         [False, ["å b"]],
         [False, ["å b", "ç. d"]],
         [True, [".å b"]],
@@ -85,7 +95,7 @@ async def test_contents_manager(jp_fetch, jp_serverapp, jp_root_dir):
 
     r = await jp_fetch("files/test.txt", method="GET")
     assert r.code == 200
-    assert r.headers["content-type"] == "text/plain; charset=UTF-8"
+    assert "text/plain" in r.headers["content-type"]
     assert r.body.decode() == "foobar"
 
 

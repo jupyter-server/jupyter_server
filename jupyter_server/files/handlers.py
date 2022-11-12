@@ -15,7 +15,7 @@ from jupyter_server.utils import ensure_async
 AUTH_RESOURCE = "contents"
 
 
-class FilesHandler(JupyterHandler):
+class FilesHandler(JupyterHandler, web.StaticFileHandler):
     """serve files via ContentsManager
 
     Normally used when ContentsManager is not a FileContentsManager.
