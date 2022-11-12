@@ -522,10 +522,7 @@ def jp_create_notebook(jp_root_dir):
 def jp_server_cleanup(asyncio_loop):
     yield
     app: ServerApp = ServerApp.instance()
-    try:
-        asyncio_loop.run_until_complete(app._cleanup())
-    except RuntimeError:
-        pass
+    asyncio_loop.run_until_complete(app._cleanup())
     ServerApp.clear_instance()
 
 
