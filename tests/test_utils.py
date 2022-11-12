@@ -78,6 +78,7 @@ def test_is_namespace_package_no_spec():
         mocked_spec.assert_called_once_with("dummy")
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Paths are annoying on Windows")
 def test_path_utils(tmp_path):
     path = str(tmp_path)
     assert os.path.basename(path2url(path)) == os.path.basename(path)
