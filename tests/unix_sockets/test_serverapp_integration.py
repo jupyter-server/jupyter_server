@@ -1,21 +1,18 @@
+import os
 import stat
+import subprocess
 import sys
 import time
 
 import pytest
 
 from jupyter_server.serverapp import list_running_servers, shutdown_server
+from jupyter_server.utils import urlencode_unix_socket, urlencode_unix_socket_path
 
 # Skip this module if on Windows. Unix sockets are not available on Windows.
 pytestmark = pytest.mark.skipif(
     sys.platform.startswith("win"), reason="Unix sockets are not available on Windows."
 )
-
-import os
-import subprocess
-import time
-
-from jupyter_server.utils import urlencode_unix_socket, urlencode_unix_socket_path
 
 
 def _cleanup_process(proc):
