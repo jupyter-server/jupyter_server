@@ -57,7 +57,6 @@ Tracker = "https://github.com/jupyter-server/jupyter_server/issues"
 [project.optional-dependencies]
 test = [
     "ipykernel",
-    "pandoc",
     "pytest-console-scripts",
     "pytest-timeout",
     "pytest-tornasync",
@@ -105,7 +104,7 @@ dependencies = ["coverage", "pytest-cov"]
 [tool.hatch.envs.cov.env-vars]
 ARGS = "-vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered"
 [tool.hatch.envs.cov.scripts]
-test = "python -m pytest $ARGS --cov-fail-under 70 {args}"
+test = "python -m pytest $ARGS --cov-fail-under 75 {args}"
 
 [tool.hatch.version]
 path = "jupyter_server/_version.py"
