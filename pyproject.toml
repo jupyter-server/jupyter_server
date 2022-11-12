@@ -57,6 +57,7 @@ Tracker = "https://github.com/jupyter-server/jupyter_server/issues"
 [project.optional-dependencies]
 test = [
     "ipykernel",
+    "pandoc",
     "pytest-console-scripts",
     "pytest-timeout",
     "pytest-tornasync",

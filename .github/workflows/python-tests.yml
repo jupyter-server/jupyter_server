@@ -37,7 +37,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install texlive-plain-generic inkscape texlive-xetex
           sudo apt-get install xvfb x11-utils libxkbcommon-x11-0
-          pip install pandoc
       - name: Run the tests
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
         run: hatch run cov:test -W default || hatch run cov:test -W default --lf
