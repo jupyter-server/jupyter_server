@@ -114,6 +114,7 @@ async def test_run_sync_in_loop():
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Requires unix sockets")
 def test_unix_socket_in_use(tmp_path):
+    os.unlink(str(tmp_path))
     server_address = str(tmp_path)
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.bind(server_address)

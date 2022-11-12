@@ -1,5 +1,6 @@
 import stat
 import sys
+import time
 
 import pytest
 
@@ -190,5 +191,11 @@ def test_shutdown_server(jp_environ):
         servers = list(list_running_servers())
         if len(servers):
             break
-    shutdown_server(servers[0])
+        time.sleep(0.1)
+    while 1:
+        try:
+            shutdown_server(servers[0])
+            break
+        except ConnectionRefusedError:
+            time.sleep(0.1)
     p.wait()
