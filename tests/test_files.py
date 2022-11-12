@@ -43,6 +43,15 @@ async def fetch_expect_404(jp_fetch, *path_parts):
     assert expected_http_error(e, 404), [path_parts, e]
 
 
+async def test_file_types(jp_fetch, jp_root_dir):
+    path = Path(jp_root_dir, "test")
+    path.mkdir(parents=True, exist_ok=True)
+    foos = ["foo.tar.gz", "foo.bz", "foo.foo"]
+    for foo in foos:
+        (path / foo).write_text(foo)
+        await fetch_expect_200(jp_fetch, "test", foo)
+
+
 async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir, maybe_hidden):
     is_hidden, path_parts = maybe_hidden
     path = Path(jp_root_dir, *path_parts)

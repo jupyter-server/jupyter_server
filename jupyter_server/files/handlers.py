@@ -85,8 +85,6 @@ class FilesHandler(JupyterHandler, web.StaticFileHandler):
             if model["format"] == "base64":
                 b64_bytes = model["content"].encode("ascii")
                 self.write(decodebytes(b64_bytes))
-            elif model["format"] == "json":
-                self.write(json.dumps(model["content"]))
             else:
                 self.write(model["content"])
             self.flush()
