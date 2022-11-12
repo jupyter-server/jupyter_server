@@ -1,7 +1,6 @@
 """Serve files directly from the ContentsManager."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-import json
 import mimetypes
 from base64 import decodebytes
 from typing import List
