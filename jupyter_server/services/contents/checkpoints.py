@@ -75,13 +75,13 @@ class GenericCheckpointsMixin:
 
     def create_checkpoint(self, contents_mgr, path):
         model = contents_mgr.get(path, content=True)
-        type = model["type"]
-        if type == "notebook":
+        type_ = model["type"]
+        if type_ == "notebook":
             return self.create_notebook_checkpoint(
                 model["content"],
                 path,
             )
-        elif type == "file":
+        elif type_ == "file":
             return self.create_file_checkpoint(
                 model["content"],
                 model["format"],
@@ -92,13 +92,13 @@ class GenericCheckpointsMixin:
 
     def restore_checkpoint(self, contents_mgr, checkpoint_id, path):
         """Restore a checkpoint."""
-        type = contents_mgr.get(path, content=False)["type"]
-        if type == "notebook":
+        type_ = contents_mgr.get(path, content=False)["type"]
+        if type_ == "notebook":
             model = self.get_notebook_checkpoint(checkpoint_id, path)
-        elif type == "file":
+        elif type_ == "file":
             model = self.get_file_checkpoint(checkpoint_id, path)
         else:
-            raise HTTPError(500, "Unexpected type %s" % type)
+            raise HTTPError(500, "Unexpected type %s" % type_)
         contents_mgr.save(model, path)
 
     # Required Methods
@@ -184,30 +184,31 @@ class AsyncGenericCheckpointsMixin(GenericCheckpointsMixin):
 
     async def create_checkpoint(self, contents_mgr, path):
         model = await contents_mgr.get(path, content=True)
-        type = model["type"]
-        if type == "notebook":
+        type_ = model["type"]
+        if type_ == "notebook":
             return await self.create_notebook_checkpoint(
                 model["content"],
                 path,
             )
-        elif type == "file":
+        elif type_ == "file":
             return await self.create_file_checkpoint(
                 model["content"],
                 model["format"],
                 path,
             )
         else:
-            raise HTTPError(500, "Unexpected type %s" % type)
+            raise HTTPError(500, "Unexpected type %s" % type_)
 
     async def restore_checkpoint(self, contents_mgr, checkpoint_id, path):
         """Restore a checkpoint."""
-        type = await contents_mgr.get(path, content=False)["type"]
-        if type == "notebook":
+        content_model = await contents_mgr.get(path, content=False)
+        type_ = content_model["type"]
+        if type_ == "notebook":
             model = await self.get_notebook_checkpoint(checkpoint_id, path)
-        elif type == "file":
+        elif type_ == "file":
             model = await self.get_file_checkpoint(checkpoint_id, path)
         else:
-            raise HTTPError(500, "Unexpected type %s" % type)
+            raise HTTPError(500, "Unexpected type %s" % type_)
         await contents_mgr.save(model, path)
 
     # Required Methods
