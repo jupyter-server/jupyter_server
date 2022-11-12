@@ -41,10 +41,10 @@ jobs:
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
         run: hatch run cov:test --cov-fail-under 75 -W default || hatch run cov:test -W default --lf
       - name: Run the tests on pypy
-        if: ${{ startsWith(matrix.python-version, 'pypy' }}
+        if: ${{ startsWith(matrix.python-version, 'pypy') }}
         run: hatch run test:test  -W default || hatch run test:test -W default --lf
       - name: Run the tests on windows
-        if: ${{ startsWith(matrix.python-version, 'windows' }}
+        if: ${{ startsWith(matrix.python-version, 'windows') }}
         run: hatch run cov:test -s -W default || hatch run cov:test -W default --lf
       - name: Coverage
         run: |
