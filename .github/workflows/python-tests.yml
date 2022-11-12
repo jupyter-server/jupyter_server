@@ -36,11 +36,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install texlive-plain-generic inkscape texlive-xetex
-          sudo apt-get install xvfb x11-utils libxkbcommon-x11-0
-          pip install pandoc
+          sudo apt-get install xvfb x11-utils libxkbcommon-x11-0 pandoc
       - name: Run the tests
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: hatch run cov:test -W default || hatch run cov:test -W default --lf
+        run: hatch run cov:test -W default || hatch run test:test -W default --lf
       - name: Run the tests on pypy and windows
         if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(matrix.os, 'windows') }}
         run: hatch run test:test  -W default || hatch run test:test  -W default --lf
@@ -71,20 +70,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-      - uses: pre-commit/action@v3.0.0
-        with:
-          extra_args: --all-files --hook-stage=manual
-      - name: Help message if pre-commit fail
-        if: ${{ failure() }}
-        run: |
-          echo "You can install pre-commit hooks to automatically run formatting"
-          echo "on each commit with:"
-          echo "    pre-commit install"
-          echo "or you can run by hand on staged files with"
-          echo "    pre-commit run"
-          echo "or after-the-fact on already committed files with"
-          echo "    pre-commit run --all-files --hook-stage=manual"
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - uses: jupyterlab/maintainer-tools/.github/actions/pre-commit@v1
 
   test_docs:
     name: Test Docs
