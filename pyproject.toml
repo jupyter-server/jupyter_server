@@ -146,6 +146,20 @@ filterwarnings = [
   "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
 ]
 
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "if self.debug:",
+  "if settings.DEBUG",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if 0:",
+  "if __name__ == .__main__.:",
+  "class .*\bProtocol\\):",
+"@(abc\\.)?abstractmethod",
+]
+
 [tool.jupyter-releaser.hooks]
 before-build-python = ["npm install", "npm run build"]
 
