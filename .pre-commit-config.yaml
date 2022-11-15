@@ -75,12 +75,7 @@ repos:
       - id: eslint
         stages: [manual]
 
-  - repo: https://github.com/sirosen/check-jsonschema
+  - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.19.1
     hooks:
-      - id: check-jsonschema
-        name: "Check GitHub Workflows"
-        files: ^\.github/workflows/
-        types: [yaml]
-        args: ["--schemafile", "https://json.schemastore.org/github-workflow"]
-        stages: [manual]
+      - id: check-github-workflows
