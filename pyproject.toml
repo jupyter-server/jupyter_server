@@ -102,10 +102,10 @@ nowarn = "python -m pytest -vv -W default {args}"
 features = ["test"]
 dependencies = ["coverage", "pytest-cov"]
 [tool.hatch.envs.cov.env-vars]
-ARGS = "-vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered"
+ARGS = "-vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered --cov-fail-under 70"
 [tool.hatch.envs.cov.scripts]
 test = "python -m pytest $ARGS {args}"
-integration = "python -m pytest $ARGS --integration_tests=true {args}"
+nwarn = "python -m pytest $ARGS -W default {args}"
 
 [tool.hatch.version]
 path = "jupyter_server/_version.py"
@@ -144,20 +144,6 @@ filterwarnings = [
   "ignore:run_pre_save_hook is deprecated:DeprecationWarning",
   "always:unclosed <socket.socket:ResourceWarning",
   "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
-]
-
-[tool.coverage.report]
-exclude_lines = [
-  "pragma: no cover",
-  "def __repr__",
-  "if self.debug:",
-  "if settings.DEBUG",
-  "raise AssertionError",
-  "raise NotImplementedError",
-  "if 0:",
-  "if __name__ == .__main__.:",
-  "class .*\bProtocol\\):",
-"@(abc\\.)?abstractmethod",
 ]
 
 [tool.jupyter-releaser.hooks]
