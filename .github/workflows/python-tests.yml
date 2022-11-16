@@ -151,7 +151,6 @@ jobs:
       - test_docs
       - test_minimum_versions
       - test_prereleases
-      - client8
       - check_links
       - test_sdist
     runs-on: ubuntu-latest
