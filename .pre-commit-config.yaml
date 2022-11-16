@@ -30,7 +30,7 @@ repos:
         files: \.py$
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.982
+    rev: v0.990
     hooks:
       - id: mypy
         additional_dependencies: [types-requests]
@@ -47,7 +47,7 @@ repos:
       - id: mdformat
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.2.0
+    rev: v3.2.2
     hooks:
       - id: pyupgrade
         args: [--py38-plus]
@@ -75,12 +75,7 @@ repos:
       - id: eslint
         stages: [manual]
 
-  - repo: https://github.com/sirosen/check-jsonschema
-    rev: 0.18.4
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.19.1
     hooks:
-      - id: check-jsonschema
-        name: "Check GitHub Workflows"
-        files: ^\.github/workflows/
-        types: [yaml]
-        args: ["--schemafile", "https://json.schemastore.org/github-workflow"]
-        stages: [manual]
+      - id: check-github-workflows

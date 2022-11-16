@@ -2292,7 +2292,7 @@ class ServerApp(JupyterApp):
         if len(km) != 0:
             return  # Kernels still running
 
-        if self.extension_manager.any_activity:
+        if self.extension_manager.any_activity():
             return
 
         seconds_since_active = (utcnow() - self.web_app.last_activity()).total_seconds()
