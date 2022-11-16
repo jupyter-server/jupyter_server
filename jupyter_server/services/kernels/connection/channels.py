@@ -9,7 +9,7 @@ from jupyter_client import protocol_version as client_protocol_version
 from tornado import gen, web
 from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketClosedError
-from traitlets import Bool, Dict, Float, Instance, Int, List, Unicode, default
+from traitlets import Any, Bool, Dict, Float, Instance, Int, List, Unicode, default
 
 try:
     from jupyter_client.jsonutil import json_default
@@ -89,7 +89,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
     _close_future: Future
 
     channels = Dict({})
-    kernel_info_channel = Unicode(allow_none=True)
+    kernel_info_channel = Any(allow_none=True)
 
     _kernel_info_future = Instance(klass=Future)
 
@@ -132,7 +132,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         identity = self.session.bsession
         for channel in ("iopub", "shell", "control", "stdin"):
             meth = getattr(self.kernel_manager, "connect_" + channel)
-            self.channels[channel] = stream = meth(self.kernel_id, identity=identity)
+            self.channels[channel] = stream = meth(identity=identity)
             stream.channel = channel
 
     def nudge(self):
@@ -214,14 +214,6 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # Nudge the kernel with kernel info requests until we get an IOPub message
         def nudge(count):
             count += 1
-
-            # NOTE: this close check appears to never be True during on_open,
-            # even when the peer has closed the connection
-            if self.ws_connection is None or self.ws_connection.is_closing():
-                self.log.debug("Nudge: cancelling on closed websocket: %s", self.kernel_id)
-                finish()
-                return
-
             # check for stopped kernel
             if self.kernel_id not in self.multi_kernel_manager:
                 self.log.debug("Nudge: cancelling on stopped kernel: %s", self.kernel_id)
@@ -274,8 +266,6 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self._open_sessions[self.session_key] = self
 
     async def prepare(self):
-        # authenticate first
-        super().pre_get()
         # check session collision:
         await self._register_session()
         # then request kernel info, waiting up to a certain time before giving up.
@@ -525,7 +515,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
     def _on_zmq_reply(self, stream, msg_list):
         # Sometimes this gets triggered when the on_close method is scheduled in the
         # eventloop but hasn't been called.
-        if self.ws_connection is None or stream.closed():
+        if stream.closed():
             self.log.warning("zmq message arrived on closed channel")
             self.close()
             return
@@ -554,7 +544,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             # Create a kernel_info channel to query the kernel protocol version.
             # This channel will be closed after the kernel_info reply is received.
             if self.kernel_info_channel is None:
-                self.kernel_info_channel = self.kernel_manager.connect_shell(self.kernel_id)
+                self.kernel_info_channel = self.multi_kernel_manager.connect_shell(self.kernel_id)
             assert self.kernel_info_channel is not None
             self.kernel_info_channel.on_recv(self._handle_kernel_info_reply)
             self.session.send(self.kernel_info_channel, "kernel_info_request")

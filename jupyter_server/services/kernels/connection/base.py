@@ -3,7 +3,7 @@ import struct
 import sys
 
 from jupyter_client.session import Session
-from traitlets import Float, Instance, default
+from traitlets import Callable, Float, Instance, default
 from traitlets.config import LoggingConfigurable
 
 try:
@@ -134,6 +134,8 @@ class BaseKernelWebsocketConnection(LoggingConfigurable):
     @default("session")
     def _default_session(self):
         return Session(config=self.config)
+
+    write_message = Callable()
 
     async def connect(self):
         raise NotImplementedError()

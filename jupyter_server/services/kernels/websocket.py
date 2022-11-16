@@ -187,18 +187,19 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):
         else:
             self.log.warning("No session ID specified")
         # For backwards compatibility with older versions
-        # of the message broker, call a prepare method if found.
+        # of the websocket connection, call a prepare method if found.
         if hasattr(self.connection, "prepare"):
             await self.connection.prepare()
 
     async def get(self, kernel_id):
         self.kernel_id = kernel_id
+        await self.pre_get()
         await super().get(kernel_id=kernel_id)
 
     async def open(self, kernel_id):
         # Wait for the kernel to emit an idle status.
         self.log.info(f"Connecting to kernel {self.kernel_id}.")
-        await self.connection.connect(session_id=self.session_id)
+        await self.connection.connect()
 
     def on_message(self, ws_message):
         """Get a kernel message from the websocket and turn it into a ZMQ message."""

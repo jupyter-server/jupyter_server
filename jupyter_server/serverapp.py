@@ -110,7 +110,6 @@ from jupyter_server.services.kernels.connection.base import (
 from jupyter_server.services.kernels.connection.channels import (
     ZMQChannelsWebsocketConnection,
 )
-from jupyter_server.services.kernels.kernel_broker import KernelWebsocketBroker
 from jupyter_server.services.kernels.kernelmanager import (
     AsyncMappingKernelManager,
     MappingKernelManager,
