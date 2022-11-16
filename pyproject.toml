@@ -42,7 +42,7 @@ dependencies = [
     "Send2Trash",
     "terminado>=0.8.3",
     "tornado>=6.2.0",
-    "traitlets>=5.3.0",
+    "traitlets>=5.1",
     "websocket-client",
     "jupyter_events>=0.4.0"
 ]
@@ -106,6 +106,7 @@ ARGS = "-vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-cov
 [tool.hatch.envs.cov.scripts]
 test = "python -m pytest $ARGS {args}"
 nwarn = "python -m pytest $ARGS -W default {args}"
+integration = "python -m pytest $ARGS --integration_tests=true {args}"
 
 [tool.hatch.version]
 path = "jupyter_server/_version.py"
