@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 import weakref
 from concurrent.futures import Future
 from textwrap import dedent
@@ -15,6 +16,8 @@ try:
     from jupyter_client.jsonutil import json_default
 except ImportError:
     from jupyter_client.jsonutil import date_default as json_default
+
+from jupyter_client.utils import ensure_async
 
 from jupyter_server.transutils import _i18n
 
@@ -282,7 +285,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         if (
             self.kernel_id in self.multi_kernel_manager
         ):  # only update open sessions if kernel is actively managed
-            self._open_sessions[self.session_key] = self
+            self._open_sessions[self.session_key] = self.websocket_handler
 
     async def prepare(self):
         # check session collision:
@@ -301,6 +304,12 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                 self.kernel_manager.execution_state = "dead"
                 self.kernel_manager.reason = str(e)
                 raise web.HTTPError(500, str(e)) from e
+
+        t0 = time.time()
+        while not await ensure_async(self.kernel_manager.is_alive()):
+            await asyncio.sleep(0.1)
+            if time.time() - t0 > self.multi_kernel_manager.kernel_info_timeout:
+                raise TimeoutError("Kernel never reached an 'alive' state.")
 
         self.session.key = self.kernel_manager.session.key
         future = self.request_kernel_info()
@@ -360,7 +369,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                 for _, stream in self.channels.items():
                     if not stream.closed():
                         stream.close()
-                self.close()
+                self.disconnect()
                 return
 
         self.multi_kernel_manager.add_restart_callback(self.kernel_id, self.on_kernel_restarted)
@@ -375,6 +384,9 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         connected.add_done_callback(subscribe)
         ZMQChannelsWebsocketConnection._open_sockets.add(self)
         return connected
+
+    def close(self):
+        return self.disconnect()
 
     def disconnect(self):
         self.log.debug("Websocket closed %s", self.session_key)
@@ -536,7 +548,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # eventloop but hasn't been called.
         if stream.closed():
             self.log.warning("zmq message arrived on closed channel")
-            self.close()
+            self.disconnect()
             return
         channel = getattr(stream, "channel", None)
         if self.subprotocol == "v1.kernel.websocket.jupyter.org":
