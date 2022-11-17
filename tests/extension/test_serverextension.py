@@ -11,6 +11,10 @@ from traitlets.tests.utils import check_help_all_output
 
 from jupyter_server.config_manager import BaseJSONConfigManager
 from jupyter_server.extension.serverextension import (
+    DisableServerExtensionApp,
+    ListServerExtensionsApp,
+    ServerExtensionApp,
+    ToggleServerExtensionApp,
     _get_config_dir,
     toggle_server_extension_python,
 )
@@ -112,3 +116,21 @@ def test_load_ordered(jp_serverapp, jp_server_config):
     assert jp_serverapp.mockII is True, "Mock II should have been loaded"
     assert jp_serverapp.mockI is True, "Mock I should have been loaded"
     assert jp_serverapp.mock_shared == "II", "Mock II should be loaded after Mock I"
+
+
+def test_server_extension_apps(jp_env_config_path, jp_extension_environ):
+    app = ToggleServerExtensionApp()
+    app.extra_args = "mock1"
+    app.start()
+
+    app = DisableServerExtensionApp()
+    app.extra_args = "mock1"
+    app.start()
+
+    app = ListServerExtensionsApp()
+    app.start()
+
+
+def test_server_extension_app():
+    app = ServerExtensionApp()
+    app.launch_instance(["list"])
