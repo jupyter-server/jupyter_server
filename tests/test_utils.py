@@ -118,6 +118,8 @@ async def test_run_sync_in_loop():
 def test_unix_socket_in_use(tmp_path):
     root_tmp_dir = Path("/tmp").resolve()
     server_address = os.path.join(root_tmp_dir, uuid.uuid4().hex)
+    if os.path.exists(server_address):
+        os.remove(server_address)
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.bind(server_address)
     sock.listen(0)
