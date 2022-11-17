@@ -3,7 +3,8 @@ import struct
 import sys
 
 from jupyter_client.session import Session
-from traitlets import Callable, Float, Instance, default
+from tornado.websocket import WebSocketHandler
+from traitlets import Float, Instance, default
 from traitlets.config import LoggingConfigurable
 
 try:
@@ -135,7 +136,7 @@ class BaseKernelWebsocketConnection(LoggingConfigurable):
     def _default_session(self):
         return Session(config=self.config)
 
-    write_message = Callable()
+    websocket_handler = Instance(WebSocketHandler)
 
     async def connect(self):
         raise NotImplementedError()

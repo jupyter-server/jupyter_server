@@ -79,6 +79,24 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         ),
     )
 
+    kernel_ws_protocol = Unicode(
+        None,
+        allow_none=True,
+        config=True,
+        help=_i18n(
+            "Preferred kernel message protocol over websocket to use (default: None). "
+            "If an empty string is passed, select the legacy protocol. If None, "
+            "the selected protocol will depend on what the front-end supports "
+            "(usually the most recent protocol supported by the back-end and the "
+            "front-end)."
+        ),
+    )
+
+    @property
+    def write_message(self):
+        """Alias to the websocket handler's write_message method."""
+        return self.websocket_handler.write_message
+
     # class-level registry of open sessions
     # allows checking for conflict on session-id,
     # which is used as a zmq identity and must be unique.
@@ -117,13 +135,14 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
     @classmethod
     async def close_all(cls):
         """Tornado does not provide a way to close open sockets, so add one."""
-        for socket in list(cls._open_sockets):
-            await socket.close()
+        for connection in list(cls._open_sockets):
+            connection.disconnect()
+            await _ensure_future(connection._close_future)
 
     @property
     def subprotocol(self):
         try:
-            protocol = self.selected_subprotocol
+            protocol = self.websocket_handler.selected_subprotocol
         except Exception:
             protocol = None
         return protocol
@@ -520,7 +539,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.close()
             return
         channel = getattr(stream, "channel", None)
-        if self.selected_subprotocol == "v1.kernel.websocket.jupyter.org":
+        if self.subprotocol == "v1.kernel.websocket.jupyter.org":
             bin_msg = serialize_msg_to_ws_v1(msg_list, channel)
             self.write_message(bin_msg, binary=True)
         else:

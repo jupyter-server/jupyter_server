@@ -179,7 +179,7 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):
         kernel = self.kernel_manager.get_kernel(self.kernel_id)
         self.connection = self.kernel_websocket_connection_class(
             parent=kernel,
-            write_message=self.write_message,
+            websocket_handler=self,
         )
 
         if self.get_argument("session_id", None):

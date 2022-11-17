@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable
+from typing import Any
 
 
 class KernelWebsocketConnectionABC(ABC):
@@ -10,7 +10,7 @@ class KernelWebsocketConnectionABC(ABC):
     interface.
     """
 
-    write_message: Callable
+    websocket_handler: Any
 
     @abstractmethod
     async def connect(self):
