@@ -4,7 +4,6 @@
 import json
 import re
 import struct
-import sys
 from typing import Optional, no_type_check
 from urllib.parse import urlparse
 
@@ -19,7 +18,7 @@ from jupyter_client.jsonutil import extract_dates
 from jupyter_client.session import Session
 from tornado import ioloop, web
 from tornado.iostream import IOStream
-from tornado.websocket import WebSocketHandler
+from tornado.websocket import WebSocketClosedError, WebSocketHandler
 
 from .handlers import JupyterHandler
 
@@ -42,8 +41,6 @@ def serialize_binary_message(msg):
     # don't modify msg or buffer list in-place
     msg = msg.copy()
     buffers = list(msg.pop("buffers"))
-    if sys.version_info < (3, 4):
-        buffers = [x.tobytes() for x in buffers]
     bmsg = json.dumps(msg, default=json_default).encode("utf8")
     buffers.insert(0, bmsg)
     nbufs = len(buffers)
@@ -302,7 +299,10 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             except Exception:
                 self.log.critical("Malformed message: %r" % msg_list, exc_info=True)
             else:
-                self.write_message(msg, binary=isinstance(msg, bytes))
+                try:
+                    self.write_message(msg, binary=isinstance(msg, bytes))
+                except WebSocketClosedError as e:
+                    self.log.warning(str(e))
 
 
 class AuthenticatedZMQStreamHandler(ZMQStreamHandler, JupyterHandler):

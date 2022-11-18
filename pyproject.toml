@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling >=1.0"]
+requires = ["hatchling >=1.11"]
 build-backend = "hatchling.build"
 
 [project]
@@ -20,29 +20,29 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [
     "anyio>=3.1.0,<4",
     "argon2-cffi",
     "jinja2",
-    "jupyter_client>=6.1.12",
-    "jupyter_core>=4.7.0",
+    "jupyter_client>=7.4.4",
+    "jupyter_core>=4.9.2",
     "jupyter_server_terminals",
     "nbconvert>=6.4.4",
     "nbformat>=5.2.0",
     "packaging",
     "prometheus_client",
     "pywinpty;os_name=='nt'",
-    "pyzmq>=17",
+    "pyzmq>=24",
     "Send2Trash",
     "terminado>=0.8.3",
-    "tornado>=6.1.0",
-    "traitlets>=5.1",
+    "tornado>=6.2.0",
+    "traitlets>=5.3.0",
     "websocket-client",
     "jupyter_events>=0.4.0"
 ]
@@ -60,7 +60,7 @@ test = [
     "pytest-console-scripts",
     "pytest-timeout",
     "pytest-tornasync",
-    "pytest>=6.0",
+    "pytest>=7.0",
     "requests",
     "pre-commit"
 ]
@@ -96,30 +96,32 @@ build = "make -C docs html SPHINXOPTS='-W'"
 features = ["test"]
 [tool.hatch.envs.test.scripts]
 test = "python -m pytest -vv {args}"
-nowarn = "python -m pytest -vv -W default {args}"
+nowarn = "test -W default {args}"
 
 [tool.hatch.envs.cov]
 features = ["test"]
 dependencies = ["coverage", "pytest-cov"]
-[tool.hatch.envs.cov.env-vars]
-ARGS = "-vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered"
 [tool.hatch.envs.cov.scripts]
-test = "python -m pytest $ARGS --cov-fail-under 70 {args}"
+test = "python -m pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered {args}"
+nowarn = "test -W default {args}"
+integration = "test --integration_tests=true {args}"
 
 [tool.hatch.version]
 path = "jupyter_server/_version.py"
+validate-bump = false
 
 [tool.hatch.build]
 artifacts = ["jupyter_server/static/style"]
 
 [tool.hatch.build.hooks.jupyter-builder]
-dependencies = ["hatch-jupyter-builder>=0.7.1"]
+dependencies = ["hatch-jupyter-builder>=0.8.1"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
   "jupyter_server/static/style/bootstrap.min.css",
   "jupyter_server/static/style/bootstrap-theme.min.css"
 ]
 install-pre-commit-hook = true
+optional-editable-build = true
 
 [tool.black]
 line_length = 100
@@ -132,19 +134,29 @@ addopts = "-raXs --durations 10 --color=yes --doctest-modules"
 testpaths = [
     "tests/"
 ]
-timeout = 300
+timeout = 100
 # Restore this setting to debug failures
-# timeout_method = "thread"
+timeout_method = "thread"
 filterwarnings = [
   "error",
-  "module:make_current is deprecated:DeprecationWarning",
-  "module:clear_current is deprecated:DeprecationWarning",
-  "module:There is no current event loop:DeprecationWarning",
   "ignore:Passing a schema to Validator.iter_errors:DeprecationWarning",
-  "ignore:unclosed <socket.socket:ResourceWarning",
-  "ignore:unclosed event loop:ResourceWarning",
   "ignore:run_pre_save_hook is deprecated:DeprecationWarning",
+  "always:unclosed <socket.socket:ResourceWarning",
   "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "if self.debug:",
+  "if settings.DEBUG",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if 0:",
+  "if __name__ == .__main__.:",
+  "class .*\bProtocol\\):",
+"@(abc\\.)?abstractmethod",
 ]
 
 [tool.jupyter-releaser.hooks]
@@ -152,7 +164,7 @@ before-build-python = ["npm install", "npm run build"]
 
 [tool.jupyter-releaser.options]
 pydist_resource_paths = ["jupyter_server/static/style/bootstrap.min.css", "jupyter_server/static/style/bootstrap-theme.min.css"]
-
+post-version-spec = "dev"
 
 [tool.mypy]
 check_untyped_defs = true
@@ -177,3 +189,22 @@ module = [
     "websocket"
 ]
 ignore_missing_imports = true
+
+
+[tool.flake8]
+ignore = ["E501", "W503", "E402"]
+builtins = ["c", "get_config"]
+exclude = [
+    ".cache",
+    ".github",
+    "docs"
+]
+enable-extensions = "G"
+extend-ignore = [
+    "G001", "G002", "G004", "G200", "G201", "G202",
+    # black adds spaces around ':'
+    "E203"]
+per-file-ignores = [
+    # B011: Do not call assert False since python -O removes these calls
+    # F841 local variable 'foo' is assigned to but never used
+    "tests/*: B011, F841"]

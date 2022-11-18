@@ -1,7 +1,9 @@
+import asyncio
 import json
 import os
 import shutil
 import time
+import warnings
 from typing import Any
 
 import jupyter_client
@@ -19,6 +21,17 @@ from jupyter_server.utils import url_path_join
 from ...utils import expected_http_error
 
 TEST_TIMEOUT = 60
+
+
+@pytest.fixture(autouse=True)
+def suppress_deprecation_warnings():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="The synchronous MappingKernelManager",
+            category=DeprecationWarning,
+        )
+        yield
 
 
 def j(r):
@@ -163,7 +176,10 @@ def session_is_ready(jp_serverapp):
             kernel_id = session["kernel"]["id"]
             kernel = mkm.get_kernel(kernel_id)
             if getattr(kernel, "ready", None):
-                await kernel.ready
+                ready = kernel.ready
+                if not isinstance(ready, asyncio.Future):
+                    ready = asyncio.wrap_future(ready)
+                await ready
 
     return _
 

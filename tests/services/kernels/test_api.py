@@ -1,6 +1,8 @@
+import asyncio
 import json
 import os
 import time
+import warnings
 
 import jupyter_client
 import pytest
@@ -15,14 +17,32 @@ from ...utils import expected_http_error
 TEST_TIMEOUT = 60
 
 
+@pytest.fixture(autouse=True)
+def suppress_deprecation_warnings():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="The synchronous MappingKernelManager",
+            category=DeprecationWarning,
+        )
+        yield
+
+
 @pytest.fixture
 def pending_kernel_is_ready(jp_serverapp):
-    async def _(kernel_id):
+    async def _(kernel_id, ready=None):
         km = jp_serverapp.kernel_manager
         if getattr(km, "use_pending_kernels", False):
             kernel = km.get_kernel(kernel_id)
             if getattr(kernel, "ready", None):
-                await kernel.ready
+                new_ready = kernel.ready
+                # Make sure we get a new ready promise (for a restart)
+                while new_ready == ready:
+                    await asyncio.sleep(0.1)
+                if not isinstance(new_ready, asyncio.Future):
+                    new_ready = asyncio.wrap_future(new_ready)
+                await new_ready
+                return new_ready
 
     return _
 
@@ -105,6 +125,7 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_
     assert isinstance(kernel_list, list)
     assert kernel_list[0]["id"] == kernel1["id"]
     assert kernel_list[0]["name"] == kernel1["name"]
+    await pending_kernel_is_ready(kernel1["id"])
 
     # Start a second kernel
     r = await jp_fetch(
@@ -112,6 +133,7 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_
     )
     kernel2 = json.loads(r.body.decode())
     assert isinstance(kernel2, dict)
+    await pending_kernel_is_ready(kernel1["id"])
 
     # Get kernel list again
     r = await jp_fetch("api", "kernels", method="GET")
@@ -133,7 +155,7 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_
     assert r.code == 204
 
     # Restart a kernel
-    await pending_kernel_is_ready(kernel2["id"])
+    ready = await pending_kernel_is_ready(kernel2["id"])
     r = await jp_fetch(
         "api",
         "kernels",
@@ -145,6 +167,9 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_
     restarted_kernel = json.loads(r.body.decode())
     assert restarted_kernel["id"] == kernel2["id"]
     assert restarted_kernel["name"] == kernel2["name"]
+    # Make sure we get a new ready promise
+    if ready:
+        await pending_kernel_is_ready(kernel2["id"], ready)
 
     # Start a kernel with a path
     r = await jp_fetch(
@@ -155,6 +180,7 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_
     )
     kernel3 = json.loads(r.body.decode())
     assert isinstance(kernel3, dict)
+    await pending_kernel_is_ready(kernel3["id"])
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
@@ -178,7 +204,7 @@ async def test_kernel_handler(jp_fetch, jp_serverapp, pending_kernel_is_ready):
     assert expected_http_error(e, 404)
 
     # Delete kernel with id.
-    await pending_kernel_is_ready(kernel_id)
+    ready = await pending_kernel_is_ready(kernel_id)
     r = await jp_fetch(
         "api",
         "kernels",
@@ -189,7 +215,7 @@ async def test_kernel_handler(jp_fetch, jp_serverapp, pending_kernel_is_ready):
 
     # Get list of kernels
     try:
-        await pending_kernel_is_ready(kernel_id)
+        await pending_kernel_is_ready(kernel_id, ready)
     # If the kernel is already deleted, no need to await.
     except tornado.web.HTTPError:
         pass

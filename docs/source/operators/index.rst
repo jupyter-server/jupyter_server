@@ -13,3 +13,4 @@ These pages are targeted at people using, configuring, and/or deploying multiple
    migrate-from-nbserver
    public-server
    security
+   configuring-logging

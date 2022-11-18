@@ -1,17 +1,30 @@
 import json
 import pathlib
 import sys
+import warnings
 from base64 import decodebytes, encodebytes
 from unicodedata import normalize
 
 import pytest
 import tornado
-from nbformat import from_dict, writes
+from nbformat import from_dict
 from nbformat.v4 import new_markdown_cell, new_notebook
 
 from jupyter_server.utils import url_path_join
+from tests.conftest import dirs
 
 from ...utils import expected_http_error
+
+
+@pytest.fixture(autouse=True)
+def suppress_deprecation_warnings():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="The synchronous ContentsManager",
+            category=DeprecationWarning,
+        )
+        yield
 
 
 def notebooks_only(dir_model):
@@ -22,71 +35,12 @@ def dirs_only(dir_model):
     return [x for x in dir_model["content"] if x["type"] == "directory"]
 
 
-dirs = [
-    ("", "inroot"),
-    ("Directory with spaces in", "inspace"),
-    ("unicodé", "innonascii"),
-    ("foo", "a"),
-    ("foo", "b"),
-    ("foo", "name with spaces"),
-    ("foo", "unicodé"),
-    ("foo/bar", "baz"),
-    ("ordering", "A"),
-    ("ordering", "b"),
-    ("ordering", "C"),
-    ("å b", "ç d"),
-]
-
-
 @pytest.fixture(params=["FileContentsManager", "AsyncFileContentsManager"])
 def jp_argv(request):
     return [
         "--ServerApp.contents_manager_class=jupyter_server.services.contents.filemanager."
         + request.param
     ]
-
-
-@pytest.fixture
-def contents_dir(tmp_path, jp_serverapp):
-    return tmp_path / jp_serverapp.root_dir
-
-
-@pytest.fixture
-def contents(contents_dir):
-    # Create files in temporary directory
-    paths: dict = {
-        "notebooks": [],
-        "textfiles": [],
-        "blobs": [],
-    }
-    for d, name in dirs:
-        p = contents_dir / d
-        p.mkdir(parents=True, exist_ok=True)
-
-        # Create a notebook
-        nb = writes(new_notebook(), version=4)
-        nbname = p.joinpath(f"{name}.ipynb")
-        nbname.write_text(nb, encoding="utf-8")
-        paths["notebooks"].append(nbname.relative_to(contents_dir))
-
-        # Create a text file
-        txt = f"{name} text file"
-        txtname = p.joinpath(f"{name}.txt")
-        txtname.write_text(txt, encoding="utf-8")
-        paths["textfiles"].append(txtname.relative_to(contents_dir))
-
-        # Create a random blob
-        blob = name.encode("utf-8") + b"\xFF"
-        blobname = p.joinpath(f"{name}.blob")
-        blobname.write_bytes(blob)
-        paths["blobs"].append(blobname.relative_to(contents_dir))
-    paths["all"] = list(paths.values())
-    return paths
-
-
-@pytest.fixture
-def folders():
-    return list({item[0] for item in dirs})
 
 
 @pytest.mark.parametrize("path,name", dirs)
@@ -841,6 +795,7 @@ async def test_rename_400_hidden(jp_fetch, jp_base_url, contents, contents_dir):
 
 
 async def test_checkpoints_follow_file(jp_fetch, contents):
+
     path = "foo"
     name = "a.ipynb"
 

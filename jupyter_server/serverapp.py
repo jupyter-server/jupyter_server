@@ -6,7 +6,6 @@ import errno
 import gettext
 import hashlib
 import hmac
-import inspect
 import ipaddress
 import json
 import logging
@@ -36,8 +35,9 @@ except ImportError:
 from jinja2 import Environment, FileSystemLoader
 from jupyter_core.paths import secure_write
 
+from jupyter_server.services.kernels.handlers import ZMQChannelsHandler
 from jupyter_server.transutils import _i18n, trans
-from jupyter_server.utils import pathname2url, run_sync_in_loop, urljoin
+from jupyter_server.utils import ensure_async, pathname2url, urljoin
 
 # the minimum viable tornado version: needs to be kept in sync with setup.py
 MIN_TORNADO = (6, 1, 0)
@@ -56,8 +56,8 @@ from tornado.log import LogFormatter, access_log, app_log, gen_log
 if not sys.platform.startswith("win"):
     from tornado.netutil import bind_unix_socket
 
-from jupyter_client import KernelManager
 from jupyter_client.kernelspec import KernelSpecManager
+from jupyter_client.manager import KernelManager
 from jupyter_client.session import Session
 from jupyter_core.application import JupyterApp, base_aliases, base_flags
 from jupyter_core.paths import jupyter_runtime_dir
@@ -122,7 +122,7 @@ from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
     FileContentsManager,
 )
-from jupyter_server.services.contents.largefilemanager import LargeFileManager
+from jupyter_server.services.contents.largefilemanager import AsyncLargeFileManager
 from jupyter_server.services.contents.manager import (
     AsyncContentsManager,
     ContentsManager,
@@ -132,7 +132,6 @@ from jupyter_server.services.kernels.kernelmanager import (
     MappingKernelManager,
 )
 from jupyter_server.services.sessions.sessionmanager import SessionManager
-from jupyter_server.traittypes import TypeFromClasses
 from jupyter_server.utils import (
     check_pid,
     fetch,
@@ -511,7 +510,6 @@ def shutdown_server(server_info, timeout=5, log=None):
 
     url = server_info["url"]
     pid = server_info["pid"]
-
     try:
         shutdown_url = urljoin(url, "api/shutdown")
         if log:
@@ -1163,7 +1161,7 @@ class ServerApp(JupyterApp):
         config=True,
         help="""Disable cross-site-request-forgery protection
 
-        Jupyter notebook 4.3.1 introduces protection from cross-site request forgeries,
+        Jupyter server includes protection from cross-site request forgeries,
         requiring API requests to either:
 
         - originate from pages served by this server (validated with XSRF cookie and token), or
@@ -1434,37 +1432,12 @@ class ServerApp(JupyterApp):
         help="""If True, display controls to shut down the Jupyter server, such as menu items or buttons.""",
     )
 
-    # REMOVE in VERSION 2.0
-    # Temporarily allow content managers to inherit from the 'notebook'
-    # package. We will deprecate this in the next major release.
-    contents_manager_class = TypeFromClasses(
-        default_value=LargeFileManager,
-        klasses=[
-            "jupyter_server.services.contents.manager.ContentsManager",
-            "notebook.services.contents.manager.ContentsManager",
-        ],
+    contents_manager_class = Type(
+        default_value=AsyncLargeFileManager,
+        klass=ContentsManager,
         config=True,
         help=_i18n("The content manager class to use."),
     )
-
-    # Throws a deprecation warning to notebook based contents managers.
-    @observe("contents_manager_class")
-    def _observe_contents_manager_class(self, change):
-        new = change["new"]
-        # If 'new' is a class, get a string representing the import
-        # module path.
-        if inspect.isclass(new):
-            new = new.__module__
-
-        if new.startswith("notebook"):
-            self.log.warning(
-                "The specified 'contents_manager_class' class inherits a manager from the "
-                "'notebook' package. This is not guaranteed to work in future "
-                "releases of Jupyter Server. Instead, consider switching the "
-                "manager to inherit from the 'jupyter_server' managers. "
-                "Jupyter Server will temporarily allow 'notebook' managers "
-                "until its next major release (2.x)."
-            )
 
     kernel_manager_class = Type(
         klass=MappingKernelManager,
@@ -1863,6 +1836,20 @@ class ServerApp(JupyterApp):
         # If gateway server is configured, replace appropriate managers to perform redirection.  To make
         # this determination, instantiate the GatewayClient config singleton.
         self.gateway_config = GatewayClient.instance(parent=self)
+
+        if not issubclass(self.kernel_manager_class, AsyncMappingKernelManager):
+            warnings.warn(
+                "The synchronous MappingKernelManager class is deprecated and will not be supported in Jupyter Server 3.0",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        if not issubclass(self.contents_manager_class, AsyncContentsManager):
+            warnings.warn(
+                "The synchronous ContentsManager classes are deprecated and will not be supported in Jupyter Server 3.0",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
         self.kernel_spec_manager = self.kernel_spec_manager_class(
             parent=self,
@@ -2305,7 +2292,7 @@ class ServerApp(JupyterApp):
         if len(km) != 0:
             return  # Kernels still running
 
-        if self.extension_manager.any_activity:
+        if self.extension_manager.any_activity():
             return
 
         seconds_since_active = (utcnow() - self.web_app.last_activity()).total_seconds()
@@ -2358,7 +2345,11 @@ class ServerApp(JupyterApp):
             max_buffer_size=self.max_buffer_size,
         )
 
-        success = self._bind_http_server()
+        # binding sockets must be called from inside an event loop
+        self.io_loop.add_callback(self._bind_http_server)
+
+    def _bind_http_server(self):
+        success = self._bind_http_server_unix() if self.sock else self._bind_http_server_tcp()
         if not success:
             self.log.critical(
                 _i18n(
@@ -2367,9 +2358,6 @@ class ServerApp(JupyterApp):
                 )
             )
             self.exit(1)
-
-    def _bind_http_server(self):
-        return self._bind_http_server_unix() if self.sock else self._bind_http_server_tcp()
 
     def _bind_http_server_unix(self):
         if unix_socket_in_use(self.sock):
@@ -2499,6 +2487,10 @@ class ServerApp(JupyterApp):
             self._preferred_dir_validation(self.preferred_dir, self.root_dir)
         if self._dispatching:
             return
+        # initialize io loop as early as possible,
+        # so configurables, extensions may reference the event loop
+        self.init_ioloop()
+
         # Then, use extensions' config loading mechanism to
         # update config. ServerApp config takes precedence.
         if find_extensions:
@@ -2524,7 +2516,6 @@ class ServerApp(JupyterApp):
         self.init_components()
         self.init_webapp()
         self.init_signal()
-        self.init_ioloop()
         self.load_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
@@ -2544,7 +2535,7 @@ class ServerApp(JupyterApp):
             "Shutting down %d kernel", "Shutting down %d kernels", n_kernels
         )
         self.log.info(kernel_msg % n_kernels)
-        await run_sync_in_loop(self.kernel_manager.shutdown_all())
+        await ensure_async(self.kernel_manager.shutdown_all())
 
     async def cleanup_extensions(self):
         """Call shutdown hooks in all extensions."""
@@ -2555,7 +2546,7 @@ class ServerApp(JupyterApp):
             "Shutting down %d extension", "Shutting down %d extensions", n_extensions
         )
         self.log.info(extension_msg % n_extensions)
-        await run_sync_in_loop(self.extension_manager.stop_all_extensions())
+        await ensure_async(self.extension_manager.stop_all_extensions())
 
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
@@ -2829,8 +2820,14 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
+        await ZMQChannelsHandler.close_all()
+        if getattr(self, "kernel_manager", None):
+            self.kernel_manager.__del__()
         if getattr(self, "session_manager", None):
             self.session_manager.close()
+        if hasattr(self, "http_server"):
+            # Stop a server if its set.
+            self.http_server.stop()
 
     def start_ioloop(self):
         """Start the IO Loop."""
@@ -2864,7 +2861,7 @@ class ServerApp(JupyterApp):
 
     def stop(self, from_signal=False):
         """Cleanup resources and stop the server."""
-        if hasattr(self, "_http_server"):
+        if hasattr(self, "http_server"):
             # Stop a server if its set.
             self.http_server.stop()
         if getattr(self, "io_loop", None):
@@ -2893,7 +2890,11 @@ def list_running_servers(runtime_dir=None, log=None):
     for file_name in os.listdir(runtime_dir):
         if re.match("jpserver-(.+).json", file_name):
             with open(os.path.join(runtime_dir, file_name), encoding="utf-8") as f:
-                info = json.load(f)
+                # Handle race condition where file is being written.
+                try:
+                    info = json.load(f)
+                except json.JSONDecodeError:
+                    continue
 
             # Simple check whether that process is really still running
             # Also remove leftover files from IPython 2.x without a pid field

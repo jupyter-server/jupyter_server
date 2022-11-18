@@ -1,10 +1,20 @@
 from collections import OrderedDict
 
 import pytest
+
+try:
+    from jupyter_core.paths import prefer_environment_over_user
+except ImportError:
+    prefer_environment_over_user = None
+
 from traitlets.tests.utils import check_help_all_output
 
 from jupyter_server.config_manager import BaseJSONConfigManager
 from jupyter_server.extension.serverextension import (
+    DisableServerExtensionApp,
+    ListServerExtensionsApp,
+    ServerExtensionApp,
+    ToggleServerExtensionApp,
     _get_config_dir,
     toggle_server_extension_python,
 )
@@ -43,6 +53,7 @@ def test_disable(jp_env_config_path, jp_extension_environ):
     assert not config["mock1"]
 
 
+@pytest.mark.skipif(prefer_environment_over_user is None, reason="Requires jupyter_core 5.0+")
 def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extension_environ):
     # Toggle each extension module with a JSON config file
     # at the sys-prefix config dir.
@@ -62,12 +73,12 @@ def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extensio
     # when these two configs merge.
     toggle_server_extension_python(
         "tests.extension.mockextensions.mockext_both",
-        enabled=True,
+        enabled=False,
         sys_prefix=True,
     )
     toggle_server_extension_python(
         "tests.extension.mockextensions.mockext_both",
-        enabled=False,
+        enabled=True,
         user=True,
     )
 
@@ -82,7 +93,8 @@ def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extensio
     assert extensions["tests.extension.mockextensions.mockext_sys"]
     assert extensions["tests.extension.mockextensions.mockext_py"]
     # Merging should causes this extension to be disabled.
-    assert not extensions["tests.extension.mockextensions.mockext_both"]
+    if prefer_environment_over_user():
+        assert not extensions["tests.extension.mockextensions.mockext_both"]
 
 
 @pytest.mark.parametrize(
@@ -104,3 +116,21 @@ def test_load_ordered(jp_serverapp, jp_server_config):
     assert jp_serverapp.mockII is True, "Mock II should have been loaded"
     assert jp_serverapp.mockI is True, "Mock I should have been loaded"
     assert jp_serverapp.mock_shared == "II", "Mock II should be loaded after Mock I"
+
+
+def test_server_extension_apps(jp_env_config_path, jp_extension_environ):
+    app = ToggleServerExtensionApp()
+    app.extra_args = "mock1"
+    app.start()
+
+    app = DisableServerExtensionApp()
+    app.extra_args = "mock1"
+    app.start()
+
+    app = ListServerExtensionsApp()
+    app.start()
+
+
+def test_server_extension_app():
+    app = ServerExtensionApp()
+    app.launch_instance(["list"])

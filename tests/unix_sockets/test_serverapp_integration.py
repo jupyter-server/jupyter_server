@@ -1,18 +1,18 @@
+import os
 import stat
+import subprocess
 import sys
+import time
 
 import pytest
+
+from jupyter_server.serverapp import list_running_servers, shutdown_server
+from jupyter_server.utils import urlencode_unix_socket, urlencode_unix_socket_path
 
 # Skip this module if on Windows. Unix sockets are not available on Windows.
 pytestmark = pytest.mark.skipif(
     sys.platform.startswith("win"), reason="Unix sockets are not available on Windows."
 )
-
-import os
-import subprocess
-import time
-
-from jupyter_server.utils import urlencode_unix_socket, urlencode_unix_socket_path
 
 
 def _cleanup_process(proc):
@@ -171,3 +171,28 @@ def test_launch_socket_collision(jp_unix_socket_file):
     _ensure_stopped()
 
     _cleanup_process(p1)
+
+
+@pytest.mark.integration_test
+def test_shutdown_server(jp_environ):
+    # Start a server in another process
+    # Stop that server
+    import subprocess
+
+    from jupyter_client.connect import LocalPortCache
+
+    port = LocalPortCache().find_available_port("localhost")
+    p = subprocess.Popen(["jupyter-server", f"--port={port}"])
+    servers = []
+    while 1:
+        servers = list(list_running_servers())
+        if len(servers):
+            break
+        time.sleep(0.1)
+    while 1:
+        try:
+            shutdown_server(servers[0])
+            break
+        except ConnectionRefusedError:
+            time.sleep(0.1)
+    p.wait()
