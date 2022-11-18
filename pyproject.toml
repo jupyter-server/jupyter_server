@@ -207,4 +207,7 @@ extend-ignore = [
 per-file-ignores = [
     # B011: Do not call assert False since python -O removes these calls
     # F841 local variable 'foo' is assigned to but never used
-    "tests/*: B011, F841"]
+    "tests/*: B011, F841",
+    # Ignore flake 8 errors from shimmed imports
+    "jupyter_server/base/zmqhandlers.py:F401"
+]

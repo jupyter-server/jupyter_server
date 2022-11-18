@@ -26,7 +26,6 @@ import warnings
 import webbrowser
 from base64 import encodebytes
 
-from jupyter_client import KernelManager
 from jupyter_client.kernelspec import KernelSpecManager
 from jupyter_client.manager import KernelManager
 from jupyter_client.session import Session
@@ -96,10 +95,7 @@ from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
     FileContentsManager,
 )
-from jupyter_server.services.contents.largefilemanager import (
-    AsyncLargeFileManager,
-    LargeFileManager,
-)
+from jupyter_server.services.contents.largefilemanager import AsyncLargeFileManager
 from jupyter_server.services.contents.manager import (
     AsyncContentsManager,
     ContentsManager,
@@ -115,7 +111,6 @@ from jupyter_server.services.kernels.kernelmanager import (
     MappingKernelManager,
 )
 from jupyter_server.services.sessions.sessionmanager import SessionManager
-from jupyter_server.traittypes import TypeFromClasses
 from jupyter_server.utils import (
     check_pid,
     fetch,
@@ -146,10 +141,6 @@ try:
     assert tornado.version_info >= MIN_TORNADO
 except (ImportError, AttributeError, AssertionError) as e:  # pragma: no cover
     raise ImportError(_i18n("The Jupyter Server requires tornado >=%s.%s.%s") % MIN_TORNADO) from e
-
-
-if not sys.platform.startswith("win"):
-    from tornado.netutil import bind_unix_socket
 
 
 try:

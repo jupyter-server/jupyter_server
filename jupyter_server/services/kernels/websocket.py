@@ -1,19 +1,10 @@
 """Tornado handlers for WebSocket <-> ZMQ sockets."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-import json
 import re
-import struct
-import sys
 from typing import Optional, no_type_check
 from urllib.parse import urlparse
 
-try:
-    from jupyter_client.jsonutil import json_default
-except ImportError:
-    from jupyter_client.jsonutil import date_default as json_default
-
-from jupyter_client.jsonutil import extract_dates
 from tornado import ioloop, web
 from tornado.iostream import IOStream
 from tornado.websocket import WebSocketHandler
