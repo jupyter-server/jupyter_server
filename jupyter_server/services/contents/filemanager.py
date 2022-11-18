@@ -467,13 +467,13 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         path = path.strip("/")
         os_path = self._get_os_path(path)
         rm = os.unlink
-        four_o_four = "file or directory does not exist: %r" % path
-
-        if not self.exists(path):
-            raise web.HTTPError(404, four_o_four)
 
         if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
             raise web.HTTPError(400, f"Cannot delete file or directory {os_path!r}")
+
+        four_o_four = "file or directory does not exist: %r" % path
+        if not self.exists(path):
+            raise web.HTTPError(404, four_o_four)
 
         def _check_trash(os_path):
             if sys.platform in {"win32", "darwin"}:
@@ -803,6 +803,10 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         path = path.strip("/")
         os_path = self._get_os_path(path)
         rm = os.unlink
+
+        if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+            raise web.HTTPError(400, f"Cannot delete file or directory {os_path!r}")
+
         if not os.path.exists(os_path):
             raise web.HTTPError(404, "File or directory does not exist: %s" % os_path)
 
@@ -873,6 +877,11 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         new_os_path = self._get_os_path(new_path)
         old_os_path = self._get_os_path(old_path)
+
+        if (
+            is_hidden(old_os_path, self.root_dir) or is_hidden(new_os_path, self.root_dir)
+        ) and not self.allow_hidden:
+            raise web.HTTPError(400, f"Cannot rename file or directory {old_os_path!r}")
 
         # Should we proceed with the move?
         if os.path.exists(new_os_path) and not samefile(old_os_path, new_os_path):
