@@ -1,5 +1,7 @@
+import json
 import logging
 from contextlib import nullcontext
+from unittest import mock
 
 import pytest
 
@@ -177,3 +179,33 @@ def test_password_required(identity_provider_class, password_set, password_requi
 
     with ctx:
         idp.validate_security(app, ssl_options=None)
+
+
+async def test_auth_disabled(request, jp_serverapp, jp_fetch):
+    idp = PasswordIdentityProvider(
+        parent=jp_serverapp,
+        hashed_password="",
+        token="",
+    )
+    assert not idp.auth_enabled
+
+    with mock.patch.dict(jp_serverapp.web_app.settings, {"identity_provider": idp}):
+
+        resp = await jp_fetch("/api/me", headers={"Authorization": "", "Cookie": ""})
+
+        user_info = json.loads(resp.body.decode("utf8"))
+        # anonymous login sets a cookie
+        assert "Set-Cookie" in resp.headers
+        cookie = resp.headers["Set-Cookie"]
+
+        # second request, with cookie keeps the same anonymous user
+        resp = await jp_fetch("/api/me", headers={"Authorization": "", "Cookie": cookie})
+
+        user_info_repeat = json.loads(resp.body.decode("utf8"))
+        assert user_info_repeat["identity"] == user_info["identity"]
+
+        # another request, no cookie, new anonymous user
+        resp = await jp_fetch("/api/me", headers={"Authorization": "", "Cookie": ""})
+
+        user_info_2 = json.loads(resp.body.decode("utf8"))
+        assert user_info_2["identity"]["username"] != user_info["identity"]["username"]
