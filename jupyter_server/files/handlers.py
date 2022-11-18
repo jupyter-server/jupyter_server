@@ -1,7 +1,6 @@
 """Serve files directly from the ContentsManager."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-import json
 import mimetypes
 from base64 import decodebytes
 from typing import List
@@ -15,7 +14,7 @@ from jupyter_server.utils import ensure_async
 AUTH_RESOURCE = "contents"
 
 
-class FilesHandler(JupyterHandler):
+class FilesHandler(JupyterHandler, web.StaticFileHandler):
     """serve files via ContentsManager
 
     Normally used when ContentsManager is not a FileContentsManager.
@@ -85,8 +84,6 @@ class FilesHandler(JupyterHandler):
             if model["format"] == "base64":
                 b64_bytes = model["content"].encode("ascii")
                 self.write(decodebytes(b64_bytes))
-            elif model["format"] == "json":
-                self.write(json.dumps(model["content"]))
             else:
                 self.write(model["content"])
             self.flush()

@@ -37,33 +37,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install texlive-plain-generic inkscape texlive-xetex
           sudo apt-get install xvfb x11-utils libxkbcommon-x11-0 pandoc
-      - name: Run the tests
+      - name: Run the tests on posix
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: hatch run cov:test -W default || hatch run test:test -W default --lf
-      - name: Run the tests on pypy and windows
-        if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(matrix.os, 'windows') }}
-        run: hatch run test:test  -W default || hatch run test:test  -W default --lf
+        run: hatch run cov:test --cov-fail-under 75 || hatch run test:test --lf
+      - name: Run the tests on pypy
+        if: ${{ startsWith(matrix.python-version, 'pypy') }}
+        run: hatch run test:test || hatch run test:test --lf
+      - name: Run the tests on windows
+        if: ${{ startsWith(matrix.python-version, 'windows') }}
+        run: hatch run cov:nowarn -s || hatch run cov:nowarn --lf
       - name: Coverage
         run: |
           pip install codecov
           codecov
-
-  client8:
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Base Setup
-        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      - run: |
-          pip install -U pre jupyter_client
-          hatch run test:test || hatch run test:test  --lf
 
   pre-commit:
     name: pre-commit
@@ -102,38 +88,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Base Setup
-        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           python_version: "3.8"
-      - name: Install miniumum versions
-        uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
+      - uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
+        with:
+          only_create_file: 1
       - name: Run the unit tests
         run: |
-          pytest -vv -W default || pytest -vv -W default --lf
+          export PIP_CONSTRAINT="./contraints_file.txt"
+          hatch run test:nowarn || hatch run test:nowarn --lf
 
   test_prereleases:
     name: Test Prereleases
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Base Setup
-        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - uses: actions/checkout@v3
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           python_version: "3.11"
-      - name: Install the Python dependencies
-        run: |
-          pip install --no-deps .
-          pip install --pre --upgrade ".[test]"
-      - name: List installed packages
-        run: |
-          pip freeze
-          pip check
       - name: Run the tests
         run: |
-          pytest -vv -W default || pytest -vv -W default --lf
+          export PIP_PRE=1
+          hatch run test:nowarn || hatch run test:nowarn --lf
 
   make_sdist:
     name: Make SDist
@@ -173,7 +151,6 @@ jobs:
       - test_docs
       - test_minimum_versions
       - test_prereleases
-      - client8
       - check_links
       - test_sdist
     runs-on: ubuntu-latest

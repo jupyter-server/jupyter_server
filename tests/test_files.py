@@ -12,6 +12,16 @@ from .utils import expected_http_error
 
 @pytest.fixture(
     params=[
+        "jupyter_server.files.handlers.FilesHandler",
+        "jupyter_server.base.handlers.AuthenticatedFileHandler",
+    ]
+)
+def jp_argv(request):
+    return ["--ContentsManager.files_handler_class=" + request.param]
+
+
+@pytest.fixture(
+    params=[
         [False, ["å b"]],
         [False, ["å b", "ç. d"]],
         [True, [".å b"]],
@@ -31,6 +41,15 @@ async def fetch_expect_404(jp_fetch, *path_parts):
     with pytest.raises(HTTPClientError) as e:
         await jp_fetch("files", *path_parts, method="GET")
     assert expected_http_error(e, 404), [path_parts, e]
+
+
+async def test_file_types(jp_fetch, jp_root_dir):
+    path = Path(jp_root_dir, "test")
+    path.mkdir(parents=True, exist_ok=True)
+    foos = ["foo.tar.gz", "foo.bz", "foo.foo"]
+    for foo in foos:
+        (path / foo).write_text(foo)
+        await fetch_expect_200(jp_fetch, "test", foo)
 
 
 async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir, maybe_hidden):
@@ -85,7 +104,7 @@ async def test_contents_manager(jp_fetch, jp_serverapp, jp_root_dir):
 
     r = await jp_fetch("files/test.txt", method="GET")
     assert r.code == 200
-    assert r.headers["content-type"] == "text/plain; charset=UTF-8"
+    assert "text/plain" in r.headers["content-type"]
     assert r.body.decode() == "foobar"
 
 
