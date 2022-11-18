@@ -264,6 +264,9 @@ class IdentityProvider(LoggingConfigurable):
                 # Completely insecure! No authentication at all.
                 # No need to warn here, though; validate_security will have already done that.
                 user = self.generate_anonymous_user(handler)
+                # persist user on first request
+                # so the user data is stable for a given browser session
+                self.set_login_cookie(handler, user)
 
         return user
 
