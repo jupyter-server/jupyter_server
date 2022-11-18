@@ -28,6 +28,7 @@ from traitlets.config import Application
 import jupyter_server
 from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
+from jupyter_server.auth import authorized
 from jupyter_server.i18n import combine_translations
 from jupyter_server.services.security import csp_report_uri
 from jupyter_server.utils import (
@@ -813,6 +814,8 @@ class Template404(JupyterHandler):
 class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
     """static files should only be accessible when logged in"""
 
+    auth_resource = "contents"
+
     @property
     def content_security_policy(self):
         # In case we're serving HTML/SVG, confine any Javascript to a unique
@@ -820,11 +823,13 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
         return super().content_security_policy + "; sandbox allow-scripts"
 
     @web.authenticated
+    @authorized
     def head(self, path):
         self.check_xsrf_cookie()
         return super().head(path)
 
     @web.authenticated
+    @authorized
     def get(self, path):
         if os.path.splitext(path)[1] == ".ipynb" or self.get_argument("download", None):
             name = path.rsplit("/", 1)[-1]
