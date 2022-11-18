@@ -108,6 +108,8 @@ def deserialize_msg_from_ws_v1(ws_msg):
 
 
 class BaseKernelWebsocketConnection(LoggingConfigurable):
+    """A configurable base class for connecting Kernel WebSockets to ZMQ sockets."""
+
     @property
     def kernel_manager(self):
         return self.parent

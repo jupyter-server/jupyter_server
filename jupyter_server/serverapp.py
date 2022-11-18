@@ -803,6 +803,7 @@ class ServerApp(JupyterApp):
         GatewayClient,
         Authorizer,
         EventLogger,
+        ZMQChannelsWebsocketConnection,
     ]
 
     subcommands = dict(
@@ -1745,56 +1746,54 @@ class ServerApp(JupyterApp):
     )
 
     kernel_ws_protocol = Unicode(
-        None,
         allow_none=True,
         config=True,
-        help=_i18n(
-            "Preferred kernel message protocol over websocket to use (default: None). "
-            "If an empty string is passed, select the legacy protocol. If None, "
-            "the selected protocol will depend on what the front-end supports "
-            "(usually the most recent protocol supported by the back-end and the "
-            "front-end)."
-        ),
+        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.kernel_ws_protocol"),
     )
+
+    @observe("kernel_ws_protocol")
+    def _deprecated_kernel_ws_protocol(self, change):
+        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
 
     limit_rate = Bool(
-        True,
+        allow_none=True,
         config=True,
-        help=_i18n(
-            "Whether to limit the rate of IOPub messages (default: True). "
-            "If True, use iopub_msg_rate_limit, iopub_data_rate_limit and/or rate_limit_window "
-            "to tune the rate."
-        ),
+        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.limit_rate"),
     )
+
+    @observe("limit_rate")
+    def _deprecated_limit_rate(self, change):
+        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
 
     iopub_msg_rate_limit = Float(
-        1000,
+        allow_none=True,
         config=True,
-        help=_i18n(
-            """(msgs/sec)
-        Maximum rate at which messages can be sent on iopub before they are
-        limited."""
-        ),
+        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.iopub_msg_rate_limit"),
     )
+
+    @observe("iopub_msg_rate_limit")
+    def _deprecated_iopub_msg_rate_limit(self, change):
+        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
 
     iopub_data_rate_limit = Float(
-        1000000,
+        allow_none=True,
         config=True,
-        help=_i18n(
-            """(bytes/sec)
-        Maximum rate at which stream output can be sent on iopub before they are
-        limited."""
-        ),
+        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.iopub_data_rate_limit"),
     )
 
+    @observe("iopub_data_rate_limit")
+    def _deprecated_iopub_data_rate_limit(self, change):
+        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
+
     rate_limit_window = Float(
-        3,
+        allow_none=True,
         config=True,
-        help=_i18n(
-            """(sec) Time window used to
-        check the message and data rate limits."""
-        ),
+        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.rate_limit_window"),
     )
+
+    @observe("rate_limit_window")
+    def _deprecated_rate_limit_window(self, change):
+        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
 
     shutdown_no_activity_timeout = Integer(
         0,

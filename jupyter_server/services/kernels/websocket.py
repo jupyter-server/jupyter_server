@@ -173,7 +173,7 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):
         )
 
         if self.get_argument("session_id", None):
-            self.session.session = self.get_argument("session_id")
+            self.connection.session.session = self.get_argument("session_id")
         else:
             self.log.warning("No session ID specified")
         # For backwards compatibility with older versions
@@ -196,9 +196,6 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):
         self.connection.handle_incoming_message(ws_message)
 
     def on_close(self):
-        self.log.info(
-            f"Websocket is closing for session {self.connection.session.session} and kernel ID {self.kernel_id}"
-        )
         self.connection.disconnect()
         self.connection = None
 
