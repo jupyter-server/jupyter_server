@@ -405,8 +405,9 @@ def jp_fetch(jp_serverapp, http_server_client, jp_auth_header, jp_base_url):
         base_path_url = url_path_join(jp_base_url, path_url)
         params_url = urllib.parse.urlencode(params)
         url = base_path_url + "?" + params_url
-        # Add auth keys to header
-        headers.update(jp_auth_header)
+        # Add auth keys to header, if not overridden
+        for key, value in jp_auth_header.items():
+            headers.setdefault(key, value)
         # Make request.
         return http_server_client.fetch(url, headers=headers, request_timeout=20, **kwargs)
 
