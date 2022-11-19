@@ -36,6 +36,10 @@ from nbformat.sign import NotebookNotary
 from tornado import httpserver, ioloop, web
 from tornado.httputil import url_concat
 from tornado.log import LogFormatter, access_log, app_log, gen_log
+
+if not sys.platform.startswith("win"):
+    from tornado.netutil import bind_unix_socket
+
 from traitlets import (
     Any,
     Bool,
@@ -142,28 +146,11 @@ try:
 except (ImportError, AttributeError, AssertionError) as e:  # pragma: no cover
     raise ImportError(_i18n("The Jupyter Server requires tornado >=%s.%s.%s") % MIN_TORNADO) from e
 
-
 try:
     import resource
 except ImportError:
     # Windows
     resource = None  # type:ignore[assignment]
-
-
-# the minimum viable tornado version: needs to be kept in sync with setup.py
-MIN_TORNADO = (6, 1, 0)
-
-try:
-    import tornado
-
-    assert tornado.version_info >= MIN_TORNADO
-except (ImportError, AttributeError, AssertionError) as e:  # pragma: no cover
-    raise ImportError(_i18n("The Jupyter Server requires tornado >=%s.%s.%s") % MIN_TORNADO) from e
-
-
-if not sys.platform.startswith("win"):
-    from tornado.netutil import bind_unix_socket
-
 
 # -----------------------------------------------------------------------------
 # Module globals

@@ -1,5 +1,7 @@
-"""Add deprecation warning here.
-"""
+"""This module is deprecated in Jupyter Server 2.0"""
+# Raise a warning that this module is deprecated.
+import warnings
+
 from jupyter_server.services.kernels.connection.base import (
     deserialize_binary_message,
     deserialize_msg_from_ws_v1,
@@ -7,3 +9,9 @@ from jupyter_server.services.kernels.connection.base import (
     serialize_msg_to_ws_v1,
 )
 from jupyter_server.services.kernels.websocket import WebSocketMixin
+
+warnings.warn(
+    "jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0",
+    DeprecationWarning,
+    stacklevel=2,
+)
