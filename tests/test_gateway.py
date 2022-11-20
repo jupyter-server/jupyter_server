@@ -104,6 +104,12 @@ async def mock_gateway_request(url, **kwargs):
         else:
             raise HTTPError(404, message="Kernelspec does not exist: %s" % requested_kernelspec)
 
+    # Fetch kernelspec asset
+    if endpoint.rfind("/kernelspecs/"):
+        response_buf = BytesIO(b"foo")
+        response = await ensure_async(HTTPResponse(request, 200, buffer=response_buf))
+        return response
+
     # Create kernel
     if endpoint.endswith("/api/kernels") and method == "POST":
         json_body = json.loads(kwargs["body"])
@@ -393,7 +399,7 @@ async def test_gateway_class_mappings(init_gateway, jp_serverapp):
     assert jp_serverapp.kernel_spec_manager_class.__name__ == "GatewayKernelSpecManager"
 
 
-async def test_gateway_get_kernelspecs(init_gateway, jp_fetch):
+async def test_gateway_get_kernelspecs(init_gateway, jp_fetch, jp_serverapp):
     # Validate that kernelspecs come from gateway.
     with mocked_gateway:
         r = await jp_fetch("api", "kernelspecs", method="GET")
@@ -411,6 +417,10 @@ async def test_gateway_get_named_kernelspec(init_gateway, jp_fetch):
         assert r.code == 200
         kspec_foo = json.loads(r.body.decode("utf-8"))
         assert kspec_foo.get("name") == "kspec_foo"
+
+        r = await jp_fetch("kernelspecs", "kspec_foo", "hi", method="GET")
+        assert r.code == 200
+        assert r.body == b"foo"
 
         with pytest.raises(tornado.httpclient.HTTPClientError) as e:
             await jp_fetch("api", "kernelspecs", "no_such_spec", method="GET")
@@ -443,7 +453,7 @@ async def test_gateway_session_lifecycle(init_gateway, jp_root_dir, jp_fetch):
     assert await is_kernel_running(jp_fetch, kernel_id) is False
 
 
-async def test_gateway_kernel_lifecycle(init_gateway, jp_fetch):
+async def test_gateway_kernel_lifecycle(init_gateway, jp_serverapp, jp_ws_fetch, jp_fetch):
     # Validate kernel lifecycle functions; create, interrupt, restart and delete.
 
     # create
@@ -451,6 +461,12 @@ async def test_gateway_kernel_lifecycle(init_gateway, jp_fetch):
 
     # ensure kernel still considered running
     assert await is_kernel_running(jp_fetch, kernel_id) is True
+
+    ws = await jp_ws_fetch("api", "kernels", kernel_id, "channels")
+    ws.ping()
+    ws.write_message(b"hi")
+    ws.on_message(b"hi")
+    ws.close()
 
     # interrupt
     await interrupt_kernel(jp_fetch, kernel_id)
