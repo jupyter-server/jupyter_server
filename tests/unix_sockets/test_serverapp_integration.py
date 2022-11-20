@@ -78,6 +78,8 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file, capsys):
     captured = capsys.readouterr()
     assert encoded_sock_path not in captured.out
 
+    _ensure_stopped()
+
     _cleanup_process(p)
 
 
