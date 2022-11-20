@@ -20,7 +20,7 @@ from jupyter_server.utils import url_path_join
 
 from ...utils import expected_http_error
 
-TEST_TIMEOUT = 60
+TEST_TIMEOUT = 10
 
 
 @pytest.fixture(autouse=True)
@@ -556,9 +556,13 @@ async def test_restart_kernel(session_client, jp_base_url, jp_fetch, jp_ws_fetch
     model = json.loads(r.body.decode())
     assert model["connections"] == 0
 
-    # Open a websocket connection.
-    await jp_ws_fetch("api", "kernels", kid, "channels")
+    # Add a delay to give the kernel enough time to restart.
+    #    time.sleep(2)
 
+    # Open a websocket connection.
+    ws2 = await jp_ws_fetch("api", "kernels", kid, "channels")
+    # Close/open websocket
+    ws2.close()
     r = await jp_fetch("api", "kernels", kid, method="GET")
     model = json.loads(r.body.decode())
     assert model["connections"] == 1

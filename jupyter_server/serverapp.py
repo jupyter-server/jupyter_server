@@ -26,36 +26,6 @@ import warnings
 import webbrowser
 from base64 import encodebytes
 
-try:
-    import resource
-except ImportError:
-    # Windows
-    resource = None  # type:ignore[assignment]
-
-from jinja2 import Environment, FileSystemLoader
-from jupyter_core.paths import secure_write
-
-from jupyter_server.services.kernels.handlers import ZMQChannelsHandler
-from jupyter_server.transutils import _i18n, trans
-from jupyter_server.utils import ensure_async, pathname2url, urljoin
-
-# the minimum viable tornado version: needs to be kept in sync with setup.py
-MIN_TORNADO = (6, 1, 0)
-
-try:
-    import tornado
-
-    assert tornado.version_info >= MIN_TORNADO
-except (ImportError, AttributeError, AssertionError) as e:  # pragma: no cover
-    raise ImportError(_i18n("The Jupyter Server requires tornado >=%s.%s.%s") % MIN_TORNADO) from e
-
-from tornado import httpserver, ioloop, web
-from tornado.httputil import url_concat
-from tornado.log import LogFormatter, access_log, app_log, gen_log
-
-if not sys.platform.startswith("win"):
-    from tornado.netutil import bind_unix_socket
-
 from jupyter_client.kernelspec import KernelSpecManager
 from jupyter_client.manager import KernelManager
 from jupyter_client.session import Session
@@ -63,6 +33,13 @@ from jupyter_core.application import JupyterApp, base_aliases, base_flags
 from jupyter_core.paths import jupyter_runtime_dir
 from jupyter_events.logger import EventLogger
 from nbformat.sign import NotebookNotary
+from tornado import httpserver, ioloop, web
+from tornado.httputil import url_concat
+from tornado.log import LogFormatter, access_log, app_log, gen_log
+
+if not sys.platform.startswith("win"):
+    from tornado.netutil import bind_unix_socket
+
 from traitlets import (
     Any,
     Bool,
@@ -127,6 +104,12 @@ from jupyter_server.services.contents.manager import (
     AsyncContentsManager,
     ContentsManager,
 )
+from jupyter_server.services.kernels.connection.base import (
+    BaseKernelWebsocketConnection,
+)
+from jupyter_server.services.kernels.connection.channels import (
+    ZMQChannelsWebsocketConnection,
+)
 from jupyter_server.services.kernels.kernelmanager import (
     AsyncMappingKernelManager,
     MappingKernelManager,
@@ -140,6 +123,34 @@ from jupyter_server.utils import (
     url_path_join,
     urlencode_unix_socket_path,
 )
+
+try:
+    import resource
+except ImportError:
+    # Windows
+    resource = None  # type:ignore[assignment]
+
+from jinja2 import Environment, FileSystemLoader
+from jupyter_core.paths import secure_write
+
+from jupyter_server.transutils import _i18n, trans
+from jupyter_server.utils import ensure_async, pathname2url, urljoin
+
+# the minimum viable tornado version: needs to be kept in sync with setup.py
+MIN_TORNADO = (6, 1, 0)
+
+try:
+    import tornado
+
+    assert tornado.version_info >= MIN_TORNADO
+except (ImportError, AttributeError, AssertionError) as e:  # pragma: no cover
+    raise ImportError(_i18n("The Jupyter Server requires tornado >=%s.%s.%s") % MIN_TORNADO) from e
+
+try:
+    import resource
+except ImportError:
+    # Windows
+    resource = None  # type:ignore[assignment]
 
 # -----------------------------------------------------------------------------
 # Module globals
@@ -157,7 +168,10 @@ JUPYTER_SERVICE_HANDLERS = dict(
     config=["jupyter_server.services.config.handlers"],
     contents=["jupyter_server.services.contents.handlers"],
     files=["jupyter_server.files.handlers"],
-    kernels=["jupyter_server.services.kernels.handlers"],
+    kernels=[
+        "jupyter_server.services.kernels.handlers",
+        "jupyter_server.services.kernels.websocket",
+    ],
     kernelspecs=[
         "jupyter_server.kernelspecs.handlers",
         "jupyter_server.services.kernelspecs.handlers",
@@ -224,6 +238,7 @@ class ServerWebApplication(web.Application):
         *,
         authorizer=None,
         identity_provider=None,
+        kernel_websocket_connection_class=None,
     ):
         if identity_provider is None:
             warnings.warn(
@@ -259,6 +274,7 @@ class ServerWebApplication(web.Application):
             jinja_env_options,
             authorizer=authorizer,
             identity_provider=identity_provider,
+            kernel_websocket_connection_class=kernel_websocket_connection_class,
         )
         handlers = self.init_handlers(default_services, settings)
 
@@ -282,6 +298,7 @@ class ServerWebApplication(web.Application):
         *,
         authorizer=None,
         identity_provider=None,
+        kernel_websocket_connection_class=None,
     ):
 
         _template_path = settings_overrides.get(
@@ -362,6 +379,7 @@ class ServerWebApplication(web.Application):
             authorizer=authorizer,
             identity_provider=identity_provider,
             event_logger=event_logger,
+            kernel_websocket_connection_class=kernel_websocket_connection_class,
             # handlers
             extra_services=extra_services,
             # Jupyter stuff
@@ -772,6 +790,7 @@ class ServerApp(JupyterApp):
         GatewayClient,
         Authorizer,
         EventLogger,
+        ZMQChannelsWebsocketConnection,
     ]
 
     subcommands = dict(
@@ -1462,6 +1481,13 @@ class ServerApp(JupyterApp):
             return "jupyter_server.gateway.managers.GatewaySessionManager"
         return SessionManager
 
+    kernel_websocket_connection_class = Type(
+        default_value=ZMQChannelsWebsocketConnection,
+        klass=BaseKernelWebsocketConnection,
+        config=True,
+        help=_i18n("The kernel websocket connection class to use."),
+    )
+
     config_manager_class = Type(
         default_value=ConfigManager,
         config=True,
@@ -1707,56 +1733,54 @@ class ServerApp(JupyterApp):
     )
 
     kernel_ws_protocol = Unicode(
-        None,
         allow_none=True,
         config=True,
-        help=_i18n(
-            "Preferred kernel message protocol over websocket to use (default: None). "
-            "If an empty string is passed, select the legacy protocol. If None, "
-            "the selected protocol will depend on what the front-end supports "
-            "(usually the most recent protocol supported by the back-end and the "
-            "front-end)."
-        ),
+        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.kernel_ws_protocol"),
     )
+
+    @observe("kernel_ws_protocol")
+    def _deprecated_kernel_ws_protocol(self, change):
+        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
 
     limit_rate = Bool(
-        True,
+        allow_none=True,
         config=True,
-        help=_i18n(
-            "Whether to limit the rate of IOPub messages (default: True). "
-            "If True, use iopub_msg_rate_limit, iopub_data_rate_limit and/or rate_limit_window "
-            "to tune the rate."
-        ),
+        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.limit_rate"),
     )
+
+    @observe("limit_rate")
+    def _deprecated_limit_rate(self, change):
+        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
 
     iopub_msg_rate_limit = Float(
-        1000,
+        allow_none=True,
         config=True,
-        help=_i18n(
-            """(msgs/sec)
-        Maximum rate at which messages can be sent on iopub before they are
-        limited."""
-        ),
+        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.iopub_msg_rate_limit"),
     )
+
+    @observe("iopub_msg_rate_limit")
+    def _deprecated_iopub_msg_rate_limit(self, change):
+        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
 
     iopub_data_rate_limit = Float(
-        1000000,
+        allow_none=True,
         config=True,
-        help=_i18n(
-            """(bytes/sec)
-        Maximum rate at which stream output can be sent on iopub before they are
-        limited."""
-        ),
+        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.iopub_data_rate_limit"),
     )
 
+    @observe("iopub_data_rate_limit")
+    def _deprecated_iopub_data_rate_limit(self, change):
+        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
+
     rate_limit_window = Float(
-        3,
+        allow_none=True,
         config=True,
-        help=_i18n(
-            """(sec) Time window used to
-        check the message and data rate limits."""
-        ),
+        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.rate_limit_window"),
     )
+
+    @observe("rate_limit_window")
+    def _deprecated_rate_limit_window(self, change):
+        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
 
     shutdown_no_activity_timeout = Integer(
         0,
@@ -2025,6 +2049,7 @@ class ServerApp(JupyterApp):
             self.jinja_environment_options,
             authorizer=self.authorizer,
             identity_provider=self.identity_provider,
+            kernel_websocket_connection_class=self.kernel_websocket_connection_class,
         )
         if self.certfile:
             self.ssl_options["certfile"] = self.certfile
@@ -2820,7 +2845,7 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
-        await ZMQChannelsHandler.close_all()
+        await self.kernel_websocket_connection_class.close_all()
         if getattr(self, "kernel_manager", None):
             self.kernel_manager.__del__()
         if getattr(self, "session_manager", None):
