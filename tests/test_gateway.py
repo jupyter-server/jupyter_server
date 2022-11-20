@@ -105,7 +105,7 @@ async def mock_gateway_request(url, **kwargs):
             raise HTTPError(404, message="Kernelspec does not exist: %s" % requested_kernelspec)
 
     # Fetch kernelspec asset
-    if endpoint.rfind("/kernelspecs/"):
+    if endpoint.rfind("/kernelspecs/") >= 0 and method == "GET":
         response_buf = BytesIO(b"foo")
         response = await ensure_async(HTTPResponse(request, 200, buffer=response_buf))
         return response
