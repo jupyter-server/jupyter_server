@@ -138,7 +138,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
     """Proxy web socket connection to a kernel/enterprise gateway."""
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         self.kernel_id = None
         self.ws = None
         self.ws_future: Future = Future()
