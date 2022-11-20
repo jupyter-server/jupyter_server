@@ -28,6 +28,10 @@ jobs:
       - name: Run the tests
         run: |
           hatch run cov:integration
+      - name: Coverage
+        run: |
+          pip install codecov
+          codecov
 
   integration_check: # This job does nothing and is only used for the branch protection
     if: always()
