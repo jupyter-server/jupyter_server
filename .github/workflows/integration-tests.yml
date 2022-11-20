@@ -29,7 +29,6 @@ jobs:
         run: |
           hatch run cov:integration
 
-
   integration_check: # This job does nothing and is only used for the branch protection
     if: always()
     needs:
