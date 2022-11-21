@@ -6,7 +6,12 @@ import time
 
 import pytest
 
-from jupyter_server.serverapp import list_running_servers, shutdown_server
+from jupyter_server.serverapp import (
+    JupyterServerListApp,
+    JupyterServerStopApp,
+    list_running_servers,
+    shutdown_server,
+)
 from jupyter_server.utils import urlencode_unix_socket, urlencode_unix_socket_path
 
 # Skip this module if on Windows. Unix sockets are not available on Windows.
@@ -57,6 +62,13 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
         raise AssertionError("expected stop command to fail due to target mis-match")
 
     assert encoded_sock_path.encode() in subprocess.check_output(["jupyter-server", "list"])
+
+    # Fake out stopping the server.
+    app = JupyterServerStopApp(sock=str(jp_unix_socket_file))
+    app.initialize([])
+    app.shutdown_server = lambda _: True  # type:ignore
+    app._maybe_remove_unix_socket = lambda _: _  # type: ignore
+    app.start()
 
     subprocess.check_output(["jupyter-server", "stop", jp_unix_socket_file])
 
@@ -195,4 +207,44 @@ def test_shutdown_server(jp_environ):
             break
         except ConnectionRefusedError:
             time.sleep(0.1)
-    p.wait()
+    _cleanup_process(p)
+
+
+@pytest.mark.integration_test
+def test_jupyter_server_apps(jp_environ):
+
+    # Start a server in another process
+    # Stop that server
+    import subprocess
+
+    from jupyter_client.connect import LocalPortCache
+
+    port = LocalPortCache().find_available_port("localhost")
+    p = subprocess.Popen(["jupyter-server", f"--port={port}"])
+    servers = []
+    while 1:
+        servers = list(list_running_servers())
+        if len(servers):
+            break
+        time.sleep(0.1)
+
+    app = JupyterServerListApp()
+    app.initialize([])
+    app.jsonlist = True
+    app.start()
+    app.jsonlist = False
+    app.json = True
+    app.start()
+    app.json = False
+    app.start()
+
+    app = JupyterServerStopApp()
+    app.initialize([])
+    app.port = port
+    while 1:
+        try:
+            app.start()
+            break
+        except ConnectionRefusedError:
+            time.sleep(0.1)
+    _cleanup_process(p)

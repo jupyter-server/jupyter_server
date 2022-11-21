@@ -2,6 +2,7 @@ import getpass
 import logging
 import os
 import pathlib
+import warnings
 from unittest.mock import patch
 
 import pytest
@@ -10,7 +11,13 @@ from traitlets import TraitError
 from traitlets.tests.utils import check_help_all_output
 
 from jupyter_server.auth.security import passwd_check
-from jupyter_server.serverapp import JupyterPasswordApp, ServerApp, list_running_servers
+from jupyter_server.serverapp import (
+    JupyterPasswordApp,
+    ServerApp,
+    ServerWebApplication,
+    list_running_servers,
+    random_ports,
+)
 
 
 def test_help_output():
@@ -401,3 +408,32 @@ def test_observed_root_dir_does_not_update_preferred_dir(tmp_path, jp_configurab
     app = jp_configurable_serverapp(root_dir=path, preferred_dir=path)
     app.root_dir = new_path
     assert app.preferred_dir == path
+
+
+def test_random_ports():
+    ports = list(random_ports(500, 50))
+    assert len(ports) == 50
+
+
+def test_server_web_application(jp_serverapp):
+    server: ServerApp = jp_serverapp
+    server.default_url = "/foo"
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        app = ServerWebApplication(
+            server,
+            [],
+            server.kernel_manager,
+            server.contents_manager,
+            server.session_manager,
+            server.kernel_manager,
+            server.config_manager,
+            server.event_logger,
+            ["jupyter_server.gateway.handlers"],
+            server.log,
+            server.base_url,
+            server.default_url,
+            {},
+            {},
+        )
+    app.init_handlers([], app.settings)

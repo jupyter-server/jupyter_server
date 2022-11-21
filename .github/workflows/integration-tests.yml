@@ -17,17 +17,13 @@ jobs:
         uses: actions/checkout@v3
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      - name: Install the Python dependencies
-        run: |
-          pip install -e ".[test]"
-          pip install pytest-github-actions-annotate-failures
-      - name: List installed packages
-        run: |
-          pip freeze
-          pip check
       - name: Run the tests
         run: |
           hatch run cov:integration
+      - name: Coverage
+        run: |
+          pip install codecov
+          codecov
 
   integration_check: # This job does nothing and is only used for the branch protection
     if: always()
