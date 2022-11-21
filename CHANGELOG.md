@@ -4,6 +4,47 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.0rc5
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0rc4...12f7c1d47e0ca76f8c39dfd1499142e8b6df09ee))
+
+### Enhancements made
+
+- New configurable/overridable kernel ZMQ+Websocket connection API [#1047](https://github.com/jupyter-server/jupyter_server/pull/1047) ([@Zsailer](https://github.com/Zsailer))
+- Add authorization to AuthenticatedFileHandler [#1021](https://github.com/jupyter-server/jupyter_server/pull/1021) ([@jiajunjie](https://github.com/jiajunjie))
+
+### Bugs fixed
+
+- persist userid cookie when auth is disabled [#1076](https://github.com/jupyter-server/jupyter_server/pull/1076) ([@minrk](https://github.com/minrk))
+- Fix rename_file and delete_file to handle hidden files properly [#1073](https://github.com/jupyter-server/jupyter_server/pull/1073) ([@yacchin1205](https://github.com/yacchin1205))
+- Add more coverage [#1069](https://github.com/jupyter-server/jupyter_server/pull/1069) ([@blink1073](https://github.com/blink1073))
+- Increase nbconvert and checkpoints coverage [#1066](https://github.com/jupyter-server/jupyter_server/pull/1066) ([@blink1073](https://github.com/blink1073))
+
+### Maintenance and upkeep improvements
+
+- Add more serverapp tests [#1079](https://github.com/jupyter-server/jupyter_server/pull/1079) ([@blink1073](https://github.com/blink1073))
+- Add more gateway tests [#1078](https://github.com/jupyter-server/jupyter_server/pull/1078) ([@blink1073](https://github.com/blink1073))
+- More cleanup [#1077](https://github.com/jupyter-server/jupyter_server/pull/1077) ([@blink1073](https://github.com/blink1073))
+- Fix hatch scripts and windows workflow run [#1074](https://github.com/jupyter-server/jupyter_server/pull/1074) ([@blink1073](https://github.com/blink1073))
+- use recommended github-workflows checker [#1071](https://github.com/jupyter-server/jupyter_server/pull/1071) ([@blink1073](https://github.com/blink1073))
+- Add more coverage [#1069](https://github.com/jupyter-server/jupyter_server/pull/1069) ([@blink1073](https://github.com/blink1073))
+- More coverage [#1067](https://github.com/jupyter-server/jupyter_server/pull/1067) ([@blink1073](https://github.com/blink1073))
+- Increase nbconvert and checkpoints coverage [#1066](https://github.com/jupyter-server/jupyter_server/pull/1066) ([@blink1073](https://github.com/blink1073))
+- Test downstream jupyter_server_terminals [#1065](https://github.com/jupyter-server/jupyter_server/pull/1065) ([@blink1073](https://github.com/blink1073))
+- Test notebook prerelease [#1064](https://github.com/jupyter-server/jupyter_server/pull/1064) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- docs: document the logging_config trait [#844](https://github.com/jupyter-server/jupyter_server/pull/844) ([@oliver-sanders](https://github.com/oliver-sanders))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-11-10&to=2022-11-21&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-11-10..2022-11-21&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-11-10..2022-11-21&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-11-10..2022-11-21&type=Issues) | [@jiajunjie](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajiajunjie+updated%3A2022-11-10..2022-11-21&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2022-11-10..2022-11-21&type=Issues) | [@oliver-sanders](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aoliver-sanders+updated%3A2022-11-10..2022-11-21&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2022-11-10..2022-11-21&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-11-10..2022-11-21&type=Issues) | [@yacchin1205](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ayacchin1205+updated%3A2022-11-10..2022-11-21&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-11-10..2022-11-21&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.0rc4
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0rc3...f6b732c652e0b5a600ff0d3f60c6a34173d8d6a5))
@@ -36,8 +77,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-10-17&to=2022-11-10&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-10-17..2022-11-10&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2022-10-17..2022-11-10&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-10-17..2022-11-10&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2022-10-17..2022-11-10&type=Issues) | [@divyansshhh](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adivyansshhh+updated%3A2022-10-17..2022-11-10&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afcollonval+updated%3A2022-10-17..2022-11-10&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2022-10-17..2022-11-10&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.0rc3
 
