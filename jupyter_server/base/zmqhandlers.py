@@ -2,6 +2,8 @@
 # Raise a warning that this module is deprecated.
 import warnings
 
+from tornado.websocket import WebSocketHandler
+
 from jupyter_server.base.websocket import WebSocketMixin
 from jupyter_server.services.kernels.connection.base import (
     deserialize_binary_message,
