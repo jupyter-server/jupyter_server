@@ -281,7 +281,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         stale_handler = self._open_sessions.get(self.session_key)
         if stale_handler:
             self.log.warning("Replacing stale connection: %s", self.session_key)
-            await stale_handler.close()
+            stale_handler.close()
         if (
             self.kernel_id in self.multi_kernel_manager
         ):  # only update open sessions if kernel is actively managed
