@@ -61,28 +61,11 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
     else:
         raise AssertionError("expected stop command to fail due to target mis-match")
 
-    # app = JupyterServerListApp()
-    # app.initialize([])
-    # app.start()
-    # captured = capsys.readouterr()
-    # assert encoded_sock_path in captured.out
-
     assert encoded_sock_path.encode() in subprocess.check_output(["jupyter-server", "list"])
 
-    app = JupyterServerStopApp()
-    app.initialize([])
-    app.sock = str(jp_unix_socket_file)
-    app.start()
-
-    # app = JupyterServerListApp()
-    # app.initialize([])
-    # app.start()
-    # captured = capsys.readouterr()
-    # assert encoded_sock_path not in captured.out
+    subprocess.check_output(["jupyter-server", "stop", jp_unix_socket_file])
 
     assert encoded_sock_path.encode() not in subprocess.check_output(["jupyter-server", "list"])
-
-    _ensure_stopped()
 
     _cleanup_process(p)
 
@@ -220,30 +203,30 @@ def test_shutdown_server(jp_environ):
     _cleanup_process(p)
 
 
-# @pytest.mark.integration_test
-# def test_jupyter_server_stop_app(jp_environ):
+@pytest.mark.integration_test
+def test_jupyter_server_stop_app(jp_environ):
 
-#     # Start a server in another process
-#     # Stop that server
-#     import subprocess
+    # Start a server in another process
+    # Stop that server
+    import subprocess
 
-#     from jupyter_client.connect import LocalPortCache
+    from jupyter_client.connect import LocalPortCache
 
-#     port = LocalPortCache().find_available_port("localhost")
-#     p = subprocess.Popen(["jupyter-server", f"--port={port}"])
-#     servers = []
-#     while 1:
-#         servers = list(list_running_servers())
-#         if len(servers):
-#             break
-#         time.sleep(0.1)
-#     app = JupyterServerStopApp()
-#     app.initialize([])
-#     app.port = port
-#     while 1:
-#         try:
-#             app.start()
-#             break
-#         except ConnectionRefusedError:
-#             time.sleep(0.1)
-#     _cleanup_process(p)
+    port = LocalPortCache().find_available_port("localhost")
+    p = subprocess.Popen(["jupyter-server", f"--port={port}"])
+    servers = []
+    while 1:
+        servers = list(list_running_servers())
+        if len(servers):
+            break
+        time.sleep(0.1)
+    app = JupyterServerStopApp()
+    app.initialize([])
+    app.port = port
+    while 1:
+        try:
+            app.start()
+            break
+        except ConnectionRefusedError:
+            time.sleep(0.1)
+    _cleanup_process(p)
