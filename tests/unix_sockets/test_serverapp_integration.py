@@ -63,7 +63,9 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
 
     assert encoded_sock_path.encode() in subprocess.check_output(["jupyter-server", "list"])
 
-    subprocess.check_output(["jupyter-server", "stop", jp_unix_socket_file])
+    app = JupyterServerStopApp(sock=str(jp_unix_socket_file))
+    app.initialize([])
+    app.start()
 
     assert encoded_sock_path.encode() not in subprocess.check_output(["jupyter-server", "list"])
 
