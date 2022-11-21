@@ -220,30 +220,30 @@ def test_shutdown_server(jp_environ):
     _cleanup_process(p)
 
 
-@pytest.mark.integration_test
-def test_jupyter_server_stop_app(jp_environ):
+# @pytest.mark.integration_test
+# def test_jupyter_server_stop_app(jp_environ):
 
-    # Start a server in another process
-    # Stop that server
-    import subprocess
+#     # Start a server in another process
+#     # Stop that server
+#     import subprocess
 
-    from jupyter_client.connect import LocalPortCache
+#     from jupyter_client.connect import LocalPortCache
 
-    port = LocalPortCache().find_available_port("localhost")
-    p = subprocess.Popen(["jupyter-server", f"--port={port}"])
-    servers = []
-    while 1:
-        servers = list(list_running_servers())
-        if len(servers):
-            break
-        time.sleep(0.1)
-    app = JupyterServerStopApp()
-    app.initialize([])
-    app.port = port
-    while 1:
-        try:
-            app.start()
-            break
-        except ConnectionRefusedError:
-            time.sleep(0.1)
-    _cleanup_process(p)
+#     port = LocalPortCache().find_available_port("localhost")
+#     p = subprocess.Popen(["jupyter-server", f"--port={port}"])
+#     servers = []
+#     while 1:
+#         servers = list(list_running_servers())
+#         if len(servers):
+#             break
+#         time.sleep(0.1)
+#     app = JupyterServerStopApp()
+#     app.initialize([])
+#     app.port = port
+#     while 1:
+#         try:
+#             app.start()
+#             break
+#         except ConnectionRefusedError:
+#             time.sleep(0.1)
+#     _cleanup_process(p)
