@@ -29,58 +29,62 @@ def _cleanup_process(proc):
             fid.close()
 
 
-# @pytest.mark.integration_test
-# def test_shutdown_sock_server_integration(jp_unix_socket_file, capsys):
-#     url = urlencode_unix_socket(jp_unix_socket_file).encode()
-#     encoded_sock_path = urlencode_unix_socket_path(jp_unix_socket_file)
-#     p = subprocess.Popen(
-#         ["jupyter-server", "--sock=%s" % jp_unix_socket_file, "--sock-mode=0700"],
-#         stdout=subprocess.PIPE,
-#         stderr=subprocess.PIPE,
-#     )
+@pytest.mark.integration_test
+def test_shutdown_sock_server_integration(jp_unix_socket_file, capsys):
+    url = urlencode_unix_socket(jp_unix_socket_file).encode()
+    encoded_sock_path = urlencode_unix_socket_path(jp_unix_socket_file)
+    p = subprocess.Popen(
+        ["jupyter-server", "--sock=%s" % jp_unix_socket_file, "--sock-mode=0700"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
 
-#     complete = False
-#     assert p.stderr is not None
-#     for line in iter(p.stderr.readline, b""):
-#         if url in line:
-#             complete = True
-#             break
+    complete = False
+    assert p.stderr is not None
+    for line in iter(p.stderr.readline, b""):
+        if url in line:
+            complete = True
+            break
 
-#     assert complete, "did not find socket URL in stdout when launching notebook"
+    assert complete, "did not find socket URL in stdout when launching notebook"
 
-#     socket_path = encoded_sock_path.encode()
-#     assert socket_path in subprocess.check_output(["jupyter-server", "list"])
+    socket_path = encoded_sock_path.encode()
+    assert socket_path in subprocess.check_output(["jupyter-server", "list"])
 
-#     # Ensure umask is properly applied.
-#     assert stat.S_IMODE(os.lstat(jp_unix_socket_file).st_mode) == 0o700
+    # Ensure umask is properly applied.
+    assert stat.S_IMODE(os.lstat(jp_unix_socket_file).st_mode) == 0o700
 
-#     try:
-#         subprocess.check_output(["jupyter-server", "stop"], stderr=subprocess.STDOUT)
-#     except subprocess.CalledProcessError as e:
-#         assert "There is currently no server running on" in e.output.decode()
-#     else:
-#         raise AssertionError("expected stop command to fail due to target mis-match")
+    try:
+        subprocess.check_output(["jupyter-server", "stop"], stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        assert "There is currently no server running on" in e.output.decode()
+    else:
+        raise AssertionError("expected stop command to fail due to target mis-match")
 
-#     app = JupyterServerListApp()
-#     app.initialize([])
-#     app.start()
-#     captured = capsys.readouterr()
-#     assert encoded_sock_path in captured.out
+    # app = JupyterServerListApp()
+    # app.initialize([])
+    # app.start()
+    # captured = capsys.readouterr()
+    # assert encoded_sock_path in captured.out
 
-#     app = JupyterServerStopApp()
-#     app.sock = str(jp_unix_socket_file)
-#     app.initialize([])
-#     app.start()
+    assert encoded_sock_path in subprocess.check_output(["jupyter-server", "list"])
 
-#     app = JupyterServerListApp()
-#     app.initialize([])
-#     app.start()
-#     captured = capsys.readouterr()
-#     assert encoded_sock_path not in captured.out
+    app = JupyterServerStopApp()
+    app.sock = str(jp_unix_socket_file)
+    app.initialize([])
+    app.start()
 
-#     _ensure_stopped()
+    # app = JupyterServerListApp()
+    # app.initialize([])
+    # app.start()
+    # captured = capsys.readouterr()
+    # assert encoded_sock_path not in captured.out
 
-#     _cleanup_process(p)
+    assert encoded_sock_path not in subprocess.check_output(["jupyter-server", "list"])
+
+    _ensure_stopped()
+
+    _cleanup_process(p)
 
 
 @pytest.mark.integration_test
