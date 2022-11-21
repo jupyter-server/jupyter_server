@@ -211,7 +211,7 @@ def test_shutdown_server(jp_environ):
 
 
 @pytest.mark.integration_test
-def test_jupyter_server_stop_app(jp_environ):
+def test_jupyter_server_apps(jp_environ):
 
     # Start a server in another process
     # Stop that server
@@ -227,6 +227,17 @@ def test_jupyter_server_stop_app(jp_environ):
         if len(servers):
             break
         time.sleep(0.1)
+
+    app = JupyterServerListApp()
+    app.initialize([])
+    app.jsonlist = True
+    app.start()
+    app.jsonlist = False
+    app.json = True
+    app.start()
+    app.json = False
+    app.start()
+
     app = JupyterServerStopApp()
     app.initialize([])
     app.port = port
