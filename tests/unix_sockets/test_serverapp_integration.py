@@ -70,8 +70,8 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
     assert encoded_sock_path.encode() in subprocess.check_output(["jupyter-server", "list"])
 
     app = JupyterServerStopApp()
-    app.sock = str(jp_unix_socket_file)
     app.initialize([])
+    app.sock = str(jp_unix_socket_file)
     app.start()
 
     # app = JupyterServerListApp()
@@ -217,7 +217,7 @@ def test_shutdown_server(jp_environ):
             break
         except ConnectionRefusedError:
             time.sleep(0.1)
-    p.wait()
+    _cleanup_process(p)
 
 
 @pytest.mark.integration_test
@@ -238,12 +238,12 @@ def test_jupyter_server_stop_app(jp_environ):
             break
         time.sleep(0.1)
     app = JupyterServerStopApp()
-    app.port = port
     app.initialize([])
+    app.port = port
     while 1:
         try:
             app.start()
             break
         except ConnectionRefusedError:
             time.sleep(0.1)
-    p.wait()
+    _cleanup_process(p)
