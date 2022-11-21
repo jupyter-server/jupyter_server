@@ -30,7 +30,7 @@ def _cleanup_process(proc):
 
 
 @pytest.mark.integration_test
-def test_shutdown_sock_server_integration(jp_unix_socket_file, capsys):
+def test_shutdown_sock_server_integration(jp_unix_socket_file):
     url = urlencode_unix_socket(jp_unix_socket_file).encode()
     encoded_sock_path = urlencode_unix_socket_path(jp_unix_socket_file)
     p = subprocess.Popen(
@@ -67,7 +67,7 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file, capsys):
     # captured = capsys.readouterr()
     # assert encoded_sock_path in captured.out
 
-    assert encoded_sock_path in subprocess.check_output(["jupyter-server", "list"])
+    assert encoded_sock_path.encode() in subprocess.check_output(["jupyter-server", "list"])
 
     app = JupyterServerStopApp()
     app.sock = str(jp_unix_socket_file)
@@ -80,7 +80,7 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file, capsys):
     # captured = capsys.readouterr()
     # assert encoded_sock_path not in captured.out
 
-    assert encoded_sock_path not in subprocess.check_output(["jupyter-server", "list"])
+    assert encoded_sock_path.encode() not in subprocess.check_output(["jupyter-server", "list"])
 
     _ensure_stopped()
 
