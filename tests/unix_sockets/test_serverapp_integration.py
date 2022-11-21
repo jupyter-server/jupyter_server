@@ -67,7 +67,7 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
     app = JupyterServerStopApp(sock=str(jp_unix_socket_file))
     app.initialize([])
     app.shutdown_server = lambda _: True  # type:ignore
-    app._maybe_remove_unix_socket = lambda: _  # type: ignore
+    app._maybe_remove_unix_socket = lambda _: _  # type: ignore
     app.start()
 
     subprocess.check_output(["jupyter-server", "stop", jp_unix_socket_file])
