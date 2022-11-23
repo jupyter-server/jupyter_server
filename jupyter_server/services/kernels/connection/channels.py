@@ -333,7 +333,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         buffer_info = self.multi_kernel_manager.get_buffer(self.kernel_id, self.session_key)
         if buffer_info and buffer_info["session_key"] == self.session_key:
             self.log.info("Restoring connection for %s", self.session_key)
-            if self.kernel_manager.ports_changed(self.kernel_id):
+            if self.multi_kernel_manager.ports_changed(self.kernel_id):
                 # If the kernel's ports have changed (some restarts trigger this)
                 # then reset the channels so nudge() is using the correct iopub channel
                 self.create_stream()
@@ -349,7 +349,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     self.log.info("Replaying %s buffered messages", len(replay_buffer))
                     for channel, msg_list in replay_buffer:
                         stream = self.channels[channel]
-                        self._on_zmq_reply(stream, msg_list)
+                        self.handle_outgoing_message(stream, msg_list)
 
             connected.add_done_callback(replay)
         else:
@@ -379,7 +379,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
 
         def subscribe(value):
             for _, stream in self.channels.items():
-                stream.on_recv_stream(self._on_zmq_reply)
+                stream.on_recv_stream(self.handle_outgoing_message)
 
         connected.add_done_callback(subscribe)
         ZMQChannelsWebsocketConnection._open_sockets.add(self)
