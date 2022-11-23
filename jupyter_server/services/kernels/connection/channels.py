@@ -485,6 +485,9 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         else:
             msg = self.session.deserialize(fed_msg_list)
 
+        if isinstance(stream, str):
+            stream = self.channels[stream]
+
         channel = getattr(stream, "channel", None)
         parts = fed_msg_list[1:]
 
@@ -534,7 +537,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             return json.dumps(msg, default=json_default)
 
     def select_subprotocol(self, subprotocols):
-        preferred_protocol = self.settings.get("kernel_ws_protocol")
+        preferred_protocol = self.kernel_ws_protocol
         if preferred_protocol is None:
             preferred_protocol = "v1.kernel.websocket.jupyter.org"
         elif preferred_protocol == "":
@@ -792,7 +795,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         self._send_status_message("dead")
 
     def _on_error(self, channel, msg, msg_list):
-        if self.kernel_manager.allow_tracebacks:
+        if self.multi_kernel_manager.allow_tracebacks:
             return
 
         if channel == "iopub":
