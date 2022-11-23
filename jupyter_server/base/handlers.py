@@ -68,6 +68,10 @@ class AuthenticatedHandler(web.RequestHandler):
     """A RequestHandler with an authenticated user."""
 
     @property
+    def base_url(self) -> str:
+        return self.settings.get("base_url", "/")
+
+    @property
     def content_security_policy(self):
         """The default Content-Security-Policy header
 
@@ -287,10 +291,6 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def mathjax_config(self):
         return self.settings.get("mathjax_config", "TeX-AMS-MML_HTMLorMML-full,Safe")
-
-    @property
-    def base_url(self) -> str:
-        return self.settings.get("base_url", "/")
 
     @property
     def default_url(self):
@@ -830,12 +830,12 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
 
     @web.authenticated
     @authorized
-    def get(self, path):
+    def get(self, path, **kwargs):
         if os.path.splitext(path)[1] == ".ipynb" or self.get_argument("download", None):
             name = path.rsplit("/", 1)[-1]
             self.set_attachment_header(name)
 
-        return web.StaticFileHandler.get(self, path)
+        return web.StaticFileHandler.get(self, path, **kwargs)
 
     def get_content_type(self):
         assert self.absolute_path is not None
@@ -879,7 +879,7 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
         return abs_path
 
 
-def json_errors(method):
+def json_errors(method):  # pragma: no cover
     """Decorate methods with this to return GitHub style JSON errors.
 
     This should be used on any JSON API on any handler method that can raise HTTPErrors.
