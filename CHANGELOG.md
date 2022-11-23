@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.0rc7
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0rc6...339038b532ec928b59861f9426a8ba1214454741))
+
+### Bugs fixed
+
+- Use handle_outgoing_message for ZMQ replies [#1089](https://github.com/jupyter-server/jupyter_server/pull/1089) ([@Zsailer](https://github.com/Zsailer))
+- Call `ports_changed` on the multi-kernel-manager instead of the kernel manager [#1088](https://github.com/jupyter-server/jupyter_server/pull/1088) ([@Zsailer](https://github.com/Zsailer))
+- Add more websocket connection tests and fix bugs [#1085](https://github.com/jupyter-server/jupyter_server/pull/1085) ([@blink1073](https://github.com/blink1073))
+
+### Maintenance and upkeep improvements
+
+- Add more websocket connection tests and fix bugs [#1085](https://github.com/jupyter-server/jupyter_server/pull/1085) ([@blink1073](https://github.com/blink1073))
+- Use base setup dependency type [#1084](https://github.com/jupyter-server/jupyter_server/pull/1084) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-11-21&to=2022-11-23&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-11-21..2022-11-23&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-11-21..2022-11-23&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-11-21..2022-11-23&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.0rc6
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0rc5...cd060da67aa6e3e5d8ff791f0a559a91282be2b3))
@@ -19,8 +42,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-11-21&to=2022-11-21&type=c))
 
 [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-11-21..2022-11-21&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2022-11-21..2022-11-21&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2022-11-21..2022-11-21&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.0rc5
 
