@@ -37,7 +37,7 @@ def test_authenticated_handler(jp_serverapp):
         assert isinstance(handler.identity_provider, IdentityProvider)
 
 
-def test_juptyer_handler(jp_serverapp):
+def test_jupyter_handler(jp_serverapp):
     app: ServerApp = jp_serverapp
     headers = HTTPHeaders({"Origin": "foo"})
     request = HTTPRequest("OPTIONS", headers=headers)
