@@ -57,7 +57,7 @@ def test_juptyer_handler(jp_serverapp):
     handler.settings["allow_origin_pat"] = "foo"
     handler.settings["allow_credentials"] = True
     handler.set_cors_headers()
-    assert handler.check_referer() == True
+    assert handler.check_referer() is True
 
 
 def test_api_handler(jp_serverapp):
