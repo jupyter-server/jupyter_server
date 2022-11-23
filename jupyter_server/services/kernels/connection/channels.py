@@ -349,7 +349,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     self.log.info("Replaying %s buffered messages", len(replay_buffer))
                     for channel, msg_list in replay_buffer:
                         stream = self.channels[channel]
-                        self._on_zmq_reply(stream, msg_list)
+                        self.handle_outgoing_message(stream, msg_list)
 
             connected.add_done_callback(replay)
         else:
@@ -379,7 +379,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
 
         def subscribe(value):
             for _, stream in self.channels.items():
-                stream.on_recv_stream(self._on_zmq_reply)
+                stream.on_recv_stream(self.handle_outgoing_message)
 
         connected.add_done_callback(subscribe)
         ZMQChannelsWebsocketConnection._open_sockets.add(self)
