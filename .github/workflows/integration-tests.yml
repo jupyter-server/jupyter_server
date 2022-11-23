@@ -22,7 +22,7 @@ jobs:
           hatch run cov:integration
       - name: Coverage
         run: |
-          pip install codecov
+          pip install codecov coverage[toml]
           codecov
 
   integration_check: # This job does nothing and is only used for the branch protection

@@ -48,7 +48,7 @@ jobs:
         run: hatch run cov:nowarn -s || hatch run cov:nowarn --lf
       - name: Coverage
         run: |
-          pip install codecov
+          pip install codecov coverage[toml]
           codecov
 
   pre_commit:
