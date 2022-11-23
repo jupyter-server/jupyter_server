@@ -333,7 +333,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         buffer_info = self.multi_kernel_manager.get_buffer(self.kernel_id, self.session_key)
         if buffer_info and buffer_info["session_key"] == self.session_key:
             self.log.info("Restoring connection for %s", self.session_key)
-            if self.kernel_manager.ports_changed(self.kernel_id):
+            if self.multi_kernel_manager.ports_changed(self.kernel_id):
                 # If the kernel's ports have changed (some restarts trigger this)
                 # then reset the channels so nudge() is using the correct iopub channel
                 self.create_stream()
