@@ -441,7 +441,7 @@ def test_server_web_application(jp_serverapp):
 
 def test_misc(jp_serverapp, tmp_path):
     app: ServerApp = jp_serverapp
-    assert app.terminals_enabled == True
+    assert app.terminals_enabled is True
     app.extra_args = [str(tmp_path)]
     app.parse_command_line([])
 
