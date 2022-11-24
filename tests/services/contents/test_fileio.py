@@ -145,19 +145,19 @@ def test_file_manager_mixin(tmpdir):
     bad_content = tmpdir / "bad_content.ipynb"
     bad_content.write_text("{}", "utf8")
     with pytest.raises(HTTPError):
-        mixin._read_notebook(bad_content)
+        mixin._read_notebook(str(bad_content))
     other = path_to_intermediate(bad_content)
     with open(other, "w") as fid:
         json.dump(new_notebook(), fid)
     mixin.use_atomic_writing = True
-    nb = mixin._read_notebook(bad_content)
+    nb = mixin._read_notebook(str(bad_content))
     validate(nb)
 
     with pytest.raises(HTTPError):
-        mixin._read_file(tmpdir, "text")
+        mixin._read_file(str(tmpdir), "text")
 
     with pytest.raises(HTTPError):
-        mixin._save_file(tmpdir / "foo", "foo", "bar")
+        mixin._save_file(str(tmpdir / "foo"), "foo", "bar")
 
 
 async def test_async_file_manager_mixin(tmpdir):
@@ -167,16 +167,16 @@ async def test_async_file_manager_mixin(tmpdir):
     bad_content = tmpdir / "bad_content.ipynb"
     bad_content.write_text("{}", "utf8")
     with pytest.raises(HTTPError):
-        await mixin._read_notebook(bad_content)
+        await mixin._read_notebook(str(bad_content))
     other = path_to_intermediate(bad_content)
     with open(other, "w") as fid:
         json.dump(new_notebook(), fid)
     mixin.use_atomic_writing = True
-    nb = await mixin._read_notebook(bad_content)
+    nb = await mixin._read_notebook(str(bad_content))
     validate(nb)
 
     with pytest.raises(HTTPError):
-        await mixin._read_file(tmpdir, "text")
+        await mixin._read_file(str(tmpdir), "text")
 
     with pytest.raises(HTTPError):
-        await mixin._save_file(tmpdir / "foo", "foo", "bar")
+        await mixin._save_file(str(tmpdir / "foo"), "foo", "bar")
