@@ -140,6 +140,7 @@ def test_path_to_invalid(tmpdir):
 
 def test_file_manager_mixin(tmpdir):
     mixin = FileManagerMixin()
+    mixin.root_dir = str(tmpdir)
     mixin.log = logging.getLogger()
     bad_content = tmpdir / "bad_content.ipynb"
     bad_content.write_text("{}", "utf8")
@@ -161,6 +162,7 @@ def test_file_manager_mixin(tmpdir):
 
 async def test_async_file_manager_mixin(tmpdir):
     mixin = AsyncFileManagerMixin()
+    mixin.root_dir = str(tmpdir)
     mixin.log = logging.getLogger()
     bad_content = tmpdir / "bad_content.ipynb"
     bad_content.write_text("{}", "utf8")
