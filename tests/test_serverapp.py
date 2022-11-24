@@ -472,10 +472,12 @@ def test_signals(jp_serverapp):
     app._signal_info(None, None)
 
 
-def test_shutdown_no_activity(jp_serverapp):
+async def test_shutdown_no_activity(jp_serverapp):
     app: ServerApp = jp_serverapp
+    app.extension_manager.extensions = {}
+    app.exit = lambda _: None
     app.shutdown_no_activity()
-    app.shutdown_no_activity_timeout = 0.1
+    app.shutdown_no_activity_timeout = 1
     app.init_shutdown_no_activity()
 
 
