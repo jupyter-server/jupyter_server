@@ -437,3 +437,48 @@ def test_server_web_application(jp_serverapp):
             {},
         )
     app.init_handlers([], app.settings)
+
+
+def test_misc(jp_serverapp, tmp_path):
+    app: ServerApp = jp_serverapp
+    assert app.terminals_enabled == True
+    app.extra_args = [str(tmp_path)]
+    app.parse_command_line([])
+
+
+def test_deprecated_props(jp_serverapp):
+    app: ServerApp = jp_serverapp
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        app.cookie_options = dict(foo=1)
+        app.get_secure_cookie_kwargs = dict(bar=1)
+        app.notebook_dir = "foo"
+        app.server_extensions = dict(foo=True)
+        app.kernel_ws_protocol = "foo"
+        app.limit_rate = True
+        app.iopub_msg_rate_limit = 10
+        app.iopub_data_rate_limit = 10
+        app.rate_limit_window = 10
+    with pytest.raises(SystemExit):
+        app.pylab = "foo"
+
+
+def test_signals(jp_serverapp):
+    app: ServerApp = jp_serverapp
+    app.answer_yes = True
+    app._restore_sigint_handler()
+    app._handle_sigint(None, None)
+    app._confirm_exit()
+    app._signal_info(None, None)
+
+
+def test_shutdown_no_activity(jp_serverapp):
+    app: ServerApp = jp_serverapp
+    app.shutdown_no_activity()
+    app.shutdown_no_activity_timeout = 0.1
+    app.init_shutdown_no_activity()
+
+
+def test_running_server_info(jp_serverapp):
+    app: ServerApp = jp_serverapp
+    app.running_server_info(True)
