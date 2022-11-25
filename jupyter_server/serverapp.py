@@ -25,7 +25,6 @@ import threading
 import time
 import urllib
 import warnings
-import webbrowser
 from base64 import encodebytes
 
 try:
@@ -2689,6 +2688,10 @@ class ServerApp(JupyterApp):
         return assembled_url, open_file
 
     def launch_browser(self):
+        # Deferred import for environments that do not have
+        # the webbrowser module.
+        import webbrowser
+
         try:
             browser = webbrowser.get(self.browser or None)
         except webbrowser.Error as e:
