@@ -59,7 +59,7 @@ test = [
     "ipykernel",
     "pytest-console-scripts",
     "pytest-timeout",
-    "pytest-tornasync",
+    "pytest-jupyter[server]>=0.2.1",
     "pytest>=7.0",
     "requests",
     "pre-commit"
@@ -135,6 +135,7 @@ testpaths = [
     "tests/"
 ]
 timeout = 100
+asyncio_mode = "auto"
 # Restore this setting to debug failures
 timeout_method = "thread"
 filterwarnings = [
