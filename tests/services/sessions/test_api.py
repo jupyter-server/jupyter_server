@@ -556,13 +556,16 @@ async def test_restart_kernel(session_client, jp_base_url, jp_fetch, jp_ws_fetch
     model = json.loads(r.body.decode())
     assert model["connections"] == 0
 
-    # Add a delay to give the kernel enough time to restart.
-    #    time.sleep(2)
-
-    # Open a websocket connection.
+    # Open a new websocket connection.
     ws2 = await jp_ws_fetch("api", "kernels", kid, "channels")
-    # Close/open websocket
+
+    # give it some time to close on the other side:
+    for _ in range(10):
+        r = await jp_fetch("api", "kernels", kid, method="GET")
+        model = json.loads(r.body.decode())
+        if model["connections"] == 0:
+            time.sleep(0.1)
+        else:
+            break
+
     ws2.close()
-    r = await jp_fetch("api", "kernels", kid, method="GET")
-    model = json.loads(r.body.decode())
-    assert model["connections"] == 1
