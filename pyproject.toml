@@ -100,9 +100,9 @@ nowarn = "test -W default {args}"
 
 [tool.hatch.envs.cov]
 features = ["test"]
-dependencies = ["coverage", "pytest-cov"]
+dependencies = ["coverage[toml]"]
 [tool.hatch.envs.cov.scripts]
-test = "python -m pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered {args}"
+test = "coverage run -m pytest {args}"
 nowarn = "test -W default {args}"
 integration = "test --integration_tests=true {args}"
 
