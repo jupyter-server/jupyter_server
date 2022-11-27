@@ -1,7 +1,6 @@
 import json
 
 import pytest
-from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 from tornado.httpclient import HTTPClientError
 
 from ...utils import expected_http_error, some_resource

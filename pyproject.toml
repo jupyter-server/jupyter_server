@@ -59,7 +59,7 @@ test = [
     "ipykernel",
     "pytest-console-scripts",
     "pytest-timeout",
-    "pytest-jupyter[server]>=0.2.2",
+    "pytest-jupyter[server]>=0.2.3",
     "pytest>=7.0",
     "requests",
     "pre-commit"

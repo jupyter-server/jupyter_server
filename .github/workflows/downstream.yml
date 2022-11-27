@@ -16,6 +16,8 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
+      - run: pip install pytest-jupyter[server]
+
       - name: Test nbclassic
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
         with:
@@ -46,6 +48,8 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
+      - run: pip install pytest-jupyter[server]
+
       - name: Test notebook
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
         with:
@@ -63,6 +67,8 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
+      - run: pip install pytest-jupyter[server]
+
       - name: Test jupyterlab_server
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
         with:
@@ -78,6 +84,8 @@ jobs:
 
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
+      - run: pip install pytest-jupyter[server]
 
       - name: Test jupyterlab
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
@@ -95,6 +103,8 @@ jobs:
 
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
+      - run: pip install pytest-jupyter[server]
 
       - name: Test jupyter_server_terminals
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
