@@ -16,12 +16,11 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
-      - run: pip install pytest-jupyter[server]
-
       - name: Test nbclassic
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
         with:
           package_name: nbclassic
+          test_command: pip install pytest-jupyter[server] && pytest -vv -raXxs -W default --durations 10 --color=yes
 
       - name: Test run nbclassic
         run: |
@@ -48,13 +47,12 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
-      - run: pip install pytest-jupyter[server]
-
       - name: Test notebook
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
         with:
           package_name: notebook
           package_download_extra_args: "--pre"
+          test_command: pip install pytest-jupyter[server] && pytest -vv -raXxs -W default --durations 10 --color=yes
 
   jupyterlab_server:
     runs-on: ubuntu-latest
@@ -73,6 +71,7 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
         with:
           package_name: jupyterlab_server
+          test_command: pip install pytest-jupyter[server] && pytest -vv -raXxs -W default --durations 10 --color=yes
 
   jupyterlab:
     runs-on: ubuntu-latest
@@ -84,8 +83,6 @@ jobs:
 
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-
-      - run: pip install pytest-jupyter[server]
 
       - name: Test jupyterlab
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
@@ -104,11 +101,10 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
-      - run: pip install pytest-jupyter[server]
-
       - name: Test jupyter_server_terminals
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
         with:
+          test_command: pip install pytest-jupyter[server] && pytest -vv -raXxs -W default --durations 10 --color=yes
           package_name: jupyter_server_terminals
 
   downstream_check: # This job does nothing and is only used for the branch protection
