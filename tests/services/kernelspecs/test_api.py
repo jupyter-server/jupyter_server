@@ -1,7 +1,6 @@
 import json
 
 import pytest
-from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 from tornado.httpclient import HTTPClientError
 
 from ...utils import expected_http_error, some_resource
@@ -16,7 +15,7 @@ async def test_list_kernelspecs_bad(jp_fetch, jp_kernelspecs, jp_data_dir):
     r = await jp_fetch("api", "kernelspecs", method="GET")
     model = json.loads(r.body.decode())
     assert isinstance(model, dict)
-    assert model["default"] == NATIVE_KERNEL_NAME
+    assert model["default"] == "echo"
     specs = model["kernelspecs"]
     assert isinstance(specs, dict)
     assert len(specs) > 2
@@ -26,7 +25,7 @@ async def test_list_kernelspecs(jp_fetch, jp_kernelspecs):
     r = await jp_fetch("api", "kernelspecs", method="GET")
     model = json.loads(r.body.decode())
     assert isinstance(model, dict)
-    assert model["default"] == NATIVE_KERNEL_NAME
+    assert model["default"] == "echo"
     specs = model["kernelspecs"]
     assert isinstance(specs, dict)
     assert len(specs) > 2
@@ -35,7 +34,7 @@ async def test_list_kernelspecs(jp_fetch, jp_kernelspecs):
         return s["name"] == "sample" and s["spec"]["display_name"] == "Test kernel"
 
     def is_default_kernelspec(s):
-        return s["name"] == NATIVE_KERNEL_NAME and s["spec"]["display_name"].startswith("Python")
+        return s["name"] == "echo" and s["spec"]["display_name"].startswith("echo")
 
     assert any(is_sample_kernelspec(s) for s in specs.values()), specs
     assert any(is_default_kernelspec(s) for s in specs.values()), specs
