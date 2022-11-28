@@ -684,13 +684,8 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
 class ServerKernelManager(AsyncIOLoopKernelManager):
 
     # Define activity-related attributes:
-    execution_state = Unicode("initializing", help="The current execution state of the kernel")
+    execution_state = Unicode(
+        None, allow_none=True, help="The current execution state of the kernel"
+    )
     reason = Unicode("", help="The reason for the last failure against the kernel")
     last_activity = Instance(datetime, help="The last activity on the kernel")
-
-    @default("last_activity")
-    def _default_last_activity(self):
-        return utcnow()
-
-    async def start_kernel(self, **kw: Any) -> None:
-        await super().start_kernel(**kw)
