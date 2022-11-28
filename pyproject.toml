@@ -31,7 +31,7 @@ dependencies = [
     "argon2-cffi",
     "jinja2",
     "jupyter_client>=7.4.4",
-    "jupyter_core>=4.9.2",
+    "jupyter_core>=4.12",
     "jupyter_server_terminals",
     "nbconvert>=6.4.4",
     "nbformat>=5.2.0",
