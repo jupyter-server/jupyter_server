@@ -34,7 +34,7 @@ dependencies = [
     "jupyter_core>=4.9.2",
     "jupyter_server_terminals",
     "nbconvert>=6.4.4",
-    "nbformat>=5.2.0",
+    "nbformat>=5.3.0",
     "packaging",
     "prometheus_client",
     "pywinpty;os_name=='nt'",
@@ -59,7 +59,7 @@ test = [
     "ipykernel",
     "pytest-console-scripts",
     "pytest-timeout",
-    "pytest-tornasync",
+    "pytest-jupyter[server]>=0.4",
     "pytest>=7.0",
     "requests",
     "pre-commit"
@@ -100,7 +100,7 @@ nowarn = "test -W default {args}"
 
 [tool.hatch.envs.cov]
 features = ["test"]
-dependencies = ["coverage", "pytest-cov"]
+dependencies = ["coverage[toml]", "pytest-cov"]
 [tool.hatch.envs.cov.scripts]
 test = "python -m pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered {args}"
 nowarn = "test -W default {args}"
