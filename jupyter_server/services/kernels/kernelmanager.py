@@ -7,10 +7,12 @@
 # Distributed under the terms of the Modified BSD License.
 import asyncio
 import os
+import warnings
 from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import partial
 
+from jupyter_client.ioloop.manager import AsyncIOLoopKernelManager
 from jupyter_client.multikernelmanager import (
     AsyncMultiKernelManager,
     MultiKernelManager,
@@ -36,7 +38,7 @@ from traitlets import (
 
 from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
-from jupyter_server.utils import ensure_async, to_os_path
+from jupyter_server.utils import ensure_async, import_item, to_os_path
 
 
 class MappingKernelManager(MultiKernelManager):
@@ -656,10 +658,39 @@ class MappingKernelManager(MultiKernelManager):
 class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
-        return "jupyter_client.ioloop.AsyncIOLoopKernelManager"
+        return "jupyter_server.services.kernels.kernelmanager.ServerKernelManager"
+
+    @validate("kernel_manager_class")
+    def _validate_kernel_manager_class(self, proposal):
+        km_class_value = proposal.value
+        km_class = import_item(km_class_value)
+        if not issubclass(km_class, ServerKernelManager):
+            warnings.warn(
+                f"KernelManager class '{km_class}' is not a subclass of `ServerKernelManager`.  Custom "
+                "KernelManager classes should derive from 'ServerKernelManager' beginning with jupyter-server 2.0 "
+                "or risk missing functionality.  Continuing...",
+                FutureWarning,
+                stacklevel=3,
+            )
+        return km_class_value
 
     def __init__(self, **kwargs):
         self.pinned_superclass = MultiKernelManager
         self._pending_kernel_tasks = {}
         self.pinned_superclass.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
+
+
+class ServerKernelManager(AsyncIOLoopKernelManager):
+
+    # Define activity-related attributes:
+    execution_state = Unicode("initializing", help="The current execution state of the kernel")
+    reason = Unicode("", help="The reason for the last failure against the kernel")
+    last_activity = Instance(datetime, help="The last activity on the kernel")
+
+    @default("last_activity")
+    def _default_last_activity(self):
+        return utcnow()
+
+    async def start_kernel(self, **kw: Any) -> None:
+        await super().start_kernel(**kw)
