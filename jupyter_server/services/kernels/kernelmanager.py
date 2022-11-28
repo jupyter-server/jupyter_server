@@ -666,7 +666,7 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
         km_class = import_item(km_class_value)
         if not issubclass(km_class, ServerKernelManager):
             warnings.warn(
-                f"KernelManager class '{km_class}' is not a subclass of `ServerKernelManager`.  Custom "
+                f"KernelManager class '{km_class}' is not a subclass of 'ServerKernelManager'.  Custom "
                 "KernelManager classes should derive from 'ServerKernelManager' beginning with jupyter-server 2.0 "
                 "or risk missing functionality.  Continuing...",
                 FutureWarning,
