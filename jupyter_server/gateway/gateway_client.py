@@ -521,7 +521,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         self.gateway_token_renewer = self.gateway_token_renewer_class(parent=self, log=self.log)
 
         # store of cookies with store time
-        self._cookies = {}  # type: ty.Dict[str, ty.Tuple[Morsel, datetime]]
+        self._cookies: ty.Dict[str, ty.Tuple[Morsel, datetime]] = {}
 
     def init_connection_args(self):
         """Initialize arguments used on every request.  Since these are primarily static values,

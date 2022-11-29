@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from tornado import ioloop
 
 if TYPE_CHECKING:
-    from tornado.iostream import IOStream
+    from tornado.iostream import IOStream 
 
 # ping interval for keeping websockets alive (30 seconds)
 WS_PING_INTERVAL = 30000
@@ -17,7 +17,7 @@ class WebSocketMixin:
     ping_callback = None
     last_ping = 0.0
     last_pong = 0.0
-    stream = None  # type: Optional[IOStream]
+    stream: Optional[IOStream] = None 
 
     @property
     def ping_interval(self):
