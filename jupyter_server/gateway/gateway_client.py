@@ -8,7 +8,7 @@ import typing as ty
 from abc import ABC, ABCMeta, abstractmethod
 from datetime import datetime
 from email.utils import parsedate_to_datetime
-from http.cookies import Morsel, SimpleCookie
+from http.cookies import SimpleCookie
 from socket import gaierror
 
 from tornado import web
@@ -26,6 +26,8 @@ from traitlets import (
 )
 from traitlets.config import LoggingConfigurable, SingletonConfigurable
 
+if ty.TYPE_CHECKING:
+    from http.cookies import Morsel
 
 class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore
     """The metaclass necessary for proper ABC behavior in a Configurable."""
