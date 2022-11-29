@@ -2,9 +2,8 @@ import re
 from typing import TYPE_CHECKING, Optional, no_type_check
 from urllib.parse import urlparse
 
-from tornado.iostream import IOStream
 from tornado import ioloop
-
+from tornado.iostream import IOStream
 
 # ping interval for keeping websockets alive (30 seconds)
 WS_PING_INTERVAL = 30000
