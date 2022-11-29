@@ -8,7 +8,7 @@ import typing as ty
 from abc import ABC, ABCMeta, abstractmethod
 from datetime import datetime
 from email.utils import parsedate_to_datetime
-from http.cookies import Morsel, SimpleCookie
+from http.cookies import SimpleCookie
 from socket import gaierror
 
 from tornado import web
@@ -25,6 +25,9 @@ from traitlets import (
     validate,
 )
 from traitlets.config import LoggingConfigurable, SingletonConfigurable
+
+if ty.TYPE_CHECKING:
+    from http.cookies import Morsel
 
 
 class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore
@@ -518,7 +521,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         self.gateway_token_renewer = self.gateway_token_renewer_class(parent=self, log=self.log)
 
         # store of cookies with store time
-        self._cookies = {}  # type: ty.Dict[str, ty.Tuple[Morsel, datetime]]
+        self._cookies: ty.Dict[str, ty.Tuple[Morsel, datetime]] = {}
 
     def init_connection_args(self):
         """Initialize arguments used on every request.  Since these are primarily static values,

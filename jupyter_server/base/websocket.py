@@ -15,7 +15,7 @@ class WebSocketMixin:
     ping_callback = None
     last_ping = 0.0
     last_pong = 0.0
-    stream = None  # type: Optional[IOStream]
+    stream: Optional[IOStream] = None
 
     @property
     def ping_interval(self):
