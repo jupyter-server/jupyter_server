@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.0rc8
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0rc7...d2c974a4580e9269580a632a3c8258e99792e279))
+
+### Enhancements made
+
+- Introduce ServerKernelManager class [#1101](https://github.com/jupyter-server/jupyter_server/pull/1101) ([@kevin-bates](https://github.com/kevin-bates))
+
+### Bugs fixed
+
+- Defer webbrowser import [#1095](https://github.com/jupyter-server/jupyter_server/pull/1095) ([@blink1073](https://github.com/blink1073))
+
+### Maintenance and upkeep improvements
+
+- Use pytest-jupyter [#1099](https://github.com/jupyter-server/jupyter_server/pull/1099) ([@blink1073](https://github.com/blink1073))
+- Clean up release instructions and coverage handling [#1098](https://github.com/jupyter-server/jupyter_server/pull/1098) ([@blink1073](https://github.com/blink1073))
+- Add more tests [#1092](https://github.com/jupyter-server/jupyter_server/pull/1092) ([@blink1073](https://github.com/blink1073))
+- Fix coverage upload [#1091](https://github.com/jupyter-server/jupyter_server/pull/1091) ([@blink1073](https://github.com/blink1073))
+- Add base handler tests [#1090](https://github.com/jupyter-server/jupyter_server/pull/1090) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-11-23&to=2022-11-29&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-11-23..2022-11-29&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-11-23..2022-11-29&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-11-23..2022-11-29&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-11-23..2022-11-29&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.0rc7
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0rc6...339038b532ec928b59861f9426a8ba1214454741))
@@ -24,8 +52,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-11-21&to=2022-11-23&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-11-21..2022-11-23&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-11-21..2022-11-23&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-11-21..2022-11-23&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.0rc6
 
