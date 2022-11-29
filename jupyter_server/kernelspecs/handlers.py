@@ -1,9 +1,9 @@
+from jupyter_server_kernels.kernelspecs.handlers import kernel_name_regex
 from tornado import web
 
 from jupyter_server.auth import authorized
 
 from ..base.handlers import JupyterHandler
-from ..services.kernelspecs.handlers import kernel_name_regex
 
 AUTH_RESOURCE = "kernelspecs"
 

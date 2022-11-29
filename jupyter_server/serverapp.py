@@ -86,12 +86,13 @@ from jupyter_server.base.handlers import (
 from jupyter_server.extension.config import ExtensionConfigManager
 from jupyter_server.extension.manager import ExtensionManager
 from jupyter_server.extension.serverextension import ServerExtensionApp
-from jupyter_server.gateway.managers import (
-    GatewayClient,
-    GatewayKernelSpecManager,
-    GatewayMappingKernelManager,
-    GatewaySessionManager,
-)
+
+# from jupyter_server.gateway.managers import (
+#    GatewayClient,
+#    GatewayKernelSpecManager,
+#    GatewayMappingKernelManager,
+#    GatewaySessionManager,
+# )
 from jupyter_server.log import log_request
 from jupyter_server.services.config import ConfigManager
 from jupyter_server.services.contents.filemanager import (
@@ -103,17 +104,6 @@ from jupyter_server.services.contents.manager import (
     AsyncContentsManager,
     ContentsManager,
 )
-from jupyter_server.services.kernels.connection.base import (
-    BaseKernelWebsocketConnection,
-)
-from jupyter_server.services.kernels.connection.channels import (
-    ZMQChannelsWebsocketConnection,
-)
-from jupyter_server.services.kernels.kernelmanager import (
-    AsyncMappingKernelManager,
-    MappingKernelManager,
-)
-from jupyter_server.services.sessions.sessionmanager import SessionManager
 from jupyter_server.utils import (
     check_pid,
     fetch,
@@ -168,19 +158,19 @@ JUPYTER_SERVICE_HANDLERS = dict(
     contents=["jupyter_server.services.contents.handlers"],
     files=["jupyter_server.files.handlers"],
     kernels=[
-        "jupyter_server.services.kernels.handlers",
-        "jupyter_server.services.kernels.websocket",
+        "jupyter_server_kernels.kernels.handlers",
+        "jupyter_server_kernels.kernels.websocket",
     ],
     kernelspecs=[
         "jupyter_server.kernelspecs.handlers",
-        "jupyter_server.services.kernelspecs.handlers",
+        "jupyter_server_kernels.kernelspecs.handlers",
     ],
     nbconvert=[
         "jupyter_server.nbconvert.handlers",
         "jupyter_server.services.nbconvert.handlers",
     ],
     security=["jupyter_server.services.security.handlers"],
-    sessions=["jupyter_server.services.sessions.handlers"],
+    sessions=["jupyter_server_kernels.sessions.handlers"],
     shutdown=["jupyter_server.services.shutdown"],
     view=["jupyter_server.view.handlers"],
     events=["jupyter_server.services.events.handlers"],
@@ -222,9 +212,7 @@ class ServerWebApplication(web.Application):
         self,
         jupyter_app,
         default_services,
-        kernel_manager,
         contents_manager,
-        session_manager,
         kernel_spec_manager,
         config_manager,
         event_logger,
@@ -259,9 +247,7 @@ class ServerWebApplication(web.Application):
 
         settings = self.init_settings(
             jupyter_app,
-            kernel_manager,
             contents_manager,
-            session_manager,
             kernel_spec_manager,
             config_manager,
             event_logger,
@@ -282,9 +268,7 @@ class ServerWebApplication(web.Application):
     def init_settings(
         self,
         jupyter_app,
-        kernel_manager,
         contents_manager,
-        session_manager,
         kernel_spec_manager,
         config_manager,
         event_logger,
@@ -341,6 +325,7 @@ class ServerWebApplication(web.Application):
 
         settings = dict(
             # basics
+            log=log,
             log_function=log_request,
             base_url=base_url,
             default_url=default_url,
@@ -354,13 +339,6 @@ class ServerWebApplication(web.Application):
                 "no_cache_paths": [url_path_join(base_url, "static", "custom")],
             },
             version_hash=version_hash,
-            # kernel message protocol over websocket
-            kernel_ws_protocol=jupyter_app.kernel_ws_protocol,
-            # rate limits
-            limit_rate=jupyter_app.limit_rate,
-            iopub_msg_rate_limit=jupyter_app.iopub_msg_rate_limit,
-            iopub_data_rate_limit=jupyter_app.iopub_data_rate_limit,
-            rate_limit_window=jupyter_app.rate_limit_window,
             # authentication
             cookie_secret=jupyter_app.cookie_secret,
             login_url=url_path_join(base_url, "/login"),
@@ -370,15 +348,12 @@ class ServerWebApplication(web.Application):
             local_hostnames=jupyter_app.local_hostnames,
             authenticate_prometheus=jupyter_app.authenticate_prometheus,
             # managers
-            kernel_manager=kernel_manager,
             contents_manager=contents_manager,
-            session_manager=session_manager,
             kernel_spec_manager=kernel_spec_manager,
             config_manager=config_manager,
             authorizer=authorizer,
             identity_provider=identity_provider,
             event_logger=event_logger,
-            kernel_websocket_connection_class=kernel_websocket_connection_class,
             # handlers
             extra_services=extra_services,
             # Jupyter stuff
@@ -435,15 +410,15 @@ class ServerWebApplication(web.Application):
         handlers.extend(settings["identity_provider"].get_handlers())
 
         # If gateway mode is enabled, replace appropriate handlers to perform redirection
-        if GatewayClient.instance().gateway_enabled:
-            # for each handler required for gateway, locate its pattern
-            # in the current list and replace that entry...
-            gateway_handlers = load_handlers("jupyter_server.gateway.handlers")
-            for _, gwh in enumerate(gateway_handlers):
-                for j, h in enumerate(handlers):
-                    if gwh[0] == h[0]:
-                        handlers[j] = (gwh[0], gwh[1])
-                        break
+        # if GatewayClient.instance().gateway_enabled:
+        #    # for each handler required for gateway, locate its pattern
+        #    # in the current list and replace that entry...
+        #    gateway_handlers = load_handlers("jupyter_server.gateway.handlers")
+        #    for _, gwh in enumerate(gateway_handlers):
+        #        for j, h in enumerate(handlers):
+        #            if gwh[0] == h[0]:
+        #                handlers[j] = (gwh[0], gwh[1])
+        #                break
 
         # register base handlers last
         handlers.extend(load_handlers("jupyter_server.base.handlers"))
@@ -775,21 +750,18 @@ class ServerApp(JupyterApp):
     classes = [
         KernelManager,
         Session,
-        MappingKernelManager,
         KernelSpecManager,
-        AsyncMappingKernelManager,
         ContentsManager,
         FileContentsManager,
         AsyncContentsManager,
         AsyncFileContentsManager,
         NotebookNotary,
-        GatewayMappingKernelManager,
-        GatewayKernelSpecManager,
-        GatewaySessionManager,
-        GatewayClient,
+        # GatewayMappingKernelManager,
+        # GatewayKernelSpecManager,
+        # GatewaySessionManager,
+        # GatewayClient,
         Authorizer,
         EventLogger,
-        ZMQChannelsWebsocketConnection,
     ]
 
     subcommands = dict(
@@ -1457,36 +1429,6 @@ class ServerApp(JupyterApp):
         help=_i18n("The content manager class to use."),
     )
 
-    kernel_manager_class = Type(
-        klass=MappingKernelManager,
-        config=True,
-        help=_i18n("The kernel manager class to use."),
-    )
-
-    @default("kernel_manager_class")
-    def _default_kernel_manager_class(self):
-        if self.gateway_config.gateway_enabled:
-            return "jupyter_server.gateway.managers.GatewayMappingKernelManager"
-        return AsyncMappingKernelManager
-
-    session_manager_class = Type(
-        config=True,
-        help=_i18n("The session manager class to use."),
-    )
-
-    @default("session_manager_class")
-    def _default_session_manager_class(self):
-        if self.gateway_config.gateway_enabled:
-            return "jupyter_server.gateway.managers.GatewaySessionManager"
-        return SessionManager
-
-    kernel_websocket_connection_class = Type(
-        default_value=ZMQChannelsWebsocketConnection,
-        klass=BaseKernelWebsocketConnection,
-        config=True,
-        help=_i18n("The kernel websocket connection class to use."),
-    )
-
     config_manager_class = Type(
         default_value=ConfigManager,
         config=True,
@@ -1508,8 +1450,8 @@ class ServerApp(JupyterApp):
 
     @default("kernel_spec_manager_class")
     def _default_kernel_spec_manager_class(self):
-        if self.gateway_config.gateway_enabled:
-            return "jupyter_server.gateway.managers.GatewayKernelSpecManager"
+        # if self.gateway_config.gateway_enabled:
+        #    return "jupyter_server.gateway.managers.GatewayKernelSpecManager"
         return KernelSpecManager
 
     login_handler_class = Type(
@@ -1731,56 +1673,6 @@ class ServerApp(JupyterApp):
         help=_i18n("Reraise exceptions encountered loading server extensions?"),
     )
 
-    kernel_ws_protocol = Unicode(
-        allow_none=True,
-        config=True,
-        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.kernel_ws_protocol"),
-    )
-
-    @observe("kernel_ws_protocol")
-    def _deprecated_kernel_ws_protocol(self, change):
-        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
-
-    limit_rate = Bool(
-        allow_none=True,
-        config=True,
-        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.limit_rate"),
-    )
-
-    @observe("limit_rate")
-    def _deprecated_limit_rate(self, change):
-        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
-
-    iopub_msg_rate_limit = Float(
-        allow_none=True,
-        config=True,
-        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.iopub_msg_rate_limit"),
-    )
-
-    @observe("iopub_msg_rate_limit")
-    def _deprecated_iopub_msg_rate_limit(self, change):
-        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
-
-    iopub_data_rate_limit = Float(
-        allow_none=True,
-        config=True,
-        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.iopub_data_rate_limit"),
-    )
-
-    @observe("iopub_data_rate_limit")
-    def _deprecated_iopub_data_rate_limit(self, change):
-        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
-
-    rate_limit_window = Float(
-        allow_none=True,
-        config=True,
-        help=_i18n("DEPRECATED. Use ZMQChannelsWebsocketConnection.rate_limit_window"),
-    )
-
-    @observe("rate_limit_window")
-    def _deprecated_rate_limit_window(self, change):
-        self._warn_deprecated_config(change, "ZMQChannelsWebsocketConnection")
-
     shutdown_no_activity_timeout = Integer(
         0,
         config=True,
@@ -1858,14 +1750,7 @@ class ServerApp(JupyterApp):
 
         # If gateway server is configured, replace appropriate managers to perform redirection.  To make
         # this determination, instantiate the GatewayClient config singleton.
-        self.gateway_config = GatewayClient.instance(parent=self)
-
-        if not issubclass(self.kernel_manager_class, AsyncMappingKernelManager):
-            warnings.warn(
-                "The synchronous MappingKernelManager class is deprecated and will not be supported in Jupyter Server 3.0",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+        # self.gateway_config = GatewayClient.instance(parent=self)
 
         if not issubclass(self.contents_manager_class, AsyncContentsManager):
             warnings.warn(
@@ -1877,21 +1762,9 @@ class ServerApp(JupyterApp):
         self.kernel_spec_manager = self.kernel_spec_manager_class(
             parent=self,
         )
-        self.kernel_manager = self.kernel_manager_class(
-            parent=self,
-            log=self.log,
-            connection_dir=self.runtime_dir,
-            kernel_spec_manager=self.kernel_spec_manager,
-        )
         self.contents_manager = self.contents_manager_class(
             parent=self,
             log=self.log,
-        )
-        self.session_manager = self.session_manager_class(
-            parent=self,
-            log=self.log,
-            kernel_manager=self.kernel_manager,
-            contents_manager=self.contents_manager,
         )
         self.config_manager = self.config_manager_class(
             parent=self,
@@ -2034,9 +1907,7 @@ class ServerApp(JupyterApp):
         self.web_app = ServerWebApplication(
             self,
             self.default_services,
-            self.kernel_manager,
             self.contents_manager,
-            self.session_manager,
             self.kernel_spec_manager,
             self.config_manager,
             self.event_logger,
@@ -2048,7 +1919,6 @@ class ServerApp(JupyterApp):
             self.jinja_environment_options,
             authorizer=self.authorizer,
             identity_provider=self.identity_provider,
-            kernel_websocket_connection_class=self.kernel_websocket_connection_class,
         )
         if self.certfile:
             self.ssl_options["certfile"] = self.certfile
@@ -2576,7 +2446,7 @@ class ServerApp(JupyterApp):
         "Return the current working directory and the server url information"
         info = self.contents_manager.info_string() + "\n"
         if kernel_count:
-            n_kernels = len(self.kernel_manager.list_kernel_ids())
+            n_kernels = len(self.web_app.settings["kernel_manager"].list_kernel_ids())
             kernel_msg = trans.ngettext("%d active kernel", "%d active kernels", n_kernels)
             info += kernel_msg % n_kernels
             info += "\n"
@@ -2586,11 +2456,11 @@ class ServerApp(JupyterApp):
                 version=ServerApp.version, url=self.display_url
             )
         )
-        if self.gateway_config.gateway_enabled:
-            info += (
-                _i18n("\nKernels will be managed by the Gateway server running at:\n%s")
-                % self.gateway_config.url
-            )
+        # if self.gateway_config.gateway_enabled:
+        #    info += (
+        #        _i18n("\nKernels will be managed by the Gateway server running at:\n%s")
+        #        % self.gateway_config.url
+        #    )
         return info
 
     def server_info(self):
@@ -2848,7 +2718,7 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
-        await self.kernel_websocket_connection_class.close_all()
+        await self.web_app.settings["kernel_websocket_connection_class"].close_all()
         if getattr(self, "kernel_manager", None):
             self.kernel_manager.__del__()
         if getattr(self, "session_manager", None):
