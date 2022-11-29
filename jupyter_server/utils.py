@@ -3,7 +3,6 @@
 # Distributed under the terms of the Modified BSD License.
 import errno
 import importlib.util
-import inspect
 import os
 import socket
 import sys
@@ -14,6 +13,7 @@ from urllib.parse import SplitResult, quote, unquote, urlparse, urlsplit, urluns
 from urllib.request import pathname2url  # noqa: F401
 
 from _frozen_importlib_external import _NamespacePath
+from jupyter_core.utils import ensure_async  # noqa: F401
 from packaging.version import Version
 from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest
 from tornado.netutil import Resolver
@@ -171,23 +171,6 @@ if sys.platform == "win32":
     check_pid = _check_pid_win32
 else:
     check_pid = _check_pid_posix
-
-
-async def ensure_async(obj):
-    """Convert a non-awaitable object to a coroutine if needed,
-    and await it if it was not already awaited.
-    """
-    if inspect.isawaitable(obj):
-        try:
-            result = await obj
-        except RuntimeError as e:
-            if str(e) == "cannot reuse already awaited coroutine":
-                # obj is already the coroutine's result
-                return obj
-            raise
-        return result
-    # obj doesn't need to be awaited
-    return obj
 
 
 async def run_sync_in_loop(maybe_async):
