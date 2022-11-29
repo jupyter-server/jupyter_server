@@ -29,6 +29,7 @@ from traitlets.config import LoggingConfigurable, SingletonConfigurable
 if ty.TYPE_CHECKING:
     from http.cookies import Morsel
 
+
 class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore
     """The metaclass necessary for proper ABC behavior in a Configurable."""
 

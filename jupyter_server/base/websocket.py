@@ -1,5 +1,5 @@
 import re
-from typing import Optional, no_type_check, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, no_type_check
 from urllib.parse import urlparse
 
 from tornado import ioloop
