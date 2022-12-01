@@ -32,7 +32,7 @@ dependencies = [
     "jinja2",
     "jupyter_client>=7.4.4",
     "jupyter_core>=4.12,!=~5.0",
-    "jupyter_server_kernels",
+    "jupyter_server_kernels>=0.1.1",
     "jupyter_server_terminals",
     "nbconvert>=6.4.4",
     "nbformat>=5.3.0",

@@ -162,7 +162,6 @@ JUPYTER_SERVICE_HANDLERS = dict(
         "jupyter_server_kernels.kernels.websocket",
     ],
     kernelspecs=[
-        "jupyter_server.kernelspecs.handlers",
         "jupyter_server_kernels.kernelspecs.handlers",
     ],
     nbconvert=[
@@ -2445,7 +2444,7 @@ class ServerApp(JupyterApp):
     def running_server_info(self, kernel_count=True):
         "Return the current working directory and the server url information"
         info = self.contents_manager.info_string() + "\n"
-        if kernel_count:
+        if kernel_count and "kernel_manager" in self.web_app.settings:
             n_kernels = len(self.web_app.settings["kernel_manager"].list_kernel_ids())
             kernel_msg = trans.ngettext("%d active kernel", "%d active kernels", n_kernels)
             info += kernel_msg % n_kernels
@@ -2718,7 +2717,8 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
-        await self.web_app.settings["kernel_websocket_connection_class"].close_all()
+        if "kernel_websocket_connection_class" in self.web_app.settings:
+            await self.web_app.settings["kernel_websocket_connection_class"].close_all()
         if getattr(self, "kernel_manager", None):
             self.kernel_manager.__del__()
         if getattr(self, "session_manager", None):
