@@ -126,7 +126,7 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - uses: jupyterlab/maintainer-tools/.github/actions/test-sdist@v1
         with:
-          package_spec: .
+          package_spec: -vv .
           test_command: hatch run test:test || hatch run test:test --lf
 
   check_release:
