@@ -4,13 +4,13 @@ from unittest.mock import MagicMock
 
 from jupyter_client.jsonutil import json_clean, json_default
 from jupyter_client.session import Session
+from jupyter_server_kernels.kernels.connection.channels import (
+    ZMQChannelsWebsocketConnection,
+)
 from tornado.httpserver import HTTPRequest
 from tornado.websocket import WebSocketHandler
 
 from jupyter_server.serverapp import ServerApp
-from jupyter_server.services.kernels.connection.channels import (
-    ZMQChannelsWebsocketConnection,
-)
 
 
 async def test_websocket_connection(jp_serverapp):

@@ -322,6 +322,14 @@ class JupyterHandler(AuthenticatedHandler):
 
     @property
     def session_manager(self):
+        if "session_manager" not in self.settings:
+            self.settings["session_manager"] = self.settings["session_manager_class"](
+                parent=self.serverapp,
+                log=self.settings["log"],
+                kernel_manager=self.settings["kernel_manager"],
+                contents_manager=self.contents_manager,
+            )
+
         return self.settings["session_manager"]
 
     @property

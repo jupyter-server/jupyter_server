@@ -10,12 +10,12 @@ import jupyter_client
 import pytest
 import tornado
 from jupyter_client.ioloop import AsyncIOLoopKernelManager
+from jupyter_server_kernels.kernels.kernelmanager import AsyncMappingKernelManager
 from nbformat import writes
 from nbformat.v4 import new_notebook
 from tornado.httpclient import HTTPClientError
 from traitlets import default
 
-from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
 from jupyter_server.utils import url_path_join
 
 from ...utils import expected_http_error
@@ -58,12 +58,12 @@ class NewPortsMappingKernelManager(AsyncMappingKernelManager):
 configs: list = [
     {
         "ServerApp": {
-            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager"
+            "kernel_manager_class": "jupyter_server_kernels.kernels.kernelmanager.MappingKernelManager"
         }
     },
     {
         "ServerApp": {
-            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
+            "kernel_manager_class": "jupyter_server_kernels.kernels.kernelmanager.AsyncMappingKernelManager"
         }
     },
     {

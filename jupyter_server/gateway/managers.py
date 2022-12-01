@@ -16,13 +16,13 @@ from jupyter_client.clientabc import KernelClientABC
 from jupyter_client.kernelspec import KernelSpecManager
 from jupyter_client.manager import AsyncKernelManager
 from jupyter_client.managerabc import KernelManagerABC
+from jupyter_server_kernels.kernels.kernelmanager import AsyncMappingKernelManager
+from jupyter_server_kernels.sessions.sessionmanager import SessionManager
 from tornado import web
 from tornado.escape import json_decode, json_encode, url_escape, utf8
 from traitlets import DottedObjectName, Instance, Type, default
 
 from .._tz import UTC
-from ..services.kernels.kernelmanager import AsyncMappingKernelManager
-from ..services.sessions.sessionmanager import SessionManager
 from ..utils import ensure_async, url_path_join
 from .gateway_client import GatewayClient, gateway_request
 

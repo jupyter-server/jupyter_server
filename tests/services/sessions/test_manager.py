@@ -1,18 +1,18 @@
 import asyncio
 
 import pytest
-from tornado import web
-from traitlets import TraitError
-
-from jupyter_server._tz import isoformat, utcnow
-from jupyter_server.services.contents.manager import ContentsManager
-from jupyter_server.services.kernels.kernelmanager import MappingKernelManager
-from jupyter_server.services.sessions.sessionmanager import (
+from jupyter_server_kernels.kernels.kernelmanager import MappingKernelManager
+from jupyter_server_kernels.sessions.sessionmanager import (
     KernelSessionRecord,
     KernelSessionRecordConflict,
     KernelSessionRecordList,
     SessionManager,
 )
+from tornado import web
+from traitlets import TraitError
+
+from jupyter_server._tz import isoformat, utcnow
+from jupyter_server.services.contents.manager import ContentsManager
 
 
 class DummyKernel:

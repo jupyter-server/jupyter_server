@@ -50,12 +50,12 @@ def pending_kernel_is_ready(jp_serverapp):
 configs: list = [
     {
         "ServerApp": {
-            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager"
+            "kernel_manager_class": "jupyter_server_kernels.kernels.kernelmanager.MappingKernelManager"
         }
     },
     {
         "ServerApp": {
-            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
+            "kernel_manager_class": "jupyter_server_kernels.kernels.kernelmanager.AsyncMappingKernelManager"
         }
     },
 ]
@@ -68,7 +68,7 @@ if os.name != "nt" and jupyter_client._version.version_info >= (7, 1):
     # Add a pending kernels condition
     c = {
         "ServerApp": {
-            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
+            "kernel_manager_class": "jupyter_server_kernels.kernels.kernelmanager.AsyncMappingKernelManager"
         },
         "AsyncMappingKernelManager": {"use_pending_kernels": True},
     }
