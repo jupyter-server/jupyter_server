@@ -86,7 +86,6 @@ from jupyter_server.base.handlers import (
 from jupyter_server.extension.config import ExtensionConfigManager
 from jupyter_server.extension.manager import ExtensionManager
 from jupyter_server.extension.serverextension import ServerExtensionApp
-
 from jupyter_server.log import log_request
 from jupyter_server.services.config import ConfigManager
 from jupyter_server.services.contents.filemanager import (
@@ -410,6 +409,7 @@ class ServerWebApplication(web.Application):
                 GatewayMappingKernelManager,
                 GatewaySessionManager,
             )
+
             gateway_installed = True
         except ModuleNotFoundError:
             gateway_installed = False
@@ -1752,8 +1752,10 @@ class ServerApp(JupyterApp):
         # this determination, instantiate the GatewayClient config singleton.
         try:
             from jupyter_server_kernels.gateway.managers import GatewayClient
+
             self.gateway_config = GatewayClient.instance(parent=self)
         except ModuleNotFoundError:
+
             class NoGatewayClient:
                 gateway_enabled = False
 
