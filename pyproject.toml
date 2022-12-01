@@ -120,6 +120,7 @@ ensured-targets = [
   "jupyter_server/static/style/bootstrap.min.css",
   "jupyter_server/static/style/bootstrap-theme.min.css"
 ]
+skip-if-exists = ["jupyter_server/static/style/bootstrap.min.css"]
 install-pre-commit-hook = true
 optional-editable-build = true
 
