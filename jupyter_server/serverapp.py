@@ -87,12 +87,6 @@ from jupyter_server.extension.config import ExtensionConfigManager
 from jupyter_server.extension.manager import ExtensionManager
 from jupyter_server.extension.serverextension import ServerExtensionApp
 
-# from jupyter_server.gateway.managers import (
-#    GatewayClient,
-#    GatewayKernelSpecManager,
-#    GatewayMappingKernelManager,
-#    GatewaySessionManager,
-# )
 from jupyter_server.log import log_request
 from jupyter_server.services.config import ConfigManager
 from jupyter_server.services.contents.filemanager import (
@@ -408,16 +402,27 @@ class ServerWebApplication(web.Application):
         # And from identity provider
         handlers.extend(settings["identity_provider"].get_handlers())
 
-        # If gateway mode is enabled, replace appropriate handlers to perform redirection
-        # if GatewayClient.instance().gateway_enabled:
-        #    # for each handler required for gateway, locate its pattern
-        #    # in the current list and replace that entry...
-        #    gateway_handlers = load_handlers("jupyter_server.gateway.handlers")
-        #    for _, gwh in enumerate(gateway_handlers):
-        #        for j, h in enumerate(handlers):
-        #            if gwh[0] == h[0]:
-        #                handlers[j] = (gwh[0], gwh[1])
-        #                break
+        # If gateway mode is installed and enabled, replace appropriate handlers to perform redirection
+        try:
+            from jupyter_server_kernels.gateway.managers import (
+                GatewayClient,
+                GatewayKernelSpecManager,
+                GatewayMappingKernelManager,
+                GatewaySessionManager,
+            )
+            gateway_installed = True
+        except ModuleNotFoundError:
+            gateway_installed = False
+
+        if gateway_installed and GatewayClient.instance().gateway_enabled:
+            # for each handler required for gateway, locate its pattern
+            # in the current list and replace that entry...
+            gateway_handlers = load_handlers("jupyter_server_kernels.gateway.handlers")
+            for _, gwh in enumerate(gateway_handlers):
+                for j, h in enumerate(handlers):
+                    if gwh[0] == h[0]:
+                        handlers[j] = (gwh[0], gwh[1])
+                        break
 
         # register base handlers last
         handlers.extend(load_handlers("jupyter_server.base.handlers"))
@@ -755,10 +760,6 @@ class ServerApp(JupyterApp):
         AsyncContentsManager,
         AsyncFileContentsManager,
         NotebookNotary,
-        # GatewayMappingKernelManager,
-        # GatewayKernelSpecManager,
-        # GatewaySessionManager,
-        # GatewayClient,
         Authorizer,
         EventLogger,
     ]
@@ -1449,8 +1450,8 @@ class ServerApp(JupyterApp):
 
     @default("kernel_spec_manager_class")
     def _default_kernel_spec_manager_class(self):
-        # if self.gateway_config.gateway_enabled:
-        #    return "jupyter_server.gateway.managers.GatewayKernelSpecManager"
+        if self.gateway_config.gateway_enabled:
+            return "jupyter_server_kernels.gateway.managers.GatewayKernelSpecManager"
         return KernelSpecManager
 
     login_handler_class = Type(
@@ -1749,7 +1750,14 @@ class ServerApp(JupyterApp):
 
         # If gateway server is configured, replace appropriate managers to perform redirection.  To make
         # this determination, instantiate the GatewayClient config singleton.
-        # self.gateway_config = GatewayClient.instance(parent=self)
+        try:
+            from jupyter_server_kernels.gateway.managers import GatewayClient
+            self.gateway_config = GatewayClient.instance(parent=self)
+        except ModuleNotFoundError:
+            class NoGatewayClient:
+                gateway_enabled = False
+
+            self.gateway_config = NoGatewayClient()
 
         if not issubclass(self.contents_manager_class, AsyncContentsManager):
             warnings.warn(
@@ -2455,11 +2463,11 @@ class ServerApp(JupyterApp):
                 version=ServerApp.version, url=self.display_url
             )
         )
-        # if self.gateway_config.gateway_enabled:
-        #    info += (
-        #        _i18n("\nKernels will be managed by the Gateway server running at:\n%s")
-        #        % self.gateway_config.url
-        #    )
+        if self.gateway_config.gateway_enabled:
+            info += (
+                _i18n("\nKernels will be managed by the Gateway server running at:\n%s")
+                % self.gateway_config.url
+            )
         return info
 
     def server_info(self):
