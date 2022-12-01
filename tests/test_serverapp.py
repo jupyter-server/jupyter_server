@@ -423,10 +423,8 @@ def test_server_web_application(jp_serverapp):
         app = ServerWebApplication(
             server,
             [],
-            server.kernel_manager,
             server.contents_manager,
-            server.session_manager,
-            server.kernel_manager,
+            server.kernel_spec_manager,
             server.config_manager,
             server.event_logger,
             ["jupyter_server.gateway.handlers"],

@@ -31,7 +31,7 @@ def suppress_deprecation_warnings():
         Config(
             {
                 "ServerApp": {
-                    "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.MappingKernelManager",
+                    "kernel_manager_class": "jupyter_server_kernels.kernels.kernelmanager.MappingKernelManager",
                     "MappingKernelManager": {
                         "cull_idle_timeout": CULL_TIMEOUT,
                         "cull_interval": CULL_INTERVAL,
@@ -44,7 +44,7 @@ def suppress_deprecation_warnings():
         Config(
             {
                 "ServerApp": {
-                    "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+                    "kernel_manager_class": "jupyter_server_kernels.kernels.kernelmanager.AsyncMappingKernelManager",
                     "AsyncMappingKernelManager": {
                         "cull_idle_timeout": CULL_TIMEOUT,
                         "cull_interval": CULL_INTERVAL,
@@ -86,7 +86,7 @@ async def test_cull_idle(jp_fetch, jp_ws_fetch):
         Config(
             {
                 "ServerApp": {
-                    "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+                    "kernel_manager_class": "jupyter_server_kernels.kernels.kernelmanager.AsyncMappingKernelManager",
                     "AsyncMappingKernelManager": {
                         "cull_idle_timeout": CULL_TIMEOUT,
                         "cull_interval": CULL_INTERVAL,
