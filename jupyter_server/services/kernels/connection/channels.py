@@ -4,6 +4,7 @@ import time
 import weakref
 from concurrent.futures import Future
 from textwrap import dedent
+from typing import Dict as Dict_t
 from typing import MutableSet
 
 from jupyter_client import protocol_version as client_protocol_version
@@ -21,6 +22,7 @@ from jupyter_client.utils import ensure_async
 
 from jupyter_server.transutils import _i18n
 
+from ..websocket import KernelWebsocketHandler
 from .abc import KernelWebsocketConnectionABC
 from .base import (
     BaseKernelWebsocketConnection,
@@ -103,7 +105,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
     # class-level registry of open sessions
     # allows checking for conflict on session-id,
     # which is used as a zmq identity and must be unique.
-    _open_sessions: dict = {}
+    _open_sessions: Dict_t[str, KernelWebsocketHandler] = {}
     _open_sockets: MutableSet["ZMQChannelsWebsocketConnection"] = weakref.WeakSet()
 
     _kernel_info_future: Future
@@ -391,7 +393,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
     def disconnect(self):
         self.log.debug("Websocket closed %s", self.session_key)
         # unregister myself as an open session (only if it's really me)
-        if self._open_sessions.get(self.session_key) is self:
+        if self._open_sessions.get(self.session_key) is self.websocket_handler:
             self._open_sessions.pop(self.session_key)
 
         if self.kernel_id in self.multi_kernel_manager:
@@ -535,16 +537,6 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             return buf
         else:
             return json.dumps(msg, default=json_default)
-
-    def select_subprotocol(self, subprotocols):
-        preferred_protocol = self.kernel_ws_protocol
-        if preferred_protocol is None:
-            preferred_protocol = "v1.kernel.websocket.jupyter.org"
-        elif preferred_protocol == "":
-            preferred_protocol = None
-        selected_subprotocol = preferred_protocol if preferred_protocol in subprotocols else None
-        # None is the default, "legacy" protocol
-        return selected_subprotocol
 
     def _on_zmq_reply(self, stream, msg_list):
         # Sometimes this gets triggered when the on_close method is scheduled in the
