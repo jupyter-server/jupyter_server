@@ -66,16 +66,16 @@ class ContentsManager(LoggingConfigurable):
     root_dir = Unicode("/", config=True)
 
     preferred_dir = Unicode(
-        "/",
+        "",
         config=True,
         help=_i18n(
-            "Preferred starting directory to use for notebooks, relative to the server root dir."
+            "Preferred starting directory to use for notebooks. This is an API path (`/` separated, relative to root dir)"
         ),
     )
 
     @validate("preferred_dir")
     def _validate_preferred_dir(self, proposal):
-        value = proposal["value"]
+        value = proposal["value"].strip("/")
         try:
             dir_exists = run_sync(self.dir_exists)(value)
         except HTTPError as e:

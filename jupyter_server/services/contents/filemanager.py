@@ -68,16 +68,16 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         else:
             if value is not None:
                 warnings.warn(
-                    "ServerApp.preferred_dir config is deprecated in jupyter-server 2.0. Use ContentsManager.preferred_dir with a relative path instead",
+                    "ServerApp.preferred_dir config is deprecated in jupyter-server 2.0. Use FileContentsManager.preferred_dir instead",
                     FutureWarning,
                     stacklevel=3,
                 )
                 try:
                     path = Path(value)
-                    return "/" + path.relative_to(self.root_dir).as_posix()
+                    return path.relative_to(self.root_dir).as_posix()
                 except ValueError:
                     raise TraitError("%s is outside root contents directory" % value)
-        return "/"
+        return ""
 
     @default("checkpoints_class")
     def _checkpoints_class_default(self):

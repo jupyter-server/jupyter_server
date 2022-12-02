@@ -271,7 +271,7 @@ def test_valid_preferred_dir(tmp_path, jp_configurable_serverapp):
     assert app.preferred_dir == path
     assert app.root_dir == app.preferred_dir
     assert app.contents_manager.root_dir == path
-    assert app.contents_manager.preferred_dir == "/"
+    assert app.contents_manager.preferred_dir == ""
 
 
 @pytest.mark.filterwarnings("ignore::FutureWarning")
@@ -283,7 +283,7 @@ def test_valid_preferred_dir_is_root_subdir(tmp_path, jp_configurable_serverapp)
     assert app.root_dir == path
     assert app.preferred_dir == path_subdir
     assert app.preferred_dir.startswith(app.root_dir)
-    assert app.contents_manager.preferred_dir == "/subdir"
+    assert app.contents_manager.preferred_dir == "subdir"
 
 
 def test_valid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverapp):
@@ -332,8 +332,9 @@ def test_preferred_dir_validation(
 
     os_preferred_dir = str(tmp_path / "subdir")
     os.makedirs(os_preferred_dir, exist_ok=True)
-    config_preferred_dir = os_preferred_dir if config_target == "ServerApp" else "/subdir"
-    expected_preferred_dir = "/subdir"
+    config_preferred_dir = os_preferred_dir if config_target == "ServerApp" else "subdir"
+    config_preferred_dir = config_preferred_dir + "/"  # add trailing slash to ensure it is removed
+    expected_preferred_dir = "subdir"
 
     argv = []
     kwargs = {"root_dir": None}
@@ -355,7 +356,7 @@ def test_preferred_dir_validation(
     if preferred_dir_loc == "config":
         config_lines.append(f'c.{config_target}.preferred_dir = r"{config_preferred_dir}"')
     if preferred_dir_loc == "default":
-        expected_preferred_dir = "/"
+        expected_preferred_dir = ""
 
     if config_file is not None:
         config_file.write_text("\n".join(config_lines))
