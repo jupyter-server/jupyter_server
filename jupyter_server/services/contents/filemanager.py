@@ -21,6 +21,7 @@ from traitlets import Bool, TraitError, Unicode, default, validate
 from jupyter_server import _tz as tz
 from jupyter_server.base.handlers import AuthenticatedFileHandler
 from jupyter_server.transutils import _i18n
+from jupyter_server.utils import to_api_path
 
 from .filecheckpoints import AsyncFileCheckpoints, FileCheckpoints
 from .fileio import AsyncFileManagerMixin, FileManagerMixin
@@ -78,6 +79,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 except ValueError:
                     raise TraitError("%s is outside root contents directory" % value)
         return ""
+
+    @validate("preferred_dir")
+    def _validate_preferred_dir(self, proposal):
+        # It should be safe to pass an API path through this method:
+        proposal["value"] = to_api_path(proposal["value"], self.root_dir)
+        return super()._validate_preferred_dir(proposal)
 
     @default("checkpoints_class")
     def _checkpoints_class_default(self):
