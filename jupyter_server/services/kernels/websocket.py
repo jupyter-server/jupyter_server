@@ -14,7 +14,7 @@ AUTH_RESOURCE = "kernels"
 
 
 class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):
-    """The kernels websocket should connecte"""
+    """The kernels websocket should connect"""
 
     auth_resource = AUTH_RESOURCE
 
@@ -74,6 +74,16 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):
     def on_close(self):
         self.connection.disconnect()
         self.connection = None
+
+    def select_subprotocol(self, subprotocols):
+        preferred_protocol = self.connection.kernel_ws_protocol
+        if preferred_protocol is None:
+            preferred_protocol = "v1.kernel.websocket.jupyter.org"
+        elif preferred_protocol == "":
+            preferred_protocol = None
+        selected_subprotocol = preferred_protocol if preferred_protocol in subprotocols else None
+        # None is the default, "legacy" protocol
+        return selected_subprotocol
 
 
 default_handlers = [
