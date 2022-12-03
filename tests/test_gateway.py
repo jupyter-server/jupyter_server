@@ -427,33 +427,49 @@ async def test_gateway_get_named_kernelspec(init_gateway, jp_fetch):
         assert expected_http_error(e, 404)
 
 
-async def test_gateway_session_lifecycle(init_gateway, jp_root_dir, jp_fetch):
+@pytest.mark.parametrize("cull_kernel", [False, True])
+async def test_gateway_session_lifecycle(init_gateway, jp_root_dir, jp_fetch, cull_kernel):
     # Validate session lifecycle functions; create and delete.
 
     # create
     session_id, kernel_id = await create_session(jp_root_dir, jp_fetch, "kspec_foo")
 
     # ensure kernel still considered running
-    assert await is_kernel_running(jp_fetch, kernel_id) is True
+    assert await is_session_active(jp_fetch, session_id) is True
 
     # interrupt
     await interrupt_kernel(jp_fetch, kernel_id)
 
     # ensure kernel still considered running
-    assert await is_kernel_running(jp_fetch, kernel_id) is True
+    assert await is_session_active(jp_fetch, session_id) is True
 
     # restart
     await restart_kernel(jp_fetch, kernel_id)
 
-    # ensure kernel still considered running
-    assert await is_kernel_running(jp_fetch, kernel_id) is True
+    assert await is_session_active(jp_fetch, session_id) is True
 
-    # delete
-    await delete_session(jp_fetch, session_id)
-    assert await is_kernel_running(jp_fetch, kernel_id) is False
+    if cull_kernel:
+        running_kernels.pop(kernel_id)
+
+    # fetch kernel and session and ensure not considered running
+    assert await is_kernel_running(jp_fetch, kernel_id) is not cull_kernel
+    assert await is_session_active(jp_fetch, session_id) is not cull_kernel
+
+    # delete session.  If culled, ensure 404 is raised
+    if cull_kernel:
+        with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+            await delete_session(jp_fetch, session_id)
+        assert expected_http_error(e, 404)
+    else:
+        await delete_session(jp_fetch, session_id)
+
+    assert await is_session_active(jp_fetch, session_id) is False
 
 
-async def test_gateway_kernel_lifecycle(init_gateway, jp_serverapp, jp_ws_fetch, jp_fetch):
+@pytest.mark.parametrize("cull_kernel", [False, True])
+async def test_gateway_kernel_lifecycle(
+    init_gateway, jp_serverapp, jp_ws_fetch, jp_fetch, cull_kernel
+):
     # Validate kernel lifecycle functions; create, interrupt, restart and delete.
 
     # create
@@ -480,8 +496,20 @@ async def test_gateway_kernel_lifecycle(init_gateway, jp_serverapp, jp_ws_fetch,
     # ensure kernel still considered running
     assert await is_kernel_running(jp_fetch, kernel_id) is True
 
-    # delete
-    await delete_kernel(jp_fetch, kernel_id)
+    if cull_kernel:
+        running_kernels.pop(kernel_id)
+
+    # fetch kernel and session and ensure not considered running
+    assert await is_kernel_running(jp_fetch, kernel_id) is not cull_kernel
+
+    # delete kernel.  If culled, ensure 404 is raised
+    if cull_kernel:
+        with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+            await delete_kernel(jp_fetch, kernel_id)
+        assert expected_http_error(e, 404)
+    else:
+        await delete_kernel(jp_fetch, kernel_id)
+
     assert await is_kernel_running(jp_fetch, kernel_id) is False
 
 
@@ -583,6 +611,22 @@ async def test_channel_queue_get_msg_when_response_router_had_finished():
 #
 # Test methods below...
 #
+
+
+async def is_session_active(jp_fetch, session_id):
+    """Issues request to get the set of running kernels"""
+    with mocked_gateway:
+        # Get list of running kernels
+        r = await jp_fetch("api", "sessions", method="GET")
+        assert r.code == 200
+        sessions = json.loads(r.body.decode("utf-8"))
+        assert len(sessions) == len(running_kernels)  # Use running_kernels as truth
+        for model in sessions:
+            if model.get("id") == session_id:
+                return True
+        return False
+
+
 async def create_session(root_dir, jp_fetch, kernel_name):
     """Creates a session for a kernel.  The session is created against the server
     which then uses the gateway for kernel management.
