@@ -201,7 +201,12 @@ ignore = [
   "N806",
   # Exception name `KernelSessionRecordConflict` should be named with an Error suffix
   "N818",
-
+]
+unfixable = [
+  # Don't touch print statements
+  "T201",
+  # Don't touch unused imports
+  "F401",
 ]
 exclude = [
     ".cache",
@@ -226,6 +231,8 @@ ban-relative-imports = "all"
 "jupyter_server/base/zmqhandlers.py" = ["F401"]
 # F821 Undefined name `c`
 "**/*_config.py" = ["F821"]
+# F401 `jupyter_server_terminals.TerminalAPIHandler` imported but unused
+"jupyter_server/terminal/api_handlers.py" = ["F401"]
 
 [tool.pytest.ini_options]
 addopts = "-raXs --durations 10 --color=yes --doctest-modules"

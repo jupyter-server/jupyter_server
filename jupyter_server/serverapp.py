@@ -598,6 +598,7 @@ class JupyterServerStopApp(JupyterApp):
         return shutdown_server(server, log=self.log)
 
     def _shutdown_or_exit(self, target_endpoint, server):
+        self.log.info("Shutting down server on %s..." % target_endpoint)
         if not self.shutdown_server(server):
             sys.exit("Could not stop server on %s" % target_endpoint)
 
@@ -609,6 +610,7 @@ class JupyterServerStopApp(JupyterApp):
             pass
 
     def start(self):
+        info = self.log.info
         servers = list(list_running_servers(self.runtime_dir, log=self.log))
         if not servers:
             self.exit("There are no running servers (per %s)" % self.runtime_dir)
@@ -625,8 +627,11 @@ class JupyterServerStopApp(JupyterApp):
                 if port == self.port:
                     self._shutdown_or_exit(port, server)
                     return
-        for _ in servers:
-            pass
+        current_endpoint = self.sock or self.port
+        info(f"There is currently no server running on {current_endpoint}")
+        info("Ports/sockets currently in use:")
+        for server in servers:
+            info(" - {}".format(server.get("sock") or server["port"]))
         self.exit(1)
 
 
@@ -665,17 +670,20 @@ class JupyterServerListApp(JupyterApp):
     )
 
     def start(self):
+        info = self.log.info
         serverinfo_list = list(list_running_servers(self.runtime_dir, log=self.log))
         if self.jsonlist:
-            pass
+            info(json.dumps(serverinfo_list, indent=2))
         elif self.json:
-            for _serverinfo in serverinfo_list:
-                pass
+            for serverinfo in serverinfo_list:
+                info(json.dumps(serverinfo))
         else:
+            info("Currently running servers:")
             for serverinfo in serverinfo_list:
                 url = serverinfo["url"]
                 if serverinfo.get("token"):
                     url = url + "?token=%s" % serverinfo["token"]
+                info(url, "::", serverinfo["root_dir"])
 
 
 # -----------------------------------------------------------------------------
@@ -2199,6 +2207,7 @@ class ServerApp(JupyterApp):
             # since this might be called from a signal handler
             self.stop(from_signal=True)
             return
+        info(self.running_server_info())
         yes = _i18n("y")
         no = _i18n("n")
         sys.stdout.write(_i18n("Shutdown this Jupyter server (%s/[%s])? ") % (yes, no))
@@ -2213,7 +2222,8 @@ class ServerApp(JupyterApp):
                 self.stop(from_signal=True)
                 return
         else:
-            pass
+            info(_i18n("No answer for 5s:"), end=" ")
+        info(_i18n("resuming operation..."))
         # no answer, or answer is no:
         # set it back to original SIGINT handler
         # use IOLoop.add_callback because signal.signal must be called
@@ -2225,7 +2235,7 @@ class ServerApp(JupyterApp):
         self.stop(from_signal=True)
 
     def _signal_info(self, sig, frame):
-        pass
+        self.log.info(self.running_server_info())
 
     def init_components(self):
         """Check the components submodule, and warn if it's unclean"""
