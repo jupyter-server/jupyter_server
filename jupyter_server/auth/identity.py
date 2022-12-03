@@ -103,8 +103,8 @@ def _backward_compat_user(got_user: Any) -> User:
                 kwargs[field] = got_user[field]
         try:
             return User(**kwargs)
-        except TypeError:
-            raise ValueError(f"Unrecognized user: {got_user}")
+        except TypeError as e:
+            raise ValueError(f"Unrecognized user: {got_user}") from e
     else:
         raise ValueError(f"Unrecognized user: {got_user}")
 
@@ -496,7 +496,7 @@ class IdentityProvider(LoggingConfigurable):
         - skip origin-checks for scripts
         """
         # ensure get_user has been called, so we know if we're token-authenticated
-        handler.current_user  # noqa
+        handler.current_user
         return getattr(handler, "_token_authenticated", False)
 
     def validate_security(

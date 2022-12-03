@@ -19,15 +19,8 @@ from tornado.web import HTTPError
 from traitlets import Int, Unicode
 from traitlets.config import Config
 
-from jupyter_server.gateway.gateway_client import (
-    GatewayTokenRenewerBase,
-    NoOpTokenRenewer,
-)
-from jupyter_server.gateway.managers import (
-    ChannelQueue,
-    GatewayClient,
-    GatewayKernelManager,
-)
+from jupyter_server.gateway.gateway_client import GatewayTokenRenewerBase, NoOpTokenRenewer
+from jupyter_server.gateway.managers import ChannelQueue, GatewayClient, GatewayKernelManager
 from jupyter_server.utils import ensure_async
 
 from .utils import expected_http_error

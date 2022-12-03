@@ -12,18 +12,7 @@ from nbformat import ValidationError, sign
 from nbformat import validate as validate_nb
 from nbformat.v4 import new_notebook
 from tornado.web import HTTPError, RequestHandler
-from traitlets import (
-    Any,
-    Bool,
-    Dict,
-    Instance,
-    List,
-    TraitError,
-    Type,
-    Unicode,
-    default,
-    validate,
-)
+from traitlets import Any, Bool, Dict, Instance, List, TraitError, Type, Unicode, default, validate
 from traitlets.config.configurable import LoggingConfigurable
 
 from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH, JUPYTER_SERVER_EVENTS_URI
@@ -288,10 +277,10 @@ class ContentsManager(LoggingConfigurable):
 
     @default("checkpoints_kwargs")
     def _default_checkpoints_kwargs(self):
-        return dict(
-            parent=self,
-            log=self.log,
-        )
+        return {
+            "parent": self,
+            "log": self.log,
+        }
 
     files_handler_class = Type(
         FilesHandler,
@@ -727,10 +716,10 @@ class AsyncContentsManager(ContentsManager):
 
     @default("checkpoints_kwargs")
     def _default_checkpoints_kwargs(self):
-        return dict(
-            parent=self,
-            log=self.log,
-        )
+        return {
+            "parent": self,
+            "log": self.log,
+        }
 
     # ContentsManager API part 1: methods that must be
     # implemented in subclasses.

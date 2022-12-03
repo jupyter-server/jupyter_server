@@ -173,7 +173,7 @@ def test_launch_socket_collision(jp_unix_socket_file):
     except subprocess.CalledProcessError as cpe:
         assert check_msg in cpe.output.decode()
     except Exception as ex:
-        raise AssertionError(f"expected 'already in use' error, got '{ex}'!")
+        raise AssertionError(f"expected 'already in use' error, got '{ex}'!") from ex
     else:
         raise AssertionError("expected 'already in use' error, got success instead!")
 

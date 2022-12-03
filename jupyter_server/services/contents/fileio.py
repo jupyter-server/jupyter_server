@@ -361,7 +361,7 @@ class AsyncFileManagerMixin(FileManagerMixin):
 
     async def _read_notebook(self, os_path, as_version=4, capture_validation_error=None):
         """Read a notebook from an os path."""
-        with self.open(os_path, "r", encoding="utf-8") as f:
+        with self.open(os_path, encoding="utf-8") as f:
             try:
                 return await run_sync(
                     partial(

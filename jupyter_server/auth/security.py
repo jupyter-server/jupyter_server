@@ -52,7 +52,7 @@ def passwd(passphrase=None, algorithm="argon2"):
                 passphrase = p0
                 break
             else:
-                print("Passwords do not match.")
+                pass
         else:
             raise ValueError("No matching passwords found. Giving up.")
 

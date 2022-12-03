@@ -348,10 +348,10 @@ class GatewayKernelManager(AsyncKernelManager):
         kw = {}
         kw.update(self.get_connection_info(session=True))
         kw.update(
-            dict(
-                connection_file=self.connection_file,
-                parent=self,
-            )
+            {
+                "connection_file": self.connection_file,
+                "parent": self,
+            }
         )
         kw["kernel_id"] = self.kernel_id
 
@@ -534,9 +534,9 @@ class ChannelQueue(Queue):
         while True:
             try:
                 return self.get(block=False)
-            except Empty:
+            except Empty as e:
                 if self.response_router_finished:
-                    raise RuntimeError("Response router had finished")
+                    raise RuntimeError("Response router had finished") from e
                 if monotonic() > end_time:
                     raise
                 await asyncio.sleep(0)

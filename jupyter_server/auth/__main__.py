@@ -14,9 +14,9 @@ def set_password(args):
         password1 = getpass("" if args.quiet else "Provide password: ")
         password_repeat = getpass("" if args.quiet else "Repeat password:  ")
         if password1 != password_repeat:
-            print("Passwords do not match, try again")
+            pass
         elif len(password1) < 4:
-            print("Please provide at least 4 characters")
+            pass
         else:
             password = password1
 
@@ -31,7 +31,7 @@ def set_password(args):
         },
     )
     if not args.quiet:
-        print("password stored in config dir: %s" % jupyter_config_dir())
+        pass
 
 
 def main(argv):

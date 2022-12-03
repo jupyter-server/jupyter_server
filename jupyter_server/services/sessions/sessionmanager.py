@@ -244,7 +244,7 @@ class SessionManager(LoggingConfigurable):
         return exists
 
     def new_session_id(self):
-        "Create a uuid for a new session"
+        """Create a uuid for a new session"""
         return str(uuid.uuid4())
 
     async def create_session(
@@ -362,7 +362,7 @@ class SessionManager(LoggingConfigurable):
         try:
             model = await self.row_to_model(row)
         except KeyError as e:
-            raise web.HTTPError(404, "Session not found: %s" % str(e))
+            raise web.HTTPError(404, "Session not found: %s" % str(e)) from e
         return model
 
     async def update_session(self, session_id, **kwargs):

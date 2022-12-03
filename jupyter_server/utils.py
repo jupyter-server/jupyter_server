@@ -8,12 +8,11 @@ import socket
 import sys
 import warnings
 from contextlib import contextmanager
-from urllib.parse import urljoin  # noqa: F401
 from urllib.parse import SplitResult, quote, unquote, urlparse, urlsplit, urlunsplit
 from urllib.request import pathname2url  # noqa: F401
 
 from _frozen_importlib_external import _NamespacePath
-from jupyter_core.utils import ensure_async  # noqa: F401
+from jupyter_core.utils import ensure_async
 from packaging.version import Version
 from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest
 from tornado.netutil import Resolver
@@ -395,8 +394,8 @@ def import_item(name):
         module = __import__(package, fromlist=[obj])
         try:
             pak = getattr(module, obj)
-        except AttributeError:
-            raise ImportError("No module named %s" % obj)
+        except AttributeError as e:
+            raise ImportError("No module named %s" % obj) from e
         return pak
     else:
         # called with un-dotted string

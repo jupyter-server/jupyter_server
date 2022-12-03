@@ -13,17 +13,7 @@ from socket import gaierror
 
 from tornado import web
 from tornado.httpclient import AsyncHTTPClient, HTTPClientError, HTTPResponse
-from traitlets import (
-    Bool,
-    Float,
-    Int,
-    TraitError,
-    Type,
-    Unicode,
-    default,
-    observe,
-    validate,
-)
+from traitlets import Bool, Float, Int, TraitError, Type, Unicode, default, observe, validate
 from traitlets.config import LoggingConfigurable, SingletonConfigurable
 
 if ty.TYPE_CHECKING:

@@ -516,7 +516,7 @@ class JupyterHandler(AuthenticatedHandler):
             return
         try:
             return super().check_xsrf_cookie()
-        except web.HTTPError:
+        except web.HTTPError as e:
             if self.request.method in {"GET", "HEAD"}:
                 # Consider Referer a sufficient cross-origin check for GET requests
                 if not self.check_referer():
@@ -525,7 +525,7 @@ class JupyterHandler(AuthenticatedHandler):
                         msg = f"Blocking Cross Origin request from {referer}."
                     else:
                         msg = "Blocking request from unknown origin"
-                    raise web.HTTPError(403, msg)
+                    raise web.HTTPError(403, msg) from e
             else:
                 raise
 
@@ -683,12 +683,12 @@ class JupyterHandler(AuthenticatedHandler):
             exception = "(unknown)"
 
         # build template namespace
-        ns = dict(
-            status_code=status_code,
-            status_message=status_message,
-            message=message,
-            exception=exception,
-        )
+        ns = {
+            "status_code": status_code,
+            "status_message": status_message,
+            "message": message,
+            "exception": exception,
+        }
 
         self.set_header("Content-Type", "text/html")
         # render the template

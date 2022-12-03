@@ -357,11 +357,11 @@ class ServerExtensionApp(BaseExtensionApp):
     description = "Work with Jupyter server extensions"
     examples = _examples
 
-    subcommands = dict(
-        enable=(EnableServerExtensionApp, "Enable a server extension"),
-        disable=(DisableServerExtensionApp, "Disable a server extension"),
-        list=(ListServerExtensionsApp, "List server extensions"),
-    )
+    subcommands = {
+        "enable": (EnableServerExtensionApp, "Enable a server extension"),
+        "disable": (DisableServerExtensionApp, "Disable a server extension"),
+        "list": (ListServerExtensionsApp, "List server extensions"),
+    }
 
     def start(self):
         """Perform the App's actions as configured"""

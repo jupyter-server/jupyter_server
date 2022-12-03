@@ -106,6 +106,28 @@ test = "python -m pytest -vv --cov jupyter_server --cov-branch --cov-report term
 nowarn = "test -W default {args}"
 integration = "test --integration_tests=true {args}"
 
+[tool.hatch.envs.lint]
+detached = true
+dependencies = [
+  "black>=22.6.0",
+  "mypy>=0.990",
+  "ruff>=0.0.132",
+]
+[tool.hatch.envs.lint.scripts]
+typing = "mypy --install-types --non-interactive {args}"
+style = [
+  "ruff {args:.}",
+  "black --check --diff {args:.}",
+]
+fmt = [
+  "black {args:.}",
+  "ruff --fix {args:.}",
+]
+all = [
+  "style",
+  "typing",
+]
+
 [tool.hatch.version]
 path = "jupyter_server/_version.py"
 validate-bump = false
@@ -125,10 +147,85 @@ install-pre-commit-hook = true
 optional-editable-build = true
 
 [tool.black]
-line_length = 100
+line-length = 100
+skip-string-normalization = true
+target-version = ["py38"]
 
-[tool.isort]
-profile = "black"
+[tool.ruff]
+target-version = "py38"
+line-length = 100
+select = [
+  "A",
+  "B",
+  "C",
+  "E",
+  "F",
+  "FBT",
+  "I",
+  "M",
+  "N",
+  "Q",
+  "RUF",
+  "S",
+  "T",
+  "U",
+  "W",
+  "YTT",
+]
+ignore = [
+  # Allow non-abstract empty methods in abstract base classes
+  "B027",
+  # Ignore McCabe complexity
+  "C901",
+  # Allow boolean positional values in function calls, like `dict.get(... True)`
+  "FBT003",
+  # Use of `assert` detected
+  "S101",
+  # Line too long
+  "E501",
+  # Relative imports are banned
+  "I252",
+  # Boolean ... in function definition
+  "FBT001",
+  "FBT002",
+  # Module level import not at top of file
+  "E402",
+  # A001/A002/A003 .. is shadowing a python builtin
+  "A001",
+  "A002",
+  "A003",
+  # Possible hardcoded password
+  "S105",
+  "S106",
+  # Variable `xxx` in function should be lowercase
+  "N806",
+  # Exception name `KernelSessionRecordConflict` should be named with an Error suffix
+  "N818",
+
+]
+exclude = [
+    ".cache",
+    ".github",
+    "docs",
+]
+
+[tool.ruff.flake8-quotes]
+inline-quotes = "double"
+
+[tool.ruff.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.per-file-ignores]
+# B011 Do not call assert False since python -O removes these calls
+# F841 local variable 'foo' is assigned to but never used
+# C408 Unnecessary `dict` call
+# E402 Module level import not at top of file
+# T201 `print` found
+"tests/*" = ["B011", "F841", "C408", "E402", "T201"]
+# Ignore flake 8 errors from shimmed imports
+"jupyter_server/base/zmqhandlers.py" = ["F401"]
+# F821 Undefined name `c`
+"**/*_config.py" = ["F821"]
 
 [tool.pytest.ini_options]
 addopts = "-raXs --durations 10 --color=yes --doctest-modules"
@@ -192,25 +289,3 @@ module = [
     "websocket"
 ]
 ignore_missing_imports = true
-
-
-[tool.flake8]
-ignore = ["E501", "W503", "E402"]
-builtins = ["c", "get_config"]
-exclude = [
-    ".cache",
-    ".github",
-    "docs"
-]
-enable-extensions = "G"
-extend-ignore = [
-    "G001", "G002", "G004", "G200", "G201", "G202",
-    # black adds spaces around ':'
-    "E203"]
-per-file-ignores = [
-    # B011: Do not call assert False since python -O removes these calls
-    # F841 local variable 'foo' is assigned to but never used
-    "tests/*: B011, F841",
-    # Ignore flake 8 errors from shimmed imports
-    "jupyter_server/base/zmqhandlers.py:F401"
-]

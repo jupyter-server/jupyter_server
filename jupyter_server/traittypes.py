@@ -56,7 +56,7 @@ class TypeFromClasses(ClassBasedTraitType):
         super().__init__(new_default_value, **kwargs)
 
     def subclass_from_klasses(self, value):
-        "Check that a given class is a subclasses found in the klasses list."
+        """Check that a given class is a subclasses found in the klasses list."""
         return any(issubclass(value, klass) for klass in self.importable_klasses)
 
     def validate(self, obj, value):
@@ -64,11 +64,11 @@ class TypeFromClasses(ClassBasedTraitType):
         if isinstance(value, str):
             try:
                 value = self._resolve_string(value)
-            except ImportError:
+            except ImportError as e:
                 raise TraitError(
                     "The '%s' trait of %s instance must be a type, but "
                     "%r could not be imported" % (self.name, obj, value)
-                )
+                ) from e
         try:
             if self.subclass_from_klasses(value):
                 return value
@@ -172,7 +172,7 @@ class InstanceFromClasses(ClassBasedTraitType):
         super().__init__(**kwargs)
 
     def instance_from_importable_klasses(self, value):
-        "Check that a given class is a subclasses found in the klasses list."
+        """Check that a given class is a subclasses found in the klasses list."""
         return any(isinstance(value, klass) for klass in self.importable_klasses)
 
     def validate(self, obj, value):

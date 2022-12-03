@@ -32,29 +32,29 @@ def get_data_files():
 
 cmdclass = create_cmdclass(data_files_spec=get_data_files())
 
-setup_args = dict(
-    name="jupyter_server_example",
-    version=VERSION,
-    description="Jupyter Server Example",
-    long_description=open("README.md").read(),
-    python_requires=">=3.8",
-    install_requires=[
+setup_args = {
+    "name": "jupyter_server_example",
+    "version": VERSION,
+    "description": "Jupyter Server Example",
+    "long_description": open("README.md").read(),
+    "python_requires": ">=3.8",
+    "install_requires": [
         "jupyter_server",
         "jinja2",
     ],
-    extras_require={
+    "extras_require": {
         "test": ["pytest", "pytest-asyncio"],
     },
-    include_package_data=True,
-    cmdclass=cmdclass,
-    entry_points={
+    "include_package_data": True,
+    "cmdclass": cmdclass,
+    "entry_points": {
         "console_scripts": [
             "jupyter-simple-ext1 = simple_ext1.application:main",
             "jupyter-simple-ext11 = simple_ext11.application:main",
             "jupyter-simple-ext2 = simple_ext2.application:main",
         ]
     },
-)
+}
 
 
 if __name__ == "__main__":

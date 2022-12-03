@@ -13,10 +13,7 @@ from datetime import datetime, timedelta
 from functools import partial
 
 from jupyter_client.ioloop.manager import AsyncIOLoopKernelManager
-from jupyter_client.multikernelmanager import (
-    AsyncMultiKernelManager,
-    MultiKernelManager,
-)
+from jupyter_client.multikernelmanager import AsyncMultiKernelManager, MultiKernelManager
 from jupyter_client.session import Session
 from jupyter_core.paths import exists
 from tornado import web

@@ -18,23 +18,6 @@ repos:
       - id: check-builtin-literals
       - id: trailing-whitespace
 
-  - repo: https://github.com/psf/black
-    rev: 22.10.0
-    hooks:
-      - id: black
-
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
-    hooks:
-      - id: isort
-        files: \.py$
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.991
-    hooks:
-      - id: mypy
-        additional_dependencies: [types-requests]
-
   - repo: https://github.com/abravalheri/validate-pyproject
     rev: v0.10.1
     hooks:
@@ -69,13 +52,3 @@ repos:
           ["flake8-bugbear==22.6.22", "flake8-implicit-str-concat==0.2.0"]
         stages: [manual]
 
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.29.0
-    hooks:
-      - id: eslint
-        stages: [manual]
-
-  - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.19.2
-    hooks:
-      - id: check-github-workflows
