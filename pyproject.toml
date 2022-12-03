@@ -83,6 +83,11 @@ docs = [
     "sphinxemoji",
     "tornado",
 ]
+lint = [
+  "black>=22.6.0",
+  "mypy>=0.990",
+  "ruff>=0.0.132",
+]
 
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
@@ -108,11 +113,7 @@ integration = "test --integration_tests=true {args}"
 
 [tool.hatch.envs.lint]
 detached = true
-dependencies = [
-  "black>=22.6.0",
-  "mypy>=0.990",
-  "ruff>=0.0.132",
-]
+features = ["lint"]
 [tool.hatch.envs.lint.scripts]
 typing = "mypy --install-types --non-interactive {args}"
 style = [

@@ -59,13 +59,16 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - uses: jupyterlab/maintainer-tools/.github/actions/pre-commit@v1
 
-  test_docs:
+  test_docs_and_lint:
     name: Test Docs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      - run: hatch run docs:build
+      - run: |
+          hatch run docs:build
+          hatch run lint:typing
+          hatch run lint:style
 
   test_examples:
     name: Test Examples
@@ -158,7 +161,7 @@ jobs:
     needs:
       - build
       - pre_commit
-      - test_docs
+      - test_docs_and_lint
       - test_minimum_versions
       - test_prereleases
       - check_links
