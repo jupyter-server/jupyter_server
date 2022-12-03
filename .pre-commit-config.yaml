@@ -1,3 +1,6 @@
+ci:
+    skip: [format]  # requires downloads
+
 default_language_version:
   node: system
 
