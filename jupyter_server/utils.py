@@ -8,8 +8,16 @@ import socket
 import sys
 import warnings
 from contextlib import contextmanager
-from urllib.parse import SplitResult, quote, unquote, urlparse, urlsplit, urlunsplit
-from urllib.request import pathname2url  # noqa: F401
+from urllib.parse import (
+    SplitResult,
+    quote,
+    unquote,
+    urljoin,  # noqa
+    urlparse,
+    urlsplit,
+    urlunsplit,
+)
+from urllib.request import pathname2url  # noqa
 
 from _frozen_importlib_external import _NamespacePath
 from jupyter_core.utils import ensure_async

@@ -207,6 +207,8 @@ unfixable = [
   "T201",
   # Don't touch unused imports
   "F401",
+  # Don't touch noqa lines
+  "M001",
 ]
 exclude = [
     ".cache",
