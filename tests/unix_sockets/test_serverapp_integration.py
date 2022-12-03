@@ -49,7 +49,9 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
     assert complete, "did not find socket URL in stdout when launching notebook"
 
     socket_path = encoded_sock_path.encode()
-    assert socket_path in subprocess.check_output(["jupyter-server", "list"])
+    assert socket_path in subprocess.check_output(
+        ["jupyter-server", "list"], stderr=subprocess.STDOUT
+    )
 
     # Ensure umask is properly applied.
     assert stat.S_IMODE(os.lstat(jp_unix_socket_file).st_mode) == 0o700
