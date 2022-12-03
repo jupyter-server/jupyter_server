@@ -1,5 +1,6 @@
 import argparse
 import sys
+import warnings
 from getpass import getpass
 
 from jupyter_core.paths import jupyter_config_dir
@@ -11,14 +12,14 @@ from jupyter_server.config_manager import BaseJSONConfigManager
 
 def set_password(args):
     password = args.password
-    log = get_logger()
+
     while not password:
         password1 = getpass("" if args.quiet else "Provide password: ")
         password_repeat = getpass("" if args.quiet else "Repeat password:  ")
         if password1 != password_repeat:
-            log.error("Passwords do not match, try again")
+            warnings.warn("Passwords do not match, try again")
         elif len(password1) < 4:
-            log.error("Please provide at least 4 characters")
+            warnings.warn("Please provide at least 4 characters")
         else:
             password = password1
 
@@ -33,6 +34,7 @@ def set_password(args):
         },
     )
     if not args.quiet:
+        log = get_logger()
         log.info("password stored in config dir: %s" % jupyter_config_dir())
 
 
