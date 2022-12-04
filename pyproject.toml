@@ -149,7 +149,6 @@ optional-editable-build = true
 
 [tool.black]
 line-length = 100
-skip-string-normalization = true
 target-version = ["py38"]
 
 [tool.ruff]
