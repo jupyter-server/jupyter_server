@@ -26,7 +26,7 @@ class NbconvertRootHandler(APIHandler):
     @authorized
     async def get(self):
         try:
-            from nbconvert.exporters import base  # type:ignore
+            from nbconvert.exporters import base
         except ImportError as e:
             raise web.HTTPError(500, "Could not import nbconvert: %s" % e) from e
         res = {}

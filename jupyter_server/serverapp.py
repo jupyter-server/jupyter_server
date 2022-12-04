@@ -493,7 +493,7 @@ class JupyterPasswordApp(JupyterApp):
     and removes the need for token-based authentication.
     """
 
-    description: str = __doc__  # type:ignore[assignment]
+    description: str = __doc__
 
     def _config_file_default(self):
         return os.path.join(self.config_dir, "jupyter_server_config.json")
@@ -574,10 +574,8 @@ def shutdown_server(server_info, timeout=5, log=None):
 
 class JupyterServerStopApp(JupyterApp):
 
-    version: str = __version__  # type:ignore[assignment]
-    description: str = (
-        "Stop currently running Jupyter server for a given port"  # type:ignore[assignment]
-    )
+    version: str = __version__
+    description: str = "Stop currently running Jupyter server for a given port"
 
     port = Integer(
         DEFAULT_JUPYTER_SERVER_PORT,
@@ -638,8 +636,8 @@ class JupyterServerStopApp(JupyterApp):
 
 
 class JupyterServerListApp(JupyterApp):
-    version: str = __version__  # type:ignore[assignment]
-    description: str = _i18n("List currently running Jupyter servers.")  # type:ignore[assignment]
+    version: str = __version__
+    description: str = _i18n("List currently running Jupyter servers.")
 
     flags = {
         "jsonlist": (
@@ -754,14 +752,14 @@ aliases.update(
 
 class ServerApp(JupyterApp):
 
-    name = "jupyter-server"  # type:ignore[assignment]
-    version: str = __version__  # type:ignore[assignment]
-    description: str = _i18n(  # type:ignore[assignment]
+    name = "jupyter-server"
+    version: str = __version__
+    description: str = _i18n(
         """The Jupyter Server.
 
     This launches a Tornado-based Jupyter Server."""
     )
-    examples = _examples  # type:ignore[assignment]
+    examples = _examples
 
     flags = Dict(flags)  # type:ignore[assignment]
     aliases = Dict(aliases)  # type:ignore[assignment]
@@ -786,11 +784,23 @@ class ServerApp(JupyterApp):
         ZMQChannelsWebsocketConnection,
     ]
 
-    subcommands = {  # type:ignore[assignment]
-        "list": (JupyterServerListApp, JupyterServerListApp.description.splitlines()[0]),
-        "stop": (JupyterServerStopApp, JupyterServerStopApp.description.splitlines()[0]),
-        "password": (JupyterPasswordApp, JupyterPasswordApp.description.splitlines()[0]),
-        "extension": (ServerExtensionApp, ServerExtensionApp.description.splitlines()[0]),
+    subcommands = {
+        "list": (
+            JupyterServerListApp,
+            JupyterServerListApp.description.splitlines()[0],
+        ),  # type:ignore[dict-item]
+        "stop": (
+            JupyterServerStopApp,
+            JupyterServerStopApp.description.splitlines()[0],
+        ),  # type:ignore[dict-item]
+        "password": (
+            JupyterPasswordApp,
+            JupyterPasswordApp.description.splitlines()[0],
+        ),  # type:ignore[dict-item]
+        "extension": (
+            ServerExtensionApp,
+            ServerExtensionApp.description.splitlines()[0],
+        ),  # type:ignore[dict-item]
     }
 
     # A list of services whose handlers will be exposed.

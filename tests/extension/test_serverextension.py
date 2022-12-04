@@ -120,11 +120,11 @@ def test_load_ordered(jp_serverapp, jp_server_config):
 
 def test_server_extension_apps(jp_env_config_path, jp_extension_environ):
     app = ToggleServerExtensionApp()
-    app.extra_args = "mock1"
+    app.extra_args = ["mock1"]
     app.start()
 
     app2 = DisableServerExtensionApp()
-    app2.extra_args = "mock1"
+    app2.extra_args = ["mock1"]
     app2.start()
 
     app3 = ListServerExtensionsApp()

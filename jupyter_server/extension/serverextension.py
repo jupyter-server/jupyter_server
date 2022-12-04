@@ -119,7 +119,7 @@ class BaseExtensionApp(JupyterApp):
     _log_formatter_cls = LogFormatter  # type:ignore[assignment]
     flags = _base_flags
     aliases = _base_aliases
-    version = __version__  # type:ignore[assignment]
+    version = __version__
 
     user = Bool(False, config=True, help="Whether to do a user install")
     sys_prefix = Bool(True, config=True, help="Use the sys.prefix as the prefix")
@@ -218,8 +218,8 @@ _desc = "Enable/disable a server extension using frontend configuration files."
 class ToggleServerExtensionApp(BaseExtensionApp):
     """A base class for enabling/disabling extensions"""
 
-    name = "jupyter server extension enable/disable"  # type:ignore[assignment]
-    description = _desc  # type:ignore[assignment]
+    name = "jupyter server extension enable/disable"
+    description = _desc
 
     flags = flags
 
@@ -277,13 +277,13 @@ class ToggleServerExtensionApp(BaseExtensionApp):
 class EnableServerExtensionApp(ToggleServerExtensionApp):
     """An App that enables (and validates) Server Extensions"""
 
-    name = "jupyter server extension enable"  # type:ignore[assignment]
+    name = "jupyter server extension enable"
     description = """
     Enable a server extension in configuration.
 
     Usage
         jupyter server extension enable [--system|--sys-prefix]
-    """  # type:ignore[assignment]
+    """
     _toggle_value = True  # type:ignore[assignment]
     _toggle_pre_message = "enabling"
     _toggle_post_message = "enabled"
@@ -292,13 +292,13 @@ class EnableServerExtensionApp(ToggleServerExtensionApp):
 class DisableServerExtensionApp(ToggleServerExtensionApp):
     """An App that disables Server Extensions"""
 
-    name = "jupyter server extension disable"  # type:ignore[assignment]
+    name = "jupyter server extension disable"
     description = """
     Disable a server extension in configuration.
 
     Usage
         jupyter server extension disable [--system|--sys-prefix]
-    """  # type:ignore[assignment]
+    """
     _toggle_value = False  # type:ignore[assignment]
     _toggle_pre_message = "disabling"
     _toggle_post_message = "disabled"
@@ -307,11 +307,9 @@ class DisableServerExtensionApp(ToggleServerExtensionApp):
 class ListServerExtensionsApp(BaseExtensionApp):
     """An App that lists (and validates) Server Extensions"""
 
-    name = "jupyter server extension list"  # type:ignore[assignment]
-    version = __version__  # type:ignore[assignment]
-    description = (
-        "List all server extensions known by the configuration system"  # type:ignore[assignment]
-    )
+    name = "jupyter server extension list"
+    version = __version__
+    description = "List all server extensions known by the configuration system"
 
     def list_server_extensions(self):
         """List all enabled and disabled server extensions, by config path
@@ -357,12 +355,12 @@ jupyter server extension disable --py <packagename>  # disable all server extens
 class ServerExtensionApp(BaseExtensionApp):
     """Root level server extension app"""
 
-    name = "jupyter server extension"  # type:ignore[assignment]
-    version = __version__  # type:ignore[assignment]
-    description: str = "Work with Jupyter server extensions"  # type:ignore[assignment]
-    examples = _examples  # type:ignore[assignment]
+    name = "jupyter server extension"
+    version = __version__
+    description: str = "Work with Jupyter server extensions"
+    examples = _examples
 
-    subcommands: dict = {  # type:ignore[assignment]
+    subcommands: dict = {
         "enable": (EnableServerExtensionApp, "Enable a server extension"),
         "disable": (DisableServerExtensionApp, "Disable a server extension"),
         "list": (ListServerExtensionsApp, "List server extensions"),
