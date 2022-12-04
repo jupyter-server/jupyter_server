@@ -1,14 +1,14 @@
 import inspect
 from ast import literal_eval
 
-from traitlets import ClassBasedTraitType, TraitError, Undefined
+from traitlets import Any, ClassBasedTraitType, TraitError, Undefined
 from traitlets.utils.descriptions import describe
 
 
 class TypeFromClasses(ClassBasedTraitType):
     """A trait whose value must be a subclass of a class in a specified list of classes."""
 
-    default_value: Undefined
+    default_value: Any
 
     def __init__(self, default_value=Undefined, klasses=None, **kwargs):
         """Construct a Type trait
@@ -217,7 +217,9 @@ class InstanceFromClasses(ClassBasedTraitType):
     def make_dynamic_default(self):
         if (self.default_args is None) and (self.default_kwargs is None):
             return None
-        return self.klass(*(self.default_args or ()), **(self.default_kwargs or {}))
+        return self.klass(  # type:ignore[attr-defined]
+            *(self.default_args or ()), **(self.default_kwargs or {})
+        )
 
     def default_value_repr(self):
         return repr(self.make_dynamic_default())

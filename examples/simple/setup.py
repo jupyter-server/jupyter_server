@@ -1,6 +1,6 @@
 import os
 
-from jupyter_packaging import create_cmdclass
+from jupyter_packaging import create_cmdclass  # type:ignore
 from setuptools import setup
 
 VERSION = "0.0.1"

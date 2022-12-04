@@ -185,7 +185,7 @@ class ExtensionPackage(HasTraits):
         return self._module
 
     @property
-    def version(self):
+    def version(self) -> str:
         """Get the version of this package, if it's given. Otherwise, return an empty string"""
         return getattr(self._module, "__version__", "")
 

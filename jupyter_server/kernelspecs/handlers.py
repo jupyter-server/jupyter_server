@@ -9,7 +9,7 @@ AUTH_RESOURCE = "kernelspecs"
 
 
 class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
-    SUPPORTED_METHODS = ("GET", "HEAD")
+    SUPPORTED_METHODS = ("GET", "HEAD")  # type:ignore[assignment]
     auth_resource = AUTH_RESOURCE
 
     def initialize(self):

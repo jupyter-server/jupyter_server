@@ -240,12 +240,12 @@ def test_jupyter_server_apps(jp_environ):
     app.json = False
     app.start()
 
-    app = JupyterServerStopApp()
-    app.initialize([])
-    app.port = port
+    stop_app = JupyterServerStopApp()
+    stop_app.initialize([])
+    stop_app.port = port
     while 1:
         try:
-            app.start()
+            stop_app.start()
             break
         except ConnectionRefusedError:
             time.sleep(0.1)

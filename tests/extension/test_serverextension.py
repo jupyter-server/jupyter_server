@@ -5,7 +5,7 @@ import pytest
 try:
     from jupyter_core.paths import prefer_environment_over_user
 except ImportError:
-    prefer_environment_over_user = None
+    prefer_environment_over_user = None  # type:ignore
 
 from traitlets.tests.utils import check_help_all_output
 
@@ -123,12 +123,12 @@ def test_server_extension_apps(jp_env_config_path, jp_extension_environ):
     app.extra_args = "mock1"
     app.start()
 
-    app = DisableServerExtensionApp()
-    app.extra_args = "mock1"
-    app.start()
+    app2 = DisableServerExtensionApp()
+    app2.extra_args = "mock1"
+    app2.start()
 
-    app = ListServerExtensionsApp()
-    app.start()
+    app3 = ListServerExtensionsApp()
+    app3.start()
 
 
 def test_server_extension_app():

@@ -331,7 +331,7 @@ class ModifyCheckpointsHandler(ContentsAPIHandler):
 class NotebooksRedirectHandler(JupyterHandler):
     """Redirect /api/notebooks to /api/contents"""
 
-    SUPPORTED_METHODS = ("GET", "PUT", "PATCH", "POST", "DELETE")
+    SUPPORTED_METHODS = ("GET", "PUT", "PATCH", "POST", "DELETE")  # type:ignore[assignment]
 
     def get(self, path):
         self.log.warning("/api/notebooks is deprecated, use /api/contents")

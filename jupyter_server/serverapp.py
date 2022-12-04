@@ -315,7 +315,7 @@ class ServerWebApplication(web.Application):
             localedir=os.path.join(base_dir, "jupyter_server/i18n"),
             fallback=True,
         )
-        env.install_gettext_translations(nbui, newstyle=False)
+        env.install_gettext_translations(nbui, newstyle=False)  # type:ignore[attr-defined]
 
         if sys_info["commit_source"] == "repository":
             # don't cache (rely on 304) when working from master
@@ -493,7 +493,7 @@ class JupyterPasswordApp(JupyterApp):
     and removes the need for token-based authentication.
     """
 
-    description = __doc__
+    description: str = __doc__  # type:ignore[assignment]
 
     def _config_file_default(self):
         return os.path.join(self.config_dir, "jupyter_server_config.json")
@@ -574,8 +574,10 @@ def shutdown_server(server_info, timeout=5, log=None):
 
 class JupyterServerStopApp(JupyterApp):
 
-    version = __version__
-    description = "Stop currently running Jupyter server for a given port"
+    version: str = __version__  # type:ignore[assignment]
+    description: str = (
+        "Stop currently running Jupyter server for a given port"  # type:ignore[assignment]
+    )
 
     port = Integer(
         DEFAULT_JUPYTER_SERVER_PORT,
@@ -636,8 +638,8 @@ class JupyterServerStopApp(JupyterApp):
 
 
 class JupyterServerListApp(JupyterApp):
-    version = __version__
-    description = _i18n("List currently running Jupyter servers.")
+    version: str = __version__  # type:ignore[assignment]
+    description: str = _i18n("List currently running Jupyter servers.")  # type:ignore[assignment]
 
     flags = {
         "jsonlist": (
@@ -752,17 +754,17 @@ aliases.update(
 
 class ServerApp(JupyterApp):
 
-    name = "jupyter-server"
-    version = __version__
-    description = _i18n(
+    name = "jupyter-server"  # type:ignore[assignment]
+    version: str = __version__  # type:ignore[assignment]
+    description: str = _i18n(  # type:ignore[assignment]
         """The Jupyter Server.
 
     This launches a Tornado-based Jupyter Server."""
     )
-    examples = _examples
+    examples = _examples  # type:ignore[assignment]
 
-    flags = Dict(flags)
-    aliases = Dict(aliases)
+    flags = Dict(flags)  # type:ignore[assignment]
+    aliases = Dict(aliases)  # type:ignore[assignment]
 
     classes = [
         KernelManager,
@@ -784,7 +786,7 @@ class ServerApp(JupyterApp):
         ZMQChannelsWebsocketConnection,
     ]
 
-    subcommands = {
+    subcommands = {  # type:ignore[assignment]
         "list": (JupyterServerListApp, JupyterServerListApp.description.splitlines()[0]),
         "stop": (JupyterServerStopApp, JupyterServerStopApp.description.splitlines()[0]),
         "password": (JupyterPasswordApp, JupyterPasswordApp.description.splitlines()[0]),
@@ -810,7 +812,7 @@ class ServerApp(JupyterApp):
         "events",
     )
 
-    _log_formatter_cls = LogFormatter
+    _log_formatter_cls = LogFormatter  # type:ignore[assignment]
 
     @default("log_level")
     def _default_log_level(self):

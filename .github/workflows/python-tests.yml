@@ -60,14 +60,14 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/pre-commit@v1
 
   test_docs_and_lint:
-    name: Test Docs
+    name: Test Docs and Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - run: |
           hatch run docs:build
-          hatch run lint:typing
+          hatch run test:typing
           hatch run lint:style
 
   test_examples:

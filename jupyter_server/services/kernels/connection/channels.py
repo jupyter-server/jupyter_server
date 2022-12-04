@@ -114,13 +114,13 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
     channels = Dict({})
     kernel_info_channel = Any(allow_none=True)
 
-    _kernel_info_future = Instance(klass=Future)
+    _kernel_info_future = Instance(klass=Future)  # type:ignore[assignment]
 
     @default("_kernel_info_future")
     def _default_kernel_info_future(self):
         return Future()
 
-    _close_future = Instance(klass=Future)
+    _close_future = Instance(klass=Future)  # type:ignore[assignment]
 
     @default("_close_future")
     def _default_close_future(self):

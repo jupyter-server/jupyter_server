@@ -46,7 +46,7 @@ class APIStatusHandler(APIHandler):
 
         kernels = await ensure_async(self.kernel_manager.list_kernels())
         total_connections = sum(k["connections"] for k in kernels)
-        last_activity = isoformat(self.application.last_activity())
+        last_activity = isoformat(self.application.last_activity())  # type:ignore[attr-defined]
         model = {
             "started": started,
             "last_activity": last_activity,

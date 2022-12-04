@@ -26,7 +26,9 @@ class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: igno
     pass
 
 
-class GatewayTokenRenewerBase(ABC, LoggingConfigurable, metaclass=GatewayTokenRenewerMeta):
+class GatewayTokenRenewerBase(  # type:ignore[misc]
+    ABC, LoggingConfigurable, metaclass=GatewayTokenRenewerMeta
+):
     """
     Abstract base class for refreshing tokens used between this server and a Gateway
     server.  Implementations requiring additional configuration can extend their class
@@ -49,7 +51,7 @@ class GatewayTokenRenewerBase(ABC, LoggingConfigurable, metaclass=GatewayTokenRe
         pass
 
 
-class NoOpTokenRenewer(GatewayTokenRenewerBase):
+class NoOpTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
     """NoOpTokenRenewer is the default value to the GatewayClient trait
     `gateway_token_renewer` and merely returns the provided token.
     """

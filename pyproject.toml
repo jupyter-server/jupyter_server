@@ -42,7 +42,7 @@ dependencies = [
     "Send2Trash",
     "terminado>=0.8.3",
     "tornado>=6.2.0",
-    "traitlets>=5.3.0",
+    "traitlets>=5.6.0",
     "websocket-client",
     "jupyter_events>=0.4.0"
 ]
@@ -96,6 +96,7 @@ build = "make -C docs html SPHINXOPTS='-W'"
 features = ["test"]
 [tool.hatch.envs.test.scripts]
 test = "python -m pytest -vv {args}"
+typing = "mypy --install-types --non-interactive {args:.}"
 nowarn = "test -W default {args}"
 
 [tool.hatch.envs.cov]
@@ -114,7 +115,6 @@ dependencies = [
   "ruff>=0.0.132",
 ]
 [tool.hatch.envs.lint.scripts]
-typing = "mypy --install-types --non-interactive {args:jupyter_server tests}"
 style = [
   "ruff {args:.}",
   "black --check --diff {args:.}",
@@ -122,10 +122,6 @@ style = [
 fmt = [
   "black {args:.}",
   "ruff --fix {args:.}",
-]
-all = [
-  "style",
-  "typing",
 ]
 
 [tool.hatch.version]
@@ -209,17 +205,6 @@ unfixable = [
   # Don't touch noqa lines
   "M001",
 ]
-exclude = [
-    ".cache",
-    ".github",
-    "docs",
-]
-
-[tool.ruff.flake8-quotes]
-inline-quotes = "double"
-
-[tool.ruff.flake8-tidy-imports]
-ban-relative-imports = "all"
 
 [tool.ruff.per-file-ignores]
 # B011 Do not call assert False since python -O removes these calls
@@ -288,10 +273,12 @@ warn_redundant_casts = true
 explicit_package_bases = true
 namespace_packages = true
 
-
 [[tool.mypy.overrides]]
 module = [
+    "pamela",
     "pysqlite2",
+    "jupyter_events.*",
+    "jupyter_server_terminals.*",
     "_frozen_importlib_external",
     "send2trash",
     "websocket"

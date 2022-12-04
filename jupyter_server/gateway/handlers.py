@@ -5,6 +5,7 @@ import logging
 import mimetypes
 import os
 import random
+from typing import cast
 
 from jupyter_client.session import Session
 from tornado import web
@@ -161,7 +162,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         kwargs = GatewayClient.instance().load_connection_args(**kwargs)
 
         request = HTTPRequest(ws_url, **kwargs)
-        self.ws_future = websocket_connect(request)
+        self.ws_future = cast(Future, websocket_connect(request))
         self.ws_future.add_done_callback(self._connection_done)
 
         loop = IOLoop.current()

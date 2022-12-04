@@ -154,6 +154,7 @@ async def test_identity_permissions(
         params = None
 
     r = await jp_fetch("api/me", params=params)
+    assert r is not None
     assert r.code == 200
     response = json.loads(r.body.decode())
     assert set(response.keys()) == {"identity", "permissions"}
@@ -176,6 +177,7 @@ async def test_identity_bad_permissions(jp_fetch, permissions):
         await jp_fetch("api/me", params={"permissions": json.dumps(permissions)})
 
     r = exc.value.response
+    assert r is not None
     assert r.code == 400
     reply = json.loads(r.body.decode())
     assert "permissions should be a JSON dict" in reply["message"]
