@@ -59,8 +59,7 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
 
     assert complete, "did not find socket URL in stdout when launching notebook"
 
-    socket_path = encoded_sock_path.encode()
-    assert socket_path in _check_output("jupyter-server list")
+    assert encoded_sock_path in _check_output("jupyter-server list")
 
     # Ensure umask is properly applied.
     assert stat.S_IMODE(os.lstat(jp_unix_socket_file).st_mode) == 0o700
@@ -72,7 +71,7 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
     else:
         raise AssertionError("expected stop command to fail due to target mis-match")
 
-    assert encoded_sock_path.encode() in _check_output("jupyter-server list")
+    assert encoded_sock_path in _check_output("jupyter-server list")
 
     # Fake out stopping the server.
     app = JupyterServerStopApp(sock=str(jp_unix_socket_file))
@@ -83,7 +82,7 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
 
     _check_output(["jupyter-server", "stop", jp_unix_socket_file])
 
-    assert encoded_sock_path.encode() not in _check_output(["jupyter-server", "list"])
+    assert encoded_sock_path not in _check_output(["jupyter-server", "list"])
 
     _cleanup_process(p)
 
