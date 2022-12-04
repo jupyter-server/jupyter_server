@@ -784,23 +784,23 @@ class ServerApp(JupyterApp):
         ZMQChannelsWebsocketConnection,
     ]
 
-    subcommands = {
+    subcommands: dict = {
         "list": (
             JupyterServerListApp,
             JupyterServerListApp.description.splitlines()[0],
-        ),  # type:ignore[dict-item]
+        ),
         "stop": (
             JupyterServerStopApp,
             JupyterServerStopApp.description.splitlines()[0],
-        ),  # type:ignore[dict-item]
+        ),
         "password": (
             JupyterPasswordApp,
             JupyterPasswordApp.description.splitlines()[0],
-        ),  # type:ignore[dict-item]
+        ),
         "extension": (
             ServerExtensionApp,
             ServerExtensionApp.description.splitlines()[0],
-        ),  # type:ignore[dict-item]
+        ),
     }
 
     # A list of services whose handlers will be exposed.

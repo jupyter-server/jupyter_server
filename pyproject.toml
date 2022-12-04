@@ -127,7 +127,6 @@ style = [
 ]
 fmt = [
   "black {args:.}",
-  "mdformat {args:.}",
   "ruff --fix {args:.}",
 ]
 
