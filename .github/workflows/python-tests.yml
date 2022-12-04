@@ -51,14 +51,22 @@ jobs:
           pip install codecov coverage[toml]
           codecov
 
-  test_docs_and_lint:
-    name: Test Docs and Lint
+  test_docs:
+    name: Test Docs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      - run: |
-          hatch run docs:build
+      - run: hatch run docs:build
+
+  test_lint:
+    name: Test Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      -  name: Run Linters
+         run: |
           hatch run typing:test
           hatch run lint:style
           pipx run 'validate-pyproject[all]' pyproject.toml
@@ -156,7 +164,8 @@ jobs:
     if: always()
     needs:
       - build
-      - test_docs_and_lint
+      - test_docs
+      - test_lint
       - test_minimum_versions
       - test_prereleases
       - check_links
