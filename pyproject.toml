@@ -123,7 +123,7 @@ dependencies = [
 style = [
   "ruff {args:.}",
   "black --check --diff {args:.}",
-  "mdformat --check {args:docs}"
+  "mdformat --check {args:docs *.md}"
 ]
 fmt = [
   "black {args:.}",
