@@ -25,7 +25,10 @@ def _check_output(cmd, *args, **kwargs):
     if isinstance(cmd, str):
         cmd = shlex.split(cmd)
     kwargs.setdefault("stderr", subprocess.STDOUT)
-    return subprocess.check_output(cmd, *args, **kwargs)
+    output = subprocess.check_output(cmd, *args, **kwargs)
+    if not isinstance(output, str):
+        output = output.decode("utf-8")
+    return output
 
 
 def _cleanup_process(proc):
@@ -143,7 +146,9 @@ def test_stop_multi_integration(jp_unix_socket_file, jp_http_port):
 
     _ensure_stopped("There is currently no server running on 8888")
 
-    assert MSG_TMPL.format(jp_unix_socket_file) in ["jupyter-server", "stop", jp_unix_socket_file]
+    assert MSG_TMPL.format(jp_unix_socket_file) in _check_output(
+        ["jupyter-server", "stop", jp_unix_socket_file]
+    )
 
     assert MSG_TMPL.format(TEST_PORT) in _check_output(["jupyter-server", "stop", TEST_PORT])
 
