@@ -25,7 +25,7 @@ def _check_output(cmd, *args, **kwargs):
     if isinstance(cmd, str):
         cmd = shlex.split(cmd)
     kwargs.setdefault("stderr", subprocess.STDOUT)
-    return subprocess.check_output(*args, **kwargs)
+    return subprocess.check_output(cmd, *args, **kwargs)
 
 
 def _cleanup_process(proc):

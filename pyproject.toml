@@ -112,7 +112,6 @@ nowarn = "test -W default {args}"
 integration = "test --integration_tests=true {args}"
 
 [tool.hatch.envs.lint]
-detached = true
 features = ["lint"]
 [tool.hatch.envs.lint.scripts]
 typing = "mypy --install-types --non-interactive {args}"
