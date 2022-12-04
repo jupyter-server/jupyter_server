@@ -71,7 +71,7 @@ running with the ``--hook-stage manual`` argument.
 
 There are three hatch scripts that can be run locally as well:
 ``hatch run lint:style`` will check styling.  ``hatch run lint:fmt``
-will attempt to auto-format files.  ``hatch run lint:typing`` will
+will attempt to auto-format files.  ``hatch run typing:test`` will
 run the type checker.
 
 Troubleshooting the Installation

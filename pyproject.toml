@@ -96,8 +96,13 @@ build = "make -C docs html SPHINXOPTS='-W'"
 features = ["test"]
 [tool.hatch.envs.test.scripts]
 test = "python -m pytest -vv {args}"
-typing = "mypy --install-types --non-interactive {args:.}"
 nowarn = "test -W default {args}"
+
+[tool.hatch.envs.typing]
+features = ["test"]
+dependencies = ["mypy>=0.990"]
+[tool.hatch.envs.typing.scripts]
+test = "mypy --install-types --non-interactive {args:.}"
 
 [tool.hatch.envs.cov]
 features = ["test"]
@@ -111,7 +116,6 @@ integration = "test --integration_tests=true {args}"
 detached = true
 dependencies = [
   "black>=22.6.0",
-  "mypy>=0.990",
   "ruff>=0.0.132",
 ]
 [tool.hatch.envs.lint.scripts]

@@ -67,7 +67,7 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - run: |
           hatch run docs:build
-          hatch run test:typing
+          hatch run typing:test
           hatch run lint:style
 
   test_examples:
