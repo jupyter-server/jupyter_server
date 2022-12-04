@@ -156,7 +156,6 @@ jobs:
     if: always()
     needs:
       - build
-      - pre_commit
       - test_docs_and_lint
       - test_minimum_versions
       - test_prereleases
