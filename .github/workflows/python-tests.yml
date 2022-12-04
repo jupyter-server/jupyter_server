@@ -51,14 +51,6 @@ jobs:
           pip install codecov coverage[toml]
           codecov
 
-  pre_commit:
-    name: pre-commit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      - uses: jupyterlab/maintainer-tools/.github/actions/pre-commit@v1
-
   test_docs_and_lint:
     name: Test Docs and Lint
     runs-on: ubuntu-latest
@@ -69,6 +61,10 @@ jobs:
           hatch run docs:build
           hatch run typing:test
           hatch run lint:style
+          pipx run 'validate-pyproject[all]' pyproject.toml
+          pipx run doc8 --max-line-length=200  --ignore-path=docs/source/other/full-config.rst
+          npm install -g eslint
+          eslint .
 
   test_examples:
     name: Test Examples

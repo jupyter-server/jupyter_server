@@ -21,28 +21,12 @@ repos:
       - id: check-builtin-literals
       - id: trailing-whitespace
 
-  - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.10.1
-    hooks:
-      - id: validate-pyproject
-        stages: [manual]
 
-  - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.16
+  - repo: local
     hooks:
-      - id: mdformat
-
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.0
-    hooks:
-      - id: pyupgrade
-        args: [--py38-plus]
-
-  - repo: https://github.com/PyCQA/doc8
-    rev: v1.0.0
-    hooks:
-      - id: doc8
-        args: [--max-line-length=200]
-        exclude: docs/source/other/full-config.rst
-        stages: [manual]
-
+      - id: format
+        name: format
+        language: python
+        entry: 'hatch run lint:fmt'
+        additional_dependencies: [hatch]
+        types_or: [python]
