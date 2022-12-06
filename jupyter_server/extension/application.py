@@ -16,6 +16,7 @@ from jupyter_server.utils import is_namespace_package, url_path_join
 
 from .handler import ExtensionHandlerMixin
 
+
 # -----------------------------------------------------------------------------
 # Util functions and classes.
 # -----------------------------------------------------------------------------
