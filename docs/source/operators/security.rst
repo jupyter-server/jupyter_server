@@ -64,11 +64,6 @@ you can set a password for your server.
 :command:`jupyter server password` will prompt you for a password,
 and store the hashed password in your :file:`jupyter_server_config.json`.
 
-.. versionadded:: 5.0
-
-    :command:`jupyter server password` command is added.
-
-
 It is possible disable authentication altogether by setting the token and password to empty strings,
 but this is **NOT RECOMMENDED**, unless authentication or access restrictions are handled at a different layer in your web application:
 
