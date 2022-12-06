@@ -20,6 +20,11 @@ repos:
     hooks:
       - id: check-github-workflows
 
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.16
+    hooks:
+      - id: mdformat
+
   - repo: https://github.com/psf/black
     rev: 22.10.0
     hooks:
