@@ -3,10 +3,14 @@ import json
 import pytest
 from tornado.httpclient import HTTPClientError
 
+from jupyter_server.serverapp import ServerApp
+
 from ...utils import expected_http_error, some_resource
 
 
-async def test_list_kernelspecs_bad(jp_fetch, jp_kernelspecs, jp_data_dir):
+async def test_list_kernelspecs_bad(jp_fetch, jp_kernelspecs, jp_data_dir, jp_serverapp):
+    app: ServerApp = jp_serverapp
+    default = app.kernel_manager.default_kernel_name
     bad_kernel_dir = jp_data_dir.joinpath(jp_data_dir, "kernels", "bad2")
     bad_kernel_dir.mkdir(parents=True)
     bad_kernel_json = bad_kernel_dir.joinpath("kernel.json")
@@ -15,17 +19,19 @@ async def test_list_kernelspecs_bad(jp_fetch, jp_kernelspecs, jp_data_dir):
     r = await jp_fetch("api", "kernelspecs", method="GET")
     model = json.loads(r.body.decode())
     assert isinstance(model, dict)
-    assert model["default"] == "echo"
+    assert model["default"] == default
     specs = model["kernelspecs"]
     assert isinstance(specs, dict)
     assert len(specs) > 2
 
 
-async def test_list_kernelspecs(jp_fetch, jp_kernelspecs):
+async def test_list_kernelspecs(jp_fetch, jp_kernelspecs, jp_serverapp):
+    app: ServerApp = jp_serverapp
+    default = app.kernel_manager.default_kernel_name
     r = await jp_fetch("api", "kernelspecs", method="GET")
     model = json.loads(r.body.decode())
     assert isinstance(model, dict)
-    assert model["default"] == "echo"
+    assert model["default"] == default
     specs = model["kernelspecs"]
     assert isinstance(specs, dict)
     assert len(specs) > 2
@@ -34,7 +40,7 @@ async def test_list_kernelspecs(jp_fetch, jp_kernelspecs):
         return s["name"] == "sample" and s["spec"]["display_name"] == "Test kernel"
 
     def is_default_kernelspec(s):
-        return s["name"] == "echo" and s["spec"]["display_name"].startswith("echo")
+        return s["name"] == default
 
     assert any(is_sample_kernelspec(s) for s in specs.values()), specs
     assert any(is_default_kernelspec(s) for s in specs.values()), specs
