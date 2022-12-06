@@ -125,11 +125,12 @@ features = ["lint"]
 style = [
   "ruff {args:.}",
   "black --check --diff {args:.}",
-  "mdformat --check {args:docs *.md}"
+  "mdformat --check {args:.}"
 ]
 fmt = [
   "black {args:.}",
   "ruff --fix {args:.}",
+  "mdformat --check {args:.}"
 ]
 
 [tool.hatch.version]
