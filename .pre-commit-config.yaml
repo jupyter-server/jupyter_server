@@ -15,6 +15,11 @@ repos:
       - id: check-builtin-literals
       - id: trailing-whitespace
 
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.19.2
+    hooks:
+      - id: check-github-workflows
+
   - repo: https://github.com/psf/black
     rev: 22.10.0
     hooks:
