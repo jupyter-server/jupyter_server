@@ -130,7 +130,7 @@ style = [
 fmt = [
   "black {args:.}",
   "ruff --fix {args:.}",
-  "mdformat --check {args:docs/source *.md}"
+  "mdformat {args:docs/source *.md}"
 ]
 
 [tool.hatch.version]
