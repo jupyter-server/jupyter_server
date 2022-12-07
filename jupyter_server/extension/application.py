@@ -1,6 +1,7 @@
 import logging
 import re
 import sys
+import typing as t
 
 from jinja2 import Environment, FileSystemLoader
 from jupyter_core.application import JupyterApp, NoStart
@@ -15,29 +16,30 @@ from jupyter_server.utils import is_namespace_package, url_path_join
 
 from .handler import ExtensionHandlerMixin
 
+
 # -----------------------------------------------------------------------------
 # Util functions and classes.
 # -----------------------------------------------------------------------------
 
 
-def _preparse_for_subcommand(Application, argv):
+def _preparse_for_subcommand(application_klass, argv):
     """Preparse command line to look for subcommands."""
     # Read in arguments from command line.
     if len(argv) == 0:
         return
 
     # Find any subcommands.
-    if Application.subcommands and len(argv) > 0:
+    if application_klass.subcommands and len(argv) > 0:
         # we have subcommands, and one may have been specified
         subc, subargv = argv[0], argv[1:]
-        if re.match(r"^\w(\-?\w)*$", subc) and subc in Application.subcommands:
+        if re.match(r"^\w(\-?\w)*$", subc) and subc in application_klass.subcommands:
             # it's a subcommand, and *not* a flag or class parameter
-            app = Application()
+            app = application_klass()
             app.initialize_subcommand(subc, subargv)
             return app.subapp
 
 
-def _preparse_for_stopping_flags(Application, argv):
+def _preparse_for_stopping_flags(application_klass, argv):
     """Looks for 'help', 'version', and 'generate-config; commands
     in command line. If found, raises the help and version of
     current Application.
@@ -57,19 +59,19 @@ def _preparse_for_stopping_flags(Application, argv):
 
     # Catch any help calls.
     if any(x in interpreted_argv for x in ("-h", "--help-all", "--help")):
-        app = Application()
+        app = application_klass()
         app.print_help("--help-all" in interpreted_argv)
         app.exit(0)
 
     # Catch version commands
     if "--version" in interpreted_argv or "-V" in interpreted_argv:
-        app = Application()
+        app = application_klass()
         app.print_version()
         app.exit(0)
 
     # Catch generate-config commands.
     if "--generate-config" in interpreted_argv:
-        app = Application()
+        app = application_klass()
         app.write_default_config()
         app.exit(0)
 
@@ -84,6 +86,7 @@ class ExtensionAppJinjaMixin(HasTraits):
         )
     ).tag(config=True)
 
+    @t.no_type_check
     def _prepare_templates(self):
         # Get templates defined in a subclass.
         self.initialize_templates()
@@ -165,7 +168,7 @@ class ExtensionApp(JupyterApp):
     # file, jupyter_{name}_config.
     # This should also match the jupyter subcommand used to launch
     # this extension from the CLI, e.g. `jupyter {name}`.
-    name = "ExtensionApp"
+    name: t.Union[str, Unicode] = "ExtensionApp"  # type:ignore[assignment]
 
     @classmethod
     def get_extension_package(cls):
@@ -215,7 +218,7 @@ class ExtensionApp(JupyterApp):
         # declare an empty one
         return ServerApp()
 
-    _log_formatter_cls = LogFormatter
+    _log_formatter_cls = LogFormatter  # type:ignore[assignment]
 
     @default("log_level")
     def _default_log_level(self):

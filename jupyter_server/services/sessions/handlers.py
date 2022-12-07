@@ -91,7 +91,7 @@ class SessionRootHandler(SessionsAPIHandler):
                 status_msg = "%s not found" % kernel_name
                 self.log.warning("Kernel not found: %s" % kernel_name)
                 self.set_status(501)
-                self.finish(json.dumps(dict(message=msg, short_message=status_msg)))
+                self.finish(json.dumps({"message": msg, "short_message": status_msg}))
                 return
             except Exception as e:
                 raise web.HTTPError(500, str(e)) from e

@@ -87,7 +87,9 @@ async def test_authenticated_file_handler(jp_serverapp, tmpdir):
     handler._jupyter_current_user = "foo"  # type:ignore
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        await handler.head("foo")
+        head = handler.head("foo")
+        if head:
+            await head
     assert handler.get_status() == 200
 
 

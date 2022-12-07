@@ -1,6 +1,5 @@
 import os
 import unittest.mock as mock
-from contextlib import nullcontext
 
 import pytest
 from jupyter_core.paths import jupyter_config_path
@@ -103,7 +102,10 @@ def test_extension_manager_fail_add(jp_serverapp, has_app):
     manager = ExtensionManager(serverapp=jp_serverapp if has_app else None)
     manager.add_extension(name, enabled=True)  # should only warn
     jp_serverapp.reraise_server_extension_failures = True
-    with pytest.raises(ExtensionModuleNotFound) if has_app else nullcontext():
+    if has_app:
+        with pytest.raises(ExtensionModuleNotFound):
+            assert manager.add_extension(name, enabled=True) is False
+    else:
         assert manager.add_extension(name, enabled=True) is False
 
 
@@ -118,7 +120,10 @@ def test_extension_manager_fail_link(jp_serverapp, has_app):
         manager.add_extension(name, enabled=True)
         manager.link_extension(name)  # should only warn
         jp_serverapp.reraise_server_extension_failures = True
-        with pytest.raises(RuntimeError) if has_app else nullcontext():
+        if has_app:
+            with pytest.raises(RuntimeError):
+                manager.link_extension(name)
+        else:
             manager.link_extension(name)
 
 
@@ -134,5 +139,8 @@ def test_extension_manager_fail_load(jp_serverapp, has_app):
         manager.link_extension(name)
         manager.load_extension(name)  # should only warn
         jp_serverapp.reraise_server_extension_failures = True
-        with pytest.raises(RuntimeError) if has_app else nullcontext():
+        if has_app:
+            with pytest.raises(RuntimeError):
+                manager.load_extension(name)
+        else:
             manager.load_extension(name)

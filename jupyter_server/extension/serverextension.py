@@ -116,7 +116,7 @@ _base_aliases.update(JupyterApp.aliases)
 class BaseExtensionApp(JupyterApp):
     """Base extension installer app"""
 
-    _log_formatter_cls = LogFormatter
+    _log_formatter_cls = LogFormatter  # type:ignore[assignment]
     flags = _base_flags
     aliases = _base_aliases
     version = __version__
@@ -212,11 +212,14 @@ flags.update(
 flags["python"] = flags["py"]
 
 
+_desc = "Enable/disable a server extension using frontend configuration files."
+
+
 class ToggleServerExtensionApp(BaseExtensionApp):
     """A base class for enabling/disabling extensions"""
 
     name = "jupyter server extension enable/disable"
-    description = "Enable/disable a server extension using frontend configuration files."
+    description = _desc
 
     flags = flags
 
@@ -281,7 +284,7 @@ class EnableServerExtensionApp(ToggleServerExtensionApp):
     Usage
         jupyter server extension enable [--system|--sys-prefix]
     """
-    _toggle_value = True
+    _toggle_value = True  # type:ignore[assignment]
     _toggle_pre_message = "enabling"
     _toggle_post_message = "enabled"
 
@@ -296,7 +299,7 @@ class DisableServerExtensionApp(ToggleServerExtensionApp):
     Usage
         jupyter server extension disable [--system|--sys-prefix]
     """
-    _toggle_value = False
+    _toggle_value = False  # type:ignore[assignment]
     _toggle_pre_message = "disabling"
     _toggle_post_message = "disabled"
 
@@ -354,14 +357,14 @@ class ServerExtensionApp(BaseExtensionApp):
 
     name = "jupyter server extension"
     version = __version__
-    description = "Work with Jupyter server extensions"
+    description: str = "Work with Jupyter server extensions"
     examples = _examples
 
-    subcommands = dict(
-        enable=(EnableServerExtensionApp, "Enable a server extension"),
-        disable=(DisableServerExtensionApp, "Disable a server extension"),
-        list=(ListServerExtensionsApp, "List server extensions"),
-    )
+    subcommands: dict = {
+        "enable": (EnableServerExtensionApp, "Enable a server extension"),
+        "disable": (DisableServerExtensionApp, "Disable a server extension"),
+        "list": (ListServerExtensionsApp, "List server extensions"),
+    }
 
     def start(self):
         """Perform the App's actions as configured"""

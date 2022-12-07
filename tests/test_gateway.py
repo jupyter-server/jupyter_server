@@ -19,15 +19,8 @@ from tornado.web import HTTPError
 from traitlets import Int, Unicode
 from traitlets.config import Config
 
-from jupyter_server.gateway.gateway_client import (
-    GatewayTokenRenewerBase,
-    NoOpTokenRenewer,
-)
-from jupyter_server.gateway.managers import (
-    ChannelQueue,
-    GatewayClient,
-    GatewayKernelManager,
-)
+from jupyter_server.gateway.gateway_client import GatewayTokenRenewerBase, NoOpTokenRenewer
+from jupyter_server.gateway.managers import ChannelQueue, GatewayClient, GatewayKernelManager
 from jupyter_server.utils import ensure_async
 
 from .utils import expected_http_error
@@ -196,13 +189,15 @@ def mock_websocket_create_connection(recv_side_effect=None):
     return helper
 
 
-class CustomTestTokenRenewer(GatewayTokenRenewerBase):
+class CustomTestTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
 
     TEST_EXPECTED_TOKEN_VALUE = "Use this token value: 42"
 
     # The following are configured by the config test to ensure they flow
-    config_var_1: int = Int(config=True)  # configured to: 42
-    config_var_2: str = Unicode(config=True)  # configured to: "Use this token value: "
+    # configured to: 42
+    config_var_1: int = Int(config=True)  # type:ignore
+    # configured to: "Use this token value: "
+    config_var_2: str = Unicode(config=True)  # type:ignore
 
     def get_token(
         self, auth_header_key: str, auth_scheme: Union[str, None], auth_token: str, **kwargs: Any

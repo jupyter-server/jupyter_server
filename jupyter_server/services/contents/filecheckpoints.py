@@ -124,10 +124,10 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
         """construct the info dict for a given checkpoint"""
         stats = os.stat(os_path)
         last_modified = tz.utcfromtimestamp(stats.st_mtime)
-        info = dict(
-            id=checkpoint_id,
-            last_modified=last_modified,
-        )
+        info = {
+            "id": checkpoint_id,
+            "last_modified": last_modified,
+        }
         return info
 
     # Error Handling
@@ -154,10 +154,10 @@ class AsyncFileCheckpoints(FileCheckpoints, AsyncFileManagerMixin, AsyncCheckpoi
         """construct the info dict for a given checkpoint"""
         stats = await run_sync(os.stat, os_path)
         last_modified = tz.utcfromtimestamp(stats.st_mtime)
-        info = dict(
-            id=checkpoint_id,
-            last_modified=last_modified,
-        )
+        info = {
+            "id": checkpoint_id,
+            "last_modified": last_modified,
+        }
         return info
 
     # ContentsManager-independent checkpoint API

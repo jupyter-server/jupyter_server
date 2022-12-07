@@ -204,7 +204,7 @@ class FileManagerMixin(Configurable):
         Depending on flag 'use_atomic_writing', the wrapper perform an actual atomic writing or
         simply writes the file (whatever an old exists or not)"""
         with self.perm_to_403(os_path):
-            kwargs["log"] = self.log
+            kwargs["log"] = self.log  # type:ignore
             if self.use_atomic_writing:
                 with atomic_writing(os_path, *args, **kwargs) as f:
                     yield f
@@ -224,7 +224,7 @@ class FileManagerMixin(Configurable):
                 # but nobody should be doing that anyway.
                 if not os_path:
                     os_path = e.filename or "unknown file"
-                path = to_api_path(os_path, root=self.root_dir)
+                path = to_api_path(os_path, root=self.root_dir)  # type:ignore
                 raise HTTPError(403, "Permission denied: %s" % path) from e
             else:
                 raise
@@ -234,7 +234,7 @@ class FileManagerMixin(Configurable):
 
         like shutil.copy2, but log errors in copystat
         """
-        copy2_safe(src, dest, log=self.log)
+        copy2_safe(src, dest, log=self.log)  # type:ignore
 
     def _get_os_path(self, path):
         """Given an API path, return its file system path.
@@ -253,7 +253,7 @@ class FileManagerMixin(Configurable):
         ------
         404: if path is outside root
         """
-        root = os.path.abspath(self.root_dir)
+        root = os.path.abspath(self.root_dir)  # type:ignore
         os_path = to_os_path(path, root)
         if not (os.path.abspath(os_path) + os.path.sep).startswith(root):
             raise HTTPError(404, "%s is outside root contents directory" % path)
@@ -357,11 +357,11 @@ class AsyncFileManagerMixin(FileManagerMixin):
 
         like shutil.copy2, but log errors in copystat
         """
-        await async_copy2_safe(src, dest, log=self.log)
+        await async_copy2_safe(src, dest, log=self.log)  # type:ignore
 
     async def _read_notebook(self, os_path, as_version=4, capture_validation_error=None):
         """Read a notebook from an os path."""
-        with self.open(os_path, "r", encoding="utf-8") as f:
+        with self.open(os_path, encoding="utf-8") as f:
             try:
                 return await run_sync(
                     partial(

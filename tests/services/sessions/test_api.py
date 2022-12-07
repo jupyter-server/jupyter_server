@@ -43,7 +43,9 @@ class NewPortsKernelManager(AsyncIOLoopKernelManager):
     def _default_cache_ports(self) -> bool:
         return False
 
-    async def restart_kernel(self, now: bool = False, newports: bool = True, **kw: Any) -> None:
+    async def restart_kernel(  # type:ignore[override]
+        self, now: bool = False, newports: bool = True, **kw: Any
+    ) -> None:
         self.log.debug(f"DEBUG**** calling super().restart_kernel with newports={newports}")
         return await super().restart_kernel(now=now, newports=newports, **kw)
 

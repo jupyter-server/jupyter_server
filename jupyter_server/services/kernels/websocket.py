@@ -13,7 +13,7 @@ from .handlers import _kernel_id_regex
 AUTH_RESOURCE = "kernels"
 
 
-class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):
+class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):  # type:ignore[misc]
     """The kernels websocket should connect"""
 
     auth_resource = AUTH_RESOURCE

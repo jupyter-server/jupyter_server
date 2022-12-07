@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, tzinfo
 ZERO = timedelta(0)
 
 
-class tzUTC(tzinfo):
+class tzUTC(tzinfo):  # noqa
     """tzinfo object for UTC (zero offset)"""
 
     def utcoffset(self, d):

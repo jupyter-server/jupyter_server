@@ -74,13 +74,13 @@ def get_timestamp(data: Dict[str, Any]) -> Optional[datetime]:
             timestamp = datetime.strptime(data["timestamp"], "%Y-%m-%dT%H:%M:%S%zZ")
         else:
             timestamp = None
-    except Exception:
+    except Exception as e:
         raise web.HTTPError(
             400,
             """Failed to parse timestamp from JSON request body,
             an ISO format datetime string with UTC offset is expected,
             for example, 2022-05-26T13:50:00+05:00Z""",
-        )
+        ) from e
 
     return timestamp
 

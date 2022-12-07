@@ -46,7 +46,7 @@ class APIStatusHandler(APIHandler):
 
         kernels = await ensure_async(self.kernel_manager.list_kernels())
         total_connections = sum(k["connections"] for k in kernels)
-        last_activity = isoformat(self.application.last_activity())
+        last_activity = isoformat(self.application.last_activity())  # type:ignore[attr-defined]
         model = {
             "started": started,
             "last_activity": last_activity,
@@ -66,8 +66,8 @@ class IdentityHandler(APIHandler):
         if permissions_json:
             try:
                 permissions_to_check = json.loads(permissions_json)
-            except ValueError:
-                raise web.HTTPError(400, bad_permissions_msg)
+            except ValueError as e:
+                raise web.HTTPError(400, bad_permissions_msg) from e
             if not isinstance(permissions_to_check, dict):
                 raise web.HTTPError(400, bad_permissions_msg)
         else:

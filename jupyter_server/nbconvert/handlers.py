@@ -67,7 +67,7 @@ def get_exporter(format, **kwargs):
     """get an exporter, raising appropriate errors"""
     # if this fails, will raise 500
     try:
-        from nbconvert.exporters.base import get_exporter
+        from nbconvert.exporters.base import get_exporter  # type:ignore
     except ImportError as e:
         raise web.HTTPError(500, "Could not import nbconvert: %s" % e) from e
 
@@ -87,7 +87,7 @@ def get_exporter(format, **kwargs):
 class NbconvertFileHandler(JupyterHandler):
 
     auth_resource = AUTH_RESOURCE
-    SUPPORTED_METHODS = ("GET",)
+    SUPPORTED_METHODS = ("GET",)  # type:ignore[assignment]
 
     @web.authenticated
     @authorized
@@ -153,7 +153,7 @@ class NbconvertFileHandler(JupyterHandler):
 
 class NbconvertPostHandler(JupyterHandler):
 
-    SUPPORTED_METHODS = ("POST",)
+    SUPPORTED_METHODS = ("POST",)  # type:ignore[assignment]
     auth_resource = AUTH_RESOURCE
 
     @web.authenticated

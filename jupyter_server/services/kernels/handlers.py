@@ -87,7 +87,7 @@ class KernelActionHandler(KernelsAPIHandler):
                 message = "Exception restarting kernel"
                 self.log.error(message, exc_info=True)
                 traceback = format_tb(e.__traceback__)
-                self.write(json.dumps(dict(message=message, traceback=traceback)))
+                self.write(json.dumps({"message": message, "traceback": traceback}))
                 self.set_status(500)
             else:
                 model = await ensure_async(km.kernel_model(kernel_id))

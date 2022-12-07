@@ -1,6 +1,6 @@
 import os
 
-from simple_ext1.application import SimpleApp1
+from simple_ext1.application import SimpleApp1  # type:ignore
 from traitlets import Bool, Unicode, observe
 
 from jupyter_server.serverapp import aliases, flags

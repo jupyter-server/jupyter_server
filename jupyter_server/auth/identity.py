@@ -103,8 +103,8 @@ def _backward_compat_user(got_user: Any) -> User:
                 kwargs[field] = got_user[field]
         try:
             return User(**kwargs)
-        except TypeError:
-            raise ValueError(f"Unrecognized user: {got_user}")
+        except TypeError as e:
+            raise ValueError(f"Unrecognized user: {got_user}") from e
     else:
         raise ValueError(f"Unrecognized user: {got_user}")
 
@@ -126,7 +126,7 @@ class IdentityProvider(LoggingConfigurable):
     .. versionadded:: 2.0
     """
 
-    cookie_name = Unicode(
+    cookie_name: str | Unicode = Unicode(
         "",
         config=True,
         help=_i18n("Name of the cookie to set for persisting login. Default: username-${Host}."),
@@ -140,7 +140,7 @@ class IdentityProvider(LoggingConfigurable):
         ),
     )
 
-    secure_cookie = Bool(
+    secure_cookie: bool | Bool = Bool(
         None,
         allow_none=True,
         config=True,
@@ -158,7 +158,7 @@ class IdentityProvider(LoggingConfigurable):
         ),
     )
 
-    token = Unicode(
+    token: str | Unicode = Unicode(
         "<generated>",
         help=_i18n(
             """Token used for authenticating first-time connections to the server.
@@ -209,7 +209,7 @@ class IdentityProvider(LoggingConfigurable):
             self.token_generated = True
             return binascii.hexlify(os.urandom(24)).decode("ascii")
 
-    need_token = Bool(True)
+    need_token: bool | Bool = Bool(True)
 
     def get_user(self, handler: JupyterHandler) -> User | None | Awaitable[User | None]:
         """Get the authenticated user for a request
@@ -249,7 +249,7 @@ class IdentityProvider(LoggingConfigurable):
                 self.set_login_cookie(handler, user)
             # Record that the current request has been authenticated with a token.
             # Used in is_token_authenticated above.
-            handler._token_authenticated = True
+            handler._token_authenticated = True  # type:ignore[attr-defined]
 
         if user is None:
             # If an invalid cookie was sent, clear it to prevent unnecessary
@@ -496,7 +496,7 @@ class IdentityProvider(LoggingConfigurable):
         - skip origin-checks for scripts
         """
         # ensure get_user has been called, so we know if we're token-authenticated
-        handler.current_user  # noqa
+        handler.current_user
         return getattr(handler, "_token_authenticated", False)
 
     def validate_security(
@@ -536,7 +536,7 @@ class IdentityProvider(LoggingConfigurable):
             return self.generate_anonymous_user(handler)
 
         if self.token and self.token == typed_password:
-            return self.user_for_token(typed_password)
+            return self.user_for_token(typed_password)  # type:ignore[attr-defined]
 
         return user
 
