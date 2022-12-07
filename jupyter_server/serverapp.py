@@ -2053,7 +2053,7 @@ class ServerApp(JupyterApp):
             )
             return
 
-        old_soft, old_hard = resource.getrlimit(resource.RLIMIT_NOFILE)  # noqa
+        old_soft, old_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
         soft = self.min_open_files_limit
         hard = old_hard
         if old_soft < soft:
@@ -2064,7 +2064,7 @@ class ServerApp(JupyterApp):
                     old_soft, soft, old_hard, hard
                 )
             )
-            resource.setrlimit(resource.RLIMIT_NOFILE, (soft, hard))  # noqa
+            resource.setrlimit(resource.RLIMIT_NOFILE, (soft, hard))
 
     def _get_urlparts(self, path=None, include_token=False):
         """Constructs a urllib named tuple, ParseResult,
