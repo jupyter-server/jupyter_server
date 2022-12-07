@@ -297,18 +297,21 @@ class GatewayKernelSpecManager(KernelSpecManager):
 class GatewaySessionManager(SessionManager):
     kernel_manager = Instance("jupyter_server.gateway.managers.GatewayMappingKernelManager")
 
-    async def kernel_culled(self, kernel_id):
+    async def kernel_culled(self, kernel_id: str) -> bool:
         """Checks if the kernel is still considered alive and returns true if it's not found."""
-        kernel = None
+        km: Optional[GatewayKernelManager] = None
         try:
+            # Since we keep the models up-to-date via client polling, use that state to determine
+            # if this kernel no longer exists on the gateway server rather than perform a redundant
+            # fetch operation - especially since this is called at approximately the same interval.
+            # This has the effect of reducing GET /api/kernels requests against the gateway server
+            # by 50%!
+            # Note that should the redundant polling be consolidated, or replaced with an event-based
+            # notification model, this will need to be revisited.
             km = self.kernel_manager.get_kernel(kernel_id)
-            kernel = await km.refresh_model()
         except Exception:  # Let exceptions here reflect culled kernel
             pass
-        return kernel is None
-
-
-"""KernelManager class to manage a kernel running on a Gateway Server via the REST API"""
+        return km is None
 
 
 class GatewayKernelManager(AsyncKernelManager):
