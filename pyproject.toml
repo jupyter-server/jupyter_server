@@ -72,7 +72,7 @@ lint = [
 docs = [
     # needed because m2r uses deprecated APIs
     # m2r is depended on by sphinxcontrib-openapi
-    "docutils<0.19",
+    "docutils<0.20",
     "ipykernel",
     "jinja2",
     "jupyter_client",
