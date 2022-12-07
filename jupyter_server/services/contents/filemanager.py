@@ -77,7 +77,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                     path = Path(value)
                     return path.relative_to(self.root_dir).as_posix()
                 except ValueError:
-                    raise TraitError("%s is outside root contents directory" % value)
+                    raise TraitError("%s is outside root contents directory" % value) from None
         return ""
 
     @validate("preferred_dir")
