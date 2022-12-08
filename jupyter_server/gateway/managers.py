@@ -31,7 +31,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
     """Kernel manager that supports remote kernels hosted by Jupyter Kernel or Enterprise Gateway."""
 
     # We'll maintain our own set of kernel ids
-    _kernels: Dict[str, "GatewayKernelManager"] = {}
+    _kernels: Dict[str, "GatewayKernelManager"] = {}  # type:ignore[assignment]
 
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
@@ -96,7 +96,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         model = None
         km = self.get_kernel(str(kernel_id))
         if km:
-            model = km.kernel
+            model = km.kernel  # type:ignore[attr-defined]
         return model
 
     async def list_kernels(self, **kwargs):
@@ -297,24 +297,27 @@ class GatewayKernelSpecManager(KernelSpecManager):
 class GatewaySessionManager(SessionManager):
     kernel_manager = Instance("jupyter_server.gateway.managers.GatewayMappingKernelManager")
 
-    async def kernel_culled(self, kernel_id):
+    async def kernel_culled(self, kernel_id: str) -> bool:
         """Checks if the kernel is still considered alive and returns true if it's not found."""
-        kernel = None
+        km: Optional[GatewayKernelManager] = None
         try:
+            # Since we keep the models up-to-date via client polling, use that state to determine
+            # if this kernel no longer exists on the gateway server rather than perform a redundant
+            # fetch operation - especially since this is called at approximately the same interval.
+            # This has the effect of reducing GET /api/kernels requests against the gateway server
+            # by 50%!
+            # Note that should the redundant polling be consolidated, or replaced with an event-based
+            # notification model, this will need to be revisited.
             km = self.kernel_manager.get_kernel(kernel_id)
-            kernel = await km.refresh_model()
         except Exception:  # Let exceptions here reflect culled kernel
             pass
-        return kernel is None
-
-
-"""KernelManager class to manage a kernel running on a Gateway Server via the REST API"""
+        return km is None
 
 
 class GatewayKernelManager(AsyncKernelManager):
     """Manages a single kernel remotely via a Gateway Server."""
 
-    kernel_id = None
+    kernel_id: Optional[str] = None  # type:ignore[assignment]
     kernel = None
 
     @default("cache_ports")
@@ -345,13 +348,13 @@ class GatewayKernelManager(AsyncKernelManager):
 
     def client(self, **kwargs):
         """Create a client configured to connect to our kernel"""
-        kw = {}
+        kw: dict = {}
         kw.update(self.get_connection_info(session=True))
         kw.update(
-            dict(
-                connection_file=self.connection_file,
-                parent=self,
-            )
+            {
+                "connection_file": self.connection_file,
+                "parent": self,
+            }
         )
         kw["kernel_id"] = self.kernel_id
 
@@ -534,9 +537,9 @@ class ChannelQueue(Queue):
         while True:
             try:
                 return self.get(block=False)
-            except Empty:
+            except Empty as e:
                 if self.response_router_finished:
-                    raise RuntimeError("Response router had finished")
+                    raise RuntimeError("Response router had finished") from e
                 if monotonic() > end_time:
                     raise
                 await asyncio.sleep(0)
@@ -620,11 +623,11 @@ class GatewayKernelClient(AsyncKernelClient):
     allow_stdin = False
     _channels_stopped: bool
     _channel_queues: Optional[Dict[str, ChannelQueue]]
-    _control_channel: Optional[ChannelQueue]
-    _hb_channel: Optional[ChannelQueue]
-    _stdin_channel: Optional[ChannelQueue]
-    _iopub_channel: Optional[ChannelQueue]
-    _shell_channel: Optional[ChannelQueue]
+    _control_channel: Optional[ChannelQueue]  # type:ignore[assignment]
+    _hb_channel: Optional[ChannelQueue]  # type:ignore[assignment]
+    _stdin_channel: Optional[ChannelQueue]  # type:ignore[assignment]
+    _iopub_channel: Optional[ChannelQueue]  # type:ignore[assignment]
+    _shell_channel: Optional[ChannelQueue]  # type:ignore[assignment]
 
     def __init__(self, kernel_id, **kwargs):
         super().__init__(**kwargs)

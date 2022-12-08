@@ -14,12 +14,7 @@ from jupyter_server.serverapp import ServerApp
 
 # re-run some login tests with legacy login config
 from .test_identity import test_password_required, test_validate_security  # noqa
-from .test_login import (  # noqa
-    login,
-    test_change_password,
-    test_login_cookie,
-    test_logout,
-)
+from .test_login import login, test_change_password, test_login_cookie, test_logout  # noqa
 
 # Don't raise on deprecation warnings in this module testing deprecated behavior
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")

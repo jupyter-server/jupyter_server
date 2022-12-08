@@ -99,16 +99,9 @@ from jupyter_server.services.contents.filemanager import (
     FileContentsManager,
 )
 from jupyter_server.services.contents.largefilemanager import AsyncLargeFileManager
-from jupyter_server.services.contents.manager import (
-    AsyncContentsManager,
-    ContentsManager,
-)
-from jupyter_server.services.kernels.connection.base import (
-    BaseKernelWebsocketConnection,
-)
-from jupyter_server.services.kernels.connection.channels import (
-    ZMQChannelsWebsocketConnection,
-)
+from jupyter_server.services.contents.manager import AsyncContentsManager, ContentsManager
+from jupyter_server.services.kernels.connection.base import BaseKernelWebsocketConnection
+from jupyter_server.services.kernels.connection.channels import ZMQChannelsWebsocketConnection
 from jupyter_server.services.kernels.kernelmanager import (
     AsyncMappingKernelManager,
     MappingKernelManager,
@@ -161,30 +154,30 @@ jupyter server  --certfile=mycert.pem # use SSL/TLS certificate
 jupyter server password              # enter a password to protect the server
 """
 
-JUPYTER_SERVICE_HANDLERS = dict(
-    auth=None,
-    api=["jupyter_server.services.api.handlers"],
-    config=["jupyter_server.services.config.handlers"],
-    contents=["jupyter_server.services.contents.handlers"],
-    files=["jupyter_server.files.handlers"],
-    kernels=[
+JUPYTER_SERVICE_HANDLERS = {
+    "auth": None,
+    "api": ["jupyter_server.services.api.handlers"],
+    "config": ["jupyter_server.services.config.handlers"],
+    "contents": ["jupyter_server.services.contents.handlers"],
+    "files": ["jupyter_server.files.handlers"],
+    "kernels": [
         "jupyter_server.services.kernels.handlers",
         "jupyter_server.services.kernels.websocket",
     ],
-    kernelspecs=[
+    "kernelspecs": [
         "jupyter_server.kernelspecs.handlers",
         "jupyter_server.services.kernelspecs.handlers",
     ],
-    nbconvert=[
+    "nbconvert": [
         "jupyter_server.nbconvert.handlers",
         "jupyter_server.services.nbconvert.handlers",
     ],
-    security=["jupyter_server.services.security.handlers"],
-    sessions=["jupyter_server.services.sessions.handlers"],
-    shutdown=["jupyter_server.services.shutdown"],
-    view=["jupyter_server.view.handlers"],
-    events=["jupyter_server.services.events.handlers"],
-)
+    "security": ["jupyter_server.services.security.handlers"],
+    "sessions": ["jupyter_server.services.sessions.handlers"],
+    "shutdown": ["jupyter_server.services.shutdown"],
+    "view": ["jupyter_server.view.handlers"],
+    "events": ["jupyter_server.services.events.handlers"],
+}
 
 # Added for backwards compatibility from classic notebook server.
 DEFAULT_SERVER_PORT = DEFAULT_JUPYTER_SERVER_PORT
@@ -322,7 +315,7 @@ class ServerWebApplication(web.Application):
             localedir=os.path.join(base_dir, "jupyter_server/i18n"),
             fallback=True,
         )
-        env.install_gettext_translations(nbui, newstyle=False)
+        env.install_gettext_translations(nbui, newstyle=False)  # type:ignore[attr-defined]
 
         if sys_info["commit_source"] == "repository":
             # don't cache (rely on 304) when working from master
@@ -339,63 +332,63 @@ class ServerWebApplication(web.Application):
             # collapse $HOME to ~
             root_dir = "~" + root_dir[len(home) :]
 
-        settings = dict(
+        settings = {
             # basics
-            log_function=log_request,
-            base_url=base_url,
-            default_url=default_url,
-            template_path=template_path,
-            static_path=jupyter_app.static_file_path,
-            static_custom_path=jupyter_app.static_custom_path,
-            static_handler_class=FileFindHandler,
-            static_url_prefix=url_path_join(base_url, "/static/"),
-            static_handler_args={
+            "log_function": log_request,
+            "base_url": base_url,
+            "default_url": default_url,
+            "template_path": template_path,
+            "static_path": jupyter_app.static_file_path,
+            "static_custom_path": jupyter_app.static_custom_path,
+            "static_handler_class": FileFindHandler,
+            "static_url_prefix": url_path_join(base_url, "/static/"),
+            "static_handler_args": {
                 # don't cache custom.js
                 "no_cache_paths": [url_path_join(base_url, "static", "custom")],
             },
-            version_hash=version_hash,
+            "version_hash": version_hash,
             # kernel message protocol over websocket
-            kernel_ws_protocol=jupyter_app.kernel_ws_protocol,
+            "kernel_ws_protocol": jupyter_app.kernel_ws_protocol,
             # rate limits
-            limit_rate=jupyter_app.limit_rate,
-            iopub_msg_rate_limit=jupyter_app.iopub_msg_rate_limit,
-            iopub_data_rate_limit=jupyter_app.iopub_data_rate_limit,
-            rate_limit_window=jupyter_app.rate_limit_window,
+            "limit_rate": jupyter_app.limit_rate,
+            "iopub_msg_rate_limit": jupyter_app.iopub_msg_rate_limit,
+            "iopub_data_rate_limit": jupyter_app.iopub_data_rate_limit,
+            "rate_limit_window": jupyter_app.rate_limit_window,
             # authentication
-            cookie_secret=jupyter_app.cookie_secret,
-            login_url=url_path_join(base_url, "/login"),
-            xsrf_cookies=True,
-            disable_check_xsrf=jupyter_app.disable_check_xsrf,
-            allow_remote_access=jupyter_app.allow_remote_access,
-            local_hostnames=jupyter_app.local_hostnames,
-            authenticate_prometheus=jupyter_app.authenticate_prometheus,
+            "cookie_secret": jupyter_app.cookie_secret,
+            "login_url": url_path_join(base_url, "/login"),
+            "xsrf_cookies": True,
+            "disable_check_xsrf": jupyter_app.disable_check_xsrf,
+            "allow_remote_access": jupyter_app.allow_remote_access,
+            "local_hostnames": jupyter_app.local_hostnames,
+            "authenticate_prometheus": jupyter_app.authenticate_prometheus,
             # managers
-            kernel_manager=kernel_manager,
-            contents_manager=contents_manager,
-            session_manager=session_manager,
-            kernel_spec_manager=kernel_spec_manager,
-            config_manager=config_manager,
-            authorizer=authorizer,
-            identity_provider=identity_provider,
-            event_logger=event_logger,
-            kernel_websocket_connection_class=kernel_websocket_connection_class,
+            "kernel_manager": kernel_manager,
+            "contents_manager": contents_manager,
+            "session_manager": session_manager,
+            "kernel_spec_manager": kernel_spec_manager,
+            "config_manager": config_manager,
+            "authorizer": authorizer,
+            "identity_provider": identity_provider,
+            "event_logger": event_logger,
+            "kernel_websocket_connection_class": kernel_websocket_connection_class,
             # handlers
-            extra_services=extra_services,
+            "extra_services": extra_services,
             # Jupyter stuff
-            started=now,
+            "started": now,
             # place for extensions to register activity
             # so that they can prevent idle-shutdown
-            last_activity_times={},
-            jinja_template_vars=jupyter_app.jinja_template_vars,
-            websocket_url=jupyter_app.websocket_url,
-            shutdown_button=jupyter_app.quit_button,
-            config=jupyter_app.config,
-            config_dir=jupyter_app.config_dir,
-            allow_password_change=jupyter_app.allow_password_change,
-            server_root_dir=root_dir,
-            jinja2_env=env,
-            serverapp=jupyter_app,
-        )
+            "last_activity_times": {},
+            "jinja_template_vars": jupyter_app.jinja_template_vars,
+            "websocket_url": jupyter_app.websocket_url,
+            "shutdown_button": jupyter_app.quit_button,
+            "config": jupyter_app.config,
+            "config_dir": jupyter_app.config_dir,
+            "allow_password_change": jupyter_app.allow_password_change,
+            "server_root_dir": root_dir,
+            "jinja2_env": env,
+            "serverapp": jupyter_app,
+        }
 
         # allow custom overrides for the tornado web app.
         settings.update(settings_overrides)
@@ -500,7 +493,7 @@ class JupyterPasswordApp(JupyterApp):
     and removes the need for token-based authentication.
     """
 
-    description = __doc__
+    description: str = __doc__
 
     def _config_file_default(self):
         return os.path.join(self.config_dir, "jupyter_server_config.json")
@@ -581,8 +574,8 @@ def shutdown_server(server_info, timeout=5, log=None):
 
 class JupyterServerStopApp(JupyterApp):
 
-    version = __version__
-    description = "Stop currently running Jupyter server for a given port"
+    version: str = __version__
+    description: str = "Stop currently running Jupyter server for a given port"
 
     port = Integer(
         DEFAULT_JUPYTER_SERVER_PORT,
@@ -605,7 +598,7 @@ class JupyterServerStopApp(JupyterApp):
         return shutdown_server(server, log=self.log)
 
     def _shutdown_or_exit(self, target_endpoint, server):
-        print("Shutting down server on %s..." % target_endpoint)
+        self.log.info("Shutting down server on %s..." % target_endpoint)
         if not self.shutdown_server(server):
             sys.exit("Could not stop server on %s" % target_endpoint)
 
@@ -617,6 +610,7 @@ class JupyterServerStopApp(JupyterApp):
             pass
 
     def start(self):
+        info = self.log.info
         servers = list(list_running_servers(self.runtime_dir, log=self.log))
         if not servers:
             self.exit("There are no running servers (per %s)" % self.runtime_dir)
@@ -634,30 +628,27 @@ class JupyterServerStopApp(JupyterApp):
                     self._shutdown_or_exit(port, server)
                     return
         current_endpoint = self.sock or self.port
-        print(
-            f"There is currently no server running on {current_endpoint}",
-            file=sys.stderr,
-        )
-        print("Ports/sockets currently in use:", file=sys.stderr)
+        info(f"There is currently no server running on {current_endpoint}")
+        info("Ports/sockets currently in use:")
         for server in servers:
-            print(" - {}".format(server.get("sock") or server["port"]), file=sys.stderr)
+            info(" - {}".format(server.get("sock") or server["port"]))
         self.exit(1)
 
 
 class JupyterServerListApp(JupyterApp):
-    version = __version__
-    description = _i18n("List currently running Jupyter servers.")
+    version: str = __version__
+    description: str = _i18n("List currently running Jupyter servers.")
 
-    flags = dict(
-        jsonlist=(
+    flags = {
+        "jsonlist": (
             {"JupyterServerListApp": {"jsonlist": True}},
             _i18n("Produce machine-readable JSON list output."),
         ),
-        json=(
+        "json": (
             {"JupyterServerListApp": {"json": True}},
             _i18n("Produce machine-readable JSON object on each line of output."),
         ),
-    )
+    }
 
     jsonlist = Bool(
         False,
@@ -679,19 +670,20 @@ class JupyterServerListApp(JupyterApp):
     )
 
     def start(self):
+        info = self.log.info
         serverinfo_list = list(list_running_servers(self.runtime_dir, log=self.log))
         if self.jsonlist:
-            print(json.dumps(serverinfo_list, indent=2))
+            info(json.dumps(serverinfo_list, indent=2))
         elif self.json:
             for serverinfo in serverinfo_list:
-                print(json.dumps(serverinfo))
+                info(json.dumps(serverinfo))
         else:
-            print("Currently running servers:")
+            info("Currently running servers:")
             for serverinfo in serverinfo_list:
                 url = serverinfo["url"]
                 if serverinfo.get("token"):
                     url = url + "?token=%s" % serverinfo["token"]
-                print(url, "::", serverinfo["root_dir"])
+                info(url, "::", serverinfo["root_dir"])
 
 
 # -----------------------------------------------------------------------------
@@ -761,16 +753,16 @@ aliases.update(
 class ServerApp(JupyterApp):
 
     name = "jupyter-server"
-    version = __version__
-    description = _i18n(
+    version: str = __version__
+    description: str = _i18n(
         """The Jupyter Server.
 
     This launches a Tornado-based Jupyter Server."""
     )
     examples = _examples
 
-    flags = Dict(flags)
-    aliases = Dict(aliases)
+    flags = Dict(flags)  # type:ignore[assignment]
+    aliases = Dict(aliases)  # type:ignore[assignment]
 
     classes = [
         KernelManager,
@@ -792,12 +784,24 @@ class ServerApp(JupyterApp):
         ZMQChannelsWebsocketConnection,
     ]
 
-    subcommands = dict(
-        list=(JupyterServerListApp, JupyterServerListApp.description.splitlines()[0]),
-        stop=(JupyterServerStopApp, JupyterServerStopApp.description.splitlines()[0]),
-        password=(JupyterPasswordApp, JupyterPasswordApp.description.splitlines()[0]),
-        extension=(ServerExtensionApp, ServerExtensionApp.description.splitlines()[0]),
-    )
+    subcommands: dict = {
+        "list": (
+            JupyterServerListApp,
+            JupyterServerListApp.description.splitlines()[0],
+        ),
+        "stop": (
+            JupyterServerStopApp,
+            JupyterServerStopApp.description.splitlines()[0],
+        ),
+        "password": (
+            JupyterPasswordApp,
+            JupyterPasswordApp.description.splitlines()[0],
+        ),
+        "extension": (
+            ServerExtensionApp,
+            ServerExtensionApp.description.splitlines()[0],
+        ),
+    }
 
     # A list of services whose handlers will be exposed.
     # Subclasses can override this list to
@@ -818,7 +822,7 @@ class ServerApp(JupyterApp):
         "events",
     )
 
-    _log_formatter_cls = LogFormatter
+    _log_formatter_cls = LogFormatter  # type:ignore[assignment]
 
     @default("log_level")
     def _default_log_level(self):
@@ -984,12 +988,14 @@ class ServerApp(JupyterApp):
                     converted_value <= 2**12,
                 )
             )
-        except ValueError:
-            raise TraitError('invalid --sock-mode value: %s, please specify as e.g. "0600"' % value)
-        except AssertionError:
+        except ValueError as e:
+            raise TraitError(
+                'invalid --sock-mode value: %s, please specify as e.g. "0600"' % value
+            ) from e
+        except AssertionError as e:
             raise TraitError(
                 "invalid --sock-mode value: %s, must have u+rw (0600) at a minimum" % value
-            )
+            ) from e
         return value
 
     certfile = Unicode(
@@ -1897,7 +1903,7 @@ class ServerApp(JupyterApp):
             parent=self,
             log=self.log,
         )
-        identity_provider_kwargs = dict(parent=self, log=self.log)
+        identity_provider_kwargs = {"parent": self, "log": self.log}
 
         if (
             self.login_handler_class is not LoginHandler
@@ -2111,7 +2117,7 @@ class ServerApp(JupyterApp):
             if not self.ip:
                 ip = "localhost"
             # Handle nonexplicit hostname.
-            elif self.ip in ("0.0.0.0", "::"):
+            elif self.ip in ("0.0.0.0", "::"):  # noqa
                 ip = "%s" % socket.gethostname()
             else:
                 ip = f"[{self.ip}]" if ":" in self.ip else self.ip
@@ -2213,7 +2219,7 @@ class ServerApp(JupyterApp):
             # since this might be called from a signal handler
             self.stop(from_signal=True)
             return
-        print(self.running_server_info())
+        info(self.running_server_info())
         yes = _i18n("y")
         no = _i18n("n")
         sys.stdout.write(_i18n("Shutdown this Jupyter server (%s/[%s])? ") % (yes, no))
@@ -2228,8 +2234,8 @@ class ServerApp(JupyterApp):
                 self.stop(from_signal=True)
                 return
         else:
-            print(_i18n("No answer for 5s:"), end=" ")
-        print(_i18n("resuming operation..."))
+            info(_i18n("No answer for 5s:"), end=" ")
+        info(_i18n("resuming operation..."))
         # no answer, or answer is no:
         # set it back to original SIGINT handler
         # use IOLoop.add_callback because signal.signal must be called
@@ -2241,7 +2247,7 @@ class ServerApp(JupyterApp):
         self.stop(from_signal=True)
 
     def _signal_info(self, sig, frame):
-        print(self.running_server_info())
+        self.log.info(self.running_server_info())
 
     def init_components(self):
         """Check the components submodule, and warn if it's unclean"""
@@ -2464,10 +2470,7 @@ class ServerApp(JupyterApp):
             import asyncio
 
             try:
-                from asyncio import (
-                    WindowsProactorEventLoopPolicy,
-                    WindowsSelectorEventLoopPolicy,
-                )
+                from asyncio import WindowsProactorEventLoopPolicy, WindowsSelectorEventLoopPolicy
             except ImportError:
                 pass
                 # not affected
@@ -2573,7 +2576,7 @@ class ServerApp(JupyterApp):
         await ensure_async(self.extension_manager.stop_all_extensions())
 
     def running_server_info(self, kernel_count=True):
-        "Return the current working directory and the server url information"
+        """Return the current working directory and the server url information"""
         info = self.contents_manager.info_string() + "\n"
         if kernel_count:
             n_kernels = len(self.kernel_manager.list_kernel_ids())

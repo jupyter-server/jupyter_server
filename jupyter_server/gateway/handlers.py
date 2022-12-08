@@ -5,6 +5,7 @@ import logging
 import mimetypes
 import os
 import random
+from typing import cast
 
 from jupyter_client.session import Session
 from tornado import web
@@ -66,7 +67,8 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
     async def get(self, kernel_id, *args, **kwargs):
         self.authenticate()
         self.kernel_id = kernel_id
-        await super().get(kernel_id=kernel_id, *args, **kwargs)
+        kwargs["kernel_id"] = kernel_id
+        await super().get(*args, **kwargs)
 
     def send_ping(self):
         if self.ws_connection is None and self.ping_callback is not None:
@@ -160,7 +162,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         kwargs = GatewayClient.instance().load_connection_args(**kwargs)
 
         request = HTTPRequest(ws_url, **kwargs)
-        self.ws_future = websocket_connect(request)
+        self.ws_future = cast(Future, websocket_connect(request))
         self.ws_future.add_done_callback(self._connection_done)
 
         loop = IOLoop.current()

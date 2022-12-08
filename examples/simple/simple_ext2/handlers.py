@@ -1,8 +1,5 @@
 from jupyter_server.base.handlers import JupyterHandler
-from jupyter_server.extension.handler import (
-    ExtensionHandlerJinjaMixin,
-    ExtensionHandlerMixin,
-)
+from jupyter_server.extension.handler import ExtensionHandlerJinjaMixin, ExtensionHandlerMixin
 from jupyter_server.utils import url_escape
 
 
@@ -27,7 +24,6 @@ class IndexHandler(BaseTemplateHandler):
 
 class TemplateHandler(BaseTemplateHandler):
     def get(self, path):
-        print(self.get_template("simple_ext2.html"))
         self.write(self.render_template("simple_ext2.html", path=path))
 
 

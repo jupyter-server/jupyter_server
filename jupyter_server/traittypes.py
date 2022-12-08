@@ -1,14 +1,14 @@
 import inspect
 from ast import literal_eval
 
-from traitlets import ClassBasedTraitType, TraitError, Undefined
+from traitlets import Any, ClassBasedTraitType, TraitError, Undefined
 from traitlets.utils.descriptions import describe
 
 
 class TypeFromClasses(ClassBasedTraitType):
     """A trait whose value must be a subclass of a class in a specified list of classes."""
 
-    default_value: Undefined
+    default_value: Any
 
     def __init__(self, default_value=Undefined, klasses=None, **kwargs):
         """Construct a Type trait
@@ -56,7 +56,7 @@ class TypeFromClasses(ClassBasedTraitType):
         super().__init__(new_default_value, **kwargs)
 
     def subclass_from_klasses(self, value):
-        "Check that a given class is a subclasses found in the klasses list."
+        """Check that a given class is a subclasses found in the klasses list."""
         return any(issubclass(value, klass) for klass in self.importable_klasses)
 
     def validate(self, obj, value):
@@ -64,11 +64,11 @@ class TypeFromClasses(ClassBasedTraitType):
         if isinstance(value, str):
             try:
                 value = self._resolve_string(value)
-            except ImportError:
+            except ImportError as e:
                 raise TraitError(
                     "The '%s' trait of %s instance must be a type, but "
                     "%r could not be imported" % (self.name, obj, value)
-                )
+                ) from e
         try:
             if self.subclass_from_klasses(value):
                 return value
@@ -172,7 +172,7 @@ class InstanceFromClasses(ClassBasedTraitType):
         super().__init__(**kwargs)
 
     def instance_from_importable_klasses(self, value):
-        "Check that a given class is a subclasses found in the klasses list."
+        """Check that a given class is a subclasses found in the klasses list."""
         return any(isinstance(value, klass) for klass in self.importable_klasses)
 
     def validate(self, obj, value):
@@ -217,7 +217,9 @@ class InstanceFromClasses(ClassBasedTraitType):
     def make_dynamic_default(self):
         if (self.default_args is None) and (self.default_kwargs is None):
             return None
-        return self.klass(*(self.default_args or ()), **(self.default_kwargs or {}))
+        return self.klass(  # type:ignore[attr-defined]
+            *(self.default_args or ()), **(self.default_kwargs or {})
+        )
 
     def default_value_repr(self):
         return repr(self.make_dynamic_default())

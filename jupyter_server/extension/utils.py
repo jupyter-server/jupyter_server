@@ -37,8 +37,8 @@ def get_loader(obj, logger=None):
             "of Jupyter Server.".format(name=obj),
             DeprecationWarning,
         )
-    except Exception:
-        raise ExtensionLoadingError("_load_jupyter_server_extension function was not found.")
+    except Exception as e:
+        raise ExtensionLoadingError("_load_jupyter_server_extension function was not found.") from e
     return func
 
 

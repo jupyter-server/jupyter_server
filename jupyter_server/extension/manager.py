@@ -6,12 +6,7 @@ from traitlets import validate as validate_trait
 from traitlets.config import LoggingConfigurable
 
 from .config import ExtensionConfigManager
-from .utils import (
-    ExtensionMetadataError,
-    ExtensionModuleNotFound,
-    get_loader,
-    get_metadata,
-)
+from .utils import ExtensionMetadataError, ExtensionModuleNotFound, get_loader, get_metadata
 
 
 class ExtensionPoint(HasTraits):
@@ -30,18 +25,18 @@ class ExtensionPoint(HasTraits):
         # Verify that the metadata has a "name" key.
         try:
             self._module_name = metadata["module"]
-        except KeyError:
+        except KeyError as e:
             raise ExtensionMetadataError(
                 "There is no 'module' key in the extension's metadata packet."
-            )
+            ) from e
 
         try:
             self._module = importlib.import_module(self._module_name)
-        except ImportError:
+        except ImportError as e:
             raise ExtensionModuleNotFound(
                 "The submodule '{}' could not be found. Are you "
                 "sure the extension is installed?".format(self._module_name)
-            )
+            ) from e
         # If the metadata includes an ExtensionApp, create an instance.
         if "app" in metadata:
             self._app = metadata["app"]()
@@ -177,7 +172,7 @@ class ExtensionPackage(HasTraits):
             raise ExtensionModuleNotFound(
                 "The module '{name}' could not be found ({e}). Are you "
                 "sure the extension is installed?".format(name=name, e=e)
-            )
+            ) from e
         # Create extension point interfaces for each extension path.
         for m in self._metadata:
             point = ExtensionPoint(metadata=m)
@@ -190,7 +185,7 @@ class ExtensionPackage(HasTraits):
         return self._module
 
     @property
-    def version(self):
+    def version(self) -> str:
         """Get the version of this package, if it's given. Otherwise, return an empty string"""
         return getattr(self._module, "__version__", "")
 

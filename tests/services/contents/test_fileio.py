@@ -141,7 +141,7 @@ def test_path_to_invalid(tmpdir):
 @pytest.mark.skipif(os.name == "nt", reason="test fails on Windows")
 def test_file_manager_mixin(tmpdir):
     mixin = FileManagerMixin()
-    mixin.log = logging.getLogger()
+    mixin.log = logging.getLogger()  # type:ignore
     bad_content = tmpdir / "bad_content.ipynb"
     bad_content.write_text("{}", "utf8")
     with pytest.raises(HTTPError):
@@ -163,7 +163,7 @@ def test_file_manager_mixin(tmpdir):
 @pytest.mark.skipif(os.name == "nt", reason="test fails on Windows")
 async def test_async_file_manager_mixin(tmpdir):
     mixin = AsyncFileManagerMixin()
-    mixin.log = logging.getLogger()
+    mixin.log = logging.getLogger()  # type:ignore
     bad_content = tmpdir / "bad_content.ipynb"
     bad_content.write_text("{}", "utf8")
     with pytest.raises(HTTPError):

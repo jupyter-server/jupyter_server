@@ -13,10 +13,7 @@ from datetime import datetime, timedelta
 from functools import partial
 
 from jupyter_client.ioloop.manager import AsyncIOLoopKernelManager
-from jupyter_client.multikernelmanager import (
-    AsyncMultiKernelManager,
-    MultiKernelManager,
-)
+from jupyter_client.multikernelmanager import AsyncMultiKernelManager, MultiKernelManager
 from jupyter_client.session import Session
 from jupyter_core.paths import exists
 from tornado import web
@@ -226,9 +223,9 @@ class MappingKernelManager(MultiKernelManager):
                 self._pending_kernel_tasks[kernel_id] = task
             # add busy/activity markers:
             kernel = self.get_kernel(kernel_id)
-            kernel.execution_state = "starting"
-            kernel.reason = ""
-            kernel.last_activity = utcnow()
+            kernel.execution_state = "starting"  # type:ignore[attr-defined]
+            kernel.reason = ""  # type:ignore[attr-defined]
+            kernel.last_activity = utcnow()  # type:ignore[attr-defined]
             self.log.info("Kernel started: %s", kernel_id)
             self.log.debug("Kernel args: %r", kwargs)
 
@@ -426,11 +423,11 @@ class MappingKernelManager(MultiKernelManager):
 
         def finish():
             """Common cleanup when restart finishes/fails for any reason."""
-            if not channel.closed():
+            if not channel.closed():  # type:ignore[operator]
                 channel.close()
             loop.remove_timeout(timeout)
             kernel.remove_restart_callback(on_restart_failed, "dead")
-            kernel._pending_restart_cleanup = None
+            kernel._pending_restart_cleanup = None  # type:ignore[attr-defined]
 
         def on_reply(msg):
             self.log.debug("Kernel info reply received: %s", kernel_id)
@@ -451,9 +448,9 @@ class MappingKernelManager(MultiKernelManager):
                 future.set_exception(RuntimeError("Restart failed"))
 
         kernel.add_restart_callback(on_restart_failed, "dead")
-        kernel._pending_restart_cleanup = finish
+        kernel._pending_restart_cleanup = finish  # type:ignore[attr-defined]
         kernel.session.send(channel, "kernel_info_request")
-        channel.on_recv(on_reply)
+        channel.on_recv(on_reply)  # type:ignore[operator]
         loop = IOLoop.current()
         timeout = loop.add_timeout(loop.time() + self.kernel_info_timeout, on_timeout)
         # Re-establish activity watching if ports have changed...
@@ -655,7 +652,7 @@ class MappingKernelManager(MultiKernelManager):
 
 # AsyncMappingKernelManager inherits as much as possible from MappingKernelManager,
 # overriding only what is different.
-class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
+class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):  # type:ignore[misc]
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
         return "jupyter_server.services.kernels.kernelmanager.ServerKernelManager"

@@ -38,13 +38,13 @@ def log_request(handler):
         log_method = logger.error
 
     request_time = 1000.0 * handler.request.request_time()
-    ns = dict(
-        status=status,
-        method=request.method,
-        ip=request.remote_ip,
-        uri=request.uri,
-        request_time=request_time,
-    )
+    ns = {
+        "status": status,
+        "method": request.method,
+        "ip": request.remote_ip,
+        "uri": request.uri,
+        "request_time": request_time,
+    }
     # log username
     # make sure we don't break anything
     # in case mixins cause current_user to not be a User somehow

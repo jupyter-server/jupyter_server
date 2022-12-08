@@ -27,7 +27,7 @@ class SimpleApp2(ExtensionAppJinjaMixin, ExtensionApp):
     # Local path to templates directory.
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
-    configD = Unicode("", config=True, help="Config D example.")
+    configD = Unicode("", config=True, help="Config D example.")  # noqa
 
     def initialize_handlers(self):
         self.handlers.extend(

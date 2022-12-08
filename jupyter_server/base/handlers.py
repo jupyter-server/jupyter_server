@@ -105,7 +105,9 @@ class AuthenticatedHandler(web.RequestHandler):
                 # tornado raise Exception (not a subclass)
                 # if method is unsupported (websocket and Access-Control-Allow-Origin
                 # for example, so just ignore)
-                self.log.exception("Could not set default headers: %s", e)
+                self.log.exception(  # type:ignore[attr-defined]
+                    "Could not set default headers: %s", e
+                )
 
     @property
     def cookie_name(self):
@@ -516,7 +518,7 @@ class JupyterHandler(AuthenticatedHandler):
             return
         try:
             return super().check_xsrf_cookie()
-        except web.HTTPError:
+        except web.HTTPError as e:
             if self.request.method in {"GET", "HEAD"}:
                 # Consider Referer a sufficient cross-origin check for GET requests
                 if not self.check_referer():
@@ -525,7 +527,7 @@ class JupyterHandler(AuthenticatedHandler):
                         msg = f"Blocking Cross Origin request from {referer}."
                     else:
                         msg = "Blocking request from unknown origin"
-                    raise web.HTTPError(403, msg)
+                    raise web.HTTPError(403, msg) from e
             else:
                 raise
 
@@ -683,12 +685,12 @@ class JupyterHandler(AuthenticatedHandler):
             exception = "(unknown)"
 
         # build template namespace
-        ns = dict(
-            status_code=status_code,
-            status_message=status_message,
-            message=message,
-            exception=exception,
-        )
+        ns = {
+            "status_code": status_code,
+            "status_message": status_message,
+            "message": message,
+            "exception": exception,
+        }
 
         self.set_header("Content-Type", "text/html")
         # render the template
@@ -871,6 +873,7 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
         """
         abs_path = super().validate_absolute_path(root, absolute_path)
         abs_root = os.path.abspath(root)
+        assert abs_path is not None
         if is_hidden(abs_path, abs_root) and not self.contents_manager.allow_hidden:
             self.log.info(
                 "Refusing to serve hidden file, via 404 Error, use flag 'ContentsManager.allow_hidden' to enable"
@@ -918,7 +921,7 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
 
     # cache search results, don't search for files more than once
     _static_paths: dict = {}
-    root: tuple
+    root: tuple  # type:ignore[assignment]
 
     def set_headers(self):
         super().set_headers()

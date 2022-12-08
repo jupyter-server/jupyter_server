@@ -38,8 +38,8 @@ from any directory in your system with::
     jupyter server
 
 
-Code Styling
------------------------------
+Code Styling and Quality Checks
+-------------------------------
 `jupyter_server` has adopted automatic code formatting so you shouldn't
 need to worry too much about your code style.
 As long as your code is valid,
@@ -68,6 +68,11 @@ yourself after that.
 
 Some of the hooks only run on CI by default, but you can invoke them by
 running with the ``--hook-stage manual`` argument.
+
+There are three hatch scripts that can be run locally as well:
+``hatch run lint:style`` will check styling.  ``hatch run lint:fmt``
+will attempt to auto-format files.  ``hatch run typing:test`` will
+run the type checker.
 
 Troubleshooting the Installation
 --------------------------------

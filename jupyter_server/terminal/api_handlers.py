@@ -1,5 +1,1 @@
-from jupyter_server_terminals import (  # noqa
-    TerminalAPIHandler,
-    TerminalHandler,
-    TerminalRootHandler,
-)
+from jupyter_server_terminals import TerminalAPIHandler, TerminalHandler, TerminalRootHandler

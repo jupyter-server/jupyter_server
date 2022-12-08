@@ -7,9 +7,7 @@ from jupyter_client.session import Session
 from tornado.httpserver import HTTPRequest
 
 from jupyter_server.serverapp import ServerApp
-from jupyter_server.services.kernels.connection.channels import (
-    ZMQChannelsWebsocketConnection,
-)
+from jupyter_server.services.kernels.connection.channels import ZMQChannelsWebsocketConnection
 from jupyter_server.services.kernels.websocket import KernelWebsocketHandler
 
 
