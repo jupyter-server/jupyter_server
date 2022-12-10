@@ -48,18 +48,6 @@ def is_kernelspec_model(spec_dict):
     )
 
 
-def gateway_kernelspec_model(handler, name, spec_dict, resources):
-    """Helper method to prepend the server's base_url, if configured, to the kernelspec resource path.
-    This will occur when using a gateway
-    """
-    d = {"name": name, "spec": spec_dict, "resources": {}}
-
-    for resource_name in resources:
-        resource_path = url_path_join(handler.base_url, resources[resource_name])
-        d["resources"][resource_name] = resource_path
-    return d
-
-
 class KernelSpecsAPIHandler(APIHandler):
     auth_resource = AUTH_RESOURCE
 
