@@ -38,7 +38,11 @@ def generate_kernelspec(name):
             "metadata": {},
         }
     }
-    kernelspec_stanza = {"name": name, "spec": spec_stanza, "resources": {}}
+    kernelspec_stanza = {
+        "name": name,
+        "spec": spec_stanza,
+        "resources": {"logo-64x64": f"f/kernelspecs/{name}/logo-64x64.png"},
+    }
     return kernelspec_stanza
 
 
