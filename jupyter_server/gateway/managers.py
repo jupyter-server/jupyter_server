@@ -211,13 +211,13 @@ class GatewayKernelSpecManager(KernelSpecManager):
             for resource_name in resources:
                 original_path = resources[resource_name]
                 split_eg_base_url = str.rsplit(original_path, sep="/kernelspecs/", maxsplit=1)
-                kernel_specs["kernelspecs"][kernel_name]["resources"][
-                    resource_name
-                ] = url_path_join(self.parent.base_url, "/kernelspecs", split_eg_base_url[1])
-                self.log.debug(
-                    f"Replaced original kernel resource path {original_path} with new "
-                    f"path {kernel_specs['kernelspecs'][kernel_name]['resources'][resource_name]}"
-                )
+                new_path = url_path_join(self.parent.base_url, "kernelspecs", split_eg_base_url[1])
+                kernel_specs["kernelspecs"][kernel_name]["resources"][resource_name] = new_path
+                if original_path != new_path:
+                    self.log.debug(
+                        f"Replaced original kernel resource path {original_path} with new "
+                        f"path {kernel_specs['kernelspecs'][kernel_name]['resources'][resource_name]}"
+                    )
         return kernel_specs
 
     def _get_kernelspecs_endpoint_url(self, kernel_name=None):
