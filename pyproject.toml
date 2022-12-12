@@ -108,7 +108,6 @@ nowarn = "test -W default {args}"
 
 [tool.hatch.envs.typing]
 features = ["test", "typing"]
-detached = true
 [tool.hatch.envs.typing.scripts]
 test = "mypy --install-types --non-interactive {args:.}"
 
