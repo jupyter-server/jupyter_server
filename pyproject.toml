@@ -65,7 +65,7 @@ test = [
     "pre-commit"
 ]
 lint = [
-  "black>=22.6.0",
+  "black>=22.10.0",
   "mdformat>0.7",
   "ruff>=0.0.176",
 ]
