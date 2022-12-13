@@ -38,7 +38,11 @@ def generate_kernelspec(name):
             "metadata": {},
         }
     }
-    kernelspec_stanza = {"name": name, "spec": spec_stanza, "resources": {}}
+    kernelspec_stanza = {
+        "name": name,
+        "spec": spec_stanza,
+        "resources": {"logo-64x64": f"f/kernelspecs/{name}/logo-64x64.png"},
+    }
     return kernelspec_stanza
 
 
@@ -403,6 +407,9 @@ async def test_gateway_get_kernelspecs(init_gateway, jp_fetch, jp_serverapp):
         kspecs = content.get("kernelspecs")
         assert len(kspecs) == 2
         assert kspecs.get("kspec_bar").get("name") == "kspec_bar"
+        assert (
+            kspecs.get("kspec_bar").get("resources")["logo-64x64"].startswith(jp_serverapp.base_url)
+        )
 
 
 async def test_gateway_get_named_kernelspec(init_gateway, jp_fetch):
