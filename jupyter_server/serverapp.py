@@ -683,7 +683,7 @@ class JupyterServerListApp(JupyterApp):
                 url = serverinfo["url"]
                 if serverinfo.get("token"):
                     url = url + "?token=%s" % serverinfo["token"]
-                info(url, "::", serverinfo["root_dir"])
+                info("%s :: %s", url, serverinfo["root_dir"])
 
 
 # -----------------------------------------------------------------------------
