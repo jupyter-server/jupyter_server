@@ -2762,10 +2762,10 @@ class ServerApp(JupyterApp):
             )
 
         self.write_server_info_file()
-        self.write_browser_open_files()
 
         # Handle the browser opening.
         if self.open_browser and not self.sock:
+            self.write_browser_open_files()
             self.launch_browser()
 
         if self.identity_provider.token and self.identity_provider.token_generated:
