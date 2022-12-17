@@ -42,7 +42,7 @@ jobs:
         run: hatch run cov:test --cov-fail-under 75 || hatch run test:test --lf
       - name: Run the tests on pypy
         if: ${{ startsWith(matrix.python-version, 'pypy') }}
-        run: hatch run test:test || hatch run test:test --lf
+        run: hatch run test:nowarn || hatch run test:nowarn --lf
       - name: Run the tests on windows
         if: ${{ startsWith(matrix.os, 'windows') }}
         run: hatch run cov:nowarn -s || hatch run cov:nowarn --lf
