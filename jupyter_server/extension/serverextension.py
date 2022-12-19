@@ -1,6 +1,7 @@
 """Utilities for installing extensions"""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import logging
 import os
 import sys
 
@@ -342,7 +343,10 @@ class ListServerExtensionsApp(BaseExtensionApp):
                     version = extension.version
                     self.log.info(f"      {name} {version} {GREEN_OK}")
                 except Exception as err:
-                    self.log.warning(f"      {RED_X} {err}", exc_info=True)
+                    exc_info = False
+                    if self.log_level <= logging.DEBUG:
+                        exc_info = True
+                    self.log.warning(f"      {RED_X} {err}", exc_info=exc_info)
             # Add a blank line between paths.
             self.log.info("")
 
