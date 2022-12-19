@@ -1,6 +1,7 @@
 """Utilities for installing extensions"""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import logging
 import os
 import sys
 
@@ -320,20 +321,29 @@ class ListServerExtensionsApp(BaseExtensionApp):
         )
 
         for option in configurations:
-            config_dir, ext_manager = _get_extmanager_for_context(**option)
+            config_dir = _get_config_dir(**option)
             self.log.info(f"Config dir: {config_dir}")
-            for name, extension in ext_manager.extensions.items():
-                enabled = extension.enabled
+            write_dir = "jupyter_server_config.d"
+            config_manager = ExtensionConfigManager(
+                read_config_path=[config_dir],
+                write_config_dir=os.path.join(config_dir, write_dir),
+            )
+            jpserver_extensions = config_manager.get_jpserver_extensions()
+            for name, enabled in jpserver_extensions.items():
                 # Attempt to get extension metadata
                 self.log.info(f"    {name} {GREEN_ENABLED if enabled else RED_DISABLED}")
                 try:
                     self.log.info(f"    - Validating {name}...")
+                    extension = ExtensionPackage(name=name, enabled=enabled)
                     if not extension.validate():
                         raise ValueError("validation failed")
                     version = extension.version
                     self.log.info(f"      {name} {version} {GREEN_OK}")
                 except Exception as err:
-                    self.log.warning(f"      {RED_X} {err}")
+                    exc_info = False
+                    if int(self.log_level) <= logging.DEBUG:
+                        exc_info = True
+                    self.log.warning(f"      {RED_X} {err}", exc_info=exc_info)
             # Add a blank line between paths.
             self.log.info("")
 
