@@ -2337,6 +2337,8 @@ class ServerApp(JupyterApp):
         )
 
         # binding sockets must be called from inside an event loop
+        if not self.sock:
+            self._find_http_port()
         self.io_loop.add_callback(self._bind_http_server)
 
     def _bind_http_server(self):
@@ -2371,10 +2373,16 @@ class ServerApp(JupyterApp):
             return True
 
     def _bind_http_server_tcp(self):
+        self.http_server.listen(self.port, self.ip)
+        return True
+
+    def _find_http_port(self):
         success = None
         for port in random_ports(self.port, self.port_retries + 1):
+            tmp_sock = socket.socket()
             try:
-                self.http_server.listen(port, self.ip)
+                tmp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, b"\0" * 8)
+                tmp_sock.bind((self.ip, port))
             except OSError as e:
                 if e.errno == errno.EADDRINUSE:
                     if self.port_retries:
@@ -2396,6 +2404,8 @@ class ServerApp(JupyterApp):
                 self.port = port
                 success = True
                 break
+            finally:
+                tmp_sock.close()
         if not success:
             if self.port_retries:
                 self.log.critical(
@@ -2413,7 +2423,6 @@ class ServerApp(JupyterApp):
                     % port
                 )
             self.exit(1)
-        return success
 
     @staticmethod
     def _init_asyncio_patch():
