@@ -1647,11 +1647,22 @@ class ServerApp(JupyterApp):
             value = os.path.abspath(value)
         return value
 
+    # Because the validation of preferred_dir depends on root_dir and validation
+    # occurs when the trait is loaded, there are times when we should defer the
+    # validation of preferred_dir (e.g., when preferred_dir is defined via CLI
+    # and root_dir is defined via a config file).
+    _defer_preferred_dir_validation = False
+
     @validate("root_dir")
     def _root_dir_validate(self, proposal):
         value = self._normalize_dir(proposal["value"])
         if not os.path.isdir(value):
             raise TraitError(trans.gettext("No such directory: '%r'") % value)
+
+        if self._defer_preferred_dir_validation:
+            # If we're here, then preferred_dir is configured on the CLI and
+            # root_dir is configured in a file
+            self._preferred_dir_validation(self.preferred_dir, value)
         return value
 
     preferred_dir = Unicode(
@@ -1668,7 +1679,38 @@ class ServerApp(JupyterApp):
         value = self._normalize_dir(proposal["value"])
         if not os.path.isdir(value):
             raise TraitError(trans.gettext("No such preferred dir: '%r'") % value)
+
+        # Before we validate against root_dir, check if this trait is defined on the CLI
+        # and root_dir is not.  If that's the case, we'll defer it's further validation
+        # until root_dir is validated or the server is starting (the latter occurs when
+        # the default root_dir (cwd) is used).
+        cli_config = self.cli_config.get("ServerApp", {})
+        if "preferred_dir" in cli_config and "root_dir" not in cli_config:
+            self._defer_preferred_dir_validation = True
+
+        if not self._defer_preferred_dir_validation:  # Validate now
+            self._preferred_dir_validation(value, self.root_dir)
         return value
+
+    def _preferred_dir_validation(self, preferred_dir: str, root_dir: str) -> None:
+        """Validate preferred dir relative to root_dir - preferred_dir must be equal or a subdir of root_dir"""
+        if not preferred_dir.startswith(root_dir):
+            raise TraitError(
+                trans.gettext(
+                    "preferred_dir must be equal or a subdir of root_dir. preferred_dir: '%r' root_dir: '%r'"
+                )
+                % (preferred_dir, root_dir)
+            )
+        self._defer_preferred_dir_validation = False
+
+    @observe("root_dir")
+    def _root_dir_changed(self, change):
+        self._root_dir_set = True
+        if not self.preferred_dir.startswith(change["new"]):
+            self.log.warning(
+                trans.gettext("Value of preferred_dir updated to use value of root_dir")
+            )
+            self.preferred_dir = change["new"]
 
     @observe("server_extensions")
     def _update_server_extensions(self, change):
@@ -1851,9 +1893,6 @@ class ServerApp(JupyterApp):
             parent=self,
             log=self.log,
         )
-        # Trigger a default/validation here explicitly while we still support the
-        # deprecated trait on ServerApp (FIXME remove when deprecation finalized)
-        self.contents_manager.preferred_dir
         self.session_manager = self.session_manager_class(
             parent=self,
             log=self.log,
@@ -2478,6 +2517,10 @@ class ServerApp(JupyterApp):
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
         super().initialize(argv=argv)
+        if self._defer_preferred_dir_validation:
+            # If we're here, then preferred_dir is configured on the CLI and
+            # root_dir has the default value (cwd)
+            self._preferred_dir_validation(self.preferred_dir, self.root_dir)
         if self._dispatching:
             return
         # initialize io loop as early as possible,
