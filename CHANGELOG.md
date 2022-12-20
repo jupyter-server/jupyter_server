@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.2
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.1...b5b7c5e9141698ab0206f74b8944972cbc4cf6fe))
+
+### Bugs fixed
+
+- Raise errors on individual problematic extensions when listing extension [#1139](https://github.com/jupyter-server/jupyter_server/pull/1139) ([@Zsailer](https://github.com/Zsailer))
+- Find an available port before starting event loop [#1136](https://github.com/jupyter-server/jupyter_server/pull/1136) ([@blink1073](https://github.com/blink1073))
+- only write browser files if we're launching the browser [#1133](https://github.com/jupyter-server/jupyter_server/pull/1133) ([@hhuuggoo](https://github.com/hhuuggoo))
+- Logging message used to list sessions fails with template error [#1132](https://github.com/jupyter-server/jupyter_server/pull/1132) ([@vindex10](https://github.com/vindex10))
+- Include base_url at start of kernelspec resources path [#1124](https://github.com/jupyter-server/jupyter_server/pull/1124) ([@bloomsa](https://github.com/bloomsa))
+
+### Maintenance and upkeep improvements
+
+- Fix lint rule [#1128](https://github.com/jupyter-server/jupyter_server/pull/1128) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-12-08&to=2022-12-20&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-12-08..2022-12-20&type=Issues) | [@bloomsa](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abloomsa+updated%3A2022-12-08..2022-12-20&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-12-08..2022-12-20&type=Issues) | [@hhuuggoo](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ahhuuggoo+updated%3A2022-12-08..2022-12-20&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-12-08..2022-12-20&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2022-12-08..2022-12-20&type=Issues) | [@vindex10](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avindex10+updated%3A2022-12-08..2022-12-20&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-12-08..2022-12-20&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-12-08..2022-12-20&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.0...a400c0e0de56b1abe821ce26875fad9e7e711596))
@@ -23,8 +47,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-12-06&to=2022-12-08&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-12-06..2022-12-08&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-12-06..2022-12-08&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2022-12-06..2022-12-08&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-12-06..2022-12-08&type=Issues) | [@ofek](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aofek+updated%3A2022-12-06..2022-12-08&type=Issues) | [@ophie200](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aophie200+updated%3A2022-12-06..2022-12-08&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-12-06..2022-12-08&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.0
 
