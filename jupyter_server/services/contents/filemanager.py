@@ -7,9 +7,7 @@ import os
 import shutil
 import stat
 import sys
-import warnings
 from datetime import datetime
-from pathlib import Path
 
 import nbformat
 from anyio.to_thread import run_sync
@@ -21,7 +19,6 @@ from traitlets import Bool, TraitError, Unicode, default, validate
 from jupyter_server import _tz as tz
 from jupyter_server.base.handlers import AuthenticatedFileHandler
 from jupyter_server.transutils import _i18n
-from jupyter_server.utils import to_api_path
 
 from .filecheckpoints import AsyncFileCheckpoints, FileCheckpoints
 from .fileio import AsyncFileManagerMixin, FileManagerMixin
@@ -57,34 +54,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if not os.path.isdir(value):
             raise TraitError("%r is not a directory" % value)
         return value
-
-    @default("preferred_dir")
-    def _default_preferred_dir(self):
-        try:
-            value = self.parent.preferred_dir
-            if value == self.parent.root_dir:
-                value = None
-        except AttributeError:
-            pass
-        else:
-            if value is not None:
-                warnings.warn(
-                    "ServerApp.preferred_dir config is deprecated in jupyter-server 2.0. Use FileContentsManager.preferred_dir instead",
-                    FutureWarning,
-                    stacklevel=3,
-                )
-                try:
-                    path = Path(value)
-                    return path.relative_to(self.root_dir).as_posix()
-                except ValueError:
-                    raise TraitError("%s is outside root contents directory" % value) from None
-        return ""
-
-    @validate("preferred_dir")
-    def _validate_preferred_dir(self, proposal):
-        # It should be safe to pass an API path through this method:
-        proposal["value"] = to_api_path(proposal["value"], self.root_dir)
-        return super()._validate_preferred_dir(proposal)
 
     @default("checkpoints_class")
     def _checkpoints_class_default(self):
