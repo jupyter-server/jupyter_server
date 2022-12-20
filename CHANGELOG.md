@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.23.4
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.23.3...0a02e42b960875ad578101670128dd0d7df83c47))
+
+### Bugs fixed
+
+- Raise errors on individual problematic extensions when listing extension [#1139](https://github.com/jupyter-server/jupyter_server/pull/1139) ([@Zsailer](https://github.com/Zsailer))
+- Include base_url at start of kernelspec resources path [#1124](https://github.com/jupyter-server/jupyter_server/pull/1124) ([@bloomsa](https://github.com/bloomsa))
+- Defer webbrowser import [#1095](https://github.com/jupyter-server/jupyter_server/pull/1095) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-11-21&to=2022-12-20&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-11-21..2022-12-20&type=Issues) | [@bollwyvl](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abollwyvl+updated%3A2022-11-21..2022-12-20&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-11-21..2022-12-20&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afcollonval+updated%3A2022-11-21..2022-12-20&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-11-21..2022-12-20&type=Issues) | [@meeseeksmachine](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksmachine+updated%3A2022-11-21..2022-12-20&type=Issues) | [@ofek](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aofek+updated%3A2022-11-21..2022-12-20&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2022-11-21..2022-12-20&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-11-21..2022-12-20&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-11-21..2022-12-20&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.23.3
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.23.2...4b19bf0f87a9fe8766ea896ac22f8bcdc3f08064))
@@ -17,8 +35,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-11-14&to=2022-11-21&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-11-14..2022-11-21&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-11-14..2022-11-21&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2022-11-14..2022-11-21&type=Issues) | [@meeseeksmachine](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksmachine+updated%3A2022-11-14..2022-11-21&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-11-14..2022-11-21&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-11-14..2022-11-21&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.23.2
 
