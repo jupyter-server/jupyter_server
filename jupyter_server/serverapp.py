@@ -1573,6 +1573,10 @@ class ServerApp(JupyterApp):
         info_file = "jpserver-%s.json" % os.getpid()
         return os.path.join(self.runtime_dir, info_file)
 
+    no_browser_open_file = Bool(
+        False, help="If True, do not write redirect HTML file disk, or show in messages."
+    )
+
     browser_open_file = Unicode()
 
     @default("browser_open_file")
@@ -2815,9 +2819,11 @@ class ServerApp(JupyterApp):
 
         self.write_server_info_file()
 
+        if not self.no_browser_open_file:
+            self.write_browser_open_files()
+
         # Handle the browser opening.
         if self.open_browser and not self.sock:
-            self.write_browser_open_files()
             self.launch_browser()
 
         if self.identity_provider.token and self.identity_provider.token_generated:
@@ -2840,17 +2846,26 @@ class ServerApp(JupyterApp):
                     )
                 )
             else:
-                self.log.critical(
-                    "\n".join(
-                        [
-                            "\n",
+                if self.no_browser_open_file:
+                    message = [
+                        "\n",
+                        _i18n("To access the server, copy and paste one of these URLs:"),
+                        "    %s" % self.display_url,
+                    ]
+                else:
+                    message = [
+                        "\n",
+                        _i18n(
                             "To access the server, open this file in a browser:",
-                            "    %s" % urljoin("file:", pathname2url(self.browser_open_file)),
+                        ),
+                        "    %s" % urljoin("file:", pathname2url(self.browser_open_file)),
+                        _i18n(
                             "Or copy and paste one of these URLs:",
-                            "    %s" % self.display_url,
-                        ]
-                    )
-                )
+                        ),
+                        "    %s" % self.display_url,
+                    ]
+
+                self.log.critical("\n".join(message))
 
     async def _cleanup(self):
         """General cleanup of files, extensions and kernels created

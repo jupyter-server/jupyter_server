@@ -18,6 +18,7 @@ from jupyter_server.serverapp import (
     list_running_servers,
     random_ports,
 )
+from jupyter_server.utils import pathname2url, urljoin
 
 
 def test_help_output():
@@ -484,3 +485,12 @@ async def test_shutdown_no_activity(jp_serverapp):
 def test_running_server_info(jp_serverapp):
     app: ServerApp = jp_serverapp
     app.running_server_info(True)
+
+
+@pytest.mark.parametrize("should_exist", [True, False])
+def test_browser_open_files(jp_configurable_serverapp, should_exist, caplog):
+    app = jp_configurable_serverapp(no_browser_open_file=not should_exist)
+    assert os.path.exists(app.browser_open_file) == should_exist
+    url = urljoin("file:", pathname2url(app.browser_open_file))
+    url_messages = [rec.message for rec in caplog.records if url in rec.message]
+    assert url_messages if should_exist else not url_messages
