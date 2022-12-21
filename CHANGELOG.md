@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.3
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.2...e35fbbc238a5b96d869c574fe8b8eb27b9605a05))
+
+### Bugs fixed
+
+- Restore default writing of browser open redirect file, add opt-in to skip [#1144](https://github.com/jupyter-server/jupyter_server/pull/1144) ([@bollwyvl](https://github.com/bollwyvl))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-12-20&to=2022-12-21&type=c))
+
+[@bollwyvl](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abollwyvl+updated%3A2022-12-20..2022-12-21&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.2
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.1...b5b7c5e9141698ab0206f74b8944972cbc4cf6fe))
@@ -25,8 +41,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-12-08&to=2022-12-20&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-12-08..2022-12-20&type=Issues) | [@bloomsa](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abloomsa+updated%3A2022-12-08..2022-12-20&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-12-08..2022-12-20&type=Issues) | [@hhuuggoo](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ahhuuggoo+updated%3A2022-12-08..2022-12-20&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-12-08..2022-12-20&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2022-12-08..2022-12-20&type=Issues) | [@vindex10](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avindex10+updated%3A2022-12-08..2022-12-20&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-12-08..2022-12-20&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-12-08..2022-12-20&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.1
 
