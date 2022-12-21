@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.4
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.3...53377e25efe0faf4e2a984254ca2c301aeea096d))
+
+### Bugs fixed
+
+- Fix handling of extension last activity [#1145](https://github.com/jupyter-server/jupyter_server/pull/1145) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-12-21&to=2022-12-21&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-12-21..2022-12-21&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.3
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.2...e35fbbc238a5b96d869c574fe8b8eb27b9605a05))
@@ -17,8 +33,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-12-20&to=2022-12-21&type=c))
 
 [@bollwyvl](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abollwyvl+updated%3A2022-12-20..2022-12-21&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.2
 
