@@ -480,7 +480,7 @@ class ServerWebApplication(web.Application):
         # counted here. This provides a hook for extensions to add a last activity
         # setting to the server.
         sources.extend(
-            [key for key, val in self.settings.items() if key.endswith("_last_activity")]
+            [val for key, val in self.settings.items() if key.endswith("_last_activity")]
         )
         sources.extend(self.settings["last_activity_times"].values())
         return max(sources)

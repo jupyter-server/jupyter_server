@@ -9,6 +9,8 @@ import pytest
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
 
+from jupyter_server._tz import isoformat
+
 
 @pytest.fixture
 def terminal_path(tmp_path):
@@ -67,7 +69,7 @@ async def test_no_terminals(jp_fetch):
     assert len(data) == 0
 
 
-async def test_terminal_create(jp_fetch):
+async def test_terminal_create(jp_fetch, jp_serverapp):
     resp = await jp_fetch(
         "api",
         "terminals",
@@ -115,7 +117,7 @@ async def test_terminal_create_with_kwargs(jp_fetch, jp_ws_fetch, terminal_path)
     assert data["name"] == term_name
 
 
-async def test_terminal_create_with_cwd(jp_fetch, jp_ws_fetch, terminal_path):
+async def test_terminal_create_with_cwd(jp_fetch, jp_ws_fetch, terminal_path, jp_serverapp):
     resp = await jp_fetch(
         "api",
         "terminals",
@@ -146,6 +148,12 @@ async def test_terminal_create_with_cwd(jp_fetch, jp_ws_fetch, terminal_path):
     ws.close()
 
     assert os.path.basename(terminal_path) in message_stdout
+
+    resp = await jp_fetch("api", "status")
+    data = json.loads(resp.body.decode())
+    assert data["last_activity"] == isoformat(
+        jp_serverapp.web_app.settings["terminal_last_activity"]
+    )
 
 
 @pytest.mark.skip(reason="Not yet working")
