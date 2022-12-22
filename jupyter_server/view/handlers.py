@@ -1,12 +1,13 @@
 """Tornado handlers for viewing HTML files."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from jupyter_core.utils import ensure_async
 from tornado import web
 
 from jupyter_server.auth import authorized
 
 from ..base.handlers import JupyterHandler, path_regex
-from ..utils import ensure_async, url_escape, url_path_join
+from ..utils import url_escape, url_path_join
 
 AUTH_RESOURCE = "contents"
 

@@ -6,6 +6,7 @@ from typing import Dict, Optional, Tuple
 from unittest.mock import patch
 
 import pytest
+from jupyter_core.utils import ensure_async
 from nbformat import ValidationError
 from nbformat import v4 as nbformat
 from tornado.web import HTTPError
@@ -15,7 +16,6 @@ from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
     FileContentsManager,
 )
-from jupyter_server.utils import ensure_async
 
 from ...utils import expected_http_error
 

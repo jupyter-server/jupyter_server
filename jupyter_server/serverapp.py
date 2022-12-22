@@ -124,9 +124,10 @@ except ImportError:
 
 from jinja2 import Environment, FileSystemLoader
 from jupyter_core.paths import secure_write
+from jupyter_core.utils import ensure_async
 
 from jupyter_server.transutils import _i18n, trans
-from jupyter_server.utils import ensure_async, pathname2url, urljoin
+from jupyter_server.utils import pathname2url, urljoin
 
 # the minimum viable tornado version: needs to be kept in sync with setup.py
 MIN_TORNADO = (6, 1, 0)
