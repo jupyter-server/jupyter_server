@@ -7,12 +7,12 @@ import sys
 import zipfile
 
 from anyio.to_thread import run_sync
+from jupyter_core.utils import ensure_async
 from nbformat import from_dict
 from tornado import web
 from tornado.log import app_log
 
 from jupyter_server.auth import authorized
-from jupyter_server.utils import ensure_async
 
 from ..base.handlers import FilesRedirectHandler, JupyterHandler, path_regex
 

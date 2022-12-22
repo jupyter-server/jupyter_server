@@ -10,12 +10,13 @@ import os
 
 pjoin = os.path.join
 
+from jupyter_core.utils import ensure_async
 from tornado import web
 
 from jupyter_server.auth import authorized
 
 from ...base.handlers import APIHandler
-from ...utils import ensure_async, url_path_join, url_unescape
+from ...utils import url_path_join, url_unescape
 
 AUTH_RESOURCE = "kernelspecs"
 
