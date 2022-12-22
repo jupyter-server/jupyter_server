@@ -1,3 +1,4 @@
+"""An extension application."""
 import logging
 import re
 import sys
@@ -87,7 +88,7 @@ class ExtensionAppJinjaMixin(HasTraits):
 
     @t.no_type_check
     def _prepare_templates(self):
-        # Get templates defined in a subclass.
+        """Get templates defined in a subclass."""
         self.initialize_templates()
         # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
@@ -155,6 +156,7 @@ class ExtensionApp(JupyterApp):
 
     @default("open_browser")
     def _default_open_browser(self):
+        """Default open browser value."""
         return self.serverapp.config["ServerApp"].get("open_browser", True)
 
     @property
@@ -171,6 +173,7 @@ class ExtensionApp(JupyterApp):
 
     @classmethod
     def get_extension_package(cls):
+        """Get an extension package."""
         parts = cls.__module__.split(".")
         if is_namespace_package(parts[0]):
             # in this case the package name is `<namespace>.<package>`.
@@ -179,6 +182,7 @@ class ExtensionApp(JupyterApp):
 
     @classmethod
     def get_extension_point(cls):
+        """Get an extension point."""
         return cls.__module__
 
     # Extension URL sets the default landing page for this extension.
@@ -188,6 +192,7 @@ class ExtensionApp(JupyterApp):
 
     @default("default_url")
     def _default_url(self):
+        """The default url."""
         return self.extension_url
 
     file_url_prefix = Unicode("notebooks")
@@ -205,6 +210,7 @@ class ExtensionApp(JupyterApp):
 
     @default("serverapp")
     def _default_serverapp(self):
+        """The default serverapp."""
         # load the current global instance, if any
         if ServerApp.initialized():
             try:
@@ -221,10 +227,12 @@ class ExtensionApp(JupyterApp):
 
     @default("log_level")
     def _default_log_level(self):
+        """The default log level."""
         return logging.INFO
 
     @default("log_format")
     def _default_log_format(self):
+        """The default log format."""
         """override default log format to include date & time"""
         return (
             "%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
@@ -236,6 +244,7 @@ class ExtensionApp(JupyterApp):
 
     @default("static_url_prefix")
     def _default_static_url_prefix(self):
+        """The default static url prefix."""
         static_url = f"static/{self.name}/"
         return url_path_join(self.serverapp.base_url, static_url)
 
@@ -288,6 +297,7 @@ class ExtensionApp(JupyterApp):
         self.settings[f"{self.name}_config"] = self.extension_config
 
     def _prepare_settings(self):
+        """Prepare the settings."""
         # Make webapp settings accessible to initialize_settings method
         webapp = self.serverapp.web_app
         self.settings.update(**webapp.settings)
@@ -307,6 +317,7 @@ class ExtensionApp(JupyterApp):
         webapp.settings.update(**self.settings)
 
     def _prepare_handlers(self):
+        """Prepare the handlers."""
         webapp = self.serverapp.web_app
 
         # Get handlers defined by extension subclass.
@@ -348,12 +359,13 @@ class ExtensionApp(JupyterApp):
         webapp.add_handlers(".*$", new_handlers)
 
     def _prepare_templates(self):
-        # Add templates to web app settings if extension has templates.
+        """Add templates to web app settings if extension has templates."""
         if len(self.template_paths) > 0:
             self.settings.update({f"{self.name}_template_paths": self.template_paths})
         self.initialize_templates()
 
     def _jupyter_server_config(self):
+        """The jupyter server config."""
         base_config = {
             "ServerApp": {
                 "default_url": self.default_url,

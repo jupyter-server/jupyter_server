@@ -1,3 +1,4 @@
+"""Example Jupyter Server setup."""
 import os
 
 from jupyter_packaging import create_cmdclass  # type:ignore

@@ -57,7 +57,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      - run: hatch run docs:build
+      - run: |
+          sudo apt-get install enchant  # for spell checking
+          hatch run docs:build
 
   test_lint:
     name: Test Lint
@@ -71,6 +73,7 @@ jobs:
           hatch run lint:style
           pipx run 'validate-pyproject[all]' pyproject.toml
           pipx run doc8 --max-line-length=200  --ignore-path=docs/source/other/full-config.rst
+          pipx run interrogate -v .
           npm install -g eslint
           eslint .
 

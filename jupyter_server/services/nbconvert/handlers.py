@@ -1,3 +1,4 @@
+"""API Handlers for nbconvert."""
 import asyncio
 import json
 
@@ -12,10 +13,13 @@ AUTH_RESOURCE = "nbconvert"
 
 
 class NbconvertRootHandler(APIHandler):
+    """The nbconvert root API handler."""
+
     auth_resource = AUTH_RESOURCE
     _exporter_lock: asyncio.Lock
 
     def initialize(self, **kwargs):
+        """Initialize an nbconvert root handler."""
         super().initialize(**kwargs)
         # share lock across instances of this handler class
         if not hasattr(self.__class__, "_exporter_lock"):
@@ -25,6 +29,7 @@ class NbconvertRootHandler(APIHandler):
     @web.authenticated
     @authorized
     async def get(self):
+        """Get the list of nbconvert exporters."""
         try:
             from nbconvert.exporters import base
         except ImportError as e:

@@ -1,3 +1,4 @@
+"""A simple Jupyter Server extension example."""
 import os
 
 from traitlets import Unicode
@@ -11,6 +12,7 @@ DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates
 
 
 class SimpleApp2(ExtensionAppJinjaMixin, ExtensionApp):
+    """A simple application."""
 
     # The name of the extension.
     name = "simple_ext2"
@@ -30,6 +32,7 @@ class SimpleApp2(ExtensionAppJinjaMixin, ExtensionApp):
     configD = Unicode("", config=True, help="Config D example.")  # noqa
 
     def initialize_handlers(self):
+        """Initialize handlers."""
         self.handlers.extend(
             [
                 (r"/simple_ext2/params/(.+)$", ParameterHandler),
@@ -40,6 +43,7 @@ class SimpleApp2(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
     def initialize_settings(self):
+        """Initialize settings."""
         self.log.info(f"Config {self.config}")
 
 

@@ -1,3 +1,4 @@
+"""Custom trait types."""
 import inspect
 from ast import literal_eval
 
@@ -91,11 +92,12 @@ class TypeFromClasses(ClassBasedTraitType):
         return result
 
     def instance_init(self, obj):
+        """Initialize an instance."""
         self._resolve_classes()
         super().instance_init(obj)
 
     def _resolve_classes(self):
-        # Resolve all string names to actual classes.
+        """Resolve all string names to actual classes."""
         self.importable_klasses = []
         for klass in self.klasses:
             if isinstance(klass, str):
@@ -112,6 +114,7 @@ class TypeFromClasses(ClassBasedTraitType):
             self.default_value = self._resolve_string(self.default_value)
 
     def default_value_repr(self):
+        """The default value repr."""
         value = self.default_value
         if isinstance(value, str):
             return repr(value)
@@ -176,12 +179,14 @@ class InstanceFromClasses(ClassBasedTraitType):
         return any(isinstance(value, klass) for klass in self.importable_klasses)
 
     def validate(self, obj, value):
+        """Validate an instance."""
         if self.instance_from_importable_klasses(value):
             return value
         else:
             self.error(obj, value)
 
     def info(self):
+        """Get the trait info."""
         result = "an instance of "
         assert self.klasses is not None
         for klass in self.klasses:
@@ -196,11 +201,12 @@ class InstanceFromClasses(ClassBasedTraitType):
         return result
 
     def instance_init(self, obj):
+        """Initialize the trait."""
         self._resolve_classes()
         super().instance_init(obj)
 
     def _resolve_classes(self):
-        # Resolve all string names to actual classes.
+        """Resolve all string names to actual classes."""
         self.importable_klasses = []
         assert self.klasses is not None
         for klass in self.klasses:
@@ -215,6 +221,7 @@ class InstanceFromClasses(ClassBasedTraitType):
                 self.importable_klasses.append(klass)
 
     def make_dynamic_default(self):
+        """Make the dynamic default for the trait."""
         if (self.default_args is None) and (self.default_kwargs is None):
             return None
         return self.klass(  # type:ignore[attr-defined]
@@ -222,7 +229,9 @@ class InstanceFromClasses(ClassBasedTraitType):
         )
 
     def default_value_repr(self):
+        """Get the default value repr."""
         return repr(self.make_dynamic_default())
 
     def from_string(self, s):
+        """Convert from a string."""
         return literal_eval(s)

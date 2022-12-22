@@ -34,11 +34,13 @@ _script_exporter = None
 
 
 class FileContentsManager(FileManagerMixin, ContentsManager):
+    """A file contents manager."""
 
     root_dir = Unicode(config=True)
 
     @default("root_dir")
     def _default_root_dir(self):
+        """The default root directory."""
         try:
             return self.parent.root_dir
         except AttributeError:
@@ -57,6 +59,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
     @default("checkpoints_class")
     def _checkpoints_class_default(self):
+        """The default checkpoints class."""
         return FileCheckpoints
 
     delete_to_trash = Bool(
@@ -79,10 +82,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
     @default("files_handler_class")
     def _files_handler_class_default(self):
+        """The default file handler class."""
         return AuthenticatedFileHandler
 
     @default("files_handler_params")
     def _files_handler_params_default(self):
+        """The default params for the file handler object."""
         return {"path": self.root_dir}
 
     def is_hidden(self, path):
@@ -558,6 +563,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             raise web.HTTPError(500, f"Unknown error renaming file: {old_path} {e}") from e
 
     def info_string(self):
+        """Get the information string for the manager."""
         return _i18n("Serving notebooks from local directory: %s") % self.root_dir
 
     def get_kernel_path(self, path, model=None):

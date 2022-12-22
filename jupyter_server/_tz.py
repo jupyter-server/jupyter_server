@@ -15,9 +15,11 @@ class tzUTC(tzinfo):  # noqa
     """tzinfo object for UTC (zero offset)"""
 
     def utcoffset(self, d):
+        """Compute utcoffset."""
         return ZERO
 
     def dst(self, d):
+        """Compute dst."""
         return ZERO
 
 

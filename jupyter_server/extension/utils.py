@@ -1,20 +1,29 @@
+"""Extension utilities."""
 import importlib
 import warnings
 
 
 class ExtensionLoadingError(Exception):
+    """An extension loading error."""
+
     pass
 
 
 class ExtensionMetadataError(Exception):
+    """An extension metadata error."""
+
     pass
 
 
 class ExtensionModuleNotFound(Exception):
+    """An extension module not found error."""
+
     pass
 
 
 class NotAnExtensionApp(Exception):
+    """An error raised when a module is not an extension."""
+
     pass
 
 

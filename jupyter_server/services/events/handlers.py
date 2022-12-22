@@ -41,11 +41,13 @@ class SubscribeWebsocket(
             raise web.HTTPError(403)
 
     async def get(self, *args, **kwargs):
+        """Get an event socket."""
         self.pre_get()
         res = super().get(*args, **kwargs)
         await res
 
     async def event_listener(self, logger: EventLogger, schema_id: str, data: dict) -> None:
+        """Write an event message."""
         capsule = dict(schema_id=schema_id, **data)
         self.write_message(json.dumps(capsule))
 
@@ -56,6 +58,7 @@ class SubscribeWebsocket(
         self.event_logger.add_listener(listener=self.event_listener)
 
     def on_close(self):
+        """Handle a socket close."""
         self.event_logger.remove_listener(listener=self.event_listener)
 
 
@@ -93,6 +96,7 @@ class EventHandler(APIHandler):
     @web.authenticated
     @authorized
     async def post(self):
+        """Emit an event."""
         payload = self.get_json_body()
         if payload is None:
             raise web.HTTPError(400, "No JSON data provided")

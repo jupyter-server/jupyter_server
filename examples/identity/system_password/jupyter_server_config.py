@@ -1,3 +1,4 @@
+"""Jupyter server system password identity provider example."""
 import pwd
 from getpass import getuser
 
@@ -7,10 +8,13 @@ from jupyter_server.auth.identity import IdentityProvider, User
 
 
 class SystemPasswordIdentityProvider(IdentityProvider):
+    """A system password identity provider."""
+
     # no need to generate a default token (token can still be used, but it's opt-in)
     need_token = False
 
     def process_login_form(self, handler):
+        """Process a login form."""
         username = getuser()
         password = handler.get_argument("password", "")
         try:

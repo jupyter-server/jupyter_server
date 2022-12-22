@@ -1,3 +1,4 @@
+"""A Jupyter Server example application."""
 import os
 
 from simple_ext1.application import SimpleApp1  # type:ignore
@@ -10,6 +11,8 @@ DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "./../simp
 
 
 class SimpleApp11(SimpleApp1):
+    """A simple application."""
+
     flags["hello"] = ({"SimpleApp11": {"hello": True}}, "Say hello on startup.")
     aliases.update(
         {
@@ -53,6 +56,7 @@ class SimpleApp11(SimpleApp1):
         return "/" + self.simple11_dir
 
     def initialize_settings(self):
+        """Initialize settings."""
         self.log.info(f"hello: {self.hello}")
         if self.hello is True:
             self.log.info(
@@ -62,6 +66,7 @@ class SimpleApp11(SimpleApp1):
         super().initialize_settings()
 
     def initialize_handlers(self):
+        """Initialize handlers."""
         super().initialize_handlers()
 
 

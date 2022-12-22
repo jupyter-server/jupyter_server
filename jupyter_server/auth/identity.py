@@ -194,6 +194,7 @@ class IdentityProvider(LoggingConfigurable):
 
     @default("token")
     def _token_default(self):
+        """Get the default token."""
         if os.getenv("JUPYTER_TOKEN"):
             self.token_generated = False
             return os.environ["JUPYTER_TOKEN"]
@@ -227,6 +228,7 @@ class IdentityProvider(LoggingConfigurable):
     # on base class with `async def` without splitting it into two methods
 
     async def _get_user(self, handler: JupyterHandler) -> User | None:
+        """Get the user."""
         if getattr(handler, "_jupyter_current_user", None):
             # already authenticated
             return handler._jupyter_current_user
@@ -563,6 +565,7 @@ class IdentityProvider(LoggingConfigurable):
 
 
 class PasswordIdentityProvider(IdentityProvider):
+    """A password identity provider."""
 
     hashed_password = Unicode(
         "",
@@ -614,6 +617,7 @@ class PasswordIdentityProvider(IdentityProvider):
 
     @default("need_token")
     def _need_token_default(self):
+        """The default need token value."""
         return not bool(self.hashed_password)
 
     @property
@@ -659,6 +663,7 @@ class PasswordIdentityProvider(IdentityProvider):
         app: ServerApp,
         ssl_options: dict | None = None,
     ) -> None:
+        """Handle security validation."""
         super().validate_security(app, ssl_options)
         if self.password_required and (not self.hashed_password):
             self.log.critical(
@@ -681,6 +686,7 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
 
     @default("settings")
     def _default_settings(self):
+        """The default settings."""
         return {
             "token": self.token,
             "password": self.hashed_password,
@@ -688,6 +694,7 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
 
     @default("login_handler_class")
     def _default_login_handler_class(self):
+        """The default login handler class."""
         from .login import LegacyLoginHandler
 
         return LegacyLoginHandler
@@ -697,6 +704,7 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
         return self.login_available
 
     def get_user(self, handler: JupyterHandler) -> User | None:
+        """Get the user."""
         user = self.login_handler_class.get_user(handler)
         if user is None:
             return None
@@ -707,9 +715,11 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
         return self.login_handler_class.get_login_available(self.settings)
 
     def should_check_origin(self, handler: JupyterHandler) -> bool:
+        """Whether we should check origin."""
         return self.login_handler_class.should_check_origin(handler)
 
     def is_token_authenticated(self, handler: JupyterHandler) -> bool:
+        """Whether we are token authenticated."""
         return self.login_handler_class.is_token_authenticated(handler)
 
     def validate_security(
@@ -717,6 +727,7 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
         app: ServerApp,
         ssl_options: dict | None = None,
     ) -> None:
+        """Validate security."""
         if self.password_required and (not self.hashed_password):
             self.log.critical(
                 _i18n("Jupyter servers are configured to only be run with a password.")

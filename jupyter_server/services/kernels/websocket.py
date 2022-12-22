@@ -20,6 +20,7 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
 
     @property
     def kernel_websocket_connection_class(self):
+        """The kernel websocket connection class."""
         return self.settings.get("kernel_websocket_connection_class")
 
     def set_default_headers(self):
@@ -30,9 +31,11 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
         pass
 
     def get_compression_options(self):
+        """Get the socket connection options."""
         return self.settings.get("websocket_compression_options", None)
 
     async def pre_get(self):
+        """Handle a pre_get."""
         # authenticate first
         user = self.current_user
         if user is None:
@@ -58,11 +61,13 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
             await self.connection.prepare()
 
     async def get(self, kernel_id):
+        """Handle a get request for a kernel."""
         self.kernel_id = kernel_id
         await self.pre_get()
         await super().get(kernel_id=kernel_id)
 
     async def open(self, kernel_id):
+        """Open a kernel websocket."""
         # Wait for the kernel to emit an idle status.
         self.log.info(f"Connecting to kernel {self.kernel_id}.")
         await self.connection.connect()
@@ -72,10 +77,12 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
         self.connection.handle_incoming_message(ws_message)
 
     def on_close(self):
+        """Handle a socket closure."""
         self.connection.disconnect()
         self.connection = None
 
     def select_subprotocol(self, subprotocols):
+        """Select the sub protocol for the socket."""
         preferred_protocol = self.connection.kernel_ws_protocol
         if preferred_protocol is None:
             preferred_protocol = "v1.kernel.websocket.jupyter.org"

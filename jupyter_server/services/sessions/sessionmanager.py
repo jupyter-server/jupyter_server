@@ -43,6 +43,7 @@ class KernelSessionRecord:
     kernel_id: Union[None, str] = None
 
     def __eq__(self, other: object) -> bool:
+        """Whether a record equals another."""
         if isinstance(other, KernelSessionRecord):
             condition1 = self.kernel_id and self.kernel_id == other.kernel_id
             condition2 = all(
@@ -97,11 +98,13 @@ class KernelSessionRecordList:
     """
 
     def __init__(self, *records):
+        """Initialize a record list."""
         self._records = []
         for record in records:
             self.update(record)
 
     def __str__(self):
+        """The string representation of a record list."""
         return str(self._records)
 
     def __contains__(self, record: Union[KernelSessionRecord, str]) -> bool:
@@ -116,6 +119,7 @@ class KernelSessionRecordList:
         return False
 
     def __len__(self):
+        """The length of the record list."""
         return len(self._records)
 
     def get(self, record: Union[KernelSessionRecord, str]) -> KernelSessionRecord:
@@ -149,6 +153,7 @@ class KernelSessionRecordList:
 
 
 class SessionManager(LoggingConfigurable):
+    """A session manager."""
 
     database_filepath = Unicode(
         default_value=":memory:",
@@ -162,6 +167,7 @@ class SessionManager(LoggingConfigurable):
 
     @validate("database_filepath")
     def _validate_database_filepath(self, proposal):
+        """Validate a database file path."""
         value = proposal["value"]
         if value == ":memory:":
             return value
@@ -189,6 +195,7 @@ class SessionManager(LoggingConfigurable):
     )
 
     def __init__(self, *args, **kwargs):
+        """Initialize a record list."""
         super().__init__(*args, **kwargs)
         self._pending_sessions = KernelSessionRecordList()
 

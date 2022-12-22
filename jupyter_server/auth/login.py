@@ -19,6 +19,7 @@ class LoginFormHandler(JupyterHandler):
     """
 
     def _render(self, message=None):
+        """Render the login form."""
         self.write(
             self.render_template(
                 "login.html",
@@ -60,6 +61,7 @@ class LoginFormHandler(JupyterHandler):
         self.redirect(url)
 
     def get(self):
+        """Get the login form."""
         if self.current_user:
             next_url = self.get_argument("next", default=self.base_url)
             self._redirect_safe(next_url)
@@ -67,6 +69,7 @@ class LoginFormHandler(JupyterHandler):
             self._render()
 
     def post(self):
+        """Post a login."""
         user = self.current_user = self.identity_provider.process_login_form(self)
         if user is None:
             self.set_status(401)
@@ -91,10 +94,11 @@ class LegacyLoginHandler(LoginFormHandler):
         return self.password_from_settings(self.settings)
 
     def passwd_check(self, a, b):
+        """Check a passwd."""
         return passwd_check(a, b)
 
     def post(self):
-
+        """Post a login form."""
         typed_password = self.get_argument("password", default="")
         new_password = self.get_argument("new_password", default="")
 

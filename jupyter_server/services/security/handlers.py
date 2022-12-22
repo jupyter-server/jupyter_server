@@ -22,7 +22,7 @@ class CSPReportHandler(APIHandler):
         return True
 
     def check_xsrf_cookie(self):
-        # don't check XSRF for CSP reports
+        """Don't check XSRF for CSP reports."""
         return
 
     @web.authenticated

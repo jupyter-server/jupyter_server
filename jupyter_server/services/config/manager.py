@@ -43,20 +43,24 @@ class ConfigManager(LoggingConfigurable):
 
     @default("read_config_path")
     def _default_read_config_path(self):
+        """The default read config path."""
         return [os.path.join(p, self.config_dir_name) for p in jupyter_config_path()]
 
     write_config_dir = Unicode()
 
     @default("write_config_dir")
     def _default_write_config_dir(self):
+        """the default write config dir."""
         return os.path.join(jupyter_config_dir(), self.config_dir_name)
 
     write_config_manager = Instance(BaseJSONConfigManager)
 
     @default("write_config_manager")
     def _default_write_config_manager(self):
+        """The default write config manager."""
         return BaseJSONConfigManager(config_dir=self.write_config_dir)
 
     @observe("write_config_dir")
     def _update_write_config_dir(self, change):
+        """Update the write config dir."""
         self.write_config_manager = BaseJSONConfigManager(config_dir=self.write_config_dir)

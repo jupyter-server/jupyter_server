@@ -1,3 +1,4 @@
+"""Kernel connection helpers."""
 import json
 import struct
 import sys
@@ -76,6 +77,7 @@ def deserialize_binary_message(bmsg):
 
 
 def serialize_msg_to_ws_v1(msg_or_list, channel, pack=None):
+    """Serialize a message using the v1 protocol."""
     if pack:
         msg_list = [
             pack(msg_or_list["header"]),
@@ -98,6 +100,7 @@ def serialize_msg_to_ws_v1(msg_or_list, channel, pack=None):
 
 
 def deserialize_msg_from_ws_v1(ws_msg):
+    """Deserialize a message using the v1 protocol."""
     offset_number = int.from_bytes(ws_msg[:8], "little")
     offsets = [
         int.from_bytes(ws_msg[8 * (i + 1) : 8 * (i + 2)], "little") for i in range(offset_number)
@@ -112,44 +115,54 @@ class BaseKernelWebsocketConnection(LoggingConfigurable):
 
     @property
     def kernel_manager(self):
+        """The kernel manager."""
         return self.parent
 
     @property
     def multi_kernel_manager(self):
+        """The multi kernel manager."""
         return self.kernel_manager.parent
 
     @property
     def kernel_id(self):
+        """The kernel id."""
         return self.kernel_manager.kernel_id
 
     @property
     def session_id(self):
+        """The session id."""
         return self.session.session
 
     kernel_info_timeout = Float()
 
     @default("kernel_info_timeout")
     def _default_kernel_info_timeout(self):
+        """The default kernel info timeout."""
         return self.multi_kernel_manager.kernel_info_timeout
 
     session = Instance(klass=Session, config=True)
 
     @default("session")
     def _default_session(self):
+        """The default session object."""
         return Session(config=self.config)
 
     websocket_handler = Instance(WebSocketHandler)
 
     async def connect(self):
+        """Handle a connect."""
         raise NotImplementedError()
 
     async def disconnect(self):
+        """Handle a disconnect."""
         raise NotImplementedError()
 
     def handle_incoming_message(self, incoming_msg: str) -> None:
+        """Handle an incoming message."""
         raise NotImplementedError()
 
     def handle_outgoing_message(self, stream: str, outgoing_msg: list) -> None:
+        """Handle an outgoing message."""
         raise NotImplementedError()
 
 

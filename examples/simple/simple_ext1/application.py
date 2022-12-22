@@ -1,3 +1,4 @@
+"""Jupyter server example application."""
 import os
 
 from traitlets import Unicode
@@ -18,6 +19,7 @@ DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "templates
 
 
 class SimpleApp1(ExtensionAppJinjaMixin, ExtensionApp):
+    """A simple jupyter server application."""
 
     # The name of the extension.
     name = "simple_ext1"
@@ -41,6 +43,7 @@ class SimpleApp1(ExtensionAppJinjaMixin, ExtensionApp):
     configC = Unicode("", config=True, help="Config C example.")  # noqa
 
     def initialize_handlers(self):
+        """Initialize handlers."""
         self.handlers.extend(
             [
                 (rf"/{self.name}/default", DefaultHandler),
@@ -53,6 +56,7 @@ class SimpleApp1(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
     def initialize_settings(self):
+        """Initialize settings."""
         self.log.info(f"Config {self.config}")
 
 

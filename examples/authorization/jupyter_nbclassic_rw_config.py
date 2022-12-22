@@ -1,3 +1,4 @@
+"""Nbclassic read/write auth example."""
 from jupyter_server.auth import Authorizer
 
 

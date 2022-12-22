@@ -1,3 +1,4 @@
+"""An extension handler."""
 from typing import no_type_check
 
 from jinja2.exceptions import TemplateNotFound
