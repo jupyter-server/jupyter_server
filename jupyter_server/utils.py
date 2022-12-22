@@ -181,9 +181,11 @@ else:
 
 
 async def run_sync_in_loop(maybe_async):
-    """**DEPRECATED**: Use ``ensure_async`` instead."""
+    """**DEPRECATED**: Use ``ensure_async`` from jupyter_core instead."""
     warnings.warn(
-        "run_sync_in_loop is deprecated, use 'ensure_async'", DeprecationWarning, stacklevel=2
+        "run_sync_in_loop is deprecated since Jupyter Serve 2.0, use 'ensure_async' from jupyter_core instead",
+        DeprecationWarning,
+        stacklevel=2,
     )
     return ensure_async(maybe_async)
 
