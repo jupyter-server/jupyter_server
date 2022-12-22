@@ -7,6 +7,7 @@ import re
 import warnings
 from fnmatch import fnmatch
 
+from jupyter_core.utils import ensure_async
 from jupyter_events import EventLogger
 from nbformat import ValidationError, sign
 from nbformat import validate as validate_nb
@@ -17,7 +18,7 @@ from traitlets.config.configurable import LoggingConfigurable
 
 from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH, JUPYTER_SERVER_EVENTS_URI
 from jupyter_server.transutils import _i18n
-from jupyter_server.utils import ensure_async, import_item
+from jupyter_server.utils import import_item
 
 from ...files.handlers import FilesHandler
 from .checkpoints import AsyncCheckpoints, Checkpoints

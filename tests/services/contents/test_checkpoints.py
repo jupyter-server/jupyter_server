@@ -1,5 +1,5 @@
 import pytest
-from jupyter_client.utils import ensure_async
+from jupyter_core.utils import ensure_async
 from nbformat import from_dict
 from nbformat.v4 import new_markdown_cell
 

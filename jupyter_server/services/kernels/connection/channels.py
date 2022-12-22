@@ -18,7 +18,7 @@ try:
 except ImportError:
     from jupyter_client.jsonutil import date_default as json_default
 
-from jupyter_client.utils import ensure_async
+from jupyter_core.utils import ensure_async
 
 from jupyter_server.transutils import _i18n
 
