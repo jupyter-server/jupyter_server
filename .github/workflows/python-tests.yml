@@ -59,7 +59,7 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - run: |
           sudo apt-get update
-          sudo apt-get install enchant  # for spell checking
+          sudo apt-get install enchant-2  # for spell checking
           hatch run docs:build
 
   test_lint:
