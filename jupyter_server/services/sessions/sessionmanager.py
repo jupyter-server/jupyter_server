@@ -14,12 +14,12 @@ except ImportError:
 from dataclasses import dataclass, fields
 from typing import Union
 
+from jupyter_core.utils import ensure_async
 from tornado import web
 from traitlets import Instance, TraitError, Unicode, validate
 from traitlets.config.configurable import LoggingConfigurable
 
 from jupyter_server.traittypes import InstanceFromClasses
-from jupyter_server.utils import ensure_async
 
 
 class KernelSessionRecordConflict(Exception):

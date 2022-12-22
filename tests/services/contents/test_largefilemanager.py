@@ -1,11 +1,11 @@
 import pytest
 import tornado
+from jupyter_core.utils import ensure_async
 
 from jupyter_server.services.contents.largefilemanager import (
     AsyncLargeFileManager,
     LargeFileManager,
 )
-from jupyter_server.utils import ensure_async
 
 from ...utils import expected_http_error
 
