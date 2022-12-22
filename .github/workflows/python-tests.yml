@@ -57,10 +57,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      - run: |
+      - name: Install Dependencies
+        run: |
           sudo apt-get update
           sudo apt-get install enchant-2  # for spell checking
-          hatch run docs:build
+      - run: hatch run docs:build
 
   test_lint:
     name: Test Lint
