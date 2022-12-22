@@ -5,11 +5,11 @@ import json
 import os
 from typing import Dict, List
 
+from jupyter_core.utils import ensure_async
 from tornado import web
 
 from jupyter_server._tz import isoformat, utcfromtimestamp
 from jupyter_server.auth import authorized
-from jupyter_server.utils import ensure_async
 
 from ...base.handlers import APIHandler, JupyterHandler
 

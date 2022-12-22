@@ -16,6 +16,7 @@ from jupyter_client.ioloop.manager import AsyncIOLoopKernelManager
 from jupyter_client.multikernelmanager import AsyncMultiKernelManager, MultiKernelManager
 from jupyter_client.session import Session
 from jupyter_core.paths import exists
+from jupyter_core.utils import ensure_async
 from tornado import web
 from tornado.concurrent import Future
 from tornado.ioloop import IOLoop, PeriodicCallback
@@ -35,7 +36,7 @@ from traitlets import (
 
 from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
-from jupyter_server.utils import ensure_async, import_item, to_os_path
+from jupyter_server.utils import import_item, to_os_path
 
 
 class MappingKernelManager(MultiKernelManager):
