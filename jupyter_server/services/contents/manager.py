@@ -50,7 +50,6 @@ class ContentsManager(LoggingConfigurable):
 
     @default("event_logger")
     def _default_event_logger(self):
-        """The default event logger."""
         if self.parent and hasattr(self.parent, "event_logger"):
             return self.parent.event_logger
         else:
@@ -71,7 +70,6 @@ class ContentsManager(LoggingConfigurable):
     notary = Instance(sign.NotebookNotary)
 
     def _notary_default(self):
-        """The default notary."""
         return sign.NotebookNotary(parent=self)
 
     hide_globs = List(
@@ -132,7 +130,6 @@ class ContentsManager(LoggingConfigurable):
 
     @validate("pre_save_hook")
     def _validate_pre_save_hook(self, proposal):
-        """Validate a pre save hook."""
         value = proposal["value"]
         if isinstance(value, str):
             value = import_item(self.pre_save_hook)
@@ -168,7 +165,6 @@ class ContentsManager(LoggingConfigurable):
 
     @validate("post_save_hook")
     def _validate_post_save_hook(self, proposal):
-        """Validate a post save hook."""
         value = proposal["value"]
         if isinstance(value, str):
             value = import_item(value)
@@ -280,12 +276,10 @@ class ContentsManager(LoggingConfigurable):
 
     @default("checkpoints")
     def _default_checkpoints(self):
-        """The default checkpoints object."""
         return self.checkpoints_class(**self.checkpoints_kwargs)
 
     @default("checkpoints_kwargs")
     def _default_checkpoints_kwargs(self):
-        """The default kwargs for the checklist object."""
         return {
             "parent": self,
             "log": self.log,
@@ -723,12 +717,10 @@ class AsyncContentsManager(ContentsManager):
 
     @default("checkpoints")
     def _default_checkpoints(self):
-        """The default checkpoints object."""
         return self.checkpoints_class(**self.checkpoints_kwargs)
 
     @default("checkpoints_kwargs")
     def _default_checkpoints_kwargs(self):
-        """The default kwargs to the checkpoints object."""
         return {
             "parent": self,
             "log": self.log,

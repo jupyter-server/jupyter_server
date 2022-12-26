@@ -137,14 +137,12 @@ class BaseKernelWebsocketConnection(LoggingConfigurable):
 
     @default("kernel_info_timeout")
     def _default_kernel_info_timeout(self):
-        """The default kernel info timeout."""
         return self.multi_kernel_manager.kernel_info_timeout
 
     session = Instance(klass=Session, config=True)
 
     @default("session")
     def _default_session(self):
-        """The default session object."""
         return Session(config=self.config)
 
     websocket_handler = Instance(WebSocketHandler)

@@ -842,7 +842,6 @@ class ServerApp(JupyterApp):
 
     @default("log_level")
     def _default_log_level(self):
-        """The default log level."""
         return logging.INFO
 
     @default("log_format")
@@ -934,7 +933,6 @@ class ServerApp(JupyterApp):
 
     @validate("ip")
     def _validate_ip(self, proposal):
-        """Validate the ip address."""
         value = proposal["value"]
         if value == "*":
             value = ""
@@ -966,8 +964,7 @@ class ServerApp(JupyterApp):
     )
 
     @default("port")
-    def port_default(self):
-        """The default port."""
+    def _port_default(self):
         return int(os.getenv(self.port_env, self.port_default_value))
 
     port_retries_env = "JUPYTER_PORT_RETRIES"
@@ -982,8 +979,7 @@ class ServerApp(JupyterApp):
     )
 
     @default("port_retries")
-    def port_retries_default(self):
-        """The default port retries."""
+    def _port_retries_default(self):
         return int(os.getenv(self.port_retries_env, self.port_retries_default_value))
 
     sock = Unicode("", config=True, help="The UNIX socket the Jupyter server will listen on.")
@@ -996,7 +992,6 @@ class ServerApp(JupyterApp):
 
     @validate("sock_mode")
     def _validate_sock_mode(self, proposal):
-        """The default sock mode."""
         value = proposal["value"]
         try:
             converted_value = int(value.encode(), 8)
@@ -1045,7 +1040,6 @@ class ServerApp(JupyterApp):
 
     @default("cookie_secret_file")
     def _default_cookie_secret_file(self):
-        """The default cookie secret file."""
         return os.path.join(self.runtime_dir, "jupyter_cookie_secret")
 
     cookie_secret = Bytes(
@@ -1062,7 +1056,6 @@ class ServerApp(JupyterApp):
 
     @default("cookie_secret")
     def _default_cookie_secret(self):
-        """The default cookie secret."""
         if os.path.exists(self.cookie_secret_file):
             with open(self.cookie_secret_file, "rb") as f:
                 key = f.read()
@@ -1118,7 +1111,6 @@ class ServerApp(JupyterApp):
 
     @default("min_open_files_limit")
     def _default_min_open_files_limit(self):
-        """The default min open files limit."""
         if resource is None:
             # Ignoring min_open_files_limit because the limit cannot be adjusted (for example, on Windows)
             return None
@@ -1496,7 +1488,6 @@ class ServerApp(JupyterApp):
 
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
-        """The default kernel manager class."""
         if self.gateway_config.gateway_enabled:
             return "jupyter_server.gateway.managers.GatewayMappingKernelManager"
         return AsyncMappingKernelManager
@@ -1508,7 +1499,6 @@ class ServerApp(JupyterApp):
 
     @default("session_manager_class")
     def _default_session_manager_class(self):
-        """The default session manager class."""
         if self.gateway_config.gateway_enabled:
             return "jupyter_server.gateway.managers.GatewaySessionManager"
         return SessionManager
@@ -1541,7 +1531,6 @@ class ServerApp(JupyterApp):
 
     @default("kernel_spec_manager_class")
     def _default_kernel_spec_manager_class(self):
-        """The default kernel spec manager class."""
         if self.gateway_config.gateway_enabled:
             return "jupyter_server.gateway.managers.GatewayKernelSpecManager"
         return KernelSpecManager
@@ -1598,7 +1587,6 @@ class ServerApp(JupyterApp):
 
     @default("info_file")
     def _default_info_file(self):
-        """The default info file."""
         info_file = "jpserver-%s.json" % os.getpid()
         return os.path.join(self.runtime_dir, info_file)
 
@@ -1610,7 +1598,6 @@ class ServerApp(JupyterApp):
 
     @default("browser_open_file")
     def _default_browser_open_file(self):
-        """The default browser open file."""
         basename = "jpserver-%s-open.html" % os.getpid()
         return os.path.join(self.runtime_dir, basename)
 
@@ -1618,7 +1605,6 @@ class ServerApp(JupyterApp):
 
     @default("browser_open_file_to_run")
     def _default_browser_open_file_to_run(self):
-        """The default browser open file to run."""
         basename = "jpserver-file-to-run-%s-open.html" % os.getpid()
         return os.path.join(self.runtime_dir, basename)
 
@@ -1653,7 +1639,6 @@ class ServerApp(JupyterApp):
 
     @observe("notebook_dir")
     def _update_notebook_dir(self, change):
-        """Handle changes to the notebook dir."""
         if self._root_dir_set:
             # only use deprecated config if new config is not set
             return
@@ -1665,7 +1650,6 @@ class ServerApp(JupyterApp):
 
     @default("root_dir")
     def _default_root_dir(self):
-        """The default root dir."""
         if self.file_to_run:
             self._root_dir_set = True
             return os.path.dirname(os.path.abspath(self.file_to_run))
@@ -1693,7 +1677,6 @@ class ServerApp(JupyterApp):
 
     @validate("root_dir")
     def _root_dir_validate(self, proposal):
-        """Validate the root dir."""
         value = self._normalize_dir(proposal["value"])
         if not os.path.isdir(value):
             raise TraitError(trans.gettext("No such directory: '%r'") % value)
@@ -1744,7 +1727,6 @@ class ServerApp(JupyterApp):
 
     @observe("root_dir")
     def _root_dir_changed(self, change):
-        """Handle a root dir change."""
         self._root_dir_set = True
         if not self.preferred_dir.startswith(change["new"]):
             self.log.warning(
@@ -1754,7 +1736,6 @@ class ServerApp(JupyterApp):
 
     @observe("server_extensions")
     def _update_server_extensions(self, change):
-        """Handle a server extensions change."""
         self.log.warning(_i18n("server_extensions is deprecated, use jpserver_extensions"))
         self.server_extensions = change["new"]
 

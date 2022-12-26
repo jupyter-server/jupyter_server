@@ -156,7 +156,6 @@ class ExtensionApp(JupyterApp):
 
     @default("open_browser")
     def _default_open_browser(self):
-        """Default open browser value."""
         return self.serverapp.config["ServerApp"].get("open_browser", True)
 
     @property
@@ -192,7 +191,6 @@ class ExtensionApp(JupyterApp):
 
     @default("default_url")
     def _default_url(self):
-        """The default url."""
         return self.extension_url
 
     file_url_prefix = Unicode("notebooks")
@@ -210,7 +208,6 @@ class ExtensionApp(JupyterApp):
 
     @default("serverapp")
     def _default_serverapp(self):
-        """The default serverapp."""
         # load the current global instance, if any
         if ServerApp.initialized():
             try:
@@ -227,12 +224,10 @@ class ExtensionApp(JupyterApp):
 
     @default("log_level")
     def _default_log_level(self):
-        """The default log level."""
         return logging.INFO
 
     @default("log_format")
     def _default_log_format(self):
-        """The default log format."""
         """override default log format to include date & time"""
         return (
             "%(color)s[%(levelname)1.1s %(asctime)s.%(msecs).03d %(name)s]%(end_color)s %(message)s"
@@ -244,7 +239,6 @@ class ExtensionApp(JupyterApp):
 
     @default("static_url_prefix")
     def _default_static_url_prefix(self):
-        """The default static url prefix."""
         static_url = f"static/{self.name}/"
         return url_path_join(self.serverapp.base_url, static_url)
 

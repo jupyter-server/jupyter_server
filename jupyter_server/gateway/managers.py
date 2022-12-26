@@ -37,12 +37,10 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
 
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
-        """The default kernel manager class."""
         return "jupyter_server.gateway.managers.GatewayKernelManager"
 
     @default("shared_context")
     def _default_shared_context(self):
-        """The default shared context."""
         return False  # no need to share zmq contexts
 
     def __init__(self, **kwargs):
@@ -354,7 +352,6 @@ class GatewayKernelManager(AsyncKernelManager):
 
     @default("cache_ports")
     def _default_cache_ports(self):
-        """The default value for caching ports."""
         return False  # no need to cache ports here
 
     def __init__(self, **kwargs):

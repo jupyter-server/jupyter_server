@@ -40,7 +40,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
     @default("root_dir")
     def _default_root_dir(self):
-        """The default root directory."""
         try:
             return self.parent.root_dir
         except AttributeError:
@@ -48,7 +47,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
     @validate("root_dir")
     def _validate_root_dir(self, proposal):
-        """Do a bit of validation of the root_dir."""
         value = proposal["value"]
         if not os.path.isabs(value):
             # If we receive a non-absolute path, make it absolute.
@@ -59,7 +57,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
     @default("checkpoints_class")
     def _checkpoints_class_default(self):
-        """The default checkpoints class."""
         return FileCheckpoints
 
     delete_to_trash = Bool(
@@ -82,12 +79,10 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
     @default("files_handler_class")
     def _files_handler_class_default(self):
-        """The default file handler class."""
         return AuthenticatedFileHandler
 
     @default("files_handler_params")
     def _files_handler_params_default(self):
-        """The default params for the file handler object."""
         return {"path": self.root_dir}
 
     def is_hidden(self, path):
@@ -578,6 +573,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
 
 class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, AsyncContentsManager):
+    """An async file contents manager."""
+
     @default("checkpoints_class")
     def _checkpoints_class_default(self):
         return AsyncFileCheckpoints

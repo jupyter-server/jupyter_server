@@ -169,7 +169,6 @@ class ExtensionPackage(HasTraits):
 
     @validate_trait("name")
     def _validate_name(self, proposed):
-        """Validate a name."""
         name = proposed["value"]
         self._extension_points = {}
         try:
@@ -248,14 +247,12 @@ class ExtensionManager(LoggingConfigurable):
 
     @default("config_manager")
     def _load_default_config_manager(self):
-        """Default config manager."""
         config_manager = ExtensionConfigManager()
         self._load_config_manager(config_manager)
         return config_manager
 
     @observe("config_manager")
     def _config_manager_changed(self, change):
-        """Default config manager."""
         if change.new:
             self._load_config_manager(change.new)
 

@@ -90,12 +90,10 @@ management and kernel specification retrieval.  (JUPYTER_GATEWAY_URL env var)
 
     @default("url")
     def _url_default(self):
-        """The default url."""
         return os.environ.get(self.url_env)
 
     @validate("url")
     def _url_validate(self, proposal):
-        """Validate the url."""
         value = proposal["value"]
         # Ensure value, if present, starts with 'http'
         if value is not None and len(value) > 0:
@@ -116,7 +114,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
     @default("ws_url")
     def _ws_url_default(self):
-        """The default ws url."""
         default_value = os.environ.get(self.ws_url_env)
         if default_value is None:
             if self.gateway_enabled:
@@ -125,7 +122,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
     @validate("ws_url")
     def _ws_url_validate(self, proposal):
-        """Validate the ws url."""
         value = proposal["value"]
         # Ensure value, if present, starts with 'ws'
         if value is not None and len(value) > 0:
@@ -143,7 +139,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
     @default("kernels_endpoint")
     def _kernels_endpoint_default(self):
-        """The kernels endpoint."""
         return os.environ.get(self.kernels_endpoint_env, self.kernels_endpoint_default_value)
 
     kernelspecs_endpoint_default_value = "/api/kernelspecs"
@@ -156,7 +151,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
     @default("kernelspecs_endpoint")
     def _kernelspecs_endpoint_default(self):
-        """The default kernelspecs endpoint."""
         return os.environ.get(
             self.kernelspecs_endpoint_env, self.kernelspecs_endpoint_default_value
         )
@@ -172,7 +166,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
     @default("kernelspecs_resource_endpoint")
     def _kernelspecs_resource_endpoint_default(self):
-        """The default kernelspecs resource endpoint."""
         return os.environ.get(
             self.kernelspecs_resource_endpoint_env,
             self.kernelspecs_resource_endpoint_default_value,
@@ -188,8 +181,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
     )
 
     @default("connect_timeout")
-    def connect_timeout_default(self):
-        """The default connect timeout."""
+    def _connect_timeout_default(self):
         return float(os.environ.get(self.connect_timeout_env, self.connect_timeout_default_value))
 
     request_timeout_default_value = 42.0
@@ -201,8 +193,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
     )
 
     @default("request_timeout")
-    def request_timeout_default(self):
-        """The default request timeout."""
+    def _request_timeout_default(self):
         return float(os.environ.get(self.request_timeout_env, self.request_timeout_default_value))
 
     client_key = Unicode(
@@ -216,7 +207,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
     @default("client_key")
     def _client_key_default(self):
-        """The default client key."""
         return os.environ.get(self.client_key_env)
 
     client_cert = Unicode(
@@ -230,7 +220,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
     @default("client_cert")
     def _client_cert_default(self):
-        """The default client cert."""
         return os.environ.get(self.client_cert_env)
 
     ca_certs = Unicode(
@@ -244,7 +233,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
     @default("ca_certs")
     def _ca_certs_default(self):
-        """The default ca certs."""
         return os.environ.get(self.ca_certs_env)
 
     http_user = Unicode(
@@ -258,7 +246,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
     @default("http_user")
     def _http_user_default(self):
-        """The default http user."""
         return os.environ.get(self.http_user_env)
 
     http_pwd = Unicode(
@@ -272,7 +259,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
     @default("http_pwd")
     def _http_pwd_default(self):
-        """The default http pwd."""
         return os.environ.get(self.http_pwd_env)
 
     headers_default_value = "{}"
@@ -288,7 +274,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
     @default("headers")
     def _headers_default(self):
-        """The default headers."""
         return os.environ.get(self.headers_env, self.headers_default_value)
 
     auth_header_key_default_value = "Authorization"
@@ -308,7 +293,6 @@ If the authorization header key takes a single value, `auth_scheme` should be se
 
     @default("auth_header_key")
     def _auth_header_key_default(self):
-        """The auth header key."""
         return os.environ.get(self.auth_header_key_env, self.auth_header_key_default_value)
 
     auth_token_default_value = ""
@@ -326,7 +310,6 @@ If the authorization header key takes a single value, `auth_scheme` should be se
 
     @default("auth_token")
     def _auth_token_default(self):
-        """The default auth token."""
         return os.environ.get(self.auth_token_env, self.auth_token_default_value)
 
     auth_scheme_default_value = "token"  # This value is purely for backwards compatibility
@@ -340,7 +323,6 @@ If the authorization header key takes a single value, `auth_scheme` should be se
 
     @default("auth_scheme")
     def _auth_scheme_default(self):
-        """The default auth scheme."""
         return os.environ.get(self.auth_scheme_env, self.auth_scheme_default_value)
 
     validate_cert_default_value = True
@@ -353,8 +335,7 @@ If the authorization header key takes a single value, `auth_scheme` should be se
     )
 
     @default("validate_cert")
-    def validate_cert_default(self):
-        """Validate cert."""
+    def _validate_cert_default(self):
         return bool(
             os.environ.get(self.validate_cert_env, str(self.validate_cert_default_value))
             not in ["no", "false"]
@@ -373,7 +354,6 @@ environmental values to make available to the kernel. (JUPYTER_GATEWAY_ALLOWED_E
 
     @default("allowed_envs")
     def _allowed_envs_default(self):
-        """The default allowed envs."""
         return os.environ.get(
             self.allowed_envs_env,
             os.environ.get("JUPYTER_GATEWAY_ENV_WHITELIST", self.allowed_envs_default_value),
@@ -397,8 +377,7 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
     )
 
     @default("gateway_retry_interval")
-    def gateway_retry_interval_default(self):
-        """The default gateway retry interval."""
+    def _gateway_retry_interval_default(self):
         return float(
             os.environ.get(
                 self.gateway_retry_interval_env,
@@ -416,8 +395,7 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
     )
 
     @default("gateway_retry_interval_max")
-    def gateway_retry_interval_max_default(self):
-        """The default gateway retry interval."""
+    def _gateway_retry_interval_max_default(self):
         return float(
             os.environ.get(
                 self.gateway_retry_interval_max_env,
@@ -435,8 +413,7 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
     )
 
     @default("gateway_retry_max")
-    def gateway_retry_max_default(self):
-        """The default gateway retry max."""
+    def _gateway_retry_max_default(self):
         return int(os.environ.get(self.gateway_retry_max_env, self.gateway_retry_max_default_value))
 
     gateway_token_renewer_class_default_value = (
@@ -450,8 +427,7 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
     )
 
     @default("gateway_token_renewer_class")
-    def gateway_token_renewer_class_default(self):
-        """The default gateway token renewer class."""
+    def _gateway_token_renewer_class_default(self):
         return os.environ.get(
             self.gateway_token_renewer_class_env, self.gateway_token_renewer_class_default_value
         )
@@ -467,8 +443,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
     )
 
     @default("launch_timeout_pad")
-    def launch_timeout_pad_default(self):
-        """The default launch timeout pad."""
+    def _launch_timeout_pad_default(self):
         return float(
             os.environ.get(
                 self.launch_timeout_pad_env,
@@ -487,8 +462,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
     )
 
     @default("accept_cookies")
-    def accept_cookies_default(self):
-        """The default accept cookies."""
+    def _accept_cookies_default(self):
         return bool(
             os.environ.get(self.accept_cookies_env, str(self.accept_cookies_value).lower())
             not in ["no", "false"]

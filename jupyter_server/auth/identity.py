@@ -194,7 +194,6 @@ class IdentityProvider(LoggingConfigurable):
 
     @default("token")
     def _token_default(self):
-        """Get the default token."""
         if os.getenv("JUPYTER_TOKEN"):
             self.token_generated = False
             return os.environ["JUPYTER_TOKEN"]
@@ -617,7 +616,6 @@ class PasswordIdentityProvider(IdentityProvider):
 
     @default("need_token")
     def _need_token_default(self):
-        """The default need token value."""
         return not bool(self.hashed_password)
 
     @property
@@ -686,7 +684,6 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
 
     @default("settings")
     def _default_settings(self):
-        """The default settings."""
         return {
             "token": self.token,
             "password": self.hashed_password,
@@ -694,7 +691,6 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
 
     @default("login_handler_class")
     def _default_login_handler_class(self):
-        """The default login handler class."""
         from .login import LegacyLoginHandler
 
         return LegacyLoginHandler

@@ -48,7 +48,6 @@ class MappingKernelManager(MultiKernelManager):
 
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
-        """The default kernel manager class."""
         return "jupyter_client.ioloop.IOLoopKernelManager"
 
     kernel_argv = List(Unicode())
@@ -65,7 +64,6 @@ class MappingKernelManager(MultiKernelManager):
 
     @default("root_dir")
     def _default_root_dir(self):
-        """The default root directory."""
         try:
             return self.parent.root_dir
         except AttributeError:
@@ -665,7 +663,6 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager): 
 
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
-        """The default kernel manager class."""
         return "jupyter_server.services.kernels.kernelmanager.ServerKernelManager"
 
     @validate("kernel_manager_class")
