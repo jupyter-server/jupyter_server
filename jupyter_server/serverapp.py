@@ -2258,7 +2258,7 @@ class ServerApp(JupyterApp):
                 self.stop(from_signal=True)
                 return
         else:
-            info(_i18n("No answer for 5s:"), end=" ")
+            info(_i18n("No answer for 5s:"))
         info(_i18n("resuming operation..."))
         # no answer, or answer is no:
         # set it back to original SIGINT handler
