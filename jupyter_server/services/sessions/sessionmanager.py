@@ -350,7 +350,7 @@ class SessionManager(LoggingConfigurable):
         conditions = []
         for column in kwargs.keys():
             if column not in self._columns:
-                msg = "No such column: %r", column
+                msg = f"No such column: {column}"
                 raise TypeError(msg)
             conditions.append("%s=?" % column)
 
