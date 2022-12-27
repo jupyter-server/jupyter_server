@@ -1,3 +1,4 @@
+"""Base websocket classes."""
 import re
 from typing import Optional, no_type_check
 from urllib.parse import urlparse
@@ -84,6 +85,7 @@ class WebSocketMixin:
 
     @no_type_check
     def open(self, *args, **kwargs):
+        """Open the websocket."""
         self.log.debug("Opening websocket %s", self.request.path)
 
         # start the pinging
@@ -123,4 +125,5 @@ class WebSocketMixin:
         self.last_ping = now
 
     def on_pong(self, data):
+        """Handle a pong message."""
         self.last_pong = ioloop.IOLoop.current().time()

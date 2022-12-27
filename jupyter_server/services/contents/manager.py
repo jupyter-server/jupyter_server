@@ -216,6 +216,7 @@ class ContentsManager(LoggingConfigurable):
     _post_save_hooks = List()
 
     def register_pre_save_hook(self, hook):
+        """Register a pre save hook."""
         if isinstance(hook, str):
             hook = import_item(hook)
         if not callable(hook):
@@ -223,6 +224,7 @@ class ContentsManager(LoggingConfigurable):
         self._pre_save_hooks.append(hook)
 
     def register_post_save_hook(self, hook):
+        """Register a post save hook."""
         if isinstance(hook, str):
             hook = import_item(hook)
         if not callable(hook):
@@ -448,6 +450,7 @@ class ContentsManager(LoggingConfigurable):
         return model
 
     def info_string(self):
+        """The information string for the manager."""
         return "Serving contents"
 
     def get_kernel_path(self, path, model=None):
@@ -632,6 +635,7 @@ class ContentsManager(LoggingConfigurable):
         return model
 
     def log_info(self):
+        """Log the information string for the manager."""
         self.log.info(self.info_string())
 
     def trust_notebook(self, path):
@@ -1029,7 +1033,9 @@ class AsyncContentsManager(ContentsManager):
         await self.checkpoints.restore_checkpoint(self, checkpoint_id, path)
 
     async def list_checkpoints(self, path):
+        """List the checkpoints for a path."""
         return await self.checkpoints.list_checkpoints(path)
 
     async def delete_checkpoint(self, checkpoint_id, path):
+        """Delete a checkpoint for a path by id."""
         return await self.checkpoints.delete_checkpoint(checkpoint_id, path)

@@ -25,14 +25,18 @@ AUTH_RESOURCE = "sessions"
 
 
 class SessionsAPIHandler(APIHandler):
+    """A Sessions API handler."""
+
     auth_resource = AUTH_RESOURCE
 
 
 class SessionRootHandler(SessionsAPIHandler):
+    """A Session Root API handler."""
+
     @web.authenticated
     @authorized
     async def get(self):
-        # Return a list of running sessions
+        """Get a list of running sessions."""
         sm = self.session_manager
         sessions = await ensure_async(sm.list_sessions())
         self.finish(json.dumps(sessions, default=json_default))
@@ -40,7 +44,7 @@ class SessionRootHandler(SessionsAPIHandler):
     @web.authenticated
     @authorized
     async def post(self):
-        # Creates a new session
+        """Create a new session."""
         # (unless a session already exists for the named session)
         sm = self.session_manager
 
@@ -104,10 +108,12 @@ class SessionRootHandler(SessionsAPIHandler):
 
 
 class SessionHandler(SessionsAPIHandler):
+    """A handler for a single session."""
+
     @web.authenticated
     @authorized
     async def get(self, session_id):
-        # Returns the JSON model for a single session
+        """Get the JSON model for a single session."""
         sm = self.session_manager
         model = await sm.get_session(session_id=session_id)
         self.finish(json.dumps(model, default=json_default))
@@ -173,7 +179,7 @@ class SessionHandler(SessionsAPIHandler):
     @web.authenticated
     @authorized
     async def delete(self, session_id):
-        # Deletes the session with given session_id
+        """Delete the session with given session_id."""
         sm = self.session_manager
         try:
             await sm.delete_session(session_id)

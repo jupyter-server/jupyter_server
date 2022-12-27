@@ -1,3 +1,4 @@
+"""A kernel gateway client."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import asyncio
@@ -180,7 +181,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
     )
 
     @default("connect_timeout")
-    def connect_timeout_default(self):
+    def _connect_timeout_default(self):
         return float(os.environ.get(self.connect_timeout_env, self.connect_timeout_default_value))
 
     request_timeout_default_value = 42.0
@@ -192,7 +193,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
     )
 
     @default("request_timeout")
-    def request_timeout_default(self):
+    def _request_timeout_default(self):
         return float(os.environ.get(self.request_timeout_env, self.request_timeout_default_value))
 
     client_key = Unicode(
@@ -334,7 +335,7 @@ If the authorization header key takes a single value, `auth_scheme` should be se
     )
 
     @default("validate_cert")
-    def validate_cert_default(self):
+    def _validate_cert_default(self):
         return bool(
             os.environ.get(self.validate_cert_env, str(self.validate_cert_default_value))
             not in ["no", "false"]
@@ -376,7 +377,7 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
     )
 
     @default("gateway_retry_interval")
-    def gateway_retry_interval_default(self):
+    def _gateway_retry_interval_default(self):
         return float(
             os.environ.get(
                 self.gateway_retry_interval_env,
@@ -394,7 +395,7 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
     )
 
     @default("gateway_retry_interval_max")
-    def gateway_retry_interval_max_default(self):
+    def _gateway_retry_interval_max_default(self):
         return float(
             os.environ.get(
                 self.gateway_retry_interval_max_env,
@@ -412,7 +413,7 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
     )
 
     @default("gateway_retry_max")
-    def gateway_retry_max_default(self):
+    def _gateway_retry_max_default(self):
         return int(os.environ.get(self.gateway_retry_max_env, self.gateway_retry_max_default_value))
 
     gateway_token_renewer_class_default_value = (
@@ -426,7 +427,7 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
     )
 
     @default("gateway_token_renewer_class")
-    def gateway_token_renewer_class_default(self):
+    def _gateway_token_renewer_class_default(self):
         return os.environ.get(
             self.gateway_token_renewer_class_env, self.gateway_token_renewer_class_default_value
         )
@@ -442,7 +443,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
     )
 
     @default("launch_timeout_pad")
-    def launch_timeout_pad_default(self):
+    def _launch_timeout_pad_default(self):
         return float(
             os.environ.get(
                 self.launch_timeout_pad_env,
@@ -461,7 +462,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
     )
 
     @default("accept_cookies")
-    def accept_cookies_default(self):
+    def _accept_cookies_default(self):
         return bool(
             os.environ.get(self.accept_cookies_env, str(self.accept_cookies_value).lower())
             not in ["no", "false"]
@@ -508,6 +509,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
     gateway_token_renewer: GatewayTokenRenewerBase
 
     def __init__(self, **kwargs):
+        """Initialize a gateway client."""
         super().__init__(**kwargs)
         self._connection_args = {}  # initialized on first use
         self.gateway_token_renewer = self.gateway_token_renewer_class(parent=self, log=self.log)
@@ -608,6 +610,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
             self._cookies[key] = (item, store_time)
 
     def _clear_expired_cookies(self) -> None:
+        """Clear expired cookies."""
         check_time = datetime.now()
         expired_keys = []
 
@@ -623,6 +626,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
             self._cookies.pop(key)
 
     def _update_cookie_header(self, connection_args: dict) -> None:
+        """Update a cookie header."""
         self._clear_expired_cookies()
 
         gateway_cookie_values = "; ".join(
@@ -664,6 +668,7 @@ class RetryableHTTPClient:
     backoff_factor: float = 0.1
 
     def __init__(self):
+        """Initialize the retryable http client."""
         self.retry_count: int = 0
         self.client: AsyncHTTPClient = AsyncHTTPClient()
 

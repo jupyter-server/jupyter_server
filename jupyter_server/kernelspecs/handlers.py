@@ -1,3 +1,4 @@
+"""Kernelspecs API Handlers."""
 from tornado import web
 
 from jupyter_server.auth import authorized
@@ -9,15 +10,19 @@ AUTH_RESOURCE = "kernelspecs"
 
 
 class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
+    """A Kernelspec resource handler."""
+
     SUPPORTED_METHODS = ("GET", "HEAD")  # type:ignore[assignment]
     auth_resource = AUTH_RESOURCE
 
     def initialize(self):
+        """Initialize a kernelspec resource handler."""
         web.StaticFileHandler.initialize(self, path="")
 
     @web.authenticated
     @authorized
     def get(self, kernel_name, path, include_body=True):
+        """Get a kernelspec resource."""
         ksm = self.kernel_spec_manager
         if path.lower().endswith(".png"):
             self.set_header("Cache-Control", f"max-age={60*60*24*30}")
@@ -31,6 +36,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
     @web.authenticated
     @authorized
     def head(self, kernel_name, path):
+        """Get the head infor for a kernel resource."""
         return self.get(kernel_name, path, include_body=False)
 
 

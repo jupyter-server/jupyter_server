@@ -34,6 +34,7 @@ _script_exporter = None
 
 
 class FileContentsManager(FileManagerMixin, ContentsManager):
+    """A file contents manager."""
 
     root_dir = Unicode(config=True)
 
@@ -46,7 +47,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
     @validate("root_dir")
     def _validate_root_dir(self, proposal):
-        """Do a bit of validation of the root_dir."""
         value = proposal["value"]
         if not os.path.isabs(value):
             # If we receive a non-absolute path, make it absolute.
@@ -558,6 +558,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             raise web.HTTPError(500, f"Unknown error renaming file: {old_path} {e}") from e
 
     def info_string(self):
+        """Get the information string for the manager."""
         return _i18n("Serving notebooks from local directory: %s") % self.root_dir
 
     def get_kernel_path(self, path, model=None):
@@ -572,6 +573,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
 
 class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, AsyncContentsManager):
+    """An async file contents manager."""
+
     @default("checkpoints_class")
     def _checkpoints_class_default(self):
         return AsyncFileCheckpoints

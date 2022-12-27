@@ -1,3 +1,4 @@
+"""The cli for auth."""
 import argparse
 import sys
 import warnings
@@ -11,6 +12,7 @@ from jupyter_server.config_manager import BaseJSONConfigManager
 
 
 def set_password(args):
+    """Set a password."""
     password = args.password
 
     while not password:
@@ -39,6 +41,7 @@ def set_password(args):
 
 
 def main(argv):
+    """The main cli handler."""
     parser = argparse.ArgumentParser(argv[0])
     subparsers = parser.add_subparsers()
     parser_password = subparsers.add_parser(

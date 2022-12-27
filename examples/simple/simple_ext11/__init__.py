@@ -1,3 +1,4 @@
+"""Extension entry point."""
 from .application import SimpleApp11
 
 

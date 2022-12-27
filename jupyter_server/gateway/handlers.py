@@ -1,3 +1,4 @@
+"""Gateway API handlers."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import asyncio
@@ -25,6 +26,7 @@ GATEWAY_WS_PING_INTERVAL_SECS = int(os.getenv("GATEWAY_WS_PING_INTERVAL_SECS", 3
 
 
 class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
+    """Gateway web socket channels handler."""
 
     session = None
     gateway = None
@@ -32,6 +34,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
     ping_callback = None
 
     def check_origin(self, origin=None):
+        """Check origin for the socket."""
         return JupyterHandler.check_origin(self, origin)
 
     def set_default_headers(self):
@@ -39,6 +42,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
         pass
 
     def get_compression_options(self):
+        """Get the compression options for the socket."""
         # use deflate compress websocket
         return {}
 
@@ -60,17 +64,20 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
             self.log.warning("No session ID specified")
 
     def initialize(self):
+        """Intialize the socket."""
         self.log.debug("Initializing websocket connection %s", self.request.path)
         self.session = Session(config=self.config)
         self.gateway = GatewayWebSocketClient(gateway_url=GatewayClient.instance().url)
 
     async def get(self, kernel_id, *args, **kwargs):
+        """Get the socket."""
         self.authenticate()
         self.kernel_id = kernel_id
         kwargs["kernel_id"] = kernel_id
         await super().get(*args, **kwargs)
 
     def send_ping(self):
+        """Send a ping to the socket."""
         if self.ws_connection is None and self.ping_callback is not None:
             self.ping_callback.stop()
             return
@@ -109,6 +116,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
             )
 
     def on_close(self):
+        """Handle a closing socket."""
         self.log.debug("Closing websocket connection %s", self.request.path)
         assert self.gateway is not None
         self.gateway.on_close()
@@ -116,6 +124,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
     @staticmethod
     def _get_message_summary(message):
+        """Get a summary of a message."""
         summary = []
         message_type = message["msg_type"]
         summary.append(f"type: {message_type}")
@@ -140,6 +149,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
     """Proxy web socket connection to a kernel/enterprise gateway."""
 
     def __init__(self, **kwargs):
+        """Initialize the gateway web socket client."""
         super().__init__()
         self.kernel_id = None
         self.ws = None
@@ -148,6 +158,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         self.retry = 0
 
     async def _connect(self, kernel_id, message_callback):
+        """Connect to the socket."""
         # websocket is initialized before connection
         self.ws = None
         self.kernel_id = kernel_id
@@ -169,6 +180,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         loop.add_future(self.ws_future, lambda future: self._read_messages(message_callback))
 
     def _connection_done(self, fut):
+        """Handle a finished connection."""
         if (
             not self.disconnected and fut.exception() is None
         ):  # prevent concurrent.futures._base.CancelledError
@@ -184,6 +196,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
             )
 
     def _disconnect(self):
+        """Handle a disconnect."""
         self.disconnected = True
         if self.ws is not None:
             # Close connection
@@ -267,6 +280,7 @@ class GatewayResourceHandler(APIHandler):
 
     @web.authenticated
     async def get(self, kernel_name, path, include_body=True):
+        """Get a gateway resource by name and path."""
         ksm = self.kernel_spec_manager
         kernel_spec_res = await ksm.get_kernel_spec_resource(kernel_name, path)
         if kernel_spec_res is None:

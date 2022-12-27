@@ -148,6 +148,7 @@ class MappingKernelManager(MultiKernelManager):
     )
 
     def __init__(self, **kwargs):
+        """Initialize a kernel manager."""
         self.pinned_superclass = MultiKernelManager
         self._pending_kernel_tasks = {}
         self.pinned_superclass.__init__(self, **kwargs)
@@ -190,6 +191,7 @@ class MappingKernelManager(MultiKernelManager):
         return os_path
 
     async def _remove_kernel_when_ready(self, kernel_id, kernel_awaitable):
+        """Remove a kernel when it is ready."""
         await super()._remove_kernel_when_ready(kernel_id, kernel_awaitable)
         self._kernel_connections.pop(kernel_id, None)
         self._kernel_ports.pop(kernel_id, None)
@@ -246,6 +248,7 @@ class MappingKernelManager(MultiKernelManager):
     start_kernel = _async_start_kernel
 
     async def _finish_kernel_start(self, kernel_id):
+        """Handle a kernel that finishes starting."""
         km = self.get_kernel(kernel_id)
         if hasattr(km, "ready"):
             ready = km.ready
@@ -592,6 +595,7 @@ class MappingKernelManager(MultiKernelManager):
         self._initialized_culler = True
 
     async def cull_kernels(self):
+        """Handle culling kernels."""
         self.log.debug(
             "Polling every %s seconds for kernels idle > %s seconds...",
             self.cull_interval,
@@ -609,6 +613,7 @@ class MappingKernelManager(MultiKernelManager):
                 )
 
     async def cull_kernel_if_idle(self, kernel_id):
+        """Cull a kernel if it is idle."""
         kernel = self._kernels[kernel_id]
 
         if getattr(kernel, "execution_state", None) == "dead":
@@ -654,12 +659,15 @@ class MappingKernelManager(MultiKernelManager):
 # AsyncMappingKernelManager inherits as much as possible from MappingKernelManager,
 # overriding only what is different.
 class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):  # type:ignore[misc]
+    """An asynchronous mapping kernel manager."""
+
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
         return "jupyter_server.services.kernels.kernelmanager.ServerKernelManager"
 
     @validate("kernel_manager_class")
     def _validate_kernel_manager_class(self, proposal):
+        """A validator for the kernel manager class."""
         km_class_value = proposal.value
         km_class = import_item(km_class_value)
         if not issubclass(km_class, ServerKernelManager):
@@ -673,6 +681,7 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager): 
         return km_class_value
 
     def __init__(self, **kwargs):
+        """Initialize an async mapping kernel manager."""
         self.pinned_superclass = MultiKernelManager
         self._pending_kernel_tasks = {}
         self.pinned_superclass.__init__(self, **kwargs)
@@ -680,6 +689,7 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager): 
 
 
 class ServerKernelManager(AsyncIOLoopKernelManager):
+    """A server-specific kernel manager."""
 
     # Define activity-related attributes:
     execution_state = Unicode(

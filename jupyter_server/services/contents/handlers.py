@@ -64,10 +64,14 @@ def validate_model(model, expect_content):
 
 
 class ContentsAPIHandler(APIHandler):
+    """A contents API handler."""
+
     auth_resource = AUTH_RESOURCE
 
 
 class ContentsHandler(ContentsAPIHandler):
+    """A contents handler."""
+
     def location_url(self, path):
         """Return the full URL location of a file.
 
@@ -281,6 +285,8 @@ class ContentsHandler(ContentsAPIHandler):
 
 
 class CheckpointsHandler(ContentsAPIHandler):
+    """A checkpoints API handler."""
+
     @web.authenticated
     @authorized
     async def get(self, path=""):
@@ -310,6 +316,8 @@ class CheckpointsHandler(ContentsAPIHandler):
 
 
 class ModifyCheckpointsHandler(ContentsAPIHandler):
+    """A checkpoints modification handler."""
+
     @web.authenticated
     @authorized
     async def post(self, path, checkpoint_id):
@@ -335,6 +343,7 @@ class NotebooksRedirectHandler(JupyterHandler):
     SUPPORTED_METHODS = ("GET", "PUT", "PATCH", "POST", "DELETE")  # type:ignore[assignment]
 
     def get(self, path):
+        """Handle a notebooks redirect."""
         self.log.warning("/api/notebooks is deprecated, use /api/contents")
         self.redirect(url_path_join(self.base_url, "api/contents", url_escape(path)))
 
@@ -347,6 +356,7 @@ class TrustNotebooksHandler(JupyterHandler):
     @web.authenticated
     @authorized(resource=AUTH_RESOURCE)
     async def post(self, path=""):
+        """Trust a notebook by path."""
         cm = self.contents_manager
         await ensure_async(cm.trust_notebook(path))
         self.set_status(201)

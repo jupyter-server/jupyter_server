@@ -1,3 +1,4 @@
+"""Kernel gateway managers."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import asyncio
@@ -43,6 +44,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         return False  # no need to share zmq contexts
 
     def __init__(self, **kwargs):
+        """Initialize a gateway mapping kernel manager."""
         super().__init__(**kwargs)
         self.kernels_url = url_path_join(
             GatewayClient.instance().url, GatewayClient.instance().kernels_endpoint
@@ -182,7 +184,10 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
 
 
 class GatewayKernelSpecManager(KernelSpecManager):
+    """A gateway kernel spec manager."""
+
     def __init__(self, **kwargs):
+        """Initialize a gateway kernel spec manager."""
         super().__init__(**kwargs)
         base_endpoint = url_path_join(
             GatewayClient.instance().url, GatewayClient.instance().kernelspecs_endpoint
@@ -196,6 +201,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
 
     @staticmethod
     def _get_endpoint_for_user_filter(default_endpoint):
+        """Get the endpoint for a user filter."""
         kernel_user = os.environ.get("KERNEL_USERNAME")
         if kernel_user:
             return "?user=".join([default_endpoint, kernel_user])
@@ -233,6 +239,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
         return self.base_endpoint
 
     async def get_all_specs(self):
+        """Get all of the kernel specs for the gateway."""
         fetched_kspecs = await self.list_kernel_specs()
 
         # get the default kernel name and compare to that of this server.
@@ -316,6 +323,8 @@ class GatewayKernelSpecManager(KernelSpecManager):
 
 
 class GatewaySessionManager(SessionManager):
+    """A gateway session manager."""
+
     kernel_manager = Instance("jupyter_server.gateway.managers.GatewayMappingKernelManager")
 
     async def kernel_culled(self, kernel_id: str) -> bool:
@@ -346,6 +355,7 @@ class GatewayKernelManager(AsyncKernelManager):
         return False  # no need to cache ports here
 
     def __init__(self, **kwargs):
+        """Initialize the gateway kernel manager."""
         super().__init__(**kwargs)
         self.kernels_url = url_path_join(
             GatewayClient.instance().url, GatewayClient.instance().kernels_endpoint
@@ -537,11 +547,13 @@ KernelManagerABC.register(GatewayKernelManager)
 
 
 class ChannelQueue(Queue):
+    """A queue for a named channel."""
 
     channel_name: Optional[str] = None
     response_router_finished: bool
 
     def __init__(self, channel_name: str, channel_socket: websocket.WebSocket, log: Logger):
+        """Initialize a channel queue."""
         super().__init__()
         self.channel_name = channel_name
         self.channel_socket = channel_socket
@@ -549,6 +561,7 @@ class ChannelQueue(Queue):
         self.response_router_finished = False
 
     async def _async_get(self, timeout=None):
+        """Asynchronously get from the queue."""
         if timeout is None:
             timeout = float("inf")
         elif timeout < 0:
@@ -566,6 +579,7 @@ class ChannelQueue(Queue):
                 await asyncio.sleep(0)
 
     async def get_msg(self, *args: Any, **kwargs: Any) -> dict:
+        """Get a message from the queue."""
         timeout = kwargs.get("timeout", 1)
         msg = await self._async_get(timeout=timeout)
         self.log.debug(
@@ -577,6 +591,7 @@ class ChannelQueue(Queue):
         return msg
 
     def send(self, msg: dict) -> None:
+        """Send a message to the queue."""
         message = json.dumps(msg, default=ChannelQueue.serialize_datetime).replace("</", "<\\/")
         self.log.debug(
             "Sending message on channel: {}, msg_id: {}, msg_type: {}".format(
@@ -587,14 +602,17 @@ class ChannelQueue(Queue):
 
     @staticmethod
     def serialize_datetime(dt):
+        """Serialize a datetime object."""
         if isinstance(dt, datetime.datetime):
             return dt.timestamp()
         return None
 
     def start(self) -> None:
+        """Start the queue."""
         pass
 
     def stop(self) -> None:
+        """Stop the queue."""
         if not self.empty():
             # If unprocessed messages are detected, drain the queue collecting non-status
             # messages.  If any remain that are not 'shutdown_reply' and this is not iopub
@@ -614,11 +632,15 @@ class ChannelQueue(Queue):
                 )
 
     def is_alive(self) -> bool:
+        """Whether the queue is alive."""
         return self.channel_socket is not None
 
 
 class HBChannelQueue(ChannelQueue):
+    """A queue for the hearbeat channel."""
+
     def is_beating(self) -> bool:
+        """Whether the channel is beating."""
         # Just use the is_alive status for now
         return self.is_alive()
 
@@ -651,6 +673,7 @@ class GatewayKernelClient(AsyncKernelClient):
     _shell_channel: Optional[ChannelQueue]  # type:ignore[assignment]
 
     def __init__(self, kernel_id, **kwargs):
+        """Initialize a gateway kernel client."""
         super().__init__(**kwargs)
         self.kernel_id = kernel_id
         self.channel_socket: Optional[websocket.WebSocket] = None

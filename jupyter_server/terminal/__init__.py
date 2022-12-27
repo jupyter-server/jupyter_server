@@ -1,3 +1,4 @@
+"""Terminals support."""
 import warnings
 
 # Shims

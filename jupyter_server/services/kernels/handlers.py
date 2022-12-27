@@ -24,13 +24,18 @@ AUTH_RESOURCE = "kernels"
 
 
 class KernelsAPIHandler(APIHandler):
+    """A kernels API handler."""
+
     auth_resource = AUTH_RESOURCE
 
 
 class MainKernelHandler(KernelsAPIHandler):
+    """The root kernel handler."""
+
     @web.authenticated
     @authorized
     async def get(self):
+        """Get the list of running kernels."""
         km = self.kernel_manager
         kernels = await ensure_async(km.list_kernels())
         self.finish(json.dumps(kernels, default=json_default))
@@ -38,6 +43,7 @@ class MainKernelHandler(KernelsAPIHandler):
     @web.authenticated
     @authorized
     async def post(self):
+        """Start a kernel."""
         km = self.kernel_manager
         model = self.get_json_body()
         if model is None:
@@ -56,9 +62,12 @@ class MainKernelHandler(KernelsAPIHandler):
 
 
 class KernelHandler(KernelsAPIHandler):
+    """A kernel API handler."""
+
     @web.authenticated
     @authorized
     async def get(self, kernel_id):
+        """Get a kernel model."""
         km = self.kernel_manager
         model = await ensure_async(km.kernel_model(kernel_id))
         self.finish(json.dumps(model, default=json_default))
@@ -66,6 +75,7 @@ class KernelHandler(KernelsAPIHandler):
     @web.authenticated
     @authorized
     async def delete(self, kernel_id):
+        """Remove a kernel."""
         km = self.kernel_manager
         await ensure_async(km.shutdown_kernel(kernel_id))
         self.set_status(204)
@@ -73,9 +83,12 @@ class KernelHandler(KernelsAPIHandler):
 
 
 class KernelActionHandler(KernelsAPIHandler):
+    """A kernel action API handler."""
+
     @web.authenticated
     @authorized
     async def post(self, kernel_id, action):
+        """Interrupt or restart a kernel."""
         km = self.kernel_manager
         if action == "interrupt":
             await ensure_async(km.interrupt_kernel(kernel_id))

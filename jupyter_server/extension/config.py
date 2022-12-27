@@ -1,3 +1,4 @@
+"""Extension config."""
 from jupyter_server.services.config.manager import ConfigManager
 
 DEFAULT_SECTION_NAME = "jupyter_server_config"
@@ -24,9 +25,11 @@ class ExtensionConfigManager(ConfigManager):
             return False
 
     def enable(self, name):
+        """Enable an extension by name."""
         data = {"ServerApp": {"jpserver_extensions": {name: True}}}
         self.update(name, data)
 
     def disable(self, name):
+        """Disable an extension by name."""
         data = {"ServerApp": {"jpserver_extensions": {name: False}}}
         self.update(name, data)

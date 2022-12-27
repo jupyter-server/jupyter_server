@@ -27,6 +27,7 @@ else:
 
 
 def find_resource_files(output_files_dir):
+    """Find the resource files in a directory."""
     files = []
     for dirpath, _, filenames in os.walk(output_files_dir):
         files.extend([os.path.join(dirpath, f) for f in filenames])
@@ -85,6 +86,7 @@ def get_exporter(format, **kwargs):
 
 
 class NbconvertFileHandler(JupyterHandler):
+    """An nbconvert file handler."""
 
     auth_resource = AUTH_RESOURCE
     SUPPORTED_METHODS = ("GET",)  # type:ignore[assignment]
@@ -92,6 +94,7 @@ class NbconvertFileHandler(JupyterHandler):
     @web.authenticated
     @authorized
     async def get(self, format, path):
+        """Get a notebook file in a desired format."""
         self.check_xsrf_cookie()
         exporter = get_exporter(format, config=self.config, log=self.log)
 
@@ -152,6 +155,7 @@ class NbconvertFileHandler(JupyterHandler):
 
 
 class NbconvertPostHandler(JupyterHandler):
+    """An nbconvert post handler."""
 
     SUPPORTED_METHODS = ("POST",)  # type:ignore[assignment]
     auth_resource = AUTH_RESOURCE
@@ -159,6 +163,7 @@ class NbconvertPostHandler(JupyterHandler):
     @web.authenticated
     @authorized
     async def post(self, format):
+        """Convert a notebook file to a desired format."""
         exporter = get_exporter(format, config=self.config)
 
         model = self.get_json_body()

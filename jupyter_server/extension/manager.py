@@ -1,3 +1,4 @@
+"""The extension manager."""
 import importlib
 
 from tornado.gen import multi
@@ -21,6 +22,7 @@ class ExtensionPoint(HasTraits):
 
     @validate_trait("metadata")
     def _valid_metadata(self, proposed):
+        """Validate metadata."""
         metadata = proposed["value"]
         # Verify that the metadata has a "name" key.
         try:
@@ -92,6 +94,7 @@ class ExtensionPoint(HasTraits):
         return self._module
 
     def _get_linker(self):
+        """Get a linker."""
         if self.app:
             linker = self.app._link_jupyter_server_extension
         else:
@@ -105,6 +108,7 @@ class ExtensionPoint(HasTraits):
         return linker
 
     def _get_loader(self):
+        """Get a loader."""
         loc = self.app
         if not loc:
             loc = self.module
@@ -156,6 +160,7 @@ class ExtensionPackage(HasTraits):
     enabled = Bool(False).tag(config=True)
 
     def __init__(self, *args, **kwargs):
+        """Initialize an extension package."""
         # Store extension points that have been linked.
         self._linked_points = {}
         super().__init__(*args, **kwargs)
@@ -207,20 +212,24 @@ class ExtensionPackage(HasTraits):
         return True
 
     def link_point(self, point_name, serverapp):
+        """Link an extension point."""
         linked = self._linked_points.get(point_name, False)
         if not linked:
             point = self.extension_points[point_name]
             point.link(serverapp)
 
     def load_point(self, point_name, serverapp):
+        """Load an extension point."""
         point = self.extension_points[point_name]
         return point.load(serverapp)
 
     def link_all_points(self, serverapp):
+        """Link all extension points."""
         for point_name in self.extension_points:
             self.link_point(point_name, serverapp)
 
     def load_all_points(self, serverapp):
+        """Load all extension points."""
         return [self.load_point(point_name, serverapp) for point_name in self.extension_points]
 
 
@@ -329,6 +338,7 @@ class ExtensionManager(LoggingConfigurable):
         return False
 
     def link_extension(self, name):
+        """Link an extension by name."""
         linked = self.linked_extensions.get(name, False)
         extension = self.extensions[name]
         if not linked and extension.enabled:
@@ -343,6 +353,7 @@ class ExtensionManager(LoggingConfigurable):
                 self.log.warning("%s | error linking extension: %s", name, e, exc_info=True)
 
     def load_extension(self, name):
+        """Load an extension by name."""
         extension = self.extensions.get(name)
 
         if extension.enabled:

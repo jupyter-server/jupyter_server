@@ -1,3 +1,4 @@
+"""An implementation of a kernel connection."""
 import asyncio
 import json
 import time
@@ -118,12 +119,14 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
 
     @default("_kernel_info_future")
     def _default_kernel_info_future(self):
+        """The default kernel info future."""
         return Future()
 
     _close_future = Instance(klass=Future)  # type:ignore[assignment]
 
     @default("_close_future")
     def _default_close_future(self):
+        """The default close future."""
         return Future()
 
     session_key = Unicode("")
@@ -146,6 +149,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
 
     @property
     def subprotocol(self):
+        """The sub protocol."""
         try:
             protocol = self.websocket_handler.selected_subprotocol
         except Exception:
@@ -153,6 +157,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         return protocol
 
     def create_stream(self):
+        """Create a stream."""
         identity = self.session.bsession
         for channel in ("iopub", "shell", "control", "stdin"):
             meth = getattr(self.kernel_manager, "connect_" + channel)
@@ -212,18 +217,21 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         both_done.add_done_callback(cleanup)
 
         def on_shell_reply(msg):
+            """Handle nudge shell replies."""
             self.log.debug("Nudge: shell info reply received: %s", self.kernel_id)
             if not info_future.done():
                 self.log.debug("Nudge: resolving shell future: %s", self.kernel_id)
                 info_future.set_result(None)
 
         def on_control_reply(msg):
+            """Handle nudge control replies."""
             self.log.debug("Nudge: control info reply received: %s", self.kernel_id)
             if not info_future.done():
                 self.log.debug("Nudge: resolving control future: %s", self.kernel_id)
                 info_future.set_result(None)
 
         def on_iopub(msg):
+            """Handle nudge iopub replies."""
             self.log.debug("Nudge: IOPub received: %s", self.kernel_id)
             if not iopub_future.done():
                 iopub_channel.stop_on_recv()
@@ -237,6 +245,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
 
         # Nudge the kernel with kernel info requests until we get an IOPub message
         def nudge(count):
+            """Nudge the kernel."""
             count += 1
             # check for stopped kernel
             if self.kernel_id not in self.multi_kernel_manager:
@@ -290,6 +299,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self._open_sessions[self.session_key] = self.websocket_handler
 
     async def prepare(self):
+        """Prepare a kernel connection."""
         # check session collision:
         await self._register_session()
         # then request kernel info, waiting up to a certain time before giving up.
@@ -329,6 +339,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         await asyncio.wrap_future(future)
 
     def connect(self):
+        """Handle a connection."""
         self.multi_kernel_manager.notify_connect(self.kernel_id)
 
         # on new connections, flush the message buffer
@@ -388,9 +399,11 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         return connected
 
     def close(self):
+        """Close the connection."""
         return self.disconnect()
 
     def disconnect(self):
+        """Handle a disconnect."""
         self.log.debug("Websocket closed %s", self.session_key)
         # unregister myself as an open session (only if it's really me)
         if self._open_sessions.get(self.session_key) is self.websocket_handler:
@@ -504,6 +517,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self._on_zmq_reply(stream, msg)
 
     def get_part(self, field, value, msg_list):
+        """Get a part of a message."""
         if value is None:
             field2idx = {
                 "header": 0,
@@ -539,6 +553,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             return json.dumps(msg, default=json_default)
 
     def _on_zmq_reply(self, stream, msg_list):
+        """Handle a zmq reply."""
         # Sometimes this gets triggered when the on_close method is scheduled in the
         # eventloop but hasn't been called.
         if stream.closed():
@@ -627,6 +642,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self._kernel_info_future.set_result(info)
 
     def write_stderr(self, error_message, parent_header):
+        """Write a message to stderr."""
         self.log.warning(error_message)
         err_msg = self.session.msg(
             "stream",
@@ -641,6 +657,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.write_message(json.dumps(err_msg, default=json_default))
 
     def _limit_rate(self, channel, msg, msg_list):
+        """Limit the message rate on a channel."""
         if not (self.limit_rate and channel == "iopub"):
             return False
 
@@ -764,6 +781,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             return False
 
     def _send_status_message(self, status):
+        """Send a status message."""
         iopub = self.channels.get("iopub", None)
         if iopub and not iopub.closed():
             # flush IOPub before sending a restarting/dead status message
@@ -779,14 +797,17 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.write_message(json.dumps(msg, default=json_default))
 
     def on_kernel_restarted(self):
+        """Handle a kernel restart."""
         self.log.warning("kernel %s restarted", self.kernel_id)
         self._send_status_message("restarting")
 
     def on_restart_failed(self):
+        """Handle a kernel restart failure."""
         self.log.error("kernel %s restarted failed!", self.kernel_id)
         self._send_status_message("dead")
 
     def _on_error(self, channel, msg, msg_list):
+        """Handle an error message."""
         if self.multi_kernel_manager.allow_tracebacks:
             return
 

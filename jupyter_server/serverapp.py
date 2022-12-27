@@ -212,6 +212,8 @@ def load_handlers(name):
 
 
 class ServerWebApplication(web.Application):
+    """A server web application."""
+
     def __init__(
         self,
         jupyter_app,
@@ -233,6 +235,7 @@ class ServerWebApplication(web.Application):
         identity_provider=None,
         kernel_websocket_connection_class=None,
     ):
+        """Initialize a server web application."""
         if identity_provider is None:
             warnings.warn(
                 "identity_provider unspecified. Using default IdentityProvider."
@@ -293,7 +296,7 @@ class ServerWebApplication(web.Application):
         identity_provider=None,
         kernel_websocket_connection_class=None,
     ):
-
+        """Initialize settings for the web application."""
         _template_path = settings_overrides.get(
             "template_path",
             jupyter_app.template_file_path,
@@ -497,9 +500,11 @@ class JupyterPasswordApp(JupyterApp):
     description: str = __doc__
 
     def _config_file_default(self):
+        """the default config file."""
         return os.path.join(self.config_dir, "jupyter_server_config.json")
 
     def start(self):
+        """Start the password app."""
         from jupyter_server.auth.security import set_password
 
         set_password(config_file=self.config_file)
@@ -574,6 +579,7 @@ def shutdown_server(server_info, timeout=5, log=None):
 
 
 class JupyterServerStopApp(JupyterApp):
+    """An application to stop a Jupyter server."""
 
     version: str = __version__
     description: str = "Stop currently running Jupyter server for a given port"
@@ -587,6 +593,7 @@ class JupyterServerStopApp(JupyterApp):
     sock = Unicode("", config=True, help="UNIX socket of the server to be killed.")
 
     def parse_command_line(self, argv=None):
+        """Parse command line options."""
         super().parse_command_line(argv)
         if self.extra_args:
             try:
@@ -596,21 +603,25 @@ class JupyterServerStopApp(JupyterApp):
                 self.sock = self.extra_args[0]
 
     def shutdown_server(self, server):
+        """Shut down a server."""
         return shutdown_server(server, log=self.log)
 
     def _shutdown_or_exit(self, target_endpoint, server):
+        """Handle a shutdown."""
         self.log.info("Shutting down server on %s..." % target_endpoint)
         if not self.shutdown_server(server):
             sys.exit("Could not stop server on %s" % target_endpoint)
 
     @staticmethod
     def _maybe_remove_unix_socket(socket_path):
+        """Try to remove a socket path."""
         try:
             os.unlink(socket_path)
         except OSError:
             pass
 
     def start(self):
+        """Start the server stop app."""
         info = self.log.info
         servers = list(list_running_servers(self.runtime_dir, log=self.log))
         if not servers:
@@ -637,6 +648,8 @@ class JupyterServerStopApp(JupyterApp):
 
 
 class JupyterServerListApp(JupyterApp):
+    """An application to list running Jupyter servers."""
+
     version: str = __version__
     description: str = _i18n("List currently running Jupyter servers.")
 
@@ -671,6 +684,7 @@ class JupyterServerListApp(JupyterApp):
     )
 
     def start(self):
+        """Start the server list application."""
         info = self.log.info
         serverinfo_list = list(list_running_servers(self.runtime_dir, log=self.log))
         if self.jsonlist:
@@ -752,6 +766,7 @@ aliases.update(
 
 
 class ServerApp(JupyterApp):
+    """The Jupyter Server application class."""
 
     name = "jupyter-server"
     version: str = __version__
@@ -949,7 +964,7 @@ class ServerApp(JupyterApp):
     )
 
     @default("port")
-    def port_default(self):
+    def _port_default(self):
         return int(os.getenv(self.port_env, self.port_default_value))
 
     port_retries_env = "JUPYTER_PORT_RETRIES"
@@ -964,7 +979,7 @@ class ServerApp(JupyterApp):
     )
 
     @default("port_retries")
-    def port_retries_default(self):
+    def _port_retries_default(self):
         return int(os.getenv(self.port_retries_env, self.port_retries_default_value))
 
     sock = Unicode("", config=True, help="The UNIX socket the Jupyter server will listen on.")
@@ -1155,6 +1170,7 @@ class ServerApp(JupyterApp):
     )
 
     def _warn_deprecated_config(self, change, clsname, new_name=None):
+        """Warn on deprecated config."""
         if new_name is None:
             new_name = change.name
         if clsname not in self.config or new_name not in self.config[clsname]:
@@ -1641,6 +1657,7 @@ class ServerApp(JupyterApp):
             return os.getcwd()
 
     def _normalize_dir(self, value):
+        """Normalize a directory."""
         # Strip any trailing slashes
         # *except* if it's root
         _, path = os.path.splitdrive(value)
@@ -1845,7 +1862,7 @@ class ServerApp(JupyterApp):
         return self._starter_app
 
     def parse_command_line(self, argv=None):
-
+        """Parse the command line options."""
         super().parse_command_line(argv)
 
         if self.extra_args:
@@ -1866,7 +1883,7 @@ class ServerApp(JupyterApp):
             self.update_config(c)
 
     def init_configurables(self):
-
+        """Initialize configurables."""
         # If gateway server is configured, replace appropriate managers to perform redirection.  To make
         # this determination, instantiate the GatewayClient config singleton.
         self.gateway_config = GatewayClient.instance(parent=self)
@@ -1959,6 +1976,7 @@ class ServerApp(JupyterApp):
         )
 
     def init_logging(self):
+        """Initialize logging."""
         # This prevents double log messages because tornado use a root logger that
         # self.log is a child of. The logging module dipatches log messages to a log
         # and all of its ancenstors until propagate is set to False.
@@ -2183,6 +2201,7 @@ class ServerApp(JupyterApp):
         return urlparts.geturl()
 
     def init_signal(self):
+        """Initialize signal handlers."""
         if not sys.platform.startswith("win") and sys.stdin and sys.stdin.isatty():
             signal.signal(signal.SIGINT, self._handle_sigint)
         signal.signal(signal.SIGTERM, self._signal_stop)
@@ -2248,10 +2267,12 @@ class ServerApp(JupyterApp):
         self.io_loop.add_callback_from_signal(self._restore_sigint_handler)
 
     def _signal_stop(self, sig, frame):
+        """Handle a stop signal."""
         self.log.critical(_i18n("received signal %s, stopping"), sig)
         self.stop(from_signal=True)
 
     def _signal_info(self, sig, frame):
+        """Handle an info signal."""
         self.log.info(self.running_server_info())
 
     def init_components(self):
@@ -2340,6 +2361,7 @@ class ServerApp(JupyterApp):
             self.stop()
 
     def init_shutdown_no_activity(self):
+        """Initialize a shutdown on no activity."""
         if self.shutdown_no_activity_timeout > 0:
             self.log.info(
                 "Will shut down after %d seconds with no kernels.",
@@ -2386,6 +2408,7 @@ class ServerApp(JupyterApp):
         self.io_loop.add_callback(self._bind_http_server)
 
     def _bind_http_server(self):
+        """Bind our http server."""
         success = self._bind_http_server_unix() if self.sock else self._bind_http_server_tcp()
         if not success:
             self.log.critical(
@@ -2397,6 +2420,7 @@ class ServerApp(JupyterApp):
             self.exit(1)
 
     def _bind_http_server_unix(self):
+        """Bind an http server on unix."""
         if unix_socket_in_use(self.sock):
             self.log.warning(_i18n("The socket %s is already in use.") % self.sock)
             return False
@@ -2417,10 +2441,12 @@ class ServerApp(JupyterApp):
             return True
 
     def _bind_http_server_tcp(self):
+        """Bind a tcp server."""
         self.http_server.listen(self.port, self.ip)
         return True
 
     def _find_http_port(self):
+        """Find an available http port."""
         success = None
         for port in random_ports(self.port, self.port_retries + 1):
             tmp_sock = socket.socket()
@@ -2677,6 +2703,7 @@ class ServerApp(JupyterApp):
         self.exit(1)
 
     def _write_browser_open_file(self, url, fh):
+        """Write the browser open file."""
         if self.identity_provider.token:
             url = url_concat(url, {"token": self.identity_provider.token})
         url = url_path_join(self.connection_url, url)
@@ -2742,6 +2769,7 @@ class ServerApp(JupyterApp):
                 raise
 
     def _prepare_browser_open(self):
+        """Prepare to open the browser."""
         if not self.use_redirect_file:
             uri = self.default_url[len(self.base_url) :]
 
@@ -2764,6 +2792,7 @@ class ServerApp(JupyterApp):
         return assembled_url, open_file
 
     def launch_browser(self):
+        """Launch the browser."""
         # Deferred import for environments that do not have
         # the webbrowser module.
         import webbrowser
@@ -2786,6 +2815,7 @@ class ServerApp(JupyterApp):
         threading.Thread(target=target).start()
 
     def start_app(self):
+        """Start the Jupyter Server application."""
         super().start()
 
         if not self.allow_root:

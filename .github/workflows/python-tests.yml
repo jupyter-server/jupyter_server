@@ -57,6 +57,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install enchant-2  # for spell checking
       - run: hatch run docs:build
 
   test_lint:
@@ -69,7 +73,7 @@ jobs:
          run: |
           hatch run typing:test
           hatch run lint:style
-          pipx run 'validate-pyproject[all]' pyproject.toml
+          pipx run interrogate -v .
           pipx run doc8 --max-line-length=200  --ignore-path=docs/source/other/full-config.rst
           npm install -g eslint
           eslint .

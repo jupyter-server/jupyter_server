@@ -50,13 +50,18 @@ def is_kernelspec_model(spec_dict):
 
 
 class KernelSpecsAPIHandler(APIHandler):
+    """A kernel spec API handler."""
+
     auth_resource = AUTH_RESOURCE
 
 
 class MainKernelSpecHandler(KernelSpecsAPIHandler):
+    """The root kernel spec handler."""
+
     @web.authenticated
     @authorized
     async def get(self):
+        """Get the list of kernel specs."""
         ksm = self.kernel_spec_manager
         km = self.kernel_manager
         model = {}
@@ -83,9 +88,12 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
 
 
 class KernelSpecHandler(KernelSpecsAPIHandler):
+    """A handler for an individual kernel spec."""
+
     @web.authenticated
     @authorized
     async def get(self, kernel_name):
+        """Get a kernel spec model."""
         ksm = self.kernel_spec_manager
         kernel_name = url_unescape(kernel_name)
         try:

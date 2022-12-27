@@ -1,3 +1,4 @@
+"""An extension application."""
 import logging
 import re
 import sys
@@ -87,7 +88,7 @@ class ExtensionAppJinjaMixin(HasTraits):
 
     @t.no_type_check
     def _prepare_templates(self):
-        # Get templates defined in a subclass.
+        """Get templates defined in a subclass."""
         self.initialize_templates()
         # Add templates to web app settings if extension has templates.
         if len(self.template_paths) > 0:
@@ -171,6 +172,7 @@ class ExtensionApp(JupyterApp):
 
     @classmethod
     def get_extension_package(cls):
+        """Get an extension package."""
         parts = cls.__module__.split(".")
         if is_namespace_package(parts[0]):
             # in this case the package name is `<namespace>.<package>`.
@@ -179,6 +181,7 @@ class ExtensionApp(JupyterApp):
 
     @classmethod
     def get_extension_point(cls):
+        """Get an extension point."""
         return cls.__module__
 
     # Extension URL sets the default landing page for this extension.
@@ -288,6 +291,7 @@ class ExtensionApp(JupyterApp):
         self.settings[f"{self.name}_config"] = self.extension_config
 
     def _prepare_settings(self):
+        """Prepare the settings."""
         # Make webapp settings accessible to initialize_settings method
         webapp = self.serverapp.web_app
         self.settings.update(**webapp.settings)
@@ -307,6 +311,7 @@ class ExtensionApp(JupyterApp):
         webapp.settings.update(**self.settings)
 
     def _prepare_handlers(self):
+        """Prepare the handlers."""
         webapp = self.serverapp.web_app
 
         # Get handlers defined by extension subclass.
@@ -348,12 +353,13 @@ class ExtensionApp(JupyterApp):
         webapp.add_handlers(".*$", new_handlers)
 
     def _prepare_templates(self):
-        # Add templates to web app settings if extension has templates.
+        """Add templates to web app settings if extension has templates."""
         if len(self.template_paths) > 0:
             self.settings.update({f"{self.name}_template_paths": self.template_paths})
         self.initialize_templates()
 
     def _jupyter_server_config(self):
+        """The jupyter server config."""
         base_config = {
             "ServerApp": {
                 "default_url": self.default_url,

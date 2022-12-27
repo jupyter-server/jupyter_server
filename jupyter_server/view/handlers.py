@@ -20,6 +20,7 @@ class ViewHandler(JupyterHandler):
     @web.authenticated
     @authorized
     async def get(self, path):
+        """Get a view on a given path."""
         path = path.strip("/")
         if not await ensure_async(self.contents_manager.file_exists(path)):
             raise web.HTTPError(404, "File does not exist: %s" % path)
