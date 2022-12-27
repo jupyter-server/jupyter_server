@@ -283,12 +283,8 @@ class GatewayKernelSpecManager(KernelSpecManager):
             if error.status_code == 404:
                 # Convert not found to KeyError since that's what the Notebook handler expects
                 # message is not used, but might as well make it useful for troubleshooting
-                raise KeyError(
-                    "kernelspec {kernel_name} not found on Gateway server at: {gateway_url}".format(
-                        kernel_name=kernel_name,
-                        gateway_url=GatewayClient.instance().url,
-                    )
-                ) from error
+                msg = f"kernelspec {kernel_name} not found on Gateway server at: {GatewayClient.instance().url}"
+                raise KeyError(msg) from None
             else:
                 raise
         else:
@@ -565,15 +561,17 @@ class ChannelQueue(Queue):
         if timeout is None:
             timeout = float("inf")
         elif timeout < 0:
-            raise ValueError("'timeout' must be a non-negative number")
+            msg = "'timeout' must be a non-negative number"
+            raise ValueError(msg)
         end_time = monotonic() + timeout
 
         while True:
             try:
                 return self.get(block=False)
-            except Empty as e:
+            except Empty:
                 if self.response_router_finished:
-                    raise RuntimeError("Response router had finished") from e
+                    msg = "Response router had finished"
+                    raise RuntimeError(msg) from None
                 if monotonic() > end_time:
                     raise
                 await asyncio.sleep(0)

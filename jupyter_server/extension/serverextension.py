@@ -339,7 +339,8 @@ class ListServerExtensionsApp(BaseExtensionApp):
                     self.log.info(f"    - Validating {name}...")
                     extension = ExtensionPackage(name=name, enabled=enabled)
                     if not extension.validate():
-                        raise ValueError("validation failed")
+                        msg = "validation failed"
+                        raise ValueError(msg)
                     version = extension.version
                     self.log.info(f"      {name} {version} {GREEN_OK}")
                 except Exception as err:

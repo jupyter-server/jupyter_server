@@ -419,12 +419,13 @@ class ServerWebApplication(web.Application):
                     for loc in locations:
                         handlers.extend(load_handlers(loc))
             else:
-                raise Exception(
-                    "{} is not recognized as a jupyter_server "
+                msg = (
+                    f"{service} is not recognized as a jupyter_server "
                     "service. If this is a custom service, "
                     "try adding it to the "
-                    "`extra_services` list.".format(service)
+                    "`extra_services` list."
                 )
+                raise Exception(msg)
 
         # Add extra handlers from contents manager.
         handlers.extend(settings["contents_manager"].get_extra_handlers())
@@ -2375,12 +2376,13 @@ class ServerApp(JupyterApp):
         """An instance of Tornado's HTTPServer class for the Server Web Application."""
         try:
             return self._http_server
-        except AttributeError as e:
-            raise AttributeError(
+        except AttributeError:
+            msg = (
                 "An HTTPServer instance has not been created for the "
                 "Server Web Application. To create an HTTPServer for this "
                 "application, call `.init_httpserver()`."
-            ) from e
+            )
+            raise AttributeError(msg) from None
 
     def init_httpserver(self):
         """Creates an instance of a Tornado HTTPServer for the Server Web Application
@@ -2388,10 +2390,11 @@ class ServerApp(JupyterApp):
         """
         # Check that a web_app has been initialized before starting a server.
         if not hasattr(self, "web_app"):
-            raise AttributeError(
+            msg = (
                 "A tornado web application has not be initialized. "
                 "Try calling `.init_webapp()` first."
             )
+            raise AttributeError(msg)
 
         # Create an instance of the server.
         self._http_server = httpserver.HTTPServer(

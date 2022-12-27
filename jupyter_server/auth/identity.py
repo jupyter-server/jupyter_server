@@ -72,7 +72,8 @@ class User:
 
         # username is the only truly required field
         if not self.username:
-            raise ValueError(f"user.username must not be empty: {self}")
+            msg = f"user.username must not be empty: {self}"
+            raise ValueError(msg)
 
         # derive name fields from username -> name -> display name
         if not self.name:
@@ -103,10 +104,12 @@ def _backward_compat_user(got_user: Any) -> User:
                 kwargs[field] = got_user[field]
         try:
             return User(**kwargs)
-        except TypeError as e:
-            raise ValueError(f"Unrecognized user: {got_user}") from e
+        except TypeError:
+            msg = f"Unrecognized user: {got_user}"
+            raise ValueError(msg) from None
     else:
-        raise ValueError(f"Unrecognized user: {got_user}")
+        msg = f"Unrecognized user: {got_user}"
+        raise ValueError(msg)
 
 
 class IdentityProvider(LoggingConfigurable):

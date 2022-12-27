@@ -64,24 +64,25 @@ class KernelSessionRecord:
                     self.kernel_id != other.kernel_id,
                 ]
             ):
-                raise KernelSessionRecordConflict(
+                msg = (
                     "A single session_id can only have one kernel_id "
                     "associated with. These two KernelSessionRecords share the same "
                     "session_id but have different kernel_ids. This should "
                     "not be possible and is likely an issue with the session "
                     "records."
                 )
+                raise KernelSessionRecordConflict(msg)
         return False
 
     def update(self, other: "KernelSessionRecord") -> None:
         """Updates in-place a kernel from other (only accepts positive updates"""
         if not isinstance(other, KernelSessionRecord):
-            raise TypeError("'other' must be an instance of KernelSessionRecord.")
+            msg = "'other' must be an instance of KernelSessionRecord."
+            raise TypeError(msg)
 
         if other.kernel_id and self.kernel_id and other.kernel_id != self.kernel_id:
-            raise KernelSessionRecordConflict(
-                "Could not update the record from 'other' because the two records conflict."
-            )
+            msg = "Could not update the record from 'other' because the two records conflict."
+            raise KernelSessionRecordConflict(msg)
 
         for field in fields(self):
             if hasattr(other, field.name) and getattr(other, field.name):
@@ -134,7 +135,8 @@ class KernelSessionRecordList:
             for r in self._records:
                 if record == r:
                     return record
-        raise ValueError(f"{record} not found in KernelSessionRecordList.")
+        msg = f"{record} not found in KernelSessionRecordList."
+        raise ValueError(msg)
 
     def update(self, record: KernelSessionRecord) -> None:
         """Update a record in-place or append it if not in the list."""
@@ -175,15 +177,15 @@ class SessionManager(LoggingConfigurable):
         if path.exists():
             # Verify that the database path is not a directory.
             if path.is_dir():
-                raise TraitError(
-                    "`database_filepath` expected a file path, but the given path is a directory."
-                )
+                msg = "`database_filepath` expected a file path, but the given path is a directory."
+                raise TraitError(msg)
             # Verify that database path is an SQLite 3 Database by checking its header.
             with open(value, "rb") as f:
                 header = f.read(100)
 
             if not header.startswith(b"SQLite format 3") and not header == b"":
-                raise TraitError("The given file is not an SQLite database file.")
+                msg = "The given file is not an SQLite database file."
+                raise TraitError(msg)
         return value
 
     kernel_manager = Instance("jupyter_server.services.kernels.kernelmanager.MappingKernelManager")
@@ -342,12 +344,14 @@ class SessionManager(LoggingConfigurable):
             session described by the kwarg.
         """
         if not kwargs:
-            raise TypeError("must specify a column to query")
+            msg = "must specify a column to query"
+            raise TypeError(msg)
 
         conditions = []
         for column in kwargs.keys():
             if column not in self._columns:
-                raise TypeError("No such column: %r", column)
+                msg = f"No such column: {column}"
+                raise TypeError(msg)
             conditions.append("%s=?" % column)
 
         query = "SELECT * FROM session WHERE %s" % (" AND ".join(conditions))

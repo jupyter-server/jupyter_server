@@ -45,11 +45,13 @@ class TypeFromClasses(ClassBasedTraitType):
 
         # OneOfType requires a list of klasses to be specified (different than Type).
         if not isinstance(klasses, (list, tuple, set)):
-            raise TraitError("`klasses` must be a list of class names (type is str) or classes.")
+            msg = "`klasses` must be a list of class names (type is str) or classes."
+            raise TraitError(msg)
 
         for klass in klasses:
             if not (inspect.isclass(klass) or isinstance(klass, str)):
-                raise TraitError("A OneOfType trait must specify a list of classes.")
+                msg = "A OneOfType trait must specify a list of classes."
+                raise TraitError(msg)
 
         # Store classes.
         self.klasses = klasses
@@ -165,9 +167,11 @@ class InstanceFromClasses(ClassBasedTraitType):
             )
 
         if (kw is not None) and not isinstance(kw, dict):
-            raise TraitError("The 'kw' argument must be a dict or None.")
+            msg = "The 'kw' argument must be a dict or None."
+            raise TraitError(msg)
         if (args is not None) and not isinstance(args, tuple):
-            raise TraitError("The 'args' argument must be a tuple or None.")
+            msg = "The 'args' argument must be a tuple or None."
+            raise TraitError(msg)
 
         self.default_args = args
         self.default_kwargs = kw
