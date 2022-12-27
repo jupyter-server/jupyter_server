@@ -100,10 +100,11 @@ class ExtensionHandlerMixin:
             self.require_setting(key, "static_url")  # type:ignore[attr-defined]
         except Exception as e:
             if key in self.settings:  # type:ignore[attr-defined]
-                raise Exception(
+                msg = (
                     "This extension doesn't have any static paths listed. Check that the "
                     "extension's `static_paths` trait is set."
-                ) from e
+                )
+                raise Exception(msg) from None
             else:
                 raise e
 

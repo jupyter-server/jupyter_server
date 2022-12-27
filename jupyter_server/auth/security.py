@@ -54,7 +54,8 @@ def passwd(passphrase=None, algorithm="argon2"):
             else:
                 warnings.warn("Passwords do not match.")
         else:
-            raise ValueError("No matching passwords found. Giving up.")
+            msg = "No matching passwords found. Giving up."
+            raise ValueError(msg)
 
     if algorithm == "argon2":
         import argon2

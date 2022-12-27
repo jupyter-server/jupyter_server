@@ -264,7 +264,8 @@ def _request_for_tornado_client(urlstring, method="GET", body=None, headers=None
         resolver = UnixSocketResolver(resolver=Resolver())
         AsyncHTTPClient.configure(None, resolver=resolver)
     else:
-        raise Exception("Unknown URL scheme.")
+        msg = "Unknown URL scheme."
+        raise Exception(msg)
 
     # Yield the request for the given client.
     url = urlunsplit(parts)
@@ -360,7 +361,8 @@ def filefind(filename, path_dirs=None):
         if os.path.isfile(testname):
             return os.path.abspath(testname)
 
-    raise OSError(f"File {filename!r} does not exist in any of the search paths: {path_dirs!r}")
+    msg = f"File {filename!r} does not exist in any of the search paths: {path_dirs!r}"
+    raise OSError(msg)
 
 
 def expand_path(s):

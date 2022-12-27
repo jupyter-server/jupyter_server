@@ -158,7 +158,7 @@ target-version = ["py38"]
 target-version = "py38"
 line-length = 100
 select = [
-  "A", "B", "C", "E", "F", "FBT", "I", "N", "Q", "RUF", "S", "T",
+  "A", "B", "C", "E", "EM", "F", "FBT", "I", "N", "Q", "RUF", "S", "T",
   "UP", "W", "YTT",
 ]
 ignore = [
@@ -206,7 +206,8 @@ unfixable = [
 # C408 Unnecessary `dict` call
 # E402 Module level import not at top of file
 # T201 `print` found
-"tests/*" = ["B011", "F841", "C408", "E402", "T201"]
+# EM101 Exception must not use a string literal
+"tests/*" = ["B011", "F841", "C408", "E402", "T201", "EM101", "EM102", "EM103"]
 # Ignore flake 8 errors from shimmed imports
 "jupyter_server/base/zmqhandlers.py" = ["F401"]
 # F821 Undefined name `c`

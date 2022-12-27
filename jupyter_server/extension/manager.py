@@ -27,18 +27,18 @@ class ExtensionPoint(HasTraits):
         # Verify that the metadata has a "name" key.
         try:
             self._module_name = metadata["module"]
-        except KeyError as e:
-            raise ExtensionMetadataError(
-                "There is no 'module' key in the extension's metadata packet."
-            ) from e
+        except KeyError:
+            msg = "There is no 'module' key in the extension's metadata packet."
+            raise ExtensionMetadataError(msg) from None
 
         try:
             self._module = importlib.import_module(self._module_name)
-        except ImportError as e:
-            raise ExtensionModuleNotFound(
-                "The submodule '{}' could not be found. Are you "
-                "sure the extension is installed?".format(self._module_name)
-            ) from e
+        except ImportError:
+            msg = (
+                f"The submodule '{self._module_name}' could not be found. Are you "
+                "sure the extension is installed?"
+            )
+            raise ExtensionModuleNotFound(msg) from None
         # If the metadata includes an ExtensionApp, create an instance.
         if "app" in metadata:
             self._app = metadata["app"]()
@@ -174,10 +174,11 @@ class ExtensionPackage(HasTraits):
         try:
             self._module, self._metadata = get_metadata(name)
         except ImportError as e:
-            raise ExtensionModuleNotFound(
-                "The module '{name}' could not be found ({e}). Are you "
-                "sure the extension is installed?".format(name=name, e=e)
-            ) from e
+            msg = (
+                f"The module '{name}' could not be found ({e}). Are you "
+                "sure the extension is installed?"
+            )
+            raise ExtensionModuleNotFound(msg) from None
         # Create extension point interfaces for each extension path.
         for m in self._metadata:
             point = ExtensionPoint(metadata=m)

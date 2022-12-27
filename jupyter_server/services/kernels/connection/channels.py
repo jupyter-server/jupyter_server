@@ -321,7 +321,8 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         while not await ensure_async(self.kernel_manager.is_alive()):
             await asyncio.sleep(0.1)
             if (time.time() - t0) > self.multi_kernel_manager.kernel_info_timeout:
-                raise TimeoutError("Kernel never reached an 'alive' state.")
+                msg = "Kernel never reached an 'alive' state."
+                raise TimeoutError(msg)
 
         self.session.key = self.kernel_manager.session.key
         future = self.request_kernel_info()

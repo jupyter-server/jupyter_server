@@ -134,7 +134,8 @@ class ContentsManager(LoggingConfigurable):
         if isinstance(value, str):
             value = import_item(self.pre_save_hook)
         if not callable(value):
-            raise TraitError("pre_save_hook must be callable")
+            msg = "pre_save_hook must be callable"
+            raise TraitError(msg)
         if callable(self.pre_save_hook):
             warnings.warn(
                 f"Overriding existing pre_save_hook ({self.pre_save_hook.__name__}) with a new one ({value.__name__}).",
@@ -169,7 +170,8 @@ class ContentsManager(LoggingConfigurable):
         if isinstance(value, str):
             value = import_item(value)
         if not callable(value):
-            raise TraitError("post_save_hook must be callable")
+            msg = "post_save_hook must be callable"
+            raise TraitError(msg)
         if callable(self.post_save_hook):
             warnings.warn(
                 f"Overriding existing post_save_hook ({self.post_save_hook.__name__}) with a new one ({value.__name__}).",
@@ -208,9 +210,10 @@ class ContentsManager(LoggingConfigurable):
             try:
                 self.log.debug("Running post-save hook on %s", os_path)
                 self.post_save_hook(os_path=os_path, model=model, contents_manager=self)
-            except Exception as e:
+            except Exception:
                 self.log.error("Post-save hook failed o-n %s", os_path, exc_info=True)
-                raise HTTPError(500, "Unexpected error while running post hook save: %s" % e) from e
+                msg = "fUnexpected error while running post hook save: {e}"
+                raise HTTPError(500, msg) from None
 
     _pre_save_hooks = List()
     _post_save_hooks = List()
@@ -220,7 +223,8 @@ class ContentsManager(LoggingConfigurable):
         if isinstance(hook, str):
             hook = import_item(hook)
         if not callable(hook):
-            raise RuntimeError("hook must be callable")
+            msg = "hook must be callable"
+            raise RuntimeError(msg)
         self._pre_save_hooks.append(hook)
 
     def register_post_save_hook(self, hook):
@@ -228,7 +232,8 @@ class ContentsManager(LoggingConfigurable):
         if isinstance(hook, str):
             hook = import_item(hook)
         if not callable(hook):
-            raise RuntimeError("hook must be callable")
+            msg = "hook must be callable"
+            raise RuntimeError(msg)
         self._post_save_hooks.append(hook)
 
     def run_pre_save_hooks(self, model, path, **kwargs):
@@ -377,7 +382,7 @@ class ContentsManager(LoggingConfigurable):
         exists : bool
             Whether the file exists.
         """
-        raise NotImplementedError("must be implemented in a subclass")
+        raise NotImplementedError
 
     def exists(self, path):
         """Does a file or directory exist at the given path?
@@ -398,7 +403,7 @@ class ContentsManager(LoggingConfigurable):
 
     def get(self, path, content=True, type=None, format=None):
         """Get a file or directory model."""
-        raise NotImplementedError("must be implemented in a subclass")
+        raise NotImplementedError
 
     def save(self, model, path):
         """
@@ -408,15 +413,15 @@ class ContentsManager(LoggingConfigurable):
         should call self.run_pre_save_hook(model=model, path=path) prior to
         writing any data.
         """
-        raise NotImplementedError("must be implemented in a subclass")
+        raise NotImplementedError
 
     def delete_file(self, path):
         """Delete the file or directory at path."""
-        raise NotImplementedError("must be implemented in a subclass")
+        raise NotImplementedError
 
     def rename_file(self, old_path, new_path):
         """Rename a file or directory."""
-        raise NotImplementedError("must be implemented in a subclass")
+        raise NotImplementedError
 
     # ContentsManager API part 2: methods that have useable default
     # implementations, but can be overridden in subclasses.
@@ -782,7 +787,7 @@ class AsyncContentsManager(ContentsManager):
         exists : bool
             Whether the file exists.
         """
-        raise NotImplementedError("must be implemented in a subclass")
+        raise NotImplementedError
 
     async def exists(self, path):
         """Does a file or directory exist at the given path?
@@ -805,7 +810,7 @@ class AsyncContentsManager(ContentsManager):
 
     async def get(self, path, content=True, type=None, format=None):
         """Get a file or directory model."""
-        raise NotImplementedError("must be implemented in a subclass")
+        raise NotImplementedError
 
     async def save(self, model, path):
         """
@@ -815,15 +820,15 @@ class AsyncContentsManager(ContentsManager):
         should call self.run_pre_save_hook(model=model, path=path) prior to
         writing any data.
         """
-        raise NotImplementedError("must be implemented in a subclass")
+        raise NotImplementedError
 
     async def delete_file(self, path):
         """Delete the file or directory at path."""
-        raise NotImplementedError("must be implemented in a subclass")
+        raise NotImplementedError
 
     async def rename_file(self, old_path, new_path):
         """Rename a file or directory."""
-        raise NotImplementedError("must be implemented in a subclass")
+        raise NotImplementedError
 
     # ContentsManager API part 2: methods that have useable default
     # implementations, but can be overridden in subclasses.
