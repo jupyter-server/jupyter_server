@@ -243,9 +243,8 @@ class AuthenticatedHandler(web.RequestHandler):
                 "be a required key for all subclasses of `JupyterHandler`. For an "
                 "example, see the jupyter_server source code for how to "
                 "add an identity provider to the tornado settings: "
-                "https://github.com/jupyter-server/jupyter_server/blob/"
-                "aa8fd8b3faf37466eeb99689d5555314c5bf6640/jupyter_server/serverapp.py"
-                "#L253",
+                "https://github.com/jupyter-server/jupyter_server/blob/v2.0.0/"
+                "jupyter_server/serverapp.py#L242",
             )
             from jupyter_server.auth import IdentityProvider
 
