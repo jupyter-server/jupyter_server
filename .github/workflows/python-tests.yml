@@ -67,8 +67,8 @@ jobs:
           # If this fails run `hatch run docs:api` locally
           # and commit.
           git status --porcelain
-          git status -s | grep "A" && exit 1
-          git status -s | grep "M" && exit 1
+          git status -s | grep -q A && exit 1
+          git status -s | grep -q M && exit 1
       - run: hatch run docs:build
 
   test_lint:
