@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.6
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.5...73d577610cda544e85139842c4186f7e77197440))
+
+### Bugs fixed
+
+- Iterate through set of apps in `extension_manager.any_activity` method [#1157](https://github.com/jupyter-server/jupyter_server/pull/1157) ([@mahendrapaipuri](https://github.com/mahendrapaipuri))
+
+### Maintenance and upkeep improvements
+
+- Handle flake8-errmsg [#1155](https://github.com/jupyter-server/jupyter_server/pull/1155) ([@blink1073](https://github.com/blink1073))
+- Add spelling and docstring enforcement [#1147](https://github.com/jupyter-server/jupyter_server/pull/1147) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Add spelling and docstring enforcement [#1147](https://github.com/jupyter-server/jupyter_server/pull/1147) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-12-23&to=2022-12-29&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-12-23..2022-12-29&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-12-23..2022-12-29&type=Issues) | [@mahendrapaipuri](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amahendrapaipuri+updated%3A2022-12-23..2022-12-29&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-12-23..2022-12-29&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.5
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.4...ec9029f07fe377ebb86b77e0eadd159fc9288c98))
@@ -22,8 +47,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-12-21&to=2022-12-23&type=c))
 
 [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2022-12-21..2022-12-23&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-12-21..2022-12-23&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2022-12-21..2022-12-23&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.4
 
