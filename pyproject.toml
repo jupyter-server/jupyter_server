@@ -81,6 +81,7 @@ docs = [
     "sphinxcontrib-openapi",
     "sphinxcontrib_github_alt",
     "sphinxcontrib-spelling",
+    "sphinx-autodoc-typehints",
     "sphinxemoji",
     "tornado",
 ]
@@ -92,6 +93,7 @@ jupyter-server = "jupyter_server.serverapp:main"
 features = ["docs"]
 [tool.hatch.envs.docs.scripts]
 build = "make -C docs html SPHINXOPTS='-W'"
+api = "sphinx-apidoc -o docs/source/api -f -E jupyter_server */terminal jupyter_server/pytest_plugin.py"
 
 [tool.hatch.envs.test]
 features = ["test"]

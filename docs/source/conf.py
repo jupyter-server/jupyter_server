@@ -82,6 +82,7 @@ extensions = [
     "sphinxcontrib_github_alt",
     "sphinxcontrib.openapi",
     "sphinxemoji.sphinxemoji",
+    "sphinx_autodoc_typehints",
 ]
 
 try:
@@ -370,10 +371,11 @@ texinfo_documents = [
 intersphinx_mapping = {
     "python": ("https://docs.python.org/", None),
     "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
-    "nbconvert": ("https://nbconvert.readthedocs.io/en/latest/", None),
-    "nbformat": ("https://nbformat.readthedocs.io/en/latest/", None),
-    "jupyter": ("https://jupyter.readthedocs.io/en/latest/", None),
+    "nbconvert": ("https://nbconvert.readthedocs.io/en/stable/", None),
+    "nbformat": ("https://nbformat.readthedocs.io/en/stable/", None),
+    "jupyter_core": ("https://jupyter_core.readthedocs.io/en/stable/", None),
     "tornado": ("https://www.tornadoweb.org/en/stable/", None),
+    "traitlets": ("https://traitlets.readthedocs.io/en/stable/", None),
 }
 
 spelling_lang = "en_US"

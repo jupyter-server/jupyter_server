@@ -26,10 +26,10 @@ class Authorizer(LoggingConfigurable):
 
     All authorizers used in Jupyter Server
     should inherit from this base class and, at the very minimum,
-    implement an `is_authorized` method with the
+    implement an ``is_authorized`` method with the
     same signature as in this base class.
 
-    The `is_authorized` method is called by the `@authorized` decorator
+    The ``is_authorized`` method is called by the ``@authorized`` decorator
     in JupyterHandler. If it returns True, the incoming request
     to the server is accepted; if it returns False, the server
     returns a 403 (Forbidden) error code.
@@ -45,14 +45,14 @@ class Authorizer(LoggingConfigurable):
     def is_authorized(
         self, handler: JupyterHandler, user: User, action: str, resource: str
     ) -> bool:
-        """A method to determine if `user` is authorized to perform `action`
-        (read, write, or execute) on the `resource` type.
+        """A method to determine if ``user`` is authorized to perform ``action``
+        (read, write, or execute) on the ``resource`` type.
 
         Parameters
         ----------
         user : jupyter_server.auth.User
             An object representing the authenticated user,
-            as returned by :meth:`.IdentityProvider.get_user`.
+            as returned by :meth:`jupyter_server.auth.IdentityProvider.get_user`.
 
         action : str
             the category of action for the current request: read, write, or execute.

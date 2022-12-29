@@ -308,7 +308,7 @@ class SessionManager(LoggingConfigurable):
             the path for the given session
         name: str
             the name of the session
-        type: string
+        type: str
             the type of the session
         kernel_id : str
             a uuid for the kernel associated with this session
@@ -333,7 +333,7 @@ class SessionManager(LoggingConfigurable):
 
         Parameters
         ----------
-        **kwargs : keyword argument
+        **kwargs : dict
             must be given one of the keywords and values from the session database
             (i.e. session_id, path, name, type, kernel_id)
 

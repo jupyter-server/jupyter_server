@@ -241,12 +241,12 @@ class FileManagerMixin(Configurable):
 
         Parameters
         ----------
-        path : string
+        path : str
             The relative API path to the named file.
 
         Returns
         -------
-        path : string
+        path : str
             Native, absolute OS path to for a file.
 
         Raises

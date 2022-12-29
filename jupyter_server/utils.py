@@ -97,8 +97,10 @@ def samefile_simple(path, other_path):
 
     Parameters
     ----------
-    path : String representing a path to a file
-    other_path : String representing a path to another file
+    path : str
+        representing a path to a file
+    other_path : str
+        representing a path to another file
 
     Returns
     -------
@@ -323,11 +325,16 @@ def filefind(filename, path_dirs=None):
     the full, absolute path of the first occurence of the file.  If no set of
     path dirs is given, the filename is tested as is, after running through
     :func:`expandvars` and :func:`expanduser`.  Thus a simple call::
+
         filefind('myfile.txt')
+
     will find the file in the current working dir, but::
+
         filefind('~/myfile.txt')
+
     Will find the file in the users home directory.  This function does not
     automatically try any paths, such as the cwd or the user's home directory.
+
     Parameters
     ----------
     filename : str
@@ -338,6 +345,7 @@ def filefind(filename, path_dirs=None):
         put into a sequence and the searched.  If a sequence, walk through
         each element and join with ``filename``, calling :func:`expandvars`
         and :func:`expanduser` before testing for existence.
+
     Returns
     -------
     Raises :exc:`IOError` or returns absolute path to file.
@@ -367,6 +375,7 @@ def filefind(filename, path_dirs=None):
 
 def expand_path(s):
     """Expand $VARS and ~names in a string, like a shell
+
     :Examples:
        In [2]: os.environ['FOO']='test'
        In [3]: expand_path('variable FOO is $FOO')
@@ -391,7 +400,7 @@ def import_item(name):
     executing the code ``from foo import bar``.
     Parameters
     ----------
-    name : string
+    name : str
       The fully qualified name of the module/package being imported.
     Returns
     -------
