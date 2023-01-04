@@ -3,6 +3,7 @@
 # Distributed under the terms of the Modified BSD License.
 import itertools
 import json
+import os
 import re
 import warnings
 from fnmatch import fnmatch
@@ -85,7 +86,7 @@ class ContentsManager(LoggingConfigurable):
             raise TraitError(_i18n("Preferred directory not found: %r") % value)
         try:
             if value != self.parent.preferred_dir:
-                self.parent.preferred_dir = value
+                self.parent.preferred_dir = os.path.join(self.root_dir, *value.split("/"))
         except (AttributeError, TraitError):
             pass
         return value
