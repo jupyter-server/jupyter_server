@@ -289,3 +289,6 @@ ignore-nested-functions=true
 ignore-nested-classes=true
 fail-under=95
 exclude = ["docs", "test"]
+
+[tool.check-wheel-contents]
+ignore = ["W002"]
