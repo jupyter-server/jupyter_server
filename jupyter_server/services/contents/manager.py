@@ -83,6 +83,11 @@ class ContentsManager(LoggingConfigurable):
             raise TraitError(e.log_message) from e
         if not dir_exists:
             raise TraitError(_i18n("Preferred directory not found: %r") % value)
+        try:
+            if value != self.parent.preferred_dir:
+                self.parent.preferred_dir = value
+        except (AttributeError, TraitError):
+            pass
         return value
 
     allow_hidden = Bool(False, config=True, help="Allow access to hidden files")
