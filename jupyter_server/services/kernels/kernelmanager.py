@@ -253,7 +253,10 @@ class MappingKernelManager(MultiKernelManager):
         assert kernel_id is not None
         return kernel_id
 
-    start_kernel = _async_start_kernel
+    # see https://github.com/jupyter-server/jupyter_server/issues/1165
+    # this assignment is technically incorrect, but might need a change of API
+    # in jupyter_client.
+    start_kernel = _async_start_kernel  # type: ignore[assignment]
 
     async def _finish_kernel_start(self, kernel_id):
         """Handle a kernel that finishes starting."""
