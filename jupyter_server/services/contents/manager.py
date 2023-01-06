@@ -71,7 +71,7 @@ class ContentsManager(LoggingConfigurable):
         try:
             import inspect
 
-            if inspect.isawaitable(self.dir_exists):
+            if inspect.iscoroutinefunction(self.dir_exists):
                 dir_exists = run_sync(self.dir_exists)(value)
             else:
                 dir_exists = self.dir_exists(value)
