@@ -103,3 +103,6 @@ module = [
     "websocket"
 ]
 ignore_missing_imports = true
+
+[tool.check-wheel-contents]
+ignore = ["W002"]
