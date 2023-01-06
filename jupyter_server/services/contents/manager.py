@@ -8,7 +8,7 @@ import re
 import warnings
 from fnmatch import fnmatch
 
-from jupyter_client.utils import run_sync
+from jupyter_core.utils import run_sync
 from nbformat import ValidationError, sign
 from nbformat import validate as validate_nb
 from nbformat.v4 import new_notebook
