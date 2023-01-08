@@ -47,3 +47,6 @@ docs/source/other/full-config.rst
 .history
 .vscode/*
 !.vscode/*.template
+
+# Compiled static file in example.
+examples/simple/simple_ext1/static/bundle.js
