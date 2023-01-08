@@ -1,3 +1,38 @@
 [build-system]
-requires = ["jupyter_packaging~=0.5.0", "setuptools>=40.8.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling","hatch-nodejs-version"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jupyter-server-example"
+description = "Jupyter Server Example"
+readme = "README.md"
+license = ""
+requires-python = ">=3.8"
+dependencies = [
+    "jinja2",
+    "jupyter_server",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[project.scripts]
+jupyter-simple-ext1 = "simple_ext1.application:main"
+jupyter-simple-ext11 = "simple_ext11.application:main"
+jupyter-simple-ext2 = "simple_ext2.application:main"
+
+[tool.hatch.version]
+source = "nodejs"
+
+[tool.hatch.build.targets.wheel.shared-data]
+"etc/jupyter/jupyter_server_config.d" = "etc/jupyter/jupyter_server_config.d"
+
+[tool.hatch.build.hooks.jupyter-builder]
+dependencies = [
+    "hatch-jupyter-builder>=0.8.2",
+]
+build-function = "hatch_jupyter_builder.npm_builder"
