@@ -268,18 +268,6 @@ warn_redundant_casts = true
 explicit_package_bases = true
 namespace_packages = true
 
-[[tool.mypy.overrides]]
-module = [
-    "pamela",
-    "pysqlite2",
-    "jupyter_events.*",
-    "jupyter_server_terminals.*",
-    "_frozen_importlib_external",
-    "send2trash",
-    "websocket"
-]
-ignore_missing_imports = true
-
 [tool.interrogate]
 ignore-init-module=true
 ignore-private=true
