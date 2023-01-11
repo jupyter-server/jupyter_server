@@ -144,7 +144,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
             The purpose of this shutdown is to restart the kernel (True)
         """
         km = self.get_kernel(kernel_id)
-        await km.shutdown_kernel(now=now, restart=restart)  # type:ignore[misc]
+        await km.shutdown_kernel(now=now, restart=restart)
         self.remove_kernel(kernel_id)
 
     async def restart_kernel(self, kernel_id, now=False, **kwargs):
@@ -156,7 +156,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
             The id of the kernel to restart.
         """
         km = self.get_kernel(kernel_id)
-        await km.restart_kernel(now=now, **kwargs)  # type:ignore[misc]
+        await km.restart_kernel(now=now, **kwargs)
 
     async def interrupt_kernel(self, kernel_id, **kwargs):
         """Interrupt a kernel by its kernel uuid.
@@ -167,14 +167,14 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
             The id of the kernel to interrupt.
         """
         km = self.get_kernel(kernel_id)
-        await km.interrupt_kernel()  # type:ignore[misc]
+        await km.interrupt_kernel()
 
     async def shutdown_all(self, now=False):
         """Shutdown all kernels."""
         kids = list(self._kernels)
         for kernel_id in kids:
             km = self.get_kernel(kernel_id)
-            await km.shutdown_kernel(now=now)  # type:ignore[misc]
+            await km.shutdown_kernel(now=now)
             self.remove_kernel(kernel_id)
 
     async def cull_kernels(self):

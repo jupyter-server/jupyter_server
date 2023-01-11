@@ -466,7 +466,7 @@ class SessionManager(LoggingConfigurable):
 
     async def row_to_model(self, row, tolerate_culled=False):
         """Takes sqlite database session row and turns it into a dictionary"""
-        kernel_culled = await ensure_async(self.kernel_culled(row["kernel_id"]))
+        kernel_culled: bool = await ensure_async(self.kernel_culled(row["kernel_id"]))
         if kernel_culled:
             # The kernel was culled or died without deleting the session.
             # We can't use delete_session here because that tries to find
