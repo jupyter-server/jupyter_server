@@ -8,6 +8,7 @@ from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.services.contents.manager import ContentsManager
 from jupyter_server.services.kernels.kernelmanager import MappingKernelManager
 from jupyter_server.services.sessions.sessionmanager import (
+    KernelName,
     KernelSessionRecord,
     KernelSessionRecordConflict,
     KernelSessionRecordList,
@@ -37,7 +38,7 @@ class MockMKM(MappingKernelManager):
     def _new_id(self):
         return next(self.id_letters)
 
-    async def start_kernel(self, kernel_id=None, path=None, kernel_name="python", **kwargs):
+    async def start_kernel(self, *, kernel_id=None, path=None, kernel_name="python", **kwargs):
         kernel_id = kernel_id or self._new_id()
         k = self._kernels[kernel_id] = DummyKernel(kernel_name=kernel_name)
         self._kernel_connections[kernel_id] = 0
@@ -50,7 +51,7 @@ class MockMKM(MappingKernelManager):
 
 
 class SlowStartingKernelsMKM(MockMKM):
-    async def start_kernel(self, kernel_id=None, path=None, kernel_name="python", **kwargs):
+    async def start_kernel(self, *, kernel_id=None, path=None, kernel_name="python", **kwargs):
         await asyncio.sleep(1.0)
         return await super().start_kernel(
             kernel_id=kernel_id, path=path, kernel_name=kernel_name, **kwargs
@@ -419,7 +420,7 @@ async def test_good_database_filepath(jp_runtime_dir):
     )
 
     await session_manager.create_session(
-        path="/path/to/test.ipynb", kernel_name="python", type="notebook"
+        path="/path/to/test.ipynb", kernel_name=KernelName("python"), type="notebook"
     )
     # Assert that the database file exists
     assert empty_file.exists()
@@ -451,7 +452,7 @@ async def test_session_persistence(jp_runtime_dir):
     )
 
     session = await session_manager.create_session(
-        path="/path/to/test.ipynb", kernel_name="python", type="notebook"
+        path="/path/to/test.ipynb", kernel_name=KernelName("python"), type="notebook"
     )
 
     # Assert that the database file exists
@@ -482,7 +483,7 @@ async def test_pending_kernel():
     )
     # Create a session with a slow starting kernel
     fut = session_manager.create_session(
-        path="/path/to/test.ipynb", kernel_name="python", type="notebook"
+        path="/path/to/test.ipynb", kernel_name=KernelName("python"), type="notebook"
     )
     task = asyncio.create_task(fut)
     await asyncio.sleep(0.1)
@@ -506,10 +507,10 @@ async def test_pending_kernel():
 
     # Test multiple, parallel pending kernels
     fut1 = session_manager.create_session(
-        path="/path/to/test.ipynb", kernel_name="python", type="notebook"
+        path="/path/to/test.ipynb", kernel_name=KernelName("python"), type="notebook"
     )
     fut2 = session_manager.create_session(
-        path="/path/to/test.ipynb", kernel_name="python", type="notebook"
+        path="/path/to/test.ipynb", kernel_name=KernelName("python"), type="notebook"
     )
     task1 = asyncio.create_task(fut1)
     await asyncio.sleep(0.1)

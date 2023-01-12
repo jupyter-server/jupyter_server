@@ -1,9 +1,14 @@
 """A base class session manager."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import os
 import pathlib
 import uuid
+from typing import Any, Dict, List, NewType, Optional, Union
+
+KernelName = NewType("KernelName", str)
+ModelName = NewType("ModelName", str)
 
 try:
     import sqlite3
@@ -12,7 +17,6 @@ except ImportError:
     from pysqlite2 import dbapi2 as sqlite3  # type:ignore
 
 from dataclasses import dataclass, fields
-from typing import Union
 
 from jupyter_core.utils import ensure_async
 from tornado import web
@@ -39,8 +43,8 @@ class KernelSessionRecord:
     associated with them.
     """
 
-    session_id: Union[None, str] = None
-    kernel_id: Union[None, str] = None
+    session_id: Optional[str] = None
+    kernel_id: Optional[str] = None
 
     def __eq__(self, other: object) -> bool:
         """Whether a record equals another."""
@@ -98,7 +102,9 @@ class KernelSessionRecordList:
     it will be appended.
     """
 
-    def __init__(self, *records):
+    _records: List[KernelSessionRecord]
+
+    def __init__(self, *records: KernelSessionRecord):
         """Initialize a record list."""
         self._records = []
         for record in records:
@@ -252,14 +258,26 @@ class SessionManager(LoggingConfigurable):
                 exists = True
         return exists
 
-    def new_session_id(self):
+    def new_session_id(self) -> str:
         """Create a uuid for a new session"""
         return str(uuid.uuid4())
 
     async def create_session(
-        self, path=None, name=None, type=None, kernel_name=None, kernel_id=None
-    ):
-        """Creates a session and returns its model"""
+        self,
+        path: Optional[str] = None,
+        name: Optional[ModelName] = None,
+        type: Optional[str] = None,
+        kernel_name: Optional[KernelName] = None,
+        kernel_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Creates a session and returns its model
+
+        name: ModelName(str)
+            Usually the model name, like the filename associated with current
+            kernel.
+
+
+        """
         session_id = self.new_session_id()
         record = KernelSessionRecord(session_id=session_id)
         self._pending_sessions.update(record)
@@ -277,15 +295,52 @@ class SessionManager(LoggingConfigurable):
         self._pending_sessions.remove(record)
         return result
 
-    def get_kernel_env(self, path):
-        """Return the environment variables that need to be set in the kernel"""
+    def get_kernel_env(
+        self, path: Optional[str], name: Optional[ModelName] = None
+    ) -> Dict[str, str]:
+        """Return the environment variables that need to be set in the kernel
+
+        path : str
+            the url path for the given session.
+        name: ModelName(str), optional
+            Here the name is likely to be the name of the associated file
+            with the current kernel at startup time.
+
+
+        """
+        if name is not None:
+            cwd = self.kernel_manager.cwd_for_path(path)
+            path = os.path.join(cwd, name)
+        assert isinstance(path, str)
         return {**os.environ, "JPY_SESSION_NAME": path}
 
-    async def start_kernel_for_session(self, session_id, path, name, type, kernel_name):
-        """Start a new kernel for a given session."""
+    async def start_kernel_for_session(
+        self,
+        session_id: str,
+        path: Optional[str],
+        name: Optional[ModelName],
+        type: Optional[str],
+        kernel_name: Optional[KernelName],
+    ) -> str:
+        """Start a new kernel for a given session.
+
+        session_id : str
+            uuid for the session; this method must be given a session_id
+        path : str
+            the path for the given session - seem to be a session id sometime.
+        name : str
+            Usually the model name, like the filename associated with current
+            kernel.
+        type : str
+            the type of the session
+        kernel_name : str
+            the name of the kernel specification to use.  The default kernel name will be used if not provided.
+
+        """
         # allow contents manager to specify kernels cwd
         kernel_path = await ensure_async(self.contents_manager.get_kernel_path(path=path))
-        kernel_env = self.get_kernel_env(path)
+
+        kernel_env = self.get_kernel_env(path, name)
         kernel_id = await self.kernel_manager.start_kernel(
             path=kernel_path,
             kernel_name=kernel_name,
@@ -306,9 +361,9 @@ class SessionManager(LoggingConfigurable):
             uuid for the session; this method must be given a session_id
         path : str
             the path for the given session
-        name: str
+        name : str
             the name of the session
-        type: string
+        type : str
             the type of the session
         kernel_id : str
             a uuid for the kernel associated with this session
@@ -405,13 +460,13 @@ class SessionManager(LoggingConfigurable):
         query = "UPDATE session SET %s WHERE session_id=?" % (", ".join(sets))
         self.cursor.execute(query, list(kwargs.values()) + [session_id])
 
-    def kernel_culled(self, kernel_id):
+    async def kernel_culled(self, kernel_id: str) -> bool:
         """Checks if the kernel is still considered alive and returns true if its not found."""
         return kernel_id not in self.kernel_manager
 
     async def row_to_model(self, row, tolerate_culled=False):
         """Takes sqlite database session row and turns it into a dictionary"""
-        kernel_culled = await ensure_async(self.kernel_culled(row["kernel_id"]))
+        kernel_culled: bool = await ensure_async(self.kernel_culled(row["kernel_id"]))
         if kernel_culled:
             # The kernel was culled or died without deleting the session.
             # We can't use delete_session here because that tries to find
