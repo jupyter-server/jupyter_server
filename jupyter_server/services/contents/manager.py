@@ -79,7 +79,12 @@ class ContentsManager(LoggingConfigurable):
     def _validate_preferred_dir(self, proposal):
         value = proposal["value"].strip("/")
         try:
-            dir_exists = run_sync(self.dir_exists)(value)
+            import inspect
+
+            if inspect.iscoroutinefunction(self.dir_exists):
+                dir_exists = run_sync(self.dir_exists)(value)
+            else:
+                dir_exists = self.dir_exists(value)
         except HTTPError as e:
             raise TraitError(e.log_message) from e
         if not dir_exists:
