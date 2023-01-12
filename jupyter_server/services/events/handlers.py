@@ -46,7 +46,7 @@ class SubscribeWebsocket(
         res = super().get(*args, **kwargs)
         await res
 
-    def event_listener(self, logger: EventLogger, schema_id: str, data: dict) -> None:
+    async def event_listener(self, logger: EventLogger, schema_id: str, data: dict) -> None:
         """Write an event message."""
         capsule = dict(schema_id=schema_id, **data)
         self.write_message(json.dumps(capsule))
@@ -55,11 +55,11 @@ class SubscribeWebsocket(
         """Routes events that are emitted by Jupyter Server's
         EventBus to a WebSocket client in the browser.
         """
-        self.event_logger.add_listener(listener=self.event_listener)
+        self.event_logger.add_listener(listener=self.event_listener)  # type:ignore[arg-type]
 
     def on_close(self):
         """Handle a socket close."""
-        self.event_logger.remove_listener(listener=self.event_listener)
+        self.event_logger.remove_listener(listener=self.event_listener)  # type:ignore[arg-type]
 
 
 def validate_model(data: Dict[str, Any]) -> None:
