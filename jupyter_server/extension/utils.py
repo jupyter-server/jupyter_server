@@ -1,6 +1,7 @@
 """Extension utilities."""
 import importlib
 import warnings
+import time
 
 
 class ExtensionLoadingError(Exception):
@@ -62,7 +63,14 @@ def get_metadata(package_name, logger=None):
     If it doesn't exist, return a basic metadata packet given
     the module name.
     """
+    start_time = time.perf_counter()
     module = importlib.import_module(package_name)
+    end_time = time.perf_counter()
+    duration = end_time - start_time
+    # Sometimes packages can take a *while* to import, so we report how long
+    # each module took to import. This makes it much easier for users to report
+    # slow loading modules upstream, as slow loading modules will block server startup
+    logger.info(f"Package {package_name} took {duration:.4f}s to import")
 
     try:
         return module, module._jupyter_server_extension_points()
