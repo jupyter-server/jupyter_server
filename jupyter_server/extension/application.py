@@ -124,12 +124,14 @@ class ExtensionApp(JupyterApp):
     """Base class for configurable Jupyter Server Extension Applications.
 
     ExtensionApp subclasses can be initialized two ways:
-    1. Extension is listed as a jpserver_extension, and ServerApp calls
-        its load_jupyter_server_extension classmethod. This is the
-        classic way of loading a server extension.
-    2. Extension is launched directly by calling its `launch_instance`
-        class method. This method can be set as a entry_point in
-        the extensions setup.py
+
+    - Extension is listed as a jpserver_extension, and ServerApp calls
+      its load_jupyter_server_extension classmethod. This is the
+      classic way of loading a server extension.
+
+    - Extension is launched directly by calling its `launch_instance`
+      class method. This method can be set as a entry_point in
+      the extensions setup.py.
     """
 
     # Subclasses should override this trait. Tells the server if
@@ -409,11 +411,10 @@ class ExtensionApp(JupyterApp):
         corresponding server app and webapp should already
         be initialized by this step.
 
-        1) Appends Handlers to the ServerApp,
-        2) Passes config and settings from ExtensionApp
-        to the Tornado web application
-        3) Points Tornado Webapp to templates and
-        static assets.
+        - Appends Handlers to the ServerApp,
+        - Passes config and settings from ExtensionApp
+          to the Tornado web application
+        - Points Tornado Webapp to templates and static assets.
         """
         if not self.serverapp:
             msg = (

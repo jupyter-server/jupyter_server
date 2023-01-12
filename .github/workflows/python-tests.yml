@@ -61,6 +61,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install enchant-2  # for spell checking
+      - name: Build API docs
+        run: |
+          hatch run docs:api
+          # If this fails run `hatch run docs:api` locally
+          # and commit.
+          git status --porcelain
+          git status -s | grep "A" && exit 1
+          git status -s | grep "M" && exit 1
+          echo "API docs done"
       - run: hatch run docs:build
 
   test_lint:

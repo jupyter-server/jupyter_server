@@ -118,9 +118,9 @@ class IdentityProvider(LoggingConfigurable):
 
     Two principle methods:
 
-    - :meth:`~.IdentityProvider.get_user` returns a :class:`~.User` object
+    - :meth:`~jupyter_server.auth.IdentityProvider.get_user` returns a :class:`~.User` object
       for successful authentication, or None for no-identity-found.
-    - :meth:`~.IdentityProvider.identity_model` turns a :class:`~.User` into a JSONable dict.
+    - :meth:`~jupyter_server.auth.IdentityProvider.identity_model` turns a :class:`~jupyter_server.auth.User` into a JSONable dict.
       The default is to use :py:meth:`dataclasses.asdict`,
       and usually shouldn't need override.
 
@@ -217,7 +217,7 @@ class IdentityProvider(LoggingConfigurable):
     def get_user(self, handler: JupyterHandler) -> User | None | Awaitable[User | None]:
         """Get the authenticated user for a request
 
-        Must return a :class:`.jupyter_server.auth.User`,
+        Must return a :class:`jupyter_server.auth.User`,
         though it may be a subclass.
 
         Return None if the request is not authenticated.

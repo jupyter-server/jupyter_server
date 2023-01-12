@@ -121,7 +121,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         Parameters
         ----------
-        path : string
+        path : str
             The path to check. This is an API path (`/` separated,
             relative to root_dir).
 
@@ -139,7 +139,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         Parameters
         ----------
-        path : string
+        path : str
             The path to check. This is an API path (`/` separated,
             relative to root_dir).
 
@@ -163,7 +163,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         Parameters
         ----------
-        path : string
+        path : str
             The relative path to the file (with '/' as separator)
 
         Returns
@@ -182,7 +182,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         Parameters
         ----------
-        path : string
+        path : str
             The path to check. This is an API path (`/` separated,
             relative to root_dir).
 
@@ -202,7 +202,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         Parameters
         ----------
-        path : string
+        path : str
             The API path to the file (with '/' as separator)
 
         Returns

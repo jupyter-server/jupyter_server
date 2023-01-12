@@ -119,23 +119,25 @@ class GenericCheckpointsMixin:
     def get_file_checkpoint(self, checkpoint_id, path):
         """Get the content of a checkpoint for a non-notebook file.
 
-        Returns a dict of the form:
-        {
-            'type': 'file',
-            'content': <str>,
-            'format': {'text','base64'},
-        }
+        Returns a dict of the form::
+
+            {
+                'type': 'file',
+                'content': <str>,
+                'format': {'text','base64'},
+            }
         """
         raise NotImplementedError
 
     def get_notebook_checkpoint(self, checkpoint_id, path):
         """Get the content of a checkpoint for a notebook.
 
-        Returns a dict of the form:
-        {
-            'type': 'notebook',
-            'content': <output of nbformat.read>,
-        }
+        Returns a dict of the form::
+
+            {
+                'type': 'notebook',
+                'content': <output of nbformat.read>,
+            }
         """
         raise NotImplementedError
 
@@ -229,22 +231,24 @@ class AsyncGenericCheckpointsMixin(GenericCheckpointsMixin):
     async def get_file_checkpoint(self, checkpoint_id, path):
         """Get the content of a checkpoint for a non-notebook file.
 
-        Returns a dict of the form:
-        {
-            'type': 'file',
-            'content': <str>,
-            'format': {'text','base64'},
-        }
+        Returns a dict of the form::
+
+            {
+                'type': 'file',
+                'content': <str>,
+                'format': {'text','base64'},
+            }
         """
         raise NotImplementedError
 
     async def get_notebook_checkpoint(self, checkpoint_id, path):
         """Get the content of a checkpoint for a notebook.
 
-        Returns a dict of the form:
-        {
-            'type': 'notebook',
-            'content': <output of nbformat.read>,
-        }
+        Returns a dict of the form::
+
+            {
+                'type': 'notebook',
+                'content': <output of nbformat.read>,
+            }
         """
         raise NotImplementedError

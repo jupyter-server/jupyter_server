@@ -388,7 +388,7 @@ class SessionManager(LoggingConfigurable):
 
         Parameters
         ----------
-        **kwargs : keyword argument
+        **kwargs : dict
             must be given one of the keywords and values from the session database
             (i.e. session_id, path, name, type, kernel_id)
 

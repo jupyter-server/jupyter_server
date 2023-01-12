@@ -370,7 +370,7 @@ class ContentsManager(LoggingConfigurable):
 
         Parameters
         ----------
-        path : string
+        path : str
             The path to check
 
         Returns
@@ -385,7 +385,7 @@ class ContentsManager(LoggingConfigurable):
 
         Parameters
         ----------
-        path : string
+        path : str
             The path to check. This is an API path (`/` separated,
             relative to root dir).
 
@@ -406,7 +406,7 @@ class ContentsManager(LoggingConfigurable):
 
         Parameters
         ----------
-        path : string
+        path : str
             The API path of a file to check for.
 
         Returns
@@ -423,7 +423,7 @@ class ContentsManager(LoggingConfigurable):
 
         Parameters
         ----------
-        path : string
+        path : str
             The API path of a file or directory to check for.
 
         Returns
@@ -680,7 +680,7 @@ class ContentsManager(LoggingConfigurable):
 
         Parameters
         ----------
-        path : string
+        path : str
             The path of a notebook
         """
         model = self.get(path)
@@ -698,7 +698,7 @@ class ContentsManager(LoggingConfigurable):
         ----------
         nb : dict
             The notebook dict
-        path : string
+        path : str
             The notebook's path (for logging)
         """
         if self.notary.check_cells(nb):
@@ -715,7 +715,7 @@ class ContentsManager(LoggingConfigurable):
         ----------
         nb : dict
             The notebook object (in current nbformat)
-        path : string
+        path : str
             The notebook's path (for logging)
         """
         trusted = self.notary.check_signature(nb)
@@ -775,7 +775,7 @@ class AsyncContentsManager(ContentsManager):
 
         Parameters
         ----------
-        path : string
+        path : str
             The path to check
 
         Returns
@@ -790,7 +790,7 @@ class AsyncContentsManager(ContentsManager):
 
         Parameters
         ----------
-        path : string
+        path : str
             The path to check. This is an API path (`/` separated,
             relative to root dir).
 
@@ -811,7 +811,7 @@ class AsyncContentsManager(ContentsManager):
 
         Parameters
         ----------
-        path : string
+        path : str
             The API path of a file to check for.
 
         Returns
@@ -828,7 +828,7 @@ class AsyncContentsManager(ContentsManager):
 
         Parameters
         ----------
-        path : string
+        path : str
             The API path of a file or directory to check for.
 
         Returns
@@ -1049,7 +1049,7 @@ class AsyncContentsManager(ContentsManager):
 
         Parameters
         ----------
-        path : string
+        path : str
             The path of a notebook
         """
         model = await self.get(path)

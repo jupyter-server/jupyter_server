@@ -81,10 +81,10 @@ Authentication and Authorization
 There are two steps to deciding whether to allow a given request to be happen.
 
 The first step is "Authentication" (identifying who is making the request).
-This is handled by the :class:`.IdentityProvider`.
+This is handled by the :class:`jupyter_server.auth.IdentityProvider`.
 
 Whether a given user is allowed to take a specific action is called "Authorization",
-and is handled separately, by an :class:`.Authorizer`.
+and is handled separately, by an :class:`~jupyter_server.auth.Authorizer`.
 
 These two classes may work together,
 as the information returned by the IdentityProvider is given to the Authorizer when it makes its decisions.
@@ -96,7 +96,7 @@ as all requests requiring _authorization_ must first complete _authentication_.
 Identity Providers
 ******************
 
-The :class:`.IdentityProvider` class is responsible for the "authentication" step,
+The :class:`jupyter_server.auth.IdentityProvider` class is responsible for the "authentication" step,
 identifying the user making the request,
 and constructing information about them.
 
@@ -107,9 +107,9 @@ It principally implements two methods.
   .. automethod:: get_user
   .. automethod:: identity_model
 
-The first is :meth:`.IdentityProvider.get_user`.
+The first is :meth:`jupyter_server.auth.IdentityProvider.get_user`.
 This method is given a RequestHandler, and is responsible for deciding whether there is an authenticated user making the request.
-If the request is authenticated, it should return a :class:`.jupyter_server.auth.User` object representing the authenticated user.
+If the request is authenticated, it should return a :class:`jupyter_server.auth.User` object representing the authenticated user.
 It should return None if the request is not authenticated.
 
 The default implementation accepts token or password authentication.
@@ -125,7 +125,7 @@ The User object will be a Python :py:class:`dataclasses.dataclass`, `jupyter_ser
 A custom IdentityProvider _may_ return a custom subclass.
 
 
-The next method an identity provider has is :meth:`~.IdentityProvider.identity_model`.
+The next method an identity provider has is :meth:`~jupyter_server.auth.IdentityProvider.identity_model`.
 `identity_model(user)` is responsible for transforming the user object returned from `.get_user()`
 into a standard identity model dictionary,
 for use in the `/api/me` endpoint.
