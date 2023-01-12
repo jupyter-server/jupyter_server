@@ -229,7 +229,8 @@ filterwarnings = [
   "ignore:run_pre_save_hook is deprecated:DeprecationWarning",
   "always:unclosed <socket.socket:ResourceWarning",
   "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
-  "ignore:jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0:DeprecationWarning"
+  "ignore:jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0:DeprecationWarning",
+  "ignore:zmq.eventloop.ioloop is deprecated in pyzmq 17:DeprecationWarning",
 ]
 
 [tool.coverage.report]

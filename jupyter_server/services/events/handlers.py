@@ -46,7 +46,7 @@ class SubscribeWebsocket(
         res = super().get(*args, **kwargs)
         await res
 
-    async def event_listener(self, logger: EventLogger, schema_id: str, data: dict) -> None:
+    def event_listener(self, logger: EventLogger, schema_id: str, data: dict) -> None:
         """Write an event message."""
         capsule = dict(schema_id=schema_id, **data)
         self.write_message(json.dumps(capsule))
