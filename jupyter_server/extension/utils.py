@@ -1,7 +1,7 @@
 """Extension utilities."""
 import importlib
-import warnings
 import time
+import warnings
 
 
 class ExtensionLoadingError(Exception):
