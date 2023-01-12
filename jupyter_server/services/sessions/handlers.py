@@ -52,12 +52,17 @@ class SessionRootHandler(SessionsAPIHandler):
         if model is None:
             raise web.HTTPError(400, "No JSON data provided")
 
-        if "notebook" in model and "path" in model["notebook"]:
+        if "notebook" in model:
             self.log.warning("Sessions API changed, see updated swagger docs")
-            model["path"] = model["notebook"]["path"]
             model["type"] = "notebook"
+            if "name" in model["notebook"]:
+                model["path"] = model["notebook"]["name"]
+            elif "path" in model["notebook"]:
+                model["path"] = model["notebook"]["path"]
 
         try:
+            # There is a high chance here that `path` is not a path but
+            # a unique session id
             path = model["path"]
         except KeyError as e:
             raise web.HTTPError(400, "Missing field in JSON data: path") from e

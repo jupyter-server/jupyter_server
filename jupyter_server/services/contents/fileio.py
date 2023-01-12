@@ -16,7 +16,7 @@ from tornado.web import HTTPError
 from traitlets import Bool
 from traitlets.config import Configurable
 
-from jupyter_server.utils import to_api_path, to_os_path
+from jupyter_server.utils import ApiPath, to_api_path, to_os_path
 
 
 def replace_file(src, dst):
@@ -257,7 +257,7 @@ class FileManagerMixin(Configurable):
         # to_os_path is not safe if path starts with a drive, since os.path.join discards first part
         if os.path.splitdrive(path)[0]:
             raise HTTPError(404, "%s is not a relative API path" % path)
-        os_path = to_os_path(path, root)
+        os_path = to_os_path(ApiPath(path), root)
         if not (os.path.abspath(os_path) + os.path.sep).startswith(root):
             raise HTTPError(404, "%s is outside root contents directory" % path)
         return os_path

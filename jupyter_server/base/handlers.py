@@ -735,7 +735,7 @@ class APIHandler(JupyterHandler):
                 reply["message"] = "Unhandled error"
                 reply["reason"] = None
                 reply["traceback"] = "".join(traceback.format_exception(*exc_info))
-        self.log.warning("wrote error: %r", reply["message"])
+        self.log.warning("wrote error: %r", reply["message"], exc_info=True)
         self.finish(json.dumps(reply))
 
     def get_login_url(self):

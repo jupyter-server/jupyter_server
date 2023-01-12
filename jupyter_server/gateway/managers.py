@@ -57,7 +57,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         except KeyError:
             pass
 
-    async def start_kernel(self, kernel_id=None, path=None, **kwargs):
+    async def start_kernel(self, *, kernel_id=None, path=None, **kwargs):
         """Start a kernel for a session and return its kernel_id.
 
         Parameters
@@ -323,7 +323,7 @@ class GatewaySessionManager(SessionManager):
 
     kernel_manager = Instance("jupyter_server.gateway.managers.GatewayMappingKernelManager")
 
-    async def kernel_culled(self, kernel_id: str) -> bool:
+    async def kernel_culled(self, kernel_id: str) -> bool:  # typing: ignore
         """Checks if the kernel is still considered alive and returns true if it's not found."""
         km: Optional[GatewayKernelManager] = None
         try:
