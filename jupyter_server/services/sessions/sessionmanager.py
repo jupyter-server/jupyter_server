@@ -14,7 +14,7 @@ try:
     import sqlite3
 except ImportError:
     # fallback on pysqlite2 if Python was build without sqlite
-    from pysqlite2 import dbapi2 as sqlite3  # type:ignore[no-redef]
+    from pysqlite2 import dbapi2 as sqlite3  # type:ignore
 
 from dataclasses import dataclass, fields
 

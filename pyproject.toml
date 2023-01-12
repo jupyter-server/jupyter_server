@@ -229,7 +229,8 @@ filterwarnings = [
   "ignore:run_pre_save_hook is deprecated:DeprecationWarning",
   "always:unclosed <socket.socket:ResourceWarning",
   "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
-  "ignore:jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0:DeprecationWarning"
+  "ignore:jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0:DeprecationWarning",
+  "ignore:zmq.eventloop.ioloop is deprecated in pyzmq 17:DeprecationWarning",
 ]
 
 [tool.coverage.report]
@@ -267,18 +268,6 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 explicit_package_bases = true
 namespace_packages = true
-
-[[tool.mypy.overrides]]
-module = [
-    "pamela",
-    "pysqlite2",
-    "jupyter_events.*",
-    "jupyter_server_terminals.*",
-    "_frozen_importlib_external",
-    "send2trash",
-    "websocket"
-]
-ignore_missing_imports = true
 
 [tool.interrogate]
 ignore-init-module=true

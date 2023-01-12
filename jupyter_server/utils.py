@@ -20,7 +20,7 @@ from urllib.parse import (
 )
 from urllib.request import pathname2url  # noqa: F401
 
-from _frozen_importlib_external import _NamespacePath
+from _frozen_importlib_external import _NamespacePath  # type:ignore
 from jupyter_core.utils import ensure_async
 from packaging.version import Version
 from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest
