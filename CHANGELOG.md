@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.23.5
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.23.4...2ca800829c96dc60893dc83715282b7b8fd03d59))
+
+### Bugs fixed
+
+- Backport PR #1162: Reapply preferred_dir fix, now with better backwards compatability [#1167](https://github.com/jupyter-server/jupyter_server/pull/1167) ([@vidartf](https://github.com/vidartf))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-12-20&to=2023-01-12&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-12-20..2023-01-12&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2022-12-20..2023-01-12&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-12-20..2023-01-12&type=Issues) | [@meeseeksdev](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksdev+updated%3A2022-12-20..2023-01-12&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2022-12-20..2023-01-12&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-12-20..2023-01-12&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.23.4
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.23.3...0a02e42b960875ad578101670128dd0d7df83c47))
@@ -19,8 +35,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-11-21&to=2022-12-20&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-11-21..2022-12-20&type=Issues) | [@bollwyvl](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abollwyvl+updated%3A2022-11-21..2022-12-20&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-11-21..2022-12-20&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afcollonval+updated%3A2022-11-21..2022-12-20&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2022-11-21..2022-12-20&type=Issues) | [@meeseeksmachine](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksmachine+updated%3A2022-11-21..2022-12-20&type=Issues) | [@ofek](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aofek+updated%3A2022-11-21..2022-12-20&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2022-11-21..2022-12-20&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-11-21..2022-12-20&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2022-11-21..2022-12-20&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.23.3
 
