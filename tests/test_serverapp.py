@@ -18,7 +18,16 @@ from jupyter_server.serverapp import (
     list_running_servers,
     random_ports,
 )
+from jupyter_server.services.contents.filemanager import (
+    AsyncFileContentsManager,
+    FileContentsManager,
+)
 from jupyter_server.utils import pathname2url, urljoin
+
+
+@pytest.fixture(params=[FileContentsManager, AsyncFileContentsManager])
+def jp_file_contents_manager_class(request, tmp_path):
+    return request.param
 
 
 def test_help_output():
@@ -291,9 +300,26 @@ def test_valid_preferred_dir_does_not_exist(tmp_path, jp_configurable_serverapp)
     path = str(tmp_path)
     path_subdir = str(tmp_path / "subdir")
     with pytest.raises(TraitError) as error:
-        app = jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
+        jp_configurable_serverapp(root_dir=path, preferred_dir=path_subdir)
 
     assert "No such preferred dir:" in str(error)
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_preferred_dir_validation_sync_regression(
+    tmp_path, jp_configurable_serverapp, jp_file_contents_manager_class
+):
+    path = str(tmp_path)
+    path_subdir = str(tmp_path / "subdir")
+    os.makedirs(path_subdir, exist_ok=True)
+    app = jp_configurable_serverapp(
+        root_dir=path,
+        contents_manager_class=jp_file_contents_manager_class,
+    )
+    app.contents_manager.preferred_dir = path_subdir
+    assert app.preferred_dir == path_subdir
+    assert app.preferred_dir.startswith(app.root_dir)
+    assert app.contents_manager.preferred_dir == "subdir"
 
 
 # This tests some deprecated behavior as well
