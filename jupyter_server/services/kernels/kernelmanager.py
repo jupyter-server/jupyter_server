@@ -7,10 +7,13 @@
 # Distributed under the terms of the Modified BSD License.
 import asyncio
 import os
+import typing as t
 import warnings
 from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import partial
+from typing import Dict as DictType
+from typing import Optional
 
 from jupyter_client.ioloop.manager import AsyncIOLoopKernelManager
 from jupyter_client.multikernelmanager import AsyncMultiKernelManager, MultiKernelManager
@@ -36,7 +39,7 @@ from traitlets import (
 
 from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
-from jupyter_server.utils import import_item, to_os_path
+from jupyter_server.utils import ApiPath, import_item, to_os_path
 
 
 class MappingKernelManager(MultiKernelManager):
@@ -56,7 +59,7 @@ class MappingKernelManager(MultiKernelManager):
 
     _kernel_connections = Dict()
 
-    _kernel_ports = Dict()
+    _kernel_ports: DictType[str, t.List[int]] = Dict()  # type: ignore
 
     _culler_callback = None
 
@@ -196,12 +199,16 @@ class MappingKernelManager(MultiKernelManager):
         self._kernel_connections.pop(kernel_id, None)
         self._kernel_ports.pop(kernel_id, None)
 
-    async def _async_start_kernel(self, kernel_id=None, path=None, **kwargs):
+    # TODO DEC 2022: Revise the type-ignore once the signatures have been changed upstream
+    # https://github.com/jupyter/jupyter_client/pull/905
+    async def _async_start_kernel(  # type:ignore[override]
+        self, *, kernel_id: Optional[str] = None, path: Optional[ApiPath] = None, **kwargs: str
+    ) -> str:
         """Start a kernel for a session and return its kernel_id.
 
         Parameters
         ----------
-        kernel_id : uuid
+        kernel_id : uuid (str)
             The uuid to associate the new kernel with. If this
             is not None, this kernel will be persistent whenever it is
             requested.
@@ -216,6 +223,7 @@ class MappingKernelManager(MultiKernelManager):
             if path is not None:
                 kwargs["cwd"] = self.cwd_for_path(path, env=kwargs.get("env", {}))
             if kernel_id is not None:
+                assert kernel_id is not None, "Never Fail, but necessary for mypy "
                 kwargs["kernel_id"] = kernel_id
             kernel_id = await self.pinned_superclass._async_start_kernel(self, **kwargs)
             self._kernel_connections[kernel_id] = 0
@@ -242,9 +250,12 @@ class MappingKernelManager(MultiKernelManager):
         # Initialize culling if not already
         if not self._initialized_culler:
             self.initialize_culler()
-
+        assert kernel_id is not None
         return kernel_id
 
+    # see https://github.com/jupyter-server/jupyter_server/issues/1165
+    # this assignment is technically incorrect, but might need a change of API
+    # in jupyter_client.
     start_kernel = _async_start_kernel
 
     async def _finish_kernel_start(self, kernel_id):
@@ -299,6 +310,8 @@ class MappingKernelManager(MultiKernelManager):
         """
         # Get current ports and return comparison with ports captured at startup.
         km = self.get_kernel(kernel_id)
+        assert isinstance(km.ports, list)
+        assert isinstance(self._kernel_ports[kernel_id], list)
         if km.ports != self._kernel_ports[kernel_id]:
             return km.ports
         return None

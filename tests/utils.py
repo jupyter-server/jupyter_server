@@ -1,4 +1,5 @@
 import json
+from typing import NewType
 
 from tornado.httpclient import HTTPClientError
 from tornado.web import HTTPError
@@ -9,6 +10,8 @@ sample_kernel_json = {
     "argv": ["cat", "{connection_file}"],
     "display_name": "Test kernel",
 }
+
+ApiPath = NewType("ApiPath", str)
 
 
 def mkdir(tmp_path, *parts):

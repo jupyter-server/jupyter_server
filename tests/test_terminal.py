@@ -4,6 +4,7 @@ import os
 import shlex
 import shutil
 import sys
+import warnings
 
 import pytest
 from tornado.httpclient import HTTPClientError
@@ -284,4 +285,19 @@ def test_shell_command_override(
     pytest.importorskip("traitlets", minversion=min_traitlets)
     argv = shlex.split(f"--ServerApp.terminado_settings={terminado_settings}")
     app = jp_configurable_serverapp(argv=argv)
-    assert app.web_app.settings["terminal_manager"].shell_command == expected_shell
+    if os.name == "nt":
+        assert app.web_app.settings["terminal_manager"].shell_command in (
+            expected_shell,
+            " ".join(expected_shell),
+        )
+    else:
+        assert app.web_app.settings["terminal_manager"].shell_command == expected_shell
+
+
+def test_importing_shims():
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        from jupyter_server.terminal import initialize  # noqa
+        from jupyter_server.terminal.api_handlers import TerminalRootHandler  # noqa
+        from jupyter_server.terminal.handlers import TermSocket  # noqa
+        from jupyter_server.terminal.terminalmanager import TerminalManager  # noqa

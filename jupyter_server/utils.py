@@ -8,6 +8,7 @@ import socket
 import sys
 import warnings
 from contextlib import contextmanager
+from typing import NewType
 from urllib.parse import (
     SplitResult,
     quote,
@@ -17,13 +18,15 @@ from urllib.parse import (
     urlsplit,
     urlunsplit,
 )
-from urllib.request import pathname2url  # noqa
+from urllib.request import pathname2url  # noqa: F401
 
-from _frozen_importlib_external import _NamespacePath
+from _frozen_importlib_external import _NamespacePath  # type:ignore
 from jupyter_core.utils import ensure_async
 from packaging.version import Version
 from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest
 from tornado.netutil import Resolver
+
+ApiPath = NewType("ApiPath", str)
 
 
 def url_path_join(*pieces):
@@ -111,19 +114,19 @@ def samefile_simple(path, other_path):
     return path.lower() == other_path.lower() and path_stat == other_path_stat
 
 
-def to_os_path(path, root=""):
+def to_os_path(path: ApiPath, root: str = "") -> str:
     """Convert an API path to a filesystem path
 
     If given, root will be prepended to the path.
     root must be a filesystem path already.
     """
-    parts = path.strip("/").split("/")
+    parts = str(path).strip("/").split("/")
     parts = [p for p in parts if p != ""]  # remove duplicate splits
-    path = os.path.join(root, *parts)
-    return os.path.normpath(path)
+    path_ = os.path.join(root, *parts)
+    return os.path.normpath(path_)
 
 
-def to_api_path(os_path, root=""):
+def to_api_path(os_path: str, root: str = "") -> ApiPath:
     """Convert a filesystem path to an API path
 
     If given, root will be removed from the path.
@@ -134,7 +137,7 @@ def to_api_path(os_path, root=""):
     parts = os_path.strip(os.path.sep).split(os.path.sep)
     parts = [p for p in parts if p != ""]  # remove duplicate splits
     path = "/".join(parts)
-    return path
+    return ApiPath(path)
 
 
 def check_version(v, check):

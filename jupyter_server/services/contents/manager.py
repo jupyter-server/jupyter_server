@@ -3,10 +3,12 @@
 # Distributed under the terms of the Modified BSD License.
 import itertools
 import json
+import os
 import re
 import warnings
 from fnmatch import fnmatch
 
+from jupyter_client.utils import run_sync
 from jupyter_core.utils import ensure_async
 from jupyter_events import EventLogger
 from nbformat import ValidationError, sign
@@ -65,10 +67,35 @@ class ContentsManager(LoggingConfigurable):
 
     root_dir = Unicode("/", config=True)
 
+    preferred_dir = Unicode(
+        "",
+        config=True,
+        help=_i18n(
+            "Preferred starting directory to use for notebooks. This is an API path (`/` separated, relative to root dir)"
+        ),
+    )
+
+    @validate("preferred_dir")
+    def _validate_preferred_dir(self, proposal):
+        value = proposal["value"].strip("/")
+        try:
+            dir_exists = run_sync(self.dir_exists)(value)
+        except HTTPError as e:
+            raise TraitError(e.log_message) from e
+        if not dir_exists:
+            raise TraitError(_i18n("Preferred directory not found: %r") % value)
+        try:
+            if value != self.parent.preferred_dir:
+                self.parent.preferred_dir = os.path.join(self.root_dir, *value.split("/"))
+        except (AttributeError, TraitError):
+            pass
+        return value
+
     allow_hidden = Bool(False, config=True, help="Allow access to hidden files")
 
     notary = Instance(sign.NotebookNotary)
 
+    @default("notary")
     def _notary_default(self):
         return sign.NotebookNotary(parent=self)
 

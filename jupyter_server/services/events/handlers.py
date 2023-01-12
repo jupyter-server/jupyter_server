@@ -55,11 +55,11 @@ class SubscribeWebsocket(
         """Routes events that are emitted by Jupyter Server's
         EventBus to a WebSocket client in the browser.
         """
-        self.event_logger.add_listener(listener=self.event_listener)
+        self.event_logger.add_listener(listener=self.event_listener)  # type:ignore[arg-type]
 
     def on_close(self):
         """Handle a socket close."""
-        self.event_logger.remove_listener(listener=self.event_listener)
+        self.event_logger.remove_listener(listener=self.event_listener)  # type:ignore[arg-type]
 
 
 def validate_model(data: Dict[str, Any]) -> None:
