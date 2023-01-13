@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.1.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.7...34f509d8da1710039634bc16f5336570c4861bcd))
+
+### Bugs fixed
+
+- Fix preferred_dir for sync contents manager [#1173](https://github.com/jupyter-server/jupyter_server/pull/1173) ([@vidartf](https://github.com/vidartf))
+
+### Maintenance and upkeep improvements
+
+- Update typing and warning handling [#1174](https://github.com/jupyter-server/jupyter_server/pull/1174) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Add api docs [#1159](https://github.com/jupyter-server/jupyter_server/pull/1159) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-01-12&to=2023-01-12&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-01-12..2023-01-12&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2023-01-12..2023-01-12&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2023-01-12..2023-01-12&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.7
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.0.6...5cce2afcbeeb44581e9b29ab27fef75a12d651ca))
@@ -29,8 +53,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-12-29&to=2023-01-12&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-12-29..2023-01-12&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2022-12-29..2023-01-12&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-12-29..2023-01-12&type=Issues) | [@consideRatio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AconsideRatio+updated%3A2022-12-29..2023-01-12&type=Issues) | [@meeseeksdev](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksdev+updated%3A2022-12-29..2023-01-12&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2022-12-29..2023-01-12&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2022-12-29..2023-01-12&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-12-29..2023-01-12&type=Issues) | [@yuvipanda](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ayuvipanda+updated%3A2022-12-29..2023-01-12&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.6
 
