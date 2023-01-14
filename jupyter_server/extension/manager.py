@@ -147,7 +147,7 @@ class ExtensionPoint(HasTraits):
         return loader(serverapp)
 
 
-class ExtensionPackage(HasTraits):
+class ExtensionPackage(LoggingConfigurable):
     """An API for interfacing with a Jupyter Server extension package.
 
     Usage:
@@ -172,7 +172,7 @@ class ExtensionPackage(HasTraits):
         name = proposed["value"]
         self._extension_points = {}
         try:
-            self._module, self._metadata = get_metadata(name)
+            self._module, self._metadata = get_metadata(name, self.log)
         except ImportError as e:
             msg = (
                 f"The module '{name}' could not be found ({e}). Are you "
