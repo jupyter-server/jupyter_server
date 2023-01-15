@@ -246,14 +246,17 @@ class ToggleServerExtensionApp(BaseExtensionApp):
         )
         try:
             self.log.info(f"{self._toggle_pre_message.capitalize()}: {import_name}")
-            self.log.info(f"- Writing config: {config_dir}")
-            # Validate the server extension.
-            self.log.info(f"    - Validating {import_name}...")
-            # Interface with the Extension Package and validate.
-            extpkg = ExtensionPackage(name=import_name)
-            extpkg.validate()
-            version = extpkg.version
-            self.log.info(f"      {import_name} {version} {GREEN_OK}")
+            self.log.info(f"    - Writing config: {config_dir}")
+            # If enabling, validate the server extension.
+            if self._toggle_pre_message == "enabling":
+                self.log.info(f"    - Validating {import_name}...")
+                # Interface with the Extension Package and validate.
+                extpkg = ExtensionPackage(name=import_name, action=self._toggle_pre_message)
+                extpkg.validate()
+                version = extpkg.version
+                self.log.info(f"      {import_name} {version} {GREEN_OK}")
+            else:
+                self.log.info(f"    - Validation of {import_name} skipped due to acton to disable.")
 
             # Toggle extension config.
             config = extension_manager.config_manager
@@ -335,19 +338,22 @@ class ListServerExtensionsApp(BaseExtensionApp):
             for name, enabled in jpserver_extensions.items():
                 # Attempt to get extension metadata
                 self.log.info(f"    {name} {GREEN_ENABLED if enabled else RED_DISABLED}")
-                try:
-                    self.log.info(f"    - Validating {name}...")
-                    extension = ExtensionPackage(name=name, enabled=enabled)
-                    if not extension.validate():
-                        msg = "validation failed"
-                        raise ValueError(msg)
-                    version = extension.version
-                    self.log.info(f"      {name} {version} {GREEN_OK}")
-                except Exception as err:
-                    exc_info = False
-                    if int(self.log_level) <= logging.DEBUG:
-                        exc_info = True
-                    self.log.warning(f"      {RED_X} {err}", exc_info=exc_info)
+                if enabled:
+                    try:
+                        self.log.info(f"    - Validating {name}...")
+                        extension = ExtensionPackage(name=name, enabled=enabled)
+                        if not extension.validate():
+                            msg = "validation failed"
+                            raise ValueError(msg)
+                        version = extension.version
+                        self.log.info(f"      {name} {version} {GREEN_OK}")
+                    except Exception as err:
+                        exc_info = False
+                        if int(self.log_level) <= logging.DEBUG:
+                            exc_info = True
+                        self.log.warning(f"      {RED_X} {err}", exc_info=exc_info)
+                else:
+                    self.log.info(f"    - Validation of {name} skipped.")
             # Add a blank line between paths.
             self.log.info("")
 

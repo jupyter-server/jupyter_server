@@ -163,6 +163,10 @@ class ExtensionPackage(LoggingConfigurable):
         """Initialize an extension package."""
         # Store extension points that have been linked.
         self._linked_points = {}
+        self._extension_points = {}
+        self._module = None
+        self._metadata = []
+        self._action = kwargs.pop("action", "")
         super().__init__(*args, **kwargs)
 
     _linked_points: dict = {}
@@ -172,7 +176,9 @@ class ExtensionPackage(LoggingConfigurable):
         name = proposed["value"]
         self._extension_points = {}
         try:
-            self._module, self._metadata = get_metadata(name, self.log)
+            # Perform load if we're enabling, or it's already enabled and not disabling the module
+            if (self.enabled and self._action != "disabling") or self._action == "enabling":
+                self._module, self._metadata = get_metadata(name, self.log)
         except ImportError as e:
             msg = (
                 f"The module '{name}' could not be found ({e}). Are you "

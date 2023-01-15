@@ -71,7 +71,7 @@ def get_metadata(package_name, logger=None):
     # each module took to import. This makes it much easier for users to report
     # slow loading modules upstream, as slow loading modules will block server startup
     if logger:
-        logger.info(f"Package {package_name} took {duration:.4f}s to import")
+        logger.info(f"    - Package {package_name} took {duration:.4f}s to import")
 
     try:
         return module, module._jupyter_server_extension_points()
