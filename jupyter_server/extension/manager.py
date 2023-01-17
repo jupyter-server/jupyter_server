@@ -2,7 +2,7 @@
 import importlib
 
 from tornado.gen import multi
-from traitlets import Any, Bool, Dict, HasTraits, Instance, Unicode, default, observe
+from traitlets import Any, Bool, Dict, HasTraits, Instance, List, Unicode, default, observe
 from traitlets import validate as validate_trait
 from traitlets.config import LoggingConfigurable
 
@@ -157,22 +157,39 @@ class ExtensionPackage(LoggingConfigurable):
     """
 
     name = Unicode(help="Name of the an importable Python package.")
-    enabled = Bool(False).tag(config=True)
+    enabled = Bool(False, help="Whether the extension package is enabled.")
 
-    def __init__(self, *args, **kwargs):
+    _linked_points = Dict()
+    extension_points = Dict()
+    module = Any(allow_none=True, help="The module for this extension package. None if not enabled")
+    metadata = List(Dict(), help="Extension metadata loaded from the extension package.")
+    version = Unicode(
+        help="""
+            The version of this extension package, if it can be found.
+            Otherwise, an empty string.
+            """,
+    )
+
+    @default("version")
+    def _load_version(self):
+        if not self.enabled:
+            return ""
+        return getattr(self.module, "__version__", "")
+
+    def __init__(self, **kwargs):
         """Initialize an extension package."""
-        # Store extension points that have been linked.
-        self._linked_points = {}
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
+        if self.enabled:
+            self._load_metadata()
 
-    _linked_points: dict = {}
+    def _load_metadata(self):
+        """Import package and load metadata
 
-    @validate_trait("name")
-    def _validate_name(self, proposed):
-        name = proposed["value"]
-        self._extension_points = {}
+        Only used if extension package is enabled
+        """
+        name = self.name
         try:
-            self._module, self._metadata = get_metadata(name, self.log)
+            self.module, self.metadata = get_metadata(name, logger=self.log)
         except ImportError as e:
             msg = (
                 f"The module '{name}' could not be found ({e}). Are you "
@@ -180,30 +197,10 @@ class ExtensionPackage(LoggingConfigurable):
             )
             raise ExtensionModuleNotFound(msg) from None
         # Create extension point interfaces for each extension path.
-        for m in self._metadata:
+        for m in self.metadata:
             point = ExtensionPoint(metadata=m)
-            self._extension_points[point.name] = point
+            self.extension_points[point.name] = point
         return name
-
-    @property
-    def module(self):
-        """Extension metadata loaded from the extension package."""
-        return self._module
-
-    @property
-    def version(self) -> str:
-        """Get the version of this package, if it's given. Otherwise, return an empty string"""
-        return getattr(self._module, "__version__", "")
-
-    @property
-    def metadata(self):
-        """Extension metadata loaded from the extension package."""
-        return self._metadata
-
-    @property
-    def extension_points(self):
-        """A dictionary of extension points."""
-        return self._extension_points
 
     def validate(self):
         """Validate all extension points in this package."""
