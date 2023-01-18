@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest.mock as mock
 
 import pytest
@@ -60,7 +61,7 @@ def test_extension_package_api():
     path1 = metadata_list[0]
     app = path1["app"]
 
-    e = ExtensionPackage(name="tests.extension.mockextensions")
+    e = ExtensionPackage(name="tests.extension.mockextensions", enabled=True)
     e.extension_points
     assert hasattr(e, "extension_points")
     assert len(e.extension_points) == len(metadata_list)
@@ -70,7 +71,9 @@ def test_extension_package_api():
 
 def test_extension_package_notfound_error():
     with pytest.raises(ExtensionModuleNotFound):
-        ExtensionPackage(name="nonexistent")
+        ExtensionPackage(name="nonexistent", enabled=True)
+    # no raise if not enabled
+    ExtensionPackage(name="nonexistent", enabled=False)
 
 
 def _normalize_path(path_list):
@@ -144,3 +147,23 @@ def test_extension_manager_fail_load(jp_serverapp, has_app):
                 manager.load_extension(name)
         else:
             manager.load_extension(name)
+
+
+@pytest.mark.parametrize("has_app", [True, False])
+def test_disable_no_import(jp_serverapp, has_app):
+    # de-import modules so we can detect if they are re-imported
+    disabled_ext = "tests.extension.mockextensions.mock1"
+    enabled_ext = "tests.extension.mockextensions.mock2"
+    sys.modules.pop(disabled_ext, None)
+    sys.modules.pop(enabled_ext, None)
+
+    manager = ExtensionManager(serverapp=jp_serverapp if has_app else None)
+    manager.add_extension(disabled_ext, enabled=False)
+    manager.add_extension(enabled_ext, enabled=True)
+    assert disabled_ext not in sys.modules
+    assert enabled_ext in sys.modules
+
+    ext_pkg = manager.extensions[disabled_ext]
+    assert ext_pkg.extension_points == {}
+    assert ext_pkg.version == ""
+    assert ext_pkg.metadata == []

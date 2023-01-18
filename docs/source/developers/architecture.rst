@@ -66,7 +66,7 @@ Jupyter Server contains the following components:
 
   - **Kernel Manager** manages a single kernel for the Notebook. To know more about
     Kernel Manager, follow
-    `the Jupyter Client APIs documentation <https://jupyter-client.readthedocs.io/en/latest/api/manager.html#jupyter_client.KernelManager>`_.
+    `the Jupyter Client APIs documentation <https://jupyter-client.readthedocs.io/en/latest/api/jupyter_client.html#jupyter_client.manager.AsyncKernelManager>`_.
 
   - **Kernel Spec Manager** parses files with JSON specification for a kernels,
     and provides a list of available kernel configurations. To learn about
@@ -96,17 +96,17 @@ When a user starts a new kernel, the following steps occur:
 #. **Mapping Kernel Manager** starts the kernel create process by using
    **Multi Kernel Manager** and **Kernel Manager**. You can learn more about
    **Multi Kernel Manager** in
-   `the Jupyter Client APIs <https://jupyter-client.readthedocs.io/en/latest/api/manager.html#multikernelmanager-controlling-multiple-kernels>`_.
+   `the Jupyter Client APIs <https://jupyter-client.readthedocs.io/en/latest/api/jupyter_client.html#jupyter_client.multikernelmanager.AsyncMultiKernelManager>`_.
 
 #. **Kernel Manager** uses the provisioner layer to launch a new kernel.
 
 #. **Kernel Provisioner** is responsible for launching kernels based on the
    kernel specification. If the kernel specification doesn't define a provisioner,
-   it uses `Local Provisioner <https://jupyter-client.readthedocs.io/en/latest/api/provisioners.html#jupyter_client.provisioning.local_provisioner.LocalProvisioner>`_
+   it uses `Local Provisioner <https://jupyter-client.readthedocs.io/en/latest/api/jupyter_client.provisioning.html#jupyter_client.provisioning.local_provisioner.LocalProvisioner>`_
    to launch the kernel. You can use
-   `Kernel Provisioner Base <https://jupyter-client.readthedocs.io/en/latest/api/provisioners.html#jupyter_client.provisioning.provisioner_base.KernelProvisionerBase>`_
+   `Kernel Provisioner Base <https://jupyter-client.readthedocs.io/en/latest/api/jupyter_client.provisioning.html#jupyter_client.provisioning.provisioner_base.KernelProvisionerBase>`_
    and
-   `Kernel Provisioner Factory <https://jupyter-client.readthedocs.io/en/latest/api/provisioners.html#jupyter_client.provisioning.factory.KernelProvisionerFactory>`_
+   `Kernel Provisioner Factory <https://jupyter-client.readthedocs.io/en/latest/api/jupyter_client.provisioning.html#jupyter_client.provisioning.factory.KernelProvisionerFactory>`_
    to create custom provisioners.
 
 #. **Kernel Spec Manager** gets the kernel specification from the JSON file.
