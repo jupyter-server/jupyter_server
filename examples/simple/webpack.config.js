@@ -3,6 +3,7 @@ module.exports = {
   output: {
     path: require("path").join(__dirname, "simple_ext1", "static"),
     filename: "bundle.js",
+    hashFunction: 'sha256'
   },
   mode: "development",
 };

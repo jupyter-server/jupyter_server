@@ -272,11 +272,11 @@ class SessionManager(LoggingConfigurable):
     ) -> Dict[str, Any]:
         """Creates a session and returns its model
 
+        Parameters
+        ----------
         name: ModelName(str)
             Usually the model name, like the filename associated with current
             kernel.
-
-
         """
         session_id = self.new_session_id()
         record = KernelSessionRecord(session_id=session_id)
@@ -300,13 +300,13 @@ class SessionManager(LoggingConfigurable):
     ) -> Dict[str, str]:
         """Return the environment variables that need to be set in the kernel
 
+        Parameters
+        ----------
         path : str
             the url path for the given session.
         name: ModelName(str), optional
             Here the name is likely to be the name of the associated file
             with the current kernel at startup time.
-
-
         """
         if name is not None:
             cwd = self.kernel_manager.cwd_for_path(path)
@@ -324,6 +324,8 @@ class SessionManager(LoggingConfigurable):
     ) -> str:
         """Start a new kernel for a given session.
 
+        Parameters
+        ----------
         session_id : str
             uuid for the session; this method must be given a session_id
         path : str
@@ -335,7 +337,6 @@ class SessionManager(LoggingConfigurable):
             the type of the session
         kernel_name : str
             the name of the kernel specification to use.  The default kernel name will be used if not provided.
-
         """
         # allow contents manager to specify kernels cwd
         kernel_path = await ensure_async(self.contents_manager.get_kernel_path(path=path))
