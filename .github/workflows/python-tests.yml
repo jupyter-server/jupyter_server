@@ -179,6 +179,7 @@ jobs:
       - build
       - test_docs
       - test_lint
+      - test_examples
       - test_minimum_versions
       - test_prereleases
       - check_links
