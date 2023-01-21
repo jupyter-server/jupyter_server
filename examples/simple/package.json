@@ -9,10 +9,8 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "rifraf": "~3.0.0",
     "webpack": "^5.72.0",
     "webpack-cli": "^5.0.0",
-    "whatwg-fetch": "^3.0.0",
     "typescript": "~4.7.3"
   }
 }
