@@ -2618,7 +2618,7 @@ class ServerApp(JupyterApp):
             with secure_write(self.info_file) as f:
                 json.dump(self.server_info(), f, indent=2, sort_keys=True)
         except OSError as e:
-            self.log.error(_i18n("Failed to write server-info to %s: %s"), self.info_file, e)
+            self.log.error(_i18n("Failed to write server-info to %s: %r"), self.info_file, e)
 
     def remove_server_info_file(self):
         """Remove the jpserver-<pid>.json file created for this server.
@@ -2760,7 +2760,7 @@ class ServerApp(JupyterApp):
         try:
             browser = webbrowser.get(self.browser or None)
         except webbrowser.Error as e:
-            self.log.warning(_i18n("No web browser found: %s.") % e)
+            self.log.warning(_i18n("No web browser found: %r.") % e)
             browser = None
 
         if not browser:

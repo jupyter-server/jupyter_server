@@ -287,7 +287,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 try:
                     os_path = os.path.join(os_dir, name)
                 except UnicodeDecodeError as e:
-                    self.log.warning("failed to decode filename '%s': %s", name, e)
+                    self.log.warning("failed to decode filename '%s': %r", name, e)
                     continue
 
                 try:
@@ -297,7 +297,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                     if e.errno == errno.ENOENT:
                         self.log.warning("%s doesn't exist", os_path)
                     elif e.errno != errno.EACCES:  # Don't provide clues about protected files
-                        self.log.warning("Error stat-ing %s: %s", os_path, e)
+                        self.log.warning("Error stat-ing %s: %r", os_path, e)
                     continue
 
                 if (
@@ -636,7 +636,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 try:
                     os_path = os.path.join(os_dir, name)
                 except UnicodeDecodeError as e:
-                    self.log.warning("failed to decode filename '%s': %s", name, e)
+                    self.log.warning("failed to decode filename '%s': %r", name, e)
                     continue
 
                 try:
@@ -646,7 +646,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                     if e.errno == errno.ENOENT:
                         self.log.warning("%s doesn't exist", os_path)
                     elif e.errno != errno.EACCES:  # Don't provide clues about protected files
-                        self.log.warning("Error stat-ing %s: %s", os_path, e)
+                        self.log.warning("Error stat-ing %s: %r", os_path, e)
                     continue
 
                 if (

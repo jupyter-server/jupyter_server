@@ -135,7 +135,7 @@ class NbconvertFileHandler(JupyterHandler):
                 lambda: exporter.from_notebook_node(nb, resources=resource_dict)
             )
         except Exception as e:
-            self.log.exception("nbconvert failed: %s", e)
+            self.log.exception("nbconvert failed: %r", e)
             raise web.HTTPError(500, "nbconvert failed: %s" % e) from e
 
         if respond_zip(self, name, output, resources):
