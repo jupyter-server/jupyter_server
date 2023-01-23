@@ -360,8 +360,9 @@ class ExtensionManager(LoggingConfigurable):
             except Exception as e:
                 if self.serverapp and self.serverapp.reraise_server_extension_failures:
                     raise
-                self.log.warning("%s | extension failed loading with message: %s", name, e)
-                self.log.exception("%s | stack trace", name)
+                self.log.warning(
+                    "%s | extension failed loading with message: %r", name, e, exc_info=True
+                )
             else:
                 self.log.info("%s | extension was successfully loaded.", name)
 
