@@ -494,6 +494,27 @@ async def test_copy(jp_fetch, contents, contents_dir, _check_created):
     _check_created(r, str(contents_dir), path, copy3, type="notebook")
 
 
+async def test_copy_dir(jp_fetch, contents, contents_dir, _check_created):
+    # created a nest copy of a the original folder
+    dest_dir = "foo"
+    path = "parent"
+    response = await jp_fetch(
+        "api", "contents", path, method="POST", body=json.dumps({"copy_from": dest_dir})
+    )
+
+    _check_created(response, str(contents_dir), path, dest_dir, type="directory")
+
+    # copy to a folder where a similar name exists
+    dest_dir = "foo"
+    path = "parent"
+    copy_dir = f"{dest_dir}-Copy1"
+    response = await jp_fetch(
+        "api", "contents", path, method="POST", body=json.dumps({"copy_from": dest_dir})
+    )
+
+    _check_created(response, str(contents_dir), path, copy_dir, type="directory")
+
+
 async def test_copy_path(jp_fetch, contents, contents_dir, _check_created):
     path1 = "foo"
     path2 = "å b"
@@ -573,18 +594,6 @@ async def test_copy_put_400_hidden(
             "old.txt",
             method="PUT",
             body=json.dumps({"copy_from": ".hidden.txt"}),
-        )
-    assert expected_http_error(e, 400)
-
-
-async def test_copy_dir_400(jp_fetch, contents, contents_dir, _check_created):
-    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-        await jp_fetch(
-            "api",
-            "contents",
-            "foo",
-            method="POST",
-            body=json.dumps({"copy_from": "å b"}),
         )
     assert expected_http_error(e, 400)
 

@@ -2,10 +2,12 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import errno
+import math
 import mimetypes
 import os
 import shutil
 import stat
+import subprocess
 import sys
 import warnings
 from datetime import datetime
@@ -25,7 +27,7 @@ from jupyter_server.utils import to_api_path
 
 from .filecheckpoints import AsyncFileCheckpoints, FileCheckpoints
 from .fileio import AsyncFileManagerMixin, FileManagerMixin
-from .manager import AsyncContentsManager, ContentsManager
+from .manager import AsyncContentsManager, ContentsManager, copy_pat
 
 try:
     from os.path import samefile
@@ -600,6 +602,119 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         parent_dir = path.rsplit("/", 1)[0] if "/" in path else ""
         return parent_dir
 
+    def copy(self, from_path: str, to_path=None):
+        """
+        Copy an existing file or directory and return its new model.
+        If to_path not specified, it will be the parent directory of from_path.
+        If copying a file and to_path is a directory, filename/directoryname will increment `from_path-Copy#.ext`.
+        Considering multi-part extensions, the Copy# part will be placed before the first dot for all the extensions except `ipynb`.
+        For easier manual searching in case of notebooks, the Copy# part will be placed before the last dot.
+        from_path must be a full path to a file or directory.
+        """
+        to_path_original = str(to_path)
+        path = from_path.strip("/")
+        if to_path is not None:
+            to_path = to_path.strip("/")
+
+        if "/" in path:
+            from_dir, from_name = path.rsplit("/", 1)
+        else:
+            from_dir = ""
+            from_name = path
+
+        model = self.get(path)
+        # limit the size of folders being copied to prevent a timeout error
+        if model["type"] == "directory":
+            self.check_folder_size(path)
+        else:
+            # let the super class handle copying files
+            return super().copy(from_path=from_path, to_path=to_path)
+
+        is_destination_specified = to_path is not None
+        to_name = copy_pat.sub(".", from_name)
+        if not is_destination_specified:
+            to_path = from_dir
+        if self.dir_exists(to_path):
+            name = copy_pat.sub(".", from_name)
+            to_name = super().increment_filename(name, to_path, insert="-Copy")
+        to_path = f"{to_path}/{to_name}"
+
+        return self._copy_dir(
+            from_path=from_path,
+            to_path_original=to_path_original,
+            to_name=to_name,
+            to_path=to_path,
+        )
+
+    def _copy_dir(self, from_path: str, to_path_original: str, to_name: str, to_path: str):
+        """
+        handles copying directories
+        returns the model for the copied directory
+        """
+        try:
+            os_from_path = self._get_os_path(from_path.strip("/"))
+            os_to_path = f'{self._get_os_path(to_path_original.strip("/"))}/{to_name}'
+            shutil.copytree(os_from_path, os_to_path)
+            model = self.get(to_path, content=False)
+        except OSError as err:
+            self.log.error(f"OSError in _copy_dir: {err}")
+            raise web.HTTPError(
+                400,
+                f"Can't copy '{from_path}' into Folder '{to_path}'",
+            ) from err
+
+        return model
+
+    def check_folder_size(self, path: str):
+        """
+        limit the size of folders being copied to prevent a timeout error
+        """
+        limit_mb = 100
+        limit_str = f"{limit_mb}MB"
+        limit_bytes = limit_mb * 1024 * 1024
+        size = int(self._get_dir_size(self._get_os_path(path)))
+        if size > limit_bytes:
+            raise web.HTTPError(
+                400,
+                f"""
+                    Can't copy folders larger than {limit_str},
+                    "{path}" is {self._human_readable_size(size)}
+                """,
+            )
+
+    def _get_dir_size(self, path: str = "."):
+        """
+        calls the command line program du to get the directory size
+        """
+        try:
+            result = subprocess.run(
+                ["du", "-s", "--block-size=1", path], capture_output=True
+            ).stdout.split()
+            self.log.info(f"current status of du command {result}")
+            size = result[0].decode("utf-8")
+        except Exception as err:
+            self.log.error(f"Error during directory copy: {err}")
+            raise web.HTTPError(
+                400,
+                f"""
+                Unexpected error during copy operation,
+                not able to get the size of the {path} directory
+                """,
+            ) from err
+        return size
+
+    def _human_readable_size(self, size: int):
+        """
+        returns folder size in a human readable format
+        """
+        if size == 0:
+            return "0 Bytes"
+
+        units = ["Bytes", "KB", "MB", "GB", "TB", "PB"]
+        order = int(math.log2(size) / 10) if size else 0
+
+        return "{:.4g} {}".format(size / (1 << (order * 10)), units[order])
+
 
 class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, AsyncContentsManager):
     """An async file contents manager."""
@@ -955,3 +1070,119 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             return path
         parent_dir = path.rsplit("/", 1)[0] if "/" in path else ""
         return parent_dir
+
+    async def copy(self, from_path: str, to_path=None) -> dict:
+        """
+        Copy an existing file or directory and return its new model.
+        If to_path not specified, it will be the parent directory of from_path.
+        If copying a file and to_path is a directory, filename/directoryname will increment `from_path-Copy#.ext`.
+        Considering multi-part extensions, the Copy# part will be placed before the first dot for all the extensions except `ipynb`.
+        For easier manual searching in case of notebooks, the Copy# part will be placed before the last dot.
+        from_path must be a full path to a file or directory.
+        """
+        to_path_original = str(to_path)
+        path = from_path.strip("/")
+        if to_path is not None:
+            to_path = to_path.strip("/")
+
+        if "/" in path:
+            from_dir, from_name = path.rsplit("/", 1)
+        else:
+            from_dir = ""
+            from_name = path
+
+        model = await self.get(path)
+        # limit the size of folders being copied to prevent a timeout error
+        if model["type"] == "directory":
+            await self.check_folder_size(path)
+        else:
+            # let the super class handle copying files
+            return await AsyncContentsManager.copy(self, from_path=from_path, to_path=to_path)
+
+        is_destination_specified = to_path is not None
+        to_name = copy_pat.sub(".", from_name)
+        if not is_destination_specified:
+            to_path = from_dir
+        if await self.dir_exists(to_path):
+            name = copy_pat.sub(".", from_name)
+            to_name = await super().increment_filename(name, to_path, insert="-Copy")
+        to_path = f"{to_path}/{to_name}"
+
+        return await self._copy_dir(
+            from_path=from_path,
+            to_path_original=to_path_original,
+            to_name=to_name,
+            to_path=to_path,
+        )
+
+    async def _copy_dir(
+        self, from_path: str, to_path_original: str, to_name: str, to_path: str
+    ) -> dict:
+        """
+        handles copying directories
+        returns the model for the copied directory
+        """
+        try:
+            os_from_path = self._get_os_path(from_path.strip("/"))
+            os_to_path = f'{self._get_os_path(to_path_original.strip("/"))}/{to_name}'
+            shutil.copytree(os_from_path, os_to_path)
+            model = await self.get(to_path, content=False)
+        except OSError as err:
+            self.log.error(f"OSError in _copy_dir: {err}")
+            raise web.HTTPError(
+                400,
+                f"Can't copy '{from_path}' into read-only Folder '{to_path}'",
+            ) from err
+
+        return model
+
+    async def check_folder_size(self, path: str) -> None:
+        """
+        limit the size of folders being copied to prevent a timeout error
+
+        """
+        limit_mb = 100
+        limit_str = f"{limit_mb}MB"
+        limit_bytes = limit_mb * 1024 * 1024
+        size = int(await self._get_dir_size(self._get_os_path(path)))
+        if size > limit_bytes:
+            raise web.HTTPError(
+                400,
+                f"""
+                    Can't copy folders larger than {limit_str},
+                    "{path}" is {await self._human_readable_size(size)}
+                """,
+            )
+
+    async def _get_dir_size(self, path: str = ".") -> str:
+        """
+        calls the command line program du to get the directory size
+        """
+        try:
+            result = subprocess.run(
+                ["du", "-s", "--block-size=1", path], capture_output=True
+            ).stdout.split()
+            self.log.info(f"current status of du command {result}")
+            size = result[0].decode("utf-8")
+        except Exception as err:
+            self.log.error(f"Error during directory copy: {err}")
+            raise web.HTTPError(
+                400,
+                f"""
+                Unexpected error during copy operation,
+                not able to get the size of the {path} directory
+                """,
+            ) from err
+        return size
+
+    async def _human_readable_size(self, size: int) -> str:
+        """
+        returns folder size in a human readable format
+        """
+        if size == 0:
+            return "0 Bytes"
+
+        units = ["Bytes", "KB", "MB", "GB", "TB", "PB"]
+        order = int(math.log2(size) / 10) if size else 0
+
+        return "{:.4g} {}".format(size / (1 << (order * 10)), units[order])
