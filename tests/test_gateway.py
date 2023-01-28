@@ -65,7 +65,7 @@ running_kernels = {}
 
 def generate_model(name):
     """Generate a mocked kernel model.  Caller is responsible for adding model to running_kernels dictionary."""
-    dt = datetime.utcnow().isoformat() + "Z"
+    dt = datetime.utcnow().isoformat() + "Z"  # noqa
     kernel_id = str(uuid.uuid4())
     model = {
         "id": kernel_id,
@@ -130,7 +130,7 @@ async def mock_gateway_request(url, **kwargs):
     # Fetch list of running kernels
     if endpoint.endswith("/api/kernels") and method == "GET":
         kernels = []
-        for kernel_id in running_kernels.keys():
+        for kernel_id in running_kernels:
             model = running_kernels.get(kernel_id)
             kernels.append(model)
         response_buf = BytesIO(json.dumps(kernels).encode("utf-8"))
@@ -347,7 +347,7 @@ def test_gateway_request_timeout_pad_option(
     GatewayClient.clear_instance()
 
 
-cookie_expire_time = format_datetime(datetime.now() + timedelta(seconds=180))
+cookie_expire_time = format_datetime(datetime.now() + timedelta(seconds=180))  # noqa
 
 
 @pytest.mark.parametrize(
@@ -626,10 +626,7 @@ async def is_session_active(jp_fetch, session_id):
         assert r.code == 200
         sessions = json.loads(r.body.decode("utf-8"))
         assert len(sessions) == len(running_kernels)  # Use running_kernels as truth
-        for model in sessions:
-            if model.get("id") == session_id:
-                return True
-        return False
+        return any(model.get("id") == session_id for model in sessions)
 
 
 async def create_session(jp_fetch, kernel_name):
@@ -680,10 +677,7 @@ async def is_kernel_running(jp_fetch, kernel_id):
         assert r.code == 200
         kernels = json.loads(r.body.decode("utf-8"))
         assert len(kernels) == len(running_kernels)
-        for model in kernels:
-            if model.get("id") == kernel_id:
-                return True
-        return False
+        return any(model.get("id") == kernel_id for model in kernels)
 
 
 async def create_kernel(jp_fetch, kernel_name):

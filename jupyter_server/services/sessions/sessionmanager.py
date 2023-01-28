@@ -189,7 +189,7 @@ class SessionManager(LoggingConfigurable):
             with open(value, "rb") as f:
                 header = f.read(100)
 
-            if not header.startswith(b"SQLite format 3") and not header == b"":
+            if not header.startswith(b"SQLite format 3") and header != b"":  # noqa
                 msg = "The given file is not an SQLite database file."
                 raise TraitError(msg)
         return value
@@ -404,7 +404,7 @@ class SessionManager(LoggingConfigurable):
             raise TypeError(msg)
 
         conditions = []
-        for column in kwargs.keys():
+        for column in kwargs:
             if column not in self._columns:
                 msg = f"No such column: {column}"
                 raise TypeError(msg)
@@ -454,12 +454,12 @@ class SessionManager(LoggingConfigurable):
             return
 
         sets = []
-        for column in kwargs.keys():
+        for column in kwargs:
             if column not in self._columns:
                 raise TypeError("No such column: %r" % column)
             sets.append("%s=?" % column)
         query = "UPDATE session SET %s WHERE session_id=?" % (", ".join(sets))
-        self.cursor.execute(query, list(kwargs.values()) + [session_id])
+        self.cursor.execute(query, [*list(kwargs.values()), session_id])
 
     async def kernel_culled(self, kernel_id: str) -> bool:
         """Checks if the kernel is still considered alive and returns true if its not found."""

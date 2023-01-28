@@ -412,7 +412,7 @@ def import_item(name):
     """
 
     parts = name.rsplit(".", 1)
-    if len(parts) == 2:
+    if len(parts) == 2:  # noqa
         # called with 'foo.bar....'
         package, obj = parts
         module = __import__(package, fromlist=[obj])

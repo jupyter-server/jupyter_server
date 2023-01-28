@@ -104,9 +104,9 @@ def atomic_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     if text:
         # Make sure that text files have Unix linefeeds by default
         kwargs.setdefault("newline", "\n")
-        fileobj = open(path, "w", encoding=encoding, **kwargs)
+        fileobj = open(path, "w", encoding=encoding, **kwargs)  # noqa
     else:
-        fileobj = open(path, "wb", **kwargs)
+        fileobj = open(path, "wb", **kwargs)  # noqa
 
     try:
         yield fileobj
@@ -152,9 +152,9 @@ def _simple_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     if text:
         # Make sure that text files have Unix linefeeds by default
         kwargs.setdefault("newline", "\n")
-        fileobj = open(path, "w", encoding=encoding, **kwargs)
+        fileobj = open(path, "w", encoding=encoding, **kwargs)  # noqa
     else:
-        fileobj = open(path, "wb", **kwargs)
+        fileobj = open(path, "wb", **kwargs)  # noqa
 
     try:
         yield fileobj
@@ -194,9 +194,8 @@ class FileManagerMixin(Configurable):
     @contextmanager
     def open(self, os_path, *args, **kwargs):
         """wrapper around io.open that turns permission errors into 403"""
-        with self.perm_to_403(os_path):
-            with open(os_path, *args, **kwargs) as f:
-                yield f
+        with self.perm_to_403(os_path), open(os_path, *args, **kwargs) as f:
+            yield f
 
     @contextmanager
     def atomic_writing(self, os_path, *args, **kwargs):

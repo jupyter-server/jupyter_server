@@ -308,7 +308,7 @@ class ServerWebApplication(web.Application):
         jenv_opt: dict = {"autoescape": True}
         jenv_opt.update(jinja_env_options if jinja_env_options else {})
 
-        env = Environment(
+        env = Environment(  # noqa[S701]
             loader=FileSystemLoader(template_path), extensions=["jinja2.ext.i18n"], **jenv_opt
         )
         sys_info = get_sys_info()
@@ -326,7 +326,8 @@ class ServerWebApplication(web.Application):
             version_hash = ""
         else:
             # reset the cache on server restart
-            version_hash = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+            utc = datetime.timezone.utc
+            version_hash = datetime.datetime.now(tz=utc).strftime("%Y%m%d%H%M%S")
 
         now = utcnow()
 
@@ -465,7 +466,7 @@ class ServerWebApplication(web.Application):
         new_handlers = []
         for handler in handlers:
             pattern = url_path_join(settings["base_url"], handler[0])
-            new_handler = tuple([pattern] + list(handler[1:]))
+            new_handler = (pattern, *list(handler[1:]))
             new_handlers.append(new_handler)
         # add 404 on the end, which will catch everything that falls through
         new_handlers.append((r"(.*)", Template404))
@@ -1427,7 +1428,7 @@ class ServerApp(JupyterApp):
     @property
     def static_file_path(self):
         """return extra paths + the default location"""
-        return self.extra_static_paths + [DEFAULT_STATIC_FILES_PATH]
+        return [*self.extra_static_paths, DEFAULT_STATIC_FILES_PATH]
 
     static_custom_path = List(Unicode(), help=_i18n("""Path to search for custom.js, css"""))
 
@@ -1622,10 +1623,7 @@ class ServerApp(JupyterApp):
     @observe("pylab")
     def _update_pylab(self, change):
         """when --pylab is specified, display a warning and exit"""
-        if change["new"] != "warn":
-            backend = " %s" % change["new"]
-        else:
-            backend = ""
+        backend = " %s" % change["new"] if change["new"] != "warn" else ""
         self.log.error(
             _i18n("Support for specifying --pylab on the command line has been removed.")
         )
@@ -2107,21 +2105,16 @@ class ServerApp(JupyterApp):
             else:
                 ip = f"[{self.ip}]" if ":" in self.ip else self.ip
             netloc = f"{ip}:{self.port}"
-            if self.certfile:
-                scheme = "https"
-            else:
-                scheme = "http"
+            scheme = "https" if self.certfile else "http"
         if not path:
             path = self.default_url
         query = None
-        if include_token:
-            if self.identity_provider.token:  # Don't log full token if it came from config
-                token = (
-                    self.identity_provider.token
-                    if self.identity_provider.token_generated
-                    else "..."
-                )
-                query = urllib.parse.urlencode({"token": token})
+        # Don't log full token if it came from config
+        if include_token and self.identity_provider.token:
+            token = (
+                self.identity_provider.token if self.identity_provider.token_generated else "..."
+            )
+            query = urllib.parse.urlencode({"token": token})
         # Build the URL Parts to dump.
         urlparts = urllib.parse.ParseResult(
             scheme=scheme, netloc=netloc, path=path, query=query or "", params="", fragment=""
