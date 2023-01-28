@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from http.cookies import SimpleCookie
 from io import BytesIO
@@ -347,7 +347,7 @@ def test_gateway_request_timeout_pad_option(
     GatewayClient.clear_instance()
 
 
-cookie_expire_time = format_datetime(datetime.now() + timedelta(seconds=180))  # noqa
+cookie_expire_time = format_datetime(datetime.now(tz=timezone.utc) + timedelta(seconds=180))
 
 
 @pytest.mark.parametrize(
