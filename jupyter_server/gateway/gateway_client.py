@@ -7,7 +7,7 @@ import logging
 import os
 import typing as ty
 from abc import ABC, ABCMeta, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from http.cookies import SimpleCookie
 from socket import gaierror
@@ -96,9 +96,8 @@ management and kernel specification retrieval.  (JUPYTER_GATEWAY_URL env var)
     def _url_validate(self, proposal):
         value = proposal["value"]
         # Ensure value, if present, starts with 'http'
-        if value is not None and len(value) > 0:
-            if not str(value).lower().startswith("http"):
-                raise TraitError("GatewayClient url must start with 'http': '%r'" % value)
+        if value is not None and len(value) > 0 and not str(value).lower().startswith("http"):
+            raise TraitError("GatewayClient url must start with 'http': '%r'" % value)
         return value
 
     ws_url = Unicode(
@@ -115,18 +114,16 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
     @default("ws_url")
     def _ws_url_default(self):
         default_value = os.environ.get(self.ws_url_env)
-        if default_value is None:
-            if self.gateway_enabled:
-                default_value = self.url.lower().replace("http", "ws")
+        if default_value is None and self.gateway_enabled:
+            default_value = self.url.lower().replace("http", "ws")
         return default_value
 
     @validate("ws_url")
     def _ws_url_validate(self, proposal):
         value = proposal["value"]
         # Ensure value, if present, starts with 'ws'
-        if value is not None and len(value) > 0:
-            if not str(value).lower().startswith("ws"):
-                raise TraitError("GatewayClient ws_url must start with 'ws': '%r'" % value)
+        if value is not None and len(value) > 0 and not str(value).lower().startswith("ws"):
+            raise TraitError("GatewayClient ws_url must start with 'ws': '%r'" % value)
         return value
 
     kernels_endpoint_default_value = "/api/kernels"
@@ -599,7 +596,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         if not self.accept_cookies:
             return
 
-        store_time = datetime.now()
+        store_time = datetime.now(tz=timezone.utc)
         for key, item in cookie.items():
             # Convert "expires" arg into "max-age" to facilitate expiration management.
             # As "max-age" has precedence, ignore "expires" when "max-age" exists.
@@ -611,7 +608,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
 
     def _clear_expired_cookies(self) -> None:
         """Clear expired cookies."""
-        check_time = datetime.now()
+        check_time = datetime.now(tz=timezone.utc)
         expired_keys = []
 
         for key, (morsel, store_time) in self._cookies.items():

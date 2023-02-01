@@ -528,10 +528,7 @@ class ContentsManager(LoggingConfigurable):
         suffix = dot + ext
 
         for i in itertools.count():
-            if i:
-                insert_i = f"{insert}{i}"
-            else:
-                insert_i = ""
+            insert_i = f"{insert}{i}" if i else ""
             name = "{basename}{insert}{suffix}".format(
                 basename=basename, insert=insert_i, suffix=suffix
             )
@@ -920,10 +917,7 @@ class AsyncContentsManager(ContentsManager):
         suffix = dot + ext
 
         for i in itertools.count():
-            if i:
-                insert_i = f"{insert}{i}"
-            else:
-                insert_i = ""
+            insert_i = f"{insert}{i}" if i else ""
             name = "{basename}{insert}{suffix}".format(
                 basename=basename, insert=insert_i, suffix=suffix
             )

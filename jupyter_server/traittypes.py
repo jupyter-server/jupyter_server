@@ -68,10 +68,11 @@ class TypeFromClasses(ClassBasedTraitType):
             try:
                 value = self._resolve_string(value)
             except ImportError as e:
-                raise TraitError(
-                    "The '%s' trait of %s instance must be a type, but "
-                    "%r could not be imported" % (self.name, obj, value)
-                ) from e
+                emsg = (
+                    "The '{}' trait of {} instance must be a type, but "
+                    "{!r} could not be imported".format(self.name, obj, value)
+                )
+                raise TraitError(emsg) from e
         try:
             if self.subclass_from_klasses(value):
                 return value
@@ -88,7 +89,7 @@ class TypeFromClasses(ClassBasedTraitType):
                 klass = klass.__module__ + "." + klass.__name__
             result += f"{klass} or "
         # Strip the last "or"
-        result = result.strip(" or ")  # noqa B005
+        result = result.strip(" or ")  # noqa
         if self.allow_none:
             return result + " or None"
         return result
@@ -199,7 +200,7 @@ class InstanceFromClasses(ClassBasedTraitType):
             else:
                 result += describe("a", klass)
             result += " or "
-        result = result.strip(" or ")  # noqa B005
+        result = result.strip(" or ")  # noqa
         if self.allow_none:
             result += " or None"
         return result

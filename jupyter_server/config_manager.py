@@ -116,8 +116,7 @@ class BaseJSONConfigManager(LoggingConfigurable):
         # Generate the JSON up front, since it could raise an exception,
         # in order to avoid writing half-finished corrupted data to disk.
         json_content = json.dumps(data, indent=2)
-        f = open(filename, "w", encoding="utf-8")
-        with f:
+        with open(filename, "w", encoding="utf-8") as f:
             f.write(json_content)
 
     def update(self, section_name, new_data):

@@ -665,7 +665,7 @@ async def test_delete(jp_fetch, contents, contents_dir, path, name, _check_creat
 
 async def test_delete_dirs(jp_fetch, contents, folders):
     # Iterate over folders
-    for name in sorted(folders + ["/"], key=len, reverse=True):
+    for name in sorted([*folders, "/"], key=len, reverse=True):
         r = await jp_fetch("api", "contents", name, method="GET")
         # Get JSON blobs for each content.
         listing = json.loads(r.body.decode())["content"]

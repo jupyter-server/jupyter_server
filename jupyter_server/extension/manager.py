@@ -204,10 +204,7 @@ class ExtensionPackage(LoggingConfigurable):
 
     def validate(self):
         """Validate all extension points in this package."""
-        for extension in self.extension_points.values():
-            if not extension.validate():
-                return False
-        return True
+        return all(extension.validate() for extension in self.extension_points.values())
 
     def link_point(self, point_name, serverapp):
         """Link an extension point."""
@@ -379,7 +376,7 @@ class ExtensionManager(LoggingConfigurable):
         """
         # Sort the extension names to enforce deterministic linking
         # order.
-        for name in self.sorted_extensions.keys():
+        for name in self.sorted_extensions:
             self.link_extension(name)
 
     def load_all_extensions(self):
@@ -388,7 +385,7 @@ class ExtensionManager(LoggingConfigurable):
         """
         # Sort the extension names to enforce deterministic loading
         # order.
-        for name in self.sorted_extensions.keys():
+        for name in self.sorted_extensions:
             self.load_extension(name)
 
     async def stop_all_extensions(self):

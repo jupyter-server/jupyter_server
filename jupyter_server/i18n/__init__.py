@@ -42,10 +42,7 @@ def parse_accept_lang_header(accept_lang):
         lang, qvalue = m.group("lang", "qvalue")
         # Browser header format is zh-CN, gettext uses zh_CN
         lang = lang.replace("-", "_")
-        if qvalue is None:
-            qvalue = 1.0
-        else:
-            qvalue = float(qvalue)
+        qvalue = 1.0 if qvalue is None else float(qvalue)
         if qvalue == 0:
             continue  # 0 means not accepted
         by_q[qvalue].append(lang)
@@ -59,7 +56,7 @@ def parse_accept_lang_header(accept_lang):
 def load(language, domain="nbjs"):
     """Load translations from an nbjs.json file"""
     try:
-        f = open(pjoin(I18N_DIR, language, "LC_MESSAGES", "nbjs.json"), encoding="utf-8")
+        f = open(pjoin(I18N_DIR, language, "LC_MESSAGES", "nbjs.json"), encoding="utf-8")  # noqa
     except OSError as e:
         if e.errno != errno.ENOENT:
             raise

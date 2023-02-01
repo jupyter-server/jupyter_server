@@ -32,7 +32,7 @@ def auth_header(token):
 def wait_up(url, interval=0.1, check=None):
     while True:
         try:
-            r = requests.get(url)
+            r = requests.get(url)  # noqa
         except Exception:
             if check:
                 assert check()
@@ -90,7 +90,7 @@ def launch_instance(request, port, token):
 def fetch(port, auth_header):
     def _get(endpoint):
         url = f"http://127.0.0.1:{port}" + endpoint
-        return requests.get(url, headers=auth_header)
+        return requests.get(url, headers=auth_header)  # noqa
 
     return _get
 

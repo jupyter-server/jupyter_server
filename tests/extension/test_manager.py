@@ -1,6 +1,6 @@
 import os
 import sys
-import unittest.mock as mock
+from unittest import mock
 
 import pytest
 from jupyter_core.paths import jupyter_config_path

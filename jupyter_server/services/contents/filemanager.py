@@ -309,9 +309,10 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                     continue
 
                 try:
-                    if self.should_list(name):
-                        if self.allow_hidden or not is_file_hidden(os_path, stat_res=st):
-                            contents.append(self.get(path=f"{path}/{name}", content=False))
+                    if self.should_list(name) and (
+                        self.allow_hidden or not is_file_hidden(os_path, stat_res=st)
+                    ):
+                        contents.append(self.get(path=f"{path}/{name}", content=False))
                 except OSError as e:
                     # ELOOP: recursive symlink, also don't show failure due to permissions
                     if e.errno not in [errno.ELOOP, errno.EACCES]:
@@ -596,10 +597,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         """Return the initial API path of  a kernel associated with a given notebook"""
         if self.dir_exists(path):
             return path
-        if "/" in path:
-            parent_dir = path.rsplit("/", 1)[0]
-        else:
-            parent_dir = ""
+        parent_dir = path.rsplit("/", 1)[0] if "/" in path else ""
         return parent_dir
 
 
@@ -658,9 +656,10 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                     continue
 
                 try:
-                    if self.should_list(name):
-                        if self.allow_hidden or not is_file_hidden(os_path, stat_res=st):
-                            contents.append(await self.get(path=f"{path}/{name}", content=False))
+                    if self.should_list(name) and (
+                        self.allow_hidden or not is_file_hidden(os_path, stat_res=st)
+                    ):
+                        contents.append(await self.get(path=f"{path}/{name}", content=False))
                 except OSError as e:
                     # ELOOP: recursive symlink, also don't show failure due to permissions
                     if e.errno not in [errno.ELOOP, errno.EACCES]:
@@ -954,8 +953,5 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         """Return the initial API path of a kernel associated with a given notebook"""
         if await self.dir_exists(path):
             return path
-        if "/" in path:
-            parent_dir = path.rsplit("/", 1)[0]
-        else:
-            parent_dir = ""
+        parent_dir = path.rsplit("/", 1)[0] if "/" in path else ""
         return parent_dir

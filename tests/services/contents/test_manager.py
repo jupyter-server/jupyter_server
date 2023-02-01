@@ -243,9 +243,8 @@ async def test_good_symlink(jp_file_contents_manager_class, tmp_path):
 
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Can't test permissions on Windows")
 async def test_403(jp_file_contents_manager_class, tmp_path):
-    if hasattr(os, "getuid"):
-        if os.getuid() == 0:
-            raise pytest.skip("Can't test permissions as root")
+    if hasattr(os, "getuid") and os.getuid() == 0:
+        raise pytest.skip("Can't test permissions as root")
 
     td = str(tmp_path)
     cm = jp_file_contents_manager_class(root_dir=td)

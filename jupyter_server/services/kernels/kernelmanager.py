@@ -581,29 +581,30 @@ class MappingKernelManager(MultiKernelManager):
 
         Regardless of that value, set flag that we've been here.
         """
-        if not self._initialized_culler and self.cull_idle_timeout > 0:
-            if self._culler_callback is None:
-                _ = IOLoop.current()
-                if self.cull_interval <= 0:  # handle case where user set invalid value
-                    self.log.warning(
-                        "Invalid value for 'cull_interval' detected (%s) - using default value (%s).",
-                        self.cull_interval,
-                        self.cull_interval_default,
-                    )
-                    self.cull_interval = self.cull_interval_default
-                self._culler_callback = PeriodicCallback(
-                    self.cull_kernels, 1000 * self.cull_interval
-                )
-                self.log.info(
-                    "Culling kernels with idle durations > %s seconds at %s second intervals ...",
-                    self.cull_idle_timeout,
+        if (
+            not self._initialized_culler
+            and self.cull_idle_timeout > 0
+            and self._culler_callback is None
+        ):
+            _ = IOLoop.current()
+            if self.cull_interval <= 0:  # handle case where user set invalid value
+                self.log.warning(
+                    "Invalid value for 'cull_interval' detected (%s) - using default value (%s).",
                     self.cull_interval,
+                    self.cull_interval_default,
                 )
-                if self.cull_busy:
-                    self.log.info("Culling kernels even if busy")
-                if self.cull_connected:
-                    self.log.info("Culling kernels even with connected clients")
-                self._culler_callback.start()
+                self.cull_interval = self.cull_interval_default
+            self._culler_callback = PeriodicCallback(self.cull_kernels, 1000 * self.cull_interval)
+            self.log.info(
+                "Culling kernels with idle durations > %s seconds at %s second intervals ...",
+                self.cull_idle_timeout,
+                self.cull_interval,
+            )
+            if self.cull_busy:
+                self.log.info("Culling kernels even if busy")
+            if self.cull_connected:
+                self.log.info("Culling kernels even with connected clients")
+            self._culler_callback.start()
 
         self._initialized_culler = True
 

@@ -41,10 +41,9 @@ def test_atomic_writing(tmp_path):
         # OSError: The user lacks the privilege (Windows)
         have_symlink = False
 
-    with pytest.raises(CustomExc):
-        with atomic_writing(str(f1)) as f:
-            f.write("Failing write")
-            raise CustomExc
+    with pytest.raises(CustomExc), atomic_writing(str(f1)) as f:
+        f.write("Failing write")
+        raise CustomExc
 
     with open(str(f1)) as f:
         assert f.read() == "Before"

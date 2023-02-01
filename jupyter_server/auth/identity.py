@@ -96,9 +96,8 @@ def _backward_compat_user(got_user: Any) -> User:
         return User(username=got_user)
     elif isinstance(got_user, dict):
         kwargs = {}
-        if "username" not in got_user:
-            if "name" in got_user:
-                kwargs["username"] = got_user["name"]
+        if "username" not in got_user and "name" in got_user:
+            kwargs["username"] = got_user["name"]
         for field in User.__dataclass_fields__:
             if field in got_user:
                 kwargs[field] = got_user[field]
@@ -367,7 +366,7 @@ class IdentityProvider(LoggingConfigurable):
         which values were used for a given cookie).
         """
         name = escape.native_str(name)
-        expires = datetime.datetime.utcnow() - datetime.timedelta(days=365)
+        expires = datetime.datetime.now(tz=datetime.timezone.utc) - datetime.timedelta(days=365)
 
         morsel: Morsel = Morsel()
         morsel.set(name, "", '""')
