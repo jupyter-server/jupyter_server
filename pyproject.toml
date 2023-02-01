@@ -27,7 +27,7 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "anyio>=3.1.0,<4",
+    "anyio>=3.1.0",
     "argon2-cffi",
     "jinja2",
     "jupyter_client>=7.4.4",
