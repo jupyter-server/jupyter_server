@@ -38,7 +38,7 @@ def get_loader(obj, logger=None):
     try:
         func = getattr(obj, "_load_jupyter_server_extension")  # noqa B009
     except AttributeError:
-        func = getattr(obj, "load_jupyter_server_extension", None)
+        func = getattr(obj, "load_jupyter_server_extension")  # noqa B009
         warnings.warn(
             "A `_load_jupyter_server_extension` function was not "
             "found in {name!s}. Instead, a `load_jupyter_server_extension` "
