@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "jupyter_server"
 dynamic = ["version"]
 readme = "README.md"
-license = { file = "COPYING.md" }
+license = { file = "LICENSE" }
 description = "The backend—i.e. core services, APIs, and REST endpoints—to Jupyter web applications."
 authors = [{name = "Jupyter Development Team", email = "jupyter@googlegroups.com"}]
 keywords = ["ipython", "jupyter"]
