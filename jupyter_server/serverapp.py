@@ -2147,7 +2147,7 @@ class ServerApp(JupyterApp):
         """Human readable string with URLs for interacting
         with the running Jupyter Server
         """
-        url = self.public_url + "\n or " + self.local_url
+        url = self.public_url + "\n    " + self.local_url
         return url
 
     @property
