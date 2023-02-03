@@ -23,6 +23,7 @@ def test_validate_extension():
     # enabled at Python
     assert validate_extension("tests.extension.mockextensions.mockext_py")
 
+
 def test_get_loader():
     assert get_loader(mockext_sys) == mockext_sys._load_jupyter_server_extension
     with pytest.deprecated_call():
