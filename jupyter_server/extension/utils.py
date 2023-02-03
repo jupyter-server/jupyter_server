@@ -36,20 +36,24 @@ def get_loader(obj, logger=None):
     underscore prefix.
     """
     try:
-        func = getattr(obj, "_load_jupyter_server_extension")  # noqa B009
+        return getattr(obj, "_load_jupyter_server_extension")  # noqa B009
     except AttributeError:
-        func = getattr(obj, "load_jupyter_server_extension", None)
-        warnings.warn(
-            "A `_load_jupyter_server_extension` function was not "
-            "found in {name!s}. Instead, a `load_jupyter_server_extension` "
-            "function was found and will be used for now. This function "
-            "name will be deprecated in future releases "
-            "of Jupyter Server.".format(name=obj),
-            DeprecationWarning,
-        )
-    except Exception:
+        pass
+
+    try:
+        func = getattr(obj, "load_jupyter_server_extension")  # noqa B009
+    except AttributeError:
         msg = "_load_jupyter_server_extension function was not found."
         raise ExtensionLoadingError(msg) from None
+
+    warnings.warn(
+        "A `_load_jupyter_server_extension` function was not "
+        "found in {name!s}. Instead, a `load_jupyter_server_extension` "
+        "function was found and will be used for now. This function "
+        "name will be deprecated in future releases "
+        "of Jupyter Server.".format(name=obj),
+        DeprecationWarning,
+    )
     return func
 
 
