@@ -93,10 +93,7 @@ def _make_big_dir(contents_manager, api_path):
         # we only want to increase the number of folder if the tests is being run on
         # windows, otherwise the for loop doesn't need to run as long as this
         # function is already slow enough
-        if platform.system() == "Windows":
-            num_sub_folders = 500
-        else:
-            num_sub_folders = 200
+        num_sub_folders = 500 if platform.system() == "Windows" else 200
 
         for i in range(num_sub_folders):
             os.makedirs(f"{os_path}/subfolder-{i}")
