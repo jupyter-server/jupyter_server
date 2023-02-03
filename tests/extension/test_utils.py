@@ -3,8 +3,8 @@ import warnings
 
 import pytest
 
-from jupyter_server.extension.utils import get_loader, get_metadata, validate_extension
-from tests.extension.mockextensions import mockext_sys
+from jupyter_server.extension.utils import get_loader, get_metadata, validate_extension, ExtensionLoadingError
+from tests.extension.mockextensions import mockext_sys, mockext_deprecated
 
 # Use ServerApps environment because it monkeypatches
 # jupyter_core.paths and provides a config directory
@@ -24,11 +24,11 @@ def test_validate_extension():
 
 
 def test_get_loader():
-    get_loader(mockext_sys)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        assert get_loader(object()) is None
-
+    assert get_loader(mockext_sys) == mockext_sys._load_jupyter_server_extension
+    with pytest.deprecated_call():
+        assert get_loader(mockext_deprecated) == mockext_deprecated.load_jupyter_server_extension
+    with pytest.raises(ExtensionLoadingError):
+        get_loader(object())
 
 def test_get_metadata():
     _, ext_points = get_metadata("tests.extension.mockextensions.mockext_sys")
