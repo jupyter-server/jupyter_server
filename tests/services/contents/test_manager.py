@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import sys
 import time
@@ -87,7 +88,17 @@ def _make_big_dir(contents_manager, api_path):
             """
             )
 
-        for i in range(200):
+        # since shutil.copy in Windows can't copy the metadata for files
+        # the file size of the copied file ends up being smaller than the original
+        # we only want to increase the number of folder if the tests is being run on
+        # windows, otherwise the for loop doesn't need to run as long as this
+        # function is already slow enough
+        if platform.system() == "Windows":
+            num_sub_folders = 500
+        else:
+            num_sub_folders = 200
+
+        for i in range(num_sub_folders):
             os.makedirs(f"{os_path}/subfolder-{i}")
             for j in range(200):
                 shutil.copy(
