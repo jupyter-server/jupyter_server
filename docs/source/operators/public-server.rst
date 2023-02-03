@@ -31,7 +31,7 @@ This document describes how you can
     To use JupyterHub, you need a Unix server (typically Linux) running
     somewhere that is accessible to your users on a network. This may run over
     the public internet, but doing so introduces additional
-    `security concerns <https://jupyterhub.readthedocs.io/en/latest/getting-started/security-basics.html>`_.
+    `security concerns <https://jupyterhub.readthedocs.io/en/stable/reference/websecurity.html>`_.
 
 
 
