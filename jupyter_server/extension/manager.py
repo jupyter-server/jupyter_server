@@ -1,7 +1,17 @@
 import importlib
 
 from tornado.gen import multi
-from traitlets import Any, Bool, Dict, HasTraits, Instance, List, Unicode, default, observe
+from traitlets import (
+    Any,
+    Bool,
+    Dict,
+    HasTraits,
+    Instance,
+    List,
+    Unicode,
+    default,
+    observe,
+)
 from traitlets import validate as validate_trait
 from traitlets.config import LoggingConfigurable
 
@@ -156,6 +166,7 @@ class ExtensionPackage(HasTraits):
     ext_name = "my_extensions"
     extpkg = ExtensionPackage(name=ext_name)
     """
+
     name = Unicode(help="Name of the an importable Python package.")
     enabled = Bool(False, help="Whether the extension package is enabled.")
 
@@ -184,7 +195,7 @@ class ExtensionPackage(HasTraits):
 
     def _load_metadata(self):
         """Import package and load metadata
-        
+
         Only used if extension package is enabled
         """
         name = self.name
