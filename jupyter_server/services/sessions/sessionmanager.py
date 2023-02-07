@@ -189,7 +189,7 @@ class SessionManager(LoggingConfigurable):
             with open(value, "rb") as f:
                 header = f.read(100)
 
-            if not header.startswith(b"SQLite format 3") and header != b"":  # noqa
+            if not header.startswith(b"SQLite format 3") and header != b"":
                 msg = "The given file is not an SQLite database file."
                 raise TraitError(msg)
         return value

@@ -1,7 +1,6 @@
 """Kernel connection helpers."""
 import json
 import struct
-import sys
 
 from jupyter_client.session import Session
 from tornado.websocket import WebSocketHandler

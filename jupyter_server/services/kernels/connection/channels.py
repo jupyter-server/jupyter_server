@@ -164,7 +164,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.channels[channel] = stream = meth(identity=identity)
             stream.channel = channel
 
-    def nudge(self):
+    def nudge(self):  # noqa
         """Nudge the zmq connections with kernel_info_requests
         Returns a Future that will resolve when we have received
         a shell or control reply and at least one iopub message,
@@ -444,7 +444,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             ZMQChannelsWebsocketConnection._open_sockets.remove(self)
             self._close_future.set_result(None)
         except Exception:
-            pass
+            pass  # noqa
 
     def handle_incoming_message(self, incoming_msg: str) -> None:
         """Handle incoming messages from Websocket to ZMQ Sockets."""
@@ -657,7 +657,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             err_msg["channel"] = "iopub"
             self.write_message(json.dumps(err_msg, default=json_default))
 
-    def _limit_rate(self, channel, msg, msg_list):
+    def _limit_rate(self, channel, msg, msg_list):  # noqa
         """Limit the message rate on a channel."""
         if not (self.limit_rate and channel == "iopub"):
             return False

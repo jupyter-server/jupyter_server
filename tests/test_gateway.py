@@ -77,7 +77,7 @@ def generate_model(name):
     return model
 
 
-async def mock_gateway_request(url, **kwargs):
+async def mock_gateway_request(url, **kwargs):  # noqa
     method = "GET"
     if kwargs["method"]:
         method = kwargs["method"]

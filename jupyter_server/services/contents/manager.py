@@ -93,7 +93,7 @@ class ContentsManager(LoggingConfigurable):
             if value != self.parent.preferred_dir:
                 self.parent.preferred_dir = os.path.join(self.root_dir, *value.split("/"))
         except (AttributeError, TraitError):
-            pass
+            pass  # noqa
         return value
 
     allow_hidden = Bool(False, config=True, help="Allow access to hidden files")

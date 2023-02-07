@@ -217,6 +217,10 @@ ignore = [
   "N818",
   # SIM105 Use `contextlib.suppress(...)`
   "SIM105",
+  # PLR0913 Too many arguments to function call
+  "PLR0913",
+  # PLR0912 Too many branches
+  "PLR0912",
 ]
 unfixable = [
   # Don't touch print statements

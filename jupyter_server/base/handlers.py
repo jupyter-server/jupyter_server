@@ -682,7 +682,7 @@ class JupyterHandler(AuthenticatedHandler):
             try:
                 message = exception.log_message % exception.args
             except Exception:
-                pass
+                pass  # noqa
 
             # construct the custom reason, if defined
             reason = getattr(exception, "reason", "")

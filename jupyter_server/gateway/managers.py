@@ -338,7 +338,7 @@ class GatewaySessionManager(SessionManager):
             # notification model, this will need to be revisited.
             km = self.kernel_manager.get_kernel(kernel_id)
         except Exception:  # Let exceptions here reflect culled kernel
-            pass
+            pass  # noqa
         return km is None
 
 
