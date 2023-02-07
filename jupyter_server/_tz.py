@@ -23,7 +23,7 @@ class tzUTC(tzinfo):  # noqa
         return ZERO
 
 
-UTC = tzUTC()  # noqa
+UTC = tzUTC()  # type:ignore
 
 
 def utc_aware(unaware):
