@@ -43,7 +43,6 @@ class MockExtensionTemplateHandler(
 
 
 class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
-
     name = "mockextension"
     template_paths = List().tag(config=True)
     static_paths = [STATIC_PATH]

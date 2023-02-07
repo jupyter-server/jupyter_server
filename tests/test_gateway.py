@@ -77,7 +77,7 @@ def generate_model(name):
     return model
 
 
-async def mock_gateway_request(url, **kwargs):
+async def mock_gateway_request(url, **kwargs):  # noqa
     method = "GET"
     if kwargs["method"]:
         method = kwargs["method"]
@@ -197,7 +197,6 @@ def mock_websocket_create_connection(recv_side_effect=None):
 
 
 class CustomTestTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
-
     TEST_EXPECTED_TOKEN_VALUE = "Use this token value: 42"
 
     # The following are configured by the config test to ensure they flow
@@ -342,7 +341,7 @@ def test_gateway_request_timeout_pad_option(
     GatewayClient.instance().init_connection_args()
 
     assert app.gateway_config.request_timeout == expected_request_timeout
-    assert GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == expected_kernel_launch_timeout
+    assert expected_kernel_launch_timeout == GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT
 
     GatewayClient.clear_instance()
 

@@ -94,7 +94,6 @@ class KernelActionHandler(KernelsAPIHandler):
             await ensure_async(km.interrupt_kernel(kernel_id))
             self.set_status(204)
         if action == "restart":
-
             try:
                 await km.restart_kernel(kernel_id)
             except Exception as e:

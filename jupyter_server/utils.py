@@ -313,7 +313,9 @@ def is_namespace_package(namespace):
     # NOTE: using submodule_search_locations because the loader can be None
     try:
         spec = importlib.util.find_spec(namespace)
-    except ValueError:  # spec is not set - see https://docs.python.org/3/library/importlib.html#importlib.util.find_spec
+    except (
+        ValueError
+    ):  # spec is not set - see https://docs.python.org/3/library/importlib.html#importlib.util.find_spec
         return None
 
     if not spec:

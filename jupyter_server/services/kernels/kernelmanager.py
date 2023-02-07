@@ -516,7 +516,8 @@ class MappingKernelManager(MultiKernelManager):
                 model = self.kernel_model(kernel_id)
                 kernels.append(model)
             except (web.HTTPError, KeyError):
-                pass  # Probably due to a (now) non-existent kernel, continue building the list
+                # Probably due to a (now) non-existent kernel, continue building the list
+                pass  # noqa
         return kernels
 
     # override _check_kernel_id to raise 404 instead of KeyError

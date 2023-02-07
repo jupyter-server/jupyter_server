@@ -78,7 +78,6 @@ def handle_umask():
 
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Windows")
 def test_atomic_writing_umask(handle_umask, tmp_path):
-
     os.umask(0o022)
     f1 = str(tmp_path / "1")
     with atomic_writing(f1) as f:

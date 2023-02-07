@@ -115,7 +115,7 @@ class ExtensionHandlerMixin:
         if include_host is None:
             include_host = getattr(self, "include_host", False)
 
-        if include_host:
+        if include_host:  # noqa
             base = self.request.protocol + "://" + self.request.host  # type:ignore[attr-defined]
         else:
             base = ""
