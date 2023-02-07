@@ -1796,7 +1796,6 @@ class ServerApp(JupyterApp):
 
     @default("terminals_enabled")
     def _default_terminals_enabled(self):
-
         return True
 
     authenticate_prometheus = Bool(
@@ -2729,7 +2728,7 @@ class ServerApp(JupyterApp):
             if self.identity_provider.token:
                 uri = url_concat(uri, {"token": self.identity_provider.token})
 
-        if self.file_to_run:
+        if self.file_to_run:  # noqa
             # Create a separate, temporary open-browser-file
             # pointing at a specific file.
             open_file = self.browser_open_file_to_run

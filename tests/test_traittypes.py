@@ -15,7 +15,6 @@ class DummyInt(int):
 
 
 class Thing(HasTraits):
-
     a = InstanceFromClasses(
         default_value=2,
         klasses=[

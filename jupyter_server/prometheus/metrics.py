@@ -16,7 +16,6 @@ try:
     )
 
 except ImportError:
-
     from prometheus_client import Gauge, Histogram
 
     HTTP_REQUEST_DURATION_SECONDS = Histogram(

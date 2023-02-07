@@ -68,7 +68,7 @@ def get_exporter(format, **kwargs):
     """get an exporter, raising appropriate errors"""
     # if this fails, will raise 500
     try:
-        from nbconvert.exporters.base import get_exporter  # type:ignore
+        from nbconvert.exporters.base import get_exporter
     except ImportError as e:
         raise web.HTTPError(500, "Could not import nbconvert: %s" % e) from e
 

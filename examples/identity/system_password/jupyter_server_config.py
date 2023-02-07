@@ -28,6 +28,6 @@ class SystemPasswordIdentityProvider(IdentityProvider):
         return User(username=username, name=user_info.pw_gecos or username)
 
 
-c = get_config()  # type: ignore # noqa
+c = get_config()  # type: ignore
 
 c.ServerApp.identity_provider_class = SystemPasswordIdentityProvider

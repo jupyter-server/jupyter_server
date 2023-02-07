@@ -1,7 +1,6 @@
 """Kernel connection helpers."""
 import json
 import struct
-import sys
 
 from jupyter_client.session import Session
 from tornado.websocket import WebSocketHandler
@@ -36,8 +35,6 @@ def serialize_binary_message(msg):
     # don't modify msg or buffer list in-place
     msg = msg.copy()
     buffers = list(msg.pop("buffers"))
-    if sys.version_info < (3, 4):
-        buffers = [x.tobytes() for x in buffers]
     bmsg = json.dumps(msg, default=json_default).encode("utf8")
     buffers.insert(0, bmsg)
     nbufs = len(buffers)

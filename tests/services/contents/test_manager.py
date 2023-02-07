@@ -260,7 +260,7 @@ async def test_403(jp_file_contents_manager_class, tmp_path):
 
 
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Can't test hidden files on Windows")
-async def test_400(jp_file_contents_manager_class, tmp_path):
+async def test_400(jp_file_contents_manager_class, tmp_path):  # noqa
     # Test Delete behavior
     # Test delete of file in hidden directory
     td = str(tmp_path)
@@ -503,7 +503,7 @@ async def test_modified_date(jp_contents_manager):
     assert renamed["last_modified"] >= saved["last_modified"]
 
 
-async def test_get(jp_contents_manager):
+async def test_get(jp_contents_manager):  # noqa
     cm = jp_contents_manager
     # Create a notebook
     model = await ensure_async(cm.new_untitled(type="notebook"))

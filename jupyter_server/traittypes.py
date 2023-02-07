@@ -77,7 +77,7 @@ class TypeFromClasses(ClassBasedTraitType):
             if self.subclass_from_klasses(value):
                 return value
         except Exception:
-            pass
+            pass  # noqa
 
         self.error(obj, value)
 
@@ -109,7 +109,7 @@ class TypeFromClasses(ClassBasedTraitType):
                     klass = self._resolve_string(klass)
                     self.importable_klasses.append(klass)
                 except Exception:
-                    pass
+                    pass  # noqa
             else:
                 self.importable_klasses.append(klass)
 
@@ -221,7 +221,7 @@ class InstanceFromClasses(ClassBasedTraitType):
                     klass = self._resolve_string(klass)
                     self.importable_klasses.append(klass)
                 except Exception:
-                    pass
+                    pass  # noqa
             else:
                 self.importable_klasses.append(klass)
 

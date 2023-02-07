@@ -216,7 +216,7 @@ class ExtensionApp(JupyterApp):
                 return ServerApp.instance()
             except Exception:
                 # error retrieving instance, e.g. MultipleInstanceError
-                pass
+                pass  # noqa
 
         # serverapp accessed before it was defined,
         # declare an empty one
@@ -588,7 +588,7 @@ class ExtensionApp(JupyterApp):
         extension's landing page.
         """
         # Handle arguments.
-        if argv is None:
+        if argv is None:  # noqa
             args = sys.argv[1:]  # slice out extension config.
         else:
             args = argv
