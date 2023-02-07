@@ -595,7 +595,6 @@ async def test_copy_400_hidden(
     contents,
     contents_dir,
 ):
-
     # Create text files
     hidden_dir = contents_dir / ".hidden"
     hidden_dir.mkdir(parents=True, exist_ok=True)
@@ -795,7 +794,6 @@ async def test_rename_400_hidden(jp_fetch, jp_base_url, contents, contents_dir):
 
 
 async def test_checkpoints_follow_file(jp_fetch, contents):
-
     path = "foo"
     name = "a.ipynb"
 

@@ -214,7 +214,6 @@ def test_shutdown_server(jp_environ):
 
 @pytest.mark.integration_test
 def test_jupyter_server_apps(jp_environ):
-
     # Start a server in another process
     # Stop that server
     import subprocess

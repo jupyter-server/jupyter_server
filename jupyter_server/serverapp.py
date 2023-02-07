@@ -1796,7 +1796,6 @@ class ServerApp(JupyterApp):
 
     @default("terminals_enabled")
     def _default_terminals_enabled(self):
-
         return True
 
     authenticate_prometheus = Bool(

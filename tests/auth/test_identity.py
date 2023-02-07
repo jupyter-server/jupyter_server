@@ -187,7 +187,6 @@ async def test_auth_disabled(request, jp_serverapp, jp_fetch):
     assert not idp.auth_enabled
 
     with mock.patch.dict(jp_serverapp.web_app.settings, {"identity_provider": idp}):
-
         resp = await jp_fetch("/api/me", headers={"Authorization": "", "Cookie": ""})
 
         user_info = json.loads(resp.body.decode("utf8"))
