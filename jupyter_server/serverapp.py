@@ -2404,9 +2404,14 @@ class ServerApp(JupyterApp):
 
     def _find_http_port(self):
         """Find an available http port."""
+        pat = re.compile("([a-f0-9:]+:+)+[a-f0-9]*")
         success = None
         for port in random_ports(self.port, self.port_retries + 1):
-            tmp_sock = socket.socket()
+            tmp_sock = (
+                socket.socket()
+                if pat.match(self.ip) is None
+                else socket.socket(family=socket.AF_INET6)
+            )
             try:
                 tmp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, b"\0" * 8)
                 tmp_sock.bind((self.ip, port))
