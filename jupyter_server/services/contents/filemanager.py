@@ -5,6 +5,7 @@ import errno
 import math
 import mimetypes
 import os
+import platform
 import shutil
 import stat
 import subprocess
@@ -673,6 +674,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         limit_str = f"{limit_mb}MB"
         limit_bytes = limit_mb * 1024 * 1024
         size = int(self._get_dir_size(self._get_os_path(path)))
+        size = size * 1024 if platform.system() == "Darwin" else size
+
         if size > limit_bytes:
             raise web.HTTPError(
                 400,
@@ -687,9 +690,19 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         calls the command line program du to get the directory size
         """
         try:
-            result = subprocess.run(
-                ["du", "-s", "--block-size=1", path], capture_output=True
-            ).stdout.split()
+            # result = subprocess.run(
+            #     ["du", "-s", "--block-size=1", path], capture_output=True
+            # ).stdout.split()
+            # self.log.info(f"current status of du command {result}")
+            # size = result[0].decode("utf-8")
+            if platform.system() == "Darwin":
+                result = subprocess.run(["du", "-sk", path], capture_output=True).stdout.split()
+
+            else:
+                result = subprocess.run(
+                    ["du", "-s", "--block-size=1", path], capture_output=True
+                ).stdout.split()
+
             self.log.info(f"current status of du command {result}")
             size = result[0].decode("utf-8")
         except Exception as err:
@@ -1145,6 +1158,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         limit_str = f"{limit_mb}MB"
         limit_bytes = limit_mb * 1024 * 1024
         size = int(await self._get_dir_size(self._get_os_path(path)))
+        size = size * 1024 if platform.system() == "Darwin" else size
         if size > limit_bytes:
             raise web.HTTPError(
                 400,
@@ -1159,9 +1173,18 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         calls the command line program du to get the directory size
         """
         try:
-            result = subprocess.run(
-                ["du", "-s", "--block-size=1", path], capture_output=True
-            ).stdout.split()
+            # result = subprocess.run(
+            #     ["du", "-s", "--block-size=1", path], capture_output=True
+            # ).stdout.split()
+
+            if platform.system() == "Darwin":
+                result = subprocess.run(["du", "-sk", path], capture_output=True).stdout.split()
+
+            else:
+                result = subprocess.run(
+                    ["du", "-s", "--block-size=1", path], capture_output=True
+                ).stdout.split()
+
             self.log.info(f"current status of du command {result}")
             size = result[0].decode("utf-8")
         except Exception as err:
