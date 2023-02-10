@@ -685,7 +685,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 """,
             )
 
-    def _get_dir_size(self, path = "."):
+    def _get_dir_size(self, path="."):
         """
         calls the command line program du to get the directory size
         """
