@@ -603,7 +603,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         parent_dir = path.rsplit("/", 1)[0] if "/" in path else ""
         return parent_dir
 
-    def copy(self, from_path: str, to_path=None):
+    def copy(self, from_path, to_path=None):
         """
         Copy an existing file or directory and return its new model.
         If to_path not specified, it will be the parent directory of from_path.
@@ -647,7 +647,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             to_path=to_path,
         )
 
-    def _copy_dir(self, from_path: str, to_path_original: str, to_name: str, to_path: str):
+    def _copy_dir(self, from_path, to_path_original, to_name, to_path):
         """
         handles copying directories
         returns the model for the copied directory
@@ -666,7 +666,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         return model
 
-    def check_folder_size(self, path: str):
+    def check_folder_size(self, path):
         """
         limit the size of folders being copied to prevent a timeout error
         """
@@ -685,7 +685,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 """,
             )
 
-    def _get_dir_size(self, path: str = "."):
+    def _get_dir_size(self, path = "."):
         """
         calls the command line program du to get the directory size
         """
@@ -716,7 +716,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             ) from err
         return size
 
-    def _human_readable_size(self, size: int):
+    def _human_readable_size(self, size):
         """
         returns folder size in a human readable format
         """
@@ -1084,7 +1084,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         parent_dir = path.rsplit("/", 1)[0] if "/" in path else ""
         return parent_dir
 
-    async def copy(self, from_path: str, to_path=None) -> dict:
+    async def copy(self, from_path, to_path=None):
         """
         Copy an existing file or directory and return its new model.
         If to_path not specified, it will be the parent directory of from_path.
