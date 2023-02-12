@@ -1147,7 +1147,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         """
         limit the size of folders being copied to be no more than the
         trait max_copy_folder_size_mb
-        
+
         prevent a timeout error
 
         """
