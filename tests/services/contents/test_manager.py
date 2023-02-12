@@ -1,5 +1,4 @@
 import os
-import platform
 import shutil
 import sys
 import time
@@ -59,20 +58,6 @@ def _make_big_dir(contents_manager, api_path):
     os_path = contents_manager._get_os_path(api_path)
     try:
         os.makedirs(os_path)
-        # textFile = open(f"{os_path}/demofile.txt", "a")
-        # textFile.write(
-        #     """
-        # Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-        # sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        # Ut enim ad minim veniam, quis nostrud exercitation ullamco
-        # laboris nisi ut aliquip ex ea commodo consequat.
-        #  Duis aute irure dolor in reprehenderit in voluptate
-        #  velit esse cillum dolore eu fugiat nulla pariatur.
-        #  Excepteur sint occaecat cupidatat non proident,
-        #  sunt in culpa qui officia deserunt mollit anim id est laborum.
-        # """
-        # )
-        # textFile.close()
 
         with open(f"{os_path}/demofile.txt", "a") as textFile:
             textFile.write(
@@ -88,13 +73,6 @@ def _make_big_dir(contents_manager, api_path):
             """
             )
 
-        # since shutil.copy in Windows can't copy the metadata for files
-        # the file size of the copied file ends up being smaller than the original
-        # we only want to increase the number of folder if the tests is being run on
-        # windows,
-        # big_dir_size = contents_manager.max_copy_folder_size_mb * 3
-        # print(f"the size of the big folder for testing is {big_dir_size}")
-        # num_sub_folders = big_dir_size if platform.system() != "Windows" else big_dir_size * 3
         num_sub_folders = contents_manager.max_copy_folder_size_mb * 10
         for i in range(num_sub_folders):
             os.makedirs(f"{os_path}/subfolder-{i}")

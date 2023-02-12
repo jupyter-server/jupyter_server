@@ -668,7 +668,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
     def check_folder_size(self, path):
         """
-        limit the size of folders being copied to prevent a timeout error
+        limit the size of folders being copied to be no more than the
+        trait max_copy_folder_size_mb to prevent a timeout error
         """
         limit_bytes = self.max_copy_folder_size_mb * 1024 * 1024
         size = int(self._get_dir_size(self._get_os_path(path)))
@@ -1146,10 +1147,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
     async def check_folder_size(self, path: str) -> None:
         """
         limit the size of folders being copied to be no more than the
-        trait max_copy_folder_size_mb
-
-        prevent a timeout error
-
+        trait max_copy_folder_size_mb to prevent a timeout error
         """
         limit_bytes = self.max_copy_folder_size_mb * 1024 * 1024
 
