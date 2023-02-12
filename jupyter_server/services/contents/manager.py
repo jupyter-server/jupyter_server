@@ -15,7 +15,19 @@ from nbformat import ValidationError, sign
 from nbformat import validate as validate_nb
 from nbformat.v4 import new_notebook
 from tornado.web import HTTPError, RequestHandler
-from traitlets import Any, Bool, Dict, Instance, List, TraitError, Type, Unicode, default, validate
+from traitlets import (
+    Any,
+    Bool,
+    Dict,
+    Instance,
+    Int,
+    List,
+    TraitError,
+    Type,
+    Unicode,
+    default,
+    validate,
+)
 from traitlets.config.configurable import LoggingConfigurable
 
 from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH, JUPYTER_SERVER_EVENTS_URI
@@ -120,6 +132,8 @@ class ContentsManager(LoggingConfigurable):
         Glob patterns to hide in file and directory listings.
     """,
     )
+
+    max_copy_folder_size_mb = Int(500, config=True, help="The max folder size that can be copied")
 
     untitled_notebook = Unicode(
         _i18n("Untitled"),

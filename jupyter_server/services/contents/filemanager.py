@@ -672,7 +672,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         """
         limit_mb = 100
         limit_str = f"{limit_mb}MB"
-        limit_bytes = limit_mb * 1024 * 1024
+        # limit_bytes = limit_mb * 1024 * 1024
+        limit_bytes = self.max_copy_folder_size_mb * 1024 * 1024
         size = int(self._get_dir_size(self._get_os_path(path)))
         size = size * 1024 if platform.system() == "Darwin" else size
 
@@ -1156,7 +1157,9 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         """
         limit_mb = 100
         limit_str = f"{limit_mb}MB"
-        limit_bytes = limit_mb * 1024 * 1024
+        # limit_bytes = limit_mb * 1024 * 1024
+        limit_bytes = self.max_copy_folder_size_mb * 1024 * 1024
+
         size = int(await self._get_dir_size(self._get_os_path(path)))
         size = size * 1024 if platform.system() == "Darwin" else size
         if size > limit_bytes:

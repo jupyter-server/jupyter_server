@@ -91,9 +91,10 @@ def _make_big_dir(contents_manager, api_path):
         # since shutil.copy in Windows can't copy the metadata for files
         # the file size of the copied file ends up being smaller than the original
         # we only want to increase the number of folder if the tests is being run on
-        # windows, otherwise the for loop doesn't need to run as long as this
-        # function is already slow enough
-        num_sub_folders = 500 if platform.system() == "Windows" else 200
+        # windows,
+        big_dir_size = contents_manager.max_copy_folder_size_mb * 3
+        print(f"the size of the big folder for testing is {big_dir_size}")
+        num_sub_folders = big_dir_size if platform.system() == "Windows" else big_dir_size * 3
 
         for i in range(num_sub_folders):
             os.makedirs(f"{os_path}/subfolder-{i}")
@@ -905,10 +906,12 @@ async def test_copy_dir(jp_contents_manager):
 
 
 async def test_copy_big_dir(jp_contents_manager):
-    # this tests how the Content API limits prevents copying folders that more than 100MB in size
+    # this tests how the Content API limits preventing copying folders that are more than
+    # the size limit specified in max_copy_folder_size_mb trait
     cm = jp_contents_manager
     destDir = "Untitled Folder 1"
     sourceDir = "Morningstar Notebooks"
+    cm.max_copy_folder_size_mb = 5
     _make_dir(cm, destDir)
     _make_big_dir(contents_manager=cm, api_path=sourceDir)
     with pytest.raises(HTTPError) as exc_info:
