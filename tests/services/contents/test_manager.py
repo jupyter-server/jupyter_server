@@ -94,7 +94,7 @@ def _make_big_dir(contents_manager, api_path):
         # windows,
         big_dir_size = contents_manager.max_copy_folder_size_mb * 3
         print(f"the size of the big folder for testing is {big_dir_size}")
-        num_sub_folders = big_dir_size if platform.system() == "Windows" else big_dir_size * 3
+        num_sub_folders = big_dir_size if platform.system() != "Windows" else big_dir_size * 3
 
         for i in range(num_sub_folders):
             os.makedirs(f"{os_path}/subfolder-{i}")
