@@ -92,10 +92,10 @@ def _make_big_dir(contents_manager, api_path):
         # the file size of the copied file ends up being smaller than the original
         # we only want to increase the number of folder if the tests is being run on
         # windows,
-        big_dir_size = contents_manager.max_copy_folder_size_mb * 3
-        print(f"the size of the big folder for testing is {big_dir_size}")
-        num_sub_folders = big_dir_size if platform.system() != "Windows" else big_dir_size * 3
-
+        # big_dir_size = contents_manager.max_copy_folder_size_mb * 3
+        # print(f"the size of the big folder for testing is {big_dir_size}")
+        # num_sub_folders = big_dir_size if platform.system() != "Windows" else big_dir_size * 3
+        num_sub_folders = contents_manager.max_copy_folder_size_mb * 10
         for i in range(num_sub_folders):
             os.makedirs(f"{os_path}/subfolder-{i}")
             for j in range(200):

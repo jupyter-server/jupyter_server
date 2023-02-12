@@ -670,18 +670,16 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         """
         limit the size of folders being copied to prevent a timeout error
         """
-        limit_mb = 100
-        limit_str = f"{limit_mb}MB"
-        # limit_bytes = limit_mb * 1024 * 1024
         limit_bytes = self.max_copy_folder_size_mb * 1024 * 1024
         size = int(self._get_dir_size(self._get_os_path(path)))
+        # convert from KB to Bytes for macOS
         size = size * 1024 if platform.system() == "Darwin" else size
 
         if size > limit_bytes:
             raise web.HTTPError(
                 400,
                 f"""
-                    Can't copy folders larger than {limit_str},
+                    Can't copy folders larger than {self.max_copy_folder_size_mb}MB,
                     "{path}" is {self._human_readable_size(size)}
                 """,
             )
@@ -691,14 +689,9 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         calls the command line program du to get the directory size
         """
         try:
-            # result = subprocess.run(
-            #     ["du", "-s", "--block-size=1", path], capture_output=True
-            # ).stdout.split()
-            # self.log.info(f"current status of du command {result}")
-            # size = result[0].decode("utf-8")
             if platform.system() == "Darwin":
+                # retuns the size of the folder in KB
                 result = subprocess.run(["du", "-sk", path], capture_output=True).stdout.split()
-
             else:
                 result = subprocess.run(
                     ["du", "-s", "--block-size=1", path], capture_output=True
@@ -1152,21 +1145,22 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
     async def check_folder_size(self, path: str) -> None:
         """
-        limit the size of folders being copied to prevent a timeout error
+        limit the size of folders being copied to be no more than the
+        trait max_copy_folder_size_mb
+        
+        prevent a timeout error
 
         """
-        limit_mb = 100
-        limit_str = f"{limit_mb}MB"
-        # limit_bytes = limit_mb * 1024 * 1024
         limit_bytes = self.max_copy_folder_size_mb * 1024 * 1024
 
         size = int(await self._get_dir_size(self._get_os_path(path)))
+        # convert from KB to Bytes for macOS
         size = size * 1024 if platform.system() == "Darwin" else size
         if size > limit_bytes:
             raise web.HTTPError(
                 400,
                 f"""
-                    Can't copy folders larger than {limit_str},
+                    Can't copy folders larger than {self.max_copy_folder_size_mb}MB,
                     "{path}" is {await self._human_readable_size(size)}
                 """,
             )
@@ -1176,13 +1170,9 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         calls the command line program du to get the directory size
         """
         try:
-            # result = subprocess.run(
-            #     ["du", "-s", "--block-size=1", path], capture_output=True
-            # ).stdout.split()
-
             if platform.system() == "Darwin":
+                # retuns the size of the folder in KB
                 result = subprocess.run(["du", "-sk", path], capture_output=True).stdout.split()
-
             else:
                 result = subprocess.run(
                     ["du", "-s", "--block-size=1", path], capture_output=True
