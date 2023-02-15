@@ -5,10 +5,37 @@
 #  the file COPYING, distributed as part of this software.
 # -----------------------------------------------------------------------------
 import json
+from urllib.parse import urlparse, urlunparse
 
 from tornado.log import access_log
 
 from .prometheus.log_functions import prometheus_log_method
+
+# url params to be scrubbed if seen
+# any url param that *contains* one of these
+# will be scrubbed from logs
+_SCRUB_PARAM_KEYS = {"token", "auth", "key", "code", "state", "xsrf"}
+
+
+def _scrub_uri(uri: str) -> str:
+    """scrub auth info from uri"""
+    parsed = urlparse(uri)
+    if parsed.query:
+        # check for potentially sensitive url params
+        # use manual list + split rather than parsing
+        # to minimally perturb original
+        parts = parsed.query.split("&")
+        changed = False
+        for i, s in enumerate(parts):
+            key, sep, value = s.partition("=")
+            for substring in _SCRUB_PARAM_KEYS:
+                if substring in key:
+                    parts[i] = f"{key}{sep}[secret]"
+                    changed = True
+        if changed:
+            parsed = parsed._replace(query="&".join(parts))
+            return urlunparse(parsed)
+    return uri
 
 
 def log_request(handler):
@@ -41,13 +68,13 @@ def log_request(handler):
         status=status,
         method=request.method,
         ip=request.remote_ip,
-        uri=request.uri,
+        uri=_scrub_uri(request.uri),
         request_time=request_time,
     )
     msg = "{status} {method} {uri} ({ip}) {request_time:.2f}ms"
     if status >= 400:
         # log bad referers
-        ns["referer"] = request.headers.get("Referer", "None")
+        ns["referer"] = _scrub_uri(request.headers.get("Referer", "None"))
         msg = msg + " referer={referer}"
     if status >= 500 and status != 502:
         # Log a subset of the headers if it caused an error.
