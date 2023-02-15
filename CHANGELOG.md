@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.3.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.2.1...968c56c8c69aa545f7fe93243331fe140dac7c90))
+
+### Enhancements made
+
+- Support IPV6 in \_find_http_port() [#1207](https://github.com/jupyter-server/jupyter_server/pull/1207) ([@schnell18](https://github.com/schnell18))
+
+### Bugs fixed
+
+- Redact tokens, etc. in url parameters from request logs [#1212](https://github.com/jupyter-server/jupyter_server/pull/1212) ([@minrk](https://github.com/minrk))
+- Fix get_loader returning None when load_jupyter_server_extension is not found (#1193)Co-authored-by: pre-commit-ci\[bot\] \<66853113+pre-commit-ci\[bot\]@users.noreply.github.com> [#1193](https://github.com/jupyter-server/jupyter_server/pull/1193) ([@cmd-ntrf](https://github.com/cmd-ntrf))
+
+### Maintenance and upkeep improvements
+
+- update LICENSE [#1197](https://github.com/jupyter-server/jupyter_server/pull/1197) ([@dcsaba89](https://github.com/dcsaba89))
+- Add license 2 (#1196 [#1196](https://github.com/jupyter-server/jupyter_server/pull/1196) ([@dcsaba89](https://github.com/dcsaba89))
+
+### Documentation improvements
+
+- Update jupyterhub security link [#1200](https://github.com/jupyter-server/jupyter_server/pull/1200) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-02-02&to=2023-02-15&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-02-02..2023-02-15&type=Issues) | [@cmd-ntrf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acmd-ntrf+updated%3A2023-02-02..2023-02-15&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2023-02-02..2023-02-15&type=Issues) | [@dcsaba89](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adcsaba89+updated%3A2023-02-02..2023-02-15&type=Issues) | [@meeseeksdev](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksdev+updated%3A2023-02-02..2023-02-15&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-02-02..2023-02-15&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-02-02..2023-02-15&type=Issues) | [@schnell18](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aschnell18+updated%3A2023-02-02..2023-02-15&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-02-02..2023-02-15&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.2.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.2.0...0f9556b48d7699bd2d246222067b1cb215d44c28))
@@ -19,8 +49,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-01-31&to=2023-02-02&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-01-31..2023-02-02&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2023-01-31..2023-02-02&type=Issues) | [@jonnygrout](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajonnygrout+updated%3A2023-01-31..2023-02-02&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-01-31..2023-02-02&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-01-31..2023-02-02&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.2.0
 
