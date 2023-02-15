@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.23.6
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.23.5...75bbefa82fa760b63e8ad8a9245f4a8d49503656))
+
+### Bugs fixed
+
+- Backport PR #1212: Redact tokens, etc. in url parameters from request  logs [#1214](https://github.com/jupyter-server/jupyter_server/pull/1214) ([@blink1073](https://github.com/blink1073))
+- Backport PR #1193: Fix get_loader returning None when load_jupyter_server_extension is not found (#1193) (#1199)Co-authored-by: Steven Silvester <steven.silvester@ieee.org> Co-authored-by: pre-commit-ci\[bot\] \<66853113+pre-commit-ci\[bot\]@users.noreply.github.com> [#1199](https://github.com/jupyter-server/jupyter_server/pull/1199) ([@cmd-ntrf](https://github.com/cmd-ntrf))
+
+### Documentation improvements
+
+- Update jupyterhub security link [#1200](https://github.com/jupyter-server/jupyter_server/pull/1200) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-01-12&to=2023-02-15&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-01-12..2023-02-15&type=Issues) | [@cmd-ntrf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acmd-ntrf+updated%3A2023-01-12..2023-02-15&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2023-01-12..2023-02-15&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2023-01-12..2023-02-15&type=Issues) | [@meeseeksdev](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksdev+updated%3A2023-01-12..2023-02-15&type=Issues) | [@meeseeksmachine](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksmachine+updated%3A2023-01-12..2023-02-15&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-01-12..2023-02-15&type=Issues) | [@xinliupitt](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Axinliupitt+updated%3A2023-01-12..2023-02-15&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.23.5
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v1.23.4...2ca800829c96dc60893dc83715282b7b8fd03d59))
@@ -17,8 +38,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2022-12-20&to=2023-01-12&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2022-12-20..2023-01-12&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2022-12-20..2023-01-12&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2022-12-20..2023-01-12&type=Issues) | [@meeseeksdev](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ameeseeksdev+updated%3A2022-12-20..2023-01-12&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2022-12-20..2023-01-12&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2022-12-20..2023-01-12&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.23.4
 
