@@ -6,7 +6,7 @@ import logging
 import mimetypes
 import os
 import random
-from typing import cast
+from typing import Optional, cast
 
 from jupyter_client.session import Session
 from tornado import web
@@ -281,6 +281,7 @@ class GatewayResourceHandler(APIHandler):
     @web.authenticated
     async def get(self, kernel_name, path, include_body=True):
         """Get a gateway resource by name and path."""
+        mimetype: Optional[str] = None
         ksm = self.kernel_spec_manager
         kernel_spec_res = await ksm.get_kernel_spec_resource(kernel_name, path)
         if kernel_spec_res is None:
@@ -290,8 +291,7 @@ class GatewayResourceHandler(APIHandler):
             )
         else:
             mimetype = mimetypes.guess_type(path)[0] or "text/plain"
-            self.set_header("Content-Type", mimetype)
-        self.finish(kernel_spec_res)
+        self.finish(kernel_spec_res, set_content_type=mimetype)
 
 
 from ..services.kernels.handlers import _kernel_id_regex
