@@ -422,9 +422,10 @@ async def test_gateway_get_named_kernelspec(init_gateway, jp_fetch):
         kspec_foo = json.loads(r.body.decode("utf-8"))
         assert kspec_foo.get("name") == "kspec_foo"
 
-        r = await jp_fetch("kernelspecs", "kspec_foo", "hi", method="GET")
+        r = await jp_fetch("kernelspecs", "kspec_foo", "logo-64x64.png", method="GET")
         assert r.code == 200
         assert r.body == b"foo"
+        assert r.headers["content-type"] == "image/png"
 
         with pytest.raises(tornado.httpclient.HTTPClientError) as e:
             await jp_fetch("api", "kernelspecs", "no_such_spec", method="GET")
