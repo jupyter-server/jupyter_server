@@ -236,7 +236,8 @@ class IdentityProvider(LoggingConfigurable):
         _token_user: User | None | Awaitable[User | None] = self.get_user_token(handler)
         if isinstance(_token_user, Awaitable):
             _token_user = await _token_user
-        token_user: User | None = _token_user  # need second variable name to collapse type
+        # need second variable name to collapse type
+        token_user: User | None = _token_user
         _cookie_user = self.get_user_cookie(handler)
         if isinstance(_cookie_user, Awaitable):
             _cookie_user = await _cookie_user

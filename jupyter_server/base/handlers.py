@@ -251,9 +251,28 @@ class AuthenticatedHandler(web.RequestHandler):
             )
             from jupyter_server.auth import IdentityProvider
 
-            # no identity provider set, load default
+            non_alphanum = re.compile(r"[^A-Za-z0-9]")
+            default_cookie_name = non_alphanum.sub("-", f"username-{self.request.host}")
+
+            # If there is no identity provider set, load the default. If using
+            # a classic notebook server, adding extensions that inherit
+            # from JupyterHandler will use a mix of new+old authentication log.
+            # Here, we construct an identity provider that works side-by-side
+            # and consistently with the old way that we handled auth in
+            # the classic server.
             self.settings["identity_provider"] = IdentityProvider(
-                config=self.settings.get("config", None)
+                config=self.settings.get("config", None),
+                # For backwards compatibility, pass the token
+                # from the webapp settings.
+                token=self.settings.get("token", "<generated>"),
+                # Prefix the cookie name with "model-" to avoid colliding with
+                # the cookie set by the classic server.
+                # NOTE: This creates two cookies to authenticate the user
+                # (1) the token cookie and (2) the user model cookie.
+                cookie_name="model-" + self.settings.get("cookie_name", default_cookie_name),
+                cookie_options=self.settings.get("cookie_options", {}),
+                secure_cookie=self.settings.get("secure_cookie", None),
+                get_secure_cookie_kwargs=self.settings.get("get_secure_cookie_kwargs", {}),
             )
         return self.settings["identity_provider"]
 
