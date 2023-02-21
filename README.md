@@ -52,3 +52,31 @@ If you are interested in contributing to the project, see [`CONTRIBUTING.rst`](C
 - What: [Meeting notes](https://github.com/jupyter-server/team-compass/issues/4)
 
 See our tentative [roadmap here](https://github.com/jupyter/jupyter_server/issues/127).
+
+## About the Jupyter Development Team
+
+The Jupyter Development Team is the set of all contributors to the Jupyter project.
+This includes all of the Jupyter subprojects.
+
+The core team that coordinates development on GitHub can be found here:
+https://github.com/jupyter/.
+
+## Our Copyright Policy
+
+Jupyter uses a shared copyright model. Each contributor maintains copyright
+over their contributions to Jupyter. But, it is important to note that these
+contributions are typically only changes to the repositories. Thus, the Jupyter
+source code, in its entirety is not the copyright of any single person or
+institution. Instead, it is the collective copyright of the entire Jupyter
+Development Team. If individual contributors want to maintain a record of what
+changes/contributions they have specific copyright on, they should indicate
+their copyright in the commit message of the change, when they commit the
+change to one of the Jupyter repositories.
+
+With this in mind, the following banner should be used in any source code file
+to indicate the copyright and license terms:
+
+```
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+```
