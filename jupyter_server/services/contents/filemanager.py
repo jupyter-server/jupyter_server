@@ -19,7 +19,7 @@ from anyio.to_thread import run_sync
 from jupyter_core.paths import exists, is_file_hidden, is_hidden
 from send2trash import send2trash
 from tornado import web
-from traitlets import Bool, TraitError, Unicode, default, validate
+from traitlets import Bool, Int, TraitError, Unicode, default, validate
 
 from jupyter_server import _tz as tz
 from jupyter_server.base.handlers import AuthenticatedFileHandler
@@ -43,6 +43,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
     """A file contents manager."""
 
     root_dir = Unicode(config=True)
+
+    max_copy_folder_size_mb = Int(500, config=True, help="The max folder size that can be copied")
 
     @default("root_dir")
     def _default_root_dir(self):

@@ -20,7 +20,6 @@ from traitlets import (
     Bool,
     Dict,
     Instance,
-    Int,
     List,
     TraitError,
     Type,
@@ -132,8 +131,6 @@ class ContentsManager(LoggingConfigurable):
         Glob patterns to hide in file and directory listings.
     """,
     )
-
-    max_copy_folder_size_mb = Int(500, config=True, help="The max folder size that can be copied")
 
     untitled_notebook = Unicode(
         _i18n("Untitled"),
