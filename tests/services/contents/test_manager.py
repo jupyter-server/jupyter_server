@@ -163,6 +163,9 @@ def test_get_os_path(jp_file_contents_manager_class, tmp_path):
     fs_path = os.path.join(fm.root_dir, "test.ipynb")
     assert path == fs_path
 
+
+@pytest.mark.skipif(os.name == "nt", reason="Posix only")
+def test_get_os_path_posix(jp_file_contents_manager_class, tmp_path):
     fm = jp_file_contents_manager_class(root_dir=str(tmp_path))
     path = fm._get_os_path("////test.ipynb")
     fs_path = os.path.join(fm.root_dir, "test.ipynb")
