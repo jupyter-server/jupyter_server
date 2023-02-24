@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import time
 from itertools import combinations
@@ -50,6 +51,39 @@ def _make_dir(jp_contents_manager, api_path):
         os.makedirs(os_path)
     except OSError:
         print("Directory already exists: %r" % os_path)
+
+
+def _make_big_dir(contents_manager, api_path):
+    # make a directory that is over 100 MB in size
+    os_path = contents_manager._get_os_path(api_path)
+    try:
+        os.makedirs(os_path)
+
+        with open(f"{os_path}/demofile.txt", "a") as textFile:
+            textFile.write(
+                """
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+            sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            Ut enim ad minim veniam, quis nostrud exercitation ullamco
+            laboris nisi ut aliquip ex ea commodo consequat.
+            Duis aute irure dolor in reprehenderit in voluptate
+            velit esse cillum dolore eu fugiat nulla pariatur.
+            Excepteur sint occaecat cupidatat non proident,
+            sunt in culpa qui officia deserunt mollit anim id est laborum.
+            """
+            )
+
+        num_sub_folders = contents_manager.max_copy_folder_size_mb * 10
+        for i in range(num_sub_folders):
+            os.makedirs(f"{os_path}/subfolder-{i}")
+            for j in range(200):
+                shutil.copy(
+                    f"{os_path}/demofile.txt",
+                    f"{os_path}/subfolder-{i}/testfile{j}.txt",
+                )
+
+    except OSError as err:
+        print("Directory already exists", err)
 
 
 def symlink(jp_contents_manager, src, dst):
@@ -816,6 +850,55 @@ async def test_copy(jp_contents_manager):
     copy3 = await ensure_async(cm.copy(path, "/copy 3.ipynb"))
     assert copy3["name"] == "copy 3.ipynb"
     assert copy3["path"] == "copy 3.ipynb"
+
+
+async def test_copy_dir(jp_contents_manager):
+    cm = jp_contents_manager
+    destDir = "Untitled Folder 1"
+    sourceDir = "Morningstar Notebooks"
+    nonExistantDir = "FolderDoesNotExist"
+
+    _make_dir(cm, destDir)
+    _make_dir(cm, sourceDir)
+
+    nestedDir = f"{destDir}/{sourceDir}"
+
+    # copy one folder insider another folder
+    copy = await ensure_async(cm.copy(from_path=sourceDir, to_path=destDir))
+    assert copy["path"] == nestedDir
+
+    # need to test when copying in a directory where the another folder with the same name exists
+    _make_dir(cm, nestedDir)
+    copy = await ensure_async(cm.copy(from_path=sourceDir, to_path=destDir))
+    assert copy["path"] == f"{nestedDir}-Copy1"
+
+    # need to test for when copying in the same path as the sourceDir
+    copy = await ensure_async(cm.copy(from_path=sourceDir, to_path=""))
+    assert copy["path"] == f"{sourceDir}-Copy1"
+
+    # ensure its still possible to copy a folder to another folder that doesn't exist
+    copy = await ensure_async(
+        cm.copy(
+            from_path=sourceDir,
+            to_path=nonExistantDir,
+        )
+    )
+    assert copy["path"] == f"{nonExistantDir}/{sourceDir}"
+
+
+async def test_copy_big_dir(jp_contents_manager):
+    # this tests how the Content API limits preventing copying folders that are more than
+    # the size limit specified in max_copy_folder_size_mb trait
+    cm = jp_contents_manager
+    destDir = "Untitled Folder 1"
+    sourceDir = "Morningstar Notebooks"
+    cm.max_copy_folder_size_mb = 5
+    _make_dir(cm, destDir)
+    _make_big_dir(contents_manager=cm, api_path=sourceDir)
+    with pytest.raises(HTTPError) as exc_info:
+        await ensure_async(cm.copy(from_path=sourceDir, to_path=destDir))
+
+    assert exc_info.type is HTTPError
 
 
 async def test_mark_trusted_cells(jp_contents_manager):

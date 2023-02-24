@@ -15,7 +15,18 @@ from nbformat import ValidationError, sign
 from nbformat import validate as validate_nb
 from nbformat.v4 import new_notebook
 from tornado.web import HTTPError, RequestHandler
-from traitlets import Any, Bool, Dict, Instance, List, TraitError, Type, Unicode, default, validate
+from traitlets import (
+    Any,
+    Bool,
+    Dict,
+    Instance,
+    List,
+    TraitError,
+    Type,
+    Unicode,
+    default,
+    validate,
+)
 from traitlets.config.configurable import LoggingConfigurable
 
 from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH, JUPYTER_SERVER_EVENTS_URI
