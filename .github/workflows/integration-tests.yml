@@ -11,24 +11,32 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "pypy-3.8"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Base Setup
-        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - uses: actions/checkout@v3
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Run the tests
-        run: |
-          hatch run cov:integration
+        run: hatch run cov:integration
       - name: Coverage
         run: |
           pip install codecov coverage[toml]
           codecov
 
+  build_pypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+        with:
+          python_version: "pypy-3.8"
+      - name: Run the tests
+        run: hatch run test:nowarn --integration_tests=true
+
   integration_check: # This job does nothing and is only used for the branch protection
     if: always()
     needs:
       - build
+      - build_pypy
     runs-on: ubuntu-latest
     steps:
       - name: Decide whether the needed jobs succeeded or failed

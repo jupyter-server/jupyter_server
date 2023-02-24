@@ -773,7 +773,9 @@ class APIHandler(JupyterHandler):
     def finish(self, *args, **kwargs):
         """Finish an API response."""
         self.update_api_activity()
-        self.set_header("Content-Type", "application/json")
+        # Allow caller to indicate content-type...
+        set_content_type = kwargs.pop("set_content_type", "application/json")
+        self.set_header("Content-Type", set_content_type)
         return super().finish(*args, **kwargs)
 
     def options(self, *args, **kwargs):
