@@ -84,6 +84,9 @@ docs = [
     "sphinx-autodoc-typehints",
     "sphinxemoji",
     "tornado",
+    # workaround for an unknown downstream library that is now
+    # missing typing_extensions
+    "typing_extensions"
 ]
 
 [project.scripts]
