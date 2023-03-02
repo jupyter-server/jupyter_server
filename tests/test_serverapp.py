@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pytest
 from jupyter_core.application import NoStart
 from traitlets import TraitError
+from traitlets.config import Config
 from traitlets.tests.utils import check_help_all_output
 
 from jupyter_server.auth.security import passwd_check
@@ -542,3 +543,21 @@ def test_browser_open_files(jp_configurable_serverapp, should_exist, caplog):
     url = urljoin("file:", pathname2url(app.browser_open_file))
     url_messages = [rec.message for rec in caplog.records if url in rec.message]
     assert url_messages if should_exist else not url_messages
+
+
+def test_deprecated_notebook_dir_priority(jp_configurable_serverapp, tmp_path):
+    notebook_dir = tmp_path / "notebook"
+    notebook_dir.mkdir()
+    cli_dir = tmp_path / "cli"
+    cli_dir.mkdir()
+
+    app = jp_configurable_serverapp(argv=[str(cli_dir)], root_dir=None)
+    assert app._root_dir_set
+
+    # simulate delayed loading of notebook_dir config
+    # this should _not_ take priority over an explicitly set root_dir
+    # as done by notebook_shim
+    cfg = Config()
+    cfg.ServerApp.notebook_dir = str(notebook_dir)
+    app.update_config(cfg)
+    assert app.root_dir == str(cli_dir)

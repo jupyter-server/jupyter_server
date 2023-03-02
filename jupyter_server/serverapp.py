@@ -1675,6 +1675,13 @@ class ServerApp(JupyterApp):
             raise TraitError(trans.gettext("No such directory: '%r'") % value)
         return value
 
+    @observe("root_dir")
+    def _root_dir_changed(self, change):
+        # record that root_dir is set,
+        # which affects loading of deprecated notebook_dir
+        self._root_dir_set = True
+        pass
+
     preferred_dir = Unicode(
         config=True,
         help=trans.gettext("Preferred starting directory to use for notebooks and kernels."),
