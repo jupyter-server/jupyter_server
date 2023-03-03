@@ -4,6 +4,7 @@ import sys
 import warnings
 from base64 import decodebytes, encodebytes
 from unicodedata import normalize
+from unittest.mock import patch
 
 import pytest
 import tornado
@@ -1018,3 +1019,73 @@ async def test_trust(jp_fetch, contents):
             allow_nonstandard_methods=True,
         )
         assert r.code == 201
+
+
+@patch(
+    "jupyter_core.paths.is_hidden",
+    side_effect=AssertionError("Should not call is_hidden if not important"),
+)
+@patch(
+    "jupyter_server.services.contents.filemanager.is_hidden",
+    side_effect=AssertionError("Should not call is_hidden if not important"),
+)
+async def test_regression_is_hidden(m1, m2, jp_fetch, jp_serverapp, contents, _check_created):
+    # check that no is_hidden check runs if configured to allow hidden files
+    contents_dir = contents["contents_dir"]
+
+    hidden_dir = contents_dir / ".hidden"
+    hidden_dir.mkdir(parents=True, exist_ok=True)
+    txt = "visible text file in hidden dir"
+    txtname = hidden_dir.joinpath("visible.txt")
+    txtname.write_text(txt, encoding="utf-8")
+
+    # Our role here is to check that the side-effect never triggers
+    jp_serverapp.contents_manager.allow_hidden = True
+    r = await jp_fetch(
+        "api",
+        "contents",
+        ".hidden",
+    )
+    assert r.code == 200
+
+    r = await jp_fetch(
+        "api",
+        "contents",
+        ".hidden",
+        method="POST",
+        body=json.dumps(
+            {
+                "copy_from": ".hidden/visible.txt",
+            }
+        ),
+    )
+    _check_created(r, str(contents_dir), ".hidden", "visible-Copy1.txt", type="file")
+
+    r = await jp_fetch(
+        "api",
+        "contents",
+        ".hidden",
+        "visible-Copy1.txt",
+        method="DELETE",
+    )
+    assert r.code == 204
+
+    model = {
+        "content": "foo",
+        "format": "text",
+        "type": "file",
+    }
+    r = await jp_fetch(
+        "api", "contents", ".hidden", "new.txt", method="PUT", body=json.dumps(model)
+    )
+    _check_created(r, str(contents_dir), ".hidden", "new.txt", type="file")
+
+    # sanity check that is actually triggers when flag set to false
+    jp_serverapp.contents_manager.allow_hidden = False
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch(
+            "api",
+            "contents",
+            ".hidden",
+        )
+    assert expected_http_error(e, 500)

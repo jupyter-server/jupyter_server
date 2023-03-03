@@ -893,7 +893,7 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
         abs_path = super().validate_absolute_path(root, absolute_path)
         abs_root = os.path.abspath(root)
         assert abs_path is not None
-        if is_hidden(abs_path, abs_root) and not self.contents_manager.allow_hidden:
+        if not self.contents_manager.allow_hidden and is_hidden(abs_path, abs_root):
             self.log.info(
                 "Refusing to serve hidden file, via 404 Error, use flag 'ContentsManager.allow_hidden' to enable"
             )

@@ -1010,3 +1010,43 @@ async def test_validate_notebook_model(jp_contents_manager):
         cm.validate_notebook_model(model)
         assert mock_validate_nb.call_count == 1
         mock_validate_nb.reset_mock()
+
+
+@patch(
+    "jupyter_core.paths.is_hidden",
+    side_effect=AssertionError("Should not call is_hidden if not important"),
+)
+@patch(
+    "jupyter_server.services.contents.filemanager.is_hidden",
+    side_effect=AssertionError("Should not call is_hidden if not important"),
+)
+async def test_regression_is_hidden(m1, m2, jp_contents_manager):
+    cm = jp_contents_manager
+    cm.allow_hidden = True
+    # Our role here is to check that the side-effect never triggers
+    dirname = "foo/.hidden_dir"
+    await make_populated_dir(cm, dirname)
+    await ensure_async(cm.get(dirname))
+    await check_populated_dir_files(cm, dirname)
+    await ensure_async(cm.get(path="/".join([dirname, "nb.ipynb"])))
+    await ensure_async(cm.get(path="/".join([dirname, "file.txt"])))
+    await ensure_async(cm.new(path="/".join([dirname, "nb2.ipynb"])))
+    await ensure_async(cm.new(path="/".join([dirname, "file2.txt"])))
+    await ensure_async(cm.new(path="/".join([dirname, "subdir"]), model={"type": "directory"}))
+    await ensure_async(
+        cm.copy(
+            from_path="/".join([dirname, "file.txt"]), to_path="/".join([dirname, "file-copy.txt"])
+        )
+    )
+    await ensure_async(
+        cm.rename_file(
+            old_path="/".join([dirname, "file-copy.txt"]),
+            new_path="/".join([dirname, "file-renamed.txt"]),
+        )
+    )
+    await ensure_async(cm.delete_file(path="/".join([dirname, "file-renamed.txt"])))
+
+    # sanity check that is actually triggers when flag set to false
+    cm.allow_hidden = False
+    with pytest.raises(AssertionError):
+        await ensure_async(cm.get(dirname))
