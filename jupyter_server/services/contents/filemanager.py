@@ -707,7 +707,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 "Not able to get the size of the %s directory. Copying might be slow if the directory is large!",
                 path,
             )
-            return 0
+            return "0"
         return size
 
     def _human_readable_size(self, size):
@@ -1182,7 +1182,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 "Not able to get the size of the %s directory. Copying might be slow if the directory is large!",
                 path,
             )
-            return 0
+            return "0"
         return size
 
     async def _human_readable_size(self, size: int) -> str:
