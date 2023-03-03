@@ -702,15 +702,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
             self.log.info(f"current status of du command {result}")
             size = result[0].decode("utf-8")
-        except Exception as err:
-            self.log.error(f"Error during directory copy: {err}")
-            raise web.HTTPError(
-                400,
-                f"""
-                Unexpected error during copy operation,
-                not able to get the size of the {path} directory
-                """,
-            ) from err
+        except Exception:
+            self.log.warning(
+                "Not able to get the size of the %s directory. Copying might be slow if the directory is large!",
+                path,
+            )
+            return 0
         return size
 
     def _human_readable_size(self, size):
@@ -1180,15 +1177,12 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
             self.log.info(f"current status of du command {result}")
             size = result[0].decode("utf-8")
-        except Exception as err:
-            self.log.error(f"Error during directory copy: {err}")
-            raise web.HTTPError(
-                400,
-                f"""
-                Unexpected error during copy operation,
-                not able to get the size of the {path} directory
-                """,
-            ) from err
+        except Exception:
+            self.log.warning(
+                "Not able to get the size of the %s directory. Copying might be slow if the directory is large!",
+                path,
+            )
+            return 0
         return size
 
     async def _human_readable_size(self, size: int) -> str:
