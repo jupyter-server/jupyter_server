@@ -87,7 +87,11 @@ async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir, maybe_hidden):
     "jupyter_server.services.contents.filemanager.is_hidden",
     side_effect=AssertionError("Should not call is_hidden if not important"),
 )
-async def test_regression_is_hidden(m1, m2, jp_fetch, jp_serverapp, jp_root_dir):
+@patch(
+    "jupyter_server.base.handlers.is_hidden",
+    side_effect=AssertionError("Should not call is_hidden if not important"),
+)
+async def test_regression_is_hidden(m1, m2, m3, jp_fetch, jp_serverapp, jp_root_dir):
     path_parts = [".hidden", "foo"]
     path = Path(jp_root_dir, *path_parts)
     path.mkdir(parents=True, exist_ok=True)
