@@ -296,7 +296,6 @@ async def test_403(jp_file_contents_manager_class, tmp_path):
         assert e.status_code == 403
 
 
-@pytest.mark.skipif(sys.platform.startswith("win"), reason="Can't test hidden files on Windows")
 async def test_400(jp_file_contents_manager_class, tmp_path):  # noqa
     # Test Delete behavior
     # Test delete of file in hidden directory
@@ -406,7 +405,6 @@ async def test_400(jp_file_contents_manager_class, tmp_path):  # noqa
     assert excinfo.value.status_code == 400
 
 
-@pytest.mark.skipif(sys.platform.startswith("win"), reason="Can't test hidden files on Windows")
 async def test_404(jp_file_contents_manager_class, tmp_path):
     # Test visible file in hidden folder
     with pytest.raises(HTTPError) as excinfo:

@@ -186,7 +186,6 @@ async def test_get_text_file_contents(jp_fetch, contents, path, name):
     assert expected_http_error(e, 400)
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="Disabled retrieving hidden files on Windows")
 async def test_get_404_hidden(jp_fetch, contents, contents_dir):
     # Create text files
     hidden_dir = contents_dir / ".hidden"
@@ -399,7 +398,6 @@ async def test_upload_txt(jp_fetch, contents, contents_dir, _check_created):
     assert model["content"] == body
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="Disabled uploading hidden files on Windows")
 async def test_upload_txt_hidden(jp_fetch, contents, contents_dir):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         body = "ünicode téxt"
@@ -552,7 +550,6 @@ async def test_copy_put_400(jp_fetch, contents, contents_dir, _check_created):
     assert expected_http_error(e, 400)
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="Disabled copying hidden files on Windows")
 async def test_copy_put_400_hidden(
     jp_fetch,
     contents,
@@ -599,7 +596,6 @@ async def test_copy_put_400_hidden(
     assert expected_http_error(e, 400)
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="Disabled copying hidden files on Windows")
 async def test_copy_400_hidden(
     jp_fetch,
     contents,
@@ -687,7 +683,7 @@ async def test_delete_dirs(jp_fetch, contents, folders):
     assert model["content"] == []
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="Disabled deleting non-empty dirs on Windows")
+@pytest.mark.xfail(sys.platform == "win32", reason="Deleting non-empty dirs on Windows")
 async def test_delete_non_empty_dir(jp_fetch, contents):
     # Delete a folder
     await jp_fetch("api", "contents", "å b", method="DELETE")
@@ -697,14 +693,12 @@ async def test_delete_non_empty_dir(jp_fetch, contents):
     assert expected_http_error(e, 404)
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="Disabled deleting hidden dirs on Windows")
 async def test_delete_hidden_dir(jp_fetch, contents):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch("api", "contents", ".hidden", method="DELETE")
     assert expected_http_error(e, 400)
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="Disabled deleting hidden dirs on Windows")
 async def test_delete_hidden_file(jp_fetch, contents):
     # Test deleting file in a hidden directory
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
@@ -748,7 +742,6 @@ async def test_rename(jp_fetch, jp_base_url, contents, contents_dir):
     assert "a.ipynb" not in nbnames
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="Disabled copying hidden files on Windows")
 async def test_rename_400_hidden(jp_fetch, jp_base_url, contents, contents_dir):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         old_path = ".hidden/old.txt"
