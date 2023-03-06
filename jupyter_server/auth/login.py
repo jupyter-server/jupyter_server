@@ -258,12 +258,11 @@ class LegacyLoginHandler(LoginFormHandler):
                     f"{warning} and not using authentication. "
                     "This is highly insecure and not recommended."
                 )
-        else:
-            if not app.password and not app.token:
-                app.log.warning(
-                    "All authentication is disabled."
-                    "  Anyone who can connect to this server will be able to run code."
-                )
+        elif not app.password and not app.token:
+            app.log.warning(
+                "All authentication is disabled."
+                "  Anyone who can connect to this server will be able to run code."
+            )
 
     @classmethod
     def password_from_settings(cls, settings):

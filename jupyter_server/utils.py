@@ -369,7 +369,7 @@ def filefind(filename, path_dirs=None):
 
     for path in path_dirs:
         if path == ".":
-            path = os.getcwd()
+            path = os.getcwd()  # noqa
         testname = expand_path(os.path.join(path, filename))
         if os.path.isfile(testname):
             return os.path.abspath(testname)

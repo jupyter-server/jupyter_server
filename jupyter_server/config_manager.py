@@ -41,9 +41,8 @@ def remove_defaults(data, defaults):
                 remove_defaults(data[key], defaults[key])
                 if not data[key]:  # prune empty subdicts
                     del data[key]
-            else:
-                if value == defaults[key]:
-                    del data[key]
+            elif value == defaults[key]:
+                del data[key]
 
 
 class BaseJSONConfigManager(LoggingConfigurable):

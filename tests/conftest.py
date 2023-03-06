@@ -33,11 +33,10 @@ def pytest_runtest_setup(item):
     if item.config.getoption("--integration_tests") is True:
         if not is_integration_test:
             pytest.skip("Only running tests marked as 'integration_test'.")
-    else:
-        if is_integration_test:
-            pytest.skip(
-                "Skipping this test because it's marked 'integration_test'. Run integration tests using the `--integration_tests` flag."
-            )
+    elif is_integration_test:
+        pytest.skip(
+            "Skipping this test because it's marked 'integration_test'. Run integration tests using the `--integration_tests` flag."
+        )
 
 
 mock_html = """

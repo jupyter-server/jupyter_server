@@ -520,12 +520,11 @@ class IdentityProvider(LoggingConfigurable):
                     f"{warning} and not using authentication. "
                     "This is highly insecure and not recommended."
                 )
-        else:
-            if not self.auth_enabled:
-                app.log.warning(
-                    "All authentication is disabled."
-                    "  Anyone who can connect to this server will be able to run code."
-                )
+        elif not self.auth_enabled:
+            app.log.warning(
+                "All authentication is disabled."
+                "  Anyone who can connect to this server will be able to run code."
+            )
 
     def process_login_form(self, handler: JupyterHandler) -> User | None:
         """Process login form data
