@@ -2435,6 +2435,7 @@ class ServerApp(JupyterApp):
                 else:
                     raise
             else:
+                success = True
                 self.port = port
                 break
         if not success:
