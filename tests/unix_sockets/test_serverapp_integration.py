@@ -18,7 +18,8 @@ from jupyter_server.utils import urlencode_unix_socket, urlencode_unix_socket_pa
 
 # Skip this module if on Windows. Unix sockets are not available on Windows.
 pytestmark = pytest.mark.skipif(
-    sys.platform.startswith("win"), reason="Unix sockets are not available on Windows."
+    sys.platform.startswith("win") or platform.python_implementation() == "PyPy",
+    reason="Unix sockets are not supported.",
 )
 
 
@@ -189,7 +190,6 @@ def test_launch_socket_collision(jp_unix_socket_file):
 
 
 @pytest.mark.integration_test
-@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="not supported on pypy")
 def test_shutdown_server(jp_environ):
     # Start a server in another process
     # Stop that server
@@ -215,7 +215,6 @@ def test_shutdown_server(jp_environ):
 
 
 @pytest.mark.integration_test
-@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="not supported on pypy")
 def test_jupyter_server_apps(jp_environ):
     # Start a server in another process
     # Stop that server
