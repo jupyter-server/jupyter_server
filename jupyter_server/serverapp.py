@@ -35,6 +35,7 @@ from nbformat.sign import NotebookNotary
 from tornado import httpserver, ioloop, web
 from tornado.httputil import url_concat
 from tornado.log import LogFormatter, access_log, app_log, gen_log
+from tornado.netutil import bind_sockets
 
 if not sys.platform.startswith("win"):
     from tornado.netutil import bind_unix_socket
@@ -2410,17 +2411,12 @@ class ServerApp(JupyterApp):
 
     def _find_http_port(self):
         """Find an available http port."""
-        pat = re.compile("([a-f0-9:]+:+)+[a-f0-9]*")
-        success = None
+        success = False
+        port = self.port
         for port in random_ports(self.port, self.port_retries + 1):
-            tmp_sock = (
-                socket.socket()
-                if pat.match(self.ip) is None
-                else socket.socket(family=socket.AF_INET6)
-            )
             try:
-                tmp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, b"\0" * 8)
-                tmp_sock.bind((self.ip, port))
+                sockets = bind_sockets(port, self.ip)
+                sockets[0].close()
             except OSError as e:
                 if e.errno == errno.EADDRINUSE:
                     if self.port_retries:
@@ -2439,11 +2435,9 @@ class ServerApp(JupyterApp):
                 else:
                     raise
             else:
-                self.port = port
                 success = True
+                self.port = port
                 break
-            finally:
-                tmp_sock.close()
         if not success:
             if self.port_retries:
                 self.log.critical(

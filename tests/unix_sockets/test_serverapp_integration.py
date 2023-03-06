@@ -1,4 +1,5 @@
 import os
+import platform
 import shlex
 import stat
 import subprocess
@@ -17,7 +18,8 @@ from jupyter_server.utils import urlencode_unix_socket, urlencode_unix_socket_pa
 
 # Skip this module if on Windows. Unix sockets are not available on Windows.
 pytestmark = pytest.mark.skipif(
-    sys.platform.startswith("win"), reason="Unix sockets are not available on Windows."
+    sys.platform.startswith("win") or platform.python_implementation() == "PyPy",
+    reason="Unix sockets are not supported.",
 )
 
 
