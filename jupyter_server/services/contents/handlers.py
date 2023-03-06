@@ -115,7 +115,7 @@ class ContentsHandler(ContentsAPIHandler):
             raise web.HTTPError(400, "Content %r is invalid" % content_str)
         content = int(content_str or "")
 
-        if await ensure_async(cm.is_hidden(path)) and not cm.allow_hidden:
+        if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
             raise web.HTTPError(404, f"file or directory {path!r} does not exist")
 
         model = await ensure_async(
@@ -141,10 +141,10 @@ class ContentsHandler(ContentsAPIHandler):
         old_path = model.get("path")
         if (
             old_path
+            and not cm.allow_hidden
             and (
                 await ensure_async(cm.is_hidden(path)) or await ensure_async(cm.is_hidden(old_path))
             )
-            and not cm.allow_hidden
         ):
             raise web.HTTPError(400, f"Cannot rename file or directory {path!r}")
 
@@ -252,10 +252,10 @@ class ContentsHandler(ContentsAPIHandler):
         if model:
             if model.get("copy_from"):
                 raise web.HTTPError(400, "Cannot copy with PUT, only POST")
-            if (
+            if not cm.allow_hidden and (
                 (model.get("path") and await ensure_async(cm.is_hidden(model.get("path"))))
                 or await ensure_async(cm.is_hidden(path))
-            ) and not cm.allow_hidden:
+            ):
                 raise web.HTTPError(400, f"Cannot create file or directory {path!r}")
 
             exists = await ensure_async(self.contents_manager.file_exists(path))
@@ -275,7 +275,7 @@ class ContentsHandler(ContentsAPIHandler):
         """delete a file in the given path"""
         cm = self.contents_manager
 
-        if await ensure_async(cm.is_hidden(path)) and not cm.allow_hidden:
+        if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
             raise web.HTTPError(400, f"Cannot delete file or directory {path!r}")
 
         self.log.warning("delete %s", path)

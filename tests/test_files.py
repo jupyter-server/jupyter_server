@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from nbformat import writes
@@ -37,10 +38,14 @@ async def fetch_expect_200(jp_fetch, *path_parts):
     assert r.body.decode() == path_parts[-1], (path_parts, r.body)
 
 
-async def fetch_expect_404(jp_fetch, *path_parts):
+async def fetch_expect_error(jp_fetch, code, *path_parts):
     with pytest.raises(HTTPClientError) as e:
         await jp_fetch("files", *path_parts, method="GET")
-    assert expected_http_error(e, 404), [path_parts, e]
+    assert expected_http_error(e, code), [path_parts, e]
+
+
+async def fetch_expect_404(jp_fetch, *path_parts):
+    return await fetch_expect_error(jp_fetch, 404, *path_parts)
 
 
 async def test_file_types(jp_fetch, jp_root_dir):
@@ -72,6 +77,36 @@ async def test_hidden_files(jp_fetch, jp_serverapp, jp_root_dir, maybe_hidden):
 
     for foo in foos:
         await fetch_expect_200(jp_fetch, *path_parts, foo)
+
+
+@patch(
+    "jupyter_core.paths.is_hidden",
+    side_effect=AssertionError("Should not call is_hidden if not important"),
+)
+@patch(
+    "jupyter_server.services.contents.filemanager.is_hidden",
+    side_effect=AssertionError("Should not call is_hidden if not important"),
+)
+@patch(
+    "jupyter_server.base.handlers.is_hidden",
+    side_effect=AssertionError("Should not call is_hidden if not important"),
+)
+async def test_regression_is_hidden(m1, m2, m3, jp_fetch, jp_serverapp, jp_root_dir):
+    path_parts = [".hidden", "foo"]
+    path = Path(jp_root_dir, *path_parts)
+    path.mkdir(parents=True, exist_ok=True)
+
+    foos = ["foo", ".foo"]
+    for foo in foos:
+        (path / foo).write_text(foo)
+
+    jp_serverapp.contents_manager.allow_hidden = True
+    for foo in foos:
+        await fetch_expect_200(jp_fetch, *path_parts, foo)
+
+    jp_serverapp.contents_manager.allow_hidden = False
+    for foo in foos:
+        await fetch_expect_error(jp_fetch, 500, *path_parts, foo)
 
 
 async def test_contents_manager(jp_fetch, jp_serverapp, jp_root_dir):
