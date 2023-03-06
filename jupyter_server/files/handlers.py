@@ -48,7 +48,7 @@ class FilesHandler(JupyterHandler, web.StaticFileHandler):
         self.check_xsrf_cookie()
         cm = self.contents_manager
 
-        if await ensure_async(cm.is_hidden(path)) and not cm.allow_hidden:
+        if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
             self.log.info("Refusing to serve hidden file, via 404 Error")
             raise web.HTTPError(404)
 

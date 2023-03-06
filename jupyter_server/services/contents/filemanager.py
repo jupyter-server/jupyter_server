@@ -226,7 +226,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         four_o_four = "file or directory does not exist: %r" % path
 
-        if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
             self.log.info("Refusing to serve hidden file or directory %r, via 404 Error", os_path)
             raise web.HTTPError(404, four_o_four)
 
@@ -278,7 +278,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         if not os.path.isdir(os_path):
             raise web.HTTPError(404, four_o_four)
-        elif is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+        elif not self.allow_hidden and is_hidden(os_path, self.root_dir):
             self.log.info("Refusing to serve hidden directory %r, via 404 Error", os_path)
             raise web.HTTPError(404, four_o_four)
 
@@ -414,7 +414,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if not self.exists(path):
             raise web.HTTPError(404, four_o_four)
 
-        if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
             self.log.info("Refusing to serve hidden file or directory %r, via 404 Error", os_path)
             raise web.HTTPError(404, four_o_four)
 
@@ -437,7 +437,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
     def _save_directory(self, os_path, model, path=""):
         """create a directory"""
-        if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
             raise web.HTTPError(400, "Cannot create directory %r" % os_path)
         if not os.path.exists(os_path):
             with self.perm_to_403():
@@ -460,7 +460,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         os_path = self._get_os_path(path)
 
-        if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
             raise web.HTTPError(400, f"Cannot create file or directory {os_path!r}")
 
         self.log.debug("Saving %s", os_path)
@@ -506,7 +506,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path)
         rm = os.unlink
 
-        if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
             raise web.HTTPError(400, f"Cannot delete file or directory {os_path!r}")
 
         four_o_four = "file or directory does not exist: %r" % path
@@ -576,9 +576,9 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         new_os_path = self._get_os_path(new_path)
         old_os_path = self._get_os_path(old_path)
 
-        if (
+        if not self.allow_hidden and (
             is_hidden(old_os_path, self.root_dir) or is_hidden(new_os_path, self.root_dir)
-        ) and not self.allow_hidden:
+        ):
             raise web.HTTPError(400, f"Cannot rename file or directory {old_os_path!r}")
 
         # Should we proceed with the move?
@@ -741,7 +741,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         if not os.path.isdir(os_path):
             raise web.HTTPError(404, four_o_four)
-        elif is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+        elif not self.allow_hidden and is_hidden(os_path, self.root_dir):
             self.log.info("Refusing to serve hidden directory %r, via 404 Error", os_path)
             raise web.HTTPError(404, four_o_four)
 
@@ -896,7 +896,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
     async def _save_directory(self, os_path, model, path=""):
         """create a directory"""
-        if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
             raise web.HTTPError(400, "Cannot create hidden directory %r" % os_path)
         if not os.path.exists(os_path):
             with self.perm_to_403():
@@ -961,7 +961,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         os_path = self._get_os_path(path)
         rm = os.unlink
 
-        if is_hidden(os_path, self.root_dir) and not self.allow_hidden:
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
             raise web.HTTPError(400, f"Cannot delete file or directory {os_path!r}")
 
         if not os.path.exists(os_path):
@@ -1035,9 +1035,9 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         new_os_path = self._get_os_path(new_path)
         old_os_path = self._get_os_path(old_path)
 
-        if (
+        if not self.allow_hidden and (
             is_hidden(old_os_path, self.root_dir) or is_hidden(new_os_path, self.root_dir)
-        ) and not self.allow_hidden:
+        ):
             raise web.HTTPError(400, f"Cannot rename file or directory {old_os_path!r}")
 
         # Should we proceed with the move?
