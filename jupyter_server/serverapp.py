@@ -1183,14 +1183,13 @@ class ServerApp(JupyterApp):
                 f"ServerApp.{change.name} config is deprecated in 2.0. Use {clsname}.{new_name}."
             )
             self.config[clsname][new_name] = change.new
-        else:
-            # Deprecated config used, new config also used.
-            # Warn only if the values differ.
-            # If the values are the same, assume intentional backward-compatible config.
-            if self.config[clsname][new_name] != change.new:
-                self.log.warning(
-                    f"Ignoring deprecated ServerApp.{change.name} config. Using {clsname}.{new_name}."
-                )
+        # Deprecated config used, new config also used.
+        # Warn only if the values differ.
+        # If the values are the same, assume intentional backward-compatible config.
+        elif self.config[clsname][new_name] != change.new:
+            self.log.warning(
+                f"Ignoring deprecated ServerApp.{change.name} config. Using {clsname}.{new_name}."
+            )
 
     @observe("password")
     def _deprecated_password(self, change):

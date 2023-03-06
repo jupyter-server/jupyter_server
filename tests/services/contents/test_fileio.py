@@ -69,7 +69,7 @@ def test_atomic_writing(tmp_path):
 
 @pytest.fixture
 def handle_umask():
-    global umask
+    global umask  # noqa
     umask = os.umask(0)
     os.umask(umask)
     yield

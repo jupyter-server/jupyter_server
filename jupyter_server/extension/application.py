@@ -214,9 +214,9 @@ class ExtensionApp(JupyterApp):
         if ServerApp.initialized():
             try:
                 return ServerApp.instance()
-            except Exception:
+            except Exception:  # noqa
                 # error retrieving instance, e.g. MultipleInstanceError
-                pass  # noqa
+                pass
 
         # serverapp accessed before it was defined,
         # declare an empty one

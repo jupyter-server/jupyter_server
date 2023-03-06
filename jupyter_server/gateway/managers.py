@@ -337,8 +337,9 @@ class GatewaySessionManager(SessionManager):
             # Note that should the redundant polling be consolidated, or replaced with an event-based
             # notification model, this will need to be revisited.
             km = self.kernel_manager.get_kernel(kernel_id)
-        except Exception:  # Let exceptions here reflect culled kernel
-            pass  # noqa
+        except Exception:  # noqa
+            # Let exceptions here reflect culled kernel
+            pass
         return km is None
 
 

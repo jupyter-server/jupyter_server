@@ -52,7 +52,7 @@ _sys_info_cache = None
 
 def json_sys_info():
     """Get sys info as json."""
-    global _sys_info_cache
+    global _sys_info_cache  # noqa
     if _sys_info_cache is None:
         _sys_info_cache = json.dumps(get_sys_info())
     return _sys_info_cache
@@ -681,8 +681,8 @@ class JupyterHandler(AuthenticatedHandler):
             # get the custom message, if defined
             try:
                 message = exception.log_message % exception.args
-            except Exception:
-                pass  # noqa
+            except Exception:  # noqa
+                pass
 
             # construct the custom reason, if defined
             reason = getattr(exception, "reason", "")

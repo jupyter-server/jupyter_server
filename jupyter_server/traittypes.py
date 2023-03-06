@@ -76,8 +76,8 @@ class TypeFromClasses(ClassBasedTraitType):
         try:
             if self.subclass_from_klasses(value):
                 return value
-        except Exception:
-            pass  # noqa
+        except Exception:  # noqa
+            pass
 
         self.error(obj, value)
 
@@ -86,7 +86,7 @@ class TypeFromClasses(ClassBasedTraitType):
         result = "a subclass of "
         for klass in self.klasses:
             if not isinstance(klass, str):
-                klass = klass.__module__ + "." + klass.__name__
+                klass = klass.__module__ + "." + klass.__name__  # noqa
             result += f"{klass} or "
         # Strip the last "or"
         result = result.strip(" or ")  # noqa
@@ -106,10 +106,10 @@ class TypeFromClasses(ClassBasedTraitType):
             if isinstance(klass, str):
                 # Try importing the classes to compare. Silently, ignore if not importable.
                 try:
-                    klass = self._resolve_string(klass)
+                    klass = self._resolve_string(klass)  # noqa
                     self.importable_klasses.append(klass)
-                except Exception:
-                    pass  # noqa
+                except Exception:  # noqa
+                    pass
             else:
                 self.importable_klasses.append(klass)
 
@@ -156,7 +156,7 @@ class InstanceFromClasses(ClassBasedTraitType):
         None, the None is replaced by ``()`` or ``{}``, respectively.
         """
         # If class
-        if klasses is None:
+        if klasses is None:  # noqa
             self.klasses = klasses
         # Verify all elements are either classes or strings.
         elif all(inspect.isclass(k) or isinstance(k, str) for k in klasses):
@@ -218,10 +218,10 @@ class InstanceFromClasses(ClassBasedTraitType):
             if isinstance(klass, str):
                 # Try importing the classes to compare. Silently, ignore if not importable.
                 try:
-                    klass = self._resolve_string(klass)
+                    klass = self._resolve_string(klass)  # noqa
                     self.importable_klasses.append(klass)
-                except Exception:
-                    pass  # noqa
+                except Exception:  # noqa
+                    pass
             else:
                 self.importable_klasses.append(klass)
 

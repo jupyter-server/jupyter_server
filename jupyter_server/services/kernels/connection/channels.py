@@ -443,8 +443,8 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         try:
             ZMQChannelsWebsocketConnection._open_sockets.remove(self)
             self._close_future.set_result(None)
-        except Exception:
-            pass  # noqa
+        except Exception:  # noqa
+            pass
 
     def handle_incoming_message(self, incoming_msg: str) -> None:
         """Handle incoming messages from Websocket to ZMQ Sockets."""
@@ -729,12 +729,11 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                         ),
                         msg["parent_header"],
                     )
-            else:
-                # resume once we've got some headroom below the limit
-                if self._iopub_msgs_exceeded and msg_rate < (0.8 * self.iopub_msg_rate_limit):
-                    self._iopub_msgs_exceeded = False
-                    if not self._iopub_data_exceeded:
-                        self.log.warning("iopub messages resumed")
+            # resume once we've got some headroom below the limit
+            elif self._iopub_msgs_exceeded and msg_rate < (0.8 * self.iopub_msg_rate_limit):
+                self._iopub_msgs_exceeded = False
+                if not self._iopub_data_exceeded:
+                    self.log.warning("iopub messages resumed")
 
             # Check the data rate
             if self.iopub_data_rate_limit > 0 and data_rate > self.iopub_data_rate_limit:
@@ -761,12 +760,11 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                         ),
                         msg["parent_header"],
                     )
-            else:
-                # resume once we've got some headroom below the limit
-                if self._iopub_data_exceeded and data_rate < (0.8 * self.iopub_data_rate_limit):
-                    self._iopub_data_exceeded = False
-                    if not self._iopub_msgs_exceeded:
-                        self.log.warning("iopub messages resumed")
+            # resume once we've got some headroom below the limit
+            elif self._iopub_data_exceeded and data_rate < (0.8 * self.iopub_data_rate_limit):
+                self._iopub_data_exceeded = False
+                if not self._iopub_msgs_exceeded:
+                    self.log.warning("iopub messages resumed")
 
             # If either of the limit flags are set, do not send the message.
             if self._iopub_msgs_exceeded or self._iopub_data_exceeded:
