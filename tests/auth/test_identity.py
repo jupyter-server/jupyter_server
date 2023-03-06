@@ -174,7 +174,7 @@ def test_password_required(identity_provider_class, password_set, password_requi
     app.identity_provider = idp
     ctx = nullcontext() if ok else pytest.raises(SystemExit)
 
-    with ctx:  # type:ignore[attr-defined]
+    with ctx:
         idp.validate_security(app, ssl_options=None)
 
 
