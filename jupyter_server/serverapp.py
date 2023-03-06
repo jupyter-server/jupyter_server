@@ -2411,6 +2411,8 @@ class ServerApp(JupyterApp):
 
     def _find_http_port(self):
         """Find an available http port."""
+        success = False
+        port = self.port
         for port in random_ports(self.port, self.port_retries + 1):
             try:
                 sockets = bind_sockets(port, self.ip)
@@ -2435,25 +2437,23 @@ class ServerApp(JupyterApp):
             else:
                 self.port = port
                 break
-        #     finally:
-        #         tmp_sock.close()
-        # if not success:
-        #     if self.port_retries:
-        #         self.log.critical(
-        #             _i18n(
-        #                 "ERROR: the Jupyter server could not be started because "
-        #                 "no available port could be found."
-        #             )
-        #         )
-        #     else:
-        #         self.log.critical(
-        #             _i18n(
-        #                 "ERROR: the Jupyter server could not be started because "
-        #                 "port %i is not available."
-        #             )
-        #             % port
-        #         )
-        #     self.exit(1)
+        if not success:
+            if self.port_retries:
+                self.log.critical(
+                    _i18n(
+                        "ERROR: the Jupyter server could not be started because "
+                        "no available port could be found."
+                    )
+                )
+            else:
+                self.log.critical(
+                    _i18n(
+                        "ERROR: the Jupyter server could not be started because "
+                        "port %i is not available."
+                    )
+                    % port
+                )
+            self.exit(1)
 
     @staticmethod
     def _init_asyncio_patch():
