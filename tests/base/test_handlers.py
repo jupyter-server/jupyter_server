@@ -82,7 +82,8 @@ async def test_authenticated_file_handler(jp_serverapp, tmpdir):
 
     handler = AuthenticatedFileHandler(app.web_app, request, path=str(tmpdir))
     for key in list(handler.settings):
-        del handler.settings[key]
+        if key != "contents_manager":
+            del handler.settings[key]
     handler.check_xsrf_cookie = MagicMock()  # type:ignore
     handler._jupyter_current_user = "foo"  # type:ignore
     with warnings.catch_warnings():
