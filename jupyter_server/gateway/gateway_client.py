@@ -507,7 +507,7 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
     # of the tree view.
     except HTTPClientError as e:
         error_reason = f"Exception while attempting to connect to Gateway server url '{GatewayClient.instance().url}'"
-        error_message = e.message
+        error_message = str(e)
         if e.response:
             try:
                 error_payload = json.loads(e.response.body)
