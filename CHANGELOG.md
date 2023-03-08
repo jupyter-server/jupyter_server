@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Bugs fixed
 
-- Backport PR #1212: Redact tokens, etc. in url parameters from request  logs [#1214](https://github.com/jupyter-server/jupyter_server/pull/1214) ([@blink1073](https://github.com/blink1073))
+- Backport PR #1212: Redact tokens, etc. in url parameters from request logs [#1214](https://github.com/jupyter-server/jupyter_server/pull/1214) ([@blink1073](https://github.com/blink1073))
 - Backport PR #1193: Fix get_loader returning None when load_jupyter_server_extension is not found (#1193) (#1199)Co-authored-by: Steven Silvester <steven.silvester@ieee.org> Co-authored-by: pre-commit-ci\[bot\] \<66853113+pre-commit-ci\[bot\]@users.noreply.github.com> [#1199](https://github.com/jupyter-server/jupyter_server/pull/1199) ([@cmd-ntrf](https://github.com/cmd-ntrf))
 
 ### Documentation improvements
