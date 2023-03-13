@@ -1,4 +1,5 @@
 """Kernelspecs API Handlers."""
+from jupyter_core.utils import ensure_async
 from tornado import web
 
 from jupyter_server.auth import authorized
@@ -21,23 +22,24 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
 
     @web.authenticated
     @authorized
-    def get(self, kernel_name, path, include_body=True):
+    async def get(self, kernel_name, path, include_body=True):
         """Get a kernelspec resource."""
         ksm = self.kernel_spec_manager
         if path.lower().endswith(".png"):
             self.set_header("Cache-Control", f"max-age={60*60*24*30}")
         try:
-            self.root = ksm.get_kernel_spec(kernel_name).resource_dir
+            kspec = await ensure_async(ksm.get_kernel_spec(kernel_name))
+            self.root = kspec.resource_dir
         except KeyError as e:
             raise web.HTTPError(404, "Kernel spec %s not found" % kernel_name) from e
         self.log.debug("Serving kernel resource from: %s", self.root)
-        return web.StaticFileHandler.get(self, path, include_body=include_body)
+        return await web.StaticFileHandler.get(self, path, include_body=include_body)
 
     @web.authenticated
     @authorized
-    def head(self, kernel_name, path):
+    async def head(self, kernel_name, path):
         """Get the head infor for a kernel resource."""
-        return self.get(kernel_name, path, include_body=False)
+        return await ensure_async(self.get(kernel_name, path, include_body=False))
 
 
 default_handlers = [
