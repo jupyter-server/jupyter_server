@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.5.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.4.0...dc1eee8715dfe674560789caa5123dc895717ca1))
+
+### Enhancements made
+
+- Enable KernelSpecResourceHandler to be async [#1236](https://github.com/jupyter-server/jupyter_server/pull/1236) ([@Zsailer](https://github.com/Zsailer))
+- Added error propagation to gateway_request function [#1233](https://github.com/jupyter-server/jupyter_server/pull/1233) ([@broden-wanner](https://github.com/broden-wanner))
+
+### Maintenance and upkeep improvements
+
+- Update ruff [#1230](https://github.com/jupyter-server/jupyter_server/pull/1230) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-03-06&to=2023-03-16&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-03-06..2023-03-16&type=Issues) | [@broden-wanner](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abroden-wanner+updated%3A2023-03-06..2023-03-16&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2023-03-06..2023-03-16&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-03-06..2023-03-16&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2023-03-06..2023-03-16&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.4.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.3.0...4d311b2c91e055e7b4690d8100f7fe85381f06da))
@@ -31,8 +52,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-02-15&to=2023-03-06&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-02-15..2023-03-06&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2023-02-15..2023-03-06&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2023-02-15..2023-03-06&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov-commenter+updated%3A2023-02-15..2023-03-06&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2023-02-15..2023-03-06&type=Issues) | [@dcsaba89](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adcsaba89+updated%3A2023-02-15..2023-03-06&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2023-02-15..2023-03-06&type=Issues) | [@kenyaachon](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akenyaachon+updated%3A2023-02-15..2023-03-06&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2023-02-15..2023-03-06&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-02-15..2023-03-06&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2023-02-15..2023-03-06&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-02-15..2023-03-06&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2023-02-15..2023-03-06&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.3.0
 
