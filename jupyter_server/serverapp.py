@@ -1971,7 +1971,6 @@ class ServerApp(JupyterApp):
             rel_schema_path = schema_id.replace(JUPYTER_SERVER_EVENTS_URI, "") + ".yaml"
             schema_path = DEFAULT_EVENTS_SCHEMA_PATH / rel_schema_path
             # Use this pathlib object to register the schema
-            # breakpoint()
             self.event_logger.register_event_schema(schema_path)
 
     def init_webapp(self):
