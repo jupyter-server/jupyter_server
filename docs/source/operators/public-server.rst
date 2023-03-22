@@ -78,8 +78,8 @@ Automatic Password setup
 As of notebook 5.3, the first time you log-in using a token, the server should
 give you the opportunity to setup a password from the user interface.
 
-You will be presented with a form asking for the current _token_, as well as
-your _new_ _password_ ; enter both and click on ``Login and setup new password``.
+You will be presented with a form asking for the current *token*, as well as
+your *new password*; enter both and click on ``Login and setup new password``.
 
 Next time you need to log in you'll be able to use the new password instead of
 the login token, otherwise follow the procedure to set a password from the
