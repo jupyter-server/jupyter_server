@@ -5,6 +5,8 @@ Read https://prometheus.io/docs/practices/naming/ for naming
 conventions for metrics & labels.
 """
 
+from prometheus_client import Counter
+
 try:
     # Jupyter Notebook also defines these metrics.  Re-defining them results in a ValueError.
     # Try to de-duplicate by using the ones in Notebook if available.
@@ -34,3 +36,9 @@ except ImportError:
         "counter for how many kernels are running labeled by type",
         ["type"],
     )
+
+KERNEL_RESTARTS = Counter(
+    "kernel_restarts",
+    "counter for how many kernel restarts, labeled by type and source (user or restarter)",
+    ["type", "source"],
+)

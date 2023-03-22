@@ -38,7 +38,7 @@ from traitlets import (
 )
 
 from jupyter_server._tz import isoformat, utcnow
-from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
+from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL, KERNEL_RESTARTS
 from jupyter_server.utils import ApiPath, import_item, to_os_path
 
 
@@ -179,6 +179,10 @@ class MappingKernelManager(MultiKernelManager):
     # Methods for managing kernels and sessions
     # -------------------------------------------------------------------------
 
+    def _handle_kernel_restart(self, kernel_id, kernel_name):
+        """notice that a kernel restarted"""
+        KERNEL_RESTARTS.labels(type=kernel_name, source="restarter").inc()
+
     def _handle_kernel_died(self, kernel_id):
         """notice that a kernel died"""
         self.log.warning("Kernel %s died, removing from map.", kernel_id)
@@ -278,6 +282,11 @@ class MappingKernelManager(MultiKernelManager):
             kernel_id,
             lambda: self._handle_kernel_died(kernel_id),
             "dead",
+        )
+        # register callback to count restarts
+        self.add_restart_callback(
+            kernel_id,
+            lambda: self._handle_kernel_restart(kernel_id, km.kernel_name),
         )
 
     def ports_changed(self, kernel_id):

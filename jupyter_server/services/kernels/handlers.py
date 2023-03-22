@@ -16,6 +16,7 @@ from jupyter_core.utils import ensure_async
 from tornado import web
 
 from jupyter_server.auth import authorized
+from jupyter_server.prometheus.metrics import KERNEL_RESTARTS
 from jupyter_server.utils import url_escape, url_path_join
 
 from ...base.handlers import APIHandler
@@ -104,6 +105,7 @@ class KernelActionHandler(KernelsAPIHandler):
                 self.set_status(500)
             else:
                 model = await ensure_async(km.kernel_model(kernel_id))
+                KERNEL_RESTARTS.labels(type=model["name"], source="user").inc()
                 self.write(json.dumps(model, default=json_default))
         self.finish()
 
