@@ -105,7 +105,7 @@ class KernelActionHandler(KernelsAPIHandler):
                 self.set_status(500)
             else:
                 model = await ensure_async(km.kernel_model(kernel_id))
-                KERNEL_RESTARTS.labels(type=model["name"], source="user").inc()
+                KERNEL_RESTARTS.labels(kernel_name=model["name"], source="user").inc()
                 self.write(json.dumps(model, default=json_default))
         self.finish()
 

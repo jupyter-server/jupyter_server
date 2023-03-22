@@ -181,7 +181,7 @@ class MappingKernelManager(MultiKernelManager):
 
     def _handle_kernel_restart(self, kernel_id, kernel_name):
         """notice that a kernel restarted"""
-        KERNEL_RESTARTS.labels(type=kernel_name, source="restarter").inc()
+        KERNEL_RESTARTS.labels(kernel_name=kernel_name, source="restarter").inc()
 
     def _handle_kernel_died(self, kernel_id):
         """notice that a kernel died"""

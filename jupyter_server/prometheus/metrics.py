@@ -45,7 +45,7 @@ except ImportError:
     )
 
 KERNEL_RESTARTS = Counter(
-    "kernel_restarts",
-    "counter for how many kernel restarts, labeled by type and source (user or restarter)",
-    ["type", "source"],
+    "jupyter_kernel_restarts",
+    "counter for how many kernel restarts, labeled by kernel_name and source (user or restarter)",
+    ["kernel_name", "source"],
 )
