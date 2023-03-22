@@ -91,7 +91,7 @@ as the information returned by the IdentityProvider is given to the Authorizer w
 
 Authentication always takes precedence because if no user is authenticated,
 no authorization checks need to be made,
-as all requests requiring _authorization_ must first complete _authentication_.
+as all requests requiring *authorization* must first complete *authentication*.
 
 Identity Providers
 ******************
@@ -118,11 +118,11 @@ This User object will be available as `self.current_user` in any request handler
 Request methods decorated with tornado's `@web.authenticated` decorator
 will only be allowed if this method returns something.
 
-The User object will be a Python :py:class:`dataclasses.dataclass`, `jupyter_server.auth.User`:
+The User object will be a Python :py:class:`dataclasses.dataclass` - `jupyter_server.auth.User`:
 
 .. autoclass:: jupyter_server.auth.User
 
-A custom IdentityProvider _may_ return a custom subclass.
+A custom IdentityProvider *may* return a custom subclass.
 
 
 The next method an identity provider has is :meth:`~jupyter_server.auth.IdentityProvider.identity_model`.
@@ -183,7 +183,7 @@ Authorization
 *************
 
 Authorization is the second step in allowing an action,
-after a user has been _authenticated_ by the IdentityProvider.
+after a user has been *authenticated* by the IdentityProvider.
 
 Authorization in Jupyter Server serves to provide finer grained control of access to its
 API resources. With authentication, requests are accepted if the current user is known by
