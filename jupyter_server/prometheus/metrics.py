@@ -8,6 +8,13 @@ conventions for metrics & labels.
 from prometheus_client import Counter
 
 try:
+    import notebook
+
+    if notebook.__name__ != "notebook":
+        # avoid double-importing myself if nbclassic is shimming jupyter_server into notebook,
+        # in which case notebook.__name__ will be 'jupyter_server'
+        _msg = "Not importing jupyter_server metrics under two names"
+        raise ImportError(_msg)
     # Jupyter Notebook also defines these metrics.  Re-defining them results in a ValueError.
     # Try to de-duplicate by using the ones in Notebook if available.
     # See https://github.com/jupyter/jupyter_server/issues/209
