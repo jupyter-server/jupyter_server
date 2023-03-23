@@ -68,6 +68,9 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
 
     async def open(self, kernel_id):
         """Open a kernel websocket."""
+        # Need to call super here to make sure we
+        # begin a ping-pong loop with the client.
+        super().open()
         # Wait for the kernel to emit an idle status.
         self.log.info(f"Connecting to kernel {self.kernel_id}.")
         await self.connection.connect()
