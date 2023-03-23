@@ -8,7 +8,7 @@ conventions for metrics & labels.
 from prometheus_client import Counter
 
 try:
-    import notebook
+    import notebook  # type: ignore
 
     if notebook.__name__ != "notebook":
         # avoid double-importing myself if nbclassic is shimming jupyter_server into notebook,
