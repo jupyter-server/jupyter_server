@@ -21,15 +21,15 @@
       "no-debugger": 2,
       "comma-dangle": 0,
       "no-unreachable": 2
-    },
-    "ignorePatterns": [
-      "*.min.js",
-      "*components*",
-      "*node_modules*",
-      "*built*",
-      "*build*"
-    ]
+    }
   },
+  "eslintIgnore": [
+    "*.min.js",
+    "*components*",
+    "*node_modules*",
+    "*built*",
+    "*build*"
+  ],
   "babel": {
     "presets": ["es2015"]
   }
