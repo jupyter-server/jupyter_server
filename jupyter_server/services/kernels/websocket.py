@@ -8,8 +8,6 @@ from tornado.websocket import WebSocketHandler
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.base.websocket import WebSocketMixin
 
-from .handlers import _kernel_id_regex
-
 AUTH_RESOURCE = "kernels"
 
 
@@ -94,8 +92,3 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
         selected_subprotocol = preferred_protocol if preferred_protocol in subprotocols else None
         # None is the default, "legacy" protocol
         return selected_subprotocol
-
-
-default_handlers = [
-    (r"/api/kernels/%s/channels" % _kernel_id_regex, KernelWebsocketHandler),
-]
