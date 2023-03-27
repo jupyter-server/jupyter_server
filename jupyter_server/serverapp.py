@@ -164,7 +164,6 @@ JUPYTER_SERVICE_HANDLERS = {
     "files": ["jupyter_server.files.handlers"],
     "kernels": [
         "jupyter_server.services.kernels.handlers",
-        "jupyter_server.services.kernels.websocket",
     ],
     "kernelspecs": [
         "jupyter_server.kernelspecs.handlers",
