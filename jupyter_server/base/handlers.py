@@ -3,6 +3,7 @@
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
+import contextvars
 import functools
 import inspect
 import ipaddress
@@ -64,6 +65,9 @@ def log():
         return Application.instance().log
     else:
         return app_log
+
+
+CURRENT_JUPYTER_HANDLER = contextvars.ContextVar("CURRENT_JUPYTER_HANDLER")
 
 
 class AuthenticatedHandler(web.RequestHandler):
@@ -580,6 +584,9 @@ class JupyterHandler(AuthenticatedHandler):
 
     async def prepare(self):
         """Pepare a response."""
+        # Set the current Jupyter Handler context variable.
+        CURRENT_JUPYTER_HANDLER.set(self)
+
         if not self.check_host():
             self.current_user = self._jupyter_current_user = None
             raise web.HTTPError(403)
