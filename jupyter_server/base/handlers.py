@@ -3,7 +3,6 @@
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
-import contextvars
 import functools
 import inspect
 import ipaddress
@@ -14,6 +13,7 @@ import re
 import traceback
 import types
 import warnings
+from contextvars import ContextVar
 from http.client import responses
 from typing import TYPE_CHECKING, Awaitable
 from urllib.parse import urlparse
@@ -67,7 +67,7 @@ def log():
         return app_log
 
 
-CURRENT_JUPYTER_HANDLER = contextvars.ContextVar("CURRENT_JUPYTER_HANDLER")
+CURRENT_JUPYTER_HANDLER: ContextVar[JupyterHandler] = ContextVar("CURRENT_JUPYTER_HANDLER")
 
 
 class AuthenticatedHandler(web.RequestHandler):
