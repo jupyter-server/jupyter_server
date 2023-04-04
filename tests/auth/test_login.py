@@ -161,7 +161,7 @@ async def test_logout(jp_serverapp, login, http_server_client, jp_base_url):
     assert resp.code == 200
     cookie_header = resp.headers["Set-Cookie"]
     cookies = parse_cookie(cookie_header)
-    assert cookies.get("test-cookie") == ""
+    assert not cookies.get("test-cookie")
     assert "Successfully logged out" in resp.body.decode("utf8")
 
 

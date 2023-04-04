@@ -53,6 +53,7 @@ def get_loader(obj, logger=None):
         "name will be deprecated in future releases "
         "of Jupyter Server.".format(name=obj),
         DeprecationWarning,
+        stacklevel=2,
     )
     return func
 

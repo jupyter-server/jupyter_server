@@ -62,7 +62,7 @@ def test_extension_package_api():
     app = path1["app"]
 
     e = ExtensionPackage(name="tests.extension.mockextensions", enabled=True)
-    e.extension_points
+    e.extension_points  # noqa
     assert hasattr(e, "extension_points")
     assert len(e.extension_points) == len(metadata_list)
     assert app.name in e.extension_points

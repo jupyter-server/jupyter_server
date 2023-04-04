@@ -57,7 +57,7 @@ def path2url(path):
     """Convert a local file path to a URL"""
     pieces = [quote(p) for p in path.split(os.sep)]
     # preserve trailing /
-    if pieces[-1] == "":
+    if pieces[-1] == "":  # noqa
         pieces[-1] = "/"
     url = url_path_join(*pieces)
     return url
@@ -121,7 +121,7 @@ def to_os_path(path: ApiPath, root: str = "") -> str:
     root must be a filesystem path already.
     """
     parts = str(path).strip("/").split("/")
-    parts = [p for p in parts if p != ""]  # remove duplicate splits
+    parts = [p for p in parts if p != ""]  # noqa   #  remove duplicate splits
     path_ = os.path.join(root, *parts)
     return os.path.normpath(path_)
 
@@ -135,7 +135,7 @@ def to_api_path(os_path: str, root: str = "") -> ApiPath:
     if os_path.startswith(root):
         os_path = os_path[len(root) :]
     parts = os_path.strip(os.path.sep).split(os.path.sep)
-    parts = [p for p in parts if p != ""]  # remove duplicate splits
+    parts = [p for p in parts if p != ""]  # noqa  # remove duplicate splits
     path = "/".join(parts)
     return ApiPath(path)
 

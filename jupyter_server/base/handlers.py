@@ -224,6 +224,7 @@ class AuthenticatedHandler(web.RequestHandler):
                 "https://github.com/jupyter-server/jupyter_server/blob/"
                 "653740cbad7ce0c8a8752ce83e4d3c2c754b13cb/jupyter_server/serverapp.py"
                 "#L234-L256",
+                stacklevel=2,
             )
             from jupyter_server.auth import AllowAllAuthorizer
 
@@ -245,6 +246,7 @@ class AuthenticatedHandler(web.RequestHandler):
                 "add an identity provider to the tornado settings: "
                 "https://github.com/jupyter-server/jupyter_server/blob/v2.0.0/"
                 "jupyter_server/serverapp.py#L242",
+                stacklevel=2,
             )
             from jupyter_server.auth import IdentityProvider
 
@@ -594,10 +596,10 @@ class JupyterHandler(AuthenticatedHandler):
             # check for overridden get_current_user + default IdentityProvider
             # deprecated way to override auth (e.g. JupyterHub < 3.0)
             # allow deprecated, overridden get_current_user
-            warnings.warn(
+            warnings.warn(  # noqa
                 "Overriding JupyterHandler.get_current_user is deprecated in jupyter-server 2.0."
                 " Use an IdentityProvider class.",
-                DeprecationWarning,
+                DeprecationWarning
                 # stacklevel not useful here
             )
             user = self.get_current_user()
@@ -984,7 +986,7 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
 
     def validate_absolute_path(self, root, absolute_path):
         """check if the file should be served (raises 404, 403, etc.)"""
-        if absolute_path == "":
+        if not absolute_path:
             raise web.HTTPError(404)
 
         for root in self.root:
