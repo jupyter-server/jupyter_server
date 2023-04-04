@@ -499,7 +499,7 @@ class IdentityProvider(LoggingConfigurable):
         - skip origin-checks for scripts
         """
         # ensure get_user has been called, so we know if we're token-authenticated
-        handler.current_user
+        handler.current_user  # noqa
         return getattr(handler, "_token_authenticated", False)
 
     def validate_security(

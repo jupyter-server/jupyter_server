@@ -52,7 +52,7 @@ def passwd(passphrase=None, algorithm="argon2"):
                 passphrase = p0
                 break
             else:
-                warnings.warn("Passwords do not match.")
+                warnings.warn("Passwords do not match.", stacklevel=2)
         else:
             msg = "No matching passwords found. Giving up."
             raise ValueError(msg)
@@ -161,7 +161,9 @@ def persist_config(config_file=None, mode=0o600):
         os.chmod(config_file, mode)
     except Exception:
         tb = traceback.format_exc()
-        warnings.warn(f"Failed to set permissions on {config_file}:\n{tb}", RuntimeWarning)
+        warnings.warn(
+            f"Failed to set permissions on {config_file}:\n{tb}", RuntimeWarning, stacklevel=2
+        )
 
 
 def set_password(password=None, config_file=None):

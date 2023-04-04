@@ -52,7 +52,7 @@ def test_server_info_file(tmp_path, jp_configurable_serverapp):
     app.remove_server_info_file()
 
     assert list(list_running_servers(app.runtime_dir)) == []
-    app.remove_server_info_file
+    app.remove_server_info_file()
 
 
 def test_root_dir(tmp_path, jp_configurable_serverapp):

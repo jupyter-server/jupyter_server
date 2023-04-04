@@ -197,7 +197,7 @@ def random_ports(port, n):
     for i in range(min(5, n)):
         yield port + i
     for _ in range(n - 5):
-        yield max(1, port + random.randint(-2 * n, 2 * n))
+        yield max(1, port + random.randint(-2 * n, 2 * n))  # noqa
 
 
 def load_handlers(name):
@@ -1239,7 +1239,7 @@ class ServerApp(JupyterApp):
 
         # if blank, self.ip was configured to "*" meaning bind to all interfaces,
         # see _valdate_ip
-        if self.ip == "":
+        if self.ip == "":  # noqa
             return True
 
         try:
@@ -1879,7 +1879,7 @@ class ServerApp(JupyterApp):
         )
         # Trigger a default/validation here explicitly while we still support the
         # deprecated trait on ServerApp (FIXME remove when deprecation finalized)
-        self.contents_manager.preferred_dir
+        self.contents_manager.preferred_dir  # noqa
         self.session_manager = self.session_manager_class(
             parent=self,
             log=self.log,
