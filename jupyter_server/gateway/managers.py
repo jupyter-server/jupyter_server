@@ -123,11 +123,34 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         culled_ids = []
         for kid, _ in our_kernels.items():
             if kid not in kernel_models:
+                # The upstream kernel was not reported in the list of kernels.
                 self.log.warning(
-                    f"Kernel {kid} no longer active - probably culled on Gateway server."
+                    f"Kernel {kid} not present in the list of kernels - possibly culled on Gateway server."
                 )
-                self._kernels.pop(kid, None)
-                culled_ids.append(kid)  # TODO: Figure out what do with these.
+                try:
+                    # Try to directly refresh the model for this specific kernel in case
+                    # the upstream list of kernels was erroneously incomplete.
+                    #
+                    # That might happen if the case of a proxy that manages multiple
+                    # backends where there could be transient connectivity issues with
+                    # a single backend.
+                    #
+                    # Alternatively, it could happen if there is simply a bug in the
+                    # upstream gateway server.
+                    #
+                    # Either way, including this check improves our reliability in the
+                    # face of such scenarios.
+                    model = await self._kernels[kid].refresh_model()
+                except web.HTTPError:
+                    model = None
+                if model:
+                    kernel_models[kid] = model
+                else:
+                    self.log.warning(
+                        f"Kernel {kid} no longer active - probably culled on Gateway server."
+                    )
+                    self._kernels.pop(kid, None)
+                    culled_ids.append(kid)  # TODO: Figure out what do with these.
         return list(kernel_models.values())
 
     async def shutdown_kernel(self, kernel_id, now=False, restart=False):

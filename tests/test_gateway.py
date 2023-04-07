@@ -9,7 +9,7 @@ from email.utils import format_datetime
 from http.cookies import SimpleCookie
 from io import BytesIO
 from queue import Empty
-from typing import Any, Union
+from typing import Any, Dict, Union
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -61,6 +61,12 @@ kernelspecs: dict = {
 
 # maintain a dictionary of expected running kernels.  Key = kernel_id, Value = model.
 running_kernels = {}
+
+# Dictionary of kernels to transiently omit from list results.
+#
+# This is used to simulate inconsistency in list results from the Gateway server
+# due to issues like race conditions, bugs, etc.
+omitted_kernels: Dict[str, bool] = {}
 
 
 def generate_model(name):
@@ -131,8 +137,11 @@ async def mock_gateway_request(url, **kwargs):  # noqa
     if endpoint.endswith("/api/kernels") and method == "GET":
         kernels = []
         for kernel_id in running_kernels:
-            model = running_kernels.get(kernel_id)
-            kernels.append(model)
+            if kernel_id in omitted_kernels:
+                omitted_kernels.pop(kernel_id)
+            else:
+                model = running_kernels.get(kernel_id)
+                kernels.append(model)
         response_buf = BytesIO(json.dumps(kernels).encode("utf-8"))
         response = await ensure_async(HTTPResponse(request, 200, buffer=response_buf))
         return response
@@ -453,6 +462,7 @@ async def test_gateway_session_lifecycle(init_gateway, jp_root_dir, jp_fetch, cu
 
     assert await is_session_active(jp_fetch, session_id) is True
 
+    omitted_kernels[kernel_id] = True
     if cull_kernel:
         running_kernels.pop(kernel_id)
 
@@ -501,6 +511,7 @@ async def test_gateway_kernel_lifecycle(
     # ensure kernel still considered running
     assert await is_kernel_running(jp_fetch, kernel_id) is True
 
+    omitted_kernels[kernel_id] = True
     if cull_kernel:
         running_kernels.pop(kernel_id)
 
