@@ -140,8 +140,12 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
                     #
                     # Either way, including this check improves our reliability in the
                     # face of such scenarios.
-                    kernel_models[kid] = await self._kernels[kid].refresh_model()
-                except web.HTTPError as error:
+                    model = await self._kernels[kid].refresh_model()
+                except web.HTTPError:
+                    model = None
+                if model:
+                    kernel_models[kid] = model
+                else:
                     self.log.warning(
                         f"Kernel {kid} no longer active - probably culled on Gateway server."
                     )
