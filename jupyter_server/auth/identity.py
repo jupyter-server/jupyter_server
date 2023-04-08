@@ -475,7 +475,7 @@ class IdentityProvider(LoggingConfigurable):
         name = display_name = f"Anonymous {moon}"
         initials = f"A{moon[0]}"
         color = None
-        handler.log.info(f"Generating new user for token-authenticated request: {user_id}")
+        handler.log.debug(f"Generating new user for token-authenticated request: {user_id}")
         return User(user_id, name, display_name, initials, None, color)
 
     def should_check_origin(self, handler: JupyterHandler) -> bool:
@@ -499,7 +499,7 @@ class IdentityProvider(LoggingConfigurable):
         - skip origin-checks for scripts
         """
         # ensure get_user has been called, so we know if we're token-authenticated
-        handler.current_user
+        handler.current_user  # noqa
         return getattr(handler, "_token_authenticated", False)
 
     def validate_security(

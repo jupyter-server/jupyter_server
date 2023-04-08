@@ -19,9 +19,9 @@ def set_password(args):
         password1 = getpass("" if args.quiet else "Provide password: ")
         password_repeat = getpass("" if args.quiet else "Repeat password:  ")
         if password1 != password_repeat:
-            warnings.warn("Passwords do not match, try again")
+            warnings.warn("Passwords do not match, try again", stacklevel=2)
         elif len(password1) < 4:  # noqa
-            warnings.warn("Please provide at least 4 characters")
+            warnings.warn("Please provide at least 4 characters", stacklevel=2)
         else:
             password = password1
 

@@ -8,8 +8,6 @@ from tornado.websocket import WebSocketHandler
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.base.websocket import WebSocketMixin
 
-from .handlers import _kernel_id_regex
-
 AUTH_RESOURCE = "kernels"
 
 
@@ -68,6 +66,9 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
 
     async def open(self, kernel_id):
         """Open a kernel websocket."""
+        # Need to call super here to make sure we
+        # begin a ping-pong loop with the client.
+        super().open()
         # Wait for the kernel to emit an idle status.
         self.log.info(f"Connecting to kernel {self.kernel_id}.")
         await self.connection.connect()
@@ -86,13 +87,8 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
         preferred_protocol = self.connection.kernel_ws_protocol
         if preferred_protocol is None:
             preferred_protocol = "v1.kernel.websocket.jupyter.org"
-        elif preferred_protocol == "":
+        elif preferred_protocol == "":  # noqa
             preferred_protocol = None
         selected_subprotocol = preferred_protocol if preferred_protocol in subprotocols else None
         # None is the default, "legacy" protocol
         return selected_subprotocol
-
-
-default_handlers = [
-    (r"/api/kernels/%s/channels" % _kernel_id_regex, KernelWebsocketHandler),
-]

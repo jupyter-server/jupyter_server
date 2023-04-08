@@ -22,7 +22,7 @@ from ..utils import url_path_join
 from .managers import GatewayClient
 
 # Keepalive ping interval (default: 30 seconds)
-GATEWAY_WS_PING_INTERVAL_SECS = int(os.getenv("GATEWAY_WS_PING_INTERVAL_SECS", 30))
+GATEWAY_WS_PING_INTERVAL_SECS = int(os.getenv("GATEWAY_WS_PING_INTERVAL_SECS", "30"))
 
 
 class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
@@ -229,7 +229,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
 
         # NOTE(esevan): if websocket is not disconnected by client, try to reconnect.
         if not self.disconnected and self.retry < GatewayClient.instance().gateway_retry_max:
-            jitter = random.randint(10, 100) * 0.01
+            jitter = random.randint(10, 100) * 0.01  # noqa
             retry_interval = (
                 min(
                     GatewayClient.instance().gateway_retry_interval * (2**self.retry),

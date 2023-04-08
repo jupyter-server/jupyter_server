@@ -165,7 +165,7 @@ class LegacyLoginHandler(LoginFormHandler):
         """DEPRECATED in 2.0, use IdentityProvider API"""
         if getattr(handler, "_user_id", None) is None:
             # ensure get_user has been called, so we know if we're token-authenticated
-            handler.current_user
+            handler.current_user  # noqa
         return getattr(handler, "_token_authenticated", False)
 
     @classmethod

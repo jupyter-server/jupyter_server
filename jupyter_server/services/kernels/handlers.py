@@ -19,6 +19,7 @@ from jupyter_server.auth import authorized
 from jupyter_server.utils import url_escape, url_path_join
 
 from ...base.handlers import APIHandler
+from .websocket import KernelWebsocketHandler
 
 AUTH_RESOURCE = "kernels"
 
@@ -121,4 +122,5 @@ default_handlers = [
         rf"/api/kernels/{_kernel_id_regex}/{_kernel_action_regex}",
         KernelActionHandler,
     ),
+    (r"/api/kernels/%s/channels" % _kernel_id_regex, KernelWebsocketHandler),
 ]
