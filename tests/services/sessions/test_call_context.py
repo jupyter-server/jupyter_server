@@ -2,8 +2,9 @@ import asyncio
 import time
 
 from jupyter_server.auth.utils import get_anonymous_username
-from jupyter_server.base.handlers import CURRENT_JUPYTER_HANDLER, JupyterHandler
+from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
+from jupyter_server.services.sessions.call_context import CallContext
 
 
 async def test_jupyter_handler_contextvar(jp_fetch, monkeypatch):
@@ -30,11 +31,11 @@ async def test_jupyter_handler_contextvar(jp_fetch, monkeypatch):
     # not contaminated by other asynchronous parallel requests.
     def kernel_model(self, kernel_id):
         # Get the Jupyter Handler from the current context.
-        current: JupyterHandler = CURRENT_JUPYTER_HANDLER.get()
+        current: JupyterHandler = CallContext.get(CallContext.JUPYTER_HANDLER)
         # Get the current user
         context_tracker[kernel_id]["user"] = current.current_user
         context_tracker[kernel_id]["started"] = current.current_user
-        time.sleep(2.0)
+        time.sleep(1.0)
         # Track the current user a few seconds later. We'll
         # verify that this user was unaffected by other parallel
         # requests.
@@ -52,3 +53,52 @@ async def test_jupyter_handler_contextvar(jp_fetch, monkeypatch):
     assert context_tracker[kernel1]["started"] == context_tracker[kernel1]["ended"]
     # Assert that the second request started+ended with the same user
     assert context_tracker[kernel2]["started"] == context_tracker[kernel2]["ended"]
+
+
+async def test_context_variable_names():
+    CallContext.set("foo", "bar")
+    CallContext.set("foo2", "bar2")
+    names = CallContext.context_variable_names()
+    assert len(names) == 2
+    assert set(names) == {"foo", "foo2"}
+
+
+async def test_same_context_operations():
+    CallContext.set("foo", "bar")
+    CallContext.set("foo2", "bar2")
+
+    foo = CallContext.get("foo")
+    assert foo == "bar"
+
+    CallContext.set("foo", "bar2")
+    assert CallContext.get("foo") == CallContext.get("foo2")
+
+
+async def test_multi_context_operations():
+    async def context1():
+        """The "slower" context.  This ensures that, following the sleep, the
+        context variable set prior to the sleep is still the expected value.
+        If contexts are not managed properly, we should find that context2() has
+        corrupted context1().
+        """
+        CallContext.set("foo", "bar1")
+        await asyncio.sleep(1.0)
+        assert CallContext.get("foo") == "bar1"
+        context1_names = CallContext.context_variable_names()
+        assert len(context1_names) == 1
+
+    async def context2():
+        """The "faster" context.  This ensures that CallContext reflects the
+        appropriate values of THIS context.
+        """
+        CallContext.set("foo", "bar2")
+        assert CallContext.get("foo") == "bar2"
+        CallContext.set("foo2", "bar2")
+        context2_names = CallContext.context_variable_names()
+        assert len(context2_names) == 2
+
+    await asyncio.gather(context1(), context2())
+
+    # Assert that THIS context doesn't have any variables defined.
+    names = CallContext.context_variable_names()
+    assert len(names) == 0

@@ -13,7 +13,6 @@ import re
 import traceback
 import types
 import warnings
-from contextvars import ContextVar
 from http.client import responses
 from typing import TYPE_CHECKING, Awaitable
 from urllib.parse import urlparse
@@ -32,6 +31,7 @@ from jupyter_server._tz import utcnow
 from jupyter_server.auth import authorized
 from jupyter_server.i18n import combine_translations
 from jupyter_server.services.security import csp_report_uri
+from jupyter_server.services.sessions.call_context import CallContext
 from jupyter_server.utils import (
     ensure_async,
     filefind,
@@ -65,9 +65,6 @@ def log():
         return Application.instance().log
     else:
         return app_log
-
-
-CURRENT_JUPYTER_HANDLER: ContextVar[JupyterHandler] = ContextVar("CURRENT_JUPYTER_HANDLER")
 
 
 class AuthenticatedHandler(web.RequestHandler):
@@ -585,7 +582,7 @@ class JupyterHandler(AuthenticatedHandler):
     async def prepare(self):
         """Pepare a response."""
         # Set the current Jupyter Handler context variable.
-        CURRENT_JUPYTER_HANDLER.set(self)
+        CallContext.set(CallContext.JUPYTER_HANDLER, self)
 
         if not self.check_host():
             self.current_user = self._jupyter_current_user = None
