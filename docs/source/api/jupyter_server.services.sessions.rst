@@ -16,6 +16,12 @@ Submodules
    :undoc-members:
    :show-inheritance:
 
+
+.. automodule:: jupyter_server.services.sessions.call_context
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 
