@@ -36,7 +36,7 @@ async def test_jupyter_handler_contextvar(jp_fetch, monkeypatch):
         # Get the current user
         context_tracker[kernel_id]["user"] = current.current_user
         context_tracker[kernel_id]["started"] = current.current_user
-        time.sleep(1.0)
+        await asyncio.sleep(1.0)
         # Track the current user a few seconds later. We'll
         # verify that this user was unaffected by other parallel
         # requests.
