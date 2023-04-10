@@ -1,5 +1,4 @@
 import asyncio
-import time
 
 from jupyter_server.auth.utils import get_anonymous_username
 from jupyter_server.base.handlers import JupyterHandler
@@ -26,11 +25,13 @@ async def test_jupyter_handler_contextvar(jp_fetch, monkeypatch):
 
     monkeypatch.setattr(JupyterHandler, "get_current_user", get_current_user)
 
-    # Monkeypatch an async method in the mapping kernel manager.
-    # We chose a method that takes the kernel_id as as required
-    # first argument to ensure the kernel_id is correct in the
-    # current context.
-    async def shutdown_kernel(self, kernel_id, *args, **kwargs):
+    # Monkeypatch the kernel_model method to show that
+    # the current context variable is truly local and
+    # not contaminated by other asynchronous parallel requests.
+    # Note that even though the current implementation of `kernel_model()`
+    # is synchronous, we can convert this into an async method because the
+    # kernel handler wraps the call to `kernel_model()` in `ensure_async()`.
+    async def kernel_model(self, kernel_id):
         # Get the Jupyter Handler from the current context.
         current: JupyterHandler = CallContext.get(CallContext.JUPYTER_HANDLER)
         # Get the current user
@@ -41,13 +42,14 @@ async def test_jupyter_handler_contextvar(jp_fetch, monkeypatch):
         # verify that this user was unaffected by other parallel
         # requests.
         context_tracker[kernel_id]["ended"] = current.current_user
+        return {"id": kernel_id, "name": "blah"}
 
-    monkeypatch.setattr(AsyncMappingKernelManager, "shutdown_kernel", shutdown_kernel)
+    monkeypatch.setattr(AsyncMappingKernelManager, "kernel_model", kernel_model)
 
     # Make two requests in parallel.
     await asyncio.gather(
-        jp_fetch("api", "kernels", kernel1, method="DELETE"),
-        jp_fetch("api", "kernels", kernel2, method="DELETE"),
+        jp_fetch("api", "kernels", kernel1),
+        jp_fetch("api", "kernels", kernel2),
     )
 
     # Assert that the two requests had different users
