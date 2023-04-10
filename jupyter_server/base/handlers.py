@@ -26,12 +26,12 @@ from tornado.log import app_log
 from traitlets.config import Application
 
 import jupyter_server
+from jupyter_server import CallContext
 from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
 from jupyter_server.auth import authorized
 from jupyter_server.i18n import combine_translations
 from jupyter_server.services.security import csp_report_uri
-from jupyter_server.services.sessions.call_context import CallContext
 from jupyter_server.utils import (
     ensure_async,
     filefind,

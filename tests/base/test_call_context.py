@@ -1,9 +1,9 @@
 import asyncio
 
+from jupyter_server import CallContext
 from jupyter_server.auth.utils import get_anonymous_username
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
-from jupyter_server.services.sessions.call_context import CallContext
 
 
 async def test_jupyter_handler_contextvar(jp_fetch, monkeypatch):
