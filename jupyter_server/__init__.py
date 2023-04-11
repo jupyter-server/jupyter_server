@@ -15,6 +15,7 @@ DEFAULT_EVENTS_SCHEMA_PATH = pathlib.Path(__file__).parent / "event_schemas"
 del os
 
 from ._version import __version__, version_info  # noqa
+from .base.call_context import CallContext  # noqa
 
 
 def _cleanup():
