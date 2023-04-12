@@ -1964,6 +1964,8 @@ class ServerApp(JupyterApp):
         # events URI, `JUPYTER_SERVER_EVENTS_URI`.
         schema_ids = [
             "https://events.jupyter.org/jupyter_server/contents_service/v1",
+            "https://events.jupyter.org/jupyter_server/gateway_client/v1",
+            "https://events.jupyter.org/jupyter_server/kernel_actions/v1",
         ]
         for schema_id in schema_ids:
             # Get the schema path from the schema ID.

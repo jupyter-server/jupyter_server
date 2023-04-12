@@ -12,10 +12,30 @@ from email.utils import parsedate_to_datetime
 from http.cookies import SimpleCookie
 from socket import gaierror
 
+from jupyter_events import EventLogger
 from tornado import web
 from tornado.httpclient import AsyncHTTPClient, HTTPClientError, HTTPResponse
-from traitlets import Bool, Float, Int, TraitError, Type, Unicode, default, observe, validate
+from traitlets import (
+    Bool,
+    Float,
+    Instance,
+    Int,
+    TraitError,
+    Type,
+    Unicode,
+    default,
+    observe,
+    validate,
+)
 from traitlets.config import LoggingConfigurable, SingletonConfigurable
+
+from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH, JUPYTER_SERVER_EVENTS_URI
+
+ERROR_STATUS = "error"
+SUCCESS_STATUS = "success"
+STATUS_KEY = "status"
+STATUS_CODE_KEY = "status_code"
+MESSAGE_KEY = "msg"
 
 if ty.TYPE_CHECKING:
     from http.cookies import Morsel
@@ -71,9 +91,29 @@ class NoOpTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
 class GatewayClient(SingletonConfigurable):
     """This class manages the configuration.  It's its own singleton class so
     that we can share these values across all objects.  It also contains some
-    helper methods to build request arguments out of the various config
     options.
+    helper methods to build request arguments out of the various config
     """
+
+    event_schema_id = JUPYTER_SERVER_EVENTS_URI + "/gateway_client/v1"
+    event_logger = Instance(EventLogger).tag(config=True)
+
+    @default("event_logger")
+    def _default_event_logger(self):
+        if self.parent and hasattr(self.parent, "event_logger"):
+            # Event logger is attached from serverapp.
+            return self.parent.event_logger
+        else:
+            # If parent does not have an event logger, create one.
+            logger = EventLogger()
+            schema_path = DEFAULT_EVENTS_SCHEMA_PATH / "gateway_client" / "v1.yaml"
+            logger.register_event_schema(schema_path)
+            self.log.info("Event is registered in GatewayClient.")
+            return logger
+
+    def emit(self, data):
+        """Emit event using the core event schema from Jupyter Server's Gateway Client."""
+        self.event_logger.emit(schema_id=self.event_schema_id, data=data)
 
     url = Unicode(
         default_value=None,
@@ -97,7 +137,9 @@ management and kernel specification retrieval.  (JUPYTER_GATEWAY_URL env var)
         value = proposal["value"]
         # Ensure value, if present, starts with 'http'
         if value is not None and len(value) > 0 and not str(value).lower().startswith("http"):
-            raise TraitError("GatewayClient url must start with 'http': '%r'" % value)
+            message = "GatewayClient url must start with 'http': '%r'" % value
+            self.emit(data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 400, MESSAGE_KEY: message})
+            raise TraitError(message)
         return value
 
     ws_url = Unicode(
@@ -123,7 +165,9 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         value = proposal["value"]
         # Ensure value, if present, starts with 'ws'
         if value is not None and len(value) > 0 and not str(value).lower().startswith("ws"):
-            raise TraitError("GatewayClient ws_url must start with 'ws': '%r'" % value)
+            message = "GatewayClient ws_url must start with 'ws': '%r'" % value
+            self.emit(data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 400, MESSAGE_KEY: message})
+            raise TraitError(message)
         return value
 
     kernels_endpoint_default_value = "/api/kernels"
@@ -728,6 +772,9 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
     # NOTE: We do this here since this handler is called during the server's startup and subsequent refreshes
     # of the tree view.
     except HTTPClientError as e:
+        GatewayClient.instance().emit(
+            data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: e.code, MESSAGE_KEY: str(e.message)}
+        )
         error_reason = f"Exception while attempting to connect to Gateway server url '{GatewayClient.instance().url}'"
         error_message = e.message
         if e.response:
@@ -744,12 +791,18 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
             "Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
     except ConnectionError as e:
+        GatewayClient.instance().emit(
+            data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 503, MESSAGE_KEY: str(e)}
+        )
         raise web.HTTPError(
             503,
             f"ConnectionError was received from Gateway server url '{GatewayClient.instance().url}'.  "
             "Check to be sure the Gateway instance is running.",
         ) from e
     except gaierror as e:
+        GatewayClient.instance().emit(
+            data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 404, MESSAGE_KEY: str(e)}
+        )
         raise web.HTTPError(
             404,
             f"The Gateway server specified in the gateway_url '{GatewayClient.instance().url}' doesn't "

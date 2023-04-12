@@ -5,6 +5,8 @@ import asyncio
 import datetime
 import json
 import os
+import pathlib
+import typing as t
 from logging import Logger
 from queue import Empty, Queue
 from threading import Thread
@@ -18,12 +20,15 @@ from jupyter_client.kernelspec import KernelSpecManager
 from jupyter_client.manager import AsyncKernelManager
 from jupyter_client.managerabc import KernelManagerABC
 from jupyter_core.utils import ensure_async
+from jupyter_events import EventLogger
+from jupyter_events.schema_registry import SchemaRegistryException
 from tornado import web
 from tornado.escape import json_decode, json_encode, url_escape, utf8
-from traitlets import DottedObjectName, Instance, Type, default
+from traitlets import DottedObjectName, Instance, List, Type, default
 
+from .. import DEFAULT_EVENTS_SCHEMA_PATH
 from .._tz import UTC
-from ..services.kernels.kernelmanager import AsyncMappingKernelManager
+from ..services.kernels.kernelmanager import AsyncMappingKernelManager, emit_kernel_action_event
 from ..services.sessions.sessionmanager import SessionManager
 from ..utils import url_path_join
 from .gateway_client import GatewayClient, gateway_request
@@ -79,7 +84,6 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         await km.start_kernel(kernel_id=kernel_id, **kwargs)
         kernel_id = km.kernel_id
         self._kernels[kernel_id] = km
-
         # Initialize culling if not already
         if not self._initialized_culler:
             self.initialize_culler()
@@ -290,6 +294,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
         response = await gateway_request(kernel_spec_url, method="GET")
         kernel_specs = json_decode(response.body)
         kernel_specs = self._replace_path_kernelspec_resources(kernel_specs)
+        self.log.debug(f"Retrieved list of kernel specs for the uri: {kernel_spec_url}")
         return kernel_specs
 
     async def get_kernel_spec(self, kernel_name, **kwargs):
@@ -376,6 +381,49 @@ class GatewayKernelManager(AsyncKernelManager):
     def _default_cache_ports(self):
         return False  # no need to cache ports here
 
+    # A list of pathlib objects, each pointing at an event
+    # schema to register with this kernel manager's eventlogger.
+    # This trait should not be overridden.
+
+    @property
+    def core_event_schema_paths(self) -> t.List[pathlib.Path]:
+        return [DEFAULT_EVENTS_SCHEMA_PATH / "kernel_actions" / "v1.yaml"]
+
+    # This trait is intended for subclasses to override and define
+    # custom event schemas.
+    extra_event_schema_paths = List(
+        default_value=[],
+        help="""
+        A list of pathlib.Path objects pointing at to register with
+        the kernel manager's eventlogger.
+        """,
+    ).tag(config=True)
+
+    event_logger = Instance(EventLogger)
+
+    @default("event_logger")
+    def _default_event_logger(self):
+        """Initialize the logger and ensure all required events are present."""
+        if self.parent is not None and hasattr(self.parent, "event_logger"):
+            logger = self.parent.event_logger
+        else:
+            # If parent does not have an event logger, create one.
+            logger = EventLogger()
+        # Ensure that all the expected schemas are registered. If not, register them.
+        schemas = self.core_event_schema_paths + self.extra_event_schema_paths
+        for schema_path in schemas:
+            # Try registering the event.
+            try:
+                logger.register_event_schema(schema_path)
+            # Pass if it already exists.
+            except SchemaRegistryException:
+                pass
+        return logger
+
+    def emit(self, schema_id, data):
+        """Emit an event from the kernel manager."""
+        self.event_logger.emit(schema_id=schema_id, data=data)
+
     def __init__(self, **kwargs):
         """Initialize the gateway kernel manager."""
         super().__init__(**kwargs)
@@ -458,6 +506,9 @@ class GatewayKernelManager(AsyncKernelManager):
     # Kernel management
     # --------------------------------------------------------------------------
 
+    @emit_kernel_action_event(
+        success_msg="Kernel {kernel_id} was started.",
+    )
     async def start_kernel(self, **kwargs):
         """Starts a kernel via HTTP in an asynchronous manner.
 
@@ -509,6 +560,9 @@ class GatewayKernelManager(AsyncKernelManager):
             self.kernel = await self.refresh_model()
             self.log.info(f"GatewayKernelManager using existing kernel: {self.kernel_id}")
 
+    @emit_kernel_action_event(
+        success_msg="Kernel {kernel_id} was shutdown.",
+    )
     async def shutdown_kernel(self, now=False, restart=False):
         """Attempts to stop the kernel process cleanly via HTTP."""
 
@@ -523,6 +577,9 @@ class GatewayKernelManager(AsyncKernelManager):
                 else:
                     raise
 
+    @emit_kernel_action_event(
+        success_msg="Kernel {kernel_id} was restarted.",
+    )
     async def restart_kernel(self, **kw):
         """Restarts a kernel via HTTP."""
         if self.has_kernel:
@@ -537,6 +594,9 @@ class GatewayKernelManager(AsyncKernelManager):
             )
             self.log.debug("Restart kernel response: %d %s", response.code, response.reason)
 
+    @emit_kernel_action_event(
+        success_msg="Kernel {kernel_id} was interrupted.",
+    )
     async def interrupt_kernel(self):
         """Interrupts the kernel via an HTTP request."""
         if self.has_kernel:
@@ -556,8 +616,10 @@ class GatewayKernelManager(AsyncKernelManager):
         if self.has_kernel:
             # Go ahead and issue a request to get the kernel
             self.kernel = await self.refresh_model()
+            self.log.debug(f"The kernel: {self.kernel} is alive.")
             return True
         else:  # we don't have a kernel
+            self.log.debug(f"The kernel: {self.kernel} no longer exists.")
             return False
 
     def cleanup_resources(self, restart=False):
