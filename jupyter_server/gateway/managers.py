@@ -5,8 +5,6 @@ import asyncio
 import datetime
 import json
 import os
-import pathlib
-import typing as t
 from logging import Logger
 from queue import Empty, Queue
 from threading import Thread
@@ -17,18 +15,18 @@ import websocket  # type:ignore
 from jupyter_client.asynchronous.client import AsyncKernelClient
 from jupyter_client.clientabc import KernelClientABC
 from jupyter_client.kernelspec import KernelSpecManager
-from jupyter_client.manager import AsyncKernelManager
 from jupyter_client.managerabc import KernelManagerABC
 from jupyter_core.utils import ensure_async
-from jupyter_events import EventLogger
-from jupyter_events.schema_registry import SchemaRegistryException
 from tornado import web
 from tornado.escape import json_decode, json_encode, url_escape, utf8
-from traitlets import DottedObjectName, Instance, List, Type, default
+from traitlets import DottedObjectName, Instance, Type, default
 
-from .. import DEFAULT_EVENTS_SCHEMA_PATH
 from .._tz import UTC
-from ..services.kernels.kernelmanager import AsyncMappingKernelManager, emit_kernel_action_event
+from ..services.kernels.kernelmanager import (
+    AsyncMappingKernelManager,
+    ServerKernelManager,
+    emit_kernel_action_event,
+)
 from ..services.sessions.sessionmanager import SessionManager
 from ..utils import url_path_join
 from .gateway_client import GatewayClient, gateway_request
@@ -294,7 +292,6 @@ class GatewayKernelSpecManager(KernelSpecManager):
         response = await gateway_request(kernel_spec_url, method="GET")
         kernel_specs = json_decode(response.body)
         kernel_specs = self._replace_path_kernelspec_resources(kernel_specs)
-        self.log.debug(f"Retrieved list of kernel specs for the uri: {kernel_spec_url}")
         return kernel_specs
 
     async def get_kernel_spec(self, kernel_name, **kwargs):
@@ -371,7 +368,7 @@ class GatewaySessionManager(SessionManager):
         return km is None
 
 
-class GatewayKernelManager(AsyncKernelManager):
+class GatewayKernelManager(ServerKernelManager):
     """Manages a single kernel remotely via a Gateway Server."""
 
     kernel_id: Optional[str] = None  # type:ignore[assignment]
@@ -380,49 +377,6 @@ class GatewayKernelManager(AsyncKernelManager):
     @default("cache_ports")
     def _default_cache_ports(self):
         return False  # no need to cache ports here
-
-    # A list of pathlib objects, each pointing at an event
-    # schema to register with this kernel manager's eventlogger.
-    # This trait should not be overridden.
-
-    @property
-    def core_event_schema_paths(self) -> t.List[pathlib.Path]:
-        return [DEFAULT_EVENTS_SCHEMA_PATH / "kernel_actions" / "v1.yaml"]
-
-    # This trait is intended for subclasses to override and define
-    # custom event schemas.
-    extra_event_schema_paths = List(
-        default_value=[],
-        help="""
-        A list of pathlib.Path objects pointing at to register with
-        the kernel manager's eventlogger.
-        """,
-    ).tag(config=True)
-
-    event_logger = Instance(EventLogger)
-
-    @default("event_logger")
-    def _default_event_logger(self):
-        """Initialize the logger and ensure all required events are present."""
-        if self.parent is not None and hasattr(self.parent, "event_logger"):
-            logger = self.parent.event_logger
-        else:
-            # If parent does not have an event logger, create one.
-            logger = EventLogger()
-        # Ensure that all the expected schemas are registered. If not, register them.
-        schemas = self.core_event_schema_paths + self.extra_event_schema_paths
-        for schema_path in schemas:
-            # Try registering the event.
-            try:
-                logger.register_event_schema(schema_path)
-            # Pass if it already exists.
-            except SchemaRegistryException:
-                pass
-        return logger
-
-    def emit(self, schema_id, data):
-        """Emit an event from the kernel manager."""
-        self.event_logger.emit(schema_id=schema_id, data=data)
 
     def __init__(self, **kwargs):
         """Initialize the gateway kernel manager."""
