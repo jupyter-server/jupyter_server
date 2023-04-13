@@ -329,7 +329,7 @@ intersphinx_mapping = {
     "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
     "nbconvert": ("https://nbconvert.readthedocs.io/en/stable/", None),
     "nbformat": ("https://nbformat.readthedocs.io/en/stable/", None),
-    "jupyter_core": ("https://jupyter_core.readthedocs.io/en/stable/", None),
+    "jupyter_core": ("https://jupyter-core.readthedocs.io/en/stable/", None),
     "tornado": ("https://www.tornadoweb.org/en/stable/", None),
     "traitlets": ("https://traitlets.readthedocs.io/en/stable/", None),
 }
