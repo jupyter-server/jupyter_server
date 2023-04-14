@@ -1,7 +1,6 @@
 # Jupyter Server
 
 [![Build Status](https://github.com/jupyter-server/jupyter_server/actions/workflows/python-tests.yml/badge.svg?query=branch%3Amain++)](https://github.com/jupyter-server/jupyter_server/actions/workflows/python-tests.yml/badge.svg?query=branch%3Amain++)
-[![codecov](https://codecov.io/gh/jupyter-server/jupyter_server/branch/main/graph/badge.svg?token=S9WiBg2iL0)](https://codecov.io/gh/jupyter-server/jupyter_server)
 [![Documentation Status](https://readthedocs.org/projects/jupyter-server/badge/?version=latest)](http://jupyter-server.readthedocs.io/en/latest/?badge=latest)
 
 The Jupyter Server provides the backend (i.e. the core services, APIs, and REST endpoints) for Jupyter web applications like Jupyter notebook, JupyterLab, and Voila.

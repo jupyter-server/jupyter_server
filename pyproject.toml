@@ -287,6 +287,10 @@ exclude_lines = [
 "@(abc\\.)?abstractmethod",
 ]
 
+[tool.coverage.run]
+relative_files = true
+source = ["jupyter_server"]
+
 [tool.jupyter-releaser.hooks]
 before-build-python = ["npm install", "npm run build"]
 
