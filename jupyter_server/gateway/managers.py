@@ -21,7 +21,7 @@ from tornado import web
 from tornado.escape import json_decode, json_encode, url_escape, utf8
 from traitlets import DottedObjectName, Instance, Type, default
 
-from .._tz import UTC
+from .._tz import UTC, utcnow
 from ..services.kernels.kernelmanager import (
     AsyncMappingKernelManager,
     ServerKernelManager,
@@ -387,7 +387,8 @@ class GatewayKernelManager(ServerKernelManager):
         self.kernel_url: str
         self.kernel = self.kernel_id = None
         # simulate busy/activity markers:
-        self.execution_state = self.last_activity = None
+        self.execution_state = "starting"
+        self.last_activity = utcnow()
 
     @property
     def has_kernel(self):
