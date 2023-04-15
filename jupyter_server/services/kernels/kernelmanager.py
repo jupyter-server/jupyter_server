@@ -810,8 +810,12 @@ class ServerKernelManager(AsyncIOLoopKernelManager):
     @default("event_logger")
     def _default_event_logger(self):
         """Initialize the logger and ensure all required events are present."""
-        if self.parent is not None and hasattr(self.parent, "event_logger"):
-            logger = self.parent.event_logger
+        if (
+            self.parent is not None
+            and self.parent.parent is not None
+            and hasattr(self.parent.parent, "event_logger")
+        ):
+            logger = self.parent.parent.event_logger
         else:
             # If parent does not have an event logger, create one.
             logger = EventLogger()
