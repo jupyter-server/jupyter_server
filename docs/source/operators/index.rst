@@ -14,3 +14,4 @@ These pages are targeted at people using, configuring, and/or deploying multiple
    public-server
    security
    configuring-logging
+   logging-events

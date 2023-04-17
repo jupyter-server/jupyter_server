@@ -14,5 +14,6 @@ These pages target people writing Jupyter Web applications and server extensions
    extensions
    savehooks
    contents
+   creating-events
    websocket-protocols
    API Docs <../api/modules>

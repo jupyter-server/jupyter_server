@@ -18,6 +18,7 @@ import sys
 
 HERE = osp.abspath(osp.dirname(__file__))
 sys.path.insert(0, osp.join(HERE, "..", ""))
+from jupyter_server import JUPYTER_SERVER_EVENTS
 from jupyter_server._version import version_info
 
 # -- General configuration ------------------------------------------------
@@ -50,7 +51,7 @@ try:
 except ImportError:
     pass
 
-myst_enable_extensions = ["html_image"]
+myst_enable_extensions = ["html_image", "substitution"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -385,3 +386,11 @@ def setup(app):
     with open(destination, "w") as f:
         f.write(CONFIG_HEADER)
         f.write(ServerApp().document_config_options())
+
+
+# Create a markdown list of the core events emitted by Jupyter Server.
+event_list_md = ""
+for event in JUPYTER_SERVER_EVENTS:
+    event_list_md += f"* `{event}`\n"
+
+myst_substitutions = {"jupyter_server_events": event_list_md}

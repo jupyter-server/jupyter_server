@@ -11,6 +11,8 @@ DEFAULT_TEMPLATE_PATH_LIST = [
 DEFAULT_JUPYTER_SERVER_PORT = 8888
 JUPYTER_SERVER_EVENTS_URI = "https://events.jupyter.org/jupyter_server"
 DEFAULT_EVENTS_SCHEMA_PATH = pathlib.Path(__file__).parent / "event_schemas"
+JUPYTER_SERVER_EVENTS = ["https://events.jupyter.org/jupyter_server/contents_service/v1"]
+
 
 del os
 
