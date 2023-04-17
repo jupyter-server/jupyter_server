@@ -27,7 +27,7 @@ required:
 
 We also recommend that you write this schema to a file in your extension repository in a logical location, e.g. `myextension/events/myevent/v1.yaml`.
 
-Then, you can easily register your event on the core serverapp's event logger:
+Then, you can easily register your event on the core serverapp's event logger from your extension:
 
 ```python
 import pathlib
@@ -41,6 +41,10 @@ def _load_jupyter_server_extension(serverapp: ServerApp):
 ```
 
 Once the event schema is registered, it is ready to be emitted. Note that the core `event_logger` is included in Jupyter Server's tornado settings and listed as a property of `JupyterHandler` API.
+
+:::{attention}
+While you can (technically) create your own instance of an EventLogger from your extension, users/operators will likely only collect events from the instance created by Jupyter Server's `ServerApp`. If you would to provide your own instance, be sure to clearly document how to configure your extension to collect your events.
+:::
 
 As an example, you can emit an event from custom request handler by calling `self.event_logger.emit(...)`:
 
