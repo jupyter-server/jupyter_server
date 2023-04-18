@@ -81,7 +81,6 @@ class User:
         if not self.display_name:
             self.display_name = self.name
 
-    @staticmethod
     def to_string(self) -> str:
         """Serialize a user to a string for storage in a cookie
         If overriding in a subclass, make sure to define from_string as well.
