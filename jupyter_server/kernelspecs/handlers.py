@@ -1,6 +1,5 @@
 """Kernelspecs API Handlers."""
 import mimetypes
-from typing import Optional
 
 from jupyter_core.utils import ensure_async
 from tornado import web
@@ -39,7 +38,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
                 # We have to explicitly specify the `absolute_path` attribute so that
                 # the underlying StaticFileHandler methods can calculate an etag.
                 self.absolute_path = path
-                mimetype: Optional[str] = mimetypes.guess_type(path)[0] or "text/plain"
+                mimetype: str = mimetypes.guess_type(path)[0] or "text/plain"
                 self.set_header("Content-Type", mimetype)
                 self.finish(kernel_spec_res)
                 return
