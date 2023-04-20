@@ -1,4 +1,4 @@
-"""Gateway API handlers."""
+"""Gateway connection classes."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
@@ -18,7 +18,7 @@ from .managers import GatewayClient
 
 
 class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
-    """Proxy web socket connection to a kernel/enterprise gateway."""
+    """Web socket connection that proxies to a kernel/enterprise gateway."""
 
     kernel_ws_protocol = None
 
@@ -139,7 +139,3 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
                 self.ws.write_message(message)
         except Exception as e:
             self.log.error(f"Exception writing message to websocket: {e}")  # , exc_info=True)
-
-    @classmethod
-    async def close_all(cls):
-        pass

@@ -87,7 +87,7 @@ from jupyter_server.base.handlers import (
 from jupyter_server.extension.config import ExtensionConfigManager
 from jupyter_server.extension.manager import ExtensionManager
 from jupyter_server.extension.serverextension import ServerExtensionApp
-from jupyter_server.gateway.handlers import GatewayWebSocketConnection
+from jupyter_server.gateway.connections import GatewayWebSocketConnection
 from jupyter_server.gateway.managers import (
     GatewayClient,
     GatewayKernelSpecManager,
@@ -1504,7 +1504,7 @@ class ServerApp(JupyterApp):
     @default("kernel_websocket_connection_class")
     def _default_kernel_websocket_connection_class(self):
         if self.gateway_config.gateway_enabled:
-            return "jupyter_server.gateway.handlers.GatewayWebSocketConnection"
+            return "jupyter_server.gateway.connections.GatewayWebSocketConnection"
         return ZMQChannelsWebsocketConnection
 
     config_manager_class = Type(
@@ -2859,7 +2859,19 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
-        await self.kernel_websocket_connection_class.close_all()
+        try:
+            await self.kernel_websocket_connection_class.close_all()
+        except AttributeError:
+            # This can happen in two different scenarios:
+            #
+            # 1. During tests, where the _cleanup method is invoked without
+            #    the corresponding initialize method having been invoked.
+            # 2. If the provided `kernel_websocket_connection_class` does not
+            #    implement the `close_all` class method.
+            #
+            # In either case, we don't need to do anything and just want to treat
+            # the raised error as a no-op.
+            pass
         if getattr(self, "kernel_manager", None):
             self.kernel_manager.__del__()
         if getattr(self, "session_manager", None):
