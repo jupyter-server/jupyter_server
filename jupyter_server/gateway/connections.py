@@ -128,7 +128,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
         """Send message to gateway server."""
         if self.ws is None:
             loop = IOLoop.current()
-            loop.add_future(self.ws_future, lambda future: self._write_message(message))
+            loop.add_future(self.ws_future, lambda future: self.handle_incoming_message(message))
         else:
             self._write_message(message)
 
