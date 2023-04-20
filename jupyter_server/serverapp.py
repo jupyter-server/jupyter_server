@@ -87,6 +87,7 @@ from jupyter_server.base.handlers import (
 from jupyter_server.extension.config import ExtensionConfigManager
 from jupyter_server.extension.manager import ExtensionManager
 from jupyter_server.extension.serverextension import ServerExtensionApp
+from jupyter_server.gateway.handlers import GatewayWebSocketConnection
 from jupyter_server.gateway.managers import (
     GatewayClient,
     GatewayKernelSpecManager,
@@ -432,17 +433,6 @@ class ServerWebApplication(web.Application):
         handlers.extend(settings["contents_manager"].get_extra_handlers())
         # And from identity provider
         handlers.extend(settings["identity_provider"].get_handlers())
-
-        # If gateway mode is enabled, replace appropriate handlers to perform redirection
-        if GatewayClient.instance().gateway_enabled:
-            # for each handler required for gateway, locate its pattern
-            # in the current list and replace that entry...
-            gateway_handlers = load_handlers("jupyter_server.gateway.handlers")
-            for _, gwh in enumerate(gateway_handlers):
-                for j, h in enumerate(handlers):
-                    if gwh[0] == h[0]:
-                        handlers[j] = (gwh[0], gwh[1])
-                        break
 
         # register base handlers last
         handlers.extend(load_handlers("jupyter_server.base.handlers"))
@@ -796,6 +786,7 @@ class ServerApp(JupyterApp):
         GatewayMappingKernelManager,
         GatewayKernelSpecManager,
         GatewaySessionManager,
+        GatewayWebSocketConnection,
         GatewayClient,
         Authorizer,
         EventLogger,
@@ -1505,11 +1496,16 @@ class ServerApp(JupyterApp):
         return SessionManager
 
     kernel_websocket_connection_class = Type(
-        default_value=ZMQChannelsWebsocketConnection,
         klass=BaseKernelWebsocketConnection,
         config=True,
         help=_i18n("The kernel websocket connection class to use."),
     )
+
+    @default("kernel_websocket_connection_class")
+    def _default_kernel_websocket_connection_class(self):
+        if self.gateway_config.gateway_enabled:
+            return "jupyter_server.gateway.handlers.GatewayWebSocketConnection"
+        return ZMQChannelsWebsocketConnection
 
     config_manager_class = Type(
         default_value=ConfigManager,
