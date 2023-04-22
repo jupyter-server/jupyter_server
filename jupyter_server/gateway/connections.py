@@ -6,11 +6,11 @@ import asyncio
 import random
 from typing import cast
 
+import tornado.websocket as tornado_websocket
 from tornado.concurrent import Future
 from tornado.escape import url_escape
 from tornado.httpclient import HTTPRequest
 from tornado.ioloop import IOLoop
-from tornado.websocket import websocket_connect
 
 from ..services.kernels.connection.base import BaseKernelWebsocketConnection
 from ..utils import url_path_join
@@ -44,7 +44,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
         kwargs = GatewayClient.instance().load_connection_args(**kwargs)
 
         request = HTTPRequest(ws_url, **kwargs)
-        self.ws_future = cast(Future, websocket_connect(request))
+        self.ws_future = cast(Future, tornado_websocket.websocket_connect(request))
         self.ws_future.add_done_callback(self._connection_done)
 
         loop = IOLoop.current()
