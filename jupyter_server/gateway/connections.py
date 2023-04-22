@@ -5,7 +5,7 @@
 import asyncio
 import logging
 import random
-from typing import cast
+from typing import Any, cast
 
 import tornado.websocket as tornado_websocket
 from tornado.concurrent import Future
@@ -121,7 +121,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
             loop = IOLoop.current()
             loop.spawn_callback(self.connect)
 
-    def handle_outgoing_message(self, incoming_msg: str) -> None:
+    def handle_outgoing_message(self, incoming_msg: str, *args: Any) -> None:
         """Send message to the notebook client."""
         try:
             self.websocket_handler.write_message(incoming_msg)

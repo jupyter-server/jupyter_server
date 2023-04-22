@@ -17,6 +17,7 @@ import tornado
 from jupyter_core.utils import ensure_async
 from tornado.concurrent import Future
 from tornado.httpclient import HTTPRequest, HTTPResponse
+from tornado.httputil import HTTPServerRequest
 from tornado.queues import Queue
 from tornado.web import HTTPError
 from traitlets import Int, Unicode
@@ -665,7 +666,7 @@ async def test_channel_queue_get_msg_when_response_router_had_finished():
 
 def mock_websocket_connect():
     def helper(request):
-        msgs = Queue(2)
+        msgs: Queue = Queue(2)
         msgs.put_nowait('{"msg_type": "status", "content": {"execution_state": "starting"}}')
 
         def write_message(message, *args, **kwargs):
@@ -674,7 +675,7 @@ def mock_websocket_connect():
         def read_message(*args, **kwargs):
             return msgs.get()
 
-        fut = Future()
+        fut: Future = Future()
         mock_client = MagicMock()
         mock_client.write_message = write_message
         mock_client.read_message = read_message
@@ -691,7 +692,7 @@ async def test_websocket_connection_closed(init_gateway, jp_serverapp, jp_fetch,
     km: GatewayKernelManager = jp_serverapp.kernel_manager.get_kernel(kernel_id)
 
     # Create the KernelWebsocketHandler...
-    request = HTTPRequest("foo", "GET")
+    request = HTTPServerRequest("foo", "GET")
     request.connection = MagicMock()
     handler = KernelWebsocketHandler(jp_serverapp.web_app, request)
 
