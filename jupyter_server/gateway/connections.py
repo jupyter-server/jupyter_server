@@ -3,12 +3,13 @@
 # Distributed under the terms of the Modified BSD License.
 
 import asyncio
+import logging
 import random
 from typing import cast
 
 import tornado.websocket as tornado_websocket
 from tornado.concurrent import Future
-from tornado.escape import url_escape
+from tornado.escape import json_decode, url_escape, utf8
 from tornado.httpclient import HTTPRequest
 from tornado.ioloop import IOLoop
 
@@ -120,9 +121,20 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
             loop = IOLoop.current()
             loop.spawn_callback(self.connect)
 
-    def handle_outgoing_message(self, *args, **kwargs):
+    def handle_outgoing_message(self, incoming_msg: str) -> None:
         """Send message to the notebook client."""
-        self.websocket_handler.write_message(*args, **kwargs)
+        try:
+            self.websocket_handler.write_message(incoming_msg)
+        except tornado_websocket.WebSocketClosedError:
+            if self.log.isEnabledFor(logging.DEBUG):
+                msg_summary = GatewayWebSocketConnection._get_message_summary(
+                    json_decode(utf8(incoming_msg))
+                )
+                self.log.debug(
+                    "Notebook client closed websocket connection - message dropped: {}".format(
+                        msg_summary
+                    )
+                )
 
     def handle_incoming_message(self, message: str) -> None:
         """Send message to gateway server."""
@@ -139,3 +151,25 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
                 self.ws.write_message(message)
         except Exception as e:
             self.log.error(f"Exception writing message to websocket: {e}")  # , exc_info=True)
+
+    @staticmethod
+    def _get_message_summary(message):
+        """Get a summary of a message."""
+        summary = []
+        message_type = message["msg_type"]
+        summary.append(f"type: {message_type}")
+
+        if message_type == "status":
+            summary.append(", state: {}".format(message["content"]["execution_state"]))
+        elif message_type == "error":
+            summary.append(
+                ", {}:{}:{}".format(
+                    message["content"]["ename"],
+                    message["content"]["evalue"],
+                    message["content"]["traceback"],
+                )
+            )
+        else:
+            summary.append(", ...")  # don't display potentially sensitive data
+
+            return "".join(summary)

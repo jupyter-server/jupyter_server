@@ -666,7 +666,7 @@ async def test_channel_queue_get_msg_when_response_router_had_finished():
 def mock_websocket_connect():
     def helper(request):
         msgs = Queue(2)
-        msgs.put_nowait("Initial message")
+        msgs.put_nowait('{"msg_type": "status", "content": {"execution_state": "starting"}}')
 
         def write_message(message, *args, **kwargs):
             return msgs.put(message)
