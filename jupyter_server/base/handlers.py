@@ -1,6 +1,7 @@
 """Base Tornado handlers for the Jupyter server."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import contextvars
 import datetime
 import functools
 import ipaddress
@@ -15,14 +16,10 @@ from http.client import responses
 from http.cookies import Morsel
 from urllib.parse import urlparse
 
+import jupyter_server
 import prometheus_client
 from jinja2 import TemplateNotFound
 from jupyter_core.paths import is_hidden
-from tornado import escape, httputil, web
-from tornado.log import app_log
-from traitlets.config import Application
-
-import jupyter_server
 from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
 from jupyter_server.i18n import combine_translations
@@ -35,7 +32,11 @@ from jupyter_server.utils import (
     url_path_join,
     urldecode_unix_socket_path,
 )
+from tornado import escape, httputil, web
+from tornado.log import app_log
+from traitlets.config import Application
 
+_current_request_var: contextvars.ContextVar = contextvars.ContextVar("current_request")
 # -----------------------------------------------------------------------------
 # Top-level handlers
 # -----------------------------------------------------------------------------
@@ -60,6 +61,12 @@ def log():
 
 class AuthenticatedHandler(web.RequestHandler):
     """A RequestHandler with an authenticated user."""
+
+    def prepare(self):
+        _current_request_var.set(self.request)
+
+    def base_url(self) -> str:
+        return self.settings.get("base_url", "/")
 
     @property
     def content_security_policy(self):
@@ -988,6 +995,11 @@ class PrometheusMetricsHandler(JupyterHandler):
         self.set_header("Content-Type", prometheus_client.CONTENT_TYPE_LATEST)
         self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
 
+def get_current_request():
+    """
+    Get :class:`tornado.httputil.HTTPServerRequest` that is currently being processed.
+    """
+    return _current_request_var.get(None)
 
 # -----------------------------------------------------------------------------
 # URL pattern fragments for re-use
