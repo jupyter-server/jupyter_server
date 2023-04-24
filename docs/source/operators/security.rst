@@ -190,7 +190,7 @@ as coming from a new anonymous user and generate a new set of random user inform
 
 To ensure proper functionality of the identity model and to maintain user context between requests, it's
 important for clients to support session cookies and send it in subsequent requests. Failure to do so may
-result in the server generating a new anonymous user for each request, leading to loss of user context
+result in the server generating a new anonymous user for each request, leading to loss of user context.
 
 Authorization
 *************
