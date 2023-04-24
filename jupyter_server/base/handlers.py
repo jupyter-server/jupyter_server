@@ -343,6 +343,10 @@ class JupyterHandler(AuthenticatedHandler):
         return self.settings["kernel_spec_manager"]
 
     @property
+    def kernel_spec_cache(self):
+        return self.settings["kernel_spec_cache"]
+
+    @property
     def config_manager(self):
         return self.settings["config_manager"]
 

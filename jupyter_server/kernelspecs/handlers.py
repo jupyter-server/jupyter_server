@@ -24,11 +24,11 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
     @authorized
     async def get(self, kernel_name, path, include_body=True):
         """Get a kernelspec resource."""
-        ksm = self.kernel_spec_manager
+        ksc = self.kernel_spec_cache
         if path.lower().endswith(".png"):
             self.set_header("Cache-Control", f"max-age={60*60*24*30}")
         try:
-            kspec = await ensure_async(ksm.get_kernel_spec(kernel_name))
+            kspec = await ensure_async(ksc.get_kernel_spec(kernel_name))
             self.root = kspec.resource_dir
         except KeyError as e:
             raise web.HTTPError(404, "Kernel spec %s not found" % kernel_name) from e
