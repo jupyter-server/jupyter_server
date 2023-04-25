@@ -664,21 +664,22 @@ async def test_channel_queue_get_msg_when_response_router_had_finished():
         await queue.get_msg()
 
 
+class MockWebSocketClientConnection(tornado.websocket.WebSocketClientConnection):
+    def __init__(self, *args, **kwargs):
+        self._msgs: Queue = Queue(2)
+        self._msgs.put_nowait('{"msg_type": "status", "content": {"execution_state": "starting"}}')
+
+    def write_message(self, message, *args, **kwargs):
+        return self._msgs.put(message)
+
+    def read_message(self, *args, **kwargs):
+        return self._msgs.get()
+
+
 def mock_websocket_connect():
     def helper(request):
-        msgs: Queue = Queue(2)
-        msgs.put_nowait('{"msg_type": "status", "content": {"execution_state": "starting"}}')
-
-        def write_message(message, *args, **kwargs):
-            return msgs.put(message)
-
-        def read_message(*args, **kwargs):
-            return msgs.get()
-
         fut: Future = Future()
-        mock_client = MagicMock()
-        mock_client.write_message = write_message
-        mock_client.read_message = read_message
+        mock_client = MockWebSocketClientConnection()
         fut.set_result(mock_client)
         return fut
 
