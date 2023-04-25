@@ -12,6 +12,7 @@ from tornado.concurrent import Future
 from tornado.escape import json_decode, url_escape, utf8
 from tornado.httpclient import HTTPRequest
 from tornado.ioloop import IOLoop
+from traitlets import Bool, Instance, Int
 
 from ..services.kernels.connection.base import BaseKernelWebsocketConnection
 from ..utils import url_path_join
@@ -23,12 +24,13 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
 
     kernel_ws_protocol = None
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.ws = None
-        self.ws_future: Future = Future()
-        self.disconnected = False
-        self.retry = 0
+    ws = Instance(klass=tornado_websocket.WebSocketClientConnection, allow_none=True)
+
+    ws_future = Instance(default_value=Future(), klass=Future)
+
+    disconnected = Bool(False)
+
+    retry = Int(0)
 
     async def connect(self):
         """Connect to the socket."""
