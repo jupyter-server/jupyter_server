@@ -10,6 +10,12 @@ Submodules
    :undoc-members:
    :show-inheritance:
 
+
+.. automodule:: jupyter_server.services.kernelspecs.renaming
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

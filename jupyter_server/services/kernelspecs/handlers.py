@@ -64,10 +64,10 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
         """Get the list of kernel specs."""
         ksm = self.kernel_spec_manager
         km = self.kernel_manager
+        kspecs = await ensure_async(ksm.get_all_specs())
         model = {}
         model["default"] = km.default_kernel_name
         model["kernelspecs"] = specs = {}
-        kspecs = await ensure_async(ksm.get_all_specs())
         for kernel_name, kernel_info in kspecs.items():
             try:
                 if is_kernelspec_model(kernel_info):

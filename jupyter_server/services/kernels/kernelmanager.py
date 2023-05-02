@@ -17,6 +17,7 @@ from typing import Dict as DictType
 from typing import Optional
 
 from jupyter_client.ioloop.manager import AsyncIOLoopKernelManager
+from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 from jupyter_client.multikernelmanager import AsyncMultiKernelManager, MultiKernelManager
 from jupyter_client.session import Session
 from jupyter_core.paths import exists
@@ -38,6 +39,7 @@ from traitlets import (
     TraitError,
     Unicode,
     default,
+    observe,
     validate,
 )
 
@@ -45,6 +47,8 @@ from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH
 from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
 from jupyter_server.utils import ApiPath, import_item, to_os_path
+
+from ..kernelspecs.renaming import normalize_kernel_name
 
 
 class MappingKernelManager(MultiKernelManager):
@@ -206,8 +210,14 @@ class MappingKernelManager(MultiKernelManager):
 
     # TODO DEC 2022: Revise the type-ignore once the signatures have been changed upstream
     # https://github.com/jupyter/jupyter_client/pull/905
-    async def _async_start_kernel(  # type:ignore[override]
-        self, *, kernel_id: Optional[str] = None, path: Optional[ApiPath] = None, **kwargs: str
+    @normalize_kernel_name
+    async def _async_start_kernel(
+        self,
+        *,
+        kernel_id: Optional[str] = None,
+        path: Optional[ApiPath] = None,
+        renamed_kernel: Optional[str] = None,
+        **kwargs: str,
     ) -> str:
         """Start a kernel for a session and return its kernel_id.
 
@@ -231,6 +241,8 @@ class MappingKernelManager(MultiKernelManager):
                 assert kernel_id is not None, "Never Fail, but necessary for mypy "
                 kwargs["kernel_id"] = kernel_id
             kernel_id = await self.pinned_superclass._async_start_kernel(self, **kwargs)
+            if renamed_kernel:
+                self._kernels[kernel_id].kernel_name = renamed_kernel
             self._kernel_connections[kernel_id] = 0
             task = asyncio.create_task(self._finish_kernel_start(kernel_id))
             if not getattr(self, "use_pending_kernels", None):
@@ -261,7 +273,7 @@ class MappingKernelManager(MultiKernelManager):
     # see https://github.com/jupyter-server/jupyter_server/issues/1165
     # this assignment is technically incorrect, but might need a change of API
     # in jupyter_client.
-    start_kernel = _async_start_kernel  # type:ignore[assignment]
+    start_kernel = _async_start_kernel
 
     async def _finish_kernel_start(self, kernel_id):
         """Handle a kernel that finishes starting."""
@@ -678,7 +690,7 @@ class MappingKernelManager(MultiKernelManager):
 
 # AsyncMappingKernelManager inherits as much as possible from MappingKernelManager,
 # overriding only what is different.
-class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):  # type:ignore[misc]
+class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
     """An asynchronous mapping kernel manager."""
 
     @default("kernel_manager_class")
@@ -700,12 +712,55 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager): 
             )
         return km_class_value
 
+    @default("default_kernel_name")
+    def _default_default_kernel_name(self):
+        if (
+            hasattr(self.kernel_spec_manager, "default_kernel_name")
+            and self.kernel_spec_manager.default_kernel_name
+        ):
+            return self.kernel_spec_manager.default_kernel_name
+        return NATIVE_KERNEL_NAME
+
+    @observe("default_kernel_name")
+    def _observe_default_kernel_name(self, change):
+        if (
+            hasattr(self.kernel_spec_manager, "default_kernel_name")
+            and self.kernel_spec_manager.default_kernel_name
+        ):
+            # If the kernel spec manager defines a default kernel name, treat that
+            # one as authoritative.
+            kernel_name = change.new
+            if kernel_name == self.kernel_spec_manager.default_kernel_name:
+                return
+            self.log.debug(
+                f"The MultiKernelManager default kernel name '{kernel_name}'"
+                " differs from the KernelSpecManager default kernel name"
+                f" '{self.kernel_spec_manager.default_kernel_name}'..."
+                " Using the kernel spec manager's default name."
+            )
+            self.default_kernel_name = self.kernel_spec_manager.default_kernel_name
+
+    def _on_kernel_spec_manager_default_kernel_name_changed(self, change):
+        # Sync the kernel-spec-manager's trait to the multi-kernel-manager's trait.
+        kernel_name = change.new
+        if kernel_name is None:
+            return
+        self.log.debug(f"KernelSpecManager default kernel name changed: {kernel_name}")
+        self.default_kernel_name = kernel_name
+
     def __init__(self, **kwargs):
         """Initialize an async mapping kernel manager."""
         self.pinned_superclass = MultiKernelManager
         self._pending_kernel_tasks = {}
         self.pinned_superclass.__init__(self, **kwargs)
         self.last_kernel_activity = utcnow()
+
+        if hasattr(self.kernel_spec_manager, "default_kernel_name"):
+            self.kernel_spec_manager.observe(
+                self._on_kernel_spec_manager_default_kernel_name_changed, "default_kernel_name"
+            )
+            if not self.kernel_spec_manager.default_kernel_name:
+                self.kernel_spec_manager.default_kernel_name = self.default_kernel_name
 
 
 def emit_kernel_action_event(success_msg: str = ""):  # type: ignore
