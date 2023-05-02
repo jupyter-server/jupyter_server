@@ -951,8 +951,15 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
     def set_headers(self):
         """Set the headers."""
         super().set_headers()
+
+        immutable_paths = self.settings["static_immutable_cache"] or []
+
+        # allow immutable cache for files
+        if any(self.request.path.startswith(path) for path in immutable_paths):
+            self.set_header("Cache-Control", "public, max-age=31536000, immutable")
+
         # disable browser caching, rely on 304 replies for savings
-        if "v" not in self.request.arguments or any(
+        elif "v" not in self.request.arguments or any(
             self.request.path.startswith(path) for path in self.no_cache_paths
         ):
             self.set_header("Cache-Control", "no-cache")
