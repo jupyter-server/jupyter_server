@@ -26,6 +26,7 @@ from tornado.log import app_log
 from traitlets.config import Application
 
 import jupyter_server
+from jupyter_server import CallContext
 from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
 from jupyter_server.auth import authorized
@@ -582,6 +583,9 @@ class JupyterHandler(AuthenticatedHandler):
 
     async def prepare(self):
         """Pepare a response."""
+        # Set the current Jupyter Handler context variable.
+        CallContext.set(CallContext.JUPYTER_HANDLER, self)
+
         if not self.check_host():
             self.current_user = self._jupyter_current_user = None
             raise web.HTTPError(403)

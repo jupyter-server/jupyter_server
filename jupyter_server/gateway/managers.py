@@ -15,15 +15,18 @@ import websocket  # type:ignore
 from jupyter_client.asynchronous.client import AsyncKernelClient
 from jupyter_client.clientabc import KernelClientABC
 from jupyter_client.kernelspec import KernelSpecManager
-from jupyter_client.manager import AsyncKernelManager
 from jupyter_client.managerabc import KernelManagerABC
 from jupyter_core.utils import ensure_async
 from tornado import web
 from tornado.escape import json_decode, json_encode, url_escape, utf8
 from traitlets import DottedObjectName, Instance, Type, default
 
-from .._tz import UTC
-from ..services.kernels.kernelmanager import AsyncMappingKernelManager
+from .._tz import UTC, utcnow
+from ..services.kernels.kernelmanager import (
+    AsyncMappingKernelManager,
+    ServerKernelManager,
+    emit_kernel_action_event,
+)
 from ..services.sessions.sessionmanager import SessionManager
 from ..utils import url_path_join
 from .gateway_client import GatewayClient, gateway_request
@@ -79,7 +82,6 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         await km.start_kernel(kernel_id=kernel_id, **kwargs)
         kernel_id = km.kernel_id
         self._kernels[kernel_id] = km
-
         # Initialize culling if not already
         if not self._initialized_culler:
             self.initialize_culler()
@@ -123,11 +125,34 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         culled_ids = []
         for kid, _ in our_kernels.items():
             if kid not in kernel_models:
+                # The upstream kernel was not reported in the list of kernels.
                 self.log.warning(
-                    f"Kernel {kid} no longer active - probably culled on Gateway server."
+                    f"Kernel {kid} not present in the list of kernels - possibly culled on Gateway server."
                 )
-                self._kernels.pop(kid, None)
-                culled_ids.append(kid)  # TODO: Figure out what do with these.
+                try:
+                    # Try to directly refresh the model for this specific kernel in case
+                    # the upstream list of kernels was erroneously incomplete.
+                    #
+                    # That might happen if the case of a proxy that manages multiple
+                    # backends where there could be transient connectivity issues with
+                    # a single backend.
+                    #
+                    # Alternatively, it could happen if there is simply a bug in the
+                    # upstream gateway server.
+                    #
+                    # Either way, including this check improves our reliability in the
+                    # face of such scenarios.
+                    model = await self._kernels[kid].refresh_model()
+                except web.HTTPError:
+                    model = None
+                if model:
+                    kernel_models[kid] = model
+                else:
+                    self.log.warning(
+                        f"Kernel {kid} no longer active - probably culled on Gateway server."
+                    )
+                    self._kernels.pop(kid, None)
+                    culled_ids.append(kid)  # TODO: Figure out what do with these.
         return list(kernel_models.values())
 
     async def shutdown_kernel(self, kernel_id, now=False, restart=False):
@@ -343,7 +368,7 @@ class GatewaySessionManager(SessionManager):
         return km is None
 
 
-class GatewayKernelManager(AsyncKernelManager):
+class GatewayKernelManager(ServerKernelManager):
     """Manages a single kernel remotely via a Gateway Server."""
 
     kernel_id: Optional[str] = None  # type:ignore[assignment]
@@ -362,7 +387,8 @@ class GatewayKernelManager(AsyncKernelManager):
         self.kernel_url: str
         self.kernel = self.kernel_id = None
         # simulate busy/activity markers:
-        self.execution_state = self.last_activity = None
+        self.execution_state = "starting"
+        self.last_activity = utcnow()
 
     @property
     def has_kernel(self):
@@ -435,6 +461,9 @@ class GatewayKernelManager(AsyncKernelManager):
     # Kernel management
     # --------------------------------------------------------------------------
 
+    @emit_kernel_action_event(
+        success_msg="Kernel {kernel_id} was started.",
+    )
     async def start_kernel(self, **kwargs):
         """Starts a kernel via HTTP in an asynchronous manner.
 
@@ -486,6 +515,9 @@ class GatewayKernelManager(AsyncKernelManager):
             self.kernel = await self.refresh_model()
             self.log.info(f"GatewayKernelManager using existing kernel: {self.kernel_id}")
 
+    @emit_kernel_action_event(
+        success_msg="Kernel {kernel_id} was shutdown.",
+    )
     async def shutdown_kernel(self, now=False, restart=False):
         """Attempts to stop the kernel process cleanly via HTTP."""
 
@@ -500,6 +532,9 @@ class GatewayKernelManager(AsyncKernelManager):
                 else:
                     raise
 
+    @emit_kernel_action_event(
+        success_msg="Kernel {kernel_id} was restarted.",
+    )
     async def restart_kernel(self, **kw):
         """Restarts a kernel via HTTP."""
         if self.has_kernel:
@@ -514,6 +549,9 @@ class GatewayKernelManager(AsyncKernelManager):
             )
             self.log.debug("Restart kernel response: %d %s", response.code, response.reason)
 
+    @emit_kernel_action_event(
+        success_msg="Kernel {kernel_id} was interrupted.",
+    )
     async def interrupt_kernel(self):
         """Interrupts the kernel via an HTTP request."""
         if self.has_kernel:
@@ -533,8 +571,10 @@ class GatewayKernelManager(AsyncKernelManager):
         if self.has_kernel:
             # Go ahead and issue a request to get the kernel
             self.kernel = await self.refresh_model()
+            self.log.debug(f"The kernel: {self.kernel} is alive.")
             return True
         else:  # we don't have a kernel
+            self.log.debug(f"The kernel: {self.kernel} no longer exists.")
             return False
 
     def cleanup_resources(self, restart=False):

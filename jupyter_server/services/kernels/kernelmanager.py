@@ -7,11 +7,12 @@
 # Distributed under the terms of the Modified BSD License.
 import asyncio
 import os
+import pathlib
 import typing as t
 import warnings
 from collections import defaultdict
 from datetime import datetime, timedelta
-from functools import partial
+from functools import partial, wraps
 from typing import Dict as DictType
 from typing import Optional
 
@@ -20,6 +21,9 @@ from jupyter_client.multikernelmanager import AsyncMultiKernelManager, MultiKern
 from jupyter_client.session import Session
 from jupyter_core.paths import exists
 from jupyter_core.utils import ensure_async
+from jupyter_events import EventLogger
+from jupyter_events.schema_registry import SchemaRegistryException
+from overrides import overrides
 from tornado import web
 from tornado.concurrent import Future
 from tornado.ioloop import IOLoop, PeriodicCallback
@@ -37,6 +41,7 @@ from traitlets import (
     validate,
 )
 
+from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH
 from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
 from jupyter_server.utils import ApiPath, import_item, to_os_path
@@ -703,6 +708,75 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager): 
         self.last_kernel_activity = utcnow()
 
 
+def emit_kernel_action_event(success_msg: str = ""):  # type: ignore
+    """Decorate kernel action methods to
+    begin emitting jupyter kernel action events.
+
+    Parameters
+    ----------
+    success_msg: str
+        A formattable string thats passed to the message field of
+        the emitted event when the action succeeds. You can include
+        the kernel_id, kernel_name, or action in the message using
+        a formatted string argument,
+        e.g. "{kernel_id} succeeded to {action}."
+
+    error_msg: str
+        A formattable string thats passed to the message field of
+        the emitted event when the action fails. You can include
+        the kernel_id, kernel_name, or action in the message using
+        a formatted string argument,
+        e.g. "{kernel_id} failed to {action}."
+    """
+
+    def wrap_method(method):
+        @wraps(method)
+        async def wrapped_method(self, *args, **kwargs):
+            """"""
+            # Get the method name from teh
+            action = method.__name__.replace("_kernel", "")
+            # If the method succeeds, emit a success event.
+            try:
+                out = await method(self, *args, **kwargs)
+                self.emit(
+                    schema_id="https://events.jupyter.org/jupyter_server/kernel_actions/v1",
+                    data={
+                        "kernel_id": self.kernel_id,
+                        "kernel_name": self.kernel_name,
+                        "action": action,
+                        "status": "success",
+                        "msg": success_msg.format(
+                            kernel_id=self.kernel_id, kernel_name=self.kernel_name, action=action
+                        ),
+                    },
+                )
+                return out
+            # If the method fails, emit a failed event.
+            except Exception as err:
+                data = {
+                    "kernel_id": self.kernel_id,
+                    "kernel_name": self.kernel_name,
+                    "action": action,
+                    "status": "error",
+                    "msg": str(err),
+                }
+                # If the exception is an HTTPError (usually via a gateway request)
+                # log the status_code and HTTPError log_message.
+                if isinstance(err, web.HTTPError):
+                    msg = err.log_message or ""
+                    data["status_code"] = err.status_code
+                    data["msg"] = msg
+                self.emit(
+                    schema_id="https://events.jupyter.org/jupyter_server/kernel_actions/v1",
+                    data=data,
+                )
+                raise err
+
+        return wrapped_method
+
+    return wrap_method
+
+
 class ServerKernelManager(AsyncIOLoopKernelManager):
     """A server-specific kernel manager."""
 
@@ -711,4 +785,79 @@ class ServerKernelManager(AsyncIOLoopKernelManager):
         None, allow_none=True, help="The current execution state of the kernel"
     )
     reason = Unicode("", help="The reason for the last failure against the kernel")
+
     last_activity = Instance(datetime, help="The last activity on the kernel")
+
+    # A list of pathlib objects, each pointing at an event
+    # schema to register with this kernel manager's eventlogger.
+    # This trait should not be overridden.
+    @property
+    def core_event_schema_paths(self) -> t.List[pathlib.Path]:
+        return [DEFAULT_EVENTS_SCHEMA_PATH / "kernel_actions" / "v1.yaml"]
+
+    # This trait is intended for subclasses to override and define
+    # custom event schemas.
+    extra_event_schema_paths = List(
+        default_value=[],
+        help="""
+        A list of pathlib.Path objects pointing at to register with
+        the kernel manager's eventlogger.
+        """,
+    ).tag(config=True)
+
+    event_logger = Instance(EventLogger)
+
+    @default("event_logger")
+    def _default_event_logger(self):
+        """Initialize the logger and ensure all required events are present."""
+        if (
+            self.parent is not None
+            and self.parent.parent is not None
+            and hasattr(self.parent.parent, "event_logger")
+        ):
+            logger = self.parent.parent.event_logger
+        else:
+            # If parent does not have an event logger, create one.
+            logger = EventLogger()
+        # Ensure that all the expected schemas are registered. If not, register them.
+        schemas = self.core_event_schema_paths + self.extra_event_schema_paths
+        for schema_path in schemas:
+            # Try registering the event.
+            try:
+                logger.register_event_schema(schema_path)
+            # Pass if it already exists.
+            except SchemaRegistryException:
+                pass
+        return logger
+
+    def emit(self, schema_id, data):
+        """Emit an event from the kernel manager."""
+        self.event_logger.emit(schema_id=schema_id, data=data)
+
+    @overrides
+    @emit_kernel_action_event(
+        success_msg="Kernel {kernel_id} was started.",
+    )
+    async def start_kernel(self, *args, **kwargs):
+        return await super().start_kernel(*args, **kwargs)
+
+    @overrides
+    @emit_kernel_action_event(
+        success_msg="Kernel {kernel_id} was shutdown.",
+    )
+    async def shutdown_kernel(self, *args, **kwargs):
+        return await super().shutdown_kernel(*args, **kwargs)
+
+    @overrides
+    @emit_kernel_action_event(
+        success_msg="Kernel {kernel_id} was restarted.",
+    )
+    async def restart_kernel(self, *args, **kwargs):
+        return await super().restart_kernel(*args, **kwargs)
+
+    @overrides
+    @emit_kernel_action_event(
+        success_msg="Kernel {kernel_id} was interrupted.",
+    )
+    async def interrupt_kernel(self, *args, **kwargs):
+        return await super().interrupt_kernel(*args, **kwargs)

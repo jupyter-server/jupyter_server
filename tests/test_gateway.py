@@ -9,7 +9,7 @@ from email.utils import format_datetime
 from http.cookies import SimpleCookie
 from io import BytesIO
 from queue import Empty
-from typing import Any, Union
+from typing import Any, Dict, Union
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -24,6 +24,8 @@ from jupyter_server.gateway.gateway_client import GatewayTokenRenewerBase, NoOpT
 from jupyter_server.gateway.managers import ChannelQueue, GatewayClient, GatewayKernelManager
 
 from .utils import expected_http_error
+
+pytest_plugins = ["jupyter_events.pytest_plugin"]
 
 
 def generate_kernelspec(name):
@@ -61,6 +63,12 @@ kernelspecs: dict = {
 
 # maintain a dictionary of expected running kernels.  Key = kernel_id, Value = model.
 running_kernels = {}
+
+# Dictionary of kernels to transiently omit from list results.
+#
+# This is used to simulate inconsistency in list results from the Gateway server
+# due to issues like race conditions, bugs, etc.
+omitted_kernels: Dict[str, bool] = {}
 
 
 def generate_model(name):
@@ -131,8 +139,11 @@ async def mock_gateway_request(url, **kwargs):  # noqa
     if endpoint.endswith("/api/kernels") and method == "GET":
         kernels = []
         for kernel_id in running_kernels:
-            model = running_kernels.get(kernel_id)
-            kernels.append(model)
+            if kernel_id in omitted_kernels:
+                omitted_kernels.pop(kernel_id)
+            else:
+                model = running_kernels.get(kernel_id)
+                kernels.append(model)
         response_buf = BytesIO(json.dumps(kernels).encode("utf-8"))
         response = await ensure_async(HTTPResponse(request, 200, buffer=response_buf))
         return response
@@ -453,6 +464,7 @@ async def test_gateway_session_lifecycle(init_gateway, jp_root_dir, jp_fetch, cu
 
     assert await is_session_active(jp_fetch, session_id) is True
 
+    omitted_kernels[kernel_id] = True
     if cull_kernel:
         running_kernels.pop(kernel_id)
 
@@ -473,12 +485,27 @@ async def test_gateway_session_lifecycle(init_gateway, jp_root_dir, jp_fetch, cu
 
 @pytest.mark.parametrize("cull_kernel", [False, True])
 async def test_gateway_kernel_lifecycle(
-    init_gateway, jp_serverapp, jp_ws_fetch, jp_fetch, cull_kernel
+    init_gateway,
+    jp_configurable_serverapp,
+    jp_read_emitted_events,
+    jp_event_handler,
+    jp_ws_fetch,
+    jp_fetch,
+    cull_kernel,
 ):
     # Validate kernel lifecycle functions; create, interrupt, restart and delete.
 
+    app = jp_configurable_serverapp()
+    app.event_logger.register_handler(jp_event_handler)
+
     # create
     kernel_id = await create_kernel(jp_fetch, "kspec_bar")
+
+    output = jp_read_emitted_events()[0]
+    assert "action" in output and output["action"] == "start"
+    assert "msg" in output
+    assert "kernel_id" in output and kernel_id == output["kernel_id"]
+    assert "status" in output and output["status"] == "success"
 
     # ensure kernel still considered running
     assert await is_kernel_running(jp_fetch, kernel_id) is True
@@ -492,15 +519,28 @@ async def test_gateway_kernel_lifecycle(
     # interrupt
     await interrupt_kernel(jp_fetch, kernel_id)
 
+    output = jp_read_emitted_events()[0]
+    assert "action" in output and output["action"] == "interrupt"
+    assert "msg" in output
+    assert "kernel_id" in output and kernel_id == output["kernel_id"]
+    assert "status" in output and output["status"] == "success"
+
     # ensure kernel still considered running
     assert await is_kernel_running(jp_fetch, kernel_id) is True
 
     # restart
     await restart_kernel(jp_fetch, kernel_id)
 
+    output = jp_read_emitted_events()[0]
+    assert "action" in output and output["action"] == "restart"
+    assert "msg" in output
+    assert "kernel_id" in output and kernel_id == output["kernel_id"]
+    assert "status" in output and output["status"] == "success"
+
     # ensure kernel still considered running
     assert await is_kernel_running(jp_fetch, kernel_id) is True
 
+    omitted_kernels[kernel_id] = True
     if cull_kernel:
         running_kernels.pop(kernel_id)
 
@@ -514,6 +554,12 @@ async def test_gateway_kernel_lifecycle(
         assert expected_http_error(e, 404)
     else:
         await delete_kernel(jp_fetch, kernel_id)
+
+        output = jp_read_emitted_events()[0]
+        assert "action" in output and output["action"] == "shutdown"
+        assert "msg" in output
+        assert "kernel_id" in output and kernel_id == output["kernel_id"]
+        assert "status" in output and output["status"] == "success"
 
     assert await is_kernel_running(jp_fetch, kernel_id) is False
 
