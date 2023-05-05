@@ -41,7 +41,7 @@ def pkg_commit_hash(pkg_path):
         if p.exists(p.join(cur_path, ".git")):
             try:
                 proc = subprocess.Popen(
-                    ["git", "rev-parse", "--short", "HEAD"],
+                    ["git", "rev-parse", "--short", "HEAD"],  # noqa
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     cwd=pkg_path,
