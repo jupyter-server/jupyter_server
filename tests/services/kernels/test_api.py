@@ -64,6 +64,36 @@ configs: list = [
             "kernel_spec_manager_class": "jupyter_server.services.kernelspecs.renaming.RenamingKernelSpecManager",
         },
     },
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+            "kernel_spec_manager_class": "jupyter_server.services.kernelspecs.renaming.RenamingKernelSpecManager",
+        },
+        "AsyncMappingKernelManager": {"default_kernel_name": NATIVE_KERNEL_NAME},
+    },
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+            "kernel_spec_manager_class": "jupyter_server.services.kernelspecs.renaming.RenamingKernelSpecManager",
+        },
+        "RenamingKernelSpecManager": {"default_kernel_name": NATIVE_KERNEL_NAME},
+    },
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+            "kernel_spec_manager_class": "jupyter_server.services.kernelspecs.renaming.RenamingKernelSpecManager",
+        },
+        "AsyncMappingKernelManager": {"default_kernel_name": "local-" + NATIVE_KERNEL_NAME},
+        "RenamingKernelSpecManager": {"default_kernel_name": "not-found"},
+    },
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+            "kernel_spec_manager_class": "jupyter_server.services.kernelspecs.renaming.RenamingKernelSpecManager",
+        },
+        "AsyncMappingKernelManager": {"default_kernel_name": NATIVE_KERNEL_NAME},
+        "RenamingKernelSpecManager": {"default_kernel_name": "not-found"},
+    },
 ]
 
 
