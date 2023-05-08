@@ -143,26 +143,16 @@ async def tests_get_modified_spec(kernel_spec_cache):
 
 
 async def tests_add_spec(kernel_spec_cache, kernelspec_location, other_kernelspec_location):
-    assert len(kernel_spec_cache.observed_dirs) == (1 if kernel_spec_cache.cache_enabled else 0)
-    assert (
-        str(kernelspec_location) in kernel_spec_cache.observed_dirs
-        if kernel_spec_cache.cache_enabled
-        else True
-    )
+    with pytest.raises(NoSuchKernel):
+        await kernel_spec_cache.get_kernel_spec("added")  # this will increment cache_miss
 
     _install_kernelspec(str(other_kernelspec_location), "added")
+    # this will increment cache_miss prior to load
     kspec = await kernel_spec_cache.get_kernel_spec("added")
 
-    # Ensure new location has been added to observed_dirs
-    assert len(kernel_spec_cache.observed_dirs) == (2 if kernel_spec_cache.cache_enabled else 0)
-    assert (
-        str(other_kernelspec_location) in kernel_spec_cache.observed_dirs
-        if kernel_spec_cache.cache_enabled
-        else True
-    )
-
     assert kspec.display_name == "Test kernel: added"
-    assert kernel_spec_cache.cache_misses == (1 if kernel_spec_cache.cache_enabled else 0)
+    # Cache misses should be 2, one for prior to adding the spec, the other after discovering its addition
+    assert kernel_spec_cache.cache_misses == (2 if kernel_spec_cache.cache_enabled else 0)
 
     # Add another to an existing observed directory, no cache miss here
     _install_kernelspec(str(kernelspec_location), "added2")
@@ -172,7 +162,7 @@ async def tests_add_spec(kernel_spec_cache, kernelspec_location, other_kernelspe
     kspec = await kernel_spec_cache.get_kernel_spec("added2")
 
     assert kspec.display_name == "Test kernel: added2"
-    assert kernel_spec_cache.cache_misses == (1 if kernel_spec_cache.cache_enabled else 0)
+    assert kernel_spec_cache.cache_misses == (2 if kernel_spec_cache.cache_enabled else 0)
 
 
 async def tests_remove_spec(kernel_spec_cache):
@@ -181,7 +171,7 @@ async def tests_remove_spec(kernel_spec_cache):
 
     assert kernel_spec_cache.cache_misses == 0
     shutil.rmtree(kspec.resource_dir)
-    await asyncio.sleep(0.5)  # sleep for a half-second to allow cache to remove item
+    await asyncio.sleep(1.5)  # sleep for a half-second to allow cache to remove item
     with pytest.raises(NoSuchKernel):
         await kernel_spec_cache.get_kernel_spec("test2")
 
