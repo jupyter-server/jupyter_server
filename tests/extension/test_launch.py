@@ -66,7 +66,7 @@ def launch_instance(request, port, token):
         root = Path(HERE).parent.parent
 
         process = subprocess.Popen(
-            [
+            [  # noqa
                 sys.executable,
                 "-m",
                 "tests.extension.mockextensions.app",
