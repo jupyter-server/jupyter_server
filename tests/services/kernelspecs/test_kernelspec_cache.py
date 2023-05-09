@@ -11,6 +11,7 @@ import sys
 import jupyter_core.paths
 import pytest
 from jupyter_client.kernelspec import KernelSpecManager, NoSuchKernel
+from traitlets.config import Config
 
 from jupyter_server.services.kernelspecs.kernelspec_cache import KernelSpecCache
 
@@ -106,10 +107,39 @@ def kernel_spec_manager(environ, setup_kernelspecs):
     yield KernelSpecManager(ensure_native_kernel=False)
 
 
-@pytest.fixture
-def kernel_spec_cache(is_enabled, kernel_spec_manager):
-    kspec_cache = KernelSpecCache(kernel_spec_manager=kernel_spec_manager, cache_enabled=is_enabled)
+MONITORS = ["watchdog-monitor", "polling-monitor"]
+
+
+@pytest.fixture(params=MONITORS)
+def kernel_spec_cache(request, is_enabled, kernel_spec_manager):
+    config = None
+    if request.param == "polling-monitor":
+        config = Config(
+            {
+                "KernelSpecCache": {
+                    "KernelSpecPollingMonitor": {
+                        "interval": 1.0,
+                    }
+                }
+            }
+        )
+
+    kspec_cache = KernelSpecCache(
+        kernel_spec_manager=kernel_spec_manager,
+        cache_enabled=is_enabled,
+        monitor_entry_point=request.param,
+        config=config,
+    )
     yield kspec_cache
+    kspec_cache = None
+
+
+def get_delay_factor(kernel_spec_cache: KernelSpecCache):
+    if kernel_spec_cache.cache_enabled:
+        if kernel_spec_cache.monitor_entry_point == "polling-monitor":
+            return 2.0
+        return 1.0
+    return 0.5
 
 
 @pytest.fixture(params=[False, True])  # Add types as needed
@@ -133,7 +163,7 @@ async def tests_get_modified_spec(kernel_spec_cache):
 
     # Modify entry
     _modify_kernelspec(kspec.resource_dir, "test2")
-    await asyncio.sleep(0.5)  # sleep for a half-second to allow cache to update item
+    await asyncio.sleep(get_delay_factor(kernel_spec_cache))  # sleep to allow cache to update item
     kspec = await kernel_spec_cache.get_kernel_spec("test2")
     assert kspec.display_name == "test2 modified!"
 
@@ -153,8 +183,8 @@ async def tests_add_spec(kernel_spec_cache, kernelspec_location, other_kernelspe
     # Add another to an existing observed directory, no cache miss here
     _install_kernelspec(str(kernelspec_location), "added2")
     await asyncio.sleep(
-        0.5
-    )  # sleep for a half-second to allow cache to add item (no cache miss in this case)
+        get_delay_factor(kernel_spec_cache)
+    )  # sleep to allow cache to add item (no cache miss in this case)
     kspec = await kernel_spec_cache.get_kernel_spec("added2")
 
     assert kspec.display_name == "Test kernel: added2"
@@ -167,7 +197,7 @@ async def tests_remove_spec(kernel_spec_cache):
 
     assert kernel_spec_cache.cache_misses == 0
     shutil.rmtree(kspec.resource_dir)
-    await asyncio.sleep(0.5)  # sleep for a half-second to allow cache to remove item
+    await asyncio.sleep(get_delay_factor(kernel_spec_cache))  # sleep to allow cache to remove item
     with pytest.raises(NoSuchKernel):
         await kernel_spec_cache.get_kernel_spec("test2")
 

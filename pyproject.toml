@@ -96,6 +96,7 @@ jupyter-server = "jupyter_server.serverapp:main"
 
 [project.entry-points."jupyter_server.kernelspec_monitors"]
 watchdog-monitor = "jupyter_server.services.kernelspecs.monitors:KernelSpecWatchdogMonitor"
+polling-monitor = "jupyter_server.services.kernelspecs.monitors:KernelSpecPollingMonitor"
 
 [tool.hatch.envs.docs]
 features = ["docs"]
