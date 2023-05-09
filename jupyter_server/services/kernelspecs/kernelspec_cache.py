@@ -9,7 +9,7 @@ from typing import Dict, Optional, Union
 
 from jupyter_client.kernelspec import KernelSpec
 from overrides import overrides
-from traitlets.config import SingletonConfigurable
+from traitlets.config import LoggingConfigurable
 from traitlets.traitlets import CBool, Instance, Type, default
 
 from jupyter_server.utils import ensure_async
@@ -20,7 +20,7 @@ from jupyter_server.utils import ensure_async
 CacheItemType = Dict[str, Union[str, Dict]]
 
 
-class KernelSpecCache(SingletonConfigurable):
+class KernelSpecCache(LoggingConfigurable):
     """The primary (singleton) instance for managing KernelSpecs.
 
     This class contains the configured KernelSpecManager instance upon
