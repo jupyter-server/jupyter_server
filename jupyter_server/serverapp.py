@@ -2822,10 +2822,9 @@ class ServerApp(JupyterApp):
                             "",
                             (
                                 "UNIX sockets are not browser-connectable, but you can tunnel to "
-                                "the instance via e.g.`ssh -L 8888:%s -N user@this_host` and then "
-                                "open e.g. %s in a browser."
-                            )
-                            % (self.sock, self.connection_url),
+                                "the instance via e.g.`ssh -L 8888:{} -N user@this_host` and then "
+                                "open e.g. {} in a browser."
+                            ).format(self.sock, self.connection_url),
                         ]
                     )
                 )
