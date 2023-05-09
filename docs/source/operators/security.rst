@@ -222,8 +222,8 @@ request handler. Each request is labeled as either a "read", "write", or "execut
   to ~all other permissions via other means.
 
 The ``resource`` being accessed refers to the resource name in the Jupyter Server's API endpoints.
-In most cases, this is matches the field after `/api/`.
-For instance, values for ``resource`` in the endpoints provided by the base jupyter server package,
+In most cases, this is the field after `/api/`.
+For instance, values for ``resource`` in the endpoints provided by the base Jupyter Server package,
 and the corresponding permissions:
 
 .. list-table::

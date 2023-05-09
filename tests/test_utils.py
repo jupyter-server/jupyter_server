@@ -99,7 +99,7 @@ def test_check_version():
 
 
 def test_check_pid():
-    proc = subprocess.Popen([sys.executable])
+    proc = subprocess.Popen([sys.executable])  # noqa
     proc.kill()
     proc.wait()
     check_pid(proc.pid)
