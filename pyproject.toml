@@ -94,6 +94,9 @@ docs = [
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
 
+[project.entry-points."jupyter_server.kernelspec_monitors"]
+watchdog-monitor = "jupyter_server.services.kernelspecs.monitors:KernelSpecWatchdogMonitor"
+
 [tool.hatch.envs.docs]
 features = ["docs"]
 [tool.hatch.envs.docs.scripts]

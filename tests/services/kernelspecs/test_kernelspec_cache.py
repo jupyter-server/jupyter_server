@@ -167,7 +167,7 @@ async def tests_remove_spec(kernel_spec_cache):
 
     assert kernel_spec_cache.cache_misses == 0
     shutil.rmtree(kspec.resource_dir)
-    await asyncio.sleep(1.5)  # sleep for a half-second to allow cache to remove item
+    await asyncio.sleep(0.5)  # sleep for a half-second to allow cache to remove item
     with pytest.raises(NoSuchKernel):
         await kernel_spec_cache.get_kernel_spec("test2")
 

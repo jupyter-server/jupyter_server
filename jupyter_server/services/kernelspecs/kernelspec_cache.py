@@ -4,13 +4,19 @@
 
 
 import os
-from abc import ABC, abstractmethod
+import sys
+from abc import ABC, ABCMeta, abstractmethod
 from typing import Dict, Optional, Union
 
+# See compatibility note on `group` keyword in https://docs.python.org/3/library/importlib.metadata.html#entry-points
+if sys.version_info < (3, 10):  # pragma: no cover
+    from importlib_metadata import EntryPoint, entry_points
+else:  # pragma: no cover
+    from importlib.metadata import EntryPoint, entry_points
+
 from jupyter_client.kernelspec import KernelSpec
-from overrides import overrides
 from traitlets.config import LoggingConfigurable
-from traitlets.traitlets import CBool, Instance, Type, default
+from traitlets.traitlets import CBool, Instance, Unicode, default
 
 from jupyter_server.utils import ensure_async
 
@@ -45,14 +51,13 @@ class KernelSpecCache(LoggingConfigurable):
 
     kernel_spec_manager = Instance("jupyter_client.kernelspec.KernelSpecManager")
 
-    monitor_class = Type(
-        klass="jupyter_server.services.kernelspecs.kernelspec_cache.KernelSpecMonitorBase",
-        help="""The monitor class to use to capture kernelspecs.""",
+    monitor_entry_point = Unicode(
+        help="""The monitor entry_point to use to capture kernelspecs updates.""",
     ).tag(config=True)
 
-    @default("monitor_class")
-    def _monitor_class_default(self):
-        return "jupyter_server.services.kernelspecs.kernelspec_cache.KernelSpecWatchdogMonitor"
+    @default("monitor_entry_point")
+    def _monitor_entry_point_default(self):
+        return "watchdog-monitor"
 
     # The kernelspec cache consists of a dictionary mapping the kernel name to the actual
     # kernelspec data (CacheItemType).
@@ -63,7 +68,9 @@ class KernelSpecCache(LoggingConfigurable):
         """Initialize the cache."""
         super().__init__(**kwargs)
         self.kernel_spec_manager = kernel_spec_manager
-        self.kernel_spec_monitor = KernelSpecMonitorBase.create_instance(self)
+        self.kernel_spec_monitor = None
+        if self.cache_enabled:
+            self.kernel_spec_monitor = KernelSpecMonitorBase.create_instance(self)
 
     async def get_kernel_spec(self, kernel_name: str) -> KernelSpec:
         """Get the named kernel specification.
@@ -182,15 +189,45 @@ class KernelSpecCache(LoggingConfigurable):
         return kernel_spec
 
 
-class KernelSpecMonitorBase(ABC):
+class KernelSpecMonitorMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore
+    pass
+
+
+class KernelSpecMonitorBase(  # type:ignore[misc]
+    ABC, LoggingConfigurable, metaclass=KernelSpecMonitorMeta
+):
+    GROUP_NAME = "jupyter_server.kernelspec_monitors"
+
     @classmethod
     def create_instance(
         cls, kernel_spec_cache: KernelSpecCache, **kwargs
     ) -> "KernelSpecMonitorBase":
         """Creates an instance of the monitor class configured on the KernelSpecCache instance."""
-        monitor_instance = kernel_spec_cache.monitor_class(kernel_spec_cache, **kwargs)
-        monitor_instance.initialize()
-        return monitor_instance
+
+        entry_point_name = kernel_spec_cache.monitor_entry_point
+        eps = entry_points(group=KernelSpecMonitorBase.GROUP_NAME, name=entry_point_name)
+        if eps:
+            ep: EntryPoint = eps[entry_point_name]
+            monitor_class = ep.load()
+            monitor_instance: KernelSpecMonitorBase = monitor_class(
+                kernel_spec_cache=kernel_spec_cache, **kwargs
+            )
+            if not isinstance(monitor_instance, KernelSpecMonitorBase):
+                msg = (
+                    f"Entrypoint '{kernel_spec_cache.monitor_entry_point}' of "
+                    f"group '{KernelSpecMonitorBase.GROUP_NAME}' is not a "
+                    f"subclass of '{KernelSpecMonitorBase.__name__}'"
+                )
+                raise RuntimeError(msg)
+
+            monitor_instance.initialize()
+            return monitor_instance
+        else:
+            msg = (
+                f"Entrypoint '{kernel_spec_cache.monitor_entry_point}' of "
+                f"group '{KernelSpecMonitorBase.GROUP_NAME}' cannot be located."
+            )
+            raise RuntimeError(msg)
 
     @abstractmethod
     def initialize(self) -> None:
@@ -201,140 +238,3 @@ class KernelSpecMonitorBase(ABC):
     def destroy(self) -> None:
         """Destroys the monitor."""
         pass
-
-
-class KernelSpecWatchdogMonitor(KernelSpecMonitorBase):
-    """Watchdog handler that filters on specific files deemed representative of a kernel specification."""
-
-    from watchdog.events import FileSystemEventHandler
-
-    def __init__(self, kernel_spec_cache: KernelSpecCache, **kwargs):
-        """Initialize the handler."""
-        super().__init__(**kwargs)
-        self.kernel_spec_cache = kernel_spec_cache
-        self.kernel_spec_manager = self.kernel_spec_cache.kernel_spec_manager
-        self.log = kernel_spec_cache.log
-        self.observed_dirs = set()  # Tracks which directories are being watched
-        self.observer = None
-
-    @overrides
-    def initialize(self):
-        """Initializes the cache and starts the observer."""
-        from watchdog.observers import Observer
-
-        # Seed the cache and start the observer
-        if self.kernel_spec_cache.cache_enabled:
-            self.observer = Observer()
-            kernelspecs = self.kernel_spec_manager.get_all_specs()
-            self.kernel_spec_cache.put_all_items(kernelspecs)
-            # Following adds, see if any of the manager's kernel dirs are not observed and add them
-            for kernel_dir in self.kernel_spec_manager.kernel_dirs:
-                if kernel_dir not in self.observed_dirs:
-                    if os.path.exists(kernel_dir):
-                        self.log.info(
-                            "KernelSpecCache: observing directory: {kernel_dir}".format(
-                                kernel_dir=kernel_dir
-                            )
-                        )
-                        self.observed_dirs.add(kernel_dir)
-                        self.observer.schedule(
-                            KernelSpecWatchdogMonitor.WatchDogHandler(self),
-                            kernel_dir,
-                            recursive=True,
-                        )
-                    else:
-                        self.log.warning(
-                            "KernelSpecCache: kernel_dir '{kernel_dir}' does not exist"
-                            " and will not be observed.".format(kernel_dir=kernel_dir)
-                        )
-            self.observer.start()
-
-    @overrides
-    def destroy(self) -> None:
-        self.observer = None
-
-    class WatchDogHandler(FileSystemEventHandler):
-        # Events related to these files trigger the management of the KernelSpec cache.  Should we find
-        # other files qualify as indicators of a kernel specification's state (like perhaps detached parameter
-        # files in the future) should be added to this list - at which time it should become configurable.
-        watched_files = ["kernel.json"]
-
-        def __init__(self, monitor: "KernelSpecWatchdogMonitor", **kwargs):
-            """Initialize the handler."""
-            super().__init__(**kwargs)
-            self.kernel_spec_cache = monitor.kernel_spec_cache
-            self.log = monitor.kernel_spec_cache.log
-
-        def dispatch(self, event):
-            """Dispatches events pertaining to kernelspecs to the appropriate methods.
-
-
-            The primary purpose of this method is to ensure the action is occurring against
-            the a file in the list of watched files and adds some additional attributes to
-            the event instance to make the actual event handling method easier.
-            :param event:
-                The event object representing the file system event.
-            :type event:
-                :class:`FileSystemEvent`
-            """
-            from watchdog.events import FileMovedEvent
-
-            if os.path.basename(event.src_path) in self.watched_files:
-                src_resource_dir = os.path.dirname(event.src_path)
-                event.src_resource_dir = src_resource_dir
-                event.src_kernel_name = os.path.basename(src_resource_dir)
-                if type(event) is FileMovedEvent:
-                    dest_resource_dir = os.path.dirname(event.dest_path)
-                    event.dest_resource_dir = dest_resource_dir
-                    event.dest_kernel_name = os.path.basename(dest_resource_dir)
-
-                super().dispatch(event)
-
-        def on_created(self, event):
-            """Fires when a watched file is created.
-
-            This will trigger a call to the configured KernelSpecManager to fetch the instance
-            associated with the created file, which is then added to the cache.
-            """
-            kernel_name = event.src_kernel_name
-            try:
-                kernelspec = self.kernel_spec_cache.kernel_spec_manager.get_kernel_spec(kernel_name)
-                self.kernel_spec_cache.put_item(kernel_name, kernelspec)
-            except Exception as e:
-                self.log.warning(
-                    "The following exception occurred creating cache entry for: {src_resource_dir} "
-                    "- continuing...  ({e})".format(src_resource_dir=event.src_resource_dir, e=e)
-                )
-
-        def on_deleted(self, event):
-            """Fires when a watched file is deleted, triggering a removal of the corresponding item from the cache."""
-            kernel_name = event.src_kernel_name
-            self.kernel_spec_cache.remove_item(kernel_name)
-
-        def on_modified(self, event):
-            """Fires when a watched file is modified.
-
-            This will trigger a call to the configured KernelSpecManager to fetch the instance
-            associated with the modified file, which is then replaced in the cache.
-            """
-            kernel_name = event.src_kernel_name
-            try:
-                kernelspec = self.kernel_spec_cache.kernel_spec_manager.get_kernel_spec(kernel_name)
-                self.kernel_spec_cache.put_item(kernel_name, kernelspec)
-            except Exception as e:
-                self.log.warning(
-                    "The following exception occurred updating cache entry for: {src_resource_dir} "
-                    "- continuing...  ({e})".format(src_resource_dir=event.src_resource_dir, e=e)
-                )
-
-        def on_moved(self, event):
-            """Fires when a watched file is moved.
-
-            This will trigger the update of the existing cached item, replacing its resource_dir entry
-            with that of the new destination.
-            """
-            src_kernel_name = event.src_kernel_name
-            dest_kernel_name = event.dest_kernel_name
-            cache_item = self.kernel_spec_cache.remove_item(src_kernel_name)
-            cache_item["resource_dir"] = event.dest_resource_dir
-            self.kernel_spec_cache.put_item(dest_kernel_name, cache_item)
