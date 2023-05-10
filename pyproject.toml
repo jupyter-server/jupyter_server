@@ -89,7 +89,9 @@ docs = [
     "tornado",
     # workaround for an unknown downstream library that is now
     # missing typing_extensions
-    "typing_extensions"
+    "typing_extensions",
+    # required to build api docs
+    "watchdog"
 ]
 watchdog-monitor = [
     "watchdog"

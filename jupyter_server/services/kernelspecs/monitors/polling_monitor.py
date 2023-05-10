@@ -4,6 +4,7 @@
 import json
 import os
 from hashlib import md5
+from typing import Dict
 
 from overrides import overrides
 from traitlets.traitlets import Float, default
@@ -29,7 +30,7 @@ class KernelSpecPollingMonitor(KernelSpecMonitorBase):
 
     # Keep track of hash values for each entry placed into the cache.  This will lessen
     # the churn and noise when publishing events
-    hash_values: dict[str, str]
+    hash_values: Dict[str, str]
 
     def __init__(self, kernel_spec_cache: KernelSpecCache, **kwargs):
         """Initialize the handler."""
