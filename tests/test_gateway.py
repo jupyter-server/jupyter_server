@@ -746,7 +746,9 @@ def mock_websocket_connect():
 
 
 @patch("tornado.websocket.websocket_connect", mock_websocket_connect())
-async def test_websocket_connection_closed(init_gateway, jp_serverapp, jp_fetch, caplog):
+async def test_websocket_connection_closed(
+    init_gateway, jp_mocked_gateway, jp_serverapp, jp_fetch, caplog
+):
     # Create the kernel and get the kernel manager...
     kernel_id = await create_kernel(jp_fetch, "kspec_foo")
     km: GatewayKernelManager = jp_serverapp.kernel_manager.get_kernel(kernel_id)
