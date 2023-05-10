@@ -22,8 +22,6 @@ from .managers import GatewayClient
 class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
     """Web socket connection that proxies to a kernel/enterprise gateway."""
 
-    kernel_ws_protocol = None
-
     ws = Instance(klass=tornado_websocket.WebSocketClientConnection, allow_none=True)
 
     ws_future = Instance(default_value=Future(), klass=Future)
