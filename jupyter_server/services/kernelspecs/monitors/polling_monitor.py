@@ -1,12 +1,12 @@
 """KernelSpec watchdog monitor used by KernelspecCache."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-
 import json
+import os
 from hashlib import md5
 
 from overrides import overrides
-from traitlets.traitlets import Float
+from traitlets.traitlets import Float, default
 
 from ..kernelspec_cache import KernelSpecCache, KernelSpecMonitorBase
 
@@ -14,11 +14,16 @@ from ..kernelspec_cache import KernelSpecCache, KernelSpecMonitorBase
 class KernelSpecPollingMonitor(KernelSpecMonitorBase):
     """Polling monitor that uses a periodic poll period to reload the kernelspec cache."""
 
+    interval_env = "JUPYTER_POLLING_MONITOR_INTERVAL"
     interval = Float(
-        default_value=30.0,
         config=True,
-        help="""The interval (in seconds) at which kernelspecs are updated in the cache.""",
+        help="""The interval (in seconds) at which kernelspecs are updated in the cache.
+(JUPYTER_POLLING_MONITOR_INTERVAL env var)""",
     )
+
+    @default("interval")
+    def _interval_default(self):
+        return float(os.getenv(self.interval_env, "30.0"))
 
     _pcallback = None
 

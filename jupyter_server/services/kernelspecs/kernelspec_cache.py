@@ -51,13 +51,15 @@ class KernelSpecCache(LoggingConfigurable):
 
     kernel_spec_manager = Instance("jupyter_client.kernelspec.KernelSpecManager")
 
+    monitor_name_env = "JUPYTER_KERNELSPEC_MONITOR_NAME"
     monitor_name = Unicode(
-        help="""The name of the entry_point used to monitor changes to kernelspecs.""",
+        help="""The name of the entry_point used to monitor changes to kernelspecs.
+(JUPYTER_KERNELSPEC_MONITOR_NAME env var)""",
     ).tag(config=True)
 
     @default("monitor_name")
     def _monitor_name_default(self):
-        return "polling-monitor"
+        return os.getenv(self.monitor_name_env, "polling-monitor")
 
     # The kernelspec cache consists of a dictionary mapping the kernel name to the actual
     # kernelspec data (CacheItemType).
