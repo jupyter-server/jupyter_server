@@ -35,10 +35,8 @@ class KernelSpecPollingMonitor(KernelSpecMonitorBase):
         self.log.info(f"Starting {self.__class__.__name__} with interval: {self.interval} ...")
 
     @overrides
-    def initialize(self):
-        """Initializes the cache and starts the registers the periodic poller."""
-
-        # Seed the cache and start the observer
+    def initialize(self) -> None:
+        """Initializes the cache and starts the periodic poller."""
         if self.kernel_spec_cache.cache_enabled:
             self.poll()
             self.start()

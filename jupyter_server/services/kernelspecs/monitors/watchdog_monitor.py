@@ -22,7 +22,7 @@ class KernelSpecWatchdogMonitor(KernelSpecMonitorBase):
         self.observer = None
 
     @overrides
-    def initialize(self):
+    def initialize(self) -> None:
         """Initializes the cache and starts the observer."""
         from watchdog.observers import Observer
 

@@ -79,6 +79,8 @@ def kernel_spec_cache(
     )
     app = jp_configurable_serverapp(config=config)
     yield app.kernel_spec_cache
+    app.kernel_spec_cache = None
+    app.clear_instance()
 
 
 def get_delay_factor(kernel_spec_cache: KernelSpecCache):

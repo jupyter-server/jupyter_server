@@ -61,19 +61,28 @@ class KernelSpecCache(LoggingConfigurable):
 
     # The kernelspec cache consists of a dictionary mapping the kernel name to the actual
     # kernelspec data (CacheItemType).
-    cache_items: Dict = {}
-    cache_misses: int = 0
+    cache_items: Dict
+    cache_misses: int
 
     def __init__(self, kernel_spec_manager, **kwargs) -> None:
         """Initialize the cache."""
         super().__init__(**kwargs)
         self.kernel_spec_manager = kernel_spec_manager
         self.kernel_spec_monitor = None
+        # initialize cache vars
+        self.cache_items = {}
+        self.cache_misses = 0
         if self.cache_enabled:
             # Remove configurable traits that have no bearing on monitors
             kwargs.pop("cache_enabled", None)
             kwargs.pop("monitor_name", None)
             self.kernel_spec_monitor = KernelSpecMonitorBase.create_instance(self, **kwargs)
+            self.kernel_spec_monitor.initialize()
+
+    def __del__(self):
+        if self.kernel_spec_monitor is not None:
+            self.kernel_spec_monitor.destroy()
+            self.kernel_spec_monitor = None
 
     async def get_kernel_spec(self, kernel_name: str) -> KernelSpec:
         """Get the named kernel specification.
@@ -227,15 +236,14 @@ class KernelSpecMonitorBase(  # type:ignore[misc]
                     f"subclass of '{KernelSpecMonitorBase.__name__}'"
                 )
                 raise RuntimeError(msg)
-
-            monitor_instance.initialize()
-            return monitor_instance
         else:
             msg = (
                 f"Entrypoint '{kernel_spec_cache.monitor_name}' of "
                 f"group '{KernelSpecMonitorBase.GROUP_NAME}' cannot be located."
             )
             raise RuntimeError(msg)
+
+        return monitor_instance
 
     @abstractmethod
     def initialize(self) -> None:
