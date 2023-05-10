@@ -87,6 +87,7 @@ from jupyter_server.base.handlers import (
 from jupyter_server.extension.config import ExtensionConfigManager
 from jupyter_server.extension.manager import ExtensionManager
 from jupyter_server.extension.serverextension import ServerExtensionApp
+from jupyter_server.gateway.connections import GatewayWebSocketConnection
 from jupyter_server.gateway.managers import (
     GatewayClient,
     GatewayKernelSpecManager,
@@ -432,17 +433,6 @@ class ServerWebApplication(web.Application):
         handlers.extend(settings["contents_manager"].get_extra_handlers())
         # And from identity provider
         handlers.extend(settings["identity_provider"].get_handlers())
-
-        # If gateway mode is enabled, replace appropriate handlers to perform redirection
-        if GatewayClient.instance().gateway_enabled:
-            # for each handler required for gateway, locate its pattern
-            # in the current list and replace that entry...
-            gateway_handlers = load_handlers("jupyter_server.gateway.handlers")
-            for _, gwh in enumerate(gateway_handlers):
-                for j, h in enumerate(handlers):
-                    if gwh[0] == h[0]:
-                        handlers[j] = (gwh[0], gwh[1])
-                        break
 
         # register base handlers last
         handlers.extend(load_handlers("jupyter_server.base.handlers"))
@@ -796,6 +786,7 @@ class ServerApp(JupyterApp):
         GatewayMappingKernelManager,
         GatewayKernelSpecManager,
         GatewaySessionManager,
+        GatewayWebSocketConnection,
         GatewayClient,
         Authorizer,
         EventLogger,
@@ -1505,11 +1496,16 @@ class ServerApp(JupyterApp):
         return SessionManager
 
     kernel_websocket_connection_class = Type(
-        default_value=ZMQChannelsWebsocketConnection,
         klass=BaseKernelWebsocketConnection,
         config=True,
         help=_i18n("The kernel websocket connection class to use."),
     )
+
+    @default("kernel_websocket_connection_class")
+    def _default_kernel_websocket_connection_class(self):
+        if self.gateway_config.gateway_enabled:
+            return "jupyter_server.gateway.connections.GatewayWebSocketConnection"
+        return ZMQChannelsWebsocketConnection
 
     config_manager_class = Type(
         default_value=ConfigManager,
@@ -2876,7 +2872,19 @@ class ServerApp(JupyterApp):
         self.remove_browser_open_files()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
-        await self.kernel_websocket_connection_class.close_all()
+        try:
+            await self.kernel_websocket_connection_class.close_all()
+        except AttributeError:
+            # This can happen in two different scenarios:
+            #
+            # 1. During tests, where the _cleanup method is invoked without
+            #    the corresponding initialize method having been invoked.
+            # 2. If the provided `kernel_websocket_connection_class` does not
+            #    implement the `close_all` class method.
+            #
+            # In either case, we don't need to do anything and just want to treat
+            # the raised error as a no-op.
+            pass
         if getattr(self, "kernel_manager", None):
             self.kernel_manager.__del__()
         if getattr(self, "session_manager", None):

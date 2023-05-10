@@ -1,4 +1,6 @@
 """Kernelspecs API Handlers."""
+import mimetypes
+
 from jupyter_core.utils import ensure_async
 from tornado import web
 
@@ -27,6 +29,26 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
         ksm = self.kernel_spec_manager
         if path.lower().endswith(".png"):
             self.set_header("Cache-Control", f"max-age={60*60*24*30}")
+        ksm = self.kernel_spec_manager
+        if hasattr(ksm, "get_kernel_spec_resource"):
+            # If the kernel spec manager defines a method to get kernelspec resources,
+            # then use that instead of trying to read from disk.
+            kernel_spec_res = await ksm.get_kernel_spec_resource(kernel_name, path)
+            if kernel_spec_res is not None:
+                # We have to explicitly specify the `absolute_path` attribute so that
+                # the underlying StaticFileHandler methods can calculate an etag.
+                self.absolute_path = path
+                mimetype: str = mimetypes.guess_type(path)[0] or "text/plain"
+                self.set_header("Content-Type", mimetype)
+                self.finish(kernel_spec_res)
+                return
+            else:
+                self.log.warning(
+                    "Kernelspec resource '{}' for '{}' not found.  Kernel spec manager may"
+                    " not support resource serving. Falling back to reading from disk".format(
+                        path, kernel_name
+                    )
+                )
         try:
             kspec = await ensure_async(ksm.get_kernel_spec(kernel_name))
             self.root = kspec.resource_dir

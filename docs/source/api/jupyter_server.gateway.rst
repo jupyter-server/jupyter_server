@@ -5,6 +5,12 @@ Submodules
 ----------
 
 
+.. automodule:: jupyter_server.gateway.connections
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 .. automodule:: jupyter_server.gateway.gateway_client
    :members:
    :undoc-members:

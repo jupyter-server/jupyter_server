@@ -479,7 +479,7 @@ def test_server_web_application(jp_serverapp):
             server.kernel_manager,
             server.config_manager,
             server.event_logger,
-            ["jupyter_server.gateway.handlers"],
+            [],
             server.log,
             server.base_url,
             server.default_url,
