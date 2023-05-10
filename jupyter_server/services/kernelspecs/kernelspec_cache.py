@@ -51,12 +51,12 @@ class KernelSpecCache(LoggingConfigurable):
 
     kernel_spec_manager = Instance("jupyter_client.kernelspec.KernelSpecManager")
 
-    monitor_entry_point = Unicode(
-        help="""The monitor entry_point to use to capture kernelspecs updates.""",
+    monitor_name = Unicode(
+        help="""The name of the entry_point used to monitor changes to kernelspecs.""",
     ).tag(config=True)
 
-    @default("monitor_entry_point")
-    def _monitor_entry_point_default(self):
+    @default("monitor_name")
+    def _monitor_name_default(self):
         return "polling-monitor"
 
     # The kernelspec cache consists of a dictionary mapping the kernel name to the actual
@@ -72,7 +72,7 @@ class KernelSpecCache(LoggingConfigurable):
         if self.cache_enabled:
             # Remove configurable traits that have no bearing on monitors
             kwargs.pop("cache_enabled", None)
-            kwargs.pop("monitor_entry_point", None)
+            kwargs.pop("monitor_name", None)
             self.kernel_spec_monitor = KernelSpecMonitorBase.create_instance(self, **kwargs)
 
     async def get_kernel_spec(self, kernel_name: str) -> KernelSpec:
@@ -214,7 +214,7 @@ class KernelSpecMonitorBase(  # type:ignore[misc]
         """Creates an instance of the monitor class configured on the KernelSpecCache instance."""
 
         kernel_spec_cache = kernel_spec_cache
-        entry_point_name = kernel_spec_cache.monitor_entry_point
+        entry_point_name = kernel_spec_cache.monitor_name
         eps = entry_points(group=KernelSpecMonitorBase.GROUP_NAME, name=entry_point_name)
         if eps:
             ep: EntryPoint = eps[entry_point_name]
@@ -222,7 +222,7 @@ class KernelSpecMonitorBase(  # type:ignore[misc]
             monitor_instance: KernelSpecMonitorBase = monitor_class(kernel_spec_cache, **kwargs)
             if not isinstance(monitor_instance, KernelSpecMonitorBase):
                 msg = (
-                    f"Entrypoint '{kernel_spec_cache.monitor_entry_point}' of "
+                    f"Entrypoint '{kernel_spec_cache.monitor_name}' of "
                     f"group '{KernelSpecMonitorBase.GROUP_NAME}' is not a "
                     f"subclass of '{KernelSpecMonitorBase.__name__}'"
                 )
@@ -232,7 +232,7 @@ class KernelSpecMonitorBase(  # type:ignore[misc]
             return monitor_instance
         else:
             msg = (
-                f"Entrypoint '{kernel_spec_cache.monitor_entry_point}' of "
+                f"Entrypoint '{kernel_spec_cache.monitor_name}' of "
                 f"group '{KernelSpecMonitorBase.GROUP_NAME}' cannot be located."
             )
             raise RuntimeError(msg)

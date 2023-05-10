@@ -69,7 +69,7 @@ def kernel_spec_cache(
                 },
                 "KernelSpecCache": {
                     "cache_enabled": is_enabled,
-                    "monitor_entry_point": request.param,
+                    "monitor_name": request.param,
                 },
                 "KernelSpecPollingMonitor": {
                     "interval": 1.0 if request.param == "polling-monitor" else 30.0,
@@ -83,7 +83,7 @@ def kernel_spec_cache(
 
 def get_delay_factor(kernel_spec_cache: KernelSpecCache):
     if kernel_spec_cache.cache_enabled:
-        if kernel_spec_cache.monitor_entry_point == "polling-monitor":
+        if kernel_spec_cache.monitor_name == "polling-monitor":
             return 2.0
         return 1.0
     return 0.5
