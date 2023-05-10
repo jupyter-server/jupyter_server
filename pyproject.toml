@@ -44,7 +44,6 @@ dependencies = [
     "tornado>=6.2.0",
     "traitlets>=5.6.0",
     "websocket-client",
-    "watchdog",
     "jupyter_events>=0.6.0",
     "overrides"
 ]
@@ -90,13 +89,16 @@ docs = [
     # missing typing_extensions
     "typing_extensions"
 ]
+watchdog-monitor = [
+    "watchdog"
+]
 
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
 
 [project.entry-points."jupyter_server.kernelspec_monitors"]
-watchdog-monitor = "jupyter_server.services.kernelspecs.monitors:KernelSpecWatchdogMonitor"
 polling-monitor = "jupyter_server.services.kernelspecs.monitors:KernelSpecPollingMonitor"
+watchdog-monitor = "jupyter_server.services.kernelspecs.monitors:KernelSpecWatchdogMonitor"
 
 [tool.hatch.envs.docs]
 features = ["docs"]

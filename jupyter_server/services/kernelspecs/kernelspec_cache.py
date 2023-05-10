@@ -47,7 +47,7 @@ class KernelSpecCache(LoggingConfigurable):
 
     @default("cache_enabled")
     def _cache_enabled_default(self):
-        return os.getenv(self.cache_enabled_env, "true").lower() in ("true", "1")
+        return os.getenv(self.cache_enabled_env, "false").lower() in ("true", "1")
 
     kernel_spec_manager = Instance("jupyter_client.kernelspec.KernelSpecManager")
 
@@ -70,7 +70,10 @@ class KernelSpecCache(LoggingConfigurable):
         self.kernel_spec_manager = kernel_spec_manager
         self.kernel_spec_monitor = None
         if self.cache_enabled:
-            self.kernel_spec_monitor = KernelSpecMonitorBase.create_instance(parent=self, **kwargs)
+            # Remove configurable traits that have no bearing on monitors
+            kwargs.pop("cache_enabled", None)
+            kwargs.pop("monitor_entry_point", None)
+            self.kernel_spec_monitor = KernelSpecMonitorBase.create_instance(self, **kwargs)
 
     async def get_kernel_spec(self, kernel_name: str) -> KernelSpec:
         """Get the named kernel specification.
@@ -205,18 +208,18 @@ class KernelSpecMonitorBase(  # type:ignore[misc]
     GROUP_NAME = "jupyter_server.kernelspec_monitors"
 
     @classmethod
-    def create_instance(cls, **kwargs) -> "KernelSpecMonitorBase":
+    def create_instance(
+        cls, kernel_spec_cache: KernelSpecCache, **kwargs
+    ) -> "KernelSpecMonitorBase":
         """Creates an instance of the monitor class configured on the KernelSpecCache instance."""
 
-        kernel_spec_cache = kwargs["parent"]
+        kernel_spec_cache = kernel_spec_cache
         entry_point_name = kernel_spec_cache.monitor_entry_point
         eps = entry_points(group=KernelSpecMonitorBase.GROUP_NAME, name=entry_point_name)
         if eps:
             ep: EntryPoint = eps[entry_point_name]
             monitor_class = ep.load()
-            monitor_instance: KernelSpecMonitorBase = monitor_class(
-                parent=kernel_spec_cache, config=kwargs.get("config")
-            )
+            monitor_instance: KernelSpecMonitorBase = monitor_class(kernel_spec_cache, **kwargs)
             if not isinstance(monitor_instance, KernelSpecMonitorBase):
                 msg = (
                     f"Entrypoint '{kernel_spec_cache.monitor_entry_point}' of "

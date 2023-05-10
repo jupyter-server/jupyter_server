@@ -13,10 +13,10 @@ class KernelSpecWatchdogMonitor(KernelSpecMonitorBase):
 
     from watchdog.events import FileSystemEventHandler
 
-    def __init__(self, **kwargs):
+    def __init__(self, kernel_spec_cache: KernelSpecCache, **kwargs):
         """Initialize the handler."""
         super().__init__(**kwargs)
-        self.kernel_spec_cache: KernelSpecCache = kwargs["parent"]
+        self.kernel_spec_cache: KernelSpecCache = kernel_spec_cache
         self.kernel_spec_manager = self.kernel_spec_cache.kernel_spec_manager
         self.observed_dirs = set()  # Tracks which directories are being watched
         self.observer = None

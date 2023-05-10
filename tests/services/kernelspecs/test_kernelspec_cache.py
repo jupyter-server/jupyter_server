@@ -8,7 +8,7 @@ import os
 import shutil
 
 import pytest
-from jupyter_client.kernelspec import KernelSpecManager, NoSuchKernel
+from jupyter_client.kernelspec import NoSuchKernel
 from pytest_jupyter.utils import mkdir
 from traitlets.config import Config
 
@@ -54,35 +54,31 @@ def setup_kernelspecs(jp_environ, kernelspec_location):
     _install_kernelspec(str(kernelspec_location), "test3")
 
 
-@pytest.fixture
-def kernel_spec_manager(jp_environ, setup_kernelspecs):
-    yield KernelSpecManager(ensure_native_kernel=False)
-
-
 MONITORS = ["watchdog-monitor", "polling-monitor"]
 
 
 @pytest.fixture(params=MONITORS)
-def kernel_spec_cache(request, is_enabled, kernel_spec_manager):
-    config = None
-    if request.param == "polling-monitor":
-        config = Config(
-            {
+def kernel_spec_cache(
+    jp_environ, setup_kernelspecs, request, is_enabled, jp_configurable_serverapp
+):
+    config = Config(
+        {
+            "ServerApp": {
+                "KernelSpecManager": {
+                    "ensure_native_kernel": False,
+                },
                 "KernelSpecCache": {
-                    "KernelSpecPollingMonitor": {
-                        "interval": 1.0,
-                    }
-                }
+                    "cache_enabled": is_enabled,
+                    "monitor_entry_point": request.param,
+                },
+                "KernelSpecPollingMonitor": {
+                    "interval": 1.0 if request.param == "polling-monitor" else 30.0,
+                },
             }
-        )
-
-    kspec_cache = KernelSpecCache(
-        kernel_spec_manager=kernel_spec_manager,
-        cache_enabled=is_enabled,
-        monitor_entry_point=request.param,
-        config=config,
+        }
     )
-    yield kspec_cache
+    app = jp_configurable_serverapp(config=config)
+    yield app.kernel_spec_cache
 
 
 def get_delay_factor(kernel_spec_cache: KernelSpecCache):

@@ -19,10 +19,10 @@ class KernelSpecPollingMonitor(KernelSpecMonitorBase):
 
     _pcallback = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, kernel_spec_cache: KernelSpecCache, **kwargs):
         """Initialize the handler."""
         super().__init__(**kwargs)
-        self.kernel_spec_cache: KernelSpecCache = kwargs["parent"]
+        self.kernel_spec_cache: KernelSpecCache = kernel_spec_cache
         self.kernel_spec_manager = self.kernel_spec_cache.kernel_spec_manager
         self.log.info(f"Starting {self.__class__.__name__} with interval: {self.interval} ...")
 
