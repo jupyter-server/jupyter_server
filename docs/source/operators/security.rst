@@ -147,8 +147,7 @@ Other required fields will be filled with `None`.
 Identity Model
 ^^^^^^^^^^^^^^
 
-The identity model is the model accessed at `/api/me`,
-and describes the currently authenticated user.
+The identity model is the model accessed at `/api/me`, and describes the currently authenticated user.
 
 It has the following fields:
 
@@ -178,6 +177,20 @@ color
   A CSS color string to use as a preferred color,
   such as for collaboration cursors.
   May be `null` if unavailable.
+
+
+The default implementation of the identity provider is stateless, meaning it doesn't store user information
+on the server side. Instead, it utilizes session cookies to generate and store random user information on the
+client side.
+
+When a user logs in or authenticates, the server generates a session cookie that is stored on the client side.
+This session cookie is used to keep track of the identity model between requests. If the client does not
+support session cookies or fails to send the cookie in subsequent requests, the server will treat each request
+as coming from a new anonymous user and generate a new set of random user information for each request.
+
+To ensure proper functionality of the identity model and to maintain user context between requests, it's
+important for clients to support session cookies and send it in subsequent requests. Failure to do so may
+result in the server generating a new anonymous user for each request, leading to loss of user context.
 
 Authorization
 *************
@@ -209,8 +222,8 @@ request handler. Each request is labeled as either a "read", "write", or "execut
   to ~all other permissions via other means.
 
 The ``resource`` being accessed refers to the resource name in the Jupyter Server's API endpoints.
-In most cases, this is matches the field after `/api/`.
-For instance, values for ``resource`` in the endpoints provided by the base jupyter server package,
+In most cases, this is the field after `/api/`.
+For instance, values for ``resource`` in the endpoints provided by the base Jupyter Server package,
 and the corresponding permissions:
 
 .. list-table::
