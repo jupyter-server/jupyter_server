@@ -12,6 +12,7 @@ from jupyter_server.base.handlers import (
     APIVersionHandler,
     AuthenticatedFileHandler,
     AuthenticatedHandler,
+    FileFindHandler,
     FilesRedirectHandler,
     JupyterHandler,
     RedirectWithParams,
@@ -126,3 +127,27 @@ def test_redirect_with_params(jp_serverapp):
     handler._transforms = []
     handler.get()
     assert handler.get_status() == 301
+
+
+async def test_static_handler(jp_serverapp, tmpdir):
+    async def async_magic():
+        pass
+
+    MagicMock.__await__ = lambda x: async_magic().__await__()
+
+    test_file = tmpdir / "foo"
+    with open(test_file, "w") as fid:
+        fid.write("hello")
+
+    app: ServerApp = jp_serverapp
+    request = HTTPRequest("GET", str(test_file))
+    request.connection = MagicMock()
+
+    handler = FileFindHandler(app.web_app, request, path=str(tmpdir))
+    handler._transforms = []
+    await handler.get("foo")
+    assert handler._headers["Cache-Control"] == "no-cache"
+
+    handler.settings["static_immutable_cache"] = [str(tmpdir)]
+    await handler.get("foo")
+    assert handler._headers["Cache-Control"] == "public, max-age=31536000, immutable"
