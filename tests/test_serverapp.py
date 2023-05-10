@@ -561,3 +561,13 @@ def test_deprecated_notebook_dir_priority(jp_configurable_serverapp, tmp_path):
     cfg.ServerApp.notebook_dir = str(notebook_dir)
     app.update_config(cfg)
     assert app.root_dir == str(cli_dir)
+
+
+def test_immutable_cache_trait():
+    # Verify we're working with a clean instance.
+    ServerApp.clear_instance()
+    kwargs = {"static_immutable_cache": "/test/immutable"}
+    serverapp = ServerApp.instance(**kwargs)
+    serverapp.init_configurables()
+    serverapp.init_webapp()
+    assert serverapp.web_app.settings["static_immutable_cache"] == ["/test/immutable"]

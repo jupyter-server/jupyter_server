@@ -942,7 +942,13 @@ HTTPError = web.HTTPError
 
 
 class FileFindHandler(JupyterHandler, web.StaticFileHandler):
-    """subclass of StaticFileHandler for serving files from a search path"""
+    """subclass of StaticFileHandler for serving files from a search path
+
+    The setting "static_immutable_cache" can be set up to serve some static
+    file as immutable (e.g. file name containing a hash). The setting is a
+    list of base URL, every static file URL starting with one of those will
+    be immutable.
+    """
 
     # cache search results, don't search for files more than once
     _static_paths: dict = {}
@@ -951,8 +957,15 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
     def set_headers(self):
         """Set the headers."""
         super().set_headers()
+
+        immutable_paths = self.settings.get("static_immutable_cache", [])
+
+        # allow immutable cache for files
+        if any(self.request.path.startswith(path) for path in immutable_paths):
+            self.set_header("Cache-Control", "public, max-age=31536000, immutable")
+
         # disable browser caching, rely on 304 replies for savings
-        if "v" not in self.request.arguments or any(
+        elif "v" not in self.request.arguments or any(
             self.request.path.startswith(path) for path in self.no_cache_paths
         ):
             self.set_header("Cache-Control", "no-cache")
