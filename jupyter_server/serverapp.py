@@ -1808,6 +1808,17 @@ class ServerApp(JupyterApp):
         config=True,
     )
 
+    static_immutable_cache = List(
+        Unicode(),
+        help="""
+        Paths to set up static files as immutable.
+
+        This allow setting up the cache control of static files as immutable.
+        It should be used for static file named with a hash for instance.
+        """,
+        config=True,
+    )
+
     _starter_app = Instance(
         default_value=None,
         allow_none=True,
@@ -1985,6 +1996,9 @@ class ServerApp(JupyterApp):
             "get_secure_cookie_kwargs"
         ] = self.identity_provider.get_secure_cookie_kwargs
         self.tornado_settings["token"] = self.identity_provider.token
+
+        if self.static_immutable_cache:
+            self.tornado_settings["static_immutable_cache"] = self.static_immutable_cache
 
         # ensure default_url starts with base_url
         if not self.default_url.startswith(self.base_url):
