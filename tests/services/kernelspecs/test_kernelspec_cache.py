@@ -6,61 +6,13 @@ import asyncio
 import json
 import os
 import shutil
-import sys
 
-import jupyter_core.paths
 import pytest
 from jupyter_client.kernelspec import KernelSpecManager, NoSuchKernel
+from pytest_jupyter.utils import mkdir
 from traitlets.config import Config
 
 from jupyter_server.services.kernelspecs.kernelspec_cache import KernelSpecCache
-
-
-# BEGIN - Remove once transition to jupyter_server occurs
-def mkdir(tmp_path, *parts):
-    path = tmp_path.joinpath(*parts)
-    if not path.exists():
-        path.mkdir(parents=True)
-    return path
-
-
-home_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "home"))
-data_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "data"))
-config_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "config"))
-runtime_dir = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "runtime"))
-system_jupyter_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "share", "jupyter"))
-env_jupyter_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "env", "share", "jupyter"))
-system_config_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "etc", "jupyter"))
-env_config_path = pytest.fixture(lambda tmp_path: mkdir(tmp_path, "env", "etc", "jupyter"))
-
-
-@pytest.fixture
-def environ(
-    monkeypatch,
-    tmp_path,
-    home_dir,
-    data_dir,
-    config_dir,
-    runtime_dir,
-    system_jupyter_path,
-    system_config_path,
-    env_jupyter_path,
-    env_config_path,
-):
-    monkeypatch.setenv("HOME", str(home_dir))
-    monkeypatch.setenv("PYTHONPATH", os.pathsep.join(sys.path))
-    monkeypatch.setenv("JUPYTER_NO_CONFIG", "1")
-    monkeypatch.setenv("JUPYTER_CONFIG_DIR", str(config_dir))
-    monkeypatch.setenv("JUPYTER_DATA_DIR", str(data_dir))
-    monkeypatch.setenv("JUPYTER_RUNTIME_DIR", str(runtime_dir))
-    monkeypatch.setattr(jupyter_core.paths, "SYSTEM_JUPYTER_PATH", [str(system_jupyter_path)])
-    monkeypatch.setattr(jupyter_core.paths, "ENV_JUPYTER_PATH", [str(env_jupyter_path)])
-    monkeypatch.setattr(jupyter_core.paths, "SYSTEM_CONFIG_PATH", [str(system_config_path)])
-    monkeypatch.setattr(jupyter_core.paths, "ENV_CONFIG_PATH", [str(env_config_path)])
-
-
-# END - Remove once transition to jupyter_server occurs
-
 
 kernelspec_json = {
     "argv": ["cat", "{connection_file}"],
@@ -88,14 +40,14 @@ def _modify_kernelspec(kernelspec_dir, kernel_name):
         json.dump(kernel_json, f)
 
 
-kernelspec_location = pytest.fixture(lambda data_dir: mkdir(data_dir, "kernels"))
+kernelspec_location = pytest.fixture(lambda jp_data_dir: mkdir(jp_data_dir, "kernels"))
 other_kernelspec_location = pytest.fixture(
-    lambda env_jupyter_path: mkdir(env_jupyter_path, "kernels")
+    lambda jp_env_jupyter_path: mkdir(jp_env_jupyter_path, "kernels")
 )
 
 
 @pytest.fixture
-def setup_kernelspecs(environ, kernelspec_location):
+def setup_kernelspecs(jp_environ, kernelspec_location):
     # Only populate factory info
     _install_kernelspec(str(kernelspec_location), "test1")
     _install_kernelspec(str(kernelspec_location), "test2")
@@ -103,7 +55,7 @@ def setup_kernelspecs(environ, kernelspec_location):
 
 
 @pytest.fixture
-def kernel_spec_manager(environ, setup_kernelspecs):
+def kernel_spec_manager(jp_environ, setup_kernelspecs):
     yield KernelSpecManager(ensure_native_kernel=False)
 
 
@@ -131,7 +83,6 @@ def kernel_spec_cache(request, is_enabled, kernel_spec_manager):
         config=config,
     )
     yield kspec_cache
-    kspec_cache = None
 
 
 def get_delay_factor(kernel_spec_cache: KernelSpecCache):
@@ -147,17 +98,17 @@ def is_enabled(request):
     return request.param
 
 
-async def tests_get_all_specs(kernel_spec_cache):
+async def test_get_all_specs(kernel_spec_cache):
     kspecs = await kernel_spec_cache.get_all_specs()
-    assert len(kspecs) == 3
+    assert len(kspecs) == 4  # The 3 we create, plus the echo kernel that jupyter_core adds
 
 
-async def tests_get_named_spec(kernel_spec_cache):
+async def test_get_named_spec(kernel_spec_cache):
     kspec = await kernel_spec_cache.get_kernel_spec("test2")
     assert kspec.display_name == "Test kernel: test2"
 
 
-async def tests_get_modified_spec(kernel_spec_cache):
+async def test_get_modified_spec(kernel_spec_cache):
     kspec = await kernel_spec_cache.get_kernel_spec("test2")
     assert kspec.display_name == "Test kernel: test2"
 
@@ -168,7 +119,7 @@ async def tests_get_modified_spec(kernel_spec_cache):
     assert kspec.display_name == "test2 modified!"
 
 
-async def tests_add_spec(kernel_spec_cache, kernelspec_location, other_kernelspec_location):
+async def test_add_spec(kernel_spec_cache, kernelspec_location, other_kernelspec_location):
     with pytest.raises(NoSuchKernel):
         await kernel_spec_cache.get_kernel_spec("added")  # this will increment cache_miss
 
@@ -191,7 +142,7 @@ async def tests_add_spec(kernel_spec_cache, kernelspec_location, other_kernelspe
     assert kernel_spec_cache.cache_misses == (2 if kernel_spec_cache.cache_enabled else 0)
 
 
-async def tests_remove_spec(kernel_spec_cache):
+async def test_remove_spec(kernel_spec_cache):
     kspec = await kernel_spec_cache.get_kernel_spec("test2")
     assert kspec.display_name == "Test kernel: test2"
 
@@ -204,7 +155,7 @@ async def tests_remove_spec(kernel_spec_cache):
     assert kernel_spec_cache.cache_misses == (1 if kernel_spec_cache.cache_enabled else 0)
 
 
-async def tests_get_missing(kernel_spec_cache):
+async def test_get_missing(kernel_spec_cache):
     with pytest.raises(NoSuchKernel):
         await kernel_spec_cache.get_kernel_spec("missing")
 
