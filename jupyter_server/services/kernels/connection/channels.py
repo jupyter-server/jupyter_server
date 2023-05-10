@@ -85,19 +85,6 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         ),
     )
 
-    kernel_ws_protocol = Unicode(
-        None,
-        allow_none=True,
-        config=True,
-        help=_i18n(
-            "Preferred kernel message protocol over websocket to use (default: None). "
-            "If an empty string is passed, select the legacy protocol. If None, "
-            "the selected protocol will depend on what the front-end supports "
-            "(usually the most recent protocol supported by the back-end and the "
-            "front-end)."
-        ),
-    )
-
     @property
     def write_message(self):
         """Alias to the websocket handler's write_message method."""
