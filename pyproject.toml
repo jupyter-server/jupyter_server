@@ -265,6 +265,8 @@ unfixable = [
 # S603 `subprocess` call: check for execution of untrusted input
 "jupyter_server/services/contents/filemanager.py" = ["S603", "S607"]
 "tests/unix_sockets/test_serverapp_integration.py" = ["S603", "S607"]
+# S324 Probable use of insecure hash functions in `hashlib`: `md5` (ok - used as checksum for kernelspec cache)
+"jupyter_server/services/kernelspecs/monitors/polling_monitor.py" = ["S324"]
 
 [tool.pytest.ini_options]
 addopts = "-raXs --durations 10 --color=yes --doctest-modules"

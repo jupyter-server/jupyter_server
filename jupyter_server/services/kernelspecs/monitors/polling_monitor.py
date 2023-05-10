@@ -2,6 +2,9 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import json
+from hashlib import md5
+
 from overrides import overrides
 from traitlets.traitlets import Float
 
@@ -19,11 +22,16 @@ class KernelSpecPollingMonitor(KernelSpecMonitorBase):
 
     _pcallback = None
 
+    # Keep track of hash values for each entry placed into the cache.  This will lessen
+    # the churn and noise when publishing events
+    hash_values: dict[str, str]
+
     def __init__(self, kernel_spec_cache: KernelSpecCache, **kwargs):
         """Initialize the handler."""
         super().__init__(**kwargs)
         self.kernel_spec_cache: KernelSpecCache = kernel_spec_cache
         self.kernel_spec_manager = self.kernel_spec_cache.kernel_spec_manager
+        self.hash_values = {}
         self.log.info(f"Starting {self.__class__.__name__} with interval: {self.interval} ...")
 
     @overrides
@@ -40,9 +48,29 @@ class KernelSpecPollingMonitor(KernelSpecMonitorBase):
         self.stop()
 
     def poll(self):
-        self.kernel_spec_cache.remove_all_items()
+        diff_kernelspecs = {}
         kernelspecs = self.kernel_spec_manager.get_all_specs()
-        self.kernel_spec_cache.put_all_items(kernelspecs)
+        for kernel_name, entry in kernelspecs.items():
+            hash_val = md5(json.dumps(entry).encode("utf-8")).hexdigest()
+            cached_hash_val = self.hash_values.get(kernel_name, "")
+            if hash_val != cached_hash_val:
+                diff_kernelspecs[kernel_name] = entry
+                self.hash_values[kernel_name] = hash_val
+
+        self.log.debug(
+            f"{self.__class__.__name__} num fetched: {len(kernelspecs.keys())}, "
+            f"num cached: {len(diff_kernelspecs.keys())}"
+        )
+        self.kernel_spec_cache.put_all_items(diff_kernelspecs)
+
+        # Determine items to remove by calculating what kernelspec names are in the previous
+        # set and not in the current set
+        current_set: set = set(kernelspecs.keys())
+        previous_set: set = set(self.hash_values.keys())
+        to_be_removed = previous_set.difference(current_set)
+        for kernel_name in to_be_removed:
+            self.hash_values.pop(kernel_name, None)
+            self.kernel_spec_cache.remove_item(kernel_name)
 
     def start(self):
         """Start the polling of the kernel."""
