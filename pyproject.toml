@@ -63,7 +63,9 @@ test = [
     "pytest-jupyter[server]>=0.4",
     "pytest>=7.0",
     "requests",
-    "pre-commit"
+    "pre-commit",
+    # needed to test kernelspec monitors
+    "watchdog"
 ]
 docs = [
     # needed because m2r uses deprecated APIs
