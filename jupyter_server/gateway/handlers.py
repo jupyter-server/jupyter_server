@@ -6,6 +6,7 @@ import logging
 import mimetypes
 import os
 import random
+import warnings
 from typing import Optional, cast
 
 from jupyter_client.session import Session
@@ -20,6 +21,13 @@ from traitlets.config.configurable import LoggingConfigurable
 from ..base.handlers import APIHandler, JupyterHandler
 from ..utils import url_path_join
 from .managers import GatewayClient
+
+warnings.warn(
+    "The jupyter_server.gateway.handlers module is deprecated and will not be supported in Jupyter Server 3.0",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 
 # Keepalive ping interval (default: 30 seconds)
 GATEWAY_WS_PING_INTERVAL_SECS = int(os.getenv("GATEWAY_WS_PING_INTERVAL_SECS", "30"))

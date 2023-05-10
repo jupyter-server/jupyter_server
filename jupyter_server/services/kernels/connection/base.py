@@ -4,7 +4,7 @@ import struct
 
 from jupyter_client.session import Session
 from tornado.websocket import WebSocketHandler
-from traitlets import Float, Instance, default
+from traitlets import Float, Instance, Unicode, default
 from traitlets.config import LoggingConfigurable
 
 try:
@@ -13,6 +13,8 @@ except ImportError:
     from jupyter_client.jsonutil import date_default as json_default
 
 from jupyter_client.jsonutil import extract_dates
+
+from jupyter_server.transutils import _i18n
 
 from .abc import KernelWebsocketConnectionABC
 
@@ -109,6 +111,19 @@ def deserialize_msg_from_ws_v1(ws_msg):
 
 class BaseKernelWebsocketConnection(LoggingConfigurable):
     """A configurable base class for connecting Kernel WebSockets to ZMQ sockets."""
+
+    kernel_ws_protocol = Unicode(
+        None,
+        allow_none=True,
+        config=True,
+        help=_i18n(
+            "Preferred kernel message protocol over websocket to use (default: None). "
+            "If an empty string is passed, select the legacy protocol. If None, "
+            "the selected protocol will depend on what the front-end supports "
+            "(usually the most recent protocol supported by the back-end and the "
+            "front-end)."
+        ),
+    )
 
     @property
     def kernel_manager(self):
