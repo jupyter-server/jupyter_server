@@ -5,6 +5,7 @@
 import asyncio
 import json
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -71,12 +72,13 @@ def kernel_spec_cache(
                     "cache_enabled": is_enabled,
                     "monitor_name": request.param,
                 },
-                "KernelSpecPollingMonitor": {
-                    "interval": 1.0 if request.param == "polling-monitor" else 30.0,
-                },
             }
         }
     )
+    # Increase polling frequency to avoid long test delays
+    if request.param == "polling-monitor" and is_enabled:
+        config["ServerApp"]["KernelSpecPollingMonitor"]["interval"] = 1.0
+
     app = jp_configurable_serverapp(config=config)
     yield app.kernel_spec_cache
     app.kernel_spec_cache = None
@@ -87,7 +89,9 @@ def get_delay_factor(kernel_spec_cache: KernelSpecCache) -> float:
     if kernel_spec_cache.cache_enabled:
         if kernel_spec_cache.monitor_name == "polling-monitor":
             return 2.0
-        return 1.0
+        elif kernel_spec_cache.monitor_name == "watchdog-monitor":
+            # watchdog on Windows appears to be a bit slower
+            return 2.0 if sys.platform.startswith("win") else 1.0
     return 0.5
 
 
