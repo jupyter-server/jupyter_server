@@ -2,24 +2,25 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import os
+from typing import Any, Set, Tuple
 
 from overrides import overrides
-from watchdog.events import FileMovedEvent, FileSystemEventHandler
+from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 from ..kernelspec_cache import KernelSpecCache, KernelSpecMonitorBase
 
 
-class KernelSpecWatchdogMonitor(KernelSpecMonitorBase):
+class KernelSpecWatchdogMonitor(KernelSpecMonitorBase):  # type:ignore[misc]
     """Watchdog handler that filters on specific files deemed representative of a kernel specification."""
 
-    def __init__(self, kernel_spec_cache: KernelSpecCache, **kwargs):
+    def __init__(self, kernel_spec_cache: KernelSpecCache, **kwargs: Any):
         """Initialize the handler."""
         super().__init__(**kwargs)
         self.kernel_spec_cache: KernelSpecCache = kernel_spec_cache
         self.kernel_spec_manager = self.kernel_spec_cache.kernel_spec_manager
-        self.observed_dirs = set()  # Tracks which directories are being watched
-        self.observer = None
+        self.observed_dirs: Set[str] = set()  # Tracks which directories are being watched
+        self.observer: Any = None
 
     @overrides
     def initialize(self) -> None:
@@ -58,7 +59,7 @@ class WatchDogHandler(FileSystemEventHandler):
     # files in the future) should be added to this list - at which time it should become configurable.
     watched_files = ["kernel.json"]
 
-    def __init__(self, monitor: "KernelSpecWatchdogMonitor", **kwargs):
+    def __init__(self, monitor: "KernelSpecWatchdogMonitor", **kwargs: Any):
         """Initialize the handler."""
         super().__init__(**kwargs)
         self.kernel_spec_cache = monitor.kernel_spec_cache
@@ -73,14 +74,6 @@ class WatchDogHandler(FileSystemEventHandler):
         """
 
         if os.path.basename(event.src_path) in self.watched_files:
-            src_resource_dir = os.path.dirname(event.src_path)
-            event.src_resource_dir = src_resource_dir
-            event.src_kernel_name = os.path.basename(src_resource_dir)
-            if type(event) is FileMovedEvent:
-                dest_resource_dir = os.path.dirname(event.dest_path)
-                event.dest_resource_dir = dest_resource_dir
-                event.dest_kernel_name = os.path.basename(dest_resource_dir)
-
             super().dispatch(event)
 
     def on_created(self, event):
@@ -89,19 +82,18 @@ class WatchDogHandler(FileSystemEventHandler):
         This will trigger a call to the configured KernelSpecManager to fetch the instance
         associated with the created file, which is then added to the cache.
         """
-        kernel_name = event.src_kernel_name
+        resource_dir, kernel_name = WatchDogHandler._extract_info(event.src_path)
         try:
             kernelspec = self.kernel_spec_cache.kernel_spec_manager.get_kernel_spec(kernel_name)
             self.kernel_spec_cache.put_item(kernel_name, kernelspec)
         except Exception as e:
             self.log.warning(
-                "The following exception occurred creating cache entry for: {src_resource_dir} "
-                "- continuing...  ({e})".format(src_resource_dir=event.src_resource_dir, e=e)
+                f"The following exception occurred creating cache entry for: {resource_dir} - continuing...  ({e})"
             )
 
     def on_deleted(self, event):
         """Fires when a watched file is deleted, triggering a removal of the corresponding item from the cache."""
-        kernel_name = event.src_kernel_name
+        _, kernel_name = WatchDogHandler._extract_info(event.src_path)
         self.kernel_spec_cache.remove_item(kernel_name)
 
     def on_modified(self, event):
@@ -110,14 +102,13 @@ class WatchDogHandler(FileSystemEventHandler):
         This will trigger a call to the configured KernelSpecManager to fetch the instance
         associated with the modified file, which is then replaced in the cache.
         """
-        kernel_name = event.src_kernel_name
+        resource_dir, kernel_name = WatchDogHandler._extract_info(event.src_path)
         try:
             kernelspec = self.kernel_spec_cache.kernel_spec_manager.get_kernel_spec(kernel_name)
             self.kernel_spec_cache.put_item(kernel_name, kernelspec)
         except Exception as e:
             self.log.warning(
-                "The following exception occurred updating cache entry for: {src_resource_dir} "
-                "- continuing...  ({e})".format(src_resource_dir=event.src_resource_dir, e=e)
+                f"The following exception occurred updating cache entry for: {resource_dir} - continuing...  ({e})"
             )
 
     def on_moved(self, event):
@@ -126,8 +117,15 @@ class WatchDogHandler(FileSystemEventHandler):
         This will trigger the update of the existing cached item, replacing its resource_dir entry
         with that of the new destination.
         """
-        src_kernel_name = event.src_kernel_name
-        dest_kernel_name = event.dest_kernel_name
+        _, src_kernel_name = WatchDogHandler._extract_info(event.src_path)
+        dest_resource_dir, dest_kernel_name = WatchDogHandler._extract_info(event.dest_path)
         cache_item = self.kernel_spec_cache.remove_item(src_kernel_name)
-        cache_item["resource_dir"] = event.dest_resource_dir
-        self.kernel_spec_cache.put_item(dest_kernel_name, cache_item)
+        if cache_item is not None:
+            cache_item["resource_dir"] = dest_resource_dir
+            self.kernel_spec_cache.put_item(dest_kernel_name, cache_item)
+
+    @staticmethod
+    def _extract_info(dir_name: str) -> Tuple[str, str]:
+        """Extracts the resource directory and kernel_name from the given dir_name."""
+        resource_dir: str = os.path.dirname(dir_name)  # includes kernel_name
+        return resource_dir, os.path.basename(resource_dir)

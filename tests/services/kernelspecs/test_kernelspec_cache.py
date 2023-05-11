@@ -4,12 +4,11 @@
 
 import asyncio
 import json
-import os
 import shutil
+from pathlib import Path
 
 import pytest
 from jupyter_client.kernelspec import NoSuchKernel
-from pytest_jupyter.utils import mkdir
 from traitlets.config import Config
 
 from jupyter_server.services.kernelspecs.kernelspec_cache import KernelSpecCache
@@ -20,38 +19,39 @@ kernelspec_json = {
 }
 
 
-def _install_kernelspec(kernels_dir, kernel_name):
+def _install_kernelspec(kernels_dir: Path, kernel_name: str) -> Path:
     """install a sample kernel in a kernels directory"""
-    kernelspec_dir = os.path.join(kernels_dir, kernel_name)
-    os.makedirs(kernelspec_dir)
-    json_file = os.path.join(kernelspec_dir, "kernel.json")
+    kernelspec_dir = kernels_dir / kernel_name
+    kernelspec_dir.mkdir(parents=True)
+    json_file = Path(kernelspec_dir) / "kernel.json"
     named_json = kernelspec_json.copy()
-    named_json["display_name"] = named_json["display_name"].format(kernel_name=kernel_name)
-    with open(json_file, "w") as f:
+    named_json["display_name"] = str(named_json["display_name"]).format(kernel_name=kernel_name)
+    with open(str(json_file), "w") as f:
         json.dump(named_json, f)
     return kernelspec_dir
 
 
-def _modify_kernelspec(kernelspec_dir, kernel_name):
-    json_file = os.path.join(kernelspec_dir, "kernel.json")
+def _modify_kernelspec(kernelspec_dir: str, kernel_name: str) -> None:
+    json_file = Path(kernelspec_dir) / "kernel.json"
     kernel_json = kernelspec_json.copy()
     kernel_json["display_name"] = f"{kernel_name} modified!"
-    with open(json_file, "w") as f:
+    with open(str(json_file), "w") as f:
         json.dump(kernel_json, f)
 
 
-kernelspec_location = pytest.fixture(lambda jp_data_dir: mkdir(jp_data_dir, "kernels"))
-other_kernelspec_location = pytest.fixture(
-    lambda jp_env_jupyter_path: mkdir(jp_env_jupyter_path, "kernels")
-)
+@pytest.fixture
+def other_kernelspec_location(jp_env_jupyter_path):
+    other_location = Path(jp_env_jupyter_path) / "kernels"
+    other_location.mkdir()
+    return other_location
 
 
 @pytest.fixture
-def setup_kernelspecs(jp_environ, kernelspec_location):
+def setup_kernelspecs(jp_environ, jp_kernel_dir):
     # Only populate factory info
-    _install_kernelspec(str(kernelspec_location), "test1")
-    _install_kernelspec(str(kernelspec_location), "test2")
-    _install_kernelspec(str(kernelspec_location), "test3")
+    _install_kernelspec(jp_kernel_dir, "test1")
+    _install_kernelspec(jp_kernel_dir, "test2")
+    _install_kernelspec(jp_kernel_dir, "test3")
 
 
 MONITORS = ["watchdog-monitor", "polling-monitor"]
@@ -83,7 +83,7 @@ def kernel_spec_cache(
     app.clear_instance()
 
 
-def get_delay_factor(kernel_spec_cache: KernelSpecCache):
+def get_delay_factor(kernel_spec_cache: KernelSpecCache) -> float:
     if kernel_spec_cache.cache_enabled:
         if kernel_spec_cache.monitor_name == "polling-monitor":
             return 2.0
@@ -117,11 +117,11 @@ async def test_get_modified_spec(kernel_spec_cache):
     assert kspec.display_name == "test2 modified!"
 
 
-async def test_add_spec(kernel_spec_cache, kernelspec_location, other_kernelspec_location):
+async def test_add_spec(kernel_spec_cache, jp_kernel_dir, other_kernelspec_location):
     with pytest.raises(NoSuchKernel):
         await kernel_spec_cache.get_kernel_spec("added")  # this will increment cache_miss
 
-    _install_kernelspec(str(other_kernelspec_location), "added")
+    _install_kernelspec(other_kernelspec_location, "added")
     # this will increment cache_miss prior to load
     kspec = await kernel_spec_cache.get_kernel_spec("added")
 
@@ -130,7 +130,7 @@ async def test_add_spec(kernel_spec_cache, kernelspec_location, other_kernelspec
     assert kernel_spec_cache.cache_misses == (2 if kernel_spec_cache.cache_enabled else 0)
 
     # Add another to an existing observed directory, no cache miss here
-    _install_kernelspec(str(kernelspec_location), "added2")
+    _install_kernelspec(jp_kernel_dir, "added2")
     await asyncio.sleep(
         get_delay_factor(kernel_spec_cache)
     )  # sleep to allow cache to add item (no cache miss in this case)

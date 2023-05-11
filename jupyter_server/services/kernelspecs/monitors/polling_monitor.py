@@ -4,7 +4,7 @@
 import json
 import os
 from hashlib import md5
-from typing import Dict
+from typing import Any, Dict
 
 from overrides import overrides
 from traitlets.traitlets import Float, default
@@ -12,7 +12,7 @@ from traitlets.traitlets import Float, default
 from ..kernelspec_cache import KernelSpecCache, KernelSpecMonitorBase
 
 
-class KernelSpecPollingMonitor(KernelSpecMonitorBase):
+class KernelSpecPollingMonitor(KernelSpecMonitorBase):  # type:ignore[misc]
     """Polling monitor that uses a periodic poll period to reload the kernelspec cache."""
 
     interval_env = "JUPYTER_POLLING_MONITOR_INTERVAL"
@@ -32,7 +32,7 @@ class KernelSpecPollingMonitor(KernelSpecMonitorBase):
     # the churn and noise when publishing events
     hash_values: Dict[str, str]
 
-    def __init__(self, kernel_spec_cache: KernelSpecCache, **kwargs):
+    def __init__(self, kernel_spec_cache: KernelSpecCache, **kwargs: Any):
         """Initialize the handler."""
         super().__init__(**kwargs)
         self.kernel_spec_cache: KernelSpecCache = kernel_spec_cache

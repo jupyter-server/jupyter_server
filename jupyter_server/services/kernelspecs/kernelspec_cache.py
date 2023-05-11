@@ -6,7 +6,7 @@
 import os
 import sys
 from abc import ABC, ABCMeta, abstractmethod
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 # See compatibility note on `group` keyword in https://docs.python.org/3/library/importlib.metadata.html#entry-points
 if sys.version_info < (3, 10):  # pragma: no cover
@@ -14,7 +14,7 @@ if sys.version_info < (3, 10):  # pragma: no cover
 else:  # pragma: no cover
     from importlib.metadata import EntryPoint, entry_points
 
-from jupyter_client.kernelspec import KernelSpec
+from jupyter_client.kernelspec import KernelSpec, KernelSpecManager
 from traitlets.config import LoggingConfigurable
 from traitlets.traitlets import CBool, Instance, Unicode, default
 
@@ -63,10 +63,10 @@ class KernelSpecCache(LoggingConfigurable):
 
     # The kernelspec cache consists of a dictionary mapping the kernel name to the actual
     # kernelspec data (CacheItemType).
-    cache_items: Dict
+    cache_items: Dict[str, CacheItemType]
     cache_misses: int
 
-    def __init__(self, kernel_spec_manager, **kwargs) -> None:
+    def __init__(self, kernel_spec_manager: KernelSpecManager, **kwargs: Any) -> None:
         """Initialize the cache."""
         super().__init__(**kwargs)
         self.kernel_spec_manager = kernel_spec_manager
@@ -86,7 +86,7 @@ class KernelSpecCache(LoggingConfigurable):
             self.kernel_spec_monitor.destroy()
             self.kernel_spec_monitor = None
 
-    async def get_kernel_spec(self, kernel_name: str) -> KernelSpec:
+    async def get_kernel_spec(self, kernel_name: str) -> Optional[KernelSpec]:
         """Get the named kernel specification.
 
         This method is equivalent to calling KernelSpecManager.get_kernel_spec().  If
@@ -130,7 +130,7 @@ class KernelSpecCache(LoggingConfigurable):
         If cache is disabled or the item is not in the cache, None is returned;
         otherwise, a KernelSpec instance of the item is returned.
         """
-        kernelspec = None
+        kernelspec: Optional[KernelSpec] = None
         if self.cache_enabled:
             cache_item = self.cache_items.get(kernel_name.lower())
             if cache_item:  # Convert to KernelSpec
@@ -149,7 +149,7 @@ class KernelSpecCache(LoggingConfigurable):
                 )
         return kernelspec
 
-    def get_all_items(self) -> Dict[str, CacheItemType]:
+    def get_all_items(self) -> Dict:  # type is Dict[str, CacheItemType]
         """Retrieves all kernel specification from the cache.
 
         If cache is disabled or no items are in the cache, an empty dictionary is returned;
@@ -175,9 +175,9 @@ class KernelSpecCache(LoggingConfigurable):
             self.log.info(f"KernelSpecCache: adding/updating kernelspec: {kernel_name}")
             if type(cache_item) is KernelSpec:
                 cache_item = KernelSpecCache.kernel_spec_to_cache_item(cache_item)
-            self.cache_items[kernel_name.lower()] = cache_item
+            self.cache_items[kernel_name.lower()] = cache_item  # type: ignore
 
-    def put_all_items(self, kernelspecs: Dict[str, CacheItemType]) -> None:
+    def put_all_items(self, kernelspecs: Dict[str, Union[KernelSpec, CacheItemType]]) -> None:
         """Adds or updates a dictionary of kernel specification in the cache."""
         for kernel_name, cache_item in kernelspecs.items():
             self.put_item(kernel_name, cache_item)
@@ -205,6 +205,7 @@ class KernelSpecCache(LoggingConfigurable):
     @staticmethod
     def cache_item_to_kernel_spec(cache_item: CacheItemType) -> KernelSpec:
         """Converts a CacheItemType to a KernelSpec instance for user consumption."""
+        assert type(cache_item["spec"]) is dict
         kernel_spec = KernelSpec(resource_dir=cache_item["resource_dir"], **cache_item["spec"])
         return kernel_spec
 
@@ -220,7 +221,7 @@ class KernelSpecMonitorBase(  # type:ignore[misc]
 
     @classmethod
     def create_instance(
-        cls, kernel_spec_cache: KernelSpecCache, **kwargs
+        cls, kernel_spec_cache: KernelSpecCache, **kwargs: Any
     ) -> "KernelSpecMonitorBase":
         """Creates an instance of the monitor class configured on the KernelSpecCache instance."""
 
