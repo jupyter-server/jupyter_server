@@ -2077,6 +2077,11 @@ class ServerApp(JupyterApp):
             if self.ssl_options.get("ca_certs", False):
                 self.ssl_options.setdefault("cert_reqs", ssl.CERT_REQUIRED)
 
+        # Check if nbclassic is installed and update "page_config_data" in server's settings accordingly.
+        nbclassic_installed = "nbclassic" in self.extension_manager.extensions
+        page_config = self.web_app.settings.setdefault("page_config_data", {})
+        page_config["nbclassic_installed"] = nbclassic_installed
+
         self.identity_provider.validate_security(self, ssl_options=self.ssl_options)
 
         if isinstance(self.identity_provider, LegacyIdentityProvider):
