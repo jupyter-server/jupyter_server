@@ -246,6 +246,8 @@ unfixable = [
 # S108 Probable insecure usage of temporary file or directory
 # PLC1901 `ext_pkg.version == ""` can be simplified to `not ext_pkg.version` as an empty string is falsey
 "tests/*" = ["B011", "F841", "C408", "E402", "T201", "EM101", "EM102", "EM103", "PLR2004", "S108", "PLC1901"]
+# print should be used in applications
+"**/*app.py" = ["T201"]
 # Ignore flake 8 errors from shimmed imports
 "jupyter_server/base/zmqhandlers.py" = ["F401"]
 # PLR2004 Magic value used in comparison
