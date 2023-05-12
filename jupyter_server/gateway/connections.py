@@ -24,7 +24,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
 
     ws = Instance(klass=tornado_websocket.WebSocketClientConnection, allow_none=True)
 
-    ws_future = Instance(default_value=Future(), klass=Future)
+    ws_future = Instance(klass=Future, allow_none=True)
 
     disconnected = Bool(False)
 
