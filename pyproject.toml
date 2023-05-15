@@ -66,20 +66,16 @@ test = [
     "pre-commit"
 ]
 docs = [
-    # needed because m2r uses deprecated APIs
-    # m2r is depended on by sphinxcontrib-openapi
-    "docutils<0.21",
     "ipykernel",
     "jinja2",
     "jupyter_client",
     "jupyter_server",
-    "mistune<1.0.0",
     "myst-parser",
     "nbformat",
     "prometheus_client",
     "pydata_sphinx_theme",
     "Send2Trash",
-    "sphinxcontrib-openapi",
+    "sphinxcontrib-openapi>=0.8.0",
     "sphinxcontrib_github_alt",
     "sphinxcontrib-spelling",
     "sphinx-autodoc-typehints",
