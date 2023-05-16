@@ -682,20 +682,19 @@ class JupyterServerListApp(JupyterApp):
 
     def start(self):
         """Start the server list application."""
-        info = self.log.info
         serverinfo_list = list(list_running_servers(self.runtime_dir, log=self.log))
         if self.jsonlist:
-            info(json.dumps(serverinfo_list, indent=2))
+            print(json.dumps(serverinfo_list, indent=2))
         elif self.json:
             for serverinfo in serverinfo_list:
-                info(json.dumps(serverinfo))
+                print(json.dumps(serverinfo))
         else:
-            info("Currently running servers:")
+            print("Currently running servers:")
             for serverinfo in serverinfo_list:
                 url = serverinfo["url"]
                 if serverinfo.get("token"):
                     url = url + "?token=%s" % serverinfo["token"]
-                info("%s :: %s", url, serverinfo["root_dir"])
+                print(url, "::", serverinfo["root_dir"])
 
 
 # -----------------------------------------------------------------------------
