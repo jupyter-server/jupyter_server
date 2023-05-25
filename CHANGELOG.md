@@ -4,6 +4,57 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.6.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.5.0...35b8e9cb68eec48fe9a017ac128cb776c2ead195))
+
+### New features added
+
+- Emit events from the kernels service and gateway client [#1252](https://github.com/jupyter-server/jupyter_server/pull/1252) ([@rajmusuku](https://github.com/rajmusuku))
+
+### Enhancements made
+
+- Allows immutable cache for static files in a directory [#1268](https://github.com/jupyter-server/jupyter_server/pull/1268) ([@brichet](https://github.com/brichet))
+- Merge the gateway handlers into the standard handlers. [#1261](https://github.com/jupyter-server/jupyter_server/pull/1261) ([@ojarjur](https://github.com/ojarjur))
+- Gateway manager retry kernel updates [#1256](https://github.com/jupyter-server/jupyter_server/pull/1256) ([@ojarjur](https://github.com/ojarjur))
+- Use debug-level messages for generating anonymous users [#1254](https://github.com/jupyter-server/jupyter_server/pull/1254) ([@hbcarlos](https://github.com/hbcarlos))
+- Define a CURRENT_JUPYTER_HANDLER context var [#1251](https://github.com/jupyter-server/jupyter_server/pull/1251) ([@Zsailer](https://github.com/Zsailer))
+
+### Bugs fixed
+
+- Don't instantiate an unused Future in gateway connection trait [#1276](https://github.com/jupyter-server/jupyter_server/pull/1276) ([@minrk](https://github.com/minrk))
+- Write server list to stdout [#1275](https://github.com/jupyter-server/jupyter_server/pull/1275) ([@minrk](https://github.com/minrk))
+- Make the kernel_websocket_protocol flag reusable. [#1264](https://github.com/jupyter-server/jupyter_server/pull/1264) ([@ojarjur](https://github.com/ojarjur))
+- Register websocket handler from same module as kernel handlers [#1249](https://github.com/jupyter-server/jupyter_server/pull/1249) ([@kevin-bates](https://github.com/kevin-bates))
+- Re-enable websocket ping/pong from the server [#1243](https://github.com/jupyter-server/jupyter_server/pull/1243) ([@Zsailer](https://github.com/Zsailer))
+- Fix italics in operators security sections [#1242](https://github.com/jupyter-server/jupyter_server/pull/1242) ([@kevin-bates](https://github.com/kevin-bates))
+- Fix calculation of schema location [#1239](https://github.com/jupyter-server/jupyter_server/pull/1239) ([@lresende](https://github.com/lresende))
+
+### Maintenance and upkeep improvements
+
+- Fix DeprecationWarning from pytest-console-scripts [#1281](https://github.com/jupyter-server/jupyter_server/pull/1281) ([@frenzymadness](https://github.com/frenzymadness))
+- Remove docutils and mistune pins [#1278](https://github.com/jupyter-server/jupyter_server/pull/1278) ([@blink1073](https://github.com/blink1073))
+- Update docutils requirement from \<0.20 to \<0.21 [#1277](https://github.com/jupyter-server/jupyter_server/pull/1277) ([@dependabot](https://github.com/dependabot))
+- Use Python 3.9 for the readthedocs builds [#1269](https://github.com/jupyter-server/jupyter_server/pull/1269) ([@ojarjur](https://github.com/ojarjur))
+- Fix coverage handling [#1257](https://github.com/jupyter-server/jupyter_server/pull/1257) ([@blink1073](https://github.com/blink1073))
+- chore: delete `.gitmodules` [#1248](https://github.com/jupyter-server/jupyter_server/pull/1248) ([@SauravMaheshkar](https://github.com/SauravMaheshkar))
+- chore: move `babel` and `eslint` configuration under `package.json` [#1246](https://github.com/jupyter-server/jupyter_server/pull/1246) ([@SauravMaheshkar](https://github.com/SauravMaheshkar))
+
+### Documentation improvements
+
+- Fix typo in docs [#1270](https://github.com/jupyter-server/jupyter_server/pull/1270) ([@davidbrochart](https://github.com/davidbrochart))
+- Fix typo [#1262](https://github.com/jupyter-server/jupyter_server/pull/1262) ([@davidbrochart](https://github.com/davidbrochart))
+- Extends the IP documentation [#1258](https://github.com/jupyter-server/jupyter_server/pull/1258) ([@hbcarlos](https://github.com/hbcarlos))
+- Fix italics in operators security sections [#1242](https://github.com/jupyter-server/jupyter_server/pull/1242) ([@kevin-bates](https://github.com/kevin-bates))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-03-16&to=2023-05-25&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-03-16..2023-05-25&type=Issues) | [@brichet](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abrichet+updated%3A2023-03-16..2023-05-25&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2023-03-16..2023-05-25&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2023-03-16..2023-05-25&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2023-03-16..2023-05-25&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2023-03-16..2023-05-25&type=Issues) | [@frenzymadness](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afrenzymadness+updated%3A2023-03-16..2023-05-25&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ahbcarlos+updated%3A2023-03-16..2023-05-25&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2023-03-16..2023-05-25&type=Issues) | [@lresende](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Alresende+updated%3A2023-03-16..2023-05-25&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-03-16..2023-05-25&type=Issues) | [@ojarjur](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aojarjur+updated%3A2023-03-16..2023-05-25&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-03-16..2023-05-25&type=Issues) | [@rajmusuku](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Arajmusuku+updated%3A2023-03-16..2023-05-25&type=Issues) | [@SauravMaheshkar](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ASauravMaheshkar+updated%3A2023-03-16..2023-05-25&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-03-16..2023-05-25&type=Issues) | [@yuvipanda](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ayuvipanda+updated%3A2023-03-16..2023-05-25&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2023-03-16..2023-05-25&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.5.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.4.0...dc1eee8715dfe674560789caa5123dc895717ca1))
@@ -22,8 +73,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-03-06&to=2023-03-16&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-03-06..2023-03-16&type=Issues) | [@broden-wanner](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abroden-wanner+updated%3A2023-03-06..2023-03-16&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2023-03-06..2023-03-16&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-03-06..2023-03-16&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2023-03-06..2023-03-16&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.4.0
 
