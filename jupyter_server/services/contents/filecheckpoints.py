@@ -34,7 +34,8 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
         config=True,
         help="""The directory name in which to keep file checkpoints
 
-        This is a path relative to the file's own directory.
+        This path can either be relative or absolute.
+        If it is a relative path, the checkpoint will be saved to the file's own directory.
 
         By default, it is .ipynb_checkpoints
         """,
@@ -110,7 +111,10 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
         basename, ext = os.path.splitext(name)
         filename = f"{basename}-{checkpoint_id}{ext}"
         os_path = self._get_os_path(path=parent)
-        cp_dir = os.path.join(os_path, self.checkpoint_dir)
+        if os.path.isabs(self.checkpoint_dir):
+            cp_dir = os.path.join(self.checkpoint_dir, parent)
+        else:
+            cp_dir = os.path.join(os_path, self.checkpoint_dir)
         with self.perm_to_403():
             ensure_dir_exists(cp_dir)
         cp_path = os.path.join(cp_dir, filename)
