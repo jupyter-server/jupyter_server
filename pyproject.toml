@@ -275,6 +275,7 @@ filterwarnings = [
   "ignore:datetime.utcfromtimestamp:DeprecationWarning",
   "ignore: ast.Str is deprecated:DeprecationWarning",
   "ignore:Attribute s is deprecated:DeprecationWarning",
+  "ignore:ast.NameConstant is deprecated:DeprecationWarning",
 ]
 
 [tool.coverage.report]
