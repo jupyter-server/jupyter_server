@@ -272,7 +272,7 @@ filterwarnings = [
   "always:unclosed <socket.socket:ResourceWarning",
   "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
   "ignore:jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0:DeprecationWarning",
-  "ignore:datetime.utcfromtimestamp() is deprecated and scheduled:DeprecationWarning",
+  "ignore:datetime.utcfromtimestamp:DeprecationWarning",
 ]
 
 [tool.coverage.report]
