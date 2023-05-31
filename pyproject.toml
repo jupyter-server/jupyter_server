@@ -273,11 +273,9 @@ filterwarnings = [
   "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
   "ignore:jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0:DeprecationWarning",
   "ignore:datetime.utcfromtimestamp:DeprecationWarning",
-  "ignore: ast.Str is deprecated:DeprecationWarning",
-  "ignore:Attribute s is deprecated:DeprecationWarning",
-  "ignore:ast.NameConstant is deprecated:DeprecationWarning",
-  "ignore:ast.Num is deprecated:DeprecationWarning",
   "ignore:datetime.utcnow:DeprecationWarning",
+  # ignore pytest warnings.
+  "ignore:::_pytest",
 ]
 
 [tool.coverage.report]
