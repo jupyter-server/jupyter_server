@@ -94,7 +94,7 @@ def serialize_msg_to_ws_v1(msg_or_list, channel, pack=None):
         offsets.append(len(msg) + offsets[-1])
     offset_number = len(offsets).to_bytes(8, byteorder="little")
     offsets = [offset.to_bytes(8, byteorder="little") for offset in offsets]
-    bin_msg = b"".join([offset_number, *offsets] + [channel] + msg_list)
+    bin_msg = b"".join([offset_number, *offsets, channel, *msg_list])
     return bin_msg
 
 
