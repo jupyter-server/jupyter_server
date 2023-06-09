@@ -45,7 +45,8 @@ dependencies = [
     "traitlets>=5.6.0",
     "websocket-client",
     "jupyter_events>=0.6.0",
-    "overrides"
+    "overrides",
+    "importlib_metadata>=4.8.3;python_version<\"3.10\"",
 ]
 
 [project.urls]
@@ -63,7 +64,9 @@ test = [
     "pytest-jupyter[server]>=0.4",
     "pytest>=7.0",
     "requests",
-    "pre-commit"
+    "pre-commit",
+    # needed to test kernelspec monitors
+    "watchdog"
 ]
 docs = [
     "ipykernel",
@@ -83,11 +86,20 @@ docs = [
     "tornado",
     # workaround for an unknown downstream library that is now
     # missing typing_extensions
-    "typing_extensions"
+    "typing_extensions",
+    # required to build api docs
+    "watchdog"
+]
+watchdog-monitor = [
+    "watchdog"
 ]
 
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
+
+[project.entry-points."jupyter_server.kernelspec_monitors"]
+polling-monitor = "jupyter_server.services.kernelspecs.monitors:KernelSpecPollingMonitor"
+watchdog-monitor = "jupyter_server.services.kernelspecs.monitors:KernelSpecWatchdogMonitor"
 
 [tool.hatch.envs.docs]
 features = ["docs"]
@@ -256,6 +268,8 @@ unfixable = [
 # S603 `subprocess` call: check for execution of untrusted input
 "jupyter_server/services/contents/filemanager.py" = ["S603", "S607"]
 "tests/unix_sockets/test_serverapp_integration.py" = ["S603", "S607"]
+# S324 Probable use of insecure hash functions in `hashlib`: `md5` (ok - used as checksum for kernelspec cache)
+"jupyter_server/services/kernelspecs/monitors/polling_monitor.py" = ["S324"]
 
 [tool.pytest.ini_options]
 addopts = "-raXs --durations 10 --color=yes --doctest-modules"

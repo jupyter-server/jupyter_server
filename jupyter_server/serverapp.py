@@ -108,6 +108,7 @@ from jupyter_server.services.kernels.kernelmanager import (
     AsyncMappingKernelManager,
     MappingKernelManager,
 )
+from jupyter_server.services.kernelspecs.kernelspec_cache import KernelSpecCache
 from jupyter_server.services.sessions.sessionmanager import SessionManager
 from jupyter_server.utils import (
     check_pid,
@@ -235,6 +236,7 @@ class ServerWebApplication(web.Application):
         authorizer=None,
         identity_provider=None,
         kernel_websocket_connection_class=None,
+        kernel_spec_cache=None,
     ):
         """Initialize a server web application."""
         if identity_provider is None:
@@ -272,6 +274,7 @@ class ServerWebApplication(web.Application):
             authorizer=authorizer,
             identity_provider=identity_provider,
             kernel_websocket_connection_class=kernel_websocket_connection_class,
+            kernel_spec_cache=kernel_spec_cache,
         )
         handlers = self.init_handlers(default_services, settings)
 
@@ -296,6 +299,7 @@ class ServerWebApplication(web.Application):
         authorizer=None,
         identity_provider=None,
         kernel_websocket_connection_class=None,
+        kernel_spec_cache=None,
     ):
         """Initialize settings for the web application."""
         _template_path = settings_overrides.get(
@@ -373,6 +377,7 @@ class ServerWebApplication(web.Application):
             "contents_manager": contents_manager,
             "session_manager": session_manager,
             "kernel_spec_manager": kernel_spec_manager,
+            "kernel_spec_cache": kernel_spec_cache,
             "config_manager": config_manager,
             "authorizer": authorizer,
             "identity_provider": identity_provider,
@@ -1494,6 +1499,16 @@ class ServerApp(JupyterApp):
             return "jupyter_server.gateway.managers.GatewaySessionManager"
         return SessionManager
 
+    kernel_spec_cache_class = Type(
+        default_value=KernelSpecCache,
+        klass=KernelSpecCache,
+        config=True,
+        help="""
+        The kernel spec cache class to use. Must be a subclass
+        of `jupyter_server.services.kernelspecs.kernelspec_cache.KernelSpecCache`.
+        """,
+    )
+
     kernel_websocket_connection_class = Type(
         klass=BaseKernelWebsocketConnection,
         config=True,
@@ -1892,6 +1907,11 @@ class ServerApp(JupyterApp):
             kernel_manager=self.kernel_manager,
             contents_manager=self.contents_manager,
         )
+        self.kernel_spec_cache = self.kernel_spec_cache_class(
+            parent=self,
+            log=self.log,
+            kernel_spec_manager=self.kernel_spec_manager,
+        )
         self.config_manager = self.config_manager_class(
             parent=self,
             log=self.log,
@@ -2053,6 +2073,7 @@ class ServerApp(JupyterApp):
             authorizer=self.authorizer,
             identity_provider=self.identity_provider,
             kernel_websocket_connection_class=self.kernel_websocket_connection_class,
+            kernel_spec_cache=self.kernel_spec_cache,
         )
         if self.certfile:
             self.ssl_options["certfile"] = self.certfile

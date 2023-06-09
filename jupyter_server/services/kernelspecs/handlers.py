@@ -62,12 +62,12 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
     @authorized
     async def get(self):
         """Get the list of kernel specs."""
-        ksm = self.kernel_spec_manager
+        ksc = self.kernel_spec_cache
         km = self.kernel_manager
         model = {}
         model["default"] = km.default_kernel_name
         model["kernelspecs"] = specs = {}
-        kspecs = await ensure_async(ksm.get_all_specs())
+        kspecs = await ensure_async(ksc.get_all_specs())
         for kernel_name, kernel_info in kspecs.items():
             try:
                 if is_kernelspec_model(kernel_info):
@@ -94,10 +94,10 @@ class KernelSpecHandler(KernelSpecsAPIHandler):
     @authorized
     async def get(self, kernel_name):
         """Get a kernel spec model."""
-        ksm = self.kernel_spec_manager
+        ksc = self.kernel_spec_cache
         kernel_name = url_unescape(kernel_name)
         try:
-            spec = await ensure_async(ksm.get_kernel_spec(kernel_name))
+            spec = await ensure_async(ksc.get_kernel_spec(kernel_name))
         except KeyError as e:
             raise web.HTTPError(404, "Kernel spec %s not found" % kernel_name) from e
         if is_kernelspec_model(spec):
