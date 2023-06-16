@@ -767,6 +767,9 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
     rhc = RetryableHTTPClient()
     try:
         response = await rhc.fetch(endpoint, **kwargs)
+        GatewayClient.instance().emit(
+            data={STATUS_KEY: SUCCESS_STATUS, STATUS_CODE_KEY: 200, MESSAGE_KEY: str("success")}
+        )
     # Trap a set of common exceptions so that we can inform the user that their Gateway url is incorrect
     # or the server is not running.
     # NOTE: We do this here since this handler is called during the server's startup and subsequent refreshes
@@ -808,6 +811,13 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
             f"The Gateway server specified in the gateway_url '{GatewayClient.instance().url}' doesn't "
             f"appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
+    except Exception as e:
+        GatewayClient.instance().emit(
+            data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 505, MESSAGE_KEY: str(e)}
+        )
+        logger = logging.getLogger(__name__)
+        logger.error (f"Exception while trying to launch kernel via Gateway URL {GatewayClient.instance().url} , {e}",e)
+        raise e
 
     if GatewayClient.instance().accept_cookies:
         # Update cookies on GatewayClient from server if configured.
