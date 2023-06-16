@@ -768,7 +768,7 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
     try:
         response = await rhc.fetch(endpoint, **kwargs)
         GatewayClient.instance().emit(
-            data={STATUS_KEY: SUCCESS_STATUS, STATUS_CODE_KEY: 200, MESSAGE_KEY: str("success")}
+            data={STATUS_KEY: SUCCESS_STATUS, STATUS_CODE_KEY: 200, MESSAGE_KEY: "success"}
         )
     # Trap a set of common exceptions so that we can inform the user that their Gateway url is incorrect
     # or the server is not running.
@@ -816,7 +816,10 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 505, MESSAGE_KEY: str(e)}
         )
         logger = logging.getLogger(__name__)
-        logger.error (f"Exception while trying to launch kernel via Gateway URL {GatewayClient.instance().url} , {e}",e)
+        logger.error(
+            f"Exception while trying to launch kernel via Gateway URL {GatewayClient.instance().url} , {e}",
+            e,
+        )
         raise e
 
     if GatewayClient.instance().accept_cookies:
