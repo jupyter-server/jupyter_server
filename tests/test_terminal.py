@@ -7,7 +7,7 @@ import sys
 import warnings
 
 import pytest
-from flaky import flaky
+from flaky import flaky  # type:ignore
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
 
