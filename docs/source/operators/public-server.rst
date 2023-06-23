@@ -328,19 +328,6 @@ with the following configuration setting in
         }
     }
 
-When embedding the notebook in a website using an iframe,
-consider putting the notebook in single-tab mode.
-Since the notebook opens some links in new tabs by default,
-single-tab mode keeps the notebook from opening additional tabs.
-Adding the following to :file:`~/.jupyter/custom/custom.js` will enable
-single-tab mode:
-
-.. code-block:: javascript
-
-    define(['base/js/namespace'], function(Jupyter){
-        Jupyter._target = '_self';
-    });
-
 
 Using a gateway server for kernel management
 --------------------------------------------
