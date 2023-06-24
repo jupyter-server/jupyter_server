@@ -513,17 +513,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if not self.exists(path):
             raise web.HTTPError(404, four_o_four)
 
-        def _check_trash(os_path):
-            if sys.platform in {"win32", "darwin"}:
-                return True
-
-            # It's a bit more nuanced than this, but until we can better
-            # distinguish errors from send2trash, assume that we can only trash
-            # files on the same partition as the home directory.
-            file_dev = os.stat(os_path).st_dev
-            home_dev = os.stat(os.path.expanduser("~")).st_dev
-            return file_dev == home_dev
-
         def is_non_empty_dir(os_path):
             if os.path.isdir(os_path):
                 # A directory containing only leftover checkpoints is
@@ -539,20 +528,15 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 # send2trash can really delete files on Windows, so disallow
                 # deleting non-empty files. See Github issue 3631.
                 raise web.HTTPError(400, "Directory %s not empty" % os_path)
-            if _check_trash(os_path):
-                # Looking at the code in send2trash, I don't think the errors it
-                # raises let us distinguish permission errors from other errors in
-                # code. So for now, the "look before you leap" approach is used.
-                if not self.is_writable(path):
-                    raise web.HTTPError(403, "Permission denied: %s" % path)
-                self.log.debug("Sending %s to trash", os_path)
+            # send2trash now supports deleting directories. see #1290
+            if not self.is_writable(path):
+                raise web.HTTPError(403, "Permission denied: %s" % path)
+            self.log.debug("Sending %s to trash", os_path)
+            try:
                 send2trash(os_path)
-                return
-            else:
-                self.log.warning(
-                    "Skipping trash for %s, on different device to home directory",
-                    os_path,
-                )
+            except OSError as e:
+                raise web.HTTPError(400, "send2trash failed: %s" % e)
+            return
 
         if os.path.isdir(os_path):
             # Don't permanently delete non-empty directories.
@@ -967,17 +951,6 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         if not os.path.exists(os_path):
             raise web.HTTPError(404, "File or directory does not exist: %s" % os_path)
 
-        async def _check_trash(os_path):
-            if sys.platform in {"win32", "darwin"}:
-                return True
-
-            # It's a bit more nuanced than this, but until we can better
-            # distinguish errors from send2trash, assume that we can only trash
-            # files on the same partition as the home directory.
-            file_dev = (await run_sync(os.stat, os_path)).st_dev
-            home_dev = (await run_sync(os.stat, os.path.expanduser("~"))).st_dev
-            return file_dev == home_dev
-
         async def is_non_empty_dir(os_path):
             if os.path.isdir(os_path):
                 # A directory containing only leftover checkpoints is
@@ -998,20 +971,15 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 # send2trash can really delete files on Windows, so disallow
                 # deleting non-empty files. See Github issue 3631.
                 raise web.HTTPError(400, "Directory %s not empty" % os_path)
-            if await _check_trash(os_path):
-                # Looking at the code in send2trash, I don't think the errors it
-                # raises let us distinguish permission errors from other errors in
-                # code. So for now, the "look before you leap" approach is used.
-                if not self.is_writable(path):
-                    raise web.HTTPError(403, "Permission denied: %s" % path)
-                self.log.debug("Sending %s to trash", os_path)
+            # send2trash now supports deleting directories. see #1290
+            if not self.is_writable(path):
+                raise web.HTTPError(403, "Permission denied: %s" % path)
+            self.log.debug("Sending %s to trash", os_path)
+            try:
                 send2trash(os_path)
-                return
-            else:
-                self.log.warning(
-                    "Skipping trash for %s, on different device to home directory",
-                    os_path,
-                )
+            except OSError as e:
+                raise web.HTTPError(400, "send2trash failed: %s" % e)
+            return
 
         if os.path.isdir(os_path):
             # Don't permanently delete non-empty directories.
