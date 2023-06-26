@@ -530,12 +530,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 raise web.HTTPError(400, "Directory %s not empty" % os_path)
             # send2trash now supports deleting directories. see #1290
             if not self.is_writable(path):
-                raise web.HTTPError(403, "Permission denied: %s" % path)
+                raise web.HTTPError(403, "Permission denied: %s" % path) from None
             self.log.debug("Sending %s to trash", os_path)
             try:
                 send2trash(os_path)
             except OSError as e:
-                raise web.HTTPError(400, "send2trash failed: %s" % e)
+                raise web.HTTPError(400, "send2trash failed: %s" % e) from e
             return
 
         if os.path.isdir(os_path):
@@ -973,12 +973,12 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 raise web.HTTPError(400, "Directory %s not empty" % os_path)
             # send2trash now supports deleting directories. see #1290
             if not self.is_writable(path):
-                raise web.HTTPError(403, "Permission denied: %s" % path)
+                raise web.HTTPError(403, "Permission denied: %s" % path) from None
             self.log.debug("Sending %s to trash", os_path)
             try:
                 send2trash(os_path)
             except OSError as e:
-                raise web.HTTPError(400, "send2trash failed: %s" % e)
+                raise web.HTTPError(400, "send2trash f`1ailed: %s" % e) from e
             return
 
         if os.path.isdir(os_path):
