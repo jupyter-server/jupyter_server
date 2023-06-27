@@ -39,7 +39,7 @@ dependencies = [
     "prometheus_client",
     "pywinpty;os_name=='nt'",
     "pyzmq>=24",
-    "Send2Trash",
+    "Send2Trash>=1.8.2",
     "terminado>=0.8.3",
     "tornado>=6.2.0",
     "traitlets>=5.6.0",
