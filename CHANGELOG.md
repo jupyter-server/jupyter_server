@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.7.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.6.0...b652f8d08530bd60ecf4cfffe6c32939fd94eb41))
+
+### Bugs fixed
+
+- Add missing events to gateway client [#1288](https://github.com/jupyter-server/jupyter_server/pull/1288) ([@allstrive](https://github.com/allstrive))
+
+### Maintenance and upkeep improvements
+
+- Handle test failures [#1289](https://github.com/jupyter-server/jupyter_server/pull/1289) ([@blink1073](https://github.com/blink1073))
+- Try testing against python 3.12 [#1282](https://github.com/jupyter-server/jupyter_server/pull/1282) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Remove frontend doc [#1292](https://github.com/jupyter-server/jupyter_server/pull/1292) ([@fcollonval](https://github.com/fcollonval))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-05-25&to=2023-06-27&type=c))
+
+[@allstrive](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aallstrive+updated%3A2023-05-25..2023-06-27&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-05-25..2023-06-27&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afcollonval+updated%3A2023-05-25..2023-06-27&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2023-05-25..2023-06-27&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-05-25..2023-06-27&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-05-25..2023-06-27&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-05-25..2023-06-27&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.6.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.5.0...35b8e9cb68eec48fe9a017ac128cb776c2ead195))
@@ -52,8 +77,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-03-16&to=2023-05-25&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-03-16..2023-05-25&type=Issues) | [@brichet](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abrichet+updated%3A2023-03-16..2023-05-25&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acodecov+updated%3A2023-03-16..2023-05-25&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2023-03-16..2023-05-25&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2023-03-16..2023-05-25&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aecharles+updated%3A2023-03-16..2023-05-25&type=Issues) | [@frenzymadness](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afrenzymadness+updated%3A2023-03-16..2023-05-25&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ahbcarlos+updated%3A2023-03-16..2023-05-25&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2023-03-16..2023-05-25&type=Issues) | [@lresende](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Alresende+updated%3A2023-03-16..2023-05-25&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-03-16..2023-05-25&type=Issues) | [@ojarjur](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aojarjur+updated%3A2023-03-16..2023-05-25&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-03-16..2023-05-25&type=Issues) | [@rajmusuku](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Arajmusuku+updated%3A2023-03-16..2023-05-25&type=Issues) | [@SauravMaheshkar](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ASauravMaheshkar+updated%3A2023-03-16..2023-05-25&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-03-16..2023-05-25&type=Issues) | [@yuvipanda](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ayuvipanda+updated%3A2023-03-16..2023-05-25&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2023-03-16..2023-05-25&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.5.0
 
