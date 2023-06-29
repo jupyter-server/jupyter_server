@@ -771,7 +771,7 @@ class APIHandler(JupyterHandler):
         # record activity of authenticated requests
         if (
             self._track_activity
-            and getattr(self, "_user_cache", None)
+            and getattr(self, "_jupyter_current_user", None)
             and self.get_argument("no_track_activity", None) is None
         ):
             self.settings["api_last_activity"] = utcnow()
