@@ -734,7 +734,7 @@ class RetryableHTTPClient:
                 raise e
             logging.getLogger("ServerApp").info(
                 f"Attempting retry ({self.retry_count}) against "
-                f"endpoint '{endpoint}'.  Retried error: '{repr(e)}'"
+                f"endpoint '{endpoint}'.  Retried error: '{e!r}'"
             )
             response = await self._fetch(endpoint, **kwargs)
         return response
