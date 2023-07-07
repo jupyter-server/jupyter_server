@@ -275,6 +275,8 @@ filterwarnings = [
   "ignore:jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0:DeprecationWarning",
   "ignore:datetime.utcfromtimestamp:DeprecationWarning",
   "ignore:datetime.utcnow:DeprecationWarning",
+  # from nbformat
+  "ignore:Importing ErrorTree directly from the jsonschema package:DeprecationWarning",
   # ignore pytest warnings.
   "ignore:::_pytest",
 ]
