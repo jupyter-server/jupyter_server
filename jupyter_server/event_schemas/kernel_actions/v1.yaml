@@ -7,7 +7,6 @@ description: |
 type: object
 required:
   - action
-  - kernel_id
   - msg
 properties:
   action:
@@ -35,11 +34,8 @@ properties:
       4. restart
          A kernel has been restarted for the given kernel id.
   kernel_id:
-    type: string
     description: |
       Kernel id.
-
-      This is a required field.
   kernel_name:
     type: string
     description: |
