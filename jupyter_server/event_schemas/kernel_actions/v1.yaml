@@ -65,3 +65,12 @@ properties:
     type: string
     description: |
       Description of the event specified in action.
+if:
+  properties:
+    status:
+        const: error
+    action:
+        const: start
+else:
+  required:
+    - kernel_id
