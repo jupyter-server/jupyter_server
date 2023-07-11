@@ -34,8 +34,11 @@ properties:
       4. restart
          A kernel has been restarted for the given kernel id.
   kernel_id:
+    type: string
     description: |
       Kernel id.
+
+      This is a required field for all actions and statuses except action start with status error.
   kernel_name:
     type: string
     description: |
@@ -66,11 +69,12 @@ properties:
     description: |
       Description of the event specified in action.
 if:
-  properties:
-    status:
-        const: error
-    action:
-        const: start
-else:
+    not:
+      properties:
+        status:
+            const: error
+        action:
+            const: start
+then:
   required:
     - kernel_id
