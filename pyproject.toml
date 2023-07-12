@@ -277,6 +277,8 @@ filterwarnings = [
   "ignore:datetime.utcnow:DeprecationWarning",
   # from nbformat
   "ignore:Importing ErrorTree directly from the jsonschema package:DeprecationWarning",
+  # From jupyter_events
+  "module:jsonschema.RefResolver is deprecated as of:DeprecationWarning",
   # ignore pytest warnings.
   "ignore:::_pytest",
 ]
