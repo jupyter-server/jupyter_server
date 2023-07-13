@@ -738,28 +738,31 @@ def emit_kernel_action_event(success_msg: str = ""):  # type: ignore
             # If the method succeeds, emit a success event.
             try:
                 out = await method(self, *args, **kwargs)
+                data = {
+                    "kernel_name": self.kernel_name,
+                    "action": action,
+                    "status": "success",
+                    "msg": success_msg.format(
+                        kernel_id=self.kernel_id, kernel_name=self.kernel_name, action=action
+                    ),
+                }
+                if self.kernel_id:
+                    data["kernel_id"] = self.kernel_id
                 self.emit(
                     schema_id="https://events.jupyter.org/jupyter_server/kernel_actions/v1",
-                    data={
-                        "kernel_id": self.kernel_id,
-                        "kernel_name": self.kernel_name,
-                        "action": action,
-                        "status": "success",
-                        "msg": success_msg.format(
-                            kernel_id=self.kernel_id, kernel_name=self.kernel_name, action=action
-                        ),
-                    },
+                    data=data,
                 )
                 return out
             # If the method fails, emit a failed event.
             except Exception as err:
                 data = {
-                    "kernel_id": self.kernel_id,
                     "kernel_name": self.kernel_name,
                     "action": action,
                     "status": "error",
                     "msg": str(err),
                 }
+                if self.kernel_id:
+                    data["kernel_id"] = self.kernel_id
                 # If the exception is an HTTPError (usually via a gateway request)
                 # log the status_code and HTTPError log_message.
                 if isinstance(err, web.HTTPError):

@@ -7,7 +7,6 @@ description: |
 type: object
 required:
   - action
-  - kernel_id
   - msg
 properties:
   action:
@@ -39,7 +38,7 @@ properties:
     description: |
       Kernel id.
 
-      This is a required field.
+      This is a required field for all actions and statuses except action start with status error.
   kernel_name:
     type: string
     description: |
@@ -69,3 +68,13 @@ properties:
     type: string
     description: |
       Description of the event specified in action.
+if:
+    not:
+      properties:
+        status:
+            const: error
+        action:
+            const: start
+then:
+  required:
+    - kernel_id
