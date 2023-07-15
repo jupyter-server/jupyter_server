@@ -1229,7 +1229,7 @@ class ServerApp(JupyterApp):
 
         # if blank, self.ip was configured to "*" meaning bind to all interfaces,
         # see _valdate_ip
-        if self.ip == "":  # noqa
+        if self.ip == "":
             return True
 
         try:

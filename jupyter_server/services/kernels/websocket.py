@@ -87,7 +87,7 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
         preferred_protocol = self.connection.kernel_ws_protocol
         if preferred_protocol is None:
             preferred_protocol = "v1.kernel.websocket.jupyter.org"
-        elif preferred_protocol == "":  # noqa
+        elif preferred_protocol == "":
             preferred_protocol = None
         selected_subprotocol = preferred_protocol if preferred_protocol in subprotocols else None
         # None is the default, "legacy" protocol
