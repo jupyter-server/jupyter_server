@@ -644,7 +644,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             err_msg["channel"] = "iopub"
             self.write_message(json.dumps(err_msg, default=json_default))
 
-    def _limit_rate(self, channel, msg, msg_list):  # noqa
+    def _limit_rate(self, channel, msg, msg_list):
         """Limit the message rate on a channel."""
         if not (self.limit_rate and channel == "iopub"):
             return False
