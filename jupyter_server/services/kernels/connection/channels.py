@@ -314,7 +314,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         iopub_channel.on_recv(on_iopub)
         loop = IOLoop.current()
 
-        def give_up():
+        def give_up(value):
             """Don't wait forever for the kernel"""
             if iopub_future.done():
                 return
