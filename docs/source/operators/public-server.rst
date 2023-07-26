@@ -111,7 +111,7 @@ Preparing a hashed password
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can prepare a hashed password manually, using the function
-:func:`notebook.auth.security.passwd`:
+:func:`jupyter_server.auth.passwd`:
 
 .. code-block:: python
 
@@ -123,7 +123,7 @@ You can prepare a hashed password manually, using the function
 
 .. caution::
 
-  :func:`~notebook.auth.security.passwd` when called with no arguments
+  :func:`~jupyter_server.auth.passwd` when called with no arguments
   will prompt you to enter and verify your password such as
   in the above code snippet. Although the function can also
   be passed a string as an argument such as ``passwd('mypassword')``, please
