@@ -30,7 +30,7 @@ dependencies = [
     "anyio>=3.1.0",
     "argon2-cffi",
     "jinja2",
-    "jupyter_client>=7.4.4",
+    "jupyter_client@git+https://github.com/davidbrochart/jupyter_client#egg=external-kernels",
     "jupyter_core>=4.12,!=5.0.*",
     "jupyter_server_terminals",
     "nbconvert>=6.4.4",
@@ -89,6 +89,9 @@ docs = [
 
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.envs.docs]
 features = ["docs"]
