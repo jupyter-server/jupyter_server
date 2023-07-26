@@ -24,6 +24,7 @@ import time
 import urllib
 import warnings
 from base64 import encodebytes
+from pathlib import Path
 
 from jupyter_client.kernelspec import KernelSpecManager
 from jupyter_client.manager import KernelManager
@@ -1638,6 +1639,13 @@ class ServerApp(JupyterApp):
         self.log.warning(_i18n("notebook_dir is deprecated, use root_dir"))
         self.root_dir = change["new"]
 
+    external_connection_dir = Unicode(
+        None,
+        allow_none=True,
+        config=True,
+        help=_i18n("The directory to look at for external kernel connection files."),
+    )
+
     root_dir = Unicode(config=True, help=_i18n("The directory to use for notebooks and kernels."))
     _root_dir_set = False
 
@@ -1873,10 +1881,14 @@ class ServerApp(JupyterApp):
         self.kernel_spec_manager = self.kernel_spec_manager_class(
             parent=self,
         )
+        external_connection_dir = self.external_connection_dir
+        if external_connection_dir is None:
+            external_connection_dir = str(Path(self.runtime_dir) / "external_kernels")
         self.kernel_manager = self.kernel_manager_class(
             parent=self,
             log=self.log,
             connection_dir=self.runtime_dir,
+            external_connection_dir=external_connection_dir,
             kernel_spec_manager=self.kernel_spec_manager,
         )
         self.contents_manager = self.contents_manager_class(
