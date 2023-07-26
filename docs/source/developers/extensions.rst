@@ -580,4 +580,4 @@ There are a few key steps to make this happen:
             )
 
 
-.. _`classic Notebook Server`: https://jupyter-notebook.readthedocs.io/en/stable/extending/handlers.html
+.. _`classic Notebook Server`: https://jupyter-notebook.readthedocs.io/en/v6.5.4/extending/handlers.html
