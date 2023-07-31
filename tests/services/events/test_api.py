@@ -123,7 +123,7 @@ async def test_post_event_400(jp_fetch, event_logger, payload):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch("api", "events", method="POST", body=payload)
 
-    expected_http_error(e, 400)
+    assert expected_http_error(e, 400)
 
 
 payload_7 = """\
@@ -152,4 +152,4 @@ async def test_post_event_500(jp_fetch, event_logger, payload):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch("api", "events", method="POST", body=payload)
 
-    expected_http_error(e, 500)
+    assert expected_http_error(e, 500)
