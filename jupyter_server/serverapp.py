@@ -1643,7 +1643,17 @@ class ServerApp(JupyterApp):
         None,
         allow_none=True,
         config=True,
-        help=_i18n("The directory to look at for external kernel connection files."),
+        help=_i18n(
+            "The directory to look at for external kernel connection files, if allow_external_kernels is True. Defaults to Jupyter runtime_dir/external_kernels."
+        ),
+    )
+
+    allow_external_kernels = Bool(
+        False,
+        config=True,
+        help=_i18n(
+            "Whether or not to allow external kernels, whose connection files are placed in external_connection_dir."
+        ),
     )
 
     root_dir = Unicode(config=True, help=_i18n("The directory to use for notebooks and kernels."))
@@ -1881,9 +1891,14 @@ class ServerApp(JupyterApp):
         self.kernel_spec_manager = self.kernel_spec_manager_class(
             parent=self,
         )
-        external_connection_dir = self.external_connection_dir
-        if external_connection_dir is None:
-            external_connection_dir = str(Path(self.runtime_dir) / "external_kernels")
+
+        if self.allow_external_kernels:
+            external_connection_dir = self.external_connection_dir
+            if external_connection_dir is None:
+                external_connection_dir = str(Path(self.runtime_dir) / "external_kernels")
+        else:
+            external_connection_dir = None
+
         self.kernel_manager = self.kernel_manager_class(
             parent=self,
             log=self.log,
