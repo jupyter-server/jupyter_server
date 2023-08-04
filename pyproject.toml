@@ -97,9 +97,6 @@ build = "make -C docs html SPHINXOPTS='-W'"
 api = "sphinx-apidoc -o docs/source/api -f -E jupyter_server */terminal jupyter_server/pytest_plugin.py"
 
 [tool.hatch.envs.test]
-pre-install-commands = [
-  "pip install https://github.com/davidbrochart/jupyter_client/archive/external-kernels.zip"
-]
 features = ["test"]
 [tool.hatch.envs.test.scripts]
 test = "python -m pytest -vv {args}"
@@ -112,9 +109,6 @@ dependencies = [ "mypy>=0.990" ]
 test = "mypy --install-types --non-interactive {args:.}"
 
 [tool.hatch.envs.cov]
-pre-install-commands = [
-  "pip install https://github.com/davidbrochart/jupyter_client/archive/external-kernels.zip"
-]
 features = ["test"]
 dependencies = ["coverage[toml]", "pytest-cov"]
 [tool.hatch.envs.cov.scripts]
