@@ -63,6 +63,22 @@ parameters:
     type: string
 
 paths:
+  /api/:
+    get:
+      summary: Get the Jupyter Server version
+      description: |
+        This endpoint returns only the Jupyter Server version.
+        It does not require any authentication.
+      responses:
+        200:
+          description: Jupyter Server version information
+          schema:
+            type: object
+            properties:
+              version:
+                type: string
+                description: The Jupyter Server version number as a string.
+
   /api/contents/{path}:
     parameters:
       - $ref: "#/parameters/path"
