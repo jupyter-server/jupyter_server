@@ -17,10 +17,7 @@ from typing import Dict as DictType
 from typing import Optional
 
 from jupyter_client.ioloop.manager import AsyncIOLoopKernelManager
-from jupyter_client.multikernelmanager import (
-    AsyncMultiKernelManager,
-    MultiKernelManager,
-)
+from jupyter_client.multikernelmanager import AsyncMultiKernelManager, MultiKernelManager
 from jupyter_client.session import Session
 from jupyter_core.paths import exists
 from jupyter_core.utils import ensure_async
@@ -210,11 +207,7 @@ class MappingKernelManager(MultiKernelManager):
     # TODO DEC 2022: Revise the type-ignore once the signatures have been changed upstream
     # https://github.com/jupyter/jupyter_client/pull/905
     async def _async_start_kernel(  # type:ignore[override]
-        self,
-        *,
-        kernel_id: Optional[str] = None,
-        path: Optional[ApiPath] = None,
-        **kwargs: str,
+        self, *, kernel_id: Optional[str] = None, path: Optional[ApiPath] = None, **kwargs: str
     ) -> str:
         """Start a kernel for a session and return its kernel_id.
 
@@ -752,9 +745,7 @@ def emit_kernel_action_event(success_msg: str = ""):  # type: ignore
                     "action": action,
                     "status": "success",
                     "msg": success_msg.format(
-                        kernel_id=self.kernel_id,
-                        kernel_name=self.kernel_name,
-                        action=action,
+                        kernel_id=self.kernel_id, kernel_name=self.kernel_name, action=action
                     ),
                 }
                 if self.kernel_id:
