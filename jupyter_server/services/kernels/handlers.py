@@ -94,9 +94,9 @@ class KernelActionHandler(KernelsAPIHandler):
         if action == "interrupt":
             await ensure_async(km.interrupt_kernel(kernel_id))
             self.set_status(204)
-        if action == "restart":
+        if action == "restart" or action == "restart-in-place":
             try:
-                await km.restart_kernel(kernel_id)
+                await km.restart_kernel(kernel_id, restart_in_place=action == "restart-in-place")
             except Exception as e:
                 message = "Exception restarting kernel"
                 self.log.error(message, exc_info=True)
@@ -113,7 +113,7 @@ class KernelActionHandler(KernelsAPIHandler):
 # URL to handler mappings
 # -----------------------------------------------------------------------------
 _kernel_id_regex = r"(?P<kernel_id>\w+-\w+-\w+-\w+-\w+)"
-_kernel_action_regex = r"(?P<action>restart|interrupt)"
+_kernel_action_regex = r"(?P<action>restart|interrupt|restart-in-place)"
 
 default_handlers = [
     (r"/api/kernels", MainKernelHandler),
