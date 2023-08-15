@@ -448,19 +448,19 @@ async def test_escape_root(jp_file_contents_manager_class, tmp_path):
 
     with pytest.raises(HTTPError) as e:
         await ensure_async(cm.get(".."))
-    expected_http_error(e, 404)
+    assert expected_http_error(e, 404)
 
     with pytest.raises(HTTPError) as e:
         await ensure_async(cm.get("foo/../../../bar"))
-    expected_http_error(e, 404)
+    assert expected_http_error(e, 404)
 
     with pytest.raises(HTTPError) as e:
         await ensure_async(cm.delete("../foo"))
-    expected_http_error(e, 404)
+    assert expected_http_error(e, 404)
 
     with pytest.raises(HTTPError) as e:
         await ensure_async(cm.rename("../foo", "../bar"))
-    expected_http_error(e, 404)
+    assert expected_http_error(e, 404)
 
     with pytest.raises(HTTPError) as e:
         await ensure_async(
@@ -473,7 +473,7 @@ async def test_escape_root(jp_file_contents_manager_class, tmp_path):
                 path="../foo",
             )
         )
-    expected_http_error(e, 404)
+    assert expected_http_error(e, 404)
 
 
 async def test_new_untitled(jp_contents_manager):

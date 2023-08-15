@@ -110,6 +110,8 @@ class EventHandler(APIHandler):
             )
             self.set_status(204)
             self.finish()
+        except web.HTTPError:
+            raise
         except Exception as e:
             raise web.HTTPError(500, str(e)) from e
 
