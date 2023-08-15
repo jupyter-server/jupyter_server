@@ -1016,6 +1016,8 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
 class APIVersionHandler(APIHandler):
     """An API handler for the server version."""
 
+    _track_activity = False
+
     def get(self):
         """Get the server version info."""
         # not authenticated, so give as few info as possible
