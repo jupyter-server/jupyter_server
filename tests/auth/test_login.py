@@ -92,6 +92,7 @@ def login(jp_serverapp, http_server_client, jp_base_url, login_headers):
         "//host{base_url}tree",
         "https://google.com",
         "/absolute/not/base_url",
+        "https:///a%40b/extra/slash",
     ),
 )
 async def test_next_bad(login, jp_base_url, bad_next):

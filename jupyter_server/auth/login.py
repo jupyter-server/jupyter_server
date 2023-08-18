@@ -41,12 +41,25 @@ class LoginFormHandler(JupyterHandler):
         # \ is not valid in urls, but some browsers treat it as /
         # instead of %5C, causing `\\` to behave as `//`
         url = url.replace("\\", "%5C")
+        # urllib and browsers interpret extra '/' in the scheme separator (`scheme:///host/path`)
+        # differently.
+        # urllib gives scheme=scheme, netloc='', path='/host/path', while
+        # browsers get scheme=scheme, netloc='host', path='/path'
+        # so make sure ':///*' collapses to '://' by splitting and stripping any additional leading slash
+        # don't allow any kind of `:/` shenanigans by splitting on ':' only
+        # and replacing `:/*` with exactly `://`
+        if ":" in url:
+            scheme, _, rest = url.partition(":")
+            url = f"{scheme}://{rest.lstrip('/')}"
         parsed = urlparse(url)
-        if parsed.netloc or not (parsed.path + "/").startswith(self.base_url):
+        # full url may be `//host/path` (empty scheme == same scheme as request)
+        # or `https://host/path`
+        # or even `https:///host/path` (invalid, but accepted and ambiguously interpreted)
+        if (parsed.scheme or parsed.netloc) or not (parsed.path + "/").startswith(self.base_url):
             # require that next_url be absolute path within our path
             allow = False
             # OR pass our cross-origin check
-            if parsed.netloc:
+            if parsed.scheme or parsed.netloc:
                 # if full URL, run our cross-origin check:
                 origin = f"{parsed.scheme}://{parsed.netloc}"
                 origin = origin.lower()
