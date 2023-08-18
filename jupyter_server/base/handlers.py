@@ -855,6 +855,7 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
     @authorized
     def get(self, path, **kwargs):
         """Get a file by path."""
+        self.check_xsrf_cookie()
         if os.path.splitext(path)[1] == ".ipynb" or self.get_argument("download", None):
             name = path.rsplit("/", 1)[-1]
             self.set_attachment_header(name)
