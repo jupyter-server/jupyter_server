@@ -50,6 +50,7 @@ class FilesHandler(JupyterHandler, web.StaticFileHandler):
 
         if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
             self.log.info("Refusing to serve hidden file, via 404 Error")
+            self.log.debug("Path requested: %r", path)
             raise web.HTTPError(404)
 
         path = path.strip("/")
