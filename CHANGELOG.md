@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.7.3
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.7.2...e72bf7187e396605f46ba59567543ef6386e8920))
+
+### New features added
+
+- Support external kernels [#1305](https://github.com/jupyter-server/jupyter_server/pull/1305) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-08-18&to=2023-08-31&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2023-08-18..2023-08-31&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.7.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.7.0...d8f4856c32b895106eac58c9c5768afd0e2f6465))
@@ -31,8 +47,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-06-27&to=2023-08-15&type=c))
 
 [@allstrive](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aallstrive+updated%3A2023-06-27..2023-08-15&type=Issues) | [@bhperry](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abhperry+updated%3A2023-06-27..2023-08-15&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-06-27..2023-08-15&type=Issues) | [@emmanuel-ferdman](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aemmanuel-ferdman+updated%3A2023-06-27..2023-08-15&type=Issues) | [@Hind-M](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AHind-M+updated%3A2023-06-27..2023-08-15&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2023-06-27..2023-08-15&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2023-06-27..2023-08-15&type=Issues) | [@mathbunnyru](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amathbunnyru+updated%3A2023-06-27..2023-08-15&type=Issues) | [@matthewwiese](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amatthewwiese+updated%3A2023-06-27..2023-08-15&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-06-27..2023-08-15&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-06-27..2023-08-15&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-06-27..2023-08-15&type=Issues) | [@wqj97](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awqj97+updated%3A2023-06-27..2023-08-15&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2023-06-27..2023-08-15&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.7.0
 
