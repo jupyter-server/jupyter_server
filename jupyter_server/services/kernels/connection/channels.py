@@ -410,7 +410,10 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             )
 
             # start buffering instead of closing if this was the last connection
-            if self.multi_kernel_manager._kernel_connections[self.kernel_id] == 0:
+            if (
+                self.kernel_id in self.multi_kernel_manager._kernel_connections
+                and self.multi_kernel_manager._kernel_connections[self.kernel_id] == 0
+            ):
                 self.multi_kernel_manager.start_buffering(
                     self.kernel_id, self.session_key, self.channels
                 )

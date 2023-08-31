@@ -24,7 +24,9 @@ import time
 import urllib
 import warnings
 from base64 import encodebytes
+from pathlib import Path
 
+import jupyter_client
 from jupyter_client.kernelspec import KernelSpecManager
 from jupyter_client.manager import KernelManager
 from jupyter_client.session import Session
@@ -1638,6 +1640,26 @@ class ServerApp(JupyterApp):
         self.log.warning(_i18n("notebook_dir is deprecated, use root_dir"))
         self.root_dir = change["new"]
 
+    external_connection_dir = Unicode(
+        None,
+        allow_none=True,
+        config=True,
+        help=_i18n(
+            "The directory to look at for external kernel connection files, if allow_external_kernels is True. "
+            "Defaults to Jupyter runtime_dir/external_kernels. "
+            "Make sure that this directory is not filled with left-over connection files, "
+            "that could result in unnecessary kernel manager creations."
+        ),
+    )
+
+    allow_external_kernels = Bool(
+        False,
+        config=True,
+        help=_i18n(
+            "Whether or not to allow external kernels, whose connection files are placed in external_connection_dir."
+        ),
+    )
+
     root_dir = Unicode(config=True, help=_i18n("The directory to use for notebooks and kernels."))
     _root_dir_set = False
 
@@ -1873,12 +1895,26 @@ class ServerApp(JupyterApp):
         self.kernel_spec_manager = self.kernel_spec_manager_class(
             parent=self,
         )
-        self.kernel_manager = self.kernel_manager_class(
-            parent=self,
-            log=self.log,
-            connection_dir=self.runtime_dir,
-            kernel_spec_manager=self.kernel_spec_manager,
-        )
+
+        kwargs = {
+            "parent": self,
+            "log": self.log,
+            "connection_dir": self.runtime_dir,
+            "kernel_spec_manager": self.kernel_spec_manager,
+        }
+        if jupyter_client.version_info > (8, 3, 0):
+            if self.allow_external_kernels:
+                external_connection_dir = self.external_connection_dir
+                if external_connection_dir is None:
+                    external_connection_dir = str(Path(self.runtime_dir) / "external_kernels")
+                kwargs["external_connection_dir"] = external_connection_dir
+        elif self.allow_external_kernels:
+            self.log.warning(
+                "Although allow_external_kernels=True, external kernels are not supported "
+                "because jupyter-client's version does not allow them (should be >8.3.0)."
+            )
+
+        self.kernel_manager = self.kernel_manager_class(**kwargs)
         self.contents_manager = self.contents_manager_class(
             parent=self,
             log=self.log,
