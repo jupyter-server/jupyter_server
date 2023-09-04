@@ -833,6 +833,7 @@ class ServerApp(JupyterApp):
     )
 
     _log_formatter_cls = LogFormatter  # type:ignore[assignment]
+    _stopping = Bool(False, help="Signal that we've begun stopping.")
 
     @default("log_level")
     def _default_log_level(self):
@@ -2264,6 +2265,10 @@ class ServerApp(JupyterApp):
                 self.stop(from_signal=True)
                 return
         else:
+            if self._stopping:
+                # don't show 'no answer' if we're actually stopping,
+                # e.g. ctrl-C ctrl-C
+                return
             info(_i18n("No answer for 5s:"))
         info(_i18n("resuming operation..."))
         # no answer, or answer is no:
@@ -2960,6 +2965,8 @@ class ServerApp(JupyterApp):
 
     def stop(self, from_signal=False):
         """Cleanup resources and stop the server."""
+        # signal that stopping has begun
+        self._stopping = True
         if hasattr(self, "http_server"):
             # Stop a server if its set.
             self.http_server.stop()
