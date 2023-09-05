@@ -678,10 +678,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         try:
             if platform.system() == "Darwin":
                 # retuns the size of the folder in KB
-                result = subprocess.run(["du", "-sk", path], capture_output=True).stdout.split()
+                result = subprocess.run(
+                    ["du", "-sk", path], capture_output=True, check=True
+                ).stdout.split()
             else:
                 result = subprocess.run(
-                    ["du", "-s", "--block-size=1", path], capture_output=True
+                    ["du", "-s", "--block-size=1", path], capture_output=True, check=True
                 ).stdout.split()
 
             self.log.info(f"current status of du command {result}")
@@ -704,7 +706,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         units = ["Bytes", "KB", "MB", "GB", "TB", "PB"]
         order = int(math.log2(size) / 10) if size else 0
 
-        return "{:.4g} {}".format(size / (1 << (order * 10)), units[order])
+        return f"{size / (1 << (order * 10)):.4g} {units[order]}"
 
 
 class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, AsyncContentsManager):
@@ -1137,10 +1139,12 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         try:
             if platform.system() == "Darwin":
                 # retuns the size of the folder in KB
-                result = subprocess.run(["du", "-sk", path], capture_output=True).stdout.split()
+                result = subprocess.run(
+                    ["du", "-sk", path], capture_output=True, check=True
+                ).stdout.split()
             else:
                 result = subprocess.run(
-                    ["du", "-s", "--block-size=1", path], capture_output=True
+                    ["du", "-s", "--block-size=1", path], capture_output=True, check=True
                 ).stdout.split()
 
             self.log.info(f"current status of du command {result}")
@@ -1163,4 +1167,4 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         units = ["Bytes", "KB", "MB", "GB", "TB", "PB"]
         order = int(math.log2(size) / 10) if size else 0
 
-        return "{:.4g} {}".format(size / (1 << (order * 10)), units[order])
+        return f"{size / (1 << (order * 10)):.4g} {units[order]}"

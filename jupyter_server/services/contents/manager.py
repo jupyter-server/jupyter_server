@@ -540,9 +540,7 @@ class ContentsManager(LoggingConfigurable):
 
         for i in itertools.count():
             insert_i = f"{insert}{i}" if i else ""
-            name = "{basename}{insert}{suffix}".format(
-                basename=basename, insert=insert_i, suffix=suffix
-            )
+            name = f"{basename}{insert_i}{suffix}"
             if not self.exists(f"{path}/{name}"):
                 break
         return name
@@ -929,9 +927,7 @@ class AsyncContentsManager(ContentsManager):
 
         for i in itertools.count():
             insert_i = f"{insert}{i}" if i else ""
-            name = "{basename}{insert}{suffix}".format(
-                basename=basename, insert=insert_i, suffix=suffix
-            )
+            name = f"{basename}{insert_i}{suffix}"
             file_exists = await ensure_async(self.exists(f"{path}/{name}"))
             if not file_exists:
                 break

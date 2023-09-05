@@ -69,8 +69,8 @@ class TypeFromClasses(ClassBasedTraitType):
                 value = self._resolve_string(value)
             except ImportError as e:
                 emsg = (
-                    "The '{}' trait of {} instance must be a type, but "
-                    "{!r} could not be imported".format(self.name, obj, value)
+                    f"The '{self.name}' trait of {obj} instance must be a type, but "
+                    f"{value!r} could not be imported"
                 )
                 raise TraitError(emsg) from e
         try:

@@ -403,10 +403,7 @@ class JupyterHandler(AuthenticatedHandler):
         escaped_filename = url_escape(filename)
         self.set_header(
             "Content-Disposition",
-            "attachment;"
-            " filename*=utf-8''{utf8}".format(
-                utf8=escaped_filename,
-            ),
+            f"attachment; filename*=utf-8''{escaped_filename}",
         )
 
     def get_origin(self):

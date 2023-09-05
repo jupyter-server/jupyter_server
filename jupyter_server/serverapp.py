@@ -311,7 +311,7 @@ class ServerWebApplication(web.Application):
         jenv_opt: dict = {"autoescape": True}
         jenv_opt.update(jinja_env_options if jinja_env_options else {})
 
-        env = Environment(  # noqa[S701]
+        env = Environment(  # noqa: S701
             loader=FileSystemLoader(template_path), extensions=["jinja2.ext.i18n"], **jenv_opt
         )
         sys_info = get_sys_info()
@@ -2134,9 +2134,7 @@ class ServerApp(JupyterApp):
             if hard < soft:
                 hard = soft
             self.log.debug(
-                "Raising open file limit: soft {}->{}; hard {}->{}".format(
-                    old_soft, soft, old_hard, hard
-                )
+                f"Raising open file limit: soft {old_soft}->{soft}; hard {old_hard}->{hard}"
             )
             resource.setrlimit(resource.RLIMIT_NOFILE, (soft, hard))
 
@@ -2631,11 +2629,7 @@ class ServerApp(JupyterApp):
             info += kernel_msg % n_kernels
             info += "\n"
         # Format the info so that the URL fits on a single line in 80 char display
-        info += _i18n(
-            "Jupyter Server {version} is running at:\n{url}".format(
-                version=ServerApp.version, url=self.display_url
-            )
-        )
+        info += _i18n(f"Jupyter Server {ServerApp.version} is running at:\n{self.display_url}")
         if self.gateway_config.gateway_enabled:
             info += (
                 _i18n("\nKernels will be managed by the Gateway server running at:\n%s")

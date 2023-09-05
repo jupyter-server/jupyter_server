@@ -118,9 +118,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
         elif self.log.isEnabledFor(logging.DEBUG):
             msg_summary = WebSocketChannelsHandler._get_message_summary(json_decode(utf8(message)))
             self.log.debug(
-                "Notebook client closed websocket connection - message dropped: {}".format(
-                    msg_summary
-                )
+                f"Notebook client closed websocket connection - message dropped: {msg_summary}"
             )
 
     def on_close(self):

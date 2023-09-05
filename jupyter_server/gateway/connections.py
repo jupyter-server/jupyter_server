@@ -131,9 +131,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
                     json_decode(utf8(incoming_msg))
                 )
                 self.log.debug(
-                    "Notebook client closed websocket connection - message dropped: {}".format(
-                        msg_summary
-                    )
+                    f"Notebook client closed websocket connection - message dropped: {msg_summary}"
                 )
 
     def handle_incoming_message(self, message: str) -> None:

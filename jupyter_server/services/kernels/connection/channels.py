@@ -703,7 +703,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     )
                     self.write_stderr(
                         dedent(
-                            """\
+                            f"""\
                     IOPub message rate exceeded.
                     The Jupyter server will temporarily stop sending output
                     to the client in order to avoid crashing it.
@@ -711,11 +711,9 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     `--ServerApp.iopub_msg_rate_limit`.
 
                     Current values:
-                    ServerApp.iopub_msg_rate_limit={} (msgs/sec)
-                    ServerApp.rate_limit_window={} (secs)
-                    """.format(
-                                self.iopub_msg_rate_limit, self.rate_limit_window
-                            )
+                    ServerApp.iopub_msg_rate_limit={self.iopub_msg_rate_limit} (msgs/sec)
+                    ServerApp.rate_limit_window={self.rate_limit_window} (secs)
+                    """
                         ),
                         msg["parent_header"],
                     )
@@ -734,7 +732,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     )
                     self.write_stderr(
                         dedent(
-                            """\
+                            f"""\
                     IOPub data rate exceeded.
                     The Jupyter server will temporarily stop sending output
                     to the client in order to avoid crashing it.
@@ -742,11 +740,9 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     `--ServerApp.iopub_data_rate_limit`.
 
                     Current values:
-                    ServerApp.iopub_data_rate_limit={} (bytes/sec)
-                    ServerApp.rate_limit_window={} (secs)
-                    """.format(
-                                self.iopub_data_rate_limit, self.rate_limit_window
-                            )
+                    ServerApp.iopub_data_rate_limit={self.iopub_data_rate_limit} (bytes/sec)
+                    ServerApp.rate_limit_window={self.rate_limit_window} (secs)
+                    """
                         ),
                         msg["parent_header"],
                     )
