@@ -108,11 +108,7 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
         parent, name = ("/" + path).rsplit("/", 1)
         parent = parent.strip("/")
         basename, ext = os.path.splitext(name)
-        filename = "{name}-{checkpoint_id}{ext}".format(
-            name=basename,
-            checkpoint_id=checkpoint_id,
-            ext=ext,
-        )
+        filename = f"{basename}-{checkpoint_id}{ext}"
         os_path = self._get_os_path(path=parent)
         cp_dir = os.path.join(os_path, self.checkpoint_dir)
         with self.perm_to_403():

@@ -404,9 +404,7 @@ class JupyterHandler(AuthenticatedHandler):
         self.set_header(
             "Content-Disposition",
             "attachment;"
-            " filename*=utf-8''{utf8}".format(
-                utf8=escaped_filename,
-            ),
+            f" filename*=utf-8''{escaped_filename}",
         )
 
     def get_origin(self):

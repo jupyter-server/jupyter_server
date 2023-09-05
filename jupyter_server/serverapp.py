@@ -2134,9 +2134,7 @@ class ServerApp(JupyterApp):
             if hard < soft:
                 hard = soft
             self.log.debug(
-                "Raising open file limit: soft {}->{}; hard {}->{}".format(
-                    old_soft, soft, old_hard, hard
-                )
+                f"Raising open file limit: soft {old_soft}->{soft}; hard {old_hard}->{hard}"
             )
             resource.setrlimit(resource.RLIMIT_NOFILE, (soft, hard))
 
@@ -2632,9 +2630,7 @@ class ServerApp(JupyterApp):
             info += "\n"
         # Format the info so that the URL fits on a single line in 80 char display
         info += _i18n(
-            "Jupyter Server {version} is running at:\n{url}".format(
-                version=ServerApp.version, url=self.display_url
-            )
+            f"Jupyter Server {ServerApp.version} is running at:\n{self.display_url}"
         )
         if self.gateway_config.gateway_enabled:
             info += (

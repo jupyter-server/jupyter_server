@@ -704,7 +704,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         units = ["Bytes", "KB", "MB", "GB", "TB", "PB"]
         order = int(math.log2(size) / 10) if size else 0
 
-        return "{:.4g} {}".format(size / (1 << (order * 10)), units[order])
+        return f"{size / (1 << (order * 10)):.4g} {units[order]}"
 
 
 class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, AsyncContentsManager):
@@ -1163,4 +1163,4 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         units = ["Bytes", "KB", "MB", "GB", "TB", "PB"]
         order = int(math.log2(size) / 10) if size else 0
 
-        return "{:.4g} {}".format(size / (1 << (order * 10)), units[order])
+        return f"{size / (1 << (order * 10)):.4g} {units[order]}"

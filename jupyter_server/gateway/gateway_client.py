@@ -526,15 +526,10 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
             # protects backward-compatible config from warnings
             # if they set the same value under both names
             self.log.warning(
-                (
-                    "{cls}.{old} is deprecated in jupyter_server "
-                    "{version}, use {cls}.{new} instead"
-                ).format(
-                    cls=self.__class__.__name__,
-                    old=old_attr,
-                    new=new_attr,
-                    version=version,
-                )
+
+                    f"{self.__class__.__name__}.{old_attr} is deprecated in jupyter_server "
+                    f"{version}, use {self.__class__.__name__}.{new_attr} instead"
+
             )
             setattr(self, new_attr, change.new)
 
@@ -578,7 +573,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         os.environ["KERNEL_LAUNCH_TIMEOUT"] = str(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
 
         self._connection_args["headers"] = json.loads(self.headers)
-        if self.auth_header_key not in self._connection_args["headers"].keys():
+        if self.auth_header_key not in self._connection_args["headers"]:
             self._connection_args["headers"].update(
                 {f"{self.auth_header_key}": f"{self.auth_scheme} {self.auth_token}"}
             )

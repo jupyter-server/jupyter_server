@@ -48,10 +48,10 @@ def get_loader(obj, logger=None):
 
     warnings.warn(
         "A `_load_jupyter_server_extension` function was not "
-        "found in {name!s}. Instead, a `load_jupyter_server_extension` "
+        f"found in {obj!s}. Instead, a `load_jupyter_server_extension` "
         "function was found and will be used for now. This function "
         "name will be deprecated in future releases "
-        "of Jupyter Server.".format(name=obj),
+        "of Jupyter Server.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -91,10 +91,10 @@ def get_metadata(package_name, logger=None):
         if logger:
             logger.warning(
                 "A `_jupyter_server_extension_points` function was not "
-                "found in {name}. Instead, a `_jupyter_server_extension_paths` "
+                f"found in {package_name}. Instead, a `_jupyter_server_extension_paths` "
                 "function was found and will be used for now. This function "
                 "name will be deprecated in future releases "
-                "of Jupyter Server.".format(name=package_name)
+                "of Jupyter Server."
             )
         return module, extension_points
     except AttributeError:
@@ -105,9 +105,9 @@ def get_metadata(package_name, logger=None):
     if logger:
         logger.debug(
             "A `_jupyter_server_extension_points` function was "
-            "not found in {name}, so Jupyter Server will look "
+            f"not found in {package_name}, so Jupyter Server will look "
             "for extension points in the extension pacakge's "
-            "root.".format(name=package_name)
+            "root."
         )
     return module, [{"module": package_name, "name": package_name}]
 
