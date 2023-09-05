@@ -311,7 +311,7 @@ class ServerWebApplication(web.Application):
         jenv_opt: dict = {"autoescape": True}
         jenv_opt.update(jinja_env_options if jinja_env_options else {})
 
-        env = Environment(  # noqa[S701]
+        env = Environment(  # noqa: S701
             loader=FileSystemLoader(template_path), extensions=["jinja2.ext.i18n"], **jenv_opt
         )
         sys_info = get_sys_info()

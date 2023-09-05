@@ -26,7 +26,6 @@ def kernelspec_model(handler, name, spec_dict, resource_dir):
     d = {"name": name, "spec": spec_dict, "resources": {}}
 
     # Add resource files if they exist
-    resource_dir = resource_dir
     for resource in ["kernel.js", "kernel.css"]:
         if os.path.exists(pjoin(resource_dir, resource)):
             d["resources"][resource] = url_path_join(

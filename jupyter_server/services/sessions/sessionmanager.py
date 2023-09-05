@@ -135,7 +135,7 @@ class KernelSessionRecordList:
         """
         if isinstance(record, str):
             for r in self._records:
-                if record == r.kernel_id or record == r.session_id:
+                if record in (r.kernel_id, r.session_id):
                     return r
         elif isinstance(record, KernelSessionRecord):
             for r in self._records:

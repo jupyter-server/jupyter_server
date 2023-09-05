@@ -678,10 +678,10 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         try:
             if platform.system() == "Darwin":
                 # retuns the size of the folder in KB
-                result = subprocess.run(["du", "-sk", path], capture_output=True).stdout.split()
+                result = subprocess.run(["du", "-sk", path], capture_output=True, check=True).stdout.split()
             else:
                 result = subprocess.run(
-                    ["du", "-s", "--block-size=1", path], capture_output=True
+                    ["du", "-s", "--block-size=1", path], capture_output=True, check=True
                 ).stdout.split()
 
             self.log.info(f"current status of du command {result}")
@@ -1137,10 +1137,10 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         try:
             if platform.system() == "Darwin":
                 # retuns the size of the folder in KB
-                result = subprocess.run(["du", "-sk", path], capture_output=True).stdout.split()
+                result = subprocess.run(["du", "-sk", path], capture_output=True, check=True).stdout.split()
             else:
                 result = subprocess.run(
-                    ["du", "-s", "--block-size=1", path], capture_output=True
+                    ["du", "-s", "--block-size=1", path], capture_output=True, check=True
                 ).stdout.split()
 
             self.log.info(f"current status of du command {result}")

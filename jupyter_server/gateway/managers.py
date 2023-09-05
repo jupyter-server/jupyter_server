@@ -307,7 +307,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
         try:
             response = await gateway_request(kernel_spec_url, method="GET")
         except web.HTTPError as error:
-            if error.status_code == 404:  # noqa[PLR2004]
+            if error.status_code == 404:  # noqa: PLR2004
                 # Convert not found to KeyError since that's what the Notebook handler expects
                 # message is not used, but might as well make it useful for troubleshooting
                 msg = f"kernelspec {kernel_name} not found on Gateway server at: {GatewayClient.instance().url}"
@@ -336,7 +336,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
         try:
             response = await gateway_request(kernel_spec_resource_url, method="GET")
         except web.HTTPError as error:
-            if error.status_code == 404:  # noqa[PLR2004]
+            if error.status_code == 404:  # noqa: PLR2004
                 kernel_spec_resource = None
             else:
                 raise
@@ -433,7 +433,7 @@ class GatewayKernelManager(ServerKernelManager):
                 response = await gateway_request(self.kernel_url, method="GET")
 
             except web.HTTPError as error:
-                if error.status_code == 404:  # noqa[PLR2004]
+                if error.status_code == 404:  # noqa: PLR2004
                     self.log.warning("Kernel not found at: %s" % self.kernel_url)
                     model = None
                 else:
@@ -527,7 +527,7 @@ class GatewayKernelManager(ServerKernelManager):
                 response = await gateway_request(self.kernel_url, method="DELETE")
                 self.log.debug("Shutdown kernel response: %d %s", response.code, response.reason)
             except web.HTTPError as error:
-                if error.status_code == 404:  # noqa[PLR2004]
+                if error.status_code == 404:  # noqa: PLR2004
                     self.log.debug("Shutdown kernel response: kernel not found (ignored)")
                 else:
                     raise
