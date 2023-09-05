@@ -2629,9 +2629,7 @@ class ServerApp(JupyterApp):
             info += kernel_msg % n_kernels
             info += "\n"
         # Format the info so that the URL fits on a single line in 80 char display
-        info += _i18n(
-            f"Jupyter Server {ServerApp.version} is running at:\n{self.display_url}"
-        )
+        info += _i18n(f"Jupyter Server {ServerApp.version} is running at:\n{self.display_url}")
         if self.gateway_config.gateway_enabled:
             info += (
                 _i18n("\nKernels will be managed by the Gateway server running at:\n%s")

@@ -608,9 +608,7 @@ class ExtensionApp(JupyterApp):
 
         # Log if extension is blocking other extensions from loading.
         if not cls.load_other_extensions:
-            serverapp.log.info(
-                f"{cls.name} is running without loading other extensions."
-            )
+            serverapp.log.info(f"{cls.name} is running without loading other extensions.")
         # Start the server.
         try:
             serverapp.start()

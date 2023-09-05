@@ -526,10 +526,8 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
             # protects backward-compatible config from warnings
             # if they set the same value under both names
             self.log.warning(
-
-                    f"{self.__class__.__name__}.{old_attr} is deprecated in jupyter_server "
-                    f"{version}, use {self.__class__.__name__}.{new_attr} instead"
-
+                f"{self.__class__.__name__}.{old_attr} is deprecated in jupyter_server "
+                f"{version}, use {self.__class__.__name__}.{new_attr} instead"
             )
             setattr(self, new_attr, change.new)
 
