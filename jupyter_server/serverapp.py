@@ -2208,8 +2208,10 @@ class ServerApp(JupyterApp):
     def init_signal(self):
         """Initialize signal handlers."""
         if (
-            not sys.platform.startswith("win") and sys.stdin and sys.stdin.isatty()
-        ):  # type:ignore[truthy-bool]
+            not sys.platform.startswith("win")
+            and sys.stdin
+            and sys.stdin.isatty()  # type:ignore[truthy-bool]
+        ):
             signal.signal(signal.SIGINT, self._handle_sigint)
         signal.signal(signal.SIGTERM, self._signal_stop)
         if hasattr(signal, "SIGUSR1"):
