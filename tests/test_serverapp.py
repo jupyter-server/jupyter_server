@@ -588,7 +588,7 @@ def test_browser_open_files(jp_configurable_serverapp, should_exist, caplog):
     assert os.path.exists(app.browser_open_file) == should_exist
     url = urljoin("file:", pathname2url(app.browser_open_file))
     url_messages = [rec.message for rec in caplog.records if url in rec.message]
-    assert url_messages if should_exist else not url_messages  # type: ignore[truthy-bool]
+    assert url_messages if should_exist else not url_messages
 
 
 def test_deprecated_notebook_dir_priority(jp_configurable_serverapp, tmp_path):
