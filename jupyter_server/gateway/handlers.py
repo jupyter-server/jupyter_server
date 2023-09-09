@@ -72,7 +72,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
             self.log.warning("No session ID specified")
 
     def initialize(self):
-        """Intialize the socket."""
+        """Initialize the socket."""
         self.log.debug("Initializing websocket connection %s", self.request.path)
         self.session = Session(config=self.config)
         self.gateway = GatewayWebSocketClient(gateway_url=GatewayClient.instance().url)

@@ -23,7 +23,7 @@ class SimpleApp11(SimpleApp1):
     # The name of the extension.
     name = "simple_ext11"
 
-    # Te url that your extension will serve its homepage.
+    # The url that your extension will serve its homepage.
     extension_url = "/simple_ext11/default"
 
     # Local path to static files directory.

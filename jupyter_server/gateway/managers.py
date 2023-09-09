@@ -678,7 +678,7 @@ class ChannelQueue(Queue):
 
 
 class HBChannelQueue(ChannelQueue):
-    """A queue for the hearbeat channel."""
+    """A queue for the heartbeat channel."""
 
     def is_beating(self) -> bool:
         """Whether the channel is beating."""

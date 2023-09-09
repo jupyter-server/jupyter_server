@@ -85,7 +85,7 @@ def log_request(handler):
 
     msg = "{status} {method} {uri} ({username}@{ip}) {request_time:.2f}ms"
     if status >= 400:  # noqa: PLR2004
-        # log bad referers
+        # log bad referrers
         ns["referer"] = _scrub_uri(request.headers.get("Referer", "None"))
         msg = msg + " referer={referer}"
     if status >= 500 and status != 502:  # noqa: PLR2004

@@ -24,7 +24,7 @@ By default, Jupyter Server looks for server-specific configuration in a ``jupyte
         /Users/username/Library/Jupyter/runtime
 
 
-The paths under ``config`` are listed in order of precedence. If the same trait is listed in multiple places, it will be set to the value from the file with the highest precendence.
+The paths under ``config`` are listed in order of precedence. If the same trait is listed in multiple places, it will be set to the value from the file with the highest precedence.
 
 
 Jupyter Server uses IPython's traitlets system for configuration. Traits can be

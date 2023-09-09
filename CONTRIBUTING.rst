@@ -40,11 +40,11 @@ from any directory in your system with::
 
 Code Styling and Quality Checks
 -------------------------------
-`jupyter_server` has adopted automatic code formatting so you shouldn't
+``jupyter_server`` has adopted automatic code formatting so you shouldn't
 need to worry too much about your code style.
 As long as your code is valid,
 the pre-commit hook should take care of how it should look.
-`pre-commit` and its associated hooks will automatically be installed when
+``pre-commit`` and its associated hooks will automatically be installed when
 you run ``pip install -e ".[test]"``
 
 To install ``pre-commit`` hook manually, run the following::

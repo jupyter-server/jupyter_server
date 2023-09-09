@@ -589,8 +589,8 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
             self._connection_args["auth_password"] = self.http_pwd
 
     def load_connection_args(self, **kwargs):
-        """Merges the static args relative to the connection, with the given keyword arguments.  If statics
-        have yet to be initialized, we'll do that here.
+        """Merges the static args relative to the connection, with the given keyword arguments.  If static
+        args have yet to be initialized, we'll do that here.
 
         """
         if len(self._connection_args) == 0:

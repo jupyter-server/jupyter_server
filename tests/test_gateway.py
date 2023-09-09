@@ -787,7 +787,7 @@ async def is_kernel_running(jp_fetch, kernel_id):
 
 
 async def create_kernel(jp_fetch, kernel_name):
-    """Issues request to retart the given kernel"""
+    """Issues request to restart the given kernel"""
     with mocked_gateway:
         body = json.dumps({"name": kernel_name})
 
@@ -825,7 +825,7 @@ async def interrupt_kernel(jp_fetch, kernel_id):
 
 
 async def restart_kernel(jp_fetch, kernel_id):
-    """Issues request to retart the given kernel"""
+    """Issues request to restart the given kernel"""
     with mocked_gateway:
         r = await jp_fetch(
             "api",

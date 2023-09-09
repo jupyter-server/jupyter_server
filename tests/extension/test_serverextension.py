@@ -69,7 +69,7 @@ def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extensio
     )
 
     # Write this configuration in two places, sys-prefix and user.
-    # sys-prefix supercedes users, so the extension should be disabled
+    # sys-prefix supersedes users, so the extension should be disabled
     # when these two configs merge.
     toggle_server_extension_python(
         "tests.extension.mockextensions.mockext_both",

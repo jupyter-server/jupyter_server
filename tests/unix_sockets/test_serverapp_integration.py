@@ -71,7 +71,7 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
     except subprocess.CalledProcessError as e:
         assert "There is currently no server running on" in e.output.decode()
     else:
-        raise AssertionError("expected stop command to fail due to target mis-match")
+        raise AssertionError("expected stop command to fail due to target mismatch")
 
     assert encoded_sock_path in _check_output("jupyter-server list")
 

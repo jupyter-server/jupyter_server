@@ -715,14 +715,14 @@ def emit_kernel_action_event(success_msg: str = ""):  # type: ignore
     Parameters
     ----------
     success_msg: str
-        A formattable string thats passed to the message field of
+        A formattable string that's passed to the message field of
         the emitted event when the action succeeds. You can include
         the kernel_id, kernel_name, or action in the message using
         a formatted string argument,
         e.g. "{kernel_id} succeeded to {action}."
 
     error_msg: str
-        A formattable string thats passed to the message field of
+        A formattable string that's passed to the message field of
         the emitted event when the action fails. You can include
         the kernel_id, kernel_name, or action in the message using
         a formatted string argument,
@@ -733,7 +733,7 @@ def emit_kernel_action_event(success_msg: str = ""):  # type: ignore
         @wraps(method)
         async def wrapped_method(self, *args, **kwargs):
             """"""
-            # Get the method name from teh
+            # Get the method name from the
             action = method.__name__.replace("_kernel", "")
             # If the method succeeds, emit a success event.
             try:

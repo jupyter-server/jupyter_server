@@ -283,7 +283,7 @@ msgid "No such notebook dir: '%r'"
 msgstr "没有找到路径: '%r' "
 
 #: notebook/serverapp.py:1046
-msgid "Dict of Python modules to load as notebook server extensions.Entry values can be used to enable and disable the loading ofthe extensions. The extensions will be loaded in alphabetical order."
+msgid "Dict of Python modules to load as notebook server extensions.Entry values can be used to enable and disable the loading of the extensions. The extensions will be loaded in alphabetical order."
 msgstr "将Python模块作为笔记本服务器扩展加载。可以使用条目值来启用和禁用扩展的加载。这些扩展将以字母顺序加载。"
 
 #: notebook/serverapp.py:1055

@@ -36,8 +36,8 @@ The easiest way to add endpoints and handle incoming requests is to subclass the
     from jupyter_server.base.handlers import JupyterHandler
     import tornado
 
-    class MyExtensionHandler(JupyterHandler):
 
+    class MyExtensionHandler(JupyterHandler):
         @tornado.web.authenticated
         def get(self):
             ...
@@ -57,10 +57,8 @@ Then add this handler to Jupyter Server's Web Application through the ``_load_ju
         """
         This function is called when the extension is loaded.
         """
-        handlers = [
-            ('/myextension/hello', MyExtensionHandler)
-        ]
-        serverapp.web_app.add_handlers('.*$', handlers)
+        handlers = [("/myextension/hello", MyExtensionHandler)]
+        serverapp.web_app.add_handlers(".*$", handlers)
 
 
 Making an extension discoverable
@@ -79,19 +77,13 @@ Usually, this requires a ``module`` key with the import path to the extension's
         Returns a list of dictionaries with metadata describing
         where to find the `_load_jupyter_server_extension` function.
         """
-        return [
-            {
-                "module": "my_extension"
-            }
-        ]
+        return [{"module": "my_extension"}]
 
 Second, add the extension to the ServerApp's ``jpserver_extensions`` trait. This can be manually added by users in their ``jupyter_server_config.py`` file,
 
 .. code-block:: python
 
-    c.ServerApp.jpserver_extensions = {
-        "my_extension": True
-    }
+    c.ServerApp.jpserver_extensions = {"my_extension": True}
 
 or loaded from a JSON file in the ``jupyter_server_config.d`` directory under
 one of `Jupyter's paths`_. (See the `Distributing a server extension`_ section
@@ -100,13 +92,7 @@ it.)
 
 .. code-block:: python
 
-    {
-        "ServerApp": {
-            "jpserver_extensions": {
-                "my_extension": true
-            }
-        }
-    }
+    {"ServerApp": {"jpserver_extensions": {"my_extension": true}}}
 
 
 Authoring a configurable extension application
@@ -136,7 +122,6 @@ The basic structure of an ExtensionApp is shown below:
 
 
     class MyExtensionApp(ExtensionApp):
-
         # -------------- Required traits --------------
         name = "myextension"
         default_url = "/myextension"
@@ -156,7 +141,7 @@ The basic structure of an ExtensionApp is shown below:
             ...
             # Update the self.settings trait to pass extra
             # settings to the underlying Tornado Web Application.
-            self.settings.update({'<trait>':...})
+            self.settings.update({"<trait>": ...})
 
         def initialize_handlers(self):
             ...
@@ -211,7 +196,6 @@ Jupyter Server provides a convenient mixin class for adding these properties to 
 
 
     class MyExtensionHandler(ExtensionHandlerMixin, JupyterHandler):
-
         @tornado.web.authenticated
         def get(self):
             ...
@@ -251,16 +235,14 @@ templates from the Jinja templating environment created by the ``ExtensionApp``.
     from jupyter_server.base.handlers import JupyterHandler
     from jupyter_server.extension.handler import (
         ExtensionHandlerMixin,
-        ExtensionHandlerJinjaMixin
+        ExtensionHandlerJinjaMixin,
     )
     import tornado
 
-    class MyExtensionHandler(
-        ExtensionHandlerMixin,
-        ExtensionHandlerJinjaMixin,
-        JupyterHandler
-    ):
 
+    class MyExtensionHandler(
+        ExtensionHandlerMixin, ExtensionHandlerJinjaMixin, JupyterHandler
+    ):
         @tornado.web.authenticated
         def get(self):
             ...
@@ -288,12 +270,7 @@ To make an ``ExtensionApp`` discoverable by Jupyter Server, add the ``app`` key+
         Returns a list of dictionaries with metadata describing
         where to find the `_load_jupyter_server_extension` function.
         """
-        return [
-            {
-                "module": "myextension",
-                "app": MyExtensionApp
-            }
-        ]
+        return [{"module": "myextension", "app": MyExtensionApp}]
 
 
 Launching an ``ExtensionApp``
@@ -315,13 +292,11 @@ To make your extension executable from anywhere on your system, point an entry-p
 
 
     setup(
-        name='myfrontend',
-        ...
+        name="myfrontend",
+        # ...
         entry_points={
-            'console_scripts': [
-                'jupyter-myextension = myextension:launch_instance'
-            ]
-        }
+            "console_scripts": ["jupyter-myextension = myextension:launch_instance"]
+        },
     )
 
 ``ExtensionApp`` as a classic Notebook server extension
@@ -353,13 +328,9 @@ Putting it all together, authors can distribute their extension following this s
 
         # Found in the __init__.py of package
 
+
         def _jupyter_server_extension_points():
-            return [
-                {
-                    "module": "myextension.app",
-                    "app": MyExtensionApp
-                }
-            ]
+            return [{"module": "myextension.app", "app": MyExtensionApp}]
 
 2. Create an extension by writing a ``_load_jupyter_server_extension()`` function or subclassing ``ExtensionApp``.
     This is where the extension logic will live (i.e. custom extension handlers, config, etc). See the sections above for more information on how to create an extension.
@@ -412,15 +383,14 @@ Putting it all together, authors can distribute their extension following this s
 
         setup(
             name="myextension",
-            ...
+            # ...
             include_package_data=True,
             data_files=[
                 (
                     "etc/jupyter/jupyter_server_config.d",
-                    ["jupyter-config/jupyter_server_config.d/myextension.json"]
+                    ["jupyter-config/jupyter_server_config.d/myextension.json"],
                 ),
-            ]
-
+            ],
         )
 
 
@@ -451,6 +421,7 @@ There are a few key steps to make this happen:
 
         def load_jupyter_server_extension(nb_server_app):
             ...
+
 
         # Reference the old function name with the new function name.
 
@@ -494,19 +465,18 @@ There are a few key steps to make this happen:
 
         setup(
             name="myextension",
-            ...
+            # ...
             include_package_data=True,
             data_files=[
                 (
                     "etc/jupyter/jupyter_server_config.d",
-                    ["jupyter-config/jupyter_server_config.d/myextension.json"]
+                    ["jupyter-config/jupyter_server_config.d/myextension.json"],
                 ),
                 (
                     "etc/jupyter/jupyter_notebook_config.d",
-                    ["jupyter-config/jupyter_notebook_config.d/myextension.json"]
+                    ["jupyter-config/jupyter_notebook_config.d/myextension.json"],
                 ),
-            ]
-
+            ],
         )
 
 3. (Optional) Point extension at the new favicon location.
@@ -520,14 +490,13 @@ There are a few key steps to make this happen:
     .. code-block:: python
 
         def load_jupyter_server_extension(nb_server_app):
-
             web_app = nb_server_app.web_app
-            host_pattern = '.*$'
-            base_url = web_app.settings['base_url']
+            host_pattern = ".*$"
+            base_url = web_app.settings["base_url"]
 
             # Add custom extensions handler.
             custom_handlers = [
-                ...
+                # ...
             ]
 
             # Favicon redirects.
@@ -535,49 +504,74 @@ There are a few key steps to make this happen:
                 (
                     url_path_join(base_url, "/static/favicons/favicon.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon.ico")
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/favicons/favicon-busy-1.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-1.ico")}
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-busy-1.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/favicons/favicon-busy-2.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-2.ico")}
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-busy-2.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/favicons/favicon-busy-3.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-3.ico")}
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-busy-3.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/favicons/favicon-file.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-file.ico")}
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-file.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/favicons/favicon-notebook.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-notebook.ico")}
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-notebook.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/favicons/favicon-terminal.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-terminal.ico")}
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-terminal.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/logo/logo.png"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/logo.png")}
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/logo.png")},
                 ),
             ]
 
-            web_app.add_handlers(
-                host_pattern,
-                custom_handlers + favicon_redirects
-            )
+            web_app.add_handlers(host_pattern, custom_handlers + favicon_redirects)
 
 
 .. _`classic Notebook Server`: https://jupyter-notebook.readthedocs.io/en/v6.5.4/extending/handlers.html

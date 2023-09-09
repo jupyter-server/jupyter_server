@@ -560,7 +560,7 @@ class ExtensionApp(JupyterApp):
     @classmethod
     def initialize_server(cls, argv=None, load_other_extensions=True, **kwargs):
         """Creates an instance of ServerApp and explicitly sets
-        this extension to enabled=True (i.e. superceding disabling
+        this extension to enabled=True (i.e. superseding disabling
         found in other config from files).
 
         The `launch_instance` method uses this method to initialize

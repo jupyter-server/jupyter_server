@@ -137,7 +137,7 @@ The content of the Config is based on the trait you have defined via the `CLI` a
 
 ## Only Extension 2
 
-Now stop agin the server and start with only `Extension 2`.
+Now stop again the server and start with only `Extension 2`.
 
 ```bash
 # Start the jupyter server extension simple_ext2, it will NOT load simple_ext1 because of load_other_extensions = False.

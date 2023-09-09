@@ -1956,7 +1956,7 @@ class ServerApp(JupyterApp):
             # non-default login handler ignored because also explicitly set identity provider
             self.log.warning(
                 f"Ignoring deprecated config ServerApp.login_handler_class={self.login_handler_class}."
-                " Superceded by ServerApp.identity_provider_class={self.identity_provider_class}."
+                " Superseded by ServerApp.identity_provider_class={self.identity_provider_class}."
             )
         self.identity_provider = self.identity_provider_class(**identity_provider_kwargs)
 
@@ -2544,7 +2544,7 @@ class ServerApp(JupyterApp):
             CLI arguments to parse.
         find_extensions : bool
             If True, find and load extensions listed in Jupyter config paths. If False,
-            only load extensions that are passed to ServerApp directy through
+            only load extensions that are passed to ServerApp directly through
             the `argv`, `config`, or `jpserver_extensions` arguments.
         new_httpserver : bool
             If True, a tornado HTTPServer instance will be created and configured for the Server Web

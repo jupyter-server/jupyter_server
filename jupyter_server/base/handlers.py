@@ -579,7 +579,7 @@ class JupyterHandler(AuthenticatedHandler):
         return allow
 
     async def prepare(self):
-        """Pepare a response."""
+        """Prepare a response."""
         # Set the current Jupyter Handler context variable.
         CallContext.set(CallContext.JUPYTER_HANDLER, self)
 
