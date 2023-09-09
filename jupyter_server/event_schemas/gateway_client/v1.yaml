@@ -6,8 +6,8 @@ description: |
   Record events of a gateway client.
 type: object
 required:
- - status
- - msg
+  - status
+  - msg
 properties:
   status:
     enum:

@@ -31,6 +31,7 @@ class MyCustomAuthorizer(Authorizer):
 
         return True
 
+
 # Pass this custom class to Jupyter Server
 c.ServerApp.authorizer_class = MyCustomAuthorizer
 ```
