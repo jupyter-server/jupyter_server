@@ -265,7 +265,7 @@ minversion = "6.0"
 xfail_strict = true
 log_cli_level = "info"
 addopts = [
-  "-raXs", "--durations 10", "--color=yes", "--doctest-modules",
+  "-raXs", "--durations=10", "--color=yes", "--doctest-modules",
    "--showlocals", "--strict-markers", "--strict-config"
 ]
 testpaths = [
@@ -281,8 +281,8 @@ filterwarnings = [
   "always:unclosed <socket.socket:ResourceWarning",
   "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
   "ignore:jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0:DeprecationWarning",
-  "ignore:datetime.utcfromtimestamp:DeprecationWarning",
-  "ignore:datetime.utcnow:DeprecationWarning",
+  "ignore:datetime.datetime.utcfromtimestamp:DeprecationWarning",
+  "ignore:datetime.datetime.utcnow:DeprecationWarning",
   # from nbformat
   "ignore:Importing ErrorTree directly from the jsonschema package:DeprecationWarning",
   # From jupyter_events
