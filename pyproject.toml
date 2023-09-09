@@ -265,7 +265,7 @@ minversion = "6.0"
 xfail_strict = true
 log_cli_level = "info"
 addopts = [
-  "-ra", "-Xs", "--durations 10", "--color=yes", "--doctest-modules",
+  "-raXs", "--durations 10", "--color=yes", "--doctest-modules",
    "--showlocals", "--strict-markers", "--strict-config"
 ]
 testpaths = [
@@ -347,4 +347,4 @@ exclude = ["docs", "test"]
 ignore = ["W002"]
 
 [tool.repo-review]
-ignore = ["PY007", "GH102", "PC140", "MY101"]
+ignore = ["PY007", "PP308", "GH102", "PC140", "MY101"]
