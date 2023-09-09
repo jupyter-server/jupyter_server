@@ -14,7 +14,7 @@ try:
     import sqlite3
 except ImportError:
     # fallback on pysqlite2 if Python was build without sqlite
-    from pysqlite2 import dbapi2 as sqlite3  # type:ignore
+    from pysqlite2 import dbapi2 as sqlite3  # type:ignore[import,no-redef]
 
 from dataclasses import dataclass, fields
 
@@ -81,7 +81,7 @@ class KernelSessionRecord:
     def update(self, other: "KernelSessionRecord") -> None:
         """Updates in-place a kernel from other (only accepts positive updates"""
         if not isinstance(other, KernelSessionRecord):
-            msg = "'other' must be an instance of KernelSessionRecord."
+            msg = "'other' must be an instance of KernelSessionRecord."  # type:ignore[unreachable]
             raise TypeError(msg)
 
         if other.kernel_id and self.kernel_id and other.kernel_id != self.kernel_id:

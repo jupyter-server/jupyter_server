@@ -5,7 +5,7 @@ import pytest
 try:
     from jupyter_core.paths import prefer_environment_over_user
 except ImportError:
-    prefer_environment_over_user = None  # type:ignore
+    prefer_environment_over_user = None  # type:ignore[assignment]
 
 from traitlets.tests.utils import check_help_all_output
 

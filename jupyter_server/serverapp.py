@@ -1108,7 +1108,7 @@ class ServerApp(JupyterApp):
     def _default_min_open_files_limit(self):
         if resource is None:
             # Ignoring min_open_files_limit because the limit cannot be adjusted (for example, on Windows)
-            return None
+            return None  # type:ignore[unreachable]
 
         soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
 
@@ -2122,7 +2122,7 @@ class ServerApp(JupyterApp):
     def init_resources(self):
         """initialize system resources"""
         if resource is None:
-            self.log.debug(
+            self.log.debug(  # type:ignore[unreachable]
                 "Ignoring min_open_files_limit because the limit cannot be adjusted (for example, on Windows)"
             )
             return
@@ -2207,7 +2207,9 @@ class ServerApp(JupyterApp):
 
     def init_signal(self):
         """Initialize signal handlers."""
-        if not sys.platform.startswith("win") and sys.stdin and sys.stdin.isatty():
+        if (
+            not sys.platform.startswith("win") and sys.stdin and sys.stdin.isatty()
+        ):  # type:ignore[truthy-bool]
             signal.signal(signal.SIGINT, self._handle_sigint)
         signal.signal(signal.SIGTERM, self._signal_stop)
         if hasattr(signal, "SIGUSR1"):

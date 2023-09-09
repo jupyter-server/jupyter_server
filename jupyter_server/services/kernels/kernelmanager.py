@@ -64,7 +64,7 @@ class MappingKernelManager(MultiKernelManager):
 
     _kernel_connections = Dict()
 
-    _kernel_ports: DictType[str, t.List[int]] = Dict()  # type: ignore
+    _kernel_ports: DictType[str, t.List[int]] = Dict()  # type: ignore[assignment]
 
     _culler_callback = None
 
@@ -708,7 +708,7 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager): 
         self.last_kernel_activity = utcnow()
 
 
-def emit_kernel_action_event(success_msg: str = ""):  # type: ignore
+def emit_kernel_action_event(success_msg: str = "") -> t.Callable:
     """Decorate kernel action methods to
     begin emitting jupyter kernel action events.
 

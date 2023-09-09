@@ -67,7 +67,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
         if self.get_argument("session_id", None):
             assert self.session is not None
-            self.session.session = self.get_argument("session_id")
+            self.session.session = self.get_argument("session_id")  # type:ignore[unreachable]
         else:
             self.log.warning("No session ID specified")
 
@@ -87,7 +87,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
     def send_ping(self):
         """Send a ping to the socket."""
         if self.ws_connection is None and self.ping_callback is not None:
-            self.ping_callback.stop()
+            self.ping_callback.stop()  # type:ignore[unreachable]
             return
 
         self.ping(b"")

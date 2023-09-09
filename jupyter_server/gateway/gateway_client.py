@@ -41,7 +41,7 @@ if ty.TYPE_CHECKING:
     from http.cookies import Morsel
 
 
-class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore
+class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore[misc]
     """The metaclass necessary for proper ABC behavior in a Configurable."""
 
     pass

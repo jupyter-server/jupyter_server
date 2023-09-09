@@ -436,7 +436,7 @@ def test_preferred_dir_validation(
         config_file.write_text("\n".join(config_lines))
 
     if argv:
-        kwargs["argv"] = argv  # type:ignore
+        kwargs["argv"] = argv  # type:ignore[assignment]
 
     if root_dir_loc == "default" and preferred_dir_loc != "default":  # error expected
         with pytest.raises(SystemExit):
@@ -571,7 +571,7 @@ def test_signals(jp_serverapp):
 async def test_shutdown_no_activity(jp_serverapp):
     app: ServerApp = jp_serverapp
     app.extension_manager.extensions = {}
-    app.exit = lambda _: None  # type:ignore
+    app.exit = lambda _: None  # type:ignore[assignment,misc]
     app.shutdown_no_activity()
     app.shutdown_no_activity_timeout = 1
     app.init_shutdown_no_activity()
@@ -588,7 +588,7 @@ def test_browser_open_files(jp_configurable_serverapp, should_exist, caplog):
     assert os.path.exists(app.browser_open_file) == should_exist
     url = urljoin("file:", pathname2url(app.browser_open_file))
     url_messages = [rec.message for rec in caplog.records if url in rec.message]
-    assert url_messages if should_exist else not url_messages
+    assert url_messages if should_exist else not url_messages  # type: ignore[truthy-bool]
 
 
 def test_deprecated_notebook_dir_priority(jp_configurable_serverapp, tmp_path):
