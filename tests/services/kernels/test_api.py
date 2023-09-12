@@ -58,6 +58,42 @@ configs: list = [
             "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
         }
     },
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+            "kernel_spec_manager_class": "jupyter_server.services.kernelspecs.renaming.RenamingKernelSpecManager",
+        },
+    },
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+            "kernel_spec_manager_class": "jupyter_server.services.kernelspecs.renaming.RenamingKernelSpecManager",
+        },
+        "AsyncMappingKernelManager": {"default_kernel_name": NATIVE_KERNEL_NAME},
+    },
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+            "kernel_spec_manager_class": "jupyter_server.services.kernelspecs.renaming.RenamingKernelSpecManager",
+        },
+        "RenamingKernelSpecManager": {"default_kernel_name": NATIVE_KERNEL_NAME},
+    },
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+            "kernel_spec_manager_class": "jupyter_server.services.kernelspecs.renaming.RenamingKernelSpecManager",
+        },
+        "AsyncMappingKernelManager": {"default_kernel_name": "local-" + NATIVE_KERNEL_NAME},
+        "RenamingKernelSpecManager": {"default_kernel_name": "not-found"},
+    },
+    {
+        "ServerApp": {
+            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+            "kernel_spec_manager_class": "jupyter_server.services.kernelspecs.renaming.RenamingKernelSpecManager",
+        },
+        "AsyncMappingKernelManager": {"default_kernel_name": NATIVE_KERNEL_NAME},
+        "RenamingKernelSpecManager": {"default_kernel_name": "not-found"},
+    },
 ]
 
 
@@ -66,13 +102,22 @@ configs: list = [
 # See https://github.com/jupyter-server/jupyter_server/issues/672
 if os.name != "nt" and jupyter_client._version.version_info >= (7, 1):
     # Add a pending kernels condition
-    c = {
-        "ServerApp": {
-            "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
+    cs = [
+        {
+            "ServerApp": {
+                "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager"
+            },
+            "AsyncMappingKernelManager": {"use_pending_kernels": True},
         },
-        "AsyncMappingKernelManager": {"use_pending_kernels": True},
-    }
-    configs.append(c)
+        {
+            "ServerApp": {
+                "kernel_manager_class": "jupyter_server.services.kernels.kernelmanager.AsyncMappingKernelManager",
+                "kernel_spec_manager_class": "jupyter_server.services.kernelspecs.renaming.RenamingKernelSpecManager",
+            },
+            "AsyncMappingKernelManager": {"use_pending_kernels": True},
+        },
+    ]
+    configs.extend(cs)
 
 
 @pytest.fixture(params=configs)
@@ -102,15 +147,44 @@ async def test_default_kernels(jp_fetch, jp_base_url):
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_kernel_is_ready):
-    # Start the first kernel
-    r = await jp_fetch(
-        "api", "kernels", method="POST", body=json.dumps({"name": NATIVE_KERNEL_NAME})
+async def test_kernels_with_default_kernelspec(jp_fetch, jp_base_url, jp_kernelspecs):
+    r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
+    kernel = json.loads(r.body.decode())
+    assert r.headers["location"] == url_path_join(jp_base_url, "/api/kernels/", kernel["id"])
+    assert r.code == 201
+    assert isinstance(kernel, dict)
+
+    report_uri = url_path_join(jp_base_url, "/api/security/csp-report")
+    expected_csp = "; ".join(
+        ["frame-ancestors 'self'", "report-uri " + report_uri, "default-src 'none'"]
     )
+    assert r.headers["Content-Security-Policy"] == expected_csp
+
+    # Verify that the default kernel was created using the default kernelspec
+    r2 = await jp_fetch("api", "kernelspecs", method="GET")
+    model = json.loads(r2.body.decode())
+    assert isinstance(model, dict)
+    assert model["default"] == kernel["name"]
+    specs = model["kernelspecs"]
+    assert isinstance(specs, dict)
+    assert kernel["name"] in specs
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
+async def test_main_kernel_handler(
+    jp_server_config, jp_fetch, jp_base_url, jp_serverapp, pending_kernel_is_ready
+):
+    # Start the first kernel
+    spec_name_prefix = jp_server_config.get("RenamingKernelSpecManager", {}).get(
+        "spec_name_prefix", ""
+    )
+    kernel_name = spec_name_prefix + NATIVE_KERNEL_NAME
+    r = await jp_fetch("api", "kernels", method="POST", body=json.dumps({"name": kernel_name}))
     kernel1 = json.loads(r.body.decode())
     assert r.headers["location"] == url_path_join(jp_base_url, "/api/kernels/", kernel1["id"])
     assert r.code == 201
     assert isinstance(kernel1, dict)
+    assert kernel1["name"] == kernel_name
 
     report_uri = url_path_join(jp_base_url, "/api/security/csp-report")
     expected_csp = "; ".join(
@@ -128,11 +202,10 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_
     await pending_kernel_is_ready(kernel1["id"])
 
     # Start a second kernel
-    r = await jp_fetch(
-        "api", "kernels", method="POST", body=json.dumps({"name": NATIVE_KERNEL_NAME})
-    )
+    r = await jp_fetch("api", "kernels", method="POST", body=json.dumps({"name": kernel_name}))
     kernel2 = json.loads(r.body.decode())
     assert isinstance(kernel2, dict)
+    assert kernel2["name"] == kernel_name
     await pending_kernel_is_ready(kernel1["id"])
 
     # Get kernel list again
@@ -176,7 +249,7 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_
         "api",
         "kernels",
         method="POST",
-        body=json.dumps({"name": NATIVE_KERNEL_NAME, "path": "/foo"}),
+        body=json.dumps({"name": kernel_name, "path": "/foo"}),
     )
     kernel3 = json.loads(r.body.decode())
     assert isinstance(kernel3, dict)
@@ -184,11 +257,13 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_kernel_handler(jp_fetch, jp_serverapp, pending_kernel_is_ready):
+async def test_kernel_handler(jp_server_config, jp_fetch, jp_serverapp, pending_kernel_is_ready):
     # Create a kernel
-    r = await jp_fetch(
-        "api", "kernels", method="POST", body=json.dumps({"name": NATIVE_KERNEL_NAME})
+    spec_name_prefix = jp_server_config.get("RenamingKernelSpecManager", {}).get(
+        "spec_name_prefix", ""
     )
+    kernel_name = spec_name_prefix + NATIVE_KERNEL_NAME
+    r = await jp_fetch("api", "kernels", method="POST", body=json.dumps({"name": kernel_name}))
     kernel_id = json.loads(r.body.decode())["id"]
     r = await jp_fetch("api", "kernels", kernel_id, method="GET")
     kernel = json.loads(r.body.decode())
@@ -257,11 +332,13 @@ async def test_kernel_handler_startup_error_pending(
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
-async def test_connection(jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header):
+async def test_connection(jp_server_config, jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header):
     # Create kernel
-    r = await jp_fetch(
-        "api", "kernels", method="POST", body=json.dumps({"name": NATIVE_KERNEL_NAME})
+    spec_name_prefix = jp_server_config.get("RenamingKernelSpecManager", {}).get(
+        "spec_name_prefix", ""
     )
+    kernel_name = spec_name_prefix + NATIVE_KERNEL_NAME
+    r = await jp_fetch("api", "kernels", method="POST", body=json.dumps({"name": kernel_name}))
     kid = json.loads(r.body.decode())["id"]
 
     # Get kernel info

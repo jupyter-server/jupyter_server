@@ -227,6 +227,29 @@ class CustomTestTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
         return f"{self.config_var_2}{self.config_var_1}"
 
 
+@pytest.fixture(params=[False, True])
+def jp_rename_kernels(request):
+    return request.param
+
+
+@pytest.fixture
+def jp_argv(jp_rename_kernels):
+    argv = [
+        "--gateway-url=" + mock_gateway_url,
+    ]
+    if jp_rename_kernels:
+        argv.append(
+            "--ServerApp.kernel_spec_manager_class=jupyter_server.gateway.managers.GatewayRenamingKernelSpecManager"
+        )
+    return argv
+
+
+@pytest.fixture
+def jp_mocked_gateway(jp_server_config, jp_argv, jp_configurable_serverapp):
+    with mocked_gateway:
+        yield jp_configurable_serverapp(config=jp_server_config, argv=jp_argv)
+
+
 @pytest.fixture()
 def jp_server_config():
     return Config(
@@ -253,7 +276,7 @@ def init_gateway(monkeypatch):
     GatewayClient.clear_instance()
 
 
-async def test_gateway_env_options(init_gateway, jp_serverapp):
+async def test_gateway_env_options(init_gateway, jp_mocked_gateway, jp_serverapp):
     assert jp_serverapp.gateway_config.gateway_enabled is True
     assert jp_serverapp.gateway_config.url == mock_gateway_url
     assert jp_serverapp.gateway_config.http_user == mock_http_user
@@ -269,18 +292,19 @@ async def test_gateway_env_options(init_gateway, jp_serverapp):
     assert GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT == 43
 
 
-def test_gateway_cli_options(jp_configurable_serverapp, capsys):
-    argv = [
-        "--gateway-url=" + mock_gateway_url,
-        "--GatewayClient.http_user=" + mock_http_user,
-        "--GatewayClient.connect_timeout=44.4",
-        "--GatewayClient.request_timeout=96.0",
-        "--GatewayClient.launch_timeout_pad=5.1",
-        "--GatewayClient.env_whitelist=FOO,BAR",
-    ]
+def test_gateway_cli_options(jp_mocked_gateway, jp_argv, jp_configurable_serverapp, capsys):
+    jp_argv.extend(
+        [
+            "--GatewayClient.http_user=" + mock_http_user,
+            "--GatewayClient.connect_timeout=44.4",
+            "--GatewayClient.request_timeout=96.0",
+            "--GatewayClient.launch_timeout_pad=5.1",
+            "--GatewayClient.env_whitelist=FOO,BAR",
+        ]
+    )
 
     GatewayClient.clear_instance()
-    app = jp_configurable_serverapp(argv=argv)
+    app = jp_configurable_serverapp(argv=jp_argv)
 
     assert app.gateway_config.gateway_enabled is True
     assert app.gateway_config.url == mock_gateway_url
@@ -304,15 +328,16 @@ def test_gateway_cli_options(jp_configurable_serverapp, capsys):
 
 
 @pytest.mark.parametrize("renewer_type", ["default", "custom"])
-def test_token_renewer_config(jp_server_config, jp_configurable_serverapp, renewer_type):
-    argv = ["--gateway-url=" + mock_gateway_url]
+def test_token_renewer_config(
+    jp_server_config, jp_argv, jp_configurable_serverapp, renewer_type, jp_mocked_gateway
+):
     if renewer_type == "custom":
-        argv.append(
+        jp_argv.append(
             "--GatewayClient.gateway_token_renewer_class=tests.test_gateway.CustomTestTokenRenewer"
         )
 
     GatewayClient.clear_instance()
-    app = jp_configurable_serverapp(argv=argv)
+    app = jp_configurable_serverapp(argv=jp_argv)
 
     assert app.gateway_config.gateway_enabled is True
     assert app.gateway_config.url == mock_gateway_url
@@ -409,51 +434,78 @@ def test_gateway_request_with_expiring_cookies(
     GatewayClient.clear_instance()
 
 
-async def test_gateway_class_mappings(init_gateway, jp_serverapp):
+async def test_gateway_class_mappings(
+    init_gateway, jp_mocked_gateway, jp_rename_kernels, jp_serverapp
+):
     # Ensure appropriate class mappings are in place.
     assert jp_serverapp.kernel_manager_class.__name__ == "GatewayMappingKernelManager"
     assert jp_serverapp.session_manager_class.__name__ == "GatewaySessionManager"
-    assert jp_serverapp.kernel_spec_manager_class.__name__ == "GatewayKernelSpecManager"
+    if jp_rename_kernels:
+        assert jp_serverapp.kernel_spec_manager_class.__name__ == "GatewayRenamingKernelSpecManager"
+    else:
+        assert jp_serverapp.kernel_spec_manager_class.__name__ == "GatewayKernelSpecManager"
 
 
-async def test_gateway_get_kernelspecs(init_gateway, jp_fetch, jp_serverapp):
+async def test_gateway_get_kernelspecs(
+    init_gateway, jp_mocked_gateway, jp_rename_kernels, jp_fetch, jp_serverapp
+):
     # Validate that kernelspecs come from gateway.
-    with mocked_gateway:
-        r = await jp_fetch("api", "kernelspecs", method="GET")
-        assert r.code == 200
-        content = json.loads(r.body.decode("utf-8"))
-        kspecs = content.get("kernelspecs")
-        assert len(kspecs) == 2
-        assert kspecs.get("kspec_bar").get("name") == "kspec_bar"
-        assert (
-            kspecs.get("kspec_bar").get("resources")["logo-64x64"].startswith(jp_serverapp.base_url)
-        )
+    r = await jp_fetch("api", "kernelspecs", method="GET")
+    assert r.code == 200
+    content = json.loads(r.body.decode("utf-8"))
+    default_kernel_name = content.get("default")
+    kspecs = content.get("kernelspecs")
+    assert len(kspecs) == 2
+    expected_kernel_name = "kspec_bar"
+    expected_default_kernel_name = "kspec_foo"
+    if jp_rename_kernels:
+        expected_kernel_name = "remote-kspec_bar"
+        expected_default_kernel_name = "remote-kspec_foo"
+    assert default_kernel_name == expected_default_kernel_name
+    assert kspecs.get(expected_kernel_name).get("name") == expected_kernel_name
+    assert (
+        kspecs.get(expected_kernel_name)
+        .get("resources")["logo-64x64"]
+        .startswith(jp_serverapp.base_url)
+    )
 
 
-async def test_gateway_get_named_kernelspec(init_gateway, jp_fetch):
+async def test_gateway_get_named_kernelspec(
+    init_gateway, jp_mocked_gateway, jp_rename_kernels, jp_fetch
+):
     # Validate that a specific kernelspec can be retrieved from gateway (and an invalid spec can't)
-    with mocked_gateway:
-        r = await jp_fetch("api", "kernelspecs", "kspec_foo", method="GET")
-        assert r.code == 200
-        kspec_foo = json.loads(r.body.decode("utf-8"))
-        assert kspec_foo.get("name") == "kspec_foo"
+    kernel_name = "kspec_foo"
+    if jp_rename_kernels:
+        kernel_name = "remote-kspec_foo"
+    r = await jp_fetch("api", "kernelspecs", kernel_name, method="GET")
+    assert r.code == 200
+    kspec_foo = json.loads(r.body.decode("utf-8"))
+    assert kspec_foo.get("name") == kernel_name
 
-        r = await jp_fetch("kernelspecs", "kspec_foo", "logo-64x64.png", method="GET")
-        assert r.code == 200
-        assert r.body == b"foo"
-        assert r.headers["content-type"] == "image/png"
+    r = await jp_fetch("kernelspecs", kernel_name, "logo-64x64.png", method="GET")
+    assert r.code == 200
+    assert r.body == b"foo"
+    assert r.headers["content-type"] == "image/png"
 
-        with pytest.raises(tornado.httpclient.HTTPClientError) as e:
-            await jp_fetch("api", "kernelspecs", "no_such_spec", method="GET")
-        assert expected_http_error(e, 404)
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch("api", "kernelspecs", "no_such_spec", method="GET")
+    assert expected_http_error(e, 404)
 
 
 @pytest.mark.parametrize("cull_kernel", [False, True])
-async def test_gateway_session_lifecycle(init_gateway, jp_root_dir, jp_fetch, cull_kernel):
+async def test_gateway_session_lifecycle(
+    init_gateway, jp_mocked_gateway, jp_rename_kernels, jp_root_dir, jp_fetch, cull_kernel
+):
     # Validate session lifecycle functions; create and delete.
 
     # create
-    session_id, kernel_id = await create_session(jp_fetch, "kspec_foo")
+    kernel_name = "kspec_foo"
+    remote_kernel_name = kernel_name
+    if jp_rename_kernels:
+        kernel_name = "remote-kspec_foo"
+    session_id, kernel_id = await create_session(
+        jp_fetch, kernel_name, remote_kernel_name=remote_kernel_name
+    )
 
     # ensure kernel still considered running
     assert await is_session_active(jp_fetch, session_id) is True
@@ -465,7 +517,7 @@ async def test_gateway_session_lifecycle(init_gateway, jp_root_dir, jp_fetch, cu
     assert await is_session_active(jp_fetch, session_id) is True
 
     # restart
-    await restart_kernel(jp_fetch, kernel_id)
+    await restart_kernel(jp_fetch, kernel_id, kernel_name, remote_kernel_name)
 
     assert await is_session_active(jp_fetch, session_id) is True
 
@@ -491,6 +543,8 @@ async def test_gateway_session_lifecycle(init_gateway, jp_root_dir, jp_fetch, cu
 @pytest.mark.parametrize("cull_kernel", [False, True])
 async def test_gateway_kernel_lifecycle(
     init_gateway,
+    jp_mocked_gateway,
+    jp_rename_kernels,
     jp_configurable_serverapp,
     jp_read_emitted_events,
     jp_event_handler,
@@ -504,7 +558,11 @@ async def test_gateway_kernel_lifecycle(
     app.event_logger.register_handler(jp_event_handler)
 
     # create
-    kernel_id = await create_kernel(jp_fetch, "kspec_bar")
+    kernel_name = "kspec_bar"
+    remote_kernel_name = kernel_name
+    if jp_rename_kernels:
+        kernel_name = "remote-kspec_bar"
+    kernel_id = await create_kernel(jp_fetch, kernel_name, remote_kernel_name=remote_kernel_name)
 
     output = jp_read_emitted_events()[0]
     assert "action" in output and output["action"] == "start"
@@ -534,7 +592,7 @@ async def test_gateway_kernel_lifecycle(
     assert await is_kernel_running(jp_fetch, kernel_id) is True
 
     # restart
-    await restart_kernel(jp_fetch, kernel_id)
+    await restart_kernel(jp_fetch, kernel_id, kernel_name, remote_kernel_name)
 
     output = jp_read_emitted_events()[0]
     assert "action" in output and output["action"] == "restart"
@@ -570,7 +628,9 @@ async def test_gateway_kernel_lifecycle(
 
 
 @pytest.mark.parametrize("missing_kernel", [True, False])
-async def test_gateway_shutdown(init_gateway, jp_serverapp, jp_fetch, missing_kernel):
+async def test_gateway_shutdown(
+    init_gateway, jp_mocked_gateway, jp_serverapp, jp_fetch, missing_kernel
+):
     # Validate server shutdown when multiple gateway kernels are present or
     # we've lost track of at least one (missing) kernel
 
@@ -585,8 +645,7 @@ async def test_gateway_shutdown(init_gateway, jp_serverapp, jp_fetch, missing_ke
     if missing_kernel:
         running_kernels.pop(k1)  # "terminate" kernel w/o our knowledge
 
-    with mocked_gateway:
-        await jp_serverapp.kernel_manager.shutdown_all()
+    await jp_serverapp.kernel_manager.shutdown_all()
 
     assert await is_kernel_running(jp_fetch, k1) is False
     assert await is_kernel_running(jp_fetch, k2) is False
@@ -594,7 +653,7 @@ async def test_gateway_shutdown(init_gateway, jp_serverapp, jp_fetch, missing_ke
 
 @patch("websocket.create_connection", mock_websocket_create_connection(recv_side_effect=Exception))
 async def test_kernel_client_response_router_notifies_channel_queue_when_finished(
-    init_gateway, jp_serverapp, jp_fetch
+    init_gateway, jp_mocked_gateway, jp_serverapp, jp_fetch
 ):
     # create
     kernel_id = await create_kernel(jp_fetch, "kspec_bar")
@@ -687,7 +746,9 @@ def mock_websocket_connect():
 
 
 @patch("tornado.websocket.websocket_connect", mock_websocket_connect())
-async def test_websocket_connection_closed(init_gateway, jp_serverapp, jp_fetch, caplog):
+async def test_websocket_connection_closed(
+    init_gateway, jp_mocked_gateway, jp_serverapp, jp_fetch, caplog
+):
     # Create the kernel and get the kernel manager...
     kernel_id = await create_kernel(jp_fetch, "kspec_foo")
     km: GatewayKernelManager = jp_serverapp.kernel_manager.get_kernel(kernel_id)
@@ -726,129 +787,124 @@ async def test_websocket_connection_closed(init_gateway, jp_serverapp, jp_fetch,
 
 async def is_session_active(jp_fetch, session_id):
     """Issues request to get the set of running kernels"""
-    with mocked_gateway:
-        # Get list of running kernels
-        r = await jp_fetch("api", "sessions", method="GET")
-        assert r.code == 200
-        sessions = json.loads(r.body.decode("utf-8"))
-        assert len(sessions) == len(running_kernels)  # Use running_kernels as truth
-        return any(model.get("id") == session_id for model in sessions)
+    # Get list of running kernels
+    r = await jp_fetch("api", "sessions", method="GET")
+    assert r.code == 200
+    sessions = json.loads(r.body.decode("utf-8"))
+    assert len(sessions) == len(running_kernels)  # Use running_kernels as truth
+    return any(model.get("id") == session_id for model in sessions)
 
 
-async def create_session(jp_fetch, kernel_name):
+async def create_session(jp_fetch, kernel_name, remote_kernel_name=None):
     """Creates a session for a kernel.  The session is created against the server
     which then uses the gateway for kernel management.
     """
-    with mocked_gateway:
-        nb_path = "/testgw.ipynb"
-        body = json.dumps(
-            {"path": str(nb_path), "type": "notebook", "kernel": {"name": kernel_name}}
-        )
+    nb_path = "/testgw.ipynb"
+    body = json.dumps({"path": str(nb_path), "type": "notebook", "kernel": {"name": kernel_name}})
 
-        # add a KERNEL_ value to the current env and we'll ensure that that value exists in the mocked method
-        os.environ["KERNEL_KSPEC_NAME"] = kernel_name
+    # add a KERNEL_ value to the current env and we'll ensure that that value exists in the mocked method
+    remote_kernel_name = remote_kernel_name or kernel_name
+    os.environ["KERNEL_KSPEC_NAME"] = remote_kernel_name
 
-        # Create the kernel... (also tests get_kernel)
-        r = await jp_fetch("api", "sessions", method="POST", body=body)
-        assert r.code == 201
-        model = json.loads(r.body.decode("utf-8"))
-        assert model.get("path") == str(nb_path)
-        kernel_id = model.get("kernel").get("id")
-        # ensure its in the running_kernels and name matches.
-        running_kernel = running_kernels.get(kernel_id)
-        assert running_kernel is not None
-        assert kernel_id == running_kernel.get("id")
-        assert model.get("kernel").get("name") == running_kernel.get("name")
-        session_id = model.get("id")
+    # Create the kernel... (also tests get_kernel)
+    r = await jp_fetch("api", "sessions", method="POST", body=body)
+    assert r.code == 201
+    model = json.loads(r.body.decode("utf-8"))
+    assert model.get("path") == str(nb_path)
+    kernel_id = model.get("kernel").get("id")
+    # ensure its in the running_kernels and name matches.
+    running_kernel = running_kernels.get(kernel_id)
+    assert running_kernel is not None
+    assert kernel_id == running_kernel.get("id")
+    assert running_kernel.get("name") == remote_kernel_name
+    assert model.get("kernel").get("name") == kernel_name
+    session_id = model.get("id")
 
-        # restore env
-        os.environ.pop("KERNEL_KSPEC_NAME")
-        return session_id, kernel_id
+    # restore env
+    os.environ.pop("KERNEL_KSPEC_NAME")
+    return session_id, kernel_id
 
 
 async def delete_session(jp_fetch, session_id):
     """Deletes a session corresponding to the given session id."""
-    with mocked_gateway:
-        # Delete the session (and kernel)
-        r = await jp_fetch("api", "sessions", session_id, method="DELETE")
-        assert r.code == 204
-        assert r.reason == "No Content"
+    # Delete the session (and kernel)
+    r = await jp_fetch("api", "sessions", session_id, method="DELETE")
+    assert r.code == 204
+    assert r.reason == "No Content"
 
 
 async def is_kernel_running(jp_fetch, kernel_id):
     """Issues request to get the set of running kernels"""
-    with mocked_gateway:
-        # Get list of running kernels
-        r = await jp_fetch("api", "kernels", method="GET")
-        assert r.code == 200
-        kernels = json.loads(r.body.decode("utf-8"))
-        assert len(kernels) == len(running_kernels)
-        return any(model.get("id") == kernel_id for model in kernels)
+    # Get list of running kernels
+    r = await jp_fetch("api", "kernels", method="GET")
+    assert r.code == 200
+    kernels = json.loads(r.body.decode("utf-8"))
+    assert len(kernels) == len(running_kernels)
+    return any(model.get("id") == kernel_id for model in kernels)
 
 
-async def create_kernel(jp_fetch, kernel_name):
+async def create_kernel(jp_fetch, kernel_name, remote_kernel_name=None):
     """Issues request to retart the given kernel"""
-    with mocked_gateway:
-        body = json.dumps({"name": kernel_name})
+    body = json.dumps({"name": kernel_name})
 
-        # add a KERNEL_ value to the current env and we'll ensure that that value exists in the mocked method
-        os.environ["KERNEL_KSPEC_NAME"] = kernel_name
+    # add a KERNEL_ value to the current env and we'll ensure that that value exists in the mocked method
+    remote_kernel_name = remote_kernel_name or kernel_name
+    os.environ["KERNEL_KSPEC_NAME"] = remote_kernel_name
 
-        r = await jp_fetch("api", "kernels", method="POST", body=body)
-        assert r.code == 201
-        model = json.loads(r.body.decode("utf-8"))
-        kernel_id = model.get("id")
-        # ensure its in the running_kernels and name matches.
-        running_kernel = running_kernels.get(kernel_id)
-        assert running_kernel is not None
-        assert kernel_id == running_kernel.get("id")
-        assert model.get("name") == kernel_name
+    r = await jp_fetch("api", "kernels", method="POST", body=body)
+    assert r.code == 201
+    model = json.loads(r.body.decode("utf-8"))
+    kernel_id = model.get("id")
+    # ensure its in the running_kernels and name matches.
+    running_kernel = running_kernels.get(kernel_id)
+    assert running_kernel is not None
+    assert kernel_id == running_kernel.get("id")
+    assert running_kernel.get("name") == remote_kernel_name
+    assert model.get("name") == kernel_name
 
-        # restore env
-        os.environ.pop("KERNEL_KSPEC_NAME")
-        return kernel_id
+    # restore env
+    os.environ.pop("KERNEL_KSPEC_NAME")
+    return kernel_id
 
 
 async def interrupt_kernel(jp_fetch, kernel_id):
     """Issues request to interrupt the given kernel"""
-    with mocked_gateway:
-        r = await jp_fetch(
-            "api",
-            "kernels",
-            kernel_id,
-            "interrupt",
-            method="POST",
-            allow_nonstandard_methods=True,
-        )
-        assert r.code == 204
-        assert r.reason == "No Content"
+    r = await jp_fetch(
+        "api",
+        "kernels",
+        kernel_id,
+        "interrupt",
+        method="POST",
+        allow_nonstandard_methods=True,
+    )
+    assert r.code == 204
+    assert r.reason == "No Content"
 
 
-async def restart_kernel(jp_fetch, kernel_id):
+async def restart_kernel(jp_fetch, kernel_id, kernel_name, remote_kernel_name):
     """Issues request to retart the given kernel"""
-    with mocked_gateway:
-        r = await jp_fetch(
-            "api",
-            "kernels",
-            kernel_id,
-            "restart",
-            method="POST",
-            allow_nonstandard_methods=True,
-        )
-        assert r.code == 200
-        model = json.loads(r.body.decode("utf-8"))
-        restarted_kernel_id = model.get("id")
-        # ensure its in the running_kernels and name matches.
-        running_kernel = running_kernels.get(restarted_kernel_id)
-        assert running_kernel is not None
-        assert restarted_kernel_id == running_kernel.get("id")
-        assert model.get("name") == running_kernel.get("name")
+    r = await jp_fetch(
+        "api",
+        "kernels",
+        kernel_id,
+        "restart",
+        method="POST",
+        allow_nonstandard_methods=True,
+    )
+    assert r.code == 200
+    model = json.loads(r.body.decode("utf-8"))
+    restarted_kernel_id = model.get("id")
+    # ensure its in the running_kernels and name matches.
+    running_kernel = running_kernels.get(restarted_kernel_id)
+    assert running_kernel is not None
+    assert restarted_kernel_id == running_kernel.get("id")
+    assert running_kernel.get("name") == remote_kernel_name
+    assert model.get("name") == kernel_name
 
 
 async def delete_kernel(jp_fetch, kernel_id):
     """Deletes kernel corresponding to the given kernel id."""
-    with mocked_gateway:
-        # Delete the session (and kernel)
-        r = await jp_fetch("api", "kernels", kernel_id, method="DELETE")
-        assert r.code == 204
-        assert r.reason == "No Content"
+    # Delete the session (and kernel)
+    r = await jp_fetch("api", "kernels", kernel_id, method="DELETE")
+    assert r.code == 204
+    assert r.reason == "No Content"

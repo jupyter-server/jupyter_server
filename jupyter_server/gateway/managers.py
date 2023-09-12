@@ -16,10 +16,10 @@ from jupyter_client.asynchronous.client import AsyncKernelClient
 from jupyter_client.clientabc import KernelClientABC
 from jupyter_client.kernelspec import KernelSpecManager
 from jupyter_client.managerabc import KernelManagerABC
-from jupyter_core.utils import ensure_async
+from jupyter_core.utils import ensure_async, run_sync
 from tornado import web
 from tornado.escape import json_decode, json_encode, url_escape, utf8
-from traitlets import DottedObjectName, Instance, Type, default
+from traitlets import DottedObjectName, Instance, Type, Unicode, default, observe
 
 from .._tz import UTC, utcnow
 from ..services.kernels.kernelmanager import (
@@ -27,6 +27,7 @@ from ..services.kernels.kernelmanager import (
     ServerKernelManager,
     emit_kernel_action_event,
 )
+from ..services.kernelspecs.renaming import RenamingKernelSpecManagerMixin, normalize_kernel_name
 from ..services.sessions.sessionmanager import SessionManager
 from ..utils import url_path_join
 from .gateway_client import GatewayClient, gateway_request
@@ -60,7 +61,8 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         except KeyError:
             pass
 
-    async def start_kernel(self, *, kernel_id=None, path=None, **kwargs):
+    @normalize_kernel_name
+    async def start_kernel(self, *, kernel_id=None, path=None, renamed_kernel=None, **kwargs):
         """Start a kernel for a session and return its kernel_id.
 
         Parameters
@@ -80,6 +82,10 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
 
         km = self.kernel_manager_factory(parent=self, log=self.log)
         await km.start_kernel(kernel_id=kernel_id, **kwargs)
+        if renamed_kernel is not None:
+            km.kernel_name = renamed_kernel
+            if km.kernel:
+                km.kernel["name"] = km.kernel_name
         kernel_id = km.kernel_id
         self._kernels[kernel_id] = km
         # Initialize culling if not already
@@ -210,6 +216,27 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
 class GatewayKernelSpecManager(KernelSpecManager):
     """A gateway kernel spec manager."""
 
+    default_kernel_name = Unicode(allow_none=True)
+
+    # Use a hidden trait for the default kernel name we get from the remote.
+    #
+    # This is automatically copied to the corresponding public trait.
+    #
+    # We use two layers of trait so that sub classes can modify the public
+    # trait without confusing the logic that tracks changes to the remote
+    # default kernel name.
+    _remote_default_kernel_name = Unicode(allow_none=True)
+
+    @default("default_kernel_name")
+    def _default_default_kernel_name(self):
+        # The default kernel name is taken from the remote gateway
+        run_sync(self.get_all_specs)()
+        return self._remote_default_kernel_name
+
+    @observe("_remote_default_kernel_name")
+    def _observe_remote_default_kernel_name(self, change):
+        self.default_kernel_name = change.new
+
     def __init__(self, **kwargs):
         """Initialize a gateway kernel spec manager."""
         super().__init__(**kwargs)
@@ -273,14 +300,13 @@ class GatewayKernelSpecManager(KernelSpecManager):
         # If different log a warning and reset the default.  However, the
         # caller of this method will still return this server's value until
         # the next fetch of kernelspecs - at which time they'll match.
-        km = self.parent.kernel_manager
         remote_default_kernel_name = fetched_kspecs.get("default")
-        if remote_default_kernel_name != km.default_kernel_name:
+        if remote_default_kernel_name != self._remote_default_kernel_name:
             self.log.info(
                 f"Default kernel name on Gateway server ({remote_default_kernel_name}) differs from "
-                f"Notebook server ({km.default_kernel_name}).  Updating to Gateway server's value."
+                f"Notebook server ({self._remote_default_kernel_name}).  Updating to Gateway server's value."
             )
-            km.default_kernel_name = remote_default_kernel_name
+            self._remote_default_kernel_name = remote_default_kernel_name
 
         remote_kspecs = fetched_kspecs.get("kernelspecs")
         return remote_kspecs
@@ -343,6 +369,18 @@ class GatewayKernelSpecManager(KernelSpecManager):
         else:
             kernel_spec_resource = response.body
         return kernel_spec_resource
+
+
+class GatewayRenamingKernelSpecManager(RenamingKernelSpecManagerMixin, GatewayKernelSpecManager):
+    spec_name_prefix = Unicode(
+        "remote-", help="Prefix to be added onto the front of kernel spec names."
+    )
+
+    display_name_suffix = Unicode(
+        " (Remote)",
+        config=True,
+        help="Suffix to be added onto the end of kernel spec display names.",
+    )
 
 
 class GatewaySessionManager(SessionManager):
@@ -453,6 +491,8 @@ class GatewayKernelManager(ServerKernelManager):
                 # a parent instance if, say, a server extension is using another application
                 # (e.g., papermill) that uses a KernelManager instance directly.
                 self.parent._kernel_connections[self.kernel_id] = int(model["connections"])
+            if self.kernel_name:
+                model["name"] = self.kernel_name
 
         self.kernel = model
         return model
@@ -477,7 +517,8 @@ class GatewayKernelManager(ServerKernelManager):
 
         if kernel_id is None:
             kernel_name = kwargs.get("kernel_name", "python3")
-            self.log.debug("Request new kernel at: %s" % self.kernels_url)
+            self.kernel_name = kernel_name
+            self.log.debug(f"Request new kernel at: {self.kernels_url} using {kernel_name}")
 
             # Let KERNEL_USERNAME take precedent over http_user config option.
             if os.environ.get("KERNEL_USERNAME") is None and GatewayClient.instance().http_user:
