@@ -2781,6 +2781,10 @@ class ServerApp(JupyterApp):
             if self.identity_provider.token:
                 uri = url_concat(uri, {"token": self.identity_provider.token})
 
+            if self.file_to_run:
+                file_to_run_relpath = self._resolve_file_to_run_and_root_dir()
+                uri = url_escape(url_path_join(uri, *file_to_run_relpath.split(os.sep)))
+
         if self.file_to_run:  # noqa
             # Create a separate, temporary open-browser-file
             # pointing at a specific file.
