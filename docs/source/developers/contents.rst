@@ -109,39 +109,39 @@ model. There are three model types: **notebook**, **file**, and **directory**.
 
     # Notebook Model with Content
     {
-        'content': {
-            'metadata': {},
-            'nbformat': 4,
-            'nbformat_minor': 0,
-            'cells': [
+        "content": {
+            "metadata": {},
+            "nbformat": 4,
+            "nbformat_minor": 0,
+            "cells": [
                 {
-                    'cell_type': 'markdown',
-                    'metadata': {},
-                    'source': 'Some **Markdown**',
+                    "cell_type": "markdown",
+                    "metadata": {},
+                    "source": "Some **Markdown**",
                 },
             ],
         },
-        'created': datetime(2015, 7, 25, 19, 50, 19, 19865),
-        'format': 'json',
-        'last_modified': datetime(2015, 7, 25, 19, 50, 19, 19865),
-        'mimetype': None,
-        'name': 'a.ipynb',
-        'path': 'foo/a.ipynb',
-        'type': 'notebook',
-        'writable': True,
+        "created": datetime(2015, 7, 25, 19, 50, 19, 19865),
+        "format": "json",
+        "last_modified": datetime(2015, 7, 25, 19, 50, 19, 19865),
+        "mimetype": None,
+        "name": "a.ipynb",
+        "path": "foo/a.ipynb",
+        "type": "notebook",
+        "writable": True,
     }
 
     # Notebook Model without Content
     {
-        'content': None,
-        'created': datetime.datetime(2015, 7, 25, 20, 17, 33, 271931),
-        'format': None,
-        'last_modified': datetime.datetime(2015, 7, 25, 20, 17, 33, 271931),
-        'mimetype': None,
-        'name': 'a.ipynb',
-        'path': 'foo/a.ipynb',
-        'type': 'notebook',
-        'writable': True
+        "content": None,
+        "created": datetime.datetime(2015, 7, 25, 20, 17, 33, 271931),
+        "format": None,
+        "last_modified": datetime.datetime(2015, 7, 25, 20, 17, 33, 271931),
+        "mimetype": None,
+        "name": "a.ipynb",
+        "path": "foo/a.ipynb",
+        "type": "notebook",
+        "writable": True,
     }
 
 
@@ -227,21 +227,28 @@ return for a more complete implementation.
 
     class NoOpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         """requires the following methods:"""
+
         def create_file_checkpoint(self, content, format, path):
-            """ -> checkpoint model"""
+            """-> checkpoint model"""
+
         def create_notebook_checkpoint(self, nb, path):
-            """ -> checkpoint model"""
+            """-> checkpoint model"""
+
         def get_file_checkpoint(self, checkpoint_id, path):
-            """ -> {'type': 'file', 'content': <str>, 'format': {'text', 'base64'}}"""
+            """-> {'type': 'file', 'content': <str>, 'format': {'text', 'base64'}}"""
+
         def get_notebook_checkpoint(self, checkpoint_id, path):
-            """ -> {'type': 'notebook', 'content': <output of nbformat.read>}"""
+            """-> {'type': 'notebook', 'content': <output of nbformat.read>}"""
+
         def delete_checkpoint(self, checkpoint_id, path):
             """deletes a checkpoint for a file"""
+
         def list_checkpoints(self, path):
             """returns a list of checkpoint models for a given file,
             default just does one per file
             """
             return []
+
         def rename_checkpoint(self, checkpoint_id, old_path, new_path):
             """renames checkpoint from old path to new path"""
 

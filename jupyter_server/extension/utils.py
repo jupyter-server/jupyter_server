@@ -63,7 +63,7 @@ def get_metadata(package_name, logger=None):
 
     This looks for a `_jupyter_server_extension_points` function
     that returns metadata about all extension points within a Jupyter
-    Server Extension pacakge.
+    Server Extension package.
 
     If it doesn't exist, return a basic metadata packet given
     the module name.

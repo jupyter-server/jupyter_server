@@ -217,9 +217,9 @@ class CustomTestTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
 
     # The following are configured by the config test to ensure they flow
     # configured to: 42
-    config_var_1: int = Int(config=True)  # type:ignore
+    config_var_1: int = Int(config=True)  # type:ignore[assignment]
     # configured to: "Use this token value: "
-    config_var_2: str = Unicode(config=True)  # type:ignore
+    config_var_2: str = Unicode(config=True)  # type:ignore[assignment]
 
     def get_token(
         self, auth_header_key: str, auth_scheme: Union[str, None], auth_token: str, **kwargs: Any
@@ -617,7 +617,7 @@ async def test_kernel_client_response_router_notifies_channel_queue_when_finishe
         kc.hb_channel,
         kc.control_channel,
     ]
-    assert all(channel.response_router_finished if True else False for channel in all_channels)
+    assert all(channel.response_router_finished for channel in all_channels)
 
     await ensure_async(kc.stop_channels())
 
@@ -787,7 +787,7 @@ async def is_kernel_running(jp_fetch, kernel_id):
 
 
 async def create_kernel(jp_fetch, kernel_name):
-    """Issues request to retart the given kernel"""
+    """Issues request to restart the given kernel"""
     with mocked_gateway:
         body = json.dumps({"name": kernel_name})
 
@@ -825,7 +825,7 @@ async def interrupt_kernel(jp_fetch, kernel_id):
 
 
 async def restart_kernel(jp_fetch, kernel_id):
-    """Issues request to retart the given kernel"""
+    """Issues request to restart the given kernel"""
     with mocked_gateway:
         r = await jp_fetch(
             "api",

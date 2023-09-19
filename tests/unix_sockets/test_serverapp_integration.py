@@ -71,15 +71,15 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
     except subprocess.CalledProcessError as e:
         assert "There is currently no server running on" in e.output.decode()
     else:
-        raise AssertionError("expected stop command to fail due to target mis-match")
+        raise AssertionError("expected stop command to fail due to target mismatch")
 
     assert encoded_sock_path in _check_output("jupyter-server list")
 
     # Fake out stopping the server.
     app = JupyterServerStopApp(sock=str(jp_unix_socket_file))
     app.initialize([])
-    app.shutdown_server = lambda _: True  # type:ignore
-    app._maybe_remove_unix_socket = lambda _: _  # type: ignore
+    app.shutdown_server = lambda _: True  # type:ignore[method-assign]
+    app._maybe_remove_unix_socket = lambda _: _  # type: ignore[method-assign]
     app.start()
 
     _check_output(["jupyter-server", "stop", jp_unix_socket_file])

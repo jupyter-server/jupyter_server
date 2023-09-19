@@ -44,7 +44,7 @@ extensions = [
 ]
 
 try:
-    import enchant  # type:ignore  # noqa
+    import enchant  # type:ignore[import]  # noqa
 
     extensions += ["sphinxcontrib.spelling"]
 except ImportError:

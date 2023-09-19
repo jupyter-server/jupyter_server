@@ -82,7 +82,7 @@ async def test_list_nonexistant_dir(jp_fetch, contents):
         await jp_fetch(
             "api",
             "contents",
-            "nonexistant",
+            "nonexistent",
             method="GET",
         )
 

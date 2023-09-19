@@ -271,7 +271,7 @@ All notable changes to this project will be documented in this file.
 
 ### Bugs fixed
 
-- Reapply preferred_dir fix, now with better backwards compatability [#1162](https://github.com/jupyter-server/jupyter_server/pull/1162) ([@vidartf](https://github.com/vidartf))
+- Reapply preferred_dir fix, now with better backwards compatibility [#1162](https://github.com/jupyter-server/jupyter_server/pull/1162) ([@vidartf](https://github.com/vidartf))
 
 ### Maintenance and upkeep improvements
 
@@ -1055,7 +1055,7 @@ All notable changes to this project will be documented in this file.
 
 ### Bugs fixed
 
-- Regression in connection URL calcuation in ServerApp [#761](https://github.com/jupyter-server/jupyter_server/pull/761) ([@jhamet93](https://github.com/jhamet93))
+- Regression in connection URL calculation in ServerApp [#761](https://github.com/jupyter-server/jupyter_server/pull/761) ([@jhamet93](https://github.com/jhamet93))
 - Include explicit package data [#757](https://github.com/jupyter-server/jupyter_server/pull/757) ([@blink1073](https://github.com/blink1073))
 - Ensure terminal cwd exists [#755](https://github.com/jupyter-server/jupyter_server/pull/755) ([@fcollonval](https://github.com/fcollonval))
 - make 'cwd' param for TerminalManager absolute [#749](https://github.com/jupyter-server/jupyter_server/pull/749) ([@rccern](https://github.com/rccern))
@@ -1947,7 +1947,7 @@ This was a broken release and was yanked from PyPI.
 
 ### Added
 
-- ([#191](https://github.com/jupyter/jupyter_server/pull/191)) Async kernel managment is now possible using the `AsyncKernelManager` from `jupyter_client`
+- ([#191](https://github.com/jupyter/jupyter_server/pull/191)) Async kernel management is now possible using the `AsyncKernelManager` from `jupyter_client`
 - ([#201](https://github.com/jupyter/jupyter_server/pull/201)) Parameters can now be passed to new terminals created by the `terminals` REST API.
 
 ### Changed

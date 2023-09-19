@@ -677,7 +677,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         """
         try:
             if platform.system() == "Darwin":
-                # retuns the size of the folder in KB
+                # returns the size of the folder in KB
                 result = subprocess.run(
                     ["du", "-sk", path], capture_output=True, check=True
                 ).stdout.split()
@@ -1138,7 +1138,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         """
         try:
             if platform.system() == "Darwin":
-                # retuns the size of the folder in KB
+                # returns the size of the folder in KB
                 result = subprocess.run(
                     ["du", "-sk", path], capture_output=True, check=True
                 ).stdout.split()

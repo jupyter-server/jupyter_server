@@ -5,7 +5,7 @@ personal-data: true
 description: |
   Record actions on files via the ContentsManager.
 
-  The notebook ContentsManager REST API is used by all frontends to retreive,
+  The notebook ContentsManager REST API is used by all frontends to retrieve,
   save, list, delete and perform other actions on notebooks, directories,
   and other files through the UI. This is pluggable - the default acts on
   the file system, but can be replaced with a different ContentsManager

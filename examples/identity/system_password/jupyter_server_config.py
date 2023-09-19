@@ -2,7 +2,7 @@
 import pwd
 from getpass import getuser
 
-from pamela import PAMError, authenticate  # type:ignore
+from pamela import PAMError, authenticate  # type:ignore[import]
 
 from jupyter_server.auth.identity import IdentityProvider, User
 
@@ -28,6 +28,6 @@ class SystemPasswordIdentityProvider(IdentityProvider):
         return User(username=username, name=user_info.pw_gecos or username)
 
 
-c = get_config()  # type: ignore
+c = get_config()  # type: ignore[name-defined]
 
 c.ServerApp.identity_provider_class = SystemPasswordIdentityProvider

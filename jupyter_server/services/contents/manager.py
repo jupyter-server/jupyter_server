@@ -466,7 +466,7 @@ class ContentsManager(LoggingConfigurable):
         """Rename a file or directory."""
         raise NotImplementedError
 
-    # ContentsManager API part 2: methods that have useable default
+    # ContentsManager API part 2: methods that have usable default
     # implementations, but can be overridden in subclasses.
 
     def delete(self, path):
@@ -868,7 +868,7 @@ class AsyncContentsManager(ContentsManager):
         """Rename a file or directory."""
         raise NotImplementedError
 
-    # ContentsManager API part 2: methods that have useable default
+    # ContentsManager API part 2: methods that have usable default
     # implementations, but can be overridden in subclasses.
 
     async def delete(self, path):

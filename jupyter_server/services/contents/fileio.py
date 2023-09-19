@@ -187,7 +187,7 @@ class FileManagerMixin(Configurable):
         True,
         config=True,
         help="""By default notebooks are saved on disk on a temporary file and then if succefully written, it replaces the old ones.
-      This procedure, namely 'atomic_writing', causes some bugs on file system whitout operation order enforcement (like some networked fs).
+      This procedure, namely 'atomic_writing', causes some bugs on file system without operation order enforcement (like some networked fs).
       If set to False, the new notebook is written directly on the old one which could fail (eg: full filesystem or quota )""",
     )
 
@@ -203,7 +203,7 @@ class FileManagerMixin(Configurable):
         Depending on flag 'use_atomic_writing', the wrapper perform an actual atomic writing or
         simply writes the file (whatever an old exists or not)"""
         with self.perm_to_403(os_path):
-            kwargs["log"] = self.log  # type:ignore
+            kwargs["log"] = self.log  # type:ignore[attr-defined]
             if self.use_atomic_writing:
                 with atomic_writing(os_path, *args, **kwargs) as f:
                     yield f
@@ -223,7 +223,7 @@ class FileManagerMixin(Configurable):
                 # but nobody should be doing that anyway.
                 if not os_path:
                     os_path = e.filename or "unknown file"
-                path = to_api_path(os_path, root=self.root_dir)  # type:ignore
+                path = to_api_path(os_path, root=self.root_dir)  # type:ignore[attr-defined]
                 raise HTTPError(403, "Permission denied: %s" % path) from e
             else:
                 raise
@@ -233,7 +233,7 @@ class FileManagerMixin(Configurable):
 
         like shutil.copy2, but log errors in copystat
         """
-        copy2_safe(src, dest, log=self.log)  # type:ignore
+        copy2_safe(src, dest, log=self.log)  # type:ignore[attr-defined]
 
     def _get_os_path(self, path):
         """Given an API path, return its file system path.
@@ -252,7 +252,7 @@ class FileManagerMixin(Configurable):
         ------
         404: if path is outside root
         """
-        root = os.path.abspath(self.root_dir)  # type:ignore
+        root = os.path.abspath(self.root_dir)  # type:ignore[attr-defined]
         # to_os_path is not safe if path starts with a drive, since os.path.join discards first part
         if os.path.splitdrive(path)[0]:
             raise HTTPError(404, "%s is not a relative API path" % path)
@@ -359,7 +359,7 @@ class AsyncFileManagerMixin(FileManagerMixin):
 
         like shutil.copy2, but log errors in copystat
         """
-        await async_copy2_safe(src, dest, log=self.log)  # type:ignore
+        await async_copy2_safe(src, dest, log=self.log)  # type:ignore[attr-defined]
 
     async def _read_notebook(self, os_path, as_version=4, capture_validation_error=None):
         """Read a notebook from an os path."""

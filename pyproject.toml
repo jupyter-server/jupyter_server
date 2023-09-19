@@ -104,7 +104,7 @@ nowarn = "test -W default {args}"
 
 [tool.hatch.envs.typing]
 features = ["test"]
-dependencies = [ "mypy>=0.990" ]
+dependencies = [ "mypy>=1.5.1" ]
 [tool.hatch.envs.typing.scripts]
 test = "mypy --install-types --non-interactive {args:.}"
 
@@ -261,7 +261,13 @@ unfixable = [
 "tests/unix_sockets/test_serverapp_integration.py" = ["S603", "S607"]
 
 [tool.pytest.ini_options]
-addopts = "-raXs --durations 10 --color=yes --doctest-modules"
+minversion = "6.0"
+xfail_strict = true
+log_cli_level = "info"
+addopts = [
+  "-raXs", "--durations=10", "--color=yes", "--doctest-modules",
+   "--showlocals", "--strict-markers", "--strict-config"
+]
 testpaths = [
     "tests/"
 ]
@@ -275,8 +281,8 @@ filterwarnings = [
   "always:unclosed <socket.socket:ResourceWarning",
   "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
   "ignore:jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0:DeprecationWarning",
-  "ignore:datetime.utcfromtimestamp:DeprecationWarning",
-  "ignore:datetime.utcnow:DeprecationWarning",
+  "ignore:datetime.datetime.utcfromtimestamp:DeprecationWarning",
+  "ignore:datetime.datetime.utcnow:DeprecationWarning",
   # from nbformat
   "ignore:Importing ErrorTree directly from the jsonschema package:DeprecationWarning",
   # From jupyter_events
@@ -318,10 +324,12 @@ no_implicit_optional = true
 pretty = true
 show_error_context = true
 show_error_codes = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 strict_equality = true
 warn_unused_configs = true
 warn_unused_ignores = true
 warn_redundant_casts = true
+warn_unreachable = true
 explicit_package_bases = true
 namespace_packages = true
 
@@ -337,3 +345,6 @@ exclude = ["docs", "test"]
 
 [tool.check-wheel-contents]
 ignore = ["W002"]
+
+[tool.repo-review]
+ignore = ["PY007", "PP308", "GH102", "PC140", "MY101"]

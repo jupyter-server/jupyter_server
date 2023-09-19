@@ -11,7 +11,7 @@ from threading import Thread
 from time import monotonic
 from typing import Any, Dict, Optional
 
-import websocket  # type:ignore
+import websocket  # type:ignore[import]
 from jupyter_client.asynchronous.client import AsyncKernelClient
 from jupyter_client.clientabc import KernelClientABC
 from jupyter_client.kernelspec import KernelSpecManager
@@ -99,7 +99,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         """
         model = None
         km = self.get_kernel(str(kernel_id))
-        if km:
+        if km:  # type:ignore[truthy-bool]
             model = km.kernel  # type:ignore[attr-defined]
         return model
 
@@ -678,7 +678,7 @@ class ChannelQueue(Queue):
 
 
 class HBChannelQueue(ChannelQueue):
-    """A queue for the hearbeat channel."""
+    """A queue for the heartbeat channel."""
 
     def is_beating(self) -> bool:
         """Whether the channel is beating."""

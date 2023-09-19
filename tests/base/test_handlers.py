@@ -85,8 +85,8 @@ async def test_authenticated_file_handler(jp_serverapp, tmpdir):
     for key in list(handler.settings):
         if key != "contents_manager":
             del handler.settings[key]
-    handler.check_xsrf_cookie = MagicMock()  # type:ignore
-    handler._jupyter_current_user = "foo"  # type:ignore
+    handler.check_xsrf_cookie = MagicMock()  # type:ignore[method-assign]
+    handler._jupyter_current_user = "foo"  # type:ignore[assignment]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         head = handler.head("foo")

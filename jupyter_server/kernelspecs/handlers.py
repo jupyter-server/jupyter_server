@@ -60,7 +60,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
     @web.authenticated
     @authorized
     async def head(self, kernel_name, path):
-        """Get the head infor for a kernel resource."""
+        """Get the head info for a kernel resource."""
         return await ensure_async(self.get(kernel_name, path, include_body=False))
 
 

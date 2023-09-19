@@ -450,8 +450,8 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                 "header": None,
             }
         else:
-            if isinstance(ws_msg, bytes):
-                msg = deserialize_binary_message(ws_msg)
+            if isinstance(ws_msg, bytes):  # type:ignore[unreachable]
+                msg = deserialize_binary_message(ws_msg)  # type:ignore[unreachable]
             else:
                 msg = json.loads(ws_msg)
             msg_list = []
@@ -468,7 +468,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         if am:
             msg["header"] = self.get_part("header", msg["header"], msg_list)
             assert msg["header"] is not None
-            if msg["header"]["msg_type"] not in am:
+            if msg["header"]["msg_type"] not in am:  # type:ignore[unreachable]
                 self.log.warning(
                     'Received message of type "%s", which is not allowed. Ignoring.'
                     % msg["header"]["msg_type"]
