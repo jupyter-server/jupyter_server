@@ -709,9 +709,9 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
 
     @property
     def login_available(self):
-        return self.login_handler_class.get_login_available(
+        return self.login_handler_class.get_login_available(  # type:ignore[attr-defined]
             self.settings
-        )  # type:ignore[attr-defined]
+        )
 
     def should_check_origin(self, handler: JupyterHandler) -> bool:
         """Whether we should check origin."""
@@ -734,6 +734,6 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
             self.log.critical(_i18n("Hint: run the following command to set a password"))
             self.log.critical(_i18n("\t$ python -m jupyter_server.auth password"))
             sys.exit(1)
-        return self.login_handler_class.validate_security(
+        return self.login_handler_class.validate_security(  # type:ignore[attr-defined]
             app, ssl_options
-        )  # type:ignore[attr-defined]
+        )
