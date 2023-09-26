@@ -85,6 +85,8 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         ),
     )
 
+    websocket_handler = Instance(KernelWebsocketHandler)
+
     @property
     def write_message(self):
         """Alias to the websocket handler's write_message method."""
