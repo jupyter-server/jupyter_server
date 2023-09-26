@@ -48,10 +48,9 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
     @default("root_dir")
     def _default_root_dir(self):
-        try:
-            return self.parent.root_dir
-        except AttributeError:
+        if not self.parent:
             return os.getcwd()
+        return self.parent.root_dir
 
     @validate("root_dir")
     def _validate_root_dir(self, proposal):
@@ -65,6 +64,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
     @default("preferred_dir")
     def _default_preferred_dir(self):
+        if not self.parent:
+            return ""
         try:
             value = self.parent.preferred_dir
             if value == self.parent.root_dir:

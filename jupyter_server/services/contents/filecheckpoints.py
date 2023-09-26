@@ -43,10 +43,9 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
     root_dir = Unicode(config=True)
 
     def _root_dir_default(self):
-        try:
-            return self.parent.root_dir
-        except AttributeError:
+        if not self.parent:
             return os.getcwd()
+        return self.parent.root_dir
 
     # ContentsManager-dependent checkpoint API
     def create_checkpoint(self, contents_mgr, path):
