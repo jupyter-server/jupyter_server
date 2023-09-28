@@ -221,8 +221,12 @@ explicit_package_bases = true
 strict = true
 pretty = true
 warn_unreachable = true
-disable_error_code = ["no-untyped-def", "no-untyped-call"]
+disable_error_code = ["no-untyped-def", "no-untyped-call", "unused-ignore"]
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+
+[[tool.mypy.overrides]]
+module = ["notebook.*", "pysqlite2.*", "overrides"]
+ignore_missing_imports = true
 
 [tool.interrogate]
 ignore-init-module=true

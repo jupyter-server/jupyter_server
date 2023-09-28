@@ -96,7 +96,7 @@ class ExtensionHandlerMixin:
         if template.environment is self.settings["jinja2_env"]:
             # default template environment, use default static_url
             ns["static_url"] = super().static_url  # type:ignore[misc]
-        return cast("str", template.render(**ns))
+        return template.render(**ns)
 
     @property
     def static_url_prefix(self) -> str:

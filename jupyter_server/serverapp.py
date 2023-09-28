@@ -391,7 +391,7 @@ class ServerWebApplication(web.Application):
             localedir=os.path.join(base_dir, "jupyter_server/i18n"),
             fallback=True,
         )
-        env.install_gettext_translations(nbui, newstyle=False)
+        env.install_gettext_translations(nbui, newstyle=False)  # type: ignore[attr-defined]
 
         if sys_info["commit_source"] == "repository":
             # don't cache (rely on 304) when working from master
