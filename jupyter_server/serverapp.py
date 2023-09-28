@@ -1879,21 +1879,25 @@ class ServerApp(JupyterApp):
         # this determination, instantiate the GatewayClient config singleton.
         self.gateway_config = GatewayClient.instance(parent=self)
 
-        if not issubclass(self.kernel_manager_class, AsyncMappingKernelManager):
+        if not issubclass(
+            self.kernel_manager_class, AsyncMappingKernelManager  # type:ignore[arg-type]
+        ):
             warnings.warn(
                 "The synchronous MappingKernelManager class is deprecated and will not be supported in Jupyter Server 3.0",
                 DeprecationWarning,
                 stacklevel=2,
             )
 
-        if not issubclass(self.contents_manager_class, AsyncContentsManager):
+        if not issubclass(
+            self.contents_manager_class, AsyncContentsManager  # type:ignore[arg-type]
+        ):
             warnings.warn(
                 "The synchronous ContentsManager classes are deprecated and will not be supported in Jupyter Server 3.0",
                 DeprecationWarning,
                 stacklevel=2,
             )
 
-        self.kernel_spec_manager = self.kernel_spec_manager_class(
+        self.kernel_spec_manager = self.kernel_spec_manager_class(  # type:ignore[operator]
             parent=self,
         )
 
@@ -1915,21 +1919,21 @@ class ServerApp(JupyterApp):
                 "because jupyter-client's version does not allow them (should be >8.3.0)."
             )
 
-        self.kernel_manager = self.kernel_manager_class(**kwargs)
-        self.contents_manager = self.contents_manager_class(
+        self.kernel_manager = self.kernel_manager_class(**kwargs)  # type:ignore[operator]
+        self.contents_manager = self.contents_manager_class(  # type:ignore[operator]
             parent=self,
             log=self.log,
         )
         # Trigger a default/validation here explicitly while we still support the
         # deprecated trait on ServerApp (FIXME remove when deprecation finalized)
         self.contents_manager.preferred_dir  # noqa
-        self.session_manager = self.session_manager_class(
+        self.session_manager = self.session_manager_class(  # type:ignore[operator]
             parent=self,
             log=self.log,
             kernel_manager=self.kernel_manager,
             contents_manager=self.contents_manager,
         )
-        self.config_manager = self.config_manager_class(
+        self.config_manager = self.config_manager_class(  # type:ignore[operator]
             parent=self,
             log=self.log,
         )
@@ -1958,7 +1962,9 @@ class ServerApp(JupyterApp):
                 f"Ignoring deprecated config ServerApp.login_handler_class={self.login_handler_class}."
                 " Superseded by ServerApp.identity_provider_class={self.identity_provider_class}."
             )
-        self.identity_provider = self.identity_provider_class(**identity_provider_kwargs)
+        self.identity_provider = self.identity_provider_class(
+            **identity_provider_kwargs
+        )  # type:ignore[operator]
 
         if self.identity_provider_class is LegacyIdentityProvider:
             # legacy config stored the password in tornado_settings
@@ -1979,7 +1985,7 @@ class ServerApp(JupyterApp):
                 # that means it has some config that should take higher priority than deprecated ServerApp.token
                 self.log.warning("Ignoring deprecated ServerApp.token config")
 
-        self.authorizer = self.authorizer_class(
+        self.authorizer = self.authorizer_class(  # type:ignore[operator]
             parent=self, log=self.log, identity_provider=self.identity_provider
         )
 
@@ -2100,7 +2106,7 @@ class ServerApp(JupyterApp):
         if not self.ssl_options:
             # could be an empty dict or None
             # None indicates no SSL config
-            self.ssl_options = None
+            self.ssl_options = None  # type:ignore[assignment]
         else:
             # SSL may be missing, so only import it if it's to be used
             import ssl
@@ -2130,7 +2136,7 @@ class ServerApp(JupyterApp):
         old_soft, old_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
         soft = self.min_open_files_limit
         hard = old_hard
-        if old_soft < soft:
+        if soft is not None and old_soft < soft:
             if hard < soft:
                 hard = soft
             self.log.debug(
@@ -2911,7 +2917,7 @@ class ServerApp(JupyterApp):
         await self.cleanup_extensions()
         await self.cleanup_kernels()
         try:
-            await self.kernel_websocket_connection_class.close_all()
+            await self.kernel_websocket_connection_class.close_all()  # type:ignore[attr-defined]
         except AttributeError:
             # This can happen in two different scenarios:
             #

@@ -156,7 +156,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
     @default("ws_url")
     def _ws_url_default(self):
         default_value = os.environ.get(self.ws_url_env)
-        if default_value is None and self.gateway_enabled:
+        if self.url is not None and default_value is None and self.gateway_enabled:
             default_value = self.url.lower().replace("http", "ws")
         return default_value
 
@@ -462,7 +462,7 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
     )
     gateway_token_renewer_class_env = "JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS"
     gateway_token_renewer_class = Type(
-        klass=GatewayTokenRenewerBase,
+        klass=GatewayTokenRenewerBase,  # type:ignore[type-abstract]
         config=True,
         help="""The class to use for Gateway token renewal. (JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS env var)""",
     )
@@ -546,7 +546,9 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         """Initialize a gateway client."""
         super().__init__(**kwargs)
         self._connection_args = {}  # initialized on first use
-        self.gateway_token_renewer = self.gateway_token_renewer_class(parent=self, log=self.log)
+        self.gateway_token_renewer = self.gateway_token_renewer_class(
+            parent=self, log=self.log
+        )  # type:ignore[operator]
 
         # store of cookies with store time
         self._cookies: ty.Dict[str, ty.Tuple[Morsel, datetime]] = {}
@@ -570,11 +572,12 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         # Ensure any adjustments are reflected in env.
         os.environ["KERNEL_LAUNCH_TIMEOUT"] = str(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
 
-        self._connection_args["headers"] = json.loads(self.headers)
-        if self.auth_header_key not in self._connection_args["headers"]:
-            self._connection_args["headers"].update(
-                {f"{self.auth_header_key}": f"{self.auth_scheme} {self.auth_token}"}
-            )
+        if self.headers:
+            self._connection_args["headers"] = json.loads(self.headers)
+            if self.auth_header_key not in self._connection_args["headers"]:
+                self._connection_args["headers"].update(
+                    {f"{self.auth_header_key}": f"{self.auth_scheme} {self.auth_token}"}
+                )
         self._connection_args["connect_timeout"] = self.connect_timeout
         self._connection_args["request_timeout"] = self.request_timeout
         self._connection_args["validate_cert"] = self.validate_cert
@@ -598,18 +601,19 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
 
         # Give token renewal a shot at renewing the token
         prev_auth_token = self.auth_token
-        try:
-            self.auth_token = self.gateway_token_renewer.get_token(
-                self.auth_header_key, self.auth_scheme, self.auth_token
-            )
-        except Exception as ex:
-            self.log.error(
-                f"An exception occurred attempting to renew the "
-                f"Gateway authorization token using an instance of class "
-                f"'{self.gateway_token_renewer_class}'.  The request will "
-                f"proceed using the current token value.  Exception was: {ex}"
-            )
-            self.auth_token = prev_auth_token
+        if self.auth_token:
+            try:
+                self.auth_token = self.gateway_token_renewer.get_token(
+                    self.auth_header_key, self.auth_scheme, self.auth_token
+                )
+            except Exception as ex:
+                self.log.error(
+                    f"An exception occurred attempting to renew the "
+                    f"Gateway authorization token using an instance of class "
+                    f"'{self.gateway_token_renewer_class}'.  The request will "
+                    f"proceed using the current token value.  Exception was: {ex}"
+                )
+                self.auth_token = prev_auth_token
 
         for arg, value in self._connection_args.items():
             if arg == "headers":

@@ -114,7 +114,7 @@ class TypeFromClasses(ClassBasedTraitType):
                 self.importable_klasses.append(klass)
 
         if isinstance(self.default_value, str):
-            self.default_value = self._resolve_string(self.default_value)
+            self.default_value = self._resolve_string(self.default_value)  # type:ignore[arg-type]
 
     def default_value_repr(self):
         """The default value repr."""

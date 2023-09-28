@@ -351,7 +351,7 @@ class ExtensionManager(LoggingConfigurable):
         """Load an extension by name."""
         extension = self.extensions.get(name)
 
-        if extension.enabled:
+        if extension and extension.enabled:
             try:
                 extension.load_all_points(self.serverapp)
             except Exception as e:

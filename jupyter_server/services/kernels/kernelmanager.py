@@ -72,10 +72,9 @@ class MappingKernelManager(MultiKernelManager):
 
     @default("root_dir")
     def _default_root_dir(self):
-        try:
-            return self.parent.root_dir
-        except AttributeError:
+        if not self.parent:
             return os.getcwd()
+        return self.parent.root_dir
 
     @validate("root_dir")
     def _update_root_dir(self, proposal):

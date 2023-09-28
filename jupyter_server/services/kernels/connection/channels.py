@@ -6,7 +6,7 @@ import weakref
 from concurrent.futures import Future
 from textwrap import dedent
 from typing import Dict as Dict_t
-from typing import MutableSet
+from typing import MutableSet, cast
 
 from jupyter_client import protocol_version as client_protocol_version
 from tornado import gen, web
@@ -84,6 +84,8 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         check the message and data rate limits."""
         ),
     )
+
+    websocket_handler = Instance(KernelWebsocketHandler)
 
     @property
     def write_message(self):
@@ -283,7 +285,9 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         if (
             self.kernel_id in self.multi_kernel_manager
         ):  # only update open sessions if kernel is actively managed
-            self._open_sessions[self.session_key] = self.websocket_handler
+            self._open_sessions[self.session_key] = cast(
+                KernelWebsocketHandler, self.websocket_handler
+            )
 
     async def prepare(self):
         """Prepare a kernel connection."""

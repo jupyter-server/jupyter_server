@@ -100,11 +100,12 @@ class ContentsManager(LoggingConfigurable):
             raise TraitError(e.log_message) from e
         if not dir_exists:
             raise TraitError(_i18n("Preferred directory not found: %r") % value)
-        try:
-            if value != self.parent.preferred_dir:
-                self.parent.preferred_dir = os.path.join(self.root_dir, *value.split("/"))
-        except (AttributeError, TraitError):
-            pass
+        if self.parent:
+            try:
+                if value != self.parent.preferred_dir:
+                    self.parent.preferred_dir = os.path.join(self.root_dir, *value.split("/"))
+            except TraitError:
+                pass
         return value
 
     allow_hidden = Bool(False, config=True, help="Allow access to hidden files")
@@ -324,7 +325,7 @@ class ContentsManager(LoggingConfigurable):
 
     @default("checkpoints")
     def _default_checkpoints(self):
-        return self.checkpoints_class(**self.checkpoints_kwargs)
+        return self.checkpoints_class(**self.checkpoints_kwargs)  # type:ignore[operator]
 
     @default("checkpoints_kwargs")
     def _default_checkpoints_kwargs(self):
@@ -760,7 +761,7 @@ class AsyncContentsManager(ContentsManager):
 
     @default("checkpoints")
     def _default_checkpoints(self):
-        return self.checkpoints_class(**self.checkpoints_kwargs)
+        return self.checkpoints_class(**self.checkpoints_kwargs)  # type:ignore[operator]
 
     @default("checkpoints_kwargs")
     def _default_checkpoints_kwargs(self):

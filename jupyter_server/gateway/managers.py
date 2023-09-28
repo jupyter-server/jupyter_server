@@ -236,6 +236,8 @@ class GatewayKernelSpecManager(KernelSpecManager):
         This enables clients to properly route through jupyter_server to a gateway
         for kernel resources such as logo files
         """
+        if not self.parent:
+            return {}
         kernelspecs = kernel_specs["kernelspecs"]
         for kernel_name in kernelspecs:
             resources = kernelspecs[kernel_name]["resources"]
@@ -273,6 +275,8 @@ class GatewayKernelSpecManager(KernelSpecManager):
         # If different log a warning and reset the default.  However, the
         # caller of this method will still return this server's value until
         # the next fetch of kernelspecs - at which time they'll match.
+        if not self.parent:
+            return {}
         km = self.parent.kernel_manager
         remote_default_kernel_name = fetched_kspecs.get("default")
         if remote_default_kernel_name != km.default_kernel_name:
@@ -416,7 +420,7 @@ class GatewayKernelManager(ServerKernelManager):
 
         # add kwargs last, for manual overrides
         kw.update(kwargs)
-        return self.client_factory(**kw)
+        return self.client_factory(**kw)  # type:ignore[operator]
 
     async def refresh_model(self, model=None):
         """Refresh the kernel model.

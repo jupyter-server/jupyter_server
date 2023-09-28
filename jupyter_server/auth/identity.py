@@ -702,22 +702,24 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
 
     def get_user(self, handler: JupyterHandler) -> User | None:
         """Get the user."""
-        user = self.login_handler_class.get_user(handler)
+        user = self.login_handler_class.get_user(handler)  # type:ignore[attr-defined]
         if user is None:
             return None
         return _backward_compat_user(user)
 
     @property
     def login_available(self):
-        return self.login_handler_class.get_login_available(self.settings)
+        return self.login_handler_class.get_login_available(  # type:ignore[attr-defined]
+            self.settings
+        )
 
     def should_check_origin(self, handler: JupyterHandler) -> bool:
         """Whether we should check origin."""
-        return self.login_handler_class.should_check_origin(handler)
+        return self.login_handler_class.should_check_origin(handler)  # type:ignore[attr-defined]
 
     def is_token_authenticated(self, handler: JupyterHandler) -> bool:
         """Whether we are token authenticated."""
-        return self.login_handler_class.is_token_authenticated(handler)
+        return self.login_handler_class.is_token_authenticated(handler)  # type:ignore[attr-defined]
 
     def validate_security(
         self,
@@ -732,4 +734,6 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
             self.log.critical(_i18n("Hint: run the following command to set a password"))
             self.log.critical(_i18n("\t$ python -m jupyter_server.auth password"))
             sys.exit(1)
-        return self.login_handler_class.validate_security(app, ssl_options)
+        return self.login_handler_class.validate_security(  # type:ignore[attr-defined]
+            app, ssl_options
+        )

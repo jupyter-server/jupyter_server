@@ -44,7 +44,8 @@ class SubscribeWebsocket(
         """Get an event socket."""
         self.pre_get()
         res = super().get(*args, **kwargs)
-        await res
+        if res is not None:
+            await res
 
     async def event_listener(self, logger: EventLogger, schema_id: str, data: dict) -> None:
         """Write an event message."""
