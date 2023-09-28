@@ -155,7 +155,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.channels[channel] = stream = meth(identity=identity)
             stream.channel = channel
 
-    def nudge(self):
+    def nudge(self) -> asyncio.Future[None]:
         """Nudge the zmq connections with kernel_info_requests
         Returns a Future that will resolve when we have received
         a shell or control reply and at least one iopub message,
@@ -171,7 +171,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # establishing its zmq subscriptions before processing the next request.
         if getattr(self.kernel_manager, "execution_state", None) == "busy":
             self.log.debug("Nudge: not nudging busy kernel %s", self.kernel_id)
-            f: asyncio.Future[t.Any] = asyncio.Future()
+            f: asyncio.Future[None] = asyncio.Future()
             f.set_result(None)
             return f
         # Use a transient shell channel to prevent leaking
@@ -365,8 +365,15 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # actually wait for it
         await asyncio.wrap_future(future)
 
-    def connect(self):
-        """Handle a connection."""
+    def connect(self) -> asyncio.Future[None] | None:
+        """Handle a connection.
+
+        Returns the Future from :meth:`nudge` (which resolves once the
+        kernel is responsive and stream subscriptions/replay callbacks
+        have been wired up), or ``None`` if the connection failed and
+        was disconnected. Callers should ``await`` the returned Future
+        before relying on the connection being live.
+        """
         self.multi_kernel_manager.notify_connect(self.kernel_id)
 
         # on new connections, flush the message buffer

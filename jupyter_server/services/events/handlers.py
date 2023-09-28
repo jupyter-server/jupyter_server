@@ -87,7 +87,7 @@ def validate_model(
     # handle that case here.
     schema = registry.get(schema_id)
     version = str(cast("str", data.get("version")))
-    if schema.version != version:
+    if str(schema.version) != version:
         message = f"Unregistered version: {version!r}≠{schema.version!r} for `{schema_id}`"
         raise Exception(message)
 
