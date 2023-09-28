@@ -70,6 +70,33 @@ def log():
 class AuthenticatedHandler(web.RequestHandler):
     """A RequestHandler with an authenticated user."""
 
+    @staticmethod
+    def public(method):
+        """ """
+        method.jupyter_server_public = True
+        return method
+
+    def __init_subclass__(cls, /, **kwargs):
+        """
+        We want methods to be authenticated by default as it's safer.
+
+        Thus we use this to automatically look for the right methods and
+        wrap them in @web.authenticated and @authenticated.
+
+        We can mark a route to not be authenticated/authorized by using the
+        @public decorator or mark the function with the
+        ``jupyter_server_public=True`` attribute.
+        """
+        super().__init_subclass__(**kwargs)
+        for method_name in ["get", "head", "post", "put", "patch", "delete"]:
+            meth = getattr(cls, method_name, None)
+            # maybe look at f.__code__.co_filename and if ends with web.py
+            # say it's not necessary to use web authenticated ?
+            if meth is None:
+                continue
+            if not getattr(meth, "jupyter_server_public", False):
+                setattr(cls, method_name, web.authenticated(authorized(meth)))
+
     @property
     def base_url(self) -> str:
         return self.settings.get("base_url", "/")
