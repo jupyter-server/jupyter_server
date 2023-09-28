@@ -219,6 +219,19 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path=path)
         return exists(os_path)
 
+    def resolve_path(self, path: str):
+        """Resolve path relative to root resource."""
+        # transform OS path to API path
+        relative_path = to_api_path(path, self.root_dir)
+        # check if the API path is within contents directory
+        try:
+            os_path = self._get_os_path(path=relative_path)
+        except web.HTTPError:
+            return None
+        if exists(os_path):
+            return relative_path
+        return None
+
     def _base_model(self, path):
         """Build the common base of a contents model"""
         os_path = self._get_os_path(path)

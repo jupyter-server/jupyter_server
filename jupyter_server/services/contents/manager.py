@@ -873,6 +873,10 @@ class AsyncContentsManager(ContentsManager):
     # ContentsManager API part 2: methods that have useable default
     # implementations, but can be overridden in subclasses.
 
+    async def resolve_path(self, path: str):
+        """Resolve path relative to root resource."""
+        return None
+
     async def delete(self, path):
         """Delete a file/directory and any associated checkpoints."""
         path = path.strip("/")

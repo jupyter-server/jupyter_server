@@ -105,8 +105,41 @@ class IdentityHandler(APIHandler):
         self.write(json.dumps(model))
 
 
+class PathResolverHandler(APIHandler):
+    """Path resolver handler."""
+
+    auth_resource = AUTH_RESOURCE
+    _track_activity = False
+
+    @web.authenticated
+    @authorized
+    async def get(self):
+        """Resolve the path."""
+        path = self.get_query_argument("path")
+        kernel_uuid = self.get_query_argument("kernel", default=None)
+
+        scopes = [
+            self.contents_manager,
+            # TODO vs multi_kernel_manager?
+            # TODO: kernel lives in client so we may need to implement it there.
+            self.kernel_manager.get_kernel(kernel_uuid),
+            # *self.get_additional_scopes(kernel_uuid)
+        ]
+        # TODO: maybe client should be able to define their own scope? this way
+        # ipykernel can return {"scope": "source"} or {scope: 'kernel'}
+        # TODO: how to plug in the additional scopes? a traitlet? maybe...
+        resolved = [
+            {"scope": scope, "path": await scope.resolve_path(path)}
+            for scope in scopes
+            if hasattr(scope, "resolve_path")
+        ]
+        response = {"resolved": [entry for entry in resolved if entry["path"] is not None]}
+        self.finish(json.dumps(response))
+
+
 default_handlers = [
     (r"/api/spec.yaml", APISpecHandler),
     (r"/api/status", APIStatusHandler),
     (r"/api/me", IdentityHandler),
+    (r"/api/resolvePath", PathResolverHandler),
 ]
