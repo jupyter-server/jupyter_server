@@ -3,19 +3,21 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from functools import wraps
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Optional, TypeVar, Union, cast
 
 from tornado.log import app_log
 from tornado.web import HTTPError
 
 from .utils import HTTP_METHOD_TO_AUTH_ACTION
 
+FuncT = TypeVar("FuncT", bound=Callable[..., Any])
+
 
 def authorized(
-    action: Optional[Union[str, Callable]] = None,
+    action: Optional[Union[str, FuncT]] = None,
     resource: Optional[str] = None,
     message: Optional[str] = None,
-) -> Callable:
+) -> FuncT:
     """A decorator for tornado.web.RequestHandler methods
     that verifies whether the current user is authorized
     to make the following request.
@@ -73,4 +75,4 @@ def authorized(
         # no-arguments `@authorized` decorator called
         return wrapper(method)
 
-    return wrapper
+    return cast(FuncT, wrapper)

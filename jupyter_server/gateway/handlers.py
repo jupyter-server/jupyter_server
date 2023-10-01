@@ -289,7 +289,9 @@ class GatewayResourceHandler(APIHandler):
         """Get a gateway resource by name and path."""
         mimetype: Optional[str] = None
         ksm = self.kernel_spec_manager
-        kernel_spec_res = await ksm.get_kernel_spec_resource(kernel_name, path)
+        kernel_spec_res = await ksm.get_kernel_spec_resource(  # type:ignore[attr-defined]
+            kernel_name, path
+        )
         if kernel_spec_res is None:
             self.log.warning(
                 "Kernelspec resource '{}' for '{}' not found.  Gateway may not support"

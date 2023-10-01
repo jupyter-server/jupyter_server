@@ -53,7 +53,9 @@ class MainKernelHandler(KernelsAPIHandler):
             model.setdefault("name", km.default_kernel_name)
 
         kernel_id = await ensure_async(
-            km.start_kernel(kernel_name=model["name"], path=model.get("path"))
+            km.start_kernel(
+                kernel_name=model["name"], path=model.get("path")
+            )  # type:ignore[has-type]
         )
         model = await ensure_async(km.kernel_model(kernel_id))
         location = url_path_join(self.base_url, "api", "kernels", url_escape(kernel_id))
@@ -92,7 +94,7 @@ class KernelActionHandler(KernelsAPIHandler):
         """Interrupt or restart a kernel."""
         km = self.kernel_manager
         if action == "interrupt":
-            await ensure_async(km.interrupt_kernel(kernel_id))
+            km.interrupt_kernel(kernel_id)
             self.set_status(204)
         if action == "restart":
             try:

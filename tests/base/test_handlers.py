@@ -50,8 +50,8 @@ def test_jupyter_handler(jp_serverapp):
     handler.settings["mathjax_config"] = "bar"
     assert handler.mathjax_url == "/foo"
     assert handler.mathjax_config == "bar"
-    handler.settings["terminal_manager"] = "fizz"
-    assert handler.terminal_manager == "fizz"
+    handler.settings["terminal_manager"] = None
+    assert handler.terminal_manager is None
     handler.settings["allow_origin"] = True
     handler.set_cors_headers()
     handler.settings["allow_origin"] = False

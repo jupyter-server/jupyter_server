@@ -14,7 +14,8 @@ import traceback
 import types
 import warnings
 from http.client import responses
-from typing import TYPE_CHECKING, Awaitable
+from logging import Logger
+from typing import TYPE_CHECKING, Any, Awaitable, Sequence, cast
 from urllib.parse import urlparse
 
 import prometheus_client
@@ -42,7 +43,17 @@ from jupyter_server.utils import (
 )
 
 if TYPE_CHECKING:
-    from jupyter_server.auth.identity import User
+    from jupyter_client.kernelspec import KernelSpecManager
+    from jupyter_server_terminals.terminalmanager import TerminalManager
+    from tornado.concurrent import Future
+
+    from jupyter_server.auth.authorizer import Authorizer
+    from jupyter_server.auth.identity import IdentityProvider, User
+    from jupyter_server.serverapp import ServerApp
+    from jupyter_server.services.config.manager import ConfigManager
+    from jupyter_server.services.contents.manager import ContentsManager
+    from jupyter_server.services.kernels.kernelmanager import MappingKernelManager
+    from jupyter_server.services.sessions.sessionmanager import SessionManager
 
 # -----------------------------------------------------------------------------
 # Top-level handlers
@@ -59,7 +70,7 @@ def json_sys_info():
     return _sys_info_cache
 
 
-def log():
+def log() -> Logger:
     """Get the application log."""
     if Application.initialized():
         return Application.instance().log
@@ -75,7 +86,7 @@ class AuthenticatedHandler(web.RequestHandler):
         return self.settings.get("base_url", "/")
 
     @property
-    def content_security_policy(self):
+    def content_security_policy(self) -> str:
         """The default Content-Security-Policy header
 
         Can be overridden by defining Content-Security-Policy in settings['headers']
@@ -93,7 +104,7 @@ class AuthenticatedHandler(web.RequestHandler):
             ]
         )
 
-    def set_default_headers(self):
+    def set_default_headers(self) -> None:
         """Set the default headers."""
         headers = {}
         headers["X-Content-Type-Options"] = "nosniff"
@@ -114,7 +125,7 @@ class AuthenticatedHandler(web.RequestHandler):
                 )
 
     @property
-    def cookie_name(self):
+    def cookie_name(self) -> str:
         warnings.warn(
             """JupyterHandler.login_handler is deprecated in 2.0,
             use JupyterHandler.identity_provider.
@@ -124,7 +135,7 @@ class AuthenticatedHandler(web.RequestHandler):
         )
         return self.identity_provider.get_cookie_name(self)
 
-    def force_clear_cookie(self, name, path="/", domain=None):
+    def force_clear_cookie(self, name: str, path: str = "/", domain: str | None = None) -> None:
         """Force a cookie clear."""
         warnings.warn(
             """JupyterHandler.login_handler is deprecated in 2.0,
@@ -133,9 +144,9 @@ class AuthenticatedHandler(web.RequestHandler):
             DeprecationWarning,
             stacklevel=2,
         )
-        return self.identity_provider._force_clear_cookie(self, name, path=path, domain=domain)
+        self.identity_provider._force_clear_cookie(self, name, path=path, domain=domain)
 
-    def clear_login_cookie(self):
+    def clear_login_cookie(self) -> None:
         """Clear a login cookie."""
         warnings.warn(
             """JupyterHandler.login_handler is deprecated in 2.0,
@@ -144,9 +155,9 @@ class AuthenticatedHandler(web.RequestHandler):
             DeprecationWarning,
             stacklevel=2,
         )
-        return self.identity_provider.clear_login_cookie(self)
+        self.identity_provider.clear_login_cookie(self)
 
-    def get_current_user(self):
+    def get_current_user(self) -> str:
         """Get the current user."""
         clsname = self.__class__.__name__
         msg = (
@@ -164,7 +175,7 @@ class AuthenticatedHandler(web.RequestHandler):
         # haven't called get_user in prepare, raise
         raise RuntimeError(msg)
 
-    def skip_check_origin(self):
+    def skip_check_origin(self) -> bool:
         """Ask my login_handler if I should skip the origin_check
 
         For example: in the default LoginHandler, if a request is token-authenticated,
@@ -176,18 +187,18 @@ class AuthenticatedHandler(web.RequestHandler):
         return not self.identity_provider.should_check_origin(self)
 
     @property
-    def token_authenticated(self):
+    def token_authenticated(self) -> bool:
         """Have I been authenticated with a token?"""
         return self.identity_provider.is_token_authenticated(self)
 
     @property
-    def logged_in(self):
+    def logged_in(self) -> bool:
         """Is a user currently logged in?"""
         user = self.current_user
         return user and user != "anonymous"
 
     @property
-    def login_handler(self):
+    def login_handler(self) -> Any:
         """Return the login handler for this application, if any."""
         warnings.warn(
             """JupyterHandler.login_handler is deprecated in 2.0,
@@ -199,12 +210,12 @@ class AuthenticatedHandler(web.RequestHandler):
         return self.identity_provider.login_handler_class
 
     @property
-    def token(self):
+    def token(self) -> str | None:
         """Return the login token for this application, if any."""
         return self.identity_provider.token
 
     @property
-    def login_available(self):
+    def login_available(self) -> bool:
         """May a user proceed to log in?
 
         This returns True if login capability is available, irrespective of
@@ -214,7 +225,7 @@ class AuthenticatedHandler(web.RequestHandler):
         return self.identity_provider.login_available
 
     @property
-    def authorizer(self):
+    def authorizer(self) -> Authorizer:
         if "authorizer" not in self.settings:
             warnings.warn(
                 "The Tornado web application does not have an 'authorizer' defined "
@@ -234,10 +245,10 @@ class AuthenticatedHandler(web.RequestHandler):
                 identity_provider=self.identity_provider,
             )
 
-        return self.settings.get("authorizer")
+        return cast(Authorizer, self.settings.get("authorizer"))
 
     @property
-    def identity_provider(self):
+    def identity_provider(self) -> IdentityProvider:
         if "identity_provider" not in self.settings:
             warnings.warn(
                 "The Tornado web application does not have an 'identity_provider' defined "
@@ -265,21 +276,21 @@ class JupyterHandler(AuthenticatedHandler):
     """
 
     @property
-    def config(self):
+    def config(self) -> dict[str, Any] | None:
         return self.settings.get("config", None)
 
     @property
-    def log(self):
+    def log(self) -> Logger:
         """use the Jupyter log by default, falling back on tornado's logger"""
         return log()
 
     @property
-    def jinja_template_vars(self):
+    def jinja_template_vars(self) -> dict[str, Any]:
         """User-supplied values to supply to jinja templates."""
         return self.settings.get("jinja_template_vars", {})
 
     @property
-    def serverapp(self):
+    def serverapp(self) -> ServerApp | None:
         return self.settings["serverapp"]
 
     # ---------------------------------------------------------------
@@ -287,31 +298,31 @@ class JupyterHandler(AuthenticatedHandler):
     # ---------------------------------------------------------------
 
     @property
-    def version_hash(self):
+    def version_hash(self) -> str:
         """The version hash to use for cache hints for static files"""
         return self.settings.get("version_hash", "")
 
     @property
-    def mathjax_url(self):
+    def mathjax_url(self) -> str:
         url = self.settings.get("mathjax_url", "")
         if not url or url_is_absolute(url):
             return url
         return url_path_join(self.base_url, url)
 
     @property
-    def mathjax_config(self):
+    def mathjax_config(self) -> str:
         return self.settings.get("mathjax_config", "TeX-AMS-MML_HTMLorMML-full,Safe")
 
     @property
-    def default_url(self):
+    def default_url(self) -> str:
         return self.settings.get("default_url", "")
 
     @property
-    def ws_url(self):
+    def ws_url(self) -> str:
         return self.settings.get("websocket_url", "")
 
     @property
-    def contents_js_source(self):
+    def contents_js_source(self) -> str:
         self.log.debug(
             "Using contents: %s",
             self.settings.get("contents_js_source", "services/contents"),
@@ -323,27 +334,27 @@ class JupyterHandler(AuthenticatedHandler):
     # ---------------------------------------------------------------
 
     @property
-    def kernel_manager(self):
+    def kernel_manager(self) -> MappingKernelManager:
         return self.settings["kernel_manager"]
 
     @property
-    def contents_manager(self):
+    def contents_manager(self) -> ContentsManager:
         return self.settings["contents_manager"]
 
     @property
-    def session_manager(self):
+    def session_manager(self) -> SessionManager:
         return self.settings["session_manager"]
 
     @property
-    def terminal_manager(self):
+    def terminal_manager(self) -> TerminalManager:
         return self.settings["terminal_manager"]
 
     @property
-    def kernel_spec_manager(self):
+    def kernel_spec_manager(self) -> KernelSpecManager:
         return self.settings["kernel_spec_manager"]
 
     @property
-    def config_manager(self):
+    def config_manager(self) -> ConfigManager:
         return self.settings["config_manager"]
 
     @property
@@ -355,25 +366,25 @@ class JupyterHandler(AuthenticatedHandler):
     # ---------------------------------------------------------------
 
     @property
-    def allow_origin(self):
+    def allow_origin(self) -> str:
         """Normal Access-Control-Allow-Origin"""
         return self.settings.get("allow_origin", "")
 
     @property
-    def allow_origin_pat(self):
+    def allow_origin_pat(self) -> str:
         """Regular expression version of allow_origin"""
         return self.settings.get("allow_origin_pat", None)
 
     @property
-    def allow_credentials(self):
+    def allow_credentials(self) -> bool:
         """Whether to set Access-Control-Allow-Credentials"""
         return self.settings.get("allow_credentials", False)
 
-    def set_default_headers(self):
+    def set_default_headers(self) -> None:
         """Add CORS headers, if defined"""
         super().set_default_headers()
 
-    def set_cors_headers(self):
+    def set_cors_headers(self) -> None:
         """Add CORS headers, if defined
 
         Now that current_user is async (jupyter-server 2.0),
@@ -395,7 +406,7 @@ class JupyterHandler(AuthenticatedHandler):
         if self.allow_credentials:
             self.set_header("Access-Control-Allow-Credentials", "true")
 
-    def set_attachment_header(self, filename):
+    def set_attachment_header(self, filename: str) -> None:
         """Set Content-Disposition: attachment header
 
         As a method to ensure handling of filename encoding
@@ -406,7 +417,7 @@ class JupyterHandler(AuthenticatedHandler):
             f"attachment; filename*=utf-8''{escaped_filename}",
         )
 
-    def get_origin(self):
+    def get_origin(self) -> str | None:
         # Handle WebSocket Origin naming convention differences
         # The difference between version 8 and 13 is that in 8 the
         # client sends a "Sec-Websocket-Origin" header and in 13 it's
@@ -419,7 +430,7 @@ class JupyterHandler(AuthenticatedHandler):
 
     # origin_to_satisfy_tornado is present because tornado requires
     # check_origin to take an origin argument, but we don't use it
-    def check_origin(self, origin_to_satisfy_tornado=""):
+    def check_origin(self, origin_to_satisfy_tornado: str = "") -> bool:
         """Check Origin for cross-site API requests, including websockets
 
         Copied from WebSocket with changes:
@@ -466,7 +477,7 @@ class JupyterHandler(AuthenticatedHandler):
             )
         return allow
 
-    def check_referer(self):
+    def check_referer(self) -> bool:
         """Check Referer for cross-site requests.
         Disables requests to certain endpoints with
         external or missing Referer.
@@ -512,7 +523,7 @@ class JupyterHandler(AuthenticatedHandler):
             )
         return allow
 
-    def check_xsrf_cookie(self):
+    def check_xsrf_cookie(self) -> None:
         """Bypass xsrf cookie checks when token-authenticated"""
         if not hasattr(self, "_jupyter_current_user"):
             # Called too early, will be checked later
@@ -536,7 +547,7 @@ class JupyterHandler(AuthenticatedHandler):
             else:
                 raise
 
-    def check_host(self):
+    def check_host(self) -> bool:
         """Check the host header if remote access disallowed.
 
         Returns True if the request should continue, False otherwise.
@@ -578,7 +589,7 @@ class JupyterHandler(AuthenticatedHandler):
             )
         return allow
 
-    async def prepare(self):
+    async def prepare(self) -> None:
         """Prepare a response."""
         # Set the current Jupyter Handler context variable.
         CallContext.set(CallContext.JUPYTER_HANDLER, self)
@@ -603,7 +614,7 @@ class JupyterHandler(AuthenticatedHandler):
                 DeprecationWarning
                 # stacklevel not useful here
             )
-            user = self.get_current_user()
+            user = User(self.get_current_user())
         else:
             _user = self.identity_provider.get_user(self)
             if isinstance(_user, Awaitable):
@@ -619,7 +630,9 @@ class JupyterHandler(AuthenticatedHandler):
         self.set_cors_headers()
         if self.request.method not in {"GET", "HEAD", "OPTIONS"}:
             self.check_xsrf_cookie()
-        return super().prepare()
+        prep = super().prepare()
+        if isinstance(prep, Awaitable):
+            await prep
 
     # ---------------------------------------------------------------
     # template rendering
@@ -636,7 +649,7 @@ class JupyterHandler(AuthenticatedHandler):
         return template.render(**ns)
 
     @property
-    def template_namespace(self):
+    def template_namespace(self) -> dict[str, Any]:
         return dict(
             base_url=self.base_url,
             default_url=self.default_url,
@@ -659,7 +672,7 @@ class JupyterHandler(AuthenticatedHandler):
             **self.jinja_template_vars,
         )
 
-    def get_json_body(self):
+    def get_json_body(self) -> dict[str, Any] | None:
         """Return the body of the request as JSON data."""
         if not self.request.body:
             return None
@@ -673,7 +686,7 @@ class JupyterHandler(AuthenticatedHandler):
             raise web.HTTPError(400, "Invalid JSON in body of request") from e
         return model
 
-    def write_error(self, status_code, **kwargs):
+    def write_error(self, status_code: int, **kwargs: Any) -> None:
         """render custom error pages"""
         exc_info = kwargs.get("exc_info")
         message = ""
@@ -715,13 +728,13 @@ class JupyterHandler(AuthenticatedHandler):
 class APIHandler(JupyterHandler):
     """Base class for API handlers"""
 
-    async def prepare(self):
+    async def prepare(self) -> None:
         """Prepare an API response."""
         await super().prepare()
         if not self.check_origin():
             raise web.HTTPError(404)
 
-    def write_error(self, status_code, **kwargs):
+    def write_error(self, status_code: int, **kwargs: Any) -> None:
         """APIHandler errors are JSON, not human pages"""
         self.set_header("Content-Type", "application/json")
         message = responses.get(status_code, "Unknown HTTP Error")
@@ -741,7 +754,7 @@ class APIHandler(JupyterHandler):
         self.log.warning("wrote error: %r", reply["message"], exc_info=True)
         self.finish(json.dumps(reply))
 
-    def get_login_url(self):
+    def get_login_url(self) -> str:
         """Get the login url."""
         # if get_login_url is invoked in an API handler,
         # that means @web.authenticated is trying to trigger a redirect.
@@ -751,7 +764,7 @@ class APIHandler(JupyterHandler):
         return super().get_login_url()
 
     @property
-    def content_security_policy(self):
+    def content_security_policy(self) -> str:
         csp = "; ".join(
             [
                 super().content_security_policy,
@@ -763,7 +776,7 @@ class APIHandler(JupyterHandler):
     # set _track_activity = False on API handlers that shouldn't track activity
     _track_activity = True
 
-    def update_api_activity(self):
+    def update_api_activity(self) -> None:
         """Update last_activity of API requests"""
         # record activity of authenticated requests
         if (
@@ -773,7 +786,7 @@ class APIHandler(JupyterHandler):
         ):
             self.settings["api_last_activity"] = utcnow()
 
-    def finish(self, *args, **kwargs):
+    def finish(self, *args: Any, **kwargs: Any) -> Future[Any]:
         """Finish an API response."""
         self.update_api_activity()
         # Allow caller to indicate content-type...
@@ -781,7 +794,7 @@ class APIHandler(JupyterHandler):
         self.set_header("Content-Type", set_content_type)
         return super().finish(*args, **kwargs)
 
-    def options(self, *args, **kwargs):
+    def options(self, *args: Any, **kwargs: Any) -> None:
         """Get the options."""
         if "Access-Control-Allow-Headers" in self.settings.get("headers", {}):
             self.set_header(
@@ -824,7 +837,7 @@ class APIHandler(JupyterHandler):
 class Template404(JupyterHandler):
     """Render our 404 template"""
 
-    async def prepare(self):
+    async def prepare(self) -> None:
         """Prepare a 404 response."""
         await super().prepare()
         raise web.HTTPError(404)
@@ -836,30 +849,32 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
     auth_resource = "contents"
 
     @property
-    def content_security_policy(self):
+    def content_security_policy(self) -> str:
         # In case we're serving HTML/SVG, confine any Javascript to a unique
         # origin so it can't interact with the Jupyter server.
         return super().content_security_policy + "; sandbox allow-scripts"
 
     @web.authenticated
     @authorized
-    def head(self, path):
+    def head(self, path: str) -> Awaitable[None]:  # type:ignore[override]
         """Get the head response for a path."""
         self.check_xsrf_cookie()
         return super().head(path)
 
     @web.authenticated
     @authorized
-    def get(self, path, **kwargs):
+    def get(
+        self, path: str, include_body: bool = False
+    ) -> Awaitable[None]:  # type:ignore[override]
         """Get a file by path."""
         self.check_xsrf_cookie()
         if os.path.splitext(path)[1] == ".ipynb" or self.get_argument("download", None):
             name = path.rsplit("/", 1)[-1]
             self.set_attachment_header(name)
 
-        return web.StaticFileHandler.get(self, path, **kwargs)
+        return web.StaticFileHandler.get(self, path, include_body=include_body)
 
-    def get_content_type(self):
+    def get_content_type(self) -> str:
         """Get the content type."""
         assert self.absolute_path is not None
         path = self.absolute_path.strip("/")
@@ -876,18 +891,18 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
             else:
                 return super().get_content_type()
 
-    def set_headers(self):
+    def set_headers(self) -> None:
         """Set the headers."""
         super().set_headers()
         # disable browser caching, rely on 304 replies for savings
         if "v" not in self.request.arguments:
             self.add_header("Cache-Control", "no-cache")
 
-    def compute_etag(self):
+    def compute_etag(self) -> str | None:
         """Compute the etag."""
         return None
 
-    def validate_absolute_path(self, root, absolute_path):
+    def validate_absolute_path(self, root: str, absolute_path: str) -> str:
         """Validate and return the absolute path.
 
         Requires tornado 3.1
@@ -905,7 +920,7 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
         return abs_path
 
 
-def json_errors(method):  # pragma: no cover
+def json_errors(method: Any) -> Any:  # pragma: no cover
     """Decorate methods with this to return GitHub style JSON errors.
 
     This should be used on any JSON API on any handler method that can raise HTTPErrors.
@@ -949,10 +964,10 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
     """
 
     # cache search results, don't search for files more than once
-    _static_paths: dict = {}
-    root: tuple  # type:ignore[assignment]
+    _static_paths: dict[str, Any] = {}
+    root: tuple[str]  # type:ignore[assignment]
 
-    def set_headers(self):
+    def set_headers(self) -> None:
         """Set the headers."""
         super().set_headers()
 
@@ -968,22 +983,29 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
         ):
             self.set_header("Cache-Control", "no-cache")
 
-    def initialize(self, path, default_filename=None, no_cache_paths=None):
+    def initialize(
+        self,
+        path: str | list[str],
+        default_filename: str | None = None,
+        no_cache_paths: list[str] | None = None,
+    ) -> None:
         """Initialize the file find handler."""
         self.no_cache_paths = no_cache_paths or []
 
         if isinstance(path, str):
             path = [path]
 
-        self.root = tuple(os.path.abspath(os.path.expanduser(p)) + os.sep for p in path)
+        self.root = tuple(
+            os.path.abspath(os.path.expanduser(p)) + os.sep for p in path
+        )  # type:ignore[assignment]
         self.default_filename = default_filename
 
-    def compute_etag(self):
+    def compute_etag(self) -> str | None:
         """Compute the etag."""
         return None
 
     @classmethod
-    def get_absolute_path(cls, roots, path):
+    def get_absolute_path(cls, roots: Sequence[str], path: str) -> str:
         """locate a file to serve on our static file search path"""
         with cls._lock:
             if path in cls._static_paths:
@@ -999,7 +1021,7 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
             log().debug(f"Path {path} served from {abspath}")
             return abspath
 
-    def validate_absolute_path(self, root, absolute_path):
+    def validate_absolute_path(self, root: str, absolute_path: str) -> str | None:
         """check if the file should be served (raises 404, 403, etc.)"""
         if not absolute_path:
             raise web.HTTPError(404)
@@ -1016,7 +1038,7 @@ class APIVersionHandler(APIHandler):
 
     _track_activity = False
 
-    def get(self):
+    def get(self) -> None:
         """Get the server version info."""
         # not authenticated, so give as few info as possible
         self.finish(json.dumps({"version": jupyter_server.__version__}))
@@ -1028,7 +1050,7 @@ class TrailingSlashHandler(web.RequestHandler):
     This should be the first, highest priority handler.
     """
 
-    def get(self):
+    def get(self) -> None:
         """Handle trailing slashes in a get."""
         assert self.request.uri is not None
         path, *rest = self.request.uri.partition("?")
@@ -1044,7 +1066,7 @@ class TrailingSlashHandler(web.RequestHandler):
 class MainHandler(JupyterHandler):
     """Simple handler for base_url."""
 
-    def get(self):
+    def get(self) -> None:
         """Get the main template."""
         html = self.render_template("main.html")
         self.write(html)
@@ -1056,7 +1078,7 @@ class FilesRedirectHandler(JupyterHandler):
     """Handler for redirecting relative URLs to the /files/ handler"""
 
     @staticmethod
-    async def redirect_to_files(self, path):
+    async def redirect_to_files(self: Any, path: str) -> None:
         """make redirect logic a reusable static method
 
         so it can be called from other handlers.
@@ -1084,19 +1106,19 @@ class FilesRedirectHandler(JupyterHandler):
         self.log.debug("Redirecting %s to %s", self.request.path, url)
         self.redirect(url)
 
-    def get(self, path=""):
+    def get(self, path: str = "") -> Awaitable:
         return self.redirect_to_files(self, path)
 
 
 class RedirectWithParams(web.RequestHandler):
     """Sam as web.RedirectHandler, but preserves URL parameters"""
 
-    def initialize(self, url, permanent=True):
+    def initialize(self, url: str, permanent: bool = True) -> None:
         """Initialize a redirect handler."""
         self._url = url
         self._permanent = permanent
 
-    def get(self):
+    def get(self) -> None:
         """Get a redirect."""
         sep = "&" if "?" in self._url else "?"
         url = sep.join([self._url, self.request.query])
@@ -1108,7 +1130,7 @@ class PrometheusMetricsHandler(JupyterHandler):
     Return prometheus metrics for this server
     """
 
-    def get(self):
+    def get(self) -> None:
         """Get prometheus metrics."""
         if self.settings["authenticate_prometheus"] and not self.logged_in:
             raise web.HTTPError(403)

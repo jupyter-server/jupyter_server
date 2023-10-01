@@ -4,7 +4,7 @@
 """
 import json
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from jupyter_events import EventLogger
 from tornado import web, websocket
@@ -105,8 +105,8 @@ class EventHandler(APIHandler):
         try:
             validate_model(payload)
             self.event_logger.emit(
-                schema_id=payload.get("schema_id"),
-                data=payload.get("data"),
+                schema_id=cast(str, payload.get("schema_id")),
+                data=cast("dict[str, Any]", payload.get("data")),
                 timestamp_override=get_timestamp(payload),
             )
             self.set_status(204)
