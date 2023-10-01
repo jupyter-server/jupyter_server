@@ -2,9 +2,11 @@
 
 .. versionadded:: 2.0
 """
+from __future__ import annotations
+
 import json
 from datetime import datetime
-from typing import Any, Dict, Optional, cast
+from typing import Any, cast
 
 from jupyter_events import EventLogger
 from tornado import web, websocket
@@ -63,7 +65,7 @@ class SubscribeWebsocket(
         self.event_logger.remove_listener(listener=self.event_listener)
 
 
-def validate_model(data: Dict[str, Any]) -> None:
+def validate_model(data: dict[str, Any]) -> None:
     """Validates for required fields in the JSON request body"""
     required_keys = {"schema_id", "version", "data"}
     for key in required_keys:
@@ -71,7 +73,7 @@ def validate_model(data: Dict[str, Any]) -> None:
             raise web.HTTPError(400, f"Missing `{key}` in the JSON request body.")
 
 
-def get_timestamp(data: Dict[str, Any]) -> Optional[datetime]:
+def get_timestamp(data: dict[str, Any]) -> datetime | None:
     """Parses timestamp from the JSON request body"""
     try:
         if "timestamp" in data:

@@ -5,6 +5,8 @@ Just UTC-awareness right now
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 from datetime import datetime, timedelta, tzinfo
 from typing import Callable
 
