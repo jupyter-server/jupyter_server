@@ -109,7 +109,7 @@ class SessionRootHandler(SessionsAPIHandler):
         location = url_path_join(self.base_url, "api", "sessions", s_model["id"])
         self.set_header("Location", location)
         self.set_status(201)
-        self.finish(json.dumps(model, default=json_default))
+        self.finish(json.dumps(s_model, default=json_default))
 
 
 class SessionHandler(SessionsAPIHandler):
