@@ -863,9 +863,9 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
 
     @web.authenticated
     @authorized
-    def get(
+    def get(  # type:ignore[override]
         self, path: str, include_body: bool = False
-    ) -> Awaitable[None]:  # type:ignore[override]
+    ) -> Awaitable[None]:
         """Get a file by path."""
         self.check_xsrf_cookie()
         if os.path.splitext(path)[1] == ".ipynb" or self.get_argument("download", None):
