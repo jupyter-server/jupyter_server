@@ -94,7 +94,7 @@ class KernelActionHandler(KernelsAPIHandler):
         """Interrupt or restart a kernel."""
         km = self.kernel_manager
         if action == "interrupt":
-            km.interrupt_kernel(kernel_id)
+            await ensure_async(km.interrupt_kernel(kernel_id))  # type:ignore[func-returns-value]
             self.set_status(204)
         if action == "restart":
             try:

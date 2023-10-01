@@ -36,13 +36,11 @@ class FilesHandler(JupyterHandler, web.StaticFileHandler):
 
     @web.authenticated
     @authorized
-    async def head(self, path: str) -> None:  # type:ignore[override]
+    def head(self, path: str) -> Awaitable[None] | None:  # type:ignore[override]
         """The head response."""
         self.get(path, include_body=False)
         self.check_xsrf_cookie()
-        resp = self.get(path, include_body=False)
-        if isinstance(resp, Awaitable):
-            await resp
+        return self.get(path, include_body=False)
 
     @web.authenticated
     @authorized

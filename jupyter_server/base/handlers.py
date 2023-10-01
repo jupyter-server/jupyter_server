@@ -52,7 +52,7 @@ if TYPE_CHECKING:
     from jupyter_server.serverapp import ServerApp
     from jupyter_server.services.config.manager import ConfigManager
     from jupyter_server.services.contents.manager import ContentsManager
-    from jupyter_server.services.kernels.kernelmanager import MappingKernelManager
+    from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
     from jupyter_server.services.sessions.sessionmanager import SessionManager
 
 # -----------------------------------------------------------------------------
@@ -334,7 +334,7 @@ class JupyterHandler(AuthenticatedHandler):
     # ---------------------------------------------------------------
 
     @property
-    def kernel_manager(self) -> MappingKernelManager:
+    def kernel_manager(self) -> AsyncMappingKernelManager:
         return self.settings["kernel_manager"]
 
     @property
@@ -589,7 +589,7 @@ class JupyterHandler(AuthenticatedHandler):
             )
         return allow
 
-    async def prepare(self) -> None:
+    async def prepare(self) -> Awaitable[None] | None:  # type:ignore[override]
         """Prepare a response."""
         # Set the current Jupyter Handler context variable.
         CallContext.set(CallContext.JUPYTER_HANDLER, self)
@@ -630,9 +630,7 @@ class JupyterHandler(AuthenticatedHandler):
         self.set_cors_headers()
         if self.request.method not in {"GET", "HEAD", "OPTIONS"}:
             self.check_xsrf_cookie()
-        prep = super().prepare()
-        if isinstance(prep, Awaitable):
-            await prep
+        return super().prepare()
 
     # ---------------------------------------------------------------
     # template rendering
@@ -864,7 +862,7 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
     @web.authenticated
     @authorized
     def get(  # type:ignore[override]
-        self, path: str, include_body: bool = False
+        self, path: str, **kwargs: Any
     ) -> Awaitable[None]:
         """Get a file by path."""
         self.check_xsrf_cookie()
@@ -872,7 +870,7 @@ class AuthenticatedFileHandler(JupyterHandler, web.StaticFileHandler):
             name = path.rsplit("/", 1)[-1]
             self.set_attachment_header(name)
 
-        return web.StaticFileHandler.get(self, path, include_body=include_body)
+        return web.StaticFileHandler.get(self, path, **kwargs)
 
     def get_content_type(self) -> str:
         """Get the content type."""

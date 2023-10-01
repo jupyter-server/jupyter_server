@@ -2,13 +2,11 @@
 
 .. versionadded:: 2.0
 """
-from __future__ import annotations
-
 import json
 from datetime import datetime
-from typing import Any, cast
+from typing import Any, Dict, Optional, cast
 
-from jupyter_events import EventLogger
+import jupyter_events.logger
 from tornado import web, websocket
 
 from jupyter_server.auth import authorized
@@ -49,7 +47,9 @@ class SubscribeWebsocket(
         if res is not None:
             await res
 
-    async def event_listener(self, logger: EventLogger, schema_id: str, data: dict) -> None:
+    async def event_listener(
+        self, logger: jupyter_events.logger.EventLogger, schema_id: str, data: Dict
+    ) -> None:
         """Write an event message."""
         capsule = dict(schema_id=schema_id, **data)
         self.write_message(json.dumps(capsule))
@@ -65,7 +65,7 @@ class SubscribeWebsocket(
         self.event_logger.remove_listener(listener=self.event_listener)
 
 
-def validate_model(data: dict[str, Any]) -> None:
+def validate_model(data: Dict[str, Any]) -> None:
     """Validates for required fields in the JSON request body"""
     required_keys = {"schema_id", "version", "data"}
     for key in required_keys:
@@ -73,7 +73,7 @@ def validate_model(data: dict[str, Any]) -> None:
             raise web.HTTPError(400, f"Missing `{key}` in the JSON request body.")
 
 
-def get_timestamp(data: dict[str, Any]) -> datetime | None:
+def get_timestamp(data: Dict[str, Any]) -> Optional[datetime]:
     """Parses timestamp from the JSON request body"""
     try:
         if "timestamp" in data:
@@ -108,7 +108,7 @@ class EventHandler(APIHandler):
             validate_model(payload)
             self.event_logger.emit(
                 schema_id=cast(str, payload.get("schema_id")),
-                data=cast("dict[str, Any]", payload.get("data")),
+                data=cast("Dict[str, Any]", payload.get("data")),
                 timestamp_override=get_timestamp(payload),
             )
             self.set_status(204)
