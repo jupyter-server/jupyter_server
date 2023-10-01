@@ -150,9 +150,6 @@ except ImportError:
     # Windows
     resource = None  # type:ignore[assignment]
 
-if t.TYPE_CHECKING:
-    from jupyter_server.extension.application import ExtensionApp
-
 # -----------------------------------------------------------------------------
 # Module globals
 # -----------------------------------------------------------------------------
@@ -1856,7 +1853,7 @@ class ServerApp(JupyterApp):
     )
 
     @property
-    def starter_app(self) -> "t.Optional[ExtensionApp]":
+    def starter_app(self) -> t.Any:
         """Get the Extension that started this server."""
         return self._starter_app
 
