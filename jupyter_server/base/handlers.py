@@ -245,7 +245,7 @@ class AuthenticatedHandler(web.RequestHandler):
                 identity_provider=self.identity_provider,
             )
 
-        return cast(Authorizer, self.settings.get("authorizer"))
+        return cast("Authorizer", self.settings.get("authorizer"))
 
     @property
     def identity_provider(self) -> IdentityProvider:
