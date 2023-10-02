@@ -48,7 +48,7 @@ class SubscribeWebsocket(
             await res
 
     async def event_listener(
-        self, logger: jupyter_events.logger.EventLogger, schema_id: str, data: Dict
+        self, logger: jupyter_events.logger.EventLogger, schema_id: str, data: dict
     ) -> None:
         """Write an event message."""
         capsule = dict(schema_id=schema_id, **data)
