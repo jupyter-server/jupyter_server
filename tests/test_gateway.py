@@ -322,13 +322,13 @@ def test_token_renewer_config(jp_server_config, jp_configurable_serverapp, renew
     if renewer_type == "default":
         assert isinstance(gw_client.gateway_token_renewer, NoOpTokenRenewer)
         token = gw_client.gateway_token_renewer.get_token(
-            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token
+            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token or ""
         )
         assert token == gw_client.auth_token
     else:
         assert isinstance(gw_client.gateway_token_renewer, CustomTestTokenRenewer)
         token = gw_client.gateway_token_renewer.get_token(
-            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token
+            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token or ""
         )
         assert token == CustomTestTokenRenewer.TEST_EXPECTED_TOKEN_VALUE
 

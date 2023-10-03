@@ -50,7 +50,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         """Initialize a gateway mapping kernel manager."""
         super().__init__(**kwargs)
         self.kernels_url = url_path_join(
-            GatewayClient.instance().url, GatewayClient.instance().kernels_endpoint
+            GatewayClient.instance().url or "", GatewayClient.instance().kernels_endpoint or ""
         )
 
     def remove_kernel(self, kernel_id):
@@ -214,12 +214,12 @@ class GatewayKernelSpecManager(KernelSpecManager):
         """Initialize a gateway kernel spec manager."""
         super().__init__(**kwargs)
         base_endpoint = url_path_join(
-            GatewayClient.instance().url, GatewayClient.instance().kernelspecs_endpoint
+            GatewayClient.instance().url or "", GatewayClient.instance().kernelspecs_endpoint
         )
 
         self.base_endpoint = GatewayKernelSpecManager._get_endpoint_for_user_filter(base_endpoint)
         self.base_resource_endpoint = url_path_join(
-            GatewayClient.instance().url,
+            GatewayClient.instance().url or "",
             GatewayClient.instance().kernelspecs_resource_endpoint,
         )
 
@@ -386,7 +386,7 @@ class GatewayKernelManager(ServerKernelManager):
         """Initialize the gateway kernel manager."""
         super().__init__(**kwargs)
         self.kernels_url = url_path_join(
-            GatewayClient.instance().url, GatewayClient.instance().kernels_endpoint
+            GatewayClient.instance().url or "", GatewayClient.instance().kernels_endpoint
         )
         self.kernel_url: str
         self.kernel = self.kernel_id = None
@@ -420,7 +420,7 @@ class GatewayKernelManager(ServerKernelManager):
 
         # add kwargs last, for manual overrides
         kw.update(kwargs)
-        return self.client_factory(**kw)  # type:ignore[operator]
+        return self.client_factory(**kw)
 
     async def refresh_model(self, model=None):
         """Refresh the kernel model.
@@ -485,7 +485,7 @@ class GatewayKernelManager(ServerKernelManager):
 
             # Let KERNEL_USERNAME take precedent over http_user config option.
             if os.environ.get("KERNEL_USERNAME") is None and GatewayClient.instance().http_user:
-                os.environ["KERNEL_USERNAME"] = GatewayClient.instance().http_user
+                os.environ["KERNEL_USERNAME"] = GatewayClient.instance().http_user or ""
 
             payload_envs = os.environ.copy()
             payload_envs.update(kwargs.get("env", {}))  # Add any env entries in this request
@@ -739,7 +739,7 @@ class GatewayKernelClient(AsyncKernelClient):
         """
 
         ws_url = url_path_join(
-            GatewayClient.instance().ws_url,
+            GatewayClient.instance().ws_url or "",
             GatewayClient.instance().kernels_endpoint,
             url_escape(self.kernel_id),
             "channels",

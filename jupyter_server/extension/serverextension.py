@@ -73,7 +73,7 @@ class ArgumentConflict(ValueError):
 
 
 _base_flags: dict[str, t.Any] = {}
-_base_flags.update(JupyterApp.flags)  # type:ignore[has-type]
+_base_flags.update(JupyterApp.flags)
 _base_flags.pop("y", None)
 _base_flags.pop("generate-config", None)
 _base_flags.update(
@@ -116,15 +116,15 @@ _base_flags.update(
 _base_flags["python"] = _base_flags["py"]
 
 _base_aliases: dict[str, t.Any] = {}
-_base_aliases.update(JupyterApp.aliases)  # type:ignore[has-type]
+_base_aliases.update(JupyterApp.aliases)
 
 
 class BaseExtensionApp(JupyterApp):
     """Base extension installer app"""
 
     _log_formatter_cls = LogFormatter  # type:ignore[assignment]
-    flags = _base_flags  # type:ignore[assignment]
-    aliases = _base_aliases  # type:ignore[assignment]
+    flags = _base_flags
+    aliases = _base_aliases
     version = __version__
 
     user = Bool(False, config=True, help="Whether to do a user install")
@@ -179,7 +179,7 @@ def toggle_server_extension_python(
 # ----------------------------------------------------------------------
 
 flags = {}
-flags.update(BaseExtensionApp.flags)  # type:ignore[has-type]
+flags.update(BaseExtensionApp.flags)
 flags.pop("y", None)
 flags.pop("generate-config", None)
 flags.update(

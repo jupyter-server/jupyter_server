@@ -1902,7 +1902,7 @@ class ServerApp(JupyterApp):
                 stacklevel=2,
             )
 
-        self.kernel_spec_manager = self.kernel_spec_manager_class(  # type:ignore[operator]
+        self.kernel_spec_manager = self.kernel_spec_manager_class(
             parent=self,
         )
 
@@ -1932,13 +1932,13 @@ class ServerApp(JupyterApp):
         # Trigger a default/validation here explicitly while we still support the
         # deprecated trait on ServerApp (FIXME remove when deprecation finalized)
         self.contents_manager.preferred_dir  # noqa
-        self.session_manager = self.session_manager_class(  # type:ignore[operator]
+        self.session_manager = self.session_manager_class(
             parent=self,
             log=self.log,
             kernel_manager=self.kernel_manager,
             contents_manager=self.contents_manager,
         )
-        self.config_manager = self.config_manager_class(  # type:ignore[operator]
+        self.config_manager = self.config_manager_class(
             parent=self,
             log=self.log,
         )

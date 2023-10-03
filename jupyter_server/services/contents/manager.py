@@ -325,7 +325,7 @@ class ContentsManager(LoggingConfigurable):
 
     @default("checkpoints")
     def _default_checkpoints(self):
-        return self.checkpoints_class(**self.checkpoints_kwargs)  # type:ignore[operator]
+        return self.checkpoints_class(**self.checkpoints_kwargs)
 
     @default("checkpoints_kwargs")
     def _default_checkpoints_kwargs(self):
@@ -761,7 +761,7 @@ class AsyncContentsManager(ContentsManager):
 
     @default("checkpoints")
     def _default_checkpoints(self):
-        return self.checkpoints_class(**self.checkpoints_kwargs)  # type:ignore[operator]
+        return self.checkpoints_class(**self.checkpoints_kwargs)
 
     @default("checkpoints_kwargs")
     def _default_checkpoints_kwargs(self):

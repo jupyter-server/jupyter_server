@@ -168,15 +168,18 @@ class GatewayWebSocketClient(LoggingConfigurable):
         # websocket is initialized before connection
         self.ws = None
         self.kernel_id = kernel_id
+        client = GatewayClient.instance()
+        assert client.ws_url is not None
+
         ws_url = url_path_join(
-            GatewayClient.instance().ws_url,
-            GatewayClient.instance().kernels_endpoint,
+            client.ws_url,
+            client.kernels_endpoint,
             url_escape(kernel_id),
             "channels",
         )
         self.log.info(f"Connecting to {ws_url}")
         kwargs: dict = {}
-        kwargs = GatewayClient.instance().load_connection_args(**kwargs)
+        kwargs = client.load_connection_args(**kwargs)
 
         request = HTTPRequest(ws_url, **kwargs)
         self.ws_future = cast(Future, websocket_connect(request))
