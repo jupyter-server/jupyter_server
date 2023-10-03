@@ -1138,7 +1138,7 @@ class PrometheusMetricsHandler(JupyterHandler):
 
 
 # -----------------------------------------------------------------------------
-# URL pattern fragments for re-use
+# URL pattern fragments for reuse
 # -----------------------------------------------------------------------------
 
 # path matches any number of `/foo[/bar...]` or just `/` or ''
