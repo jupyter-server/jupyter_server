@@ -767,7 +767,7 @@ All notable changes to this project will be documented in this file.
 - switch to jupyter_events [#862](https://github.com/jupyter-server/jupyter_server/pull/862) ([@Zsailer](https://github.com/Zsailer))
 - Make it easier for extensions to customize the ServerApp [#879](https://github.com/jupyter-server/jupyter_server/pull/879) ([@minrk](https://github.com/minrk))
 - consolidate auth config on IdentityProvider [#825](https://github.com/jupyter-server/jupyter_server/pull/825) ([@minrk](https://github.com/minrk))
-- Show import error when faiing to load an extension [#878](https://github.com/jupyter-server/jupyter_server/pull/878) ([@minrk](https://github.com/minrk))
+- Show import error when failing to load an extension [#878](https://github.com/jupyter-server/jupyter_server/pull/878) ([@minrk](https://github.com/minrk))
 - Add the root_dir value to the logging message in case of non compliant preferred_dir [#804](https://github.com/jupyter-server/jupyter_server/pull/804) ([@echarles](https://github.com/echarles))
 - Hydrate a Kernel Manager when calling GatewayKernelManager.start_kernel with a kernel_id [#788](https://github.com/jupyter-server/jupyter_server/pull/788) ([@Zsailer](https://github.com/Zsailer))
 - Remove terminals in favor of jupyter_server_terminals extension [#651](https://github.com/jupyter-server/jupyter_server/pull/651) ([@Zsailer](https://github.com/Zsailer))
@@ -926,7 +926,7 @@ All notable changes to this project will be documented in this file.
 
 ### Enhancements made
 
-- Show import error when faiing to load an extension [#878](https://github.com/jupyter-server/jupyter_server/pull/878) ([@minrk](https://github.com/minrk))
+- Show import error when failing to load an extension [#878](https://github.com/jupyter-server/jupyter_server/pull/878) ([@minrk](https://github.com/minrk))
 
 ### Bugs fixed
 
@@ -1165,7 +1165,7 @@ All notable changes to this project will be documented in this file.
 
 ### Bugs fixed
 
-- Revert "Re-use ServerApp.config_file_paths for consistency (#715)" [#728](https://github.com/jupyter-server/jupyter_server/pull/728) ([@blink1073](https://github.com/blink1073))
+- Revert "Reuse ServerApp.config_file_paths for consistency (#715)" [#728](https://github.com/jupyter-server/jupyter_server/pull/728) ([@blink1073](https://github.com/blink1073))
 
 ### Contributors to this release
 
@@ -1190,7 +1190,7 @@ All notable changes to this project will be documented in this file.
 
 - Implement Required Methods in Async Manner [#721](https://github.com/jupyter-server/jupyter_server/pull/721) ([@jhamet93](https://github.com/jhamet93))
 - Call pre_save_hook only on first chunk of large files [#716](https://github.com/jupyter-server/jupyter_server/pull/716) ([@davidbrochart](https://github.com/davidbrochart))
-- Re-use ServerApp.config_file_paths for consistency [#715](https://github.com/jupyter-server/jupyter_server/pull/715) ([@minrk](https://github.com/minrk))
+- Reuse ServerApp.config_file_paths for consistency [#715](https://github.com/jupyter-server/jupyter_server/pull/715) ([@minrk](https://github.com/minrk))
 - serverapp: Use .absolute() instead of .resolve() for symlinks [#712](https://github.com/jupyter-server/jupyter_server/pull/712) ([@EricCousineau-TRI](https://github.com/EricCousineau-TRI))
 - Fall back to legacy protocol if selected_subprotocol raises exception [#706](https://github.com/jupyter-server/jupyter_server/pull/706) ([@davidbrochart](https://github.com/davidbrochart))
 - Fix FilesHandler not meet RFC 6713 [#701](https://github.com/jupyter-server/jupyter_server/pull/701) ([@Wh1isper](https://github.com/Wh1isper))

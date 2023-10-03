@@ -269,7 +269,7 @@ ContentsManager.
    PGContents_ is an example of a complete implementation of a custom
    ``ContentsManager``.  It stores notebooks and files in PostgreSQL_ and encodes
    directories as SQL relations.  PGContents also provides an example of how to
-   re-use the notebook's tests.
+   reuse the notebook's tests.
 
 .. _NBFormat: https://nbformat.readthedocs.io/en/latest/index.html
 .. _PGContents: https://github.com/quantopian/pgcontents
