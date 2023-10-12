@@ -46,7 +46,7 @@ Once the event schema is registered, it is ready to be emitted. Note that the co
 While you can (technically) create your own instance of an EventLogger from your extension, users/operators will likely only collect events from the instance created by Jupyter Server's `ServerApp`. If you would to provide your own instance, be sure to clearly document how to configure your extension to collect your events.
 :::
 
-As an example, you can emit an event from custom request handler by calling `self.event_logger.emit(...)`:
+As an example, you can emit an event from a custom request handler by calling `self.event_logger.emit(...)`:
 
 ```python
 from jupyter_server.base.handlers import JupyterHandler
