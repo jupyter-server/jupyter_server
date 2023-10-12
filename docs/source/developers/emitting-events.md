@@ -4,7 +4,7 @@ Jupyter Server comes equipped with an `event_logger` for capturing structured ev
 
 ## Emit a custom event from an extension
 
-The core EventLogger in Jupyter Server's `ServerApp` can be used to emit events from extensions.
+The core `EventLogger` in Jupyter Server's `ServerApp` can be used to emit events from extensions.
 
 First, define an event schema. We recommend that you make the `$id` field
 a valid URI and incorporate the version as part of the URI, e.g.:
