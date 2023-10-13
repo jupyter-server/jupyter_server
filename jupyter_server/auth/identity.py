@@ -81,6 +81,39 @@ class User:
         if not self.display_name:
             self.display_name = self.name
 
+    def to_string(self) -> str:
+        """Serialize a user to a string for storage in a cookie
+        If overriding in a subclass, make sure to define from_string as well.
+        Default is just the user's username.
+        """
+        # default: username is enough
+        cookie = json.dumps(
+            {
+                "username": self.username,
+                "name": self.name,
+                "display_name": self.display_name,
+                "initials": self.initials,
+                "color": self.color,
+            }
+        )
+        return cookie
+
+    @classmethod
+    def from_string(cls, serialized_user: str) -> User:
+        """Inverse of user_to_cookie"""
+        user = json.loads(serialized_user)
+        try:
+            return User(
+                user["username"],
+                user["name"],
+                user["display_name"],
+                user["initials"],
+                None,
+                user["color"],
+            )
+        except:
+            raise
+
 
 def _backward_compat_user(got_user: Any) -> User:
     """Backward-compatibility for LoginHandler.get_user
@@ -290,37 +323,6 @@ class IdentityProvider(LoggingConfigurable):
             handlers.append((r"/logout", self.logout_handler_class))
         return handlers
 
-    def user_to_cookie(self, user: User) -> str:
-        """Serialize a user to a string for storage in a cookie
-
-        If overriding in a subclass, make sure to define user_from_cookie as well.
-
-        Default is just the user's username.
-        """
-        # default: username is enough
-        cookie = json.dumps(
-            {
-                "username": user.username,
-                "name": user.name,
-                "display_name": user.display_name,
-                "initials": user.initials,
-                "color": user.color,
-            }
-        )
-        return cookie
-
-    def user_from_cookie(self, cookie_value: str) -> User | None:
-        """Inverse of user_to_cookie"""
-        user = json.loads(cookie_value)
-        return User(
-            user["username"],
-            user["name"],
-            user["display_name"],
-            user["initials"],
-            None,
-            user["color"],
-        )
-
     def get_cookie_name(self, handler: JupyterHandler) -> str:
         """Return the login cookie name
 
@@ -347,7 +349,7 @@ class IdentityProvider(LoggingConfigurable):
             cookie_options.setdefault("secure", True)
         cookie_options.setdefault("path", handler.base_url)
         cookie_name = self.get_cookie_name(handler)
-        handler.set_secure_cookie(cookie_name, self.user_to_cookie(user), **cookie_options)
+        handler.set_secure_cookie(cookie_name, user.to_string(), **cookie_options)
 
     def _force_clear_cookie(
         self, handler: JupyterHandler, name: str, path: str = "/", domain: str | None = None
@@ -404,7 +406,7 @@ class IdentityProvider(LoggingConfigurable):
         user_cookie = _user_cookie.decode()
         # TODO: try/catch in case of change in config?
         try:
-            return self.user_from_cookie(user_cookie)
+            return User.from_string(user_cookie)
         except Exception as e:
             # log bad cookie itself, only at debug-level
             self.log.debug(f"Error unpacking user from cookie: cookie={user_cookie}", exc_info=True)
