@@ -137,6 +137,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             Whether the path exists and is hidden.
         """
         path = path.strip("/")
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path=path)
         return is_hidden(os_path, self.root_dir)
 
@@ -155,6 +156,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             Whether the path exists and is writable.
         """
         path = path.strip("/")
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path=path)
         try:
             return os.access(os_path, os.W_OK)
@@ -178,6 +180,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             Whether the file exists.
         """
         path = path.strip("/")
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
         return os.path.isfile(os_path)
 
@@ -198,6 +201,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             Whether the path is indeed a directory.
         """
         path = path.strip("/")
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path=path)
         return os.path.isdir(os_path)
 
@@ -217,11 +221,13 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             Whether the target exists.
         """
         path = path.strip("/")
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path=path)
         return exists(os_path)
 
     def _base_model(self, path):
         """Build the common base of a contents model"""
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
         info = os.lstat(os_path)
 
@@ -273,6 +279,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         if content is requested, will include a listing of the directory
         """
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
 
         four_o_four = "directory does not exist: %r" % path
@@ -288,6 +295,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model["size"] = None
         if content:
             model["content"] = contents = []
+            self.log.debug("Reading path from disk: %s", path)
             os_dir = self._get_os_path(path)
             for name in os.listdir(os_dir):
                 try:
@@ -345,6 +353,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model = self._base_model(path)
         model["type"] = "file"
 
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
         model["mimetype"] = mimetypes.guess_type(os_path)[0]
 
@@ -372,6 +381,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         """
         model = self._base_model(path)
         model["type"] = "notebook"
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
 
         if content:
@@ -409,6 +419,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             of the file or directory as well.
         """
         path = path.strip("/")
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
         four_o_four = "file or directory does not exist: %r" % path
 
@@ -458,7 +469,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             raise web.HTTPError(400, "No file type provided")
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, "No file content provided")
-
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
 
         if not self.allow_hidden and is_hidden(os_path, self.root_dir):
@@ -504,6 +515,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
     def delete_file(self, path):
         """Delete file at path."""
         path = path.strip("/")
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
         rm = os.unlink
 
@@ -558,7 +570,9 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if new_path == old_path:
             return
 
+        self.log.debug("Reading path from disk: new_path => %s", new_path)
         new_os_path = self._get_os_path(new_path)
+        self.log.debug("Reading path from disk: old_path => %s", new_path)
         old_os_path = self._get_os_path(old_path)
 
         if not self.allow_hidden and (
@@ -640,7 +654,9 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         returns the model for the copied directory
         """
         try:
+            self.log.debug("Reading path from disk: os_from_path => %s", from_path.strip("/"))
             os_from_path = self._get_os_path(from_path.strip("/"))
+            self.log.debug("Reading path from disk: os_to_path => %s", to_path_original.strip("/"))
             os_to_path = f'{self._get_os_path(to_path_original.strip("/"))}/{to_name}'
             shutil.copytree(os_from_path, os_to_path)
             model = self.get(to_path, content=False)
@@ -659,6 +675,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         trait max_copy_folder_size_mb to prevent a timeout error
         """
         limit_bytes = self.max_copy_folder_size_mb * 1024 * 1024
+        self.log.debug("Reading path from disk: %s", path)
         size = int(self._get_dir_size(self._get_os_path(path)))
         # convert from KB to Bytes for macOS
         size = size * 1024 if platform.system() == "Darwin" else size
@@ -722,6 +739,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         if content is requested, will include a listing of the directory
         """
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
 
         four_o_four = "directory does not exist: %r" % path
@@ -737,6 +755,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         model["size"] = None
         if content:
             model["content"] = contents = []
+            self.log.debug("Reading path from disk: %s", path)
             os_dir = self._get_os_path(path)
             dir_contents = await run_sync(os.listdir, os_dir)
             for name in dir_contents:
@@ -795,6 +814,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         model = self._base_model(path)
         model["type"] = "file"
 
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
         model["mimetype"] = mimetypes.guess_type(os_path)[0]
 
@@ -822,6 +842,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         """
         model = self._base_model(path)
         model["type"] = "notebook"
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
 
         if content:
@@ -863,6 +884,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         if not self.exists(path):
             raise web.HTTPError(404, "No such file or directory: %s" % path)
 
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
         if os.path.isdir(os_path):
             if type not in (None, "directory"):
@@ -904,6 +926,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, "No file content provided")
 
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
         self.log.debug("Saving %s", os_path)
 
@@ -945,6 +968,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
     async def delete_file(self, path):
         """Delete file at path."""
         path = path.strip("/")
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
         rm = os.unlink
 
@@ -1003,7 +1027,9 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         if new_path == old_path:
             return
 
+        self.log.debug("Reading path from disk: new_os_path => %s", new_path)
         new_os_path = self._get_os_path(new_path)
+        self.log.debug("Reading path from disk: old_os_path => %s", old_path)
         old_os_path = self._get_os_path(old_path)
 
         if not self.allow_hidden and (
@@ -1027,18 +1053,21 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
     async def dir_exists(self, path):
         """Does a directory exist at the given path"""
         path = path.strip("/")
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path=path)
         return os.path.isdir(os_path)
 
     async def file_exists(self, path):
         """Does a file exist at the given path"""
         path = path.strip("/")
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path)
         return os.path.isfile(os_path)
 
     async def is_hidden(self, path):
         """Is path a hidden directory or file"""
         path = path.strip("/")
+        self.log.debug("Reading path from disk: %s", path)
         os_path = self._get_os_path(path=path)
         return is_hidden(os_path, self.root_dir)
 
@@ -1101,7 +1130,9 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         returns the model for the copied directory
         """
         try:
+            self.log.debug("Reading path from disk: os_from_path => %s", from_path.strip("/"))
             os_from_path = self._get_os_path(from_path.strip("/"))
+            self.log.debug("Reading path from disk: os_to_path => %s", to_path_original.strip("/"))
             os_to_path = f'{self._get_os_path(to_path_original.strip("/"))}/{to_name}'
             shutil.copytree(os_from_path, os_to_path)
             model = await self.get(to_path, content=False)
@@ -1121,6 +1152,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         """
         limit_bytes = self.max_copy_folder_size_mb * 1024 * 1024
 
+        self.log.debug("Reading path from disk: %s", path)
         size = int(await self._get_dir_size(self._get_os_path(path)))
         # convert from KB to Bytes for macOS
         size = size * 1024 if platform.system() == "Darwin" else size
