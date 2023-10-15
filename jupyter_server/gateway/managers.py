@@ -11,7 +11,7 @@ from threading import Thread
 from time import monotonic
 from typing import Any, Dict, Optional
 
-import websocket  # type:ignore[import]
+import websocket  # type:ignore[import-untyped]
 from jupyter_client.asynchronous.client import AsyncKernelClient
 from jupyter_client.clientabc import KernelClientABC
 from jupyter_client.kernelspec import KernelSpecManager
