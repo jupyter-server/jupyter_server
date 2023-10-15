@@ -204,7 +204,7 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
         Depending on flag 'use_atomic_writing', the wrapper perform an actual atomic writing or
         simply writes the file (whatever an old exists or not)"""
         with self.perm_to_403(os_path):
-            kwargs["log"] = self.log  # type:ignore[attr-defined]
+            kwargs["log"] = self.log
             if self.use_atomic_writing:
                 with atomic_writing(os_path, *args, **kwargs) as f:
                     yield f
@@ -234,7 +234,7 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
 
         like shutil.copy2, but log errors in copystat
         """
-        copy2_safe(src, dest, log=self.log)  # type:ignore[attr-defined]
+        copy2_safe(src, dest, log=self.log)
 
     def _get_os_path(self, path):
         """Given an API path, return its file system path.
@@ -361,7 +361,7 @@ class AsyncFileManagerMixin(FileManagerMixin):
 
         like shutil.copy2, but log errors in copystat
         """
-        await async_copy2_safe(src, dest, log=self.log)  # type:ignore[attr-defined]
+        await async_copy2_safe(src, dest, log=self.log)
 
     async def _read_notebook(self, os_path, as_version=4, capture_validation_error=None):
         """Read a notebook from an os path."""
