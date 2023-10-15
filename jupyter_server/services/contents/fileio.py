@@ -15,6 +15,7 @@ from anyio.to_thread import run_sync
 from tornado.web import HTTPError
 from traitlets import Bool
 from traitlets.config import Configurable
+from traitlets.config.configurable import LoggingConfigurable
 
 from jupyter_server.utils import ApiPath, to_api_path, to_os_path
 
@@ -165,7 +166,7 @@ def _simple_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     fileobj.close()
 
 
-class FileManagerMixin(Configurable):
+class FileManagerMixin(LoggingConfigurable, Configurable):
     """
     Mixin for ContentsAPI classes that interact with the filesystem.
 
@@ -203,7 +204,7 @@ class FileManagerMixin(Configurable):
         Depending on flag 'use_atomic_writing', the wrapper perform an actual atomic writing or
         simply writes the file (whatever an old exists or not)"""
         with self.perm_to_403(os_path):
-            kwargs["log"] = self.log  # type:ignore[attr-defined]
+            kwargs["log"] = self.log
             if self.use_atomic_writing:
                 with atomic_writing(os_path, *args, **kwargs) as f:
                     yield f
@@ -233,7 +234,7 @@ class FileManagerMixin(Configurable):
 
         like shutil.copy2, but log errors in copystat
         """
-        copy2_safe(src, dest, log=self.log)  # type:ignore[attr-defined]
+        copy2_safe(src, dest, log=self.log)
 
     def _get_os_path(self, path):
         """Given an API path, return its file system path.
@@ -252,6 +253,7 @@ class FileManagerMixin(Configurable):
         ------
         404: if path is outside root
         """
+        self.log.debug("Reading path from disk: %s", path)
         root = os.path.abspath(self.root_dir)  # type:ignore[attr-defined]
         # to_os_path is not safe if path starts with a drive, since os.path.join discards first part
         if os.path.splitdrive(path)[0]:
@@ -359,7 +361,7 @@ class AsyncFileManagerMixin(FileManagerMixin):
 
         like shutil.copy2, but log errors in copystat
         """
-        await async_copy2_safe(src, dest, log=self.log)  # type:ignore[attr-defined]
+        await async_copy2_safe(src, dest, log=self.log)
 
     async def _read_notebook(self, os_path, as_version=4, capture_validation_error=None):
         """Read a notebook from an os path."""

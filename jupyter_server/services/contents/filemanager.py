@@ -458,7 +458,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             raise web.HTTPError(400, "No file type provided")
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, "No file content provided")
-
         os_path = self._get_os_path(path)
 
         if not self.allow_hidden and is_hidden(os_path, self.root_dir):
