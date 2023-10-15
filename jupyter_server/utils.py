@@ -1,6 +1,8 @@
 """Notebook related utilities"""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import errno
 import importlib.util
 import os
@@ -8,7 +10,7 @@ import socket
 import sys
 import warnings
 from contextlib import contextmanager
-from typing import NewType
+from typing import Any, Generator, NewType, Sequence
 from urllib.parse import (
     SplitResult,
     quote,
@@ -23,13 +25,13 @@ from urllib.request import pathname2url  # noqa: F401
 from _frozen_importlib_external import _NamespacePath  # type:ignore[import]
 from jupyter_core.utils import ensure_async
 from packaging.version import Version
-from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest
+from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest, HTTPResponse
 from tornado.netutil import Resolver
 
 ApiPath = NewType("ApiPath", str)
 
 
-def url_path_join(*pieces):
+def url_path_join(*pieces: str) -> str:
     """Join components of url into a relative url
 
     Use to prevent double slash when joining subpath. This will leave the
@@ -48,12 +50,12 @@ def url_path_join(*pieces):
     return result
 
 
-def url_is_absolute(url):
+def url_is_absolute(url: str) -> bool:
     """Determine whether a given URL is absolute"""
     return urlparse(url).path.startswith("/")
 
 
-def path2url(path):
+def path2url(path: str) -> str:
     """Convert a local file path to a URL"""
     pieces = [quote(p) for p in path.split(os.sep)]
     # preserve trailing /
@@ -63,14 +65,14 @@ def path2url(path):
     return url
 
 
-def url2path(url):
+def url2path(url: str) -> str:
     """Convert a URL to a local file path"""
     pieces = [unquote(p) for p in url.split("/")]
     path = os.path.join(*pieces)
     return path
 
 
-def url_escape(path):
+def url_escape(path: str) -> str:
     """Escape special characters in a URL path
 
     Turns '/foo bar/' into '/foo%20bar/'
@@ -79,7 +81,7 @@ def url_escape(path):
     return "/".join([quote(p) for p in parts])
 
 
-def url_unescape(path):
+def url_unescape(path: str) -> str:
     """Unescape special characters in a URL path
 
     Turns '/foo%20bar/' into '/foo bar/'
@@ -87,7 +89,7 @@ def url_unescape(path):
     return "/".join([unquote(p) for p in path.split("/")])
 
 
-def samefile_simple(path, other_path):
+def samefile_simple(path: str, other_path: str) -> bool:
     """
     Fill in for os.path.samefile when it is unavailable (Windows+py2).
 
@@ -140,7 +142,7 @@ def to_api_path(os_path: str, root: str = "") -> ApiPath:
     return ApiPath(path)
 
 
-def check_version(v, check):
+def check_version(v: str, check: str) -> bool:
     """check version string v >= check
 
     If dev/prerelease tags result in TypeError for string-number comparison,
@@ -156,7 +158,7 @@ def check_version(v, check):
 # Copy of IPython.utils.process.check_pid:
 
 
-def _check_pid_win32(pid):
+def _check_pid_win32(pid: int) -> bool:
     import ctypes
 
     # OpenProcess returns 0 if no such process (of ours) exists
@@ -164,7 +166,7 @@ def _check_pid_win32(pid):
     return bool(ctypes.windll.kernel32.OpenProcess(1, 0, pid))  # type:ignore[attr-defined]
 
 
-def _check_pid_posix(pid):
+def _check_pid_posix(pid: int) -> bool:
     """Copy of IPython.utils.process.check_pid"""
     try:
         os.kill(pid, 0)
@@ -195,22 +197,22 @@ async def run_sync_in_loop(maybe_async):
     return ensure_async(maybe_async)
 
 
-def urlencode_unix_socket_path(socket_path):
+def urlencode_unix_socket_path(socket_path: str) -> str:
     """Encodes a UNIX socket path string from a socket path for the `http+unix` URI form."""
     return socket_path.replace("/", "%2F")
 
 
-def urldecode_unix_socket_path(socket_path):
+def urldecode_unix_socket_path(socket_path: str) -> str:
     """Decodes a UNIX sock path string from an encoded sock path for the `http+unix` URI form."""
     return socket_path.replace("%2F", "/")
 
 
-def urlencode_unix_socket(socket_path):
+def urlencode_unix_socket(socket_path: str) -> str:
     """Encodes a UNIX socket URL from a socket path for the `http+unix` URI form."""
     return "http+unix://%s" % urlencode_unix_socket_path(socket_path)
 
 
-def unix_socket_in_use(socket_path):
+def unix_socket_in_use(socket_path: str) -> bool:
     """Checks whether a UNIX socket path on disk is in use by attempting to connect to it."""
     if not os.path.exists(socket_path):
         return False
@@ -227,7 +229,9 @@ def unix_socket_in_use(socket_path):
 
 
 @contextmanager
-def _request_for_tornado_client(urlstring, method="GET", body=None, headers=None):
+def _request_for_tornado_client(
+    urlstring: str, method: str = "GET", body: Any = None, headers: Any = None
+) -> Generator[HTTPRequest, None, None]:
     """A utility that provides a context that handles
     HTTP, HTTPS, and HTTP+UNIX request.
     Creates a tornado HTTPRequest object with a URL
@@ -278,7 +282,9 @@ def _request_for_tornado_client(urlstring, method="GET", body=None, headers=None
     yield request
 
 
-def fetch(urlstring, method="GET", body=None, headers=None):
+def fetch(
+    urlstring: str, method: str = "GET", body: Any = None, headers: Any = None
+) -> HTTPResponse:
     """
     Send a HTTP, HTTPS, or HTTP+UNIX request
     to a Tornado Web Server. Returns a tornado HTTPResponse.
@@ -290,7 +296,9 @@ def fetch(urlstring, method="GET", body=None, headers=None):
     return response
 
 
-async def async_fetch(urlstring, method="GET", body=None, headers=None, io_loop=None):
+async def async_fetch(
+    urlstring: str, method: str = "GET", body: Any = None, headers: Any = None, io_loop: Any = None
+) -> HTTPResponse:
     """
     Send an asynchronous HTTP, HTTPS, or HTTP+UNIX request
     to a Tornado Web Server. Returns a tornado HTTPResponse.
@@ -302,7 +310,7 @@ async def async_fetch(urlstring, method="GET", body=None, headers=None, io_loop=
     return response
 
 
-def is_namespace_package(namespace):
+def is_namespace_package(namespace: str) -> bool | None:
     """Is the provided namespace a Python Namespace Package (PEP420).
 
     https://www.python.org/dev/peps/pep-0420/#specification
@@ -324,7 +332,7 @@ def is_namespace_package(namespace):
     return isinstance(spec.submodule_search_locations, _NamespacePath)
 
 
-def filefind(filename, path_dirs=None):
+def filefind(filename: str, path_dirs: Sequence[str] | str | None = None) -> str:
     """Find a file by looking through a sequence of paths.
     This iterates through a sequence of paths looking for a file and returns
     the full, absolute path of the first occurrence of the file.  If no set of
@@ -378,7 +386,7 @@ def filefind(filename, path_dirs=None):
     raise OSError(msg)
 
 
-def expand_path(s):
+def expand_path(s: str) -> str:
     """Expand $VARS and ~names in a string, like a shell
 
     :Examples:
@@ -399,7 +407,7 @@ def expand_path(s):
     return s
 
 
-def import_item(name):
+def import_item(name: str) -> Any:
     """Import and return ``bar`` given the string ``foo.bar``.
     Calling ``bar = import_item("foo.bar")`` is the functional equivalent of
     executing the code ``from foo import bar``.

@@ -4,9 +4,9 @@
 """
 import json
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
-from jupyter_events import EventLogger
+import jupyter_events.logger
 from tornado import web, websocket
 
 from jupyter_server.auth import authorized
@@ -47,7 +47,9 @@ class SubscribeWebsocket(
         if res is not None:
             await res
 
-    async def event_listener(self, logger: EventLogger, schema_id: str, data: dict) -> None:
+    async def event_listener(
+        self, logger: jupyter_events.logger.EventLogger, schema_id: str, data: dict
+    ) -> None:
         """Write an event message."""
         capsule = dict(schema_id=schema_id, **data)
         self.write_message(json.dumps(capsule))
@@ -105,8 +107,8 @@ class EventHandler(APIHandler):
         try:
             validate_model(payload)
             self.event_logger.emit(
-                schema_id=payload.get("schema_id"),
-                data=payload.get("data"),
+                schema_id=cast(str, payload.get("schema_id")),
+                data=cast("Dict[str, Any]", payload.get("data")),
                 timestamp_override=get_timestamp(payload),
             )
             self.set_status(204)

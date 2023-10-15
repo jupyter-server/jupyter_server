@@ -29,7 +29,7 @@ from .utils import get_anonymous_username
 
 # circular imports for type checking
 if TYPE_CHECKING:
-    from jupyter_server.base.handlers import JupyterHandler
+    from jupyter_server.base.handlers import AuthenticatedHandler, JupyterHandler
     from jupyter_server.serverapp import ServerApp
 
 _non_alphanum = re.compile(r"[^A-Za-z0-9]")
@@ -321,7 +321,7 @@ class IdentityProvider(LoggingConfigurable):
             user["color"],
         )
 
-    def get_cookie_name(self, handler: JupyterHandler) -> str:
+    def get_cookie_name(self, handler: AuthenticatedHandler) -> str:
         """Return the login cookie name
 
         Uses IdentityProvider.cookie_name, if defined.
@@ -333,7 +333,7 @@ class IdentityProvider(LoggingConfigurable):
         else:
             return _non_alphanum.sub("-", f"username-{handler.request.host}")
 
-    def set_login_cookie(self, handler: JupyterHandler, user: User) -> None:
+    def set_login_cookie(self, handler: AuthenticatedHandler, user: User) -> None:
         """Call this on handlers to set the login cookie for success"""
         cookie_options = {}
         cookie_options.update(self.cookie_options)
@@ -350,7 +350,7 @@ class IdentityProvider(LoggingConfigurable):
         handler.set_secure_cookie(cookie_name, self.user_to_cookie(user), **cookie_options)
 
     def _force_clear_cookie(
-        self, handler: JupyterHandler, name: str, path: str = "/", domain: str | None = None
+        self, handler: AuthenticatedHandler, name: str, path: str = "/", domain: str | None = None
     ) -> None:
         """Deletes the cookie with the given name.
 
@@ -376,7 +376,7 @@ class IdentityProvider(LoggingConfigurable):
             morsel["domain"] = domain
         handler.add_header("Set-Cookie", morsel.OutputString())
 
-    def clear_login_cookie(self, handler: JupyterHandler) -> None:
+    def clear_login_cookie(self, handler: AuthenticatedHandler) -> None:
         """Clear the login cookie, effectively logging out the session."""
         cookie_options = {}
         cookie_options.update(self.cookie_options)
@@ -478,7 +478,7 @@ class IdentityProvider(LoggingConfigurable):
         handler.log.debug(f"Generating new user for token-authenticated request: {user_id}")
         return User(user_id, name, display_name, initials, None, color)
 
-    def should_check_origin(self, handler: JupyterHandler) -> bool:
+    def should_check_origin(self, handler: AuthenticatedHandler) -> bool:
         """Should the Handler check for CORS origin validation?
 
         Origin check should be skipped for token-authenticated requests.
@@ -489,7 +489,7 @@ class IdentityProvider(LoggingConfigurable):
         """
         return not self.is_token_authenticated(handler)
 
-    def is_token_authenticated(self, handler: JupyterHandler) -> bool:
+    def is_token_authenticated(self, handler: AuthenticatedHandler) -> bool:
         """Returns True if handler has been token authenticated. Otherwise, False.
 
         Login with a token is used to signal certain things, such as:
@@ -713,11 +713,11 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
             self.settings
         )
 
-    def should_check_origin(self, handler: JupyterHandler) -> bool:
+    def should_check_origin(self, handler: AuthenticatedHandler) -> bool:
         """Whether we should check origin."""
         return self.login_handler_class.should_check_origin(handler)  # type:ignore[attr-defined]
 
-    def is_token_authenticated(self, handler: JupyterHandler) -> bool:
+    def is_token_authenticated(self, handler: AuthenticatedHandler) -> bool:
         """Whether we are token authenticated."""
         return self.login_handler_class.is_token_authenticated(handler)  # type:ignore[attr-defined]
 

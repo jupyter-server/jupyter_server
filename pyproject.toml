@@ -104,7 +104,7 @@ nowarn = "test -W default {args}"
 
 [tool.hatch.envs.typing]
 features = ["test"]
-dependencies = [ "mypy>=1.5.1", "traitlets>=5.10.1" ]
+dependencies = [ "mypy>=1.5.1", "traitlets>=5.11.2", "jupyter_core>=5.3.2"]
 [tool.hatch.envs.typing.scripts]
 test = "mypy --install-types --non-interactive {args:.}"
 
@@ -318,6 +318,7 @@ pydist_resource_paths = ["jupyter_server/static/style/bootstrap.min.css", "jupyt
 post-version-spec = "dev"
 
 [tool.mypy]
+python_version = "3.8"
 check_untyped_defs = true
 disallow_incomplete_defs = true
 no_implicit_optional = true

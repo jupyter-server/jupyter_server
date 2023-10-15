@@ -35,7 +35,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
         # websocket is initialized before connection
         self.ws = None
         ws_url = url_path_join(
-            GatewayClient.instance().ws_url,
+            GatewayClient.instance().ws_url or "",
             GatewayClient.instance().kernels_endpoint,
             url_escape(self.kernel_id),
             "channels",

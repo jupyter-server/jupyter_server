@@ -168,15 +168,18 @@ class GatewayWebSocketClient(LoggingConfigurable):
         # websocket is initialized before connection
         self.ws = None
         self.kernel_id = kernel_id
+        client = GatewayClient.instance()
+        assert client.ws_url is not None
+
         ws_url = url_path_join(
-            GatewayClient.instance().ws_url,
-            GatewayClient.instance().kernels_endpoint,
+            client.ws_url,
+            client.kernels_endpoint,
             url_escape(kernel_id),
             "channels",
         )
         self.log.info(f"Connecting to {ws_url}")
         kwargs: dict = {}
-        kwargs = GatewayClient.instance().load_connection_args(**kwargs)
+        kwargs = client.load_connection_args(**kwargs)
 
         request = HTTPRequest(ws_url, **kwargs)
         self.ws_future = cast(Future, websocket_connect(request))
@@ -289,7 +292,9 @@ class GatewayResourceHandler(APIHandler):
         """Get a gateway resource by name and path."""
         mimetype: Optional[str] = None
         ksm = self.kernel_spec_manager
-        kernel_spec_res = await ksm.get_kernel_spec_resource(kernel_name, path)
+        kernel_spec_res = await ksm.get_kernel_spec_resource(  # type:ignore[attr-defined]
+            kernel_name, path
+        )
         if kernel_spec_res is None:
             self.log.warning(
                 "Kernelspec resource '{}' for '{}' not found.  Gateway may not support"

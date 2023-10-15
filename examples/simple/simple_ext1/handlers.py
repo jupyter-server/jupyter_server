@@ -36,7 +36,7 @@ class ParameterHandler(ExtensionHandlerMixin, JupyterHandler):
 
     def get(self, matched_part=None, *args, **kwargs):
         """Handle a get with parameters."""
-        var1 = self.get_argument("var1", default=None)
+        var1 = self.get_argument("var1", default="")
         components = [x for x in self.request.path.split("/") if x]
         self.write("<h1>Hello Simple App 1 from Handler.</h1>")
         self.write(f"<p>matched_part: {url_escape(matched_part)}</p>")

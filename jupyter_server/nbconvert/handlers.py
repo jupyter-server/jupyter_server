@@ -167,6 +167,7 @@ class NbconvertPostHandler(JupyterHandler):
         exporter = get_exporter(format, config=self.config)
 
         model = self.get_json_body()
+        assert model is not None
         name = model.get("name", "notebook.ipynb")
         nbnode = from_dict(model["content"])
 
