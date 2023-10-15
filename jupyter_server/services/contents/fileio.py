@@ -15,6 +15,7 @@ from anyio.to_thread import run_sync
 from tornado.web import HTTPError
 from traitlets import Bool
 from traitlets.config import Configurable
+from traitlets.config.configurable import LoggingConfigurable
 
 from jupyter_server.utils import ApiPath, to_api_path, to_os_path
 
@@ -165,7 +166,7 @@ def _simple_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     fileobj.close()
 
 
-class FileManagerMixin(Configurable):
+class FileManagerMixin(LoggingConfigurable, Configurable):
     """
     Mixin for ContentsAPI classes that interact with the filesystem.
 
