@@ -1,9 +1,19 @@
 """An extension handler."""
-from typing import no_type_check
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from jinja2.exceptions import TemplateNotFound
 
 from jupyter_server.base.handlers import FileFindHandler
+
+if TYPE_CHECKING:
+    from logging import Logger
+
+    from traitlets.config import Config
+
+    from jupyter_server.extension.application import ExtensionApp
+    from jupyter_server.serverapp import ServerApp
 
 
 class ExtensionHandlerJinjaMixin:
@@ -11,14 +21,13 @@ class ExtensionHandlerJinjaMixin:
     template rendering.
     """
 
-    @no_type_check
-    def get_template(self, name):
+    def get_template(self, name: str) -> str:
         """Return the jinja template object for a given name"""
         try:
-            env = f"{self.name}_jinja2_env"
-            return self.settings[env].get_template(name)
+            env = f"{self.name}_jinja2_env"  # type:ignore[attr-defined]
+            return self.settings[env].get_template(name)  # type:ignore[attr-defined]
         except TemplateNotFound:
-            return super().get_template(name)
+            return super().get_template(name)  # type:ignore[misc]
 
 
 class ExtensionHandlerMixin:
@@ -32,7 +41,7 @@ class ExtensionHandlerMixin:
     other extensions.
     """
 
-    def initialize(self, name, *args, **kwargs):
+    def initialize(self, name: str, *args: Any, **kwargs: Any) -> None:
         self.name = name
         try:
             super().initialize(*args, **kwargs)  # type:ignore[misc]
@@ -40,16 +49,16 @@ class ExtensionHandlerMixin:
             pass
 
     @property
-    def extensionapp(self):
+    def extensionapp(self) -> ExtensionApp:
         return self.settings[self.name]  # type:ignore[attr-defined]
 
     @property
-    def serverapp(self):
+    def serverapp(self) -> ServerApp:
         key = "serverapp"
         return self.settings[key]  # type:ignore[attr-defined]
 
     @property
-    def log(self):
+    def log(self) -> Logger:
         if not hasattr(self, "name"):
             return super().log  # type:ignore[misc]
         # Attempt to pull the ExtensionApp's log, otherwise fall back to ServerApp.
@@ -59,11 +68,11 @@ class ExtensionHandlerMixin:
             return self.serverapp.log
 
     @property
-    def config(self):
+    def config(self) -> Config:
         return self.settings[f"{self.name}_config"]  # type:ignore[attr-defined]
 
     @property
-    def server_config(self):
+    def server_config(self) -> Config:
         return self.settings["config"]  # type:ignore[attr-defined]
 
     @property
@@ -71,14 +80,14 @@ class ExtensionHandlerMixin:
         return self.settings.get("base_url", "/")  # type:ignore[attr-defined]
 
     @property
-    def static_url_prefix(self):
+    def static_url_prefix(self) -> str:
         return self.extensionapp.static_url_prefix
 
     @property
-    def static_path(self):
+    def static_path(self) -> str:
         return self.settings[f"{self.name}_static_paths"]  # type:ignore[attr-defined]
 
-    def static_url(self, path, include_host=None, **kwargs):
+    def static_url(self, path: str, include_host: bool | None = None, **kwargs: Any) -> str:
         """Returns a static URL for the given relative static file path.
         This method requires you set the ``{name}_static_path``
         setting in your extension (which specifies the root directory

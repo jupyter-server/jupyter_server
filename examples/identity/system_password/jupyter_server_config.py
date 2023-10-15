@@ -2,7 +2,7 @@
 import pwd
 from getpass import getuser
 
-from pamela import PAMError, authenticate  # type:ignore[import]
+from pamela import PAMError, authenticate  # type:ignore[import-not-found]
 
 from jupyter_server.auth.identity import IdentityProvider, User
 

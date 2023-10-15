@@ -33,8 +33,8 @@ from .manager import AsyncContentsManager, ContentsManager, copy_pat
 try:
     from os.path import samefile
 except ImportError:
-    # windows + py2
-    from jupyter_server.utils import samefile_simple as samefile
+    # windows
+    from jupyter_server.utils import samefile_simple as samefile  # type:ignore[assignment]
 
 _script_exporter = None
 

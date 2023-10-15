@@ -123,9 +123,10 @@ class LegacyLoginHandler(LoginFormHandler):
                 if new_password and getattr(self.identity_provider, "allow_password_change", False):
                     config_dir = self.settings.get("config_dir", "")
                     config_file = os.path.join(config_dir, "jupyter_server_config.json")
-                    self.identity_provider.hashed_password = self.settings[
-                        "password"
-                    ] = set_password(new_password, config_file=config_file)
+                    if hasattr(self.identity_provider, "hashed_password"):
+                        self.identity_provider.hashed_password = self.settings[
+                            "password"
+                        ] = set_password(new_password, config_file=config_file)
                     self.log.info("Wrote hashed password to %s" % config_file)
             else:
                 self.set_status(401)

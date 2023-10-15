@@ -1,7 +1,7 @@
 """A Jupyter Server example application."""
 import os
 
-from simple_ext1.application import SimpleApp1  # type:ignore[import]
+from simple_ext1.application import SimpleApp1  # type:ignore[import-not-found]
 from traitlets import Bool, Unicode, observe
 
 from jupyter_server.serverapp import aliases, flags

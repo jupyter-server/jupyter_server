@@ -4,9 +4,12 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-25%3A-
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import glob
 import json
 import os
+from typing import Any
 
 pjoin = os.path.join
 
@@ -63,7 +66,7 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
         """Get the list of kernel specs."""
         ksm = self.kernel_spec_manager
         km = self.kernel_manager
-        model = {}
+        model: dict[str, Any] = {}
         model["default"] = km.default_kernel_name
         model["kernelspecs"] = specs = {}
         kspecs = await ensure_async(ksm.get_all_specs())
