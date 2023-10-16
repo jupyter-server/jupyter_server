@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.8.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.7.3...a984e0771da5db4a14e9ac86a392ad3592b863e5))
+
+### Enhancements made
+
+- Added Logs for get_os_path closes issue [#1336](https://github.com/jupyter-server/jupyter_server/pull/1336) ([@jayeshsingh9767](https://github.com/jayeshsingh9767))
+
+### Bugs fixed
+
+- Avoid showing "No answer for 5s" when shutdown is slow [#1320](https://github.com/jupyter-server/jupyter_server/pull/1320) ([@minrk](https://github.com/minrk))
+
+### Maintenance and upkeep improvements
+
+- Update typings for mypy 1.6 [#1337](https://github.com/jupyter-server/jupyter_server/pull/1337) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1334](https://github.com/jupyter-server/jupyter_server/pull/1334) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Add typings to commonly used APIs [#1333](https://github.com/jupyter-server/jupyter_server/pull/1333) ([@blink1073](https://github.com/blink1073))
+- Update typings for traitlets 5.10 [#1330](https://github.com/jupyter-server/jupyter_server/pull/1330) ([@blink1073](https://github.com/blink1073))
+- Adopt sp-repo-review [#1324](https://github.com/jupyter-server/jupyter_server/pull/1324) ([@blink1073](https://github.com/blink1073))
+- Bump actions/checkout from 3 to 4 [#1321](https://github.com/jupyter-server/jupyter_server/pull/1321) ([@dependabot](https://github.com/dependabot))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-08-31&to=2023-10-16&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-08-31..2023-10-16&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2023-08-31..2023-10-16&type=Issues) | [@jayeshsingh9767](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajayeshsingh9767+updated%3A2023-08-31..2023-10-16&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-08-31..2023-10-16&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-08-31..2023-10-16&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-08-31..2023-10-16&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.7.3
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.7.2...e72bf7187e396605f46ba59567543ef6386e8920))
@@ -17,8 +46,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-08-18&to=2023-08-31&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2023-08-18..2023-08-31&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.7.1
 
