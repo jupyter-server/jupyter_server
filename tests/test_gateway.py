@@ -303,17 +303,19 @@ def test_gateway_cli_options(jp_configurable_serverapp, capsys):
     GatewayClient.clear_instance()
 
 
-@pytest.mark.parametrize("renewer_type,initial_auth_token", [("default", ""), ("custom", None), ("custom", "")])
-def test_token_renewer_config(jp_server_config, jp_configurable_serverapp, renewer_type, initial_auth_token):
+@pytest.mark.parametrize(
+    "renewer_type,initial_auth_token", [("default", ""), ("custom", None), ("custom", "")]
+)
+def test_token_renewer_config(
+    jp_server_config, jp_configurable_serverapp, renewer_type, initial_auth_token
+):
     argv = ["--gateway-url=" + mock_gateway_url]
     if renewer_type == "custom":
         argv.append(
             "--GatewayClient.gateway_token_renewer_class=tests.test_gateway.CustomTestTokenRenewer"
         )
     if initial_auth_token is None:
-        argv.append(
-            "--GatewayClient.auth_token=None"
-        )
+        argv.append("--GatewayClient.auth_token=None")
 
     GatewayClient.clear_instance()
     app = jp_configurable_serverapp(argv=argv)
