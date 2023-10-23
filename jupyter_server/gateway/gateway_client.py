@@ -601,7 +601,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
 
         # Give token renewal a shot at renewing the token
         prev_auth_token = self.auth_token
-        if self.auth_token:
+        if self.auth_token is not None:
             try:
                 self.auth_token = self.gateway_token_renewer.get_token(
                     self.auth_header_key, self.auth_scheme, self.auth_token

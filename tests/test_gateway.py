@@ -303,13 +303,19 @@ def test_gateway_cli_options(jp_configurable_serverapp, capsys):
     GatewayClient.clear_instance()
 
 
-@pytest.mark.parametrize("renewer_type", ["default", "custom"])
-def test_token_renewer_config(jp_server_config, jp_configurable_serverapp, renewer_type):
+@pytest.mark.parametrize(
+    "renewer_type,initial_auth_token", [("default", ""), ("custom", None), ("custom", "")]
+)
+def test_token_renewer_config(
+    jp_server_config, jp_configurable_serverapp, renewer_type, initial_auth_token
+):
     argv = ["--gateway-url=" + mock_gateway_url]
     if renewer_type == "custom":
         argv.append(
             "--GatewayClient.gateway_token_renewer_class=tests.test_gateway.CustomTestTokenRenewer"
         )
+    if initial_auth_token is None:
+        argv.append("--GatewayClient.auth_token=None")
 
     GatewayClient.clear_instance()
     app = jp_configurable_serverapp(argv=argv)
@@ -331,6 +337,11 @@ def test_token_renewer_config(jp_server_config, jp_configurable_serverapp, renew
             gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token or ""
         )
         assert token == CustomTestTokenRenewer.TEST_EXPECTED_TOKEN_VALUE
+    gw_client.load_connection_args()
+    if renewer_type == "default" or initial_auth_token is None:
+        assert gw_client.auth_token == initial_auth_token
+    else:
+        assert gw_client.auth_token == CustomTestTokenRenewer.TEST_EXPECTED_TOKEN_VALUE
 
 
 @pytest.mark.parametrize(
