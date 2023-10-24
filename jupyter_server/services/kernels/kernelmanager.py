@@ -645,6 +645,9 @@ class MappingKernelManager(MultiKernelManager):
             await ensure_async(self.shutdown_kernel(kernel_id))
             return
 
+        kernel_spec_metadata = kernel.kernel_spec.metadata
+        cull_idle_timeout = kernel_spec_metadata.get("cull_idle_timeout", self.cull_idle_timeout)
+
         if hasattr(
             kernel, "last_activity"
         ):  # last_activity is monkey-patched, so ensure that has occurred
@@ -657,7 +660,7 @@ class MappingKernelManager(MultiKernelManager):
             dt_now = utcnow()
             dt_idle = dt_now - kernel.last_activity
             # Compute idle properties
-            is_idle_time = dt_idle > timedelta(seconds=self.cull_idle_timeout)
+            is_idle_time = dt_idle > timedelta(seconds=cull_idle_timeout)
             is_idle_execute = self.cull_busy or (kernel.execution_state != "busy")
             connections = self._kernel_connections.get(kernel_id, 0)
             is_idle_connected = self.cull_connected or not connections
