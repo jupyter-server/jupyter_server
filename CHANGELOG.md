@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.9.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.9.0...bb293ec5cac5b277259f27e458da60fa8a926f46))
+
+### Bugs fixed
+
+- Revert "Update kernel env to reflect changes in session." [#1346](https://github.com/jupyter-server/jupyter_server/pull/1346) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-10-25&to=2023-10-25&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-10-25..2023-10-25&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.9.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.8.0...3438ddb16575155e98fc4f49700fff420088c8b0))
@@ -22,8 +38,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-10-16&to=2023-10-25&type=c))
 
 [@akshaychitneni](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aakshaychitneni+updated%3A2023-10-16..2023-10-25&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2023-10-16..2023-10-25&type=Issues) | [@ojarjur](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aojarjur+updated%3A2023-10-16..2023-10-25&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.8.0
 
