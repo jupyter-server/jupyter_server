@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.9.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.8.0...3438ddb16575155e98fc4f49700fff420088c8b0))
+
+### Enhancements made
+
+- Ability to configure cull_idle_timeout with kernelSpec [#1342](https://github.com/jupyter-server/jupyter_server/pull/1342) ([@akshaychitneni](https://github.com/akshaychitneni))
+- Update kernel env to reflect changes in session. [#1341](https://github.com/jupyter-server/jupyter_server/pull/1341) ([@Carreau](https://github.com/Carreau))
+
+### Bugs fixed
+
+- Run Gateway token renewers even if the auth token is empty. [#1340](https://github.com/jupyter-server/jupyter_server/pull/1340) ([@ojarjur](https://github.com/ojarjur))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-10-16&to=2023-10-25&type=c))
+
+[@akshaychitneni](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aakshaychitneni+updated%3A2023-10-16..2023-10-25&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2023-10-16..2023-10-25&type=Issues) | [@ojarjur](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aojarjur+updated%3A2023-10-16..2023-10-25&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.8.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.7.3...a984e0771da5db4a14e9ac86a392ad3592b863e5))
@@ -30,8 +51,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-08-31&to=2023-10-16&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-08-31..2023-10-16&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2023-08-31..2023-10-16&type=Issues) | [@jayeshsingh9767](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajayeshsingh9767+updated%3A2023-08-31..2023-10-16&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-08-31..2023-10-16&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-08-31..2023-10-16&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-08-31..2023-10-16&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.7.3
 
