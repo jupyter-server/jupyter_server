@@ -627,11 +627,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         if protocol_version != client_protocol_version:
             self.session.adapt_version = int(protocol_version.split(".")[0])
             self.log.info(
-                "Adapting from protocol version {protocol_version} (kernel {kernel_id}) to {client_protocol_version} (client).".format(
-                    protocol_version=protocol_version,
-                    kernel_id=self.kernel_id,
-                    client_protocol_version=client_protocol_version,
-                )
+                f"Adapting from protocol version {protocol_version} (kernel {self.kernel_id}) to {client_protocol_version} (client)."
             )
         if not self._kernel_info_future.done():
             self._kernel_info_future.set_result(info)
