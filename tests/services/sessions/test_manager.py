@@ -24,6 +24,9 @@ class DummyKernel:
     def __init__(self, kernel_name="python"):
         self.kernel_name = kernel_name
 
+    def update_env(self, *args, **kwargs):
+        pass
+
 
 dummy_date = utcnow()
 dummy_date_s = isoformat(dummy_date)
