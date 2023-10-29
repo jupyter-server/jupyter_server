@@ -1884,8 +1884,8 @@ class ServerApp(JupyterApp):
         self.gateway_config = GatewayClient.instance(parent=self)
 
         if not issubclass(
-            self.kernel_manager_class,
-            AsyncMappingKernelManager,  # type:ignore[arg-type]
+            self.kernel_manager_class,  # type:ignore[arg-type]
+            AsyncMappingKernelManager,
         ):
             warnings.warn(
                 "The synchronous MappingKernelManager class is deprecated and will not be supported in Jupyter Server 3.0",
@@ -1894,8 +1894,8 @@ class ServerApp(JupyterApp):
             )
 
         if not issubclass(
-            self.contents_manager_class,
-            AsyncContentsManager,  # type:ignore[arg-type]
+            self.contents_manager_class,  # type:ignore[arg-type]
+            AsyncContentsManager,
         ):
             warnings.warn(
                 "The synchronous ContentsManager classes are deprecated and will not be supported in Jupyter Server 3.0",
