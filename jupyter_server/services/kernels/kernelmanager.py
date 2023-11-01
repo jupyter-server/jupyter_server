@@ -802,7 +802,7 @@ class ServerKernelManager(AsyncIOLoopKernelManager):
 
     # This trait is intended for subclasses to override and define
     # custom event schemas.
-    extra_event_schema_paths = List(
+    extra_event_schema_paths: List[str] = List(  # type:ignore[assignment]
         default_value=[],
         help="""
         A list of pathlib.Path objects pointing at to register with

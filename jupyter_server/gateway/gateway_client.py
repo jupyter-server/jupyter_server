@@ -462,7 +462,7 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
     )
     gateway_token_renewer_class_env = "JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS"
     gateway_token_renewer_class = Type(
-        klass=GatewayTokenRenewerBase,  # type:ignore[type-abstract]
+        klass=GatewayTokenRenewerBase,
         config=True,
         help="""The class to use for Gateway token renewal. (JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS env var)""",
     )
@@ -546,7 +546,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         """Initialize a gateway client."""
         super().__init__(**kwargs)
         self._connection_args = {}  # initialized on first use
-        self.gateway_token_renewer = self.gateway_token_renewer_class(parent=self, log=self.log)  # type:ignore[operator]
+        self.gateway_token_renewer = self.gateway_token_renewer_class(parent=self, log=self.log)  # type:ignore[abstract]
 
         # store of cookies with store time
         self._cookies: ty.Dict[str, ty.Tuple[Morsel, datetime]] = {}

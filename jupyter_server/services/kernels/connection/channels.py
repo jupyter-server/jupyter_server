@@ -1,12 +1,13 @@
 """An implementation of a kernel connection."""
+from __future__ import annotations
+
 import asyncio
 import json
 import time
+import typing as t
 import weakref
 from concurrent.futures import Future
 from textwrap import dedent
-from typing import Dict as Dict_t
-from typing import MutableSet, cast
 
 from jupyter_client import protocol_version as client_protocol_version
 from tornado import gen, web
@@ -95,8 +96,8 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
     # class-level registry of open sessions
     # allows checking for conflict on session-id,
     # which is used as a zmq identity and must be unique.
-    _open_sessions: Dict_t[str, KernelWebsocketHandler] = {}
-    _open_sockets: MutableSet["ZMQChannelsWebsocketConnection"] = weakref.WeakSet()
+    _open_sessions: dict[str, KernelWebsocketHandler] = {}
+    _open_sockets: t.MutableSet[ZMQChannelsWebsocketConnection] = weakref.WeakSet()
 
     _kernel_info_future: Future
     _close_future: Future
@@ -127,7 +128,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
     # Queue of (time stamp, byte count)
     # Allows you to specify that the byte count should be lowered
     # by a delta amount at some point in the future.
-    _iopub_window_byte_queue = List([])
+    _iopub_window_byte_queue: List[t.Any] = List([])
 
     @classmethod
     async def close_all(cls):
@@ -285,7 +286,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         if (
             self.kernel_id in self.multi_kernel_manager
         ):  # only update open sessions if kernel is actively managed
-            self._open_sessions[self.session_key] = cast(
+            self._open_sessions[self.session_key] = t.cast(
                 KernelWebsocketHandler, self.websocket_handler
             )
 

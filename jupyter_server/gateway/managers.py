@@ -456,7 +456,7 @@ class GatewayKernelManager(ServerKernelManager):
                 # this kernel manager.  The current kernel manager instance may not have
                 # a parent instance if, say, a server extension is using another application
                 # (e.g., papermill) that uses a KernelManager instance directly.
-                self.parent._kernel_connections[self.kernel_id] = int(model["connections"])
+                self.parent._kernel_connections[self.kernel_id] = int(model["connections"])  # type:ignore[index]
 
         self.kernel = model
         return model
