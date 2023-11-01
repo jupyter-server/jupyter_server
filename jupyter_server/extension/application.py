@@ -1,4 +1,6 @@
 """An extension application."""
+from __future__ import annotations
+
 import logging
 import re
 import sys
@@ -158,19 +160,21 @@ class ExtensionApp(JupyterApp):
 
     @default("open_browser")
     def _default_open_browser(self):
+        assert self.serverapp is not None
         return self.serverapp.config["ServerApp"].get("open_browser", True)
 
     @property
     def config_file_paths(self):
         """Look on the same path as our parent for config files"""
         # rely on parent serverapp, which should control all config loading
+        assert self.serverapp is not None
         return self.serverapp.config_file_paths
 
     # The extension name used to name the jupyter config
     # file, jupyter_{name}_config.
     # This should also match the jupyter subcommand used to launch
     # this extension from the CLI, e.g. `jupyter {name}`.
-    name: t.Union[str, Unicode] = "ExtensionApp"  # type:ignore[assignment]
+    name: str | Unicode = "ExtensionApp"  # type:ignore[assignment]
 
     @classmethod
     def get_extension_package(cls):
@@ -206,7 +210,7 @@ class ExtensionApp(JupyterApp):
     ]
 
     # A ServerApp is not defined yet, but will be initialized below.
-    serverapp = Any()
+    serverapp: ServerApp | None = Any()  # type:ignore[assignment]
 
     @default("serverapp")
     def _default_serverapp(self):
@@ -242,6 +246,7 @@ class ExtensionApp(JupyterApp):
     @default("static_url_prefix")
     def _default_static_url_prefix(self):
         static_url = f"static/{self.name}/"
+        assert self.serverapp is not None
         return url_path_join(self.serverapp.base_url, static_url)
 
     static_paths = List(
@@ -264,7 +269,9 @@ class ExtensionApp(JupyterApp):
 
     settings = Dict(help=_i18n("""Settings that will passed to the server.""")).tag(config=True)
 
-    handlers = List(help=_i18n("""Handlers appended to the server.""")).tag(config=True)
+    handlers: List[tuple[t.Any, ...]] = List(
+        help=_i18n("""Handlers appended to the server.""")
+    ).tag(config=True)  # type:ignore[assignment]
 
     def _config_file_name_default(self):
         """The default config file name."""
@@ -295,6 +302,7 @@ class ExtensionApp(JupyterApp):
     def _prepare_settings(self):
         """Prepare the settings."""
         # Make webapp settings accessible to initialize_settings method
+        assert self.serverapp is not None
         webapp = self.serverapp.web_app
         self.settings.update(**webapp.settings)
 
@@ -314,6 +322,7 @@ class ExtensionApp(JupyterApp):
 
     def _prepare_handlers(self):
         """Prepare the handlers."""
+        assert self.serverapp is not None
         webapp = self.serverapp.web_app
 
         # Get handlers defined by extension subclass.
@@ -352,7 +361,7 @@ class ExtensionApp(JupyterApp):
             )
             new_handlers.append(handler)
 
-        webapp.add_handlers(".*$", new_handlers)
+        webapp.add_handlers(".*$", new_handlers)  # type:ignore[arg-type]
 
     def _prepare_templates(self):
         """Add templates to web app settings if extension has templates."""
@@ -372,7 +381,7 @@ class ExtensionApp(JupyterApp):
         base_config["ServerApp"].update(self.serverapp_config)
         return base_config
 
-    def _link_jupyter_server_extension(self, serverapp):
+    def _link_jupyter_server_extension(self, serverapp: ServerApp) -> None:
         """Link the ExtensionApp to an initialized ServerApp.
 
         The ServerApp is stored as an attribute and config
@@ -436,6 +445,7 @@ class ExtensionApp(JupyterApp):
         """
         super().start()
         # Start the server.
+        assert self.serverapp is not None
         self.serverapp.start()
 
     def current_activity(self):
@@ -447,6 +457,7 @@ class ExtensionApp(JupyterApp):
 
     def stop(self):
         """Stop the underlying Jupyter server."""
+        assert self.serverapp is not None
         self.serverapp.stop()
         self.serverapp.clear_instance()
 

@@ -1,4 +1,6 @@
 """The extension manager."""
+from __future__ import annotations
+
 import importlib
 
 from tornado.gen import multi

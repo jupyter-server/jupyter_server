@@ -1086,7 +1086,7 @@ class ServerApp(JupyterApp):
         self._warn_deprecated_config(change, "IdentityProvider")
 
     @default("token")
-    def _deprecated_token_access(self) -> None:
+    def _deprecated_token_access(self) -> str:
         warnings.warn(
             "ServerApp.token config is deprecated in jupyter-server 2.0. Use IdentityProvider.token",
             DeprecationWarning,
@@ -1884,7 +1884,7 @@ class ServerApp(JupyterApp):
         self.gateway_config = GatewayClient.instance(parent=self)
 
         if not issubclass(
-            self.kernel_manager_class,  # type:ignore[arg-type]
+            self.kernel_manager_class,
             AsyncMappingKernelManager,
         ):
             warnings.warn(
@@ -1894,7 +1894,7 @@ class ServerApp(JupyterApp):
             )
 
         if not issubclass(
-            self.contents_manager_class,  # type:ignore[arg-type]
+            self.contents_manager_class,
             AsyncContentsManager,
         ):
             warnings.warn(
@@ -1925,8 +1925,8 @@ class ServerApp(JupyterApp):
                 "because jupyter-client's version does not allow them (should be >8.3.0)."
             )
 
-        self.kernel_manager = self.kernel_manager_class(**kwargs)  # type:ignore[operator]
-        self.contents_manager = self.contents_manager_class(  # type:ignore[operator]
+        self.kernel_manager = self.kernel_manager_class(**kwargs)
+        self.contents_manager = self.contents_manager_class(
             parent=self,
             log=self.log,
         )
@@ -1968,11 +1968,11 @@ class ServerApp(JupyterApp):
                 f"Ignoring deprecated config ServerApp.login_handler_class={self.login_handler_class}."
                 " Superseded by ServerApp.identity_provider_class={self.identity_provider_class}."
             )
-        self.identity_provider = self.identity_provider_class(**identity_provider_kwargs)  # type:ignore[operator]
+        self.identity_provider = self.identity_provider_class(**identity_provider_kwargs)
 
         if self.identity_provider_class is LegacyIdentityProvider:
             # legacy config stored the password in tornado_settings
-            self.tornado_settings["password"] = self.identity_provider.hashed_password
+            self.tornado_settings["password"] = self.identity_provider.hashed_password  # type:ignore[attr-defined]
             self.tornado_settings["token"] = self.identity_provider.token
 
         if self._token_set:
@@ -1989,7 +1989,7 @@ class ServerApp(JupyterApp):
                 # that means it has some config that should take higher priority than deprecated ServerApp.token
                 self.log.warning("Ignoring deprecated ServerApp.token config")
 
-        self.authorizer = self.authorizer_class(  # type:ignore[operator]
+        self.authorizer = self.authorizer_class(
             parent=self, log=self.log, identity_provider=self.identity_provider
         )
 

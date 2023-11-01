@@ -5,6 +5,8 @@
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import asyncio
 import os
 import pathlib
@@ -13,8 +15,6 @@ import warnings
 from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import partial, wraps
-from typing import Dict as DictType
-from typing import Optional
 
 from jupyter_client.ioloop.manager import AsyncIOLoopKernelManager
 from jupyter_client.multikernelmanager import AsyncMultiKernelManager, MultiKernelManager
@@ -64,7 +64,7 @@ class MappingKernelManager(MultiKernelManager):
 
     _kernel_connections = Dict()
 
-    _kernel_ports: DictType[str, t.List[int]] = Dict()  # type: ignore[assignment]
+    _kernel_ports: dict[str, list[int]] = Dict()  # type: ignore[assignment]
 
     _culler_callback = None
 
@@ -206,7 +206,7 @@ class MappingKernelManager(MultiKernelManager):
     # TODO DEC 2022: Revise the type-ignore once the signatures have been changed upstream
     # https://github.com/jupyter/jupyter_client/pull/905
     async def _async_start_kernel(  # type:ignore[override]
-        self, *, kernel_id: Optional[str] = None, path: Optional[ApiPath] = None, **kwargs: str
+        self, *, kernel_id: str | None = None, path: ApiPath | None = None, **kwargs: str
     ) -> str:
         """Start a kernel for a session and return its kernel_id.
 
@@ -797,12 +797,12 @@ class ServerKernelManager(AsyncIOLoopKernelManager):
     # schema to register with this kernel manager's eventlogger.
     # This trait should not be overridden.
     @property
-    def core_event_schema_paths(self) -> t.List[pathlib.Path]:
+    def core_event_schema_paths(self) -> list[pathlib.Path]:
         return [DEFAULT_EVENTS_SCHEMA_PATH / "kernel_actions" / "v1.yaml"]
 
     # This trait is intended for subclasses to override and define
     # custom event schemas.
-    extra_event_schema_paths = List(
+    extra_event_schema_paths: List[str] = List(  # type:ignore[assignment]
         default_value=[],
         help="""
         A list of pathlib.Path objects pointing at to register with

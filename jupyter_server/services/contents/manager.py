@@ -1,10 +1,13 @@
 """A base class for contents managers."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import itertools
 import json
 import os
 import re
+import typing as t
 import warnings
 from fnmatch import fnmatch
 
@@ -259,8 +262,8 @@ class ContentsManager(LoggingConfigurable):
                 msg = "fUnexpected error while running post hook save: {e}"
                 raise HTTPError(500, msg) from None
 
-    _pre_save_hooks = List()
-    _post_save_hooks = List()
+    _pre_save_hooks: List[t.Any] = List()
+    _post_save_hooks: List[t.Any] = List()
 
     def register_pre_save_hook(self, hook):
         """Register a pre save hook."""
