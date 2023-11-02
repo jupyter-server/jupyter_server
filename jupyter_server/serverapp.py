@@ -91,8 +91,8 @@ from jupyter_server.extension.config import ExtensionConfigManager
 from jupyter_server.extension.manager import ExtensionManager
 from jupyter_server.extension.serverextension import ServerExtensionApp
 from jupyter_server.gateway.connections import GatewayWebSocketConnection
+from jupyter_server.gateway.gateway_client import GatewayClient
 from jupyter_server.gateway.managers import (
-    GatewayClient,
     GatewayKernelSpecManager,
     GatewayMappingKernelManager,
     GatewaySessionManager,
@@ -323,7 +323,7 @@ class ServerWebApplication(web.Application):
             localedir=os.path.join(base_dir, "jupyter_server/i18n"),
             fallback=True,
         )
-        env.install_gettext_translations(nbui, newstyle=False)  # type:ignore[attr-defined]
+        env.install_gettext_translations(nbui, newstyle=False)
 
         if sys_info["commit_source"] == "repository":
             # don't cache (rely on 304) when working from master
@@ -1913,7 +1913,7 @@ class ServerApp(JupyterApp):
             "connection_dir": self.runtime_dir,
             "kernel_spec_manager": self.kernel_spec_manager,
         }
-        if jupyter_client.version_info > (8, 3, 0):
+        if jupyter_client.version_info > (8, 3, 0):  # type:ignore[attr-defined]
             if self.allow_external_kernels:
                 external_connection_dir = self.external_connection_dir
                 if external_connection_dir is None:

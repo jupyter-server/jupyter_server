@@ -9,7 +9,7 @@ import weakref
 from concurrent.futures import Future
 from textwrap import dedent
 
-from jupyter_client import protocol_version as client_protocol_version
+from jupyter_client import protocol_version as client_protocol_version  # type:ignore[attr-defined]
 from tornado import gen, web
 from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketClosedError

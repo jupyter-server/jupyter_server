@@ -11,8 +11,7 @@ import typing as t
 import warnings
 from fnmatch import fnmatch
 
-from jupyter_client.utils import run_sync
-from jupyter_core.utils import ensure_async
+from jupyter_core.utils import ensure_async, run_sync
 from jupyter_events import EventLogger
 from nbformat import ValidationError, sign
 from nbformat import validate as validate_nb
