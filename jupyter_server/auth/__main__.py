@@ -7,7 +7,7 @@ from getpass import getpass
 from jupyter_core.paths import jupyter_config_dir
 from traitlets.log import get_logger
 
-from jupyter_server.auth import passwd
+from jupyter_server.auth import passwd  # type:ignore[attr-defined]
 from jupyter_server.config_manager import BaseJSONConfigManager
 
 

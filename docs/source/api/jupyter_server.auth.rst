@@ -49,7 +49,7 @@ Submodules
 Module contents
 ---------------
 
-.. .. automodule:: jupyter_server.auth
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
+.. automodule:: jupyter_server.auth
+   :members:
+   :undoc-members:
+   :show-inheritance:
