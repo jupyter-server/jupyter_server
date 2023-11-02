@@ -4,7 +4,7 @@ import mimetypes
 from jupyter_core.utils import ensure_async
 from tornado import web
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 
 from ..base.handlers import JupyterHandler
 from ..services.kernelspecs.handlers import kernel_name_regex

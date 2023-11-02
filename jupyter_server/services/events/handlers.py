@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional, cast
 import jupyter_events.logger
 from tornado import web, websocket
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 from jupyter_server.base.handlers import JupyterHandler
 
 from ...base.handlers import APIHandler

@@ -12,11 +12,16 @@ DEFAULT_JUPYTER_SERVER_PORT = 8888
 JUPYTER_SERVER_EVENTS_URI = "https://events.jupyter.org/jupyter_server"
 DEFAULT_EVENTS_SCHEMA_PATH = pathlib.Path(__file__).parent / "event_schemas"
 
-del os
+from ._version import __version__, version_info
+from .base.call_context import CallContext
 
-from ._version import __version__, version_info  # noqa
-from .base.call_context import CallContext  # noqa
-
-
-def _cleanup():
-    pass
+__all__ = [
+    "DEFAULT_STATIC_FILES_PATH",
+    "DEFAULT_TEMPLATE_PATH_LIST",
+    "DEFAULT_JUPYTER_SERVER_PORT",
+    "JUPYTER_SERVER_EVENTS_URI",
+    "DEFAULT_EVENTS_SCHEMA_PATH",
+    "__version__",
+    "version_info",
+    "CallContext",
+]

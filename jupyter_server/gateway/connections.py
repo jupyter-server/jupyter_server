@@ -16,7 +16,7 @@ from traitlets import Bool, Instance, Int
 
 from ..services.kernels.connection.base import BaseKernelWebsocketConnection
 from ..utils import url_path_join
-from .managers import GatewayClient
+from .gateway_client import GatewayClient
 
 
 class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
