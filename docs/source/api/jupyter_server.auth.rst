@@ -45,11 +45,3 @@ Submodules
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: jupyter_server.auth
-   :members:
-   :undoc-members:
-   :show-inheritance:
