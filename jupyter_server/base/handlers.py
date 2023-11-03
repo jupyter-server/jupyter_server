@@ -3,6 +3,7 @@
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
+import contextvars
 import functools
 import inspect
 import ipaddress
@@ -43,6 +44,7 @@ from jupyter_server.utils import (
 if TYPE_CHECKING:
     from jupyter_server.auth.identity import User
 
+_current_request_var: contextvars.ContextVar = contextvars.ContextVar("current_request")
 # -----------------------------------------------------------------------------
 # Top-level handlers
 # -----------------------------------------------------------------------------
@@ -69,6 +71,9 @@ def log():
 class AuthenticatedHandler(web.RequestHandler):
     """A RequestHandler with an authenticated user."""
 
+    def prepare(self):
+        _current_request_var.set(self.request)
+
     @property
     def base_url(self) -> str:
         return self.settings.get("base_url", "/")
@@ -89,7 +94,7 @@ class AuthenticatedHandler(web.RequestHandler):
                 # Make sure the report-uri is relative to the base_url
                 "report-uri "
                 + self.settings.get("csp_report_uri", url_path_join(self.base_url, csp_report_uri)),
-            ]
+                ]
         )
 
     def set_default_headers(self):
@@ -1096,6 +1101,13 @@ class PrometheusMetricsHandler(JupyterHandler):
 
         self.set_header("Content-Type", prometheus_client.CONTENT_TYPE_LATEST)
         self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
+
+
+def get_current_request():
+    """
+    Get :class:`tornado.httputil.HTTPServerRequest` that is currently being processed.
+    """
+    return _current_request_var.get(None)
 
 
 # -----------------------------------------------------------------------------
