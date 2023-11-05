@@ -20,10 +20,6 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
 ]
 requires-python = ">=3.8"
 dependencies = [
@@ -249,7 +245,7 @@ minversion = "6.0"
 xfail_strict = true
 log_cli_level = "info"
 addopts = [
-  "-raXs", "--durations=10", "--color=yes", "--doctest-modules",
+  "-ra", "--durations=10", "--color=yes", "--doctest-modules",
    "--showlocals", "--strict-markers", "--strict-config"
 ]
 testpaths = [
@@ -265,14 +261,6 @@ filterwarnings = [
   "always:unclosed <socket.socket:ResourceWarning",
   "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
   "ignore:jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0:DeprecationWarning",
-  "ignore:datetime.datetime.utcfromtimestamp:DeprecationWarning",
-  "ignore:datetime.datetime.utcnow:DeprecationWarning",
-  # from nbformat
-  "ignore:Importing ErrorTree directly from the jsonschema package:DeprecationWarning",
-  # From jupyter_events
-  "module:jsonschema.RefResolver is deprecated as of:DeprecationWarning",
-  # ignore pytest warnings.
-  "ignore:::_pytest",
 ]
 
 [tool.coverage.report]
@@ -325,4 +313,4 @@ exclude = ["docs", "test"]
 ignore = ["W002"]
 
 [tool.repo-review]
-ignore = ["PY007", "PP308", "GH102", "MY101"]
+ignore = ["PY007", "GH102"]
