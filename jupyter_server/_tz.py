@@ -7,8 +7,7 @@ Just UTC-awareness right now
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
-from datetime import datetime, timedelta, tzinfo
-from typing import Callable
+from datetime import datetime, timedelta, timezone, tzinfo
 
 # constant for zero offset
 ZERO = timedelta(0)
@@ -26,21 +25,16 @@ class tzUTC(tzinfo):  # noqa
         return ZERO
 
 
+def utcnow() -> datetime:
+    """Return timezone-aware UTC timestamp"""
+    return datetime.now(timezone.utc)
+
+
+def utcfromtimestamp(timestamp):
+    return datetime.fromtimestamp(timestamp, timezone.utc)
+
+
 UTC = tzUTC()  # type:ignore[abstract]
-
-
-def utc_aware(unaware: Callable[..., datetime]) -> Callable[..., datetime]:
-    """decorator for adding UTC tzinfo to datetime's utcfoo methods"""
-
-    def utc_method(*args, **kwargs):
-        dt = unaware(*args, **kwargs)
-        return dt.replace(tzinfo=UTC)
-
-    return utc_method
-
-
-utcfromtimestamp = utc_aware(datetime.utcfromtimestamp)
-utcnow = utc_aware(datetime.utcnow)
 
 
 def isoformat(dt: datetime) -> str:
