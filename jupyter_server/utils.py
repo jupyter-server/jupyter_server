@@ -15,20 +15,27 @@ from urllib.parse import (
     SplitResult,
     quote,
     unquote,
-    urljoin,  # noqa
     urlparse,
     urlsplit,
     urlunsplit,
 )
-from urllib.request import pathname2url  # noqa: F401
+from urllib.parse import (
+    urljoin as _urljoin,
+)
+from urllib.request import pathname2url as _pathname2url
 
-from _frozen_importlib_external import _NamespacePath  # type:ignore[import-not-found]
-from jupyter_core.utils import ensure_async
+from _frozen_importlib_external import _NamespacePath
+from jupyter_core.utils import ensure_async as _ensure_async
 from packaging.version import Version
 from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest, HTTPResponse
 from tornado.netutil import Resolver
 
 ApiPath = NewType("ApiPath", str)
+
+# Re-export
+urljoin = _urljoin
+pathname2url = _pathname2url
+ensure_async = _ensure_async
 
 
 def url_path_join(*pieces: str) -> str:
@@ -321,9 +328,7 @@ def is_namespace_package(namespace: str) -> bool | None:
     # NOTE: using submodule_search_locations because the loader can be None
     try:
         spec = importlib.util.find_spec(namespace)
-    except (
-        ValueError
-    ):  # spec is not set - see https://docs.python.org/3/library/importlib.html#importlib.util.find_spec
+    except ValueError:  # spec is not set - see https://docs.python.org/3/library/importlib.html#importlib.util.find_spec
         return None
 
     if not spec:

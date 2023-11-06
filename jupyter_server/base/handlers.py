@@ -30,7 +30,7 @@ import jupyter_server
 from jupyter_server import CallContext
 from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 from jupyter_server.i18n import combine_translations
 from jupyter_server.services.security import csp_report_uri
 from jupyter_server.utils import (
@@ -611,7 +611,7 @@ class JupyterHandler(AuthenticatedHandler):
             warnings.warn(  # noqa
                 "Overriding JupyterHandler.get_current_user is deprecated in jupyter-server 2.0."
                 " Use an IdentityProvider class.",
-                DeprecationWarning
+                DeprecationWarning,
                 # stacklevel not useful here
             )
             user = User(self.get_current_user())
@@ -993,9 +993,7 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
         if isinstance(path, str):
             path = [path]
 
-        self.root = tuple(
-            os.path.abspath(os.path.expanduser(p)) + os.sep for p in path
-        )  # type:ignore[assignment]
+        self.root = tuple(os.path.abspath(os.path.expanduser(p)) + os.sep for p in path)  # type:ignore[assignment]
         self.default_filename = default_filename
 
     def compute_etag(self) -> str | None:

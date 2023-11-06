@@ -11,7 +11,7 @@ from threading import Thread
 from time import monotonic
 from typing import Any, Dict, Optional
 
-import websocket  # type:ignore[import-untyped]
+import websocket
 from jupyter_client.asynchronous.client import AsyncKernelClient
 from jupyter_client.clientabc import KernelClientABC
 from jupyter_client.kernelspec import KernelSpecManager
@@ -456,7 +456,7 @@ class GatewayKernelManager(ServerKernelManager):
                 # this kernel manager.  The current kernel manager instance may not have
                 # a parent instance if, say, a server extension is using another application
                 # (e.g., papermill) that uses a KernelManager instance directly.
-                self.parent._kernel_connections[self.kernel_id] = int(model["connections"])
+                self.parent._kernel_connections[self.kernel_id] = int(model["connections"])  # type:ignore[index]
 
         self.kernel = model
         return model

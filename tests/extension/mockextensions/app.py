@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 from jupyter_events import EventLogger
@@ -44,7 +46,7 @@ class MockExtensionTemplateHandler(
 
 class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     name = "mockextension"
-    template_paths = List().tag(config=True)
+    template_paths: List[str] = List().tag(config=True)  # type:ignore[assignment]
     static_paths = [STATIC_PATH]  # type:ignore[assignment]
     mock_trait = Unicode("mock trait", config=True)
     loaded = False
@@ -59,7 +61,7 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         # Only add this event if it hasn't already been added.
         # Log the error if it fails, but don't crash the app.
         try:
-            elogger: EventLogger = self.serverapp.event_logger
+            elogger: EventLogger = self.serverapp.event_logger  # type:ignore[union-attr, assignment]
             elogger.register_event_schema(EVENT_SCHEMA)
         except SchemaRegistryException as err:
             self.log.error(err)

@@ -355,7 +355,7 @@ class ListServerExtensionsApp(BaseExtensionApp):
                     self.log.info(f"      {name} {version} {GREEN_OK}")
                 except Exception as err:
                     exc_info = False
-                    if int(self.log_level) <= logging.DEBUG:
+                    if int(self.log_level) <= logging.DEBUG:  # type:ignore[call-overload]
                         exc_info = True
                     self.log.warning(f"      {RED_X} {err}", exc_info=exc_info)
             # Add a blank line between paths.

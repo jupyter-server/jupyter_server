@@ -78,7 +78,7 @@ omitted_kernels: Dict[str, bool] = {}
 
 def generate_model(name):
     """Generate a mocked kernel model.  Caller is responsible for adding model to running_kernels dictionary."""
-    dt = datetime.utcnow().isoformat() + "Z"  # noqa
+    dt = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     kernel_id = str(uuid.uuid4())
     model = {
         "id": kernel_id,
