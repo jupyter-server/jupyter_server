@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.10.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.9.1...e71e95884483c7ce2d9fd5ee83059a0269741aa1))
+
+### Enhancements made
+
+- Update kernel env to reflect changes in session [#1354](https://github.com/jupyter-server/jupyter_server/pull/1354) ([@blink1073](https://github.com/blink1073))
+
+### Maintenance and upkeep improvements
+
+- Clean up config and address warnings [#1353](https://github.com/jupyter-server/jupyter_server/pull/1353) ([@blink1073](https://github.com/blink1073))
+- Clean up lint and typing [#1351](https://github.com/jupyter-server/jupyter_server/pull/1351) ([@blink1073](https://github.com/blink1073))
+- Update typing for traitlets 5.13 [#1350](https://github.com/jupyter-server/jupyter_server/pull/1350) ([@blink1073](https://github.com/blink1073))
+- Update typings and fix tests [#1344](https://github.com/jupyter-server/jupyter_server/pull/1344) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-10-25&to=2023-11-06&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-10-25..2023-11-06&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.9.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.9.0...bb293ec5cac5b277259f27e458da60fa8a926f46))
@@ -17,8 +40,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-10-25&to=2023-10-25&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-10-25..2023-10-25&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.9.0
 
