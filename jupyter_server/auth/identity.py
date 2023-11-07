@@ -27,11 +27,6 @@ from jupyter_server.transutils import _i18n
 from .security import passwd_check, set_password
 from .utils import get_anonymous_username
 
-# circular imports for type checking
-if t.TYPE_CHECKING:
-    from jupyter_server.base.handlers import AuthenticatedHandler, JupyterHandler
-    from jupyter_server.serverapp import ServerApp
-
 _non_alphanum = re.compile(r"[^A-Za-z0-9]")
 
 
@@ -213,7 +208,7 @@ class IdentityProvider(LoggingConfigurable):
 
     need_token: bool | Bool[bool, t.Union[bool, int]] = Bool(True)
 
-    def get_user(self, handler: JupyterHandler) -> User | None | t.Awaitable[User | None]:
+    def get_user(self, handler: web.RequestHandler) -> User | None | t.Awaitable[User | None]:
         """Get the authenticated user for a request
 
         Must return a :class:`jupyter_server.auth.User`,
@@ -228,7 +223,7 @@ class IdentityProvider(LoggingConfigurable):
     # not sure how to have optional-async type signature
     # on base class with `async def` without splitting it into two methods
 
-    async def _get_user(self, handler: JupyterHandler) -> User | None:
+    async def _get_user(self, handler: web.RequestHandler) -> User | None:
         """Get the user."""
         if getattr(handler, "_jupyter_current_user", None):
             # already authenticated
@@ -321,7 +316,7 @@ class IdentityProvider(LoggingConfigurable):
             user["color"],
         )
 
-    def get_cookie_name(self, handler: AuthenticatedHandler) -> str:
+    def get_cookie_name(self, handler: web.RequestHandler) -> str:
         """Return the login cookie name
 
         Uses IdentityProvider.cookie_name, if defined.
@@ -333,7 +328,7 @@ class IdentityProvider(LoggingConfigurable):
         else:
             return _non_alphanum.sub("-", f"username-{handler.request.host}")
 
-    def set_login_cookie(self, handler: AuthenticatedHandler, user: User) -> None:
+    def set_login_cookie(self, handler: web.RequestHandler, user: User) -> None:
         """Call this on handlers to set the login cookie for success"""
         cookie_options = {}
         cookie_options.update(self.cookie_options)
@@ -350,7 +345,7 @@ class IdentityProvider(LoggingConfigurable):
         handler.set_secure_cookie(cookie_name, self.user_to_cookie(user), **cookie_options)
 
     def _force_clear_cookie(
-        self, handler: AuthenticatedHandler, name: str, path: str = "/", domain: str | None = None
+        self, handler: web.RequestHandler, name: str, path: str = "/", domain: str | None = None
     ) -> None:
         """Deletes the cookie with the given name.
 
@@ -376,7 +371,7 @@ class IdentityProvider(LoggingConfigurable):
             morsel["domain"] = domain
         handler.add_header("Set-Cookie", morsel.OutputString())
 
-    def clear_login_cookie(self, handler: AuthenticatedHandler) -> None:
+    def clear_login_cookie(self, handler: web.RequestHandler) -> None:
         """Clear the login cookie, effectively logging out the session."""
         cookie_options = {}
         cookie_options.update(self.cookie_options)
@@ -390,7 +385,9 @@ class IdentityProvider(LoggingConfigurable):
             # two cookies with the same name. See the method above.
             self._force_clear_cookie(handler, cookie_name)
 
-    def get_user_cookie(self, handler: JupyterHandler) -> User | None | t.Awaitable[User | None]:
+    def get_user_cookie(
+        self, handler: web.RequestHandler
+    ) -> User | None | t.Awaitable[User | None]:
         """Get user from a cookie
 
         Calls user_from_cookie to deserialize cookie value
@@ -413,7 +410,7 @@ class IdentityProvider(LoggingConfigurable):
 
     auth_header_pat = re.compile(r"(token|bearer)\s+(.+)", re.IGNORECASE)
 
-    def get_token(self, handler: JupyterHandler) -> str | None:
+    def get_token(self, handler: web.RequestHandler) -> str | None:
         """Get the user token from a request
 
         Default:
@@ -429,7 +426,7 @@ class IdentityProvider(LoggingConfigurable):
                 user_token = m.group(2)
         return user_token
 
-    async def get_user_token(self, handler: JupyterHandler) -> User | None:
+    async def get_user_token(self, handler: web.RequestHandler) -> User | None:
         """Identify the user based on a token in the URL or Authorization header
 
         Returns:
@@ -464,7 +461,7 @@ class IdentityProvider(LoggingConfigurable):
         else:
             return None
 
-    def generate_anonymous_user(self, handler: JupyterHandler) -> User:
+    def generate_anonymous_user(self, handler: web.RequestHandler) -> User:
         """Generate a random anonymous user.
 
         For use when a single shared token is used,
@@ -478,7 +475,7 @@ class IdentityProvider(LoggingConfigurable):
         handler.log.debug(f"Generating new user for token-authenticated request: {user_id}")
         return User(user_id, name, display_name, initials, None, color)
 
-    def should_check_origin(self, handler: AuthenticatedHandler) -> bool:
+    def should_check_origin(self, handler: web.RequestHandler) -> bool:
         """Should the Handler check for CORS origin validation?
 
         Origin check should be skipped for token-authenticated requests.
@@ -489,7 +486,7 @@ class IdentityProvider(LoggingConfigurable):
         """
         return not self.is_token_authenticated(handler)
 
-    def is_token_authenticated(self, handler: AuthenticatedHandler) -> bool:
+    def is_token_authenticated(self, handler: web.RequestHandler) -> bool:
         """Returns True if handler has been token authenticated. Otherwise, False.
 
         Login with a token is used to signal certain things, such as:
@@ -504,7 +501,7 @@ class IdentityProvider(LoggingConfigurable):
 
     def validate_security(
         self,
-        app: ServerApp,
+        app: t.Any,
         ssl_options: dict[str, t.Any] | None = None,
     ) -> None:
         """Check the application's security.
@@ -526,7 +523,7 @@ class IdentityProvider(LoggingConfigurable):
                 "  Anyone who can connect to this server will be able to run code."
             )
 
-    def process_login_form(self, handler: JupyterHandler) -> User | None:
+    def process_login_form(self, handler: web.RequestHandler) -> User | None:
         """Process login form data
 
         Return authenticated User if successful, None if not.
@@ -633,7 +630,7 @@ class PasswordIdentityProvider(IdentityProvider):
         """Check password against our stored hashed password"""
         return passwd_check(self.hashed_password, password)
 
-    def process_login_form(self, handler: JupyterHandler) -> User | None:
+    def process_login_form(self, handler: web.RequestHandler) -> User | None:
         """Process login form data
 
         Return authenticated User if successful, None if not.
@@ -659,7 +656,7 @@ class PasswordIdentityProvider(IdentityProvider):
 
     def validate_security(
         self,
-        app: ServerApp,
+        app: t.Any,
         ssl_options: dict[str, t.Any] | None = None,
     ) -> None:
         """Handle security validation."""
@@ -700,7 +697,7 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
     def auth_enabled(self):
         return self.login_available
 
-    def get_user(self, handler: JupyterHandler) -> User | None:
+    def get_user(self, handler: web.RequestHandler) -> User | None:
         """Get the user."""
         user = self.login_handler_class.get_user(handler)  # type:ignore[attr-defined]
         if user is None:
@@ -715,17 +712,17 @@ class LegacyIdentityProvider(PasswordIdentityProvider):
             )
         )
 
-    def should_check_origin(self, handler: AuthenticatedHandler) -> bool:
+    def should_check_origin(self, handler: web.RequestHandler) -> bool:
         """Whether we should check origin."""
         return bool(self.login_handler_class.should_check_origin(handler))  # type:ignore[attr-defined]
 
-    def is_token_authenticated(self, handler: AuthenticatedHandler) -> bool:
+    def is_token_authenticated(self, handler: web.RequestHandler) -> bool:
         """Whether we are token authenticated."""
         return bool(self.login_handler_class.is_token_authenticated(handler))  # type:ignore[attr-defined]
 
     def validate_security(
         self,
-        app: ServerApp,
+        app: t.Any,
         ssl_options: dict[str, t.Any] | None = None,
     ) -> None:
         """Validate security."""
