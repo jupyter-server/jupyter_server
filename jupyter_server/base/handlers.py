@@ -335,31 +335,31 @@ class JupyterHandler(AuthenticatedHandler):
 
     @property
     def kernel_manager(self) -> AsyncMappingKernelManager:
-        return cast(AsyncMappingKernelManager, self.settings["kernel_manager"])
+        return cast("AsyncMappingKernelManager", self.settings["kernel_manager"])
 
     @property
     def contents_manager(self) -> ContentsManager:
-        return cast(ContentsManager, self.settings["contents_manager"])
+        return cast("ContentsManager", self.settings["contents_manager"])
 
     @property
     def session_manager(self) -> SessionManager:
-        return cast(SessionManager, self.settings["session_manager"])
+        return cast("SessionManager", self.settings["session_manager"])
 
     @property
     def terminal_manager(self) -> TerminalManager:
-        return cast(TerminalManager, self.settings["terminal_manager"])
+        return cast("TerminalManager", self.settings["terminal_manager"])
 
     @property
     def kernel_spec_manager(self) -> KernelSpecManager:
-        return cast(KernelSpecManager, self.settings["kernel_spec_manager"])
+        return cast("KernelSpecManager", self.settings["kernel_spec_manager"])
 
     @property
     def config_manager(self) -> ConfigManager:
-        return cast(ConfigManager, self.settings["config_manager"])
+        return cast("ConfigManager", self.settings["config_manager"])
 
     @property
     def event_logger(self) -> EventLogger:
-        return cast(EventLogger, self.settings["event_logger"])
+        return cast("EventLogger", self.settings["event_logger"])
 
     # ---------------------------------------------------------------
     # CORS
