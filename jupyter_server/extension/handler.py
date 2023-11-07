@@ -51,7 +51,7 @@ class ExtensionHandlerMixin:
 
     @property
     def extensionapp(self) -> ExtensionApp:
-        return cast(ExtensionApp, self.settings[self.name])
+        return cast("ExtensionApp", self.settings[self.name])
 
     @property
     def serverapp(self) -> ServerApp:
