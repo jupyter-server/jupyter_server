@@ -227,7 +227,7 @@ class IdentityProvider(LoggingConfigurable):
         """Get the user."""
         if getattr(handler, "_jupyter_current_user", None):
             # already authenticated
-            return handler._jupyter_current_user
+            return t.cast(User, handler._jupyter_current_user)  # type:ignore[attr-defined]
         _token_user: User | None | t.Awaitable[User | None] = self.get_user_token(handler)
         if isinstance(_token_user, t.Awaitable):
             _token_user = await _token_user
@@ -340,7 +340,7 @@ class IdentityProvider(LoggingConfigurable):
             secure_cookie = handler.request.protocol == "https"
         if secure_cookie:
             cookie_options.setdefault("secure", True)
-        cookie_options.setdefault("path", handler.base_url)
+        cookie_options.setdefault("path", handler.base_url)  # type:ignore[attr-defined]
         cookie_name = self.get_cookie_name(handler)
         handler.set_secure_cookie(cookie_name, self.user_to_cookie(user), **cookie_options)
 
@@ -375,7 +375,7 @@ class IdentityProvider(LoggingConfigurable):
         """Clear the login cookie, effectively logging out the session."""
         cookie_options = {}
         cookie_options.update(self.cookie_options)
-        path = cookie_options.setdefault("path", handler.base_url)
+        path = cookie_options.setdefault("path", handler.base_url)  # type:ignore[attr-defined]
         cookie_name = self.get_cookie_name(handler)
         handler.clear_cookie(cookie_name, path=path)
         if path and path != "/":
@@ -433,7 +433,7 @@ class IdentityProvider(LoggingConfigurable):
         - uuid if authenticated
         - None if not
         """
-        token = handler.token
+        token = t.cast("str | None", handler.token)  # type:ignore[attr-defined]
         if not token:
             return None
         # check login token from URL argument or Authorization header
@@ -472,7 +472,7 @@ class IdentityProvider(LoggingConfigurable):
         name = display_name = f"Anonymous {moon}"
         initials = f"A{moon[0]}"
         color = None
-        handler.log.debug(f"Generating new user for token-authenticated request: {user_id}")
+        handler.log.debug(f"Generating new user for token-authenticated request: {user_id}")  # type:ignore[attr-defined]
         return User(user_id, name, display_name, initials, None, color)
 
     def should_check_origin(self, handler: web.RequestHandler) -> bool:
