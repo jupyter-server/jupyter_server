@@ -266,7 +266,7 @@ class AuthenticatedHandler(web.RequestHandler):
             self.settings["identity_provider"] = IdentityProvider(
                 config=self.settings.get("config", None)
             )
-        return cast(IdentityProvider, self.settings["identity_provider"])
+        return cast("IdentityProvider", self.settings["identity_provider"])
 
 
 class JupyterHandler(AuthenticatedHandler):
