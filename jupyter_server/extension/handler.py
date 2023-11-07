@@ -56,7 +56,7 @@ class ExtensionHandlerMixin:
     @property
     def serverapp(self) -> ServerApp:
         key = "serverapp"
-        return cast(ServerApp, self.settings[key])
+        return cast("ServerApp", self.settings[key])
 
     @property
     def log(self) -> Logger:
@@ -70,11 +70,11 @@ class ExtensionHandlerMixin:
 
     @property
     def config(self) -> Config:
-        return cast(Config, self.settings[f"{self.name}_config"])
+        return cast("Config", self.settings[f"{self.name}_config"])
 
     @property
     def server_config(self) -> Config:
-        return cast(Config, self.settings["config"])
+        return cast("Config", self.settings["config"])
 
     @property
     def base_url(self) -> str:
