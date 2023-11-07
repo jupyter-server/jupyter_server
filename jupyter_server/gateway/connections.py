@@ -46,7 +46,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
         kwargs = GatewayClient.instance().load_connection_args(**kwargs)
 
         request = HTTPRequest(ws_url, **kwargs)
-        self.ws_future = cast(Future[Any], tornado_websocket.websocket_connect(request))
+        self.ws_future = cast("Future[Any]", tornado_websocket.websocket_connect(request))
         self.ws_future.add_done_callback(self._connection_done)
 
         loop = IOLoop.current()
