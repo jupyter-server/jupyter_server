@@ -1,6 +1,8 @@
 """Kernel gateway managers."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import asyncio
 import datetime
 import json
@@ -9,7 +11,7 @@ from logging import Logger
 from queue import Empty, Queue
 from threading import Thread
 from time import monotonic
-from typing import Any, Dict, Optional
+from typing import Any, Optional, cast
 
 import websocket
 from jupyter_client.asynchronous.client import AsyncKernelClient
@@ -36,7 +38,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
     """Kernel manager that supports remote kernels hosted by Jupyter Kernel or Enterprise Gateway."""
 
     # We'll maintain our own set of kernel ids
-    _kernels: Dict[str, "GatewayKernelManager"] = {}  # type:ignore[assignment]
+    _kernels: dict[str, GatewayKernelManager] = {}  # type:ignore[assignment]
 
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
@@ -408,7 +410,7 @@ class GatewayKernelManager(ServerKernelManager):
 
     def client(self, **kwargs):
         """Create a client configured to connect to our kernel"""
-        kw: dict = {}
+        kw: dict[str, Any] = {}
         kw.update(self.get_connection_info(session=True))
         kw.update(
             {
@@ -589,7 +591,7 @@ class GatewayKernelManager(ServerKernelManager):
 KernelManagerABC.register(GatewayKernelManager)
 
 
-class ChannelQueue(Queue):
+class ChannelQueue(Queue):  # type:ignore[type-arg]
     """A queue for a named channel."""
 
     channel_name: Optional[str] = None
@@ -623,7 +625,7 @@ class ChannelQueue(Queue):
                     raise
                 await asyncio.sleep(0)
 
-    async def get_msg(self, *args: Any, **kwargs: Any) -> dict:
+    async def get_msg(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """Get a message from the queue."""
         timeout = kwargs.get("timeout", 1)
         msg = await self._async_get(timeout=timeout)
@@ -633,9 +635,9 @@ class ChannelQueue(Queue):
             )
         )
         self.task_done()
-        return msg
+        return cast("dict[str, Any]", msg)
 
-    def send(self, msg: dict) -> None:
+    def send(self, msg: dict[str, Any]) -> None:
         """Send a message to the queue."""
         message = json.dumps(msg, default=ChannelQueue.serialize_datetime).replace("</", "<\\/")
         self.log.debug(
@@ -710,7 +712,7 @@ class GatewayKernelClient(AsyncKernelClient):
     # flag for whether execute requests should be allowed to call raw_input:
     allow_stdin = False
     _channels_stopped: bool
-    _channel_queues: Optional[Dict[str, ChannelQueue]]
+    _channel_queues: Optional[dict[str, ChannelQueue]]
     _control_channel: Optional[ChannelQueue]  # type:ignore[assignment]
     _hb_channel: Optional[ChannelQueue]  # type:ignore[assignment]
     _stdin_channel: Optional[ChannelQueue]  # type:ignore[assignment]

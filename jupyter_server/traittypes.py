@@ -6,7 +6,7 @@ from traitlets import Any, ClassBasedTraitType, TraitError, Undefined
 from traitlets.utils.descriptions import describe
 
 
-class TypeFromClasses(ClassBasedTraitType):
+class TypeFromClasses(ClassBasedTraitType):  # type:ignore[type-arg]
     """A trait whose value must be a subclass of a class in a specified list of classes."""
 
     default_value: Any
@@ -125,7 +125,7 @@ class TypeFromClasses(ClassBasedTraitType):
             return repr(f"{value.__module__}.{value.__name__}")
 
 
-class InstanceFromClasses(ClassBasedTraitType):
+class InstanceFromClasses(ClassBasedTraitType):  # type:ignore[type-arg]
     """A trait whose value must be an instance of a class in a specified list of classes.
     The value can also be an instance of a subclass of the specified classes.
     Subclasses can declare default classes by overriding the klass attribute

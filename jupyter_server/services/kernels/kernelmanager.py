@@ -440,7 +440,7 @@ class MappingKernelManager(MultiKernelManager):
         kernel = self.get_kernel(kernel_id)
         # return a Future that will resolve when the kernel has successfully restarted
         channel = kernel.connect_shell()
-        future: Future = Future()
+        future: Future[Any] = Future()
 
         def finish():
             """Common cleanup when restart finishes/fails for any reason."""
@@ -710,7 +710,7 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager): 
         self.last_kernel_activity = utcnow()
 
 
-def emit_kernel_action_event(success_msg: str = "") -> t.Callable:
+def emit_kernel_action_event(success_msg: str = "") -> t.Callable[..., t.Any]:
     """Decorate kernel action methods to
     begin emitting jupyter kernel action events.
 
