@@ -1,6 +1,7 @@
 """An extension handler."""
 from __future__ import annotations
 
+from logging import Logger
 from typing import TYPE_CHECKING, Any, cast
 
 from jinja2.exceptions import TemplateNotFound
@@ -8,8 +9,6 @@ from jinja2.exceptions import TemplateNotFound
 from jupyter_server.base.handlers import FileFindHandler
 
 if TYPE_CHECKING:
-    from logging import Logger
-
     from traitlets.config import Config
 
     from jupyter_server.extension.application import ExtensionApp
