@@ -99,8 +99,8 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
     _open_sessions: dict[str, KernelWebsocketHandler] = {}
     _open_sockets: t.MutableSet[ZMQChannelsWebsocketConnection] = weakref.WeakSet()
 
-    _kernel_info_future: Future[object]
-    _close_future: Future[object]
+    _kernel_info_future: Future[t.Any]
+    _close_future: Future[t.Any]
 
     channels = Dict({})
     kernel_info_channel = Any(allow_none=True)
@@ -170,7 +170,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # establishing its zmq subscriptions before processing the next request.
         if getattr(self.kernel_manager, "execution_state", None) == "busy":
             self.log.debug("Nudge: not nudging busy kernel %s", self.kernel_id)
-            f: Future[object] = Future()
+            f: Future[t.Any] = Future()
             f.set_result(None)
             return _ensure_future(f)
         # Use a transient shell channel to prevent leaking
@@ -182,8 +182,8 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # The IOPub used by the client, whose subscriptions we are verifying.
         iopub_channel = self.channels["iopub"]
 
-        info_future: Future[object] = Future()
-        iopub_future: Future[object] = Future()
+        info_future: Future[t.Any] = Future()
+        iopub_future: Future[t.Any] = Future()
         both_done = gen.multi([info_future, iopub_future])
 
         def finish(_=None):

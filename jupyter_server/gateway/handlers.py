@@ -161,7 +161,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         super().__init__()
         self.kernel_id = None
         self.ws = None
-        self.ws_future: Future[object] = Future()
+        self.ws_future: Future[Any] = Future()
         self.disconnected = False
         self.retry = 0
 
@@ -184,7 +184,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         kwargs = client.load_connection_args(**kwargs)
 
         request = HTTPRequest(ws_url, **kwargs)
-        self.ws_future = cast(Future[object], websocket_connect(request))
+        self.ws_future = cast(Future[Any], websocket_connect(request))
         self.ws_future.add_done_callback(self._connection_done)
 
         loop = IOLoop.current()

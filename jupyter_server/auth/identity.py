@@ -368,7 +368,7 @@ class IdentityProvider(LoggingConfigurable):
         name = escape.native_str(name)
         expires = datetime.datetime.now(tz=datetime.timezone.utc) - datetime.timedelta(days=365)
 
-        morsel: Morsel[object] = Morsel()
+        morsel: Morsel[t.Any] = Morsel()
         morsel.set(name, "", '""')
         morsel["expires"] = httputil.format_timestamp(expires)
         morsel["path"] = path
