@@ -5,6 +5,7 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-27%3A-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
+from http import HTTPStatus
 
 try:
     from jupyter_client.jsonutil import json_default
@@ -116,18 +117,26 @@ class ContentsHandler(ContentsAPIHandler):
         content = int(content_str or "")
 
         if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
-            raise web.HTTPError(404, f"file or directory {path!r} does not exist")
-
-        model = await ensure_async(
-            self.contents_manager.get(
-                path=path,
-                type=type,
-                format=format,
-                content=content,
+            self.set_status(HTTPStatus.NOT_FOUND)
+            self.write(f"file or directory {path!r} does not exist")
+            await self.finish()
+        try:
+            model = await ensure_async(
+                self.contents_manager.get(
+                    path=path,
+                    type=type,
+                    format=format,
+                    content=content,
+                )
             )
-        )
-        validate_model(model, expect_content=content)
-        self._finish_model(model, location=False)
+            validate_model(model, expect_content=content)
+            self._finish_model(model, location=False)
+        except web.HTTPError as exc:
+            if exc.status_code == HTTPStatus.NOT_FOUND:
+                self.set_status(HTTPStatus.NOT_FOUND)
+                self.write(f"file or directory {path!r} does not exist")
+                await self.finish()
+            raise
 
     @web.authenticated
     @authorized
