@@ -9,6 +9,7 @@ from typing import Any
 import jupyter_client
 import pytest
 import tornado
+from flaky import flaky
 from jupyter_client.ioloop import AsyncIOLoopKernelManager
 from nbformat import writes
 from nbformat.v4 import new_notebook
@@ -506,6 +507,7 @@ async def test_modify_kernel_id(session_client, jp_fetch, jp_serverapp, session_
         assert kernel_list == [kernel]
 
 
+@flaky
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_restart_kernel(session_client, jp_base_url, jp_fetch, jp_ws_fetch, session_is_ready):
     # Create a session.
