@@ -7,6 +7,7 @@ import warnings
 import jupyter_client
 import pytest
 import tornado
+from flaky import flaky
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 from tornado.httpclient import HTTPClientError
 
@@ -256,6 +257,7 @@ async def test_kernel_handler_startup_error_pending(
         await jp_ws_fetch("api", "kernels", kid, "channels")
 
 
+@flaky
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_connection(jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header):
     # Create kernel

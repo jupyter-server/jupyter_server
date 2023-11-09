@@ -116,7 +116,10 @@ integration = "test --integration_tests=true {args}"
 detached = true
 dependencies = ["pre-commit"]
 [tool.hatch.envs.lint.scripts]
-build = "pre-commit run --all-files ruff"
+build = [
+  "pre-commit run --all-files ruff",
+  "pre-commit run --all-files ruff-format",
+]
 
 [tool.hatch.version]
 path = "jupyter_server/_version.py"
@@ -137,7 +140,6 @@ install-pre-commit-hook = true
 optional-editable-build = true
 
 [tool.ruff]
-target-version = "py38"
 line-length = 100
 
 [tool.ruff.lint]
