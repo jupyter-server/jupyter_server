@@ -436,6 +436,15 @@ async def test_404(jp_file_contents_manager_class, tmp_path):
         except HTTPError as e:
             assert e.status_code == 404
 
+    # Test file not found
+    td = str(tmp_path)
+    cm = jp_file_contents_manager_class(root_dir=td)
+    os_path = cm._get_os_path(td)
+    not_a_file = os.path.join(os_path, "foo.bar")
+    with pytest.raises(HTTPError) as excinfo:
+        result = await ensure_async(cm.get(not_a_file, "w"))
+        assert excinfo.value.status_code == 404
+
 
 async def test_escape_root(jp_file_contents_manager_class, tmp_path):
     td = str(tmp_path)
