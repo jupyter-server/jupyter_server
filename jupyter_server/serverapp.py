@@ -2529,18 +2529,19 @@ class ServerApp(JupyterApp):
         at least until asyncio adds *_reader methods
         to proactor.
         """
-        if sys.platform.startswith("win") and sys.version_info >= (3, 8):
-            import asyncio
+        pass
+        # if sys.platform.startswith("win") and sys.version_info >= (3, 8):
+        #     import asyncio
 
-            try:
-                from asyncio import WindowsProactorEventLoopPolicy, WindowsSelectorEventLoopPolicy
-            except ImportError:
-                pass
-                # not affected
-            else:
-                if type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy:
-                    # prefer Selector to Proactor for tornado + pyzmq
-                    asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
+        #     try:
+        #         from asyncio import WindowsProactorEventLoopPolicy, WindowsSelectorEventLoopPolicy
+        #     except ImportError:
+        #         pass
+        #         # not affected
+        #     else:
+        #         if type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy:
+        #             # prefer Selector to Proactor for tornado + pyzmq
+        #             asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
     @catch_config_error
     def initialize(

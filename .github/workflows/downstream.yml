@@ -6,7 +6,7 @@ on:
 
 jobs:
   nbclassic:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 10
 
     steps:
@@ -37,7 +37,7 @@ jobs:
           wait $TASK_PID
 
   notebook:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 10
 
     steps:
@@ -55,7 +55,7 @@ jobs:
           test_command: pip install pytest-jupyter[server] && pytest -vv -raXxs -W default --durations 10 --color=yes
 
   jupyterlab_server:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 10
 
     steps:
@@ -74,7 +74,7 @@ jobs:
           test_command: pip install pytest-jupyter[server] && pytest -vv -raXxs -W default --durations 10 --color=yes
 
   jupyterlab:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 10
 
     steps:
@@ -91,7 +91,7 @@ jobs:
           test_command: "python -m jupyterlab.browser_check --no-browser-test"
 
   jupyter_server_terminals:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 10
 
     steps:
