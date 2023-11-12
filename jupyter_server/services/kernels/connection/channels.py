@@ -154,6 +154,20 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.channels[channel] = stream = meth(identity=identity)
             stream.channel = channel
 
+    def _is_iopub_welcome_supported(self):
+        """Check if the messaging protocol supports sending
+        Iopub welcome messages (i.e protocol_version >= 5.4)
+        """
+        MIN_MAJOR_VERSION = 5
+        MIN_MINOR_VERSION = 4
+        protocol_version_parts = client_protocol_version.split(".")
+        if int(protocol_version_parts[0]) > MIN_MAJOR_VERSION:
+            return True
+        return bool(
+            int(protocol_version_parts[0]) == MIN_MAJOR_VERSION
+            and int(protocol_version_parts[1]) >= MIN_MINOR_VERSION
+        )
+
     def nudge(self):  # noqa
         """Nudge the zmq connections with kernel_info_requests
         Returns a Future that will resolve when we have received
@@ -271,6 +285,63 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         future.add_done_callback(finish)
         return _ensure_future(future)
 
+    def wait_for_iopub_welcome(self):
+        """Wait for an iopub welcome message
+        Since protocol_version >= 5.4
+        """
+        iopub_channel = self.channels["iopub"]
+        iopub_future: Future = Future()
+
+        def on_iopub(msg):
+            """Handle iopub welcome message"""
+            idents, msg = self.session.feed_identities(msg)
+            try:
+                msg = self.session.deserialize(msg)
+            except BaseException:
+                self.log.error("Bad Iopub message", exc_info=True)
+                iopub_channel.stop_on_recv()
+                iopub_future.set_result(None)
+            else:
+                msg_type = msg["header"]["msg_type"]
+                if msg_type == "iopub_welcome":
+                    self.log.debug("Iopub welcome message received: %s", self.kernel_id)
+                    iopub_channel.stop_on_recv()
+                    iopub_future.set_result(msg)
+                else:
+                    self.log.error(
+                        "Iopub welcome message not received, receiving %s instead", msg_type
+                    )
+                    iopub_channel.stop_on_recv()
+                    iopub_future.set_result(None)
+
+        iopub_channel.on_recv(on_iopub)
+        loop = IOLoop.current()
+
+        def give_up(value):
+            """Don't wait forever for the kernel"""
+            if iopub_future.done():
+                return
+            self.log.error("Timeout waiting for IOPub welcome message from %s", self.kernel_id)
+            iopub_channel.stop_on_recv()
+            iopub_future.set_result(None)
+
+        # Resolve with a timeout if we get no response
+        timeout_future = gen.with_timeout(loop.time() + self.kernel_info_timeout, iopub_future)
+        timeout_future.add_done_callback(give_up)
+        return _ensure_future(timeout_future)
+
+    def is_subscribed(self):
+        """Check zmq subscriptions depending on the protocol version.
+        Either with iopub welcome message if supported, or with `nudge`
+        """
+        if self._is_iopub_welcome_supported():
+            return self.wait_for_iopub_welcome()
+        else:
+            self.log.warning(
+                "Be aware that using an old kernel protocol may involve possible loss of early iopub messages"
+            )
+            return self.nudge()
+
     async def _register_session(self):
         """Ensure we aren't creating a duplicate session.
 
@@ -347,7 +418,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                 # The kernel's ports have not changed; use the channels captured in the buffer
                 self.channels = buffer_info["channels"]
 
-            connected = self.nudge()
+            connected = self.is_subscribed()
 
             def replay(value):
                 replay_buffer = buffer_info["buffer"]
@@ -361,7 +432,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         else:
             try:
                 self.create_stream()
-                connected = self.nudge()
+                connected = self.is_subscribed()
             except web.HTTPError as e:
                 # Do not log error if the kernel is already shutdown,
                 # as it's normal that it's not responding
