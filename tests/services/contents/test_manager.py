@@ -406,43 +406,43 @@ async def test_400(jp_file_contents_manager_class, tmp_path):  # noqa
 
 
 async def test_404(jp_file_contents_manager_class, tmp_path):
-    # Test visible file in hidden folder
-    with pytest.raises(HTTPError) as excinfo:
-        td = str(tmp_path)
-        cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = ".hidden"
-        file_in_hidden_path = os.path.join(hidden_dir, "visible.txt")
-        _make_dir(cm, hidden_dir)
-        model = await ensure_async(cm.new(path=file_in_hidden_path))
-        os_path = cm._get_os_path(model["path"])
+    # setup
+    td = str(tmp_path)
+    cm = jp_file_contents_manager_class(root_dir=td)
 
-        try:
-            result = await ensure_async(cm.get(os_path, "w"))
-        except HTTPError as e:
-            assert e.status_code == 404
+    # Test visible file in hidden folder
+    cm.allow_hidden = True
+    hidden_dir = ".hidden"
+    file_in_hidden_path = os.path.join(hidden_dir, "visible.txt")
+    _make_dir(cm, hidden_dir)
+    model = await ensure_async(cm.new(path=file_in_hidden_path))
+    os_path = cm._get_os_path(model["path"])
+    cm.allow_hidden = False
+
+    with pytest.raises(HTTPError) as excinfo:
+        await ensure_async(cm.get(os_path))
+        assert excinfo.value.status_code == 404
 
     # Test hidden file in visible folder
-    with pytest.raises(HTTPError) as excinfo:
-        td = str(tmp_path)
-        cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = "visible"
-        file_in_hidden_path = os.path.join(hidden_dir, ".hidden.txt")
-        _make_dir(cm, hidden_dir)
-        model = await ensure_async(cm.new(path=file_in_hidden_path))
-        os_path = cm._get_os_path(model["path"])
+    cm.allow_hidden = True
+    hidden_dir = "visible"
+    file_in_hidden_path = os.path.join(hidden_dir, ".hidden.txt")
+    _make_dir(cm, hidden_dir)
+    model = await ensure_async(cm.new(path=file_in_hidden_path))
+    os_path = cm._get_os_path(model["path"])
+    cm.allow_hidden = False
 
-        try:
-            result = await ensure_async(cm.get(os_path, "w"))
-        except HTTPError as e:
-            assert e.status_code == 404
+    with pytest.raises(HTTPError) as excinfo:
+        await ensure_async(cm.get(os_path))
+        assert excinfo.value.status_code == 404
 
     # Test file not found
     td = str(tmp_path)
     cm = jp_file_contents_manager_class(root_dir=td)
-    os_path = cm._get_os_path(td)
-    not_a_file = os.path.join(os_path, "foo.bar")
+    not_a_file = "foo.bar"
+
     with pytest.raises(HTTPError) as excinfo:
-        result = await ensure_async(cm.get(not_a_file, "w"))
+        await ensure_async(cm.get(not_a_file))
         assert excinfo.value.status_code == 404
 
 
