@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.10.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.10.0...9f8ff2886903a6744c5eb483f9e5bd7e63d5d015))
+
+### Bugs fixed
+
+- ContentsHandler return 404 rather than raise exc [#1357](https://github.com/jupyter-server/jupyter_server/pull/1357) ([@bloomsa](https://github.com/bloomsa))
+
+### Maintenance and upkeep improvements
+
+- Clean up ruff config [#1358](https://github.com/jupyter-server/jupyter_server/pull/1358) ([@blink1073](https://github.com/blink1073))
+- Add more typings [#1356](https://github.com/jupyter-server/jupyter_server/pull/1356) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1355](https://github.com/jupyter-server/jupyter_server/pull/1355) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-11-06&to=2023-11-15&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-11-06..2023-11-15&type=Issues) | [@bloomsa](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abloomsa+updated%3A2023-11-06..2023-11-15&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-11-06..2023-11-15&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.10.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.9.1...e71e95884483c7ce2d9fd5ee83059a0269741aa1))
@@ -24,8 +46,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-10-25&to=2023-11-06&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-10-25..2023-11-06&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.9.1
 
