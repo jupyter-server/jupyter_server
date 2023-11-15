@@ -1,6 +1,8 @@
 """A tornado based Jupyter server."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import datetime
 import errno
 import gettext
@@ -309,7 +311,7 @@ class ServerWebApplication(web.Application):
             _template_path = (_template_path,)
         template_path = [os.path.expanduser(path) for path in _template_path]
 
-        jenv_opt: dict = {"autoescape": True}
+        jenv_opt: dict[str, t.Any] = {"autoescape": True}
         jenv_opt.update(jinja_env_options if jinja_env_options else {})
 
         env = Environment(  # noqa: S701
@@ -795,7 +797,7 @@ class ServerApp(JupyterApp):
         ZMQChannelsWebsocketConnection,
     ]
 
-    subcommands: dict = {
+    subcommands: dict[str, t.Any] = {
         "list": (
             JupyterServerListApp,
             JupyterServerListApp.description.splitlines()[0],
@@ -929,7 +931,7 @@ class ServerApp(JupyterApp):
 
     @validate("ip")
     def _validate_ip(self, proposal: t.Any) -> str:
-        value = proposal["value"]
+        value = t.cast(str, proposal["value"])
         if value == "*":
             value = ""
         return value
@@ -987,7 +989,7 @@ class ServerApp(JupyterApp):
     )
 
     @validate("sock_mode")
-    def _validate_sock_mode(self, proposal: t.Any) -> int:
+    def _validate_sock_mode(self, proposal: t.Any) -> t.Any:
         value = proposal["value"]
         try:
             converted_value = int(value.encode(), 8)
@@ -1403,7 +1405,7 @@ class ServerApp(JupyterApp):
 
     @validate("base_url")
     def _update_base_url(self, proposal: t.Any) -> str:
-        value = proposal["value"]
+        value = t.cast(str, proposal["value"])
         if not value.startswith("/"):
             value = "/" + value
         if not value.endswith("/"):
@@ -1420,14 +1422,14 @@ class ServerApp(JupyterApp):
     )
 
     @property
-    def static_file_path(self) -> t.List[str]:
+    def static_file_path(self) -> list[str]:
         """return extra paths + the default location"""
         return [*self.extra_static_paths, DEFAULT_STATIC_FILES_PATH]
 
     static_custom_path = List(Unicode(), help=_i18n("""Path to search for custom.js, css"""))
 
     @default("static_custom_path")
-    def _default_static_custom_path(self) -> t.List[str]:
+    def _default_static_custom_path(self) -> list[str]:
         return [os.path.join(d, "custom") for d in (self.config_dir, DEFAULT_STATIC_FILES_PATH)]
 
     extra_template_paths = List(
@@ -1441,7 +1443,7 @@ class ServerApp(JupyterApp):
     )
 
     @property
-    def template_file_path(self) -> t.List[str]:
+    def template_file_path(self) -> list[str]:
         """return extra paths + the default locations"""
         return self.extra_template_paths + DEFAULT_TEMPLATE_PATH_LIST
 
@@ -1483,7 +1485,7 @@ class ServerApp(JupyterApp):
     )
 
     @default("kernel_manager_class")
-    def _default_kernel_manager_class(self) -> t.Union[str, t.Type[AsyncMappingKernelManager]]:
+    def _default_kernel_manager_class(self) -> t.Union[str, type[AsyncMappingKernelManager]]:
         if self.gateway_config.gateway_enabled:
             return "jupyter_server.gateway.managers.GatewayMappingKernelManager"
         return AsyncMappingKernelManager
@@ -1494,7 +1496,7 @@ class ServerApp(JupyterApp):
     )
 
     @default("session_manager_class")
-    def _default_session_manager_class(self) -> t.Union[str, t.Type[SessionManager]]:
+    def _default_session_manager_class(self) -> t.Union[str, type[SessionManager]]:
         if self.gateway_config.gateway_enabled:
             return "jupyter_server.gateway.managers.GatewaySessionManager"
         return SessionManager
@@ -1508,7 +1510,7 @@ class ServerApp(JupyterApp):
     @default("kernel_websocket_connection_class")
     def _default_kernel_websocket_connection_class(
         self,
-    ) -> t.Union[str, t.Type[ZMQChannelsWebsocketConnection]]:
+    ) -> t.Union[str, type[ZMQChannelsWebsocketConnection]]:
         if self.gateway_config.gateway_enabled:
             return "jupyter_server.gateway.connections.GatewayWebSocketConnection"
         return ZMQChannelsWebsocketConnection
@@ -1533,7 +1535,7 @@ class ServerApp(JupyterApp):
     )
 
     @default("kernel_spec_manager_class")
-    def _default_kernel_spec_manager_class(self) -> t.Union[str, t.Type[KernelSpecManager]]:
+    def _default_kernel_spec_manager_class(self) -> t.Union[str, type[KernelSpecManager]]:
         if self.gateway_config.gateway_enabled:
             return "jupyter_server.gateway.managers.GatewayKernelSpecManager"
         return KernelSpecManager
@@ -1856,7 +1858,7 @@ class ServerApp(JupyterApp):
         """Get the Extension that started this server."""
         return self._starter_app
 
-    def parse_command_line(self, argv: t.Optional[t.List[str]] = None) -> None:
+    def parse_command_line(self, argv: t.Optional[list[str]] = None) -> None:
         """Parse the command line options."""
         super().parse_command_line(argv)
 
@@ -2148,7 +2150,9 @@ class ServerApp(JupyterApp):
             )
             resource.setrlimit(resource.RLIMIT_NOFILE, (soft, hard))
 
-    def _get_urlparts(self, path: t.Optional[str] = None, include_token: bool = False) -> t.Any:
+    def _get_urlparts(
+        self, path: t.Optional[str] = None, include_token: bool = False
+    ) -> urllib.parse.ParseResult:
         """Constructs a urllib named tuple, ParseResult,
         with default values set by server config.
         The returned tuple can be manipulated using the `_replace` method.
@@ -2545,7 +2549,7 @@ class ServerApp(JupyterApp):
     @catch_config_error
     def initialize(
         self,
-        argv: t.Optional[t.List[str]] = None,
+        argv: t.Optional[list[str]] = None,
         find_extensions: bool = True,
         new_httpserver: bool = True,
         starter_extension: t.Any = None,
@@ -2636,7 +2640,7 @@ class ServerApp(JupyterApp):
 
     def running_server_info(self, kernel_count: bool = True) -> str:
         """Return the current working directory and the server url information"""
-        info = self.contents_manager.info_string() + "\n"
+        info = t.cast(str, self.contents_manager.info_string()) + "\n"
         if kernel_count:
             n_kernels = len(self.kernel_manager.list_kernel_ids())
             kernel_msg = trans.ngettext("%d active kernel", "%d active kernels", n_kernels)
@@ -2651,7 +2655,7 @@ class ServerApp(JupyterApp):
             )
         return info
 
-    def server_info(self) -> t.Dict[str, t.Any]:
+    def server_info(self) -> dict[str, t.Any]:
         """Return a JSONable dict of information about this server."""
         return {
             "url": self.connection_url,
@@ -2784,7 +2788,7 @@ class ServerApp(JupyterApp):
             if e.errno != errno.ENOENT:
                 raise
 
-    def _prepare_browser_open(self) -> t.Tuple[str, t.Optional[str]]:
+    def _prepare_browser_open(self) -> tuple[str, t.Optional[str]]:
         """Prepare to open the browser."""
         if not self.use_redirect_file:
             uri = self.default_url[len(self.base_url) :]

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, List
 
 
 class KernelWebsocketConnectionABC(ABC):
@@ -28,6 +28,6 @@ class KernelWebsocketConnectionABC(ABC):
         ...
 
     @abstractmethod
-    def handle_outgoing_message(self, stream: str, outgoing_msg: list) -> None:
+    def handle_outgoing_message(self, stream: str, outgoing_msg: List[Any]) -> None:
         """Broker outgoing ZMQ messages to the kernel websocket."""
         ...

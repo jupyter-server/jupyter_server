@@ -73,6 +73,6 @@ def authorized(
         method = action
         action = None
         # no-arguments `@authorized` decorator called
-        return wrapper(method)
+        return cast(FuncT, wrapper(method))
 
     return cast(FuncT, wrapper)

@@ -1,6 +1,8 @@
 """A contents manager that uses the local file system for storage."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import errno
 import math
 import mimetypes
@@ -10,6 +12,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import typing as t
 import warnings
 from datetime import datetime
 from pathlib import Path
@@ -375,7 +378,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path)
 
         if content:
-            validation_error: dict = {}
+            validation_error: dict[str, t.Any] = {}
             nb = self._read_notebook(
                 os_path, as_version=4, capture_validation_error=validation_error
             )
@@ -465,7 +468,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         self.log.debug("Saving %s", os_path)
 
-        validation_error: dict = {}
+        validation_error: dict[str, t.Any] = {}
         try:
             if model["type"] == "notebook":
                 nb = nbformat.from_dict(model["content"])
@@ -824,7 +827,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         os_path = self._get_os_path(path)
 
         if content:
-            validation_error: dict = {}
+            validation_error: dict[str, t.Any] = {}
             nb = await self._read_notebook(
                 os_path, as_version=4, capture_validation_error=validation_error
             )
@@ -906,7 +909,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         os_path = self._get_os_path(path)
         self.log.debug("Saving %s", os_path)
 
-        validation_error: dict = {}
+        validation_error: dict[str, t.Any] = {}
         try:
             if model["type"] == "notebook":
                 nb = nbformat.from_dict(model["content"])
@@ -1094,7 +1097,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
     async def _copy_dir(
         self, from_path: str, to_path_original: str, to_name: str, to_path: str
-    ) -> dict:
+    ) -> dict[str, t.Any]:
         """
         handles copying directories
         returns the model for the copied directory
@@ -1111,7 +1114,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 f"Can't copy '{from_path}' into read-only Folder '{to_path}'",
             ) from err
 
-        return model
+        return model  # type:ignore[no-any-return]
 
     async def check_folder_size(self, path: str) -> None:
         """

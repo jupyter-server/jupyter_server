@@ -73,7 +73,7 @@ def json_sys_info():
 def log() -> Logger:
     """Get the application log."""
     if Application.initialized():
-        return Application.instance().log
+        return cast(Logger, Application.instance().log)
     else:
         return app_log
 
@@ -83,7 +83,7 @@ class AuthenticatedHandler(web.RequestHandler):
 
     @property
     def base_url(self) -> str:
-        return self.settings.get("base_url", "/")
+        return cast(str, self.settings.get("base_url", "/"))
 
     @property
     def content_security_policy(self) -> str:
@@ -93,7 +93,7 @@ class AuthenticatedHandler(web.RequestHandler):
         """
         if "Content-Security-Policy" in self.settings.get("headers", {}):
             # user-specified, don't override
-            return self.settings["headers"]["Content-Security-Policy"]
+            return cast(str, self.settings["headers"]["Content-Security-Policy"])
 
         return "; ".join(
             [
@@ -171,7 +171,7 @@ class AuthenticatedHandler(web.RequestHandler):
                 DeprecationWarning,
                 stacklevel=2,
             )
-            return self._jupyter_current_user
+            return cast(str, self._jupyter_current_user)
         # haven't called get_user in prepare, raise
         raise RuntimeError(msg)
 
@@ -195,7 +195,7 @@ class AuthenticatedHandler(web.RequestHandler):
     def logged_in(self) -> bool:
         """Is a user currently logged in?"""
         user = self.current_user
-        return user and user != "anonymous"
+        return bool(user and user != "anonymous")
 
     @property
     def login_handler(self) -> Any:
@@ -222,7 +222,7 @@ class AuthenticatedHandler(web.RequestHandler):
         whether the user is already logged in or not.
 
         """
-        return self.identity_provider.login_available
+        return cast(bool, self.identity_provider.login_available)
 
     @property
     def authorizer(self) -> Authorizer:
@@ -266,7 +266,7 @@ class AuthenticatedHandler(web.RequestHandler):
             self.settings["identity_provider"] = IdentityProvider(
                 config=self.settings.get("config", None)
             )
-        return self.settings["identity_provider"]
+        return cast("IdentityProvider", self.settings["identity_provider"])
 
 
 class JupyterHandler(AuthenticatedHandler):
@@ -277,7 +277,7 @@ class JupyterHandler(AuthenticatedHandler):
 
     @property
     def config(self) -> dict[str, Any] | None:
-        return self.settings.get("config", None)
+        return cast("dict[str, Any] | None", self.settings.get("config", None))
 
     @property
     def log(self) -> Logger:
@@ -287,11 +287,11 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def jinja_template_vars(self) -> dict[str, Any]:
         """User-supplied values to supply to jinja templates."""
-        return self.settings.get("jinja_template_vars", {})
+        return cast("dict[str, Any]", self.settings.get("jinja_template_vars", {}))
 
     @property
     def serverapp(self) -> ServerApp | None:
-        return self.settings["serverapp"]
+        return cast("ServerApp | None", self.settings["serverapp"])
 
     # ---------------------------------------------------------------
     # URLs
@@ -300,26 +300,26 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def version_hash(self) -> str:
         """The version hash to use for cache hints for static files"""
-        return self.settings.get("version_hash", "")
+        return cast(str, self.settings.get("version_hash", ""))
 
     @property
     def mathjax_url(self) -> str:
-        url = self.settings.get("mathjax_url", "")
+        url = cast(str, self.settings.get("mathjax_url", ""))
         if not url or url_is_absolute(url):
             return url
         return url_path_join(self.base_url, url)
 
     @property
     def mathjax_config(self) -> str:
-        return self.settings.get("mathjax_config", "TeX-AMS-MML_HTMLorMML-full,Safe")
+        return cast(str, self.settings.get("mathjax_config", "TeX-AMS-MML_HTMLorMML-full,Safe"))
 
     @property
     def default_url(self) -> str:
-        return self.settings.get("default_url", "")
+        return cast(str, self.settings.get("default_url", ""))
 
     @property
     def ws_url(self) -> str:
-        return self.settings.get("websocket_url", "")
+        return cast(str, self.settings.get("websocket_url", ""))
 
     @property
     def contents_js_source(self) -> str:
@@ -327,7 +327,7 @@ class JupyterHandler(AuthenticatedHandler):
             "Using contents: %s",
             self.settings.get("contents_js_source", "services/contents"),
         )
-        return self.settings.get("contents_js_source", "services/contents")
+        return cast(str, self.settings.get("contents_js_source", "services/contents"))
 
     # ---------------------------------------------------------------
     # Manager objects
@@ -335,31 +335,31 @@ class JupyterHandler(AuthenticatedHandler):
 
     @property
     def kernel_manager(self) -> AsyncMappingKernelManager:
-        return self.settings["kernel_manager"]
+        return cast("AsyncMappingKernelManager", self.settings["kernel_manager"])
 
     @property
     def contents_manager(self) -> ContentsManager:
-        return self.settings["contents_manager"]
+        return cast("ContentsManager", self.settings["contents_manager"])
 
     @property
     def session_manager(self) -> SessionManager:
-        return self.settings["session_manager"]
+        return cast("SessionManager", self.settings["session_manager"])
 
     @property
     def terminal_manager(self) -> TerminalManager:
-        return self.settings["terminal_manager"]
+        return cast("TerminalManager", self.settings["terminal_manager"])
 
     @property
     def kernel_spec_manager(self) -> KernelSpecManager:
-        return self.settings["kernel_spec_manager"]
+        return cast("KernelSpecManager", self.settings["kernel_spec_manager"])
 
     @property
     def config_manager(self) -> ConfigManager:
-        return self.settings["config_manager"]
+        return cast("ConfigManager", self.settings["config_manager"])
 
     @property
     def event_logger(self) -> EventLogger:
-        return self.settings["event_logger"]
+        return cast("EventLogger", self.settings["event_logger"])
 
     # ---------------------------------------------------------------
     # CORS
@@ -368,17 +368,17 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def allow_origin(self) -> str:
         """Normal Access-Control-Allow-Origin"""
-        return self.settings.get("allow_origin", "")
+        return cast(str, self.settings.get("allow_origin", ""))
 
     @property
-    def allow_origin_pat(self) -> str:
+    def allow_origin_pat(self) -> str | None:
         """Regular expression version of allow_origin"""
-        return self.settings.get("allow_origin_pat", None)
+        return cast("str | None", self.settings.get("allow_origin_pat", None))
 
     @property
     def allow_credentials(self) -> bool:
         """Whether to set Access-Control-Allow-Credentials"""
-        return self.settings.get("allow_credentials", False)
+        return cast(bool, self.settings.get("allow_credentials", False))
 
     def set_default_headers(self) -> None:
         """Add CORS headers, if defined"""
@@ -462,7 +462,7 @@ class JupyterHandler(AuthenticatedHandler):
 
         # Check CORS headers
         if self.allow_origin:
-            allow = self.allow_origin == origin
+            allow = bool(self.allow_origin == origin)
         elif self.allow_origin_pat:
             allow = bool(re.match(self.allow_origin_pat, origin))
         else:
@@ -682,7 +682,7 @@ class JupyterHandler(AuthenticatedHandler):
             self.log.debug("Bad JSON: %r", body)
             self.log.error("Couldn't parse JSON", exc_info=True)
             raise web.HTTPError(400, "Invalid JSON in body of request") from e
-        return model
+        return cast("dict[str, Any]", model)
 
     def write_error(self, status_code: int, **kwargs: Any) -> None:
         """render custom error pages"""
@@ -736,7 +736,7 @@ class APIHandler(JupyterHandler):
         """APIHandler errors are JSON, not human pages"""
         self.set_header("Content-Type", "application/json")
         message = responses.get(status_code, "Unknown HTTP Error")
-        reply: dict = {
+        reply: dict[str, Any] = {
             "message": message,
         }
         exc_info = kwargs.get("exc_info")
@@ -962,7 +962,7 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
     """
 
     # cache search results, don't search for files more than once
-    _static_paths: dict[str, Any] = {}
+    _static_paths: dict[str, str] = {}
     root: tuple[str]  # type:ignore[assignment]
 
     def set_headers(self) -> None:
@@ -1102,8 +1102,8 @@ class FilesRedirectHandler(JupyterHandler):
         self.log.debug("Redirecting %s to %s", self.request.path, url)
         self.redirect(url)
 
-    def get(self, path: str = "") -> Awaitable:
-        return self.redirect_to_files(self, path)
+    async def get(self, path: str = "") -> None:
+        return await self.redirect_to_files(self, path)
 
 
 class RedirectWithParams(web.RequestHandler):

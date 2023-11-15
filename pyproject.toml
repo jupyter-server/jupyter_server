@@ -40,7 +40,7 @@ dependencies = [
     "tornado>=6.2.0",
     "traitlets>=5.6.0",
     "websocket-client",
-    "jupyter_events>=0.6.0",
+    "jupyter_events>=0.9.0",
     "overrides"
 ]
 
@@ -206,6 +206,8 @@ ignore = [
   "PLR0912",
   # RUF012 Mutable class attributes should be annotated with `typing.ClassVar`
   "RUF012",
+  # Use `X | Y` for type annotations
+  "UP007",
 ]
 unfixable = [
   # Don't touch print statements
@@ -300,7 +302,7 @@ strict = true
 pretty = true
 show_error_codes = true
 warn_unreachable = true
-disable_error_code = ["no-untyped-def", "no-untyped-call", "type-arg", "no-any-return"]
+disable_error_code = ["no-untyped-def", "no-untyped-call"]
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 
 [tool.interrogate]

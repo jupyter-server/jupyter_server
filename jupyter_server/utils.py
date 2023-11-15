@@ -157,7 +157,7 @@ def check_version(v: str, check: str) -> bool:
     Users on dev branches are responsible for keeping their own packages up to date.
     """
     try:
-        return Version(v) >= Version(check)
+        return bool(Version(v) >= Version(check))
     except TypeError:
         return True
 

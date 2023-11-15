@@ -3,6 +3,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import os.path
+import typing as t
 
 from jupyter_core.paths import jupyter_config_dir, jupyter_config_path
 from traitlets import Instance, List, Unicode, default, observe
@@ -22,7 +23,7 @@ class ConfigManager(LoggingConfigurable):
 
     def get(self, section_name):
         """Get the config from all config sections."""
-        config: dict = {}
+        config: t.Dict[str, t.Any] = {}
         # step through back to front, to ensure front of the list is top priority
         for p in self.read_config_path[::-1]:
             cm = BaseJSONConfigManager(config_dir=p)
