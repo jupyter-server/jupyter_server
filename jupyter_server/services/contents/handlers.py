@@ -92,6 +92,12 @@ class ContentsHandler(ContentsAPIHandler):
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(model, default=json_default))
 
+    async def _finish_error(self, code, message):
+        """Finish a JSON request with an error code and descriptive message"""
+        self.set_status(code)
+        self.write(message)
+        await self.finish()
+
     @web.authenticated
     @authorized
     async def get(self, path=""):
@@ -117,9 +123,9 @@ class ContentsHandler(ContentsAPIHandler):
         content = int(content_str or "")
 
         if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
-            self.set_status(HTTPStatus.NOT_FOUND)
-            self.write(f"file or directory {path!r} does not exist")
-            await self.finish()
+            await self._finish_error(
+                HTTPStatus.NOT_FOUND, f"file or directory {path!r} does not exist"
+            )
         try:
             model = await ensure_async(
                 self.contents_manager.get(
@@ -132,10 +138,11 @@ class ContentsHandler(ContentsAPIHandler):
             validate_model(model, expect_content=content)
             self._finish_model(model, location=False)
         except web.HTTPError as exc:
+            # 404 is okay in this context, catch exception and return 404 code to prevent stack trace on client
             if exc.status_code == HTTPStatus.NOT_FOUND:
-                self.set_status(HTTPStatus.NOT_FOUND)
-                self.write(f"file or directory {path!r} does not exist")
-                await self.finish()
+                await self._finish_error(
+                    HTTPStatus.NOT_FOUND, f"file or directory {path!r} does not exist"
+                )
             raise
 
     @web.authenticated
