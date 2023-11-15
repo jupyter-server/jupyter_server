@@ -5,6 +5,7 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-27%3A-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
+from http import HTTPStatus
 
 try:
     from jupyter_client.jsonutil import json_default
@@ -91,6 +92,12 @@ class ContentsHandler(ContentsAPIHandler):
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(model, default=json_default))
 
+    async def _finish_error(self, code, message):
+        """Finish a JSON request with an error code and descriptive message"""
+        self.set_status(code)
+        self.write(message)
+        await self.finish()
+
     @web.authenticated
     @authorized
     async def get(self, path=""):
@@ -116,18 +123,27 @@ class ContentsHandler(ContentsAPIHandler):
         content = int(content_str or "")
 
         if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
-            raise web.HTTPError(404, f"file or directory {path!r} does not exist")
-
-        model = await ensure_async(
-            self.contents_manager.get(
-                path=path,
-                type=type,
-                format=format,
-                content=content,
+            await self._finish_error(
+                HTTPStatus.NOT_FOUND, f"file or directory {path!r} does not exist"
             )
-        )
-        validate_model(model, expect_content=content)
-        self._finish_model(model, location=False)
+        try:
+            model = await ensure_async(
+                self.contents_manager.get(
+                    path=path,
+                    type=type,
+                    format=format,
+                    content=content,
+                )
+            )
+            validate_model(model, expect_content=content)
+            self._finish_model(model, location=False)
+        except web.HTTPError as exc:
+            # 404 is okay in this context, catch exception and return 404 code to prevent stack trace on client
+            if exc.status_code == HTTPStatus.NOT_FOUND:
+                await self._finish_error(
+                    HTTPStatus.NOT_FOUND, f"file or directory {path!r} does not exist"
+                )
+            raise
 
     @web.authenticated
     @authorized
