@@ -28,7 +28,7 @@ Jupyter Server contains the following components:
 
 - **Config Manager** initializes configuration for the ServerApp. You can define
   custom classes for the Jupyter Server managers using this config and change
-  SererApp settings. Follow :ref:`the Config File Guide <other-full-config>` to
+  ServerApp settings. Follow :ref:`the Config File Guide <other-full-config>` to
   learn about configuration settings and how to build custom config.
 
 - **Custom Extensions** allow you to create the custom Server's REST API endpoints.
