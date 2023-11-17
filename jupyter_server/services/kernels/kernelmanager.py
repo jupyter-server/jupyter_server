@@ -549,17 +549,36 @@ class MappingKernelManager(MultiKernelManager):
             key=kernel.session.key,
         )
 
+        _user_activities = [
+            "complete_request",
+            "execute_input",
+            "execute_reply",
+            "execute_request",
+            "inspect_request",
+        ]
+
         def record_activity(msg_list):
             """Record an IOPub message arriving from a kernel"""
-            self.last_kernel_activity = kernel.last_activity = utcnow()
+            if kernel.execution_state == "starting":
+                # Starting is the status for a kernel process that has not come up yet.
+                #
+                # If we've received a 0mq message from the kernel, then we know it is
+                # no longer starting and should update the execution state accordingly.
+                kernel.execution_state = "idle"
 
-            idents, fed_msg_list = session.feed_identities(msg_list)
+            _, fed_msg_list = session.feed_identities(msg_list)
             msg = session.deserialize(fed_msg_list, content=False)
-
-            msg_type = msg["header"]["msg_type"]
-            if msg_type == "status":
+            msg_type = msg.get("header", {}).get("msg_type", "")
+            parent_msg_type = msg.get("parent_header", {}).get("msg_type", "")
+            if (
+                (msg_type in _user_activities)
+                or (parent_msg_type in _user_activities)
+                or kernel.execution_state == "busy"
+            ):
+                self.last_kernel_activity = kernel.last_activity = utcnow()
+            if msg_type == "status" and parent_msg_type in _user_activities:
                 msg = session.deserialize(fed_msg_list)
-                kernel.execution_state = msg["content"]["execution_state"]
+                kernel.execution_state = msg.get("content", {}).get("execution_state", "")
                 self.log.debug(
                     "activity on %s: %s (%s)",
                     kernel_id,
