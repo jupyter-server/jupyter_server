@@ -37,9 +37,7 @@ try:
     from os.path import samefile
 except ImportError:
     # windows
-    from jupyter_server.utils import (
-        samefile_simple as samefile,
-    )
+    from jupyter_server.utils import samefile_simple as samefile  # type:ignore[assignment]
 
 _script_exporter = None
 
