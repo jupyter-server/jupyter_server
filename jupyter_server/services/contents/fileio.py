@@ -4,6 +4,7 @@ Utilities for file-based Contents/Checkpoints managers.
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import errno
+import hashlib
 import os
 import shutil
 from base64 import decodebytes, encodebytes
@@ -268,7 +269,9 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
         with self.open(os_path, "r", encoding="utf-8") as f:
             try:
                 return nbformat.read(
-                    f, as_version=as_version, capture_validation_error=capture_validation_error
+                    f,
+                    as_version=as_version,
+                    capture_validation_error=capture_validation_error,
                 )
             except Exception as e:
                 e_orig = e
@@ -309,6 +312,7 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
         format:
           If 'text', the contents will be decoded as UTF-8.
           If 'base64', the raw bytes contents will be encoded as base64.
+          If 'byte', the raw bytes contents will be returned.
           If not specified, try to decode as UTF-8, and fall back to base64
         """
         if not os.path.isfile(os_path):
@@ -316,6 +320,9 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
 
         with self.open(os_path, "rb") as f:
             bcontent = f.read()
+        if format == "byte":
+            # Not for http response but internal use
+            return bcontent, "byte"
 
         if format is None or format == "text":
             # Try to interpret as unicode if format is unknown or if unicode
@@ -349,6 +356,12 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
 
         with self.atomic_writing(os_path, text=False) as f:
             f.write(bcontent)
+
+    def _get_md5(self, os_path):
+        c, _ = self._read_file(os_path, "byte")
+        md5 = hashlib.md5()  # noqa: S324
+        md5.update(c)
+        return md5.hexdigest()
 
 
 class AsyncFileManagerMixin(FileManagerMixin):
@@ -417,6 +430,7 @@ class AsyncFileManagerMixin(FileManagerMixin):
         format:
           If 'text', the contents will be decoded as UTF-8.
           If 'base64', the raw bytes contents will be encoded as base64.
+          If 'byte', the raw bytes contents will be returned.
           If not specified, try to decode as UTF-8, and fall back to base64
         """
         if not os.path.isfile(os_path):
@@ -424,6 +438,9 @@ class AsyncFileManagerMixin(FileManagerMixin):
 
         with self.open(os_path, "rb") as f:
             bcontent = await run_sync(f.read)
+        if format == "byte":
+            # Not for http response but internal use
+            return bcontent, "byte"
 
         if format is None or format == "text":
             # Try to interpret as unicode if format is unknown or if unicode
@@ -457,3 +474,9 @@ class AsyncFileManagerMixin(FileManagerMixin):
 
         with self.atomic_writing(os_path, text=False) as f:
             await run_sync(f.write, bcontent)
+
+    async def _get_md5(self, os_path):
+        c, _ = await self._read_file(os_path, "byte")
+        md5 = hashlib.md5()  # noqa: S324
+        md5.update(c)
+        return md5.hexdigest()

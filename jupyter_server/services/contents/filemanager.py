@@ -37,7 +37,9 @@ try:
     from os.path import samefile
 except ImportError:
     # windows
-    from jupyter_server.utils import samefile_simple as samefile  # type:ignore[assignment]
+    from jupyter_server.utils import (
+        samefile_simple as samefile,
+    )
 
 _script_exporter = None
 
@@ -268,6 +270,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model["mimetype"] = None
         model["size"] = size
         model["writable"] = self.is_writable(path)
+        model["md5"] = None
 
         return model
 
@@ -335,7 +338,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         return model
 
-    def _file_model(self, path, content=True, format=None):
+    def _file_model(self, path, content=True, format=None, md5=False):
         """Build a model for a file
 
         if content is requested, include the file contents.
@@ -364,10 +367,13 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 content=content,
                 format=format,
             )
+        if md5:
+            md5 = self._get_md5(os_path)
+            model.update(md5=md5)
 
         return model
 
-    def _notebook_model(self, path, content=True):
+    def _notebook_model(self, path, content=True, md5=False):
         """Build a notebook model
 
         if content is requested, the notebook content will be populated
@@ -386,10 +392,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             model["content"] = nb
             model["format"] = "json"
             self.validate_notebook_model(model, validation_error)
+        if md5:
+            model["md5"] = self._get_md5(os_path)
 
         return model
 
-    def get(self, path, content=True, type=None, format=None):
+    def get(self, path, content=True, type=None, format=None, md5=None):
         """Takes a path for an entity and returns its model
 
         Parameters
@@ -404,6 +412,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         format : str, optional
             The requested format for file contents. 'text' or 'base64'.
             Ignored if this returns a notebook or directory model.
+        md5: bool, optional
+            Whether to include the md5 of the file contents.
 
         Returns
         -------
@@ -431,11 +441,11 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 )
             model = self._dir_model(path, content=content)
         elif type == "notebook" or (type is None and path.endswith(".ipynb")):
-            model = self._notebook_model(path, content=content)
+            model = self._notebook_model(path, content=content, md5=md5)
         else:
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
-            model = self._file_model(path, content=content, format=format)
+            model = self._file_model(path, content=content, format=format, md5=md5)
         self.emit(data={"action": "get", "path": path})
         return model
 
@@ -686,7 +696,9 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 ).stdout.split()
             else:
                 result = subprocess.run(
-                    ["du", "-s", "--block-size=1", path], capture_output=True, check=True
+                    ["du", "-s", "--block-size=1", path],
+                    capture_output=True,
+                    check=True,
                 ).stdout.split()
 
             self.log.info(f"current status of du command {result}")
@@ -784,7 +796,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         return model
 
-    async def _file_model(self, path, content=True, format=None):
+    async def _file_model(self, path, content=True, format=None, md5=False):
         """Build a model for a file
 
         if content is requested, include the file contents.
@@ -813,10 +825,13 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 content=content,
                 format=format,
             )
+        if md5:
+            md5 = await self._get_md5(os_path)
+            model.update(md5=md5)
 
         return model
 
-    async def _notebook_model(self, path, content=True):
+    async def _notebook_model(self, path, content=True, md5=False):
         """Build a notebook model
 
         if content is requested, the notebook content will be populated
@@ -835,10 +850,12 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             model["content"] = nb
             model["format"] = "json"
             self.validate_notebook_model(model, validation_error)
+        if md5:
+            model["md5"] = await self._get_md5(os_path)
 
         return model
 
-    async def get(self, path, content=True, type=None, format=None):
+    async def get(self, path, content=True, type=None, format=None, md5=False):
         """Takes a path for an entity and returns its model
 
         Parameters
@@ -853,6 +870,8 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         format : str, optional
             The requested format for file contents. 'text' or 'base64'.
             Ignored if this returns a notebook or directory model.
+        md5: bool, optional
+            Whether to include the md5 of the file contents.
 
         Returns
         -------
@@ -875,11 +894,11 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 )
             model = await self._dir_model(path, content=content)
         elif type == "notebook" or (type is None and path.endswith(".ipynb")):
-            model = await self._notebook_model(path, content=content)
+            model = await self._notebook_model(path, content=content, md5=md5)
         else:
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
-            model = await self._file_model(path, content=content, format=format)
+            model = await self._file_model(path, content=content, format=format, md5=md5)
         self.emit(data={"action": "get", "path": path})
         return model
 
@@ -1147,7 +1166,9 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 ).stdout.split()
             else:
                 result = subprocess.run(
-                    ["du", "-s", "--block-size=1", path], capture_output=True, check=True
+                    ["du", "-s", "--block-size=1", path],
+                    capture_output=True,
+                    check=True,
                 ).stdout.split()
 
             self.log.info(f"current status of du command {result}")

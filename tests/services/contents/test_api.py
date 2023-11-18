@@ -103,6 +103,20 @@ async def test_get_nb_contents(jp_fetch, contents, path, name):
 
 
 @pytest.mark.parametrize("path,name", dirs)
+async def test_get_nb_md5(jp_fetch, contents, path, name):
+    nbname = name + ".ipynb"
+    nbpath = (path + "/" + nbname).lstrip("/")
+    r = await jp_fetch("api", "contents", nbpath, method="GET", params=dict(md5="1"))
+    model = json.loads(r.body.decode())
+    assert model["name"] == nbname
+    assert model["path"] == nbpath
+    assert model["type"] == "notebook"
+    assert "md5" in model
+    assert "metadata" in model["content"]
+    assert isinstance(model["content"]["metadata"], dict)
+
+
+@pytest.mark.parametrize("path,name", dirs)
 async def test_get_nb_no_contents(jp_fetch, contents, path, name):
     nbname = name + ".ipynb"
     nbpath = (path + "/" + nbname).lstrip("/")
@@ -184,6 +198,19 @@ async def test_get_text_file_contents(jp_fetch, contents, path, name):
             params=dict(type="file", format="text"),
         )
     assert expected_http_error(e, 400)
+
+
+@pytest.mark.parametrize("path,name", dirs)
+async def test_get_text_file_md5(jp_fetch, contents, path, name):
+    txtname = name + ".txt"
+    txtpath = (path + "/" + txtname).lstrip("/")
+    r = await jp_fetch("api", "contents", txtpath, method="GET", params=dict(md5="1"))
+    model = json.loads(r.body.decode())
+    assert model["name"] == txtname
+    assert model["path"] == txtpath
+    assert "md5" in model
+    assert model["format"] == "text"
+    assert model["type"] == "file"
 
 
 async def test_get_404_hidden(jp_fetch, contents, contents_dir):

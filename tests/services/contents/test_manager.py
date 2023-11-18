@@ -571,6 +571,9 @@ async def test_get(jp_contents_manager):  # noqa
     nb_as_bin_file = await ensure_async(cm.get(path, content=True, type="file", format="base64"))
     assert nb_as_bin_file["format"] == "base64"
 
+    nb_with_md5 = await ensure_async(cm.get(path, md5=True))
+    assert nb_with_md5["md5"]
+
     # Test in sub-directory
     sub_dir = "/foo/"
     _make_dir(cm, "foo")
@@ -585,7 +588,7 @@ async def test_get(jp_contents_manager):  # noqa
 
     # Test with a regular file.
     file_model_path = (await ensure_async(cm.new_untitled(path=sub_dir, ext=".txt")))["path"]
-    file_model = await ensure_async(cm.get(file_model_path))
+    file_model = await ensure_async(cm.get(file_model_path, md5=True))
     expected_model = {
         "content": "",
         "format": "text",
@@ -600,6 +603,7 @@ async def test_get(jp_contents_manager):  # noqa
         assert file_model[key] == value
     assert "created" in file_model
     assert "last_modified" in file_model
+    assert "md5" in file_model
 
     # Create a sub-sub directory to test getting directory contents with a
     # subdir.
