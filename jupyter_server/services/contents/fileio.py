@@ -478,5 +478,5 @@ class AsyncFileManagerMixin(FileManagerMixin):
     async def _get_md5(self, os_path):
         c, _ = await self._read_file(os_path, "byte")
         md5 = hashlib.md5()  # noqa: S324
-        md5.update(c)
+        await run_sync(md5.update, c)
         return md5.hexdigest()
