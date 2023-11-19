@@ -63,6 +63,10 @@ Models may contain the following entries:
 |                    |``None``   |if any. (:ref:`See            |
 |                    |           |Below<modelcontent>`)         |
 +--------------------+-----------+------------------------------+
+|**md5**             |unicode or |The md5 of the contents.      |
+|                    |``None``   |                              |
+|                    |           |                              |
++--------------------+-----------+------------------------------+
 
 .. _modelcontent:
 
@@ -76,6 +80,8 @@ model. There are three model types: **notebook**, **file**, and **directory**.
       :class:`nbformat.notebooknode.NotebookNode` representing the .ipynb file
       represented by the model.  See the `NBFormat`_ documentation for a full
       description.
+    - The ``md5`` field a hexdigest string of the md5 value of the notebook
+      file.
 
 - ``file`` models
     - The ``format`` field is either ``"text"`` or ``"base64"``.
@@ -85,12 +91,14 @@ model. There are three model types: **notebook**, **file**, and **directory**.
       file models, ``content`` simply contains the file's bytes after decoding
       as UTF-8.  Non-text (``base64``) files are read as bytes, base64 encoded,
       and then decoded as UTF-8.
+    - The ``md5`` field a hexdigest string of the md5 value of the file.
 
 - ``directory`` models
     - The ``format`` field is always ``"json"``.
     - The ``mimetype`` field is always ``None``.
     - The ``content`` field contains a list of :ref:`content-free<contentfree>`
       models representing the entities in the directory.
+    - The ``md5`` field is always ``None``.
 
 .. note::
 
@@ -129,6 +137,7 @@ model. There are three model types: **notebook**, **file**, and **directory**.
         "path": "foo/a.ipynb",
         "type": "notebook",
         "writable": True,
+        "md5": "7e47382b370c05a1b14706a2a8aff91a",
     }
 
     # Notebook Model without Content

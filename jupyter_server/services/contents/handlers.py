@@ -6,6 +6,7 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-27%3A-
 # Distributed under the terms of the Modified BSD License.
 import json
 from http import HTTPStatus
+from typing import Any, Dict, List
 
 try:
     from jupyter_client.jsonutil import json_default
@@ -22,33 +23,12 @@ from jupyter_server.utils import url_escape, url_path_join
 AUTH_RESOURCE = "contents"
 
 
-def validate_model(model, expect_content):
+def _validate_in_or_not(expect_in_model: bool, model: Dict[str, Any], maybe_none_keys: List[str]):
     """
-    Validate a model returned by a ContentsManager method.
-
-    If expect_content is True, then we expect non-null entries for 'content'
-    and 'format'.
+    Validate that the keys in maybe_none_keys are None or not None
     """
-    required_keys = {
-        "name",
-        "path",
-        "type",
-        "writable",
-        "created",
-        "last_modified",
-        "mimetype",
-        "content",
-        "format",
-    }
-    missing = required_keys - set(model.keys())
-    if missing:
-        raise web.HTTPError(
-            500,
-            f"Missing Model Keys: {missing}",
-        )
 
-    maybe_none_keys = ["content", "format"]
-    if expect_content:
+    if expect_in_model:
         errors = [key for key in maybe_none_keys if model[key] is None]
         if errors:
             raise web.HTTPError(
@@ -62,6 +42,40 @@ def validate_model(model, expect_content):
                 500,
                 f"Keys unexpectedly not None: {errors}",
             )
+
+
+def validate_model(model, expect_content, expect_md5):
+    """
+    Validate a model returned by a ContentsManager method.
+
+    If expect_content is True, then we expect non-null entries for 'content'
+    and 'format'.
+
+    If expect_md5 is True, then we expect non-null entries for 'md5'.
+    """
+    required_keys = {
+        "name",
+        "path",
+        "type",
+        "writable",
+        "created",
+        "last_modified",
+        "mimetype",
+        "content",
+        "format",
+        "md5",
+    }
+    missing = required_keys - set(model.keys())
+    if missing:
+        raise web.HTTPError(
+            500,
+            f"Missing Model Keys: {missing}",
+        )
+
+    content_keys = ["content", "format"]
+    md5_keys = ["md5"]
+    _validate_in_or_not(expect_content, model, content_keys)
+    _validate_in_or_not(expect_md5, model, md5_keys)
 
 
 class ContentsAPIHandler(APIHandler):
@@ -122,6 +136,11 @@ class ContentsHandler(ContentsAPIHandler):
             raise web.HTTPError(400, "Content %r is invalid" % content_str)
         content = int(content_str or "")
 
+        md5_str = self.get_query_argument("md5", default="0")
+        if md5_str not in {"0", "1"}:
+            raise web.HTTPError(400, "Content %r is invalid" % md5_str)
+        md5 = int(md5_str or "")
+
         if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
             await self._finish_error(
                 HTTPStatus.NOT_FOUND, f"file or directory {path!r} does not exist"
@@ -133,9 +152,10 @@ class ContentsHandler(ContentsAPIHandler):
                     type=type,
                     format=format,
                     content=content,
+                    md5=md5,
                 )
             )
-            validate_model(model, expect_content=content)
+            validate_model(model, expect_content=content, expect_md5=md5)
             self._finish_model(model, location=False)
         except web.HTTPError as exc:
             # 404 is okay in this context, catch exception and return 404 code to prevent stack trace on client
@@ -165,7 +185,7 @@ class ContentsHandler(ContentsAPIHandler):
             raise web.HTTPError(400, f"Cannot rename file or directory {path!r}")
 
         model = await ensure_async(cm.update(model, path))
-        validate_model(model, expect_content=False)
+        validate_model(model, expect_content=False, expect_md5=False)
         self._finish_model(model)
 
     async def _copy(self, copy_from, copy_to=None):
@@ -178,7 +198,7 @@ class ContentsHandler(ContentsAPIHandler):
         )
         model = await ensure_async(self.contents_manager.copy(copy_from, copy_to))
         self.set_status(201)
-        validate_model(model, expect_content=False)
+        validate_model(model, expect_content=False, expect_md5=False)
         self._finish_model(model)
 
     async def _upload(self, model, path):
@@ -186,7 +206,7 @@ class ContentsHandler(ContentsAPIHandler):
         self.log.info("Uploading file to %s", path)
         model = await ensure_async(self.contents_manager.new(model, path))
         self.set_status(201)
-        validate_model(model, expect_content=False)
+        validate_model(model, expect_content=False, expect_md5=False)
         self._finish_model(model)
 
     async def _new_untitled(self, path, type="", ext=""):
@@ -196,7 +216,7 @@ class ContentsHandler(ContentsAPIHandler):
             self.contents_manager.new_untitled(path=path, type=type, ext=ext)
         )
         self.set_status(201)
-        validate_model(model, expect_content=False)
+        validate_model(model, expect_content=False, expect_md5=False)
         self._finish_model(model)
 
     async def _save(self, model, path):
@@ -205,7 +225,7 @@ class ContentsHandler(ContentsAPIHandler):
         if not chunk or chunk == -1:  # Avoid tedious log information
             self.log.info("Saving file at %s", path)
         model = await ensure_async(self.contents_manager.save(model, path))
-        validate_model(model, expect_content=False)
+        validate_model(model, expect_content=False, expect_md5=False)
         self._finish_model(model)
 
     @web.authenticated
@@ -356,7 +376,13 @@ class ModifyCheckpointsHandler(ContentsAPIHandler):
 class NotebooksRedirectHandler(JupyterHandler):
     """Redirect /api/notebooks to /api/contents"""
 
-    SUPPORTED_METHODS = ("GET", "PUT", "PATCH", "POST", "DELETE")  # type:ignore[assignment]
+    SUPPORTED_METHODS = (
+        "GET",
+        "PUT",
+        "PATCH",
+        "POST",
+        "DELETE",
+    )  # type:ignore[assignment]
 
     def get(self, path):
         """Handle a notebooks redirect."""

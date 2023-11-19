@@ -142,6 +142,8 @@ def test_file_manager_mixin(tmpdir):
     mixin.log = logging.getLogger()
     bad_content = tmpdir / "bad_content.ipynb"
     bad_content.write_text("{}", "utf8")
+    # Same as `echo -n {} | md5sum`
+    assert mixin._get_md5(bad_content) == "99914b932bd37a50b983c5e7c90ae93b"
     with pytest.raises(HTTPError):
         mixin._read_notebook(bad_content)
     other = path_to_intermediate(bad_content)
@@ -164,6 +166,8 @@ async def test_async_file_manager_mixin(tmpdir):
     mixin.log = logging.getLogger()
     bad_content = tmpdir / "bad_content.ipynb"
     bad_content.write_text("{}", "utf8")
+    # Same as `echo -n {} | md5sum`
+    assert await mixin._get_md5(bad_content) == "99914b932bd37a50b983c5e7c90ae93b"
     with pytest.raises(HTTPError):
         await mixin._read_notebook(bad_content)
     other = path_to_intermediate(bad_content)
