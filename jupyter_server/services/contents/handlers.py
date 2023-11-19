@@ -23,6 +23,27 @@ from jupyter_server.utils import url_escape, url_path_join
 AUTH_RESOURCE = "contents"
 
 
+def _validate_in_or_not(expect_in_model: bool, model: Dict[str, Any], maybe_none_keys: List[str]):
+    """
+    Validate that the keys in maybe_none_keys are None or not None
+    """
+
+    if expect_in_model:
+        errors = [key for key in maybe_none_keys if model[key] is None]
+        if errors:
+            raise web.HTTPError(
+                500,
+                f"Keys unexpectedly None: {errors}",
+            )
+    else:
+        errors = {key: model[key] for key in maybe_none_keys if model[key] is not None}  # type: ignore[assignment]
+        if errors:
+            raise web.HTTPError(
+                500,
+                f"Keys unexpectedly not None: {errors}",
+            )
+
+
 def validate_model(model, expect_content, expect_md5):
     """
     Validate a model returned by a ContentsManager method.
@@ -51,30 +72,10 @@ def validate_model(model, expect_content, expect_md5):
             f"Missing Model Keys: {missing}",
         )
 
-    def validate_in_or_not(statement: bool, model: Dict[str, Any], maybe_none_keys: List[str]):
-        """
-        Validate that the keys in maybe_none_keys are None or not None
-        """
-
-        if statement:
-            errors = [key for key in maybe_none_keys if model[key] is None]
-            if errors:
-                raise web.HTTPError(
-                    500,
-                    f"Keys unexpectedly None: {errors}",
-                )
-        else:
-            errors = {key: model[key] for key in maybe_none_keys if model[key] is not None}  # type: ignore[assignment]
-            if errors:
-                raise web.HTTPError(
-                    500,
-                    f"Keys unexpectedly not None: {errors}",
-                )
-
     content_keys = ["content", "format"]
     md5_keys = ["md5"]
-    validate_in_or_not(expect_content, model, content_keys)
-    validate_in_or_not(expect_md5, model, md5_keys)
+    _validate_in_or_not(expect_content, model, content_keys)
+    _validate_in_or_not(expect_md5, model, md5_keys)
 
 
 class ContentsAPIHandler(APIHandler):
