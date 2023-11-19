@@ -20,8 +20,6 @@ class ParameterHandler(ExtensionHandlerMixin, JupyterHandler):
 class BaseTemplateHandler(ExtensionHandlerJinjaMixin, ExtensionHandlerMixin, JupyterHandler):
     """A base template handler."""
 
-    pass
-
 
 class IndexHandler(BaseTemplateHandler):
     """The root API handler."""

@@ -36,11 +36,11 @@ class SimpleApp1(ExtensionAppJinjaMixin, ExtensionApp):
     # Local path to templates directory.
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]  # type:ignore[assignment]
 
-    configA = Unicode("", config=True, help="Config A example.")  # noqa
+    configA = Unicode("", config=True, help="Config A example.")
 
-    configB = Unicode("", config=True, help="Config B example.")  # noqa
+    configB = Unicode("", config=True, help="Config B example.")
 
-    configC = Unicode("", config=True, help="Config C example.")  # noqa
+    configC = Unicode("", config=True, help="Config C example.")
 
     def initialize_handlers(self):
         """Initialize handlers."""

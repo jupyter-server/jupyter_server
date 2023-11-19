@@ -46,8 +46,6 @@ if ty.TYPE_CHECKING:
 class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore[misc]
     """The metaclass necessary for proper ABC behavior in a Configurable."""
 
-    pass
-
 
 class GatewayTokenRenewerBase(  # type:ignore[misc]
     ABC, LoggingConfigurable, metaclass=GatewayTokenRenewerMeta
@@ -71,7 +69,6 @@ class GatewayTokenRenewerBase(  # type:ignore[misc]
         Given the current authorization header key, scheme, and token, this method returns
         a (potentially renewed) token for use against the Gateway server.
         """
-        pass
 
 
 class NoOpTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
@@ -632,7 +629,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
 
         return kwargs
 
-    def update_cookies(self, cookie: SimpleCookie[ty.Any]) -> None:
+    def update_cookies(self, cookie: SimpleCookie) -> None:
         """Update cookies from existing requests for load balancers"""
         if not self.accept_cookies:
             return
@@ -822,7 +819,7 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
         # Update cookies on GatewayClient from server if configured.
         cookie_values = response.headers.get("Set-Cookie")
         if cookie_values:
-            cookie: SimpleCookie[ty.Any] = SimpleCookie()
+            cookie: SimpleCookie = SimpleCookie()
             cookie.load(cookie_values)
             GatewayClient.instance().update_cookies(cookie)
     return response

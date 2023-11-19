@@ -13,8 +13,8 @@ from jupyter_server.auth.security import passwd
 from jupyter_server.serverapp import ServerApp
 
 # re-run some login tests with legacy login config
-from .test_identity import test_password_required, test_validate_security  # noqa
-from .test_login import login, test_change_password, test_login_cookie, test_logout  # noqa
+from .test_identity import test_password_required, test_validate_security
+from .test_login import login, test_change_password, test_login_cookie, test_logout
 
 # Don't raise on deprecation warnings in this module testing deprecated behavior
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
@@ -32,19 +32,19 @@ class CustomLoginHandler(LoginHandler):
             return None
 
 
-@pytest.fixture
+@pytest.fixture()
 def login_headers():
     return {"test-user": "super"}
 
 
-@pytest.fixture
+@pytest.fixture()
 def jp_server_config():
     cfg = Config()
     cfg.ServerApp.login_handler_class = CustomLoginHandler
     return cfg
 
 
-@pytest.fixture
+@pytest.fixture()
 def identity_provider_class():
     # for tests imported from test_identity.py
     return LegacyIdentityProvider

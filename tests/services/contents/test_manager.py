@@ -296,7 +296,7 @@ async def test_403(jp_file_contents_manager_class, tmp_path):
         assert e.status_code == 403
 
 
-async def test_400(jp_file_contents_manager_class, tmp_path):  # noqa
+async def test_400(jp_file_contents_manager_class, tmp_path):
     # Test Delete behavior
     # Test delete of file in hidden directory
     td = str(tmp_path)
@@ -547,7 +547,7 @@ async def test_modified_date(jp_contents_manager):
     assert renamed["last_modified"] >= saved["last_modified"]
 
 
-async def test_get(jp_contents_manager):  # noqa
+async def test_get(jp_contents_manager):
     cm = jp_contents_manager
     # Create a notebook
     model = await ensure_async(cm.new_untitled(type="notebook"))

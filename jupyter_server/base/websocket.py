@@ -81,7 +81,6 @@ class WebSocketMixin:
 
     def clear_cookie(self, *args, **kwargs):
         """meaningless for websockets"""
-        pass
 
     @no_type_check
     def open(self, *args, **kwargs):

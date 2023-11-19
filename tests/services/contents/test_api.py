@@ -295,7 +295,7 @@ async def test_get_bad_type(jp_fetch, contents):
     assert expected_http_error(e, 400, "%s is not a directory" % path)
 
 
-@pytest.fixture
+@pytest.fixture()
 def _check_created(jp_base_url):
     def _inner(r, contents_dir, path, name, type="notebook"):
         fpath = path + "/" + name

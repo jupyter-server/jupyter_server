@@ -168,7 +168,7 @@ def test_list_running_servers(jp_serverapp, jp_web_app):
     assert len(servers) >= 1
 
 
-@pytest.fixture
+@pytest.fixture()
 def prefix_path(jp_root_dir, tmp_path):
     """If a given path is prefixed with the literal
     strings `/jp_root_dir` or `/tmp_path`, replace those

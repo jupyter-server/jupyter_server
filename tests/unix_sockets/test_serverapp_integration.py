@@ -42,7 +42,7 @@ def _cleanup_process(proc):
             fid.close()
 
 
-@pytest.mark.integration_test
+@pytest.mark.integration_test()
 def test_shutdown_sock_server_integration(jp_unix_socket_file):
     url = urlencode_unix_socket(jp_unix_socket_file).encode()
     encoded_sock_path = urlencode_unix_socket_path(jp_unix_socket_file)
@@ -89,7 +89,7 @@ def test_shutdown_sock_server_integration(jp_unix_socket_file):
     _cleanup_process(p)
 
 
-@pytest.mark.integration_test
+@pytest.mark.integration_test()
 def test_sock_server_validate_sockmode_type():
     try:
         _check_output(["jupyter-server", "--sock=/tmp/nonexistent", "--sock-mode=badbadbad"])
@@ -99,7 +99,7 @@ def test_sock_server_validate_sockmode_type():
         raise AssertionError("expected execution to fail due to validation of --sock-mode param")
 
 
-@pytest.mark.integration_test
+@pytest.mark.integration_test()
 def test_sock_server_validate_sockmode_accessible():
     try:
         _check_output(
@@ -120,7 +120,7 @@ def _ensure_stopped(check_msg="There are no running servers"):
         raise AssertionError("expected all servers to be stopped")
 
 
-@pytest.mark.integration_test
+@pytest.mark.integration_test()
 def test_stop_multi_integration(jp_unix_socket_file, jp_http_port):
     """Tests lifecycle behavior for mixed-mode server types w/ default ports.
 
@@ -158,7 +158,7 @@ def test_stop_multi_integration(jp_unix_socket_file, jp_http_port):
     [_cleanup_process(p) for p in [p1, p2, p3]]
 
 
-@pytest.mark.integration_test
+@pytest.mark.integration_test()
 def test_launch_socket_collision(jp_unix_socket_file):
     """Tests UNIX socket in-use detection for lifecycle correctness."""
     sock = jp_unix_socket_file
@@ -189,7 +189,7 @@ def test_launch_socket_collision(jp_unix_socket_file):
     _cleanup_process(p1)
 
 
-@pytest.mark.integration_test
+@pytest.mark.integration_test()
 def test_shutdown_server(jp_environ):
     # Start a server in another process
     # Stop that server
@@ -214,7 +214,7 @@ def test_shutdown_server(jp_environ):
     _cleanup_process(p)
 
 
-@pytest.mark.integration_test
+@pytest.mark.integration_test()
 def test_jupyter_server_apps(jp_environ):
     # Start a server in another process
     # Stop that server

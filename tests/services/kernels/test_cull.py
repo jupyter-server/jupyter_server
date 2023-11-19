@@ -30,7 +30,7 @@ def suppress_deprecation_warnings():
         yield
 
 
-@pytest.fixture
+@pytest.fixture()
 def jp_kernelspec_with_metadata(jp_data_dir):
     """Configures some sample kernelspecs in the Jupyter data directory."""
     kenrel_spec_name = "sample_with_metadata"

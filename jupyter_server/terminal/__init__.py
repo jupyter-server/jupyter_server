@@ -2,9 +2,9 @@
 import warnings
 
 # Shims
-from jupyter_server_terminals import api_handlers  # noqa
-from jupyter_server_terminals.handlers import TermSocket  # noqa
-from jupyter_server_terminals.terminalmanager import TerminalManager  # noqa
+from jupyter_server_terminals import api_handlers
+from jupyter_server_terminals.handlers import TermSocket
+from jupyter_server_terminals.terminalmanager import TerminalManager
 
 warnings.warn(
     "Terminals support has moved to `jupyter_server_terminals`",

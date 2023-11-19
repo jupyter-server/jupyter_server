@@ -47,8 +47,6 @@ class ParameterHandler(ExtensionHandlerMixin, JupyterHandler):
 class BaseTemplateHandler(ExtensionHandlerJinjaMixin, ExtensionHandlerMixin, JupyterHandler):
     """The base template handler."""
 
-    pass
-
 
 class TypescriptHandler(BaseTemplateHandler):
     """A typescript handler."""

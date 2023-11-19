@@ -11,7 +11,7 @@ from jupyter_server.serverapp import ServerApp
 from .mockextensions.app import MockExtensionApp
 
 
-@pytest.fixture
+@pytest.fixture()
 def jp_server_config(jp_template_dir):
     config = {
         "ServerApp": {
@@ -25,7 +25,7 @@ def jp_server_config(jp_template_dir):
     return config
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_extension(extension_manager):
     name = "tests.extension.mockextensions"
     pkg = extension_manager.extensions[name]

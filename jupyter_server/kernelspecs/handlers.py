@@ -41,7 +41,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
                 mimetype: str = mimetypes.guess_type(path)[0] or "text/plain"
                 self.set_header("Content-Type", mimetype)
                 self.finish(kernel_spec_res)
-                return
+                return None
             else:
                 self.log.warning(
                     "Kernelspec resource '{}' for '{}' not found.  Kernel spec manager may"

@@ -66,7 +66,7 @@ class SlowStartingKernelsMKM(MockMKM):
         await super().shutdown_kernel(kernel_id, now=now)
 
 
-@pytest.fixture
+@pytest.fixture()
 def session_manager():
     return SessionManager(kernel_manager=MockMKM(), contents_manager=ContentsManager())
 

@@ -16,13 +16,13 @@ import jupyter_server.serverapp
 from jupyter_server.utils import async_fetch, url_path_join, urlencode_unix_socket
 
 
-@pytest.fixture
+@pytest.fixture()
 def jp_server_config(jp_unix_socket_file):
     """Configure the serverapp fixture with the unix socket."""
     return {"ServerApp": {"sock": jp_unix_socket_file, "allow_remote_access": True}}
 
 
-@pytest.fixture
+@pytest.fixture()
 def http_server_port(jp_unix_socket_file, jp_process_id):
     """Unix socket and process ID used by tornado's HTTP Server.
 
@@ -32,7 +32,7 @@ def http_server_port(jp_unix_socket_file, jp_process_id):
     return (bind_unix_socket(jp_unix_socket_file), jp_process_id)
 
 
-@pytest.fixture
+@pytest.fixture()
 def jp_unix_socket_fetch(jp_unix_socket_file, jp_auth_header, jp_base_url, http_server, io_loop):
     """A fetch fixture for Jupyter Server tests that use the unix_serverapp fixture"""
 

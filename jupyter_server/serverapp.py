@@ -203,7 +203,7 @@ def random_ports(port: int, n: int) -> t.Generator[int, None, None]:
     for i in range(min(5, n)):
         yield port + i
     for _ in range(n - 5):
-        yield max(1, port + random.randint(-2 * n, 2 * n))  # noqa
+        yield max(1, port + random.randint(-2 * n, 2 * n))
 
 
 def load_handlers(name: str) -> t.Any:
@@ -314,7 +314,7 @@ class ServerWebApplication(web.Application):
         jenv_opt: dict[str, t.Any] = {"autoescape": True}
         jenv_opt.update(jinja_env_options if jinja_env_options else {})
 
-        env = Environment(  # noqa: S701
+        env = Environment(
             loader=FileSystemLoader(template_path), extensions=["jinja2.ext.i18n"], **jenv_opt
         )
         sys_info = get_sys_info()
@@ -1703,7 +1703,6 @@ class ServerApp(JupyterApp):
         # record that root_dir is set,
         # which affects loading of deprecated notebook_dir
         self._root_dir_set = True
-        pass
 
     preferred_dir = Unicode(
         config=True,
@@ -1934,7 +1933,7 @@ class ServerApp(JupyterApp):
         )
         # Trigger a default/validation here explicitly while we still support the
         # deprecated trait on ServerApp (FIXME remove when deprecation finalized)
-        self.contents_manager.preferred_dir  # noqa
+        self.contents_manager.preferred_dir  # noqa: B018
         self.session_manager = self.session_manager_class(
             parent=self,
             log=self.log,
@@ -2164,7 +2163,7 @@ class ServerApp(JupyterApp):
             if not self.ip:
                 ip = "localhost"
             # Handle nonexplicit hostname.
-            elif self.ip in ("0.0.0.0", "::"):  # noqa
+            elif self.ip in ("0.0.0.0", "::"):
                 ip = "%s" % socket.gethostname()
             else:
                 ip = f"[{self.ip}]" if ":" in self.ip else self.ip
@@ -2305,7 +2304,6 @@ class ServerApp(JupyterApp):
     def init_components(self) -> None:
         """Check the components submodule, and warn if it's unclean"""
         # TODO: this should still check, but now we use bower, not git submodule
-        pass
 
     def find_server_extensions(self) -> None:
         """
@@ -2491,14 +2489,13 @@ class ServerApp(JupyterApp):
                     else:
                         self.log.info(_i18n("The port %i is already in use.") % port)
                     continue
-                elif e.errno in (
+                if e.errno in (
                     errno.EACCES,
                     getattr(errno, "WSAEACCES", errno.EACCES),
                 ):
                     self.log.warning(_i18n("Permission to listen on port %i denied.") % port)
                     continue
-                else:
-                    raise
+                raise
             else:
                 success = True
                 self.port = port
@@ -2796,7 +2793,7 @@ class ServerApp(JupyterApp):
             if self.identity_provider.token:
                 uri = url_concat(uri, {"token": self.identity_provider.token})
 
-        if self.file_to_run:  # noqa
+        if self.file_to_run:  # noqa: SIM108
             # Create a separate, temporary open-browser-file
             # pointing at a specific file.
             open_file = self.browser_open_file_to_run

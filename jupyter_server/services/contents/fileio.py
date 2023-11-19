@@ -106,9 +106,9 @@ def atomic_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     if text:
         # Make sure that text files have Unix linefeeds by default
         kwargs.setdefault("newline", "\n")
-        fileobj = open(path, "w", encoding=encoding, **kwargs)  # noqa
+        fileobj = open(path, "w", encoding=encoding, **kwargs)  # noqa: SIM115
     else:
-        fileobj = open(path, "wb", **kwargs)  # noqa
+        fileobj = open(path, "wb", **kwargs)  # noqa: SIM115
 
     try:
         yield fileobj
@@ -154,9 +154,9 @@ def _simple_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     if text:
         # Make sure that text files have Unix linefeeds by default
         kwargs.setdefault("newline", "\n")
-        fileobj = open(path, "w", encoding=encoding, **kwargs)  # noqa
+        fileobj = open(path, "w", encoding=encoding, **kwargs)  # noqa: SIM115
     else:
-        fileobj = open(path, "wb", **kwargs)  # noqa
+        fileobj = open(path, "wb", **kwargs)  # noqa: SIM115
 
     try:
         yield fileobj
@@ -359,7 +359,7 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
 
     def _get_md5(self, os_path):
         c, _ = self._read_file(os_path, "byte")
-        md5 = hashlib.md5()  # noqa: S324
+        md5 = hashlib.md5()
         md5.update(c)
         return md5.hexdigest()
 
@@ -477,6 +477,6 @@ class AsyncFileManagerMixin(FileManagerMixin):
 
     async def _get_md5(self, os_path):
         c, _ = await self._read_file(os_path, "byte")
-        md5 = hashlib.md5()  # noqa: S324
+        md5 = hashlib.md5()
         await run_sync(md5.update, c)
         return md5.hexdigest()
