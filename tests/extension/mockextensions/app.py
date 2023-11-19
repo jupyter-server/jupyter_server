@@ -65,7 +65,6 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             elogger.register_event_schema(EVENT_SCHEMA)
         except SchemaRegistryException as err:
             self.log.error(err)
-            pass
 
     def initialize_handlers(self):
         self.handlers.append(("/mock", MockExtensionHandler))

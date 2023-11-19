@@ -9,7 +9,7 @@ from jupyter_server.extension.config import ExtensionConfigManager
 pytestmark = pytest.mark.usefixtures("jp_environ")
 
 
-@pytest.fixture
+@pytest.fixture()
 def configd(jp_env_config_path):
     """A pathlib.Path object that acts like a jupyter_server_config.d folder."""
     configd = jp_env_config_path.joinpath("jupyter_server_config.d")
@@ -28,7 +28,7 @@ ext1_json_config = """\
 """
 
 
-@pytest.fixture
+@pytest.fixture()
 def ext1_config(configd):
     config = configd.joinpath("ext1_config.json")
     config.write_text(ext1_json_config)
@@ -45,7 +45,7 @@ ext2_json_config = """\
 """
 
 
-@pytest.fixture
+@pytest.fixture()
 def ext2_config(configd):
     config = configd.joinpath("ext2_config.json")
     config.write_text(ext2_json_config)

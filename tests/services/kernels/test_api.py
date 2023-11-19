@@ -29,7 +29,7 @@ def suppress_deprecation_warnings():
         yield
 
 
-@pytest.fixture
+@pytest.fixture()
 def pending_kernel_is_ready(jp_serverapp):
     async def _(kernel_id, ready=None):
         km = jp_serverapp.kernel_manager

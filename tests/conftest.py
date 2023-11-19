@@ -62,18 +62,18 @@ mock_html = """
 """
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_template(jp_template_dir):
     index = jp_template_dir.joinpath("index.html")
     index.write_text(mock_html)
 
 
-@pytest.fixture
+@pytest.fixture()
 def extension_manager(jp_serverapp):
     return jp_serverapp.extension_manager
 
 
-@pytest.fixture
+@pytest.fixture()
 def config_file(jp_config_dir):
     """"""
     f = jp_config_dir.joinpath("jupyter_mockextension_config.py")
@@ -87,7 +87,7 @@ def jp_mockextension_cleanup():
     MockExtensionApp.clear_instance()
 
 
-@pytest.fixture
+@pytest.fixture()
 def contents_dir(tmp_path, jp_serverapp):
     return tmp_path / jp_serverapp.root_dir
 
@@ -108,7 +108,7 @@ dirs = [
 ]
 
 
-@pytest.fixture
+@pytest.fixture()
 def contents(contents_dir):
     # Create files in temporary directory
     paths: dict = {"notebooks": [], "textfiles": [], "blobs": [], "contents_dir": contents_dir}
@@ -137,6 +137,6 @@ def contents(contents_dir):
     return paths
 
 
-@pytest.fixture
+@pytest.fixture()
 def folders():
     return list({item[0] for item in dirs})

@@ -31,8 +31,6 @@ class KernelSessionRecordConflict(Exception):
     merge because of conflicting data.
     """
 
-    pass
-
 
 @dataclass
 class KernelSessionRecord:
@@ -410,7 +408,7 @@ class SessionManager(LoggingConfigurable):
                 raise TypeError(msg)
             conditions.append("%s=?" % column)
 
-        query = "SELECT * FROM session WHERE %s" % (" AND ".join(conditions))  # noqa
+        query = "SELECT * FROM session WHERE %s" % (" AND ".join(conditions))
 
         self.cursor.execute(query, list(kwargs.values()))
         try:
@@ -458,7 +456,7 @@ class SessionManager(LoggingConfigurable):
             if column not in self._columns:
                 raise TypeError("No such column: %r" % column)
             sets.append("%s=?" % column)
-        query = "UPDATE session SET %s WHERE session_id=?" % (", ".join(sets))  # noqa
+        query = "UPDATE session SET %s WHERE session_id=?" % (", ".join(sets))
         self.cursor.execute(query, [*list(kwargs.values()), session_id])
 
         if hasattr(self.kernel_manager, "update_env"):
@@ -492,7 +490,7 @@ class SessionManager(LoggingConfigurable):
             )
             if tolerate_culled:
                 self.log.warning(f"{msg}  Continuing...")
-                return
+                return None
             raise KeyError(msg)
 
         kernel_model = await ensure_async(self.kernel_manager.kernel_model(row["kernel_id"]))

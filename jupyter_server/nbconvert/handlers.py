@@ -139,7 +139,7 @@ class NbconvertFileHandler(JupyterHandler):
             raise web.HTTPError(500, "nbconvert failed: %s" % e) from e
 
         if respond_zip(self, name, output, resources):
-            return
+            return None
 
         # Force download if requested
         if self.get_argument("download", "false").lower() == "true":

@@ -28,7 +28,7 @@ def _preparse_for_subcommand(application_klass, argv):
     """Preparse command line to look for subcommands."""
     # Read in arguments from command line.
     if len(argv) == 0:
-        return
+        return None
 
     # Find any subcommands.
     if application_klass.subcommands and len(argv) > 0:
@@ -218,7 +218,7 @@ class ExtensionApp(JupyterApp):
         if ServerApp.initialized():
             try:
                 return ServerApp.instance()
-            except Exception:  # noqa
+            except Exception:
                 # error retrieving instance, e.g. MultipleInstanceError
                 pass
 
@@ -271,7 +271,7 @@ class ExtensionApp(JupyterApp):
 
     handlers: List[tuple[t.Any, ...]] = List(
         help=_i18n("""Handlers appended to the server.""")
-    ).tag(config=True)  # type:ignore[assignment]
+    ).tag(config=True)
 
     def _config_file_name_default(self):
         """The default config file name."""
@@ -281,15 +281,12 @@ class ExtensionApp(JupyterApp):
 
     def initialize_settings(self):
         """Override this method to add handling of settings."""
-        pass
 
     def initialize_handlers(self):
         """Override this method to append handlers to a Jupyter Server."""
-        pass
 
     def initialize_templates(self):
         """Override this method to add handling of template files."""
-        pass
 
     def _prepare_config(self):
         """Builds a Config object from the extension's traits and passes
@@ -599,7 +596,7 @@ class ExtensionApp(JupyterApp):
         extension's landing page.
         """
         # Handle arguments.
-        if argv is None:  # noqa
+        if argv is None:  # noqa: SIM108
             args = sys.argv[1:]  # slice out extension config.
         else:
             args = argv

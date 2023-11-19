@@ -26,7 +26,6 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
 
         which doesn't make sense for websockets
         """
-        pass
 
     def get_compression_options(self):
         """Get the socket connection options."""

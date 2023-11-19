@@ -10,7 +10,7 @@ from nbformat.v4 import new_notebook
 from jupyter_server.services.security import csp_report_uri
 
 
-@pytest.fixture
+@pytest.fixture()
 def jp_server_config(jp_server_authorizer):
     return {
         "ServerApp": {"authorizer_class": jp_server_authorizer},
@@ -18,7 +18,7 @@ def jp_server_config(jp_server_authorizer):
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def jp_server_auth_resources(jp_server_auth_core_resources):
     # terminal plugin doesn't have importable url patterns
     # get these from terminal/__init__.py

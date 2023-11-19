@@ -49,7 +49,6 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
     def set_default_headers(self):
         """Undo the set_default_headers in JupyterHandler which doesn't make sense for websockets"""
-        pass
 
     def get_compression_options(self):
         """Get the compression options for the socket."""
@@ -240,7 +239,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
 
         # NOTE(esevan): if websocket is not disconnected by client, try to reconnect.
         if not self.disconnected and self.retry < GatewayClient.instance().gateway_retry_max:
-            jitter = random.randint(10, 100) * 0.01  # noqa
+            jitter = random.randint(10, 100) * 0.01
             retry_interval = (
                 min(
                     GatewayClient.instance().gateway_retry_interval * (2**self.retry),

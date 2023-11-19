@@ -14,7 +14,7 @@ from traitlets.config import Config
 from jupyter_server._tz import isoformat
 
 
-@pytest.fixture
+@pytest.fixture()
 def terminal_path(tmp_path):
     subdir = tmp_path.joinpath("terminal_path")
     subdir.mkdir()
@@ -24,7 +24,7 @@ def terminal_path(tmp_path):
     shutil.rmtree(str(subdir), ignore_errors=True)
 
 
-@pytest.fixture
+@pytest.fixture()
 def terminal_root_dir(jp_root_dir):
     subdir = jp_root_dir.joinpath("terminal_path")
     subdir.mkdir()
@@ -38,7 +38,7 @@ CULL_TIMEOUT = 10
 CULL_INTERVAL = 3
 
 
-@pytest.fixture
+@pytest.fixture()
 def jp_server_config():
     return Config(
         {
@@ -52,7 +52,7 @@ def jp_server_config():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def jp_argv():
     """Allows tests to setup specific argv values."""
     return ["--ServerApp.jpserver_extensions", "jupyter_server_terminals=True"]
@@ -300,7 +300,7 @@ def test_shell_command_override(
 def test_importing_shims():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        from jupyter_server.terminal import initialize  # noqa
-        from jupyter_server.terminal.api_handlers import TerminalRootHandler  # noqa
-        from jupyter_server.terminal.handlers import TermSocket  # noqa
-        from jupyter_server.terminal.terminalmanager import TerminalManager  # noqa
+        from jupyter_server.terminal import initialize
+        from jupyter_server.terminal.api_handlers import TerminalRootHandler
+        from jupyter_server.terminal.handlers import TermSocket
+        from jupyter_server.terminal.terminalmanager import TerminalManager

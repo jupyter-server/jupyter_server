@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib
+from itertools import starmap
 
 from tornado.gen import multi
 from traitlets import Any, Bool, Dict, HasTraits, Instance, List, Unicode, default, observe
@@ -392,12 +393,7 @@ class ExtensionManager(LoggingConfigurable):
 
     async def stop_all_extensions(self):
         """Call the shutdown hooks in all extensions."""
-        await multi(
-            [
-                self.stop_extension(name, apps)
-                for name, apps in sorted(dict(self.extension_apps).items())
-            ]
-        )
+        await multi(list(starmap(self.stop_extension, sorted(dict(self.extension_apps).items()))))
 
     def any_activity(self):
         """Check for any activity currently happening across all extension applications."""

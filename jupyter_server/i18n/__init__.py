@@ -59,7 +59,7 @@ def parse_accept_lang_header(accept_lang):
 def load(language, domain="nbjs"):
     """Load translations from an nbjs.json file"""
     try:
-        f = open(pjoin(I18N_DIR, language, "LC_MESSAGES", "nbjs.json"), encoding="utf-8")  # noqa
+        f = open(pjoin(I18N_DIR, language, "LC_MESSAGES", "nbjs.json"), encoding="utf-8")  # noqa: SIM115
     except OSError as e:
         if e.errno != errno.ENOENT:
             raise

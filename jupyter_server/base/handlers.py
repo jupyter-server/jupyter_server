@@ -64,7 +64,7 @@ _sys_info_cache = None
 
 def json_sys_info():
     """Get sys info as json."""
-    global _sys_info_cache  # noqa
+    global _sys_info_cache  # noqa: PLW0603
     if _sys_info_cache is None:
         _sys_info_cache = json.dumps(get_sys_info())
     return _sys_info_cache
@@ -527,11 +527,11 @@ class JupyterHandler(AuthenticatedHandler):
         """Bypass xsrf cookie checks when token-authenticated"""
         if not hasattr(self, "_jupyter_current_user"):
             # Called too early, will be checked later
-            return
+            return None
         if self.token_authenticated or self.settings.get("disable_check_xsrf", False):
             # Token-authenticated requests do not need additional XSRF-check
             # Servers without authentication are vulnerable to XSRF
-            return
+            return None
         try:
             return super().check_xsrf_cookie()
         except web.HTTPError as e:
@@ -608,11 +608,11 @@ class JupyterHandler(AuthenticatedHandler):
             # check for overridden get_current_user + default IdentityProvider
             # deprecated way to override auth (e.g. JupyterHub < 3.0)
             # allow deprecated, overridden get_current_user
-            warnings.warn(  # noqa
+            warnings.warn(
                 "Overriding JupyterHandler.get_current_user is deprecated in jupyter-server 2.0."
                 " Use an IdentityProvider class.",
                 DeprecationWarning,
-                # stacklevel not useful here
+                stacklevel=1,
             )
             user = User(self.get_current_user())
         else:
@@ -695,7 +695,7 @@ class JupyterHandler(AuthenticatedHandler):
             # get the custom message, if defined
             try:
                 message = exception.log_message % exception.args
-            except Exception:  # noqa
+            except Exception:
                 pass
 
             # construct the custom reason, if defined

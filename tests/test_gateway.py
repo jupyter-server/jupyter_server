@@ -90,7 +90,7 @@ def generate_model(name):
     return model
 
 
-async def mock_gateway_request(url, **kwargs):  # noqa
+async def mock_gateway_request(url, **kwargs):
     method = "GET"
     if kwargs["method"]:
         method = kwargs["method"]
@@ -234,7 +234,7 @@ def jp_server_config():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def init_gateway(monkeypatch):
     """Initializes the server for use as a gateway client."""
     # Clear the singleton first since previous tests may not have used a gateway.
