@@ -33,46 +33,47 @@ which we refer to as **models**.
 
 Models may contain the following entries:
 
-+--------------------+------------+-----------------------------------------+
-|        Key         |    Type    |                  Info                   |
-+====================+============+=========================================+
-| **name**           | unicode    | Basename of the entity.                 |
-+--------------------+------------+-----------------------------------------+
-| **path**           | unicode    | Full                                    |
-|                    |            | (:ref:`API-style<apipaths>`)            |
-|                    |            | path to the entity.                     |
-+--------------------+------------+-----------------------------------------+
-| **type**           | unicode    | The entity type. One of                 |
-|                    |            | ``"notebook"``, ``"file"`` or           |
-|                    |            | ``"directory"``.                        |
-+--------------------+------------+-----------------------------------------+
-| **created**        | datetime   | Creation date of the entity.            |
-+--------------------+------------+-----------------------------------------+
-| **last_modified**  | datetime   | Last modified date of the               |
-|                    |            | entity.                                 |
-+--------------------+------------+-----------------------------------------+
-| **content**        | variable   | The "content" of the entity.            |
-|                    |            | (:ref:`See                              |
-|                    |            | Below<modelcontent>`)                   |
-+--------------------+------------+-----------------------------------------+
-| **mimetype**       | unicode or | The mimetype of ``content``,            |
-|                    | ``None``   | if any.  (:ref:`See                     |
-|                    |            | Below<modelcontent>`)                   |
-+--------------------+------------+-----------------------------------------+
-| **format**         | unicode or | The format of ``content``,              |
-|                    | ``None``   | if any. (:ref:`See                      |
-|                    |            | Below<modelcontent>`)                   |
-+--------------------+------------+-----------------------------------------+
-| [optional]         |            |                                         |
-| **hash**           | unicode or | The hash of the contents.               |
-|                    | ``None``   | It cannot be null if ``hash_algorithm`` |
-|                    |            | is defined.                             |
-+--------------------+------------+-----------------------------------------+
-| [optional]         |            |                                         |
-| **hash_algorithm** | unicode or | The algorithm used to compute           |
-|                    | ``None``   | hash value.                             |
-|                    |            | It cannot be null if hash is defined.   |
-+--------------------+------------+-----------------------------------------+
++--------------------+------------+--------------------------------+
+|        Key         |    Type    |              Info              |
++====================+============+================================+
+| **name**           | unicode    | Basename of the entity.        |
++--------------------+------------+--------------------------------+
+| **path**           | unicode    | Full                           |
+|                    |            | (:ref:`API-style<apipaths>`)   |
+|                    |            | path to the entity.            |
++--------------------+------------+--------------------------------+
+| **type**           | unicode    | The entity type. One of        |
+|                    |            | ``"notebook"``, ``"file"`` or  |
+|                    |            | ``"directory"``.               |
++--------------------+------------+--------------------------------+
+| **created**        | datetime   | Creation date of the entity.   |
++--------------------+------------+--------------------------------+
+| **last_modified**  | datetime   | Last modified date of the      |
+|                    |            | entity.                        |
++--------------------+------------+--------------------------------+
+| **content**        | variable   | The "content" of the entity.   |
+|                    |            | (:ref:`See                     |
+|                    |            | Below<modelcontent>`)          |
++--------------------+------------+--------------------------------+
+| **mimetype**       | unicode or | The mimetype of ``content``,   |
+|                    | ``None``   | if any.  (:ref:`See            |
+|                    |            | Below<modelcontent>`)          |
++--------------------+------------+--------------------------------+
+| **format**         | unicode or | The format of ``content``,     |
+|                    | ``None``   | if any. (:ref:`See             |
+|                    |            | Below<modelcontent>`)          |
++--------------------+------------+--------------------------------+
+| [optional]         |            |                                |
+| **hash**           | unicode or | The hash of the contents.      |
+|                    | ``None``   | It cannot be null if           |
+|                    |            | ``hash_algorithm`` is defined. |
++--------------------+------------+--------------------------------+
+| [optional]         |            |                                |
+| **hash_algorithm** | unicode or | The algorithm used to compute  |
+|                    | ``None``   | hash value.                    |
+|                    |            | It cannot be null              |
+|                    |            | if ``hash`` is defined.        |
++--------------------+------------+--------------------------------+
 
 .. _modelcontent:
 
