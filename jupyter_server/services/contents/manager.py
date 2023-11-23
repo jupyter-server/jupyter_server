@@ -111,7 +111,7 @@ class ContentsManager(LoggingConfigurable):
         return value
 
     allow_hidden = Bool(False, config=True, help="Allow access to hidden files")
-    support_hash = Bool(False, config=False, help="Support hash argument in `get`")
+    support_hash = Bool(False, config=False, help="Support require_hash argument in `get`")
 
     notary = Instance(sign.NotebookNotary)
 
