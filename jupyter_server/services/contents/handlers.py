@@ -152,6 +152,9 @@ class ContentsHandler(ContentsAPIHandler):
             "format": format,
             "content": content,
         }
+
+        # See https://github.com/jupyter-server/jupyter_server/issues/1366
+        # try not breaking `ContentManager.get` API while intro `hash` argument to ContentManager
         if cm.support_hash:
             kwargs["require_hash"] = require_hash
 
