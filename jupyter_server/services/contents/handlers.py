@@ -145,16 +145,17 @@ class ContentsHandler(ContentsAPIHandler):
             await self._finish_error(
                 HTTPStatus.NOT_FOUND, f"file or directory {path!r} does not exist"
             )
+        kwargs = {
+            "path": path,
+            "type": type,
+            "format": format,
+            "content": content,
+        }
+        if cm.support_md5:
+            kwargs["md5"] = md5
+
         try:
-            model = await ensure_async(
-                self.contents_manager.get(
-                    path=path,
-                    type=type,
-                    format=format,
-                    content=content,
-                    md5=md5,
-                )
-            )
+            model = await ensure_async(self.contents_manager.get(**kwargs))
             validate_model(model, expect_content=content, expect_md5=md5)
             self._finish_model(model, location=False)
         except web.HTTPError as exc:

@@ -111,6 +111,7 @@ class ContentsManager(LoggingConfigurable):
         return value
 
     allow_hidden = Bool(False, config=True, help="Allow access to hidden files")
+    support_md5 = Bool(False, config=False, help="Support md5 argument in `get`")
 
     notary = Instance(sign.NotebookNotary)
 
@@ -447,8 +448,14 @@ class ContentsManager(LoggingConfigurable):
         """
         return self.file_exists(path) or self.dir_exists(path)
 
-    def get(self, path, content=True, type=None, format=None, md5=False):
-        """Get a file or directory model."""
+    def get(self, path, content=True, type=None, format=None):
+        """
+        Get a file or directory model.
+
+        If a ContentManager supports calculating the md5 value of a file,
+        `ContentManager.support_md5` should be True and this function will accept an `md5` parameter,
+        will return a dict with an `md5` key.
+        """
         raise NotImplementedError
 
     def save(self, model, path):
@@ -850,7 +857,13 @@ class AsyncContentsManager(ContentsManager):
         )
 
     async def get(self, path, content=True, type=None, format=None):
-        """Get a file or directory model."""
+        """
+        Get a file or directory model.
+
+        If a ContentManager supports calculating the md5 value of a file,
+        ContentManager.support_md5 should be True and this function will accept an md5 parameter,
+        will return a dict with an 'md5' key.
+        """
         raise NotImplementedError
 
     async def save(self, model, path):
