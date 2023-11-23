@@ -108,7 +108,7 @@ paths:
           type: integer
         - name: hash
           in: query
-          description: "Return hash hexdigest string of content (0 for no hash, 1 for return hash), when ContentsManager not support hash, it will be ignored."
+          description: "May return hash hexdigest string of content and the hash algorithm (0 for no hash - default, 1 for return hash). It may be ignored by the content manager."
           type: integer
       responses:
         404:
@@ -901,8 +901,6 @@ definitions:
       - mimetype
       - format
       - content
-      - hash
-      - hash_algorithm
     properties:
       name:
         type: string
@@ -942,10 +940,10 @@ definitions:
         description: Format of content (one of null, 'text', 'base64', 'json')
       hash:
         type: string
-        description: "The hexdigest hash string of content, if requested (otherwise null)."
+        description: "[optional] The hexdigest hash string of content, if requested (otherwise null). It cannot be null if hash_algorithm is defined."
       hash_algorithm:
         type: string
-        ddescription: "The algorithm used to produce the hash."
+        description: "[optional] The algorithm used to produce the hash, if requested (otherwise null). It cannot be null if hash is defined."
   Checkpoints:
     description: A checkpoint object.
     type: object

@@ -573,6 +573,14 @@ async def test_get(jp_contents_manager):
 
     nb_with_hash = await ensure_async(cm.get(path, require_hash=True))
     assert nb_with_hash["hash"]
+    assert nb_with_hash["hash_algorithm"]
+
+    # Get the hash without the content
+    nb_with_hash = await ensure_async(cm.get(path, content=False, require_hash=True))
+    assert nb_with_hash["content"] is None
+    assert nb_with_hash["format"] is None
+    assert nb_with_hash["hash"]
+    assert nb_with_hash["hash_algorithm"]
 
     # Test in sub-directory
     sub_dir = "/foo/"
@@ -597,13 +605,34 @@ async def test_get(jp_contents_manager):
         "path": "foo/untitled.txt",
         "type": "file",
         "writable": True,
+        "hash_algorithm": cm.hash_algorithm,
     }
     # Assert expected model is in file_model
     for key, value in expected_model.items():
         assert file_model[key] == value
     assert "created" in file_model
     assert "last_modified" in file_model
-    assert "hash" in file_model
+    assert file_model["hash"]
+
+    # Get hash without content
+    file_model = await ensure_async(cm.get(file_model_path, content=False, require_hash=True))
+    expected_model = {
+        "content": None,
+        "format": None,
+        "mimetype": "text/plain",
+        "name": "untitled.txt",
+        "path": "foo/untitled.txt",
+        "type": "file",
+        "writable": True,
+        "hash_algorithm": cm.hash_algorithm,
+    }
+
+    # Assert expected model is in file_model
+    for key, value in expected_model.items():
+        assert file_model[key] == value
+    assert "created" in file_model
+    assert "last_modified" in file_model
+    assert file_model["hash"]
 
     # Create a sub-sub directory to test getting directory contents with a
     # subdir.

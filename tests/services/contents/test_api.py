@@ -97,9 +97,8 @@ async def test_get_nb_contents(jp_fetch, contents, path, name):
     assert model["path"] == nbpath
     assert model["type"] == "notebook"
     assert "content" in model
-    assert "hash" in model
-    assert model["hash"] == None
-    assert "hash_algorithm" in model
+    assert model["hash"] is None
+    assert model["hash_algorithm"] is None
     assert model["format"] == "json"
     assert "metadata" in model["content"]
     assert isinstance(model["content"]["metadata"], dict)
@@ -114,9 +113,8 @@ async def test_get_nb_hash(jp_fetch, contents, path, name):
     assert model["name"] == nbname
     assert model["path"] == nbpath
     assert model["type"] == "notebook"
-    assert "hash" in model
     assert model["hash"]
-    assert "hash_algorithm" in model
+    assert model["hash_algorithm"]
     assert "metadata" in model["content"]
     assert isinstance(model["content"]["metadata"], dict)
 
@@ -221,7 +219,7 @@ async def test_get_text_file_hash(jp_fetch, contents, path, name):
     assert model["path"] == txtpath
     assert "hash" in model
     assert model["hash"]
-    assert "hash_algorithm" in model
+    assert model["hash_algorithm"]
     assert model["format"] == "text"
     assert model["type"] == "file"
 
