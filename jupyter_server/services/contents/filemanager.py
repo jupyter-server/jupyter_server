@@ -357,7 +357,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         bytes_content = None
         if content:
-            content, format, bytes_content = self._read_file(os_path, format, raw=True)
+            content, format, bytes_content = self._read_file(os_path, format, raw=True)  # type: ignore[misc]
             if model["mimetype"] is None:
                 default_mime = {
                     "text": "text/plain",
@@ -372,8 +372,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         if require_hash:
             if bytes_content is None:
-                bytes_content, _ = self._read_file(os_path, "byte")
-            model.update(**self._get_hash(bytes_content))
+                bytes_content, _ = self._read_file(os_path, "byte")  # type: ignore[assignment,misc]
+            model.update(**self._get_hash(bytes_content))  # type: ignore[arg-type]
 
         return model
 
@@ -402,8 +402,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         if require_hash:
             if bytes_content is None:
-                bytes_content, _ = self._read_file(os_path, "byte")
-            model.update(**self._get_hash(bytes_content))
+                bytes_content, _ = self._read_file(os_path, "byte")  # type: ignore[misc]
+            model.update(**self._get_hash(bytes_content))  # type: ignore[arg-type]
 
         return model
 
@@ -828,7 +828,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         bytes_content = None
         if content:
-            content, format, bytes_content = await self._read_file(os_path, format, raw=True)
+            content, format, bytes_content = await self._read_file(os_path, format, raw=True)  # type: ignore[misc]
             if model["mimetype"] is None:
                 default_mime = {
                     "text": "text/plain",
@@ -843,8 +843,8 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         if require_hash:
             if bytes_content is None:
-                bytes_content, _ = await self._read_file(os_path, "byte")
-            model.update(**self._get_hash(bytes_content))
+                bytes_content, _ = await self._read_file(os_path, "byte")  # type: ignore[assignment,misc]
+            model.update(**self._get_hash(bytes_content))  # type: ignore[arg-type]
 
         return model
 
@@ -871,8 +871,8 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         if require_hash:
             if bytes_content is None:
-                bytes_content, _ = await self._read_file(os_path, "byte")
-            model.update(**(self._get_hash(bytes_content)))
+                bytes_content, _ = await self._read_file(os_path, "byte")  # type: ignore[misc]
+            model.update(**(self._get_hash(bytes_content)))  # type: ignore[arg-type]
 
         return model
 

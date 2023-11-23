@@ -196,7 +196,7 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
       If set to False, the new notebook is written directly on the old one which could fail (eg: full filesystem or quota )""",
     )
 
-    hash_algorithm = Enum(
+    hash_algorithm = Enum(  # type: ignore[call-overload]
         hashlib.algorithms_available,
         default_value="sha256",
         config=True,
@@ -287,7 +287,7 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
                 capture_validation_error=capture_validation_error,
             )
 
-            return (nb, answer[2]) if raw else nb
+            return (nb, answer[2]) if raw else nb  # type:ignore[misc]
         except Exception as e:
             e_orig = e
 
@@ -340,8 +340,8 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
         return {"hash": h.hexdigest(), "hash_algorithm": algorithm}
 
     def _read_file(
-        self, os_path: str, format: str, raw: bool = False
-    ) -> tuple[str, str] | tuple[str, str, bytes]:
+        self, os_path: str, format: str | None, raw: bool = False
+    ) -> tuple[str | bytes, str] | tuple[str | bytes, str, bytes]:
         """Read a non-notebook file.
 
         Parameters
@@ -446,7 +446,7 @@ class AsyncFileManagerMixin(FileManagerMixin):
                 ),
                 answer[0],
             )
-            return (nb, answer[2]) if raw else nb
+            return (nb, answer[2]) if raw else nb  # type:ignore[misc]
         except Exception as e:
             e_orig = e
 
@@ -484,9 +484,9 @@ class AsyncFileManagerMixin(FileManagerMixin):
                 f,
             )
 
-    async def _read_file(
-        self, os_path: str, format: str, raw: bool = False
-    ) -> tuple[str, str] | tuple[str, str, bytes]:
+    async def _read_file(  # type: ignore[override]
+        self, os_path: str, format: str | None, raw: bool = False
+    ) -> tuple[str | bytes, str] | tuple[str | bytes, str, bytes]:
         """Read a non-notebook file.
 
         Parameters
