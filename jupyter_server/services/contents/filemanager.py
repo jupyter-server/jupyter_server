@@ -857,6 +857,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             model["format"] = "json"
             self.validate_notebook_model(model, validation_error)
         if require_hash:
+            # FIXME: Here we may read file twice while content=True
             model["hash"] = await self._get_hash_from_file(os_path)
 
         return model
