@@ -48,7 +48,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
     root_dir = Unicode(config=True)
 
     max_copy_folder_size_mb = Int(500, config=True, help="The max folder size that can be copied")
-    support_md5 = Bool(True, config=False, help="Support md5 argument in `get`")
+    support_sha256 = Bool(True, config=False, help="Support sha256 argument in `get`")
 
     @default("root_dir")
     def _default_root_dir(self):
@@ -269,7 +269,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model["mimetype"] = None
         model["size"] = size
         model["writable"] = self.is_writable(path)
-        model["md5"] = None
+        model["sha256"] = None
 
         return model
 
@@ -337,7 +337,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         return model
 
-    def _file_model(self, path, content=True, format=None, md5=False):
+    def _file_model(self, path, content=True, format=None, sha256=False):
         """Build a model for a file
 
         if content is requested, include the file contents.
@@ -366,13 +366,13 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 content=content,
                 format=format,
             )
-        if md5:
-            md5 = self._get_md5(os_path)
-            model.update(md5=md5)
+        if sha256:
+            sha256 = self._get_sha256(os_path)
+            model.update(sha256=sha256)
 
         return model
 
-    def _notebook_model(self, path, content=True, md5=False):
+    def _notebook_model(self, path, content=True, sha256=False):
         """Build a notebook model
 
         if content is requested, the notebook content will be populated
@@ -391,12 +391,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             model["content"] = nb
             model["format"] = "json"
             self.validate_notebook_model(model, validation_error)
-        if md5:
-            model["md5"] = self._get_md5(os_path)
+        if sha256:
+            model["sha256"] = self._get_sha256(os_path)
 
         return model
 
-    def get(self, path, content=True, type=None, format=None, md5=None):
+    def get(self, path, content=True, type=None, format=None, sha256=None):
         """Takes a path for an entity and returns its model
 
         Parameters
@@ -411,8 +411,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         format : str, optional
             The requested format for file contents. 'text' or 'base64'.
             Ignored if this returns a notebook or directory model.
-        md5: bool, optional
-            Whether to include the md5 of the file contents.
+        sha256: bool, optional
+            Whether to include the sha256 of the file contents.
 
         Returns
         -------
@@ -440,11 +440,11 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 )
             model = self._dir_model(path, content=content)
         elif type == "notebook" or (type is None and path.endswith(".ipynb")):
-            model = self._notebook_model(path, content=content, md5=md5)
+            model = self._notebook_model(path, content=content, sha256=sha256)
         else:
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
-            model = self._file_model(path, content=content, format=format, md5=md5)
+            model = self._file_model(path, content=content, format=format, sha256=sha256)
         self.emit(data={"action": "get", "path": path})
         return model
 
@@ -726,7 +726,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, AsyncContentsManager):
     """An async file contents manager."""
 
-    support_md5 = Bool(True, config=False, help="Support md5 argument in `get`")
+    support_sha256 = Bool(True, config=False, help="Support sha256 argument in `get`")
 
     @default("checkpoints_class")
     def _checkpoints_class_default(self):
@@ -797,7 +797,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         return model
 
-    async def _file_model(self, path, content=True, format=None, md5=False):
+    async def _file_model(self, path, content=True, format=None, sha256=False):
         """Build a model for a file
 
         if content is requested, include the file contents.
@@ -826,13 +826,13 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 content=content,
                 format=format,
             )
-        if md5:
-            md5 = await self._get_md5(os_path)
-            model.update(md5=md5)
+        if sha256:
+            sha256 = await self._get_sha256(os_path)
+            model.update(sha256=sha256)
 
         return model
 
-    async def _notebook_model(self, path, content=True, md5=False):
+    async def _notebook_model(self, path, content=True, sha256=False):
         """Build a notebook model
 
         if content is requested, the notebook content will be populated
@@ -851,12 +851,12 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             model["content"] = nb
             model["format"] = "json"
             self.validate_notebook_model(model, validation_error)
-        if md5:
-            model["md5"] = await self._get_md5(os_path)
+        if sha256:
+            model["sha256"] = await self._get_sha256(os_path)
 
         return model
 
-    async def get(self, path, content=True, type=None, format=None, md5=False):
+    async def get(self, path, content=True, type=None, format=None, sha256=False):
         """Takes a path for an entity and returns its model
 
         Parameters
@@ -871,8 +871,8 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         format : str, optional
             The requested format for file contents. 'text' or 'base64'.
             Ignored if this returns a notebook or directory model.
-        md5: bool, optional
-            Whether to include the md5 of the file contents.
+        sha256: bool, optional
+            Whether to include the sha256 of the file contents.
 
         Returns
         -------
@@ -895,11 +895,11 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 )
             model = await self._dir_model(path, content=content)
         elif type == "notebook" or (type is None and path.endswith(".ipynb")):
-            model = await self._notebook_model(path, content=content, md5=md5)
+            model = await self._notebook_model(path, content=content, sha256=sha256)
         else:
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
-            model = await self._file_model(path, content=content, format=format, md5=md5)
+            model = await self._file_model(path, content=content, format=format, sha256=sha256)
         self.emit(data={"action": "get", "path": path})
         return model
 

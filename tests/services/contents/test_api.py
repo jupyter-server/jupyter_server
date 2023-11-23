@@ -103,15 +103,15 @@ async def test_get_nb_contents(jp_fetch, contents, path, name):
 
 
 @pytest.mark.parametrize("path,name", dirs)
-async def test_get_nb_md5(jp_fetch, contents, path, name):
+async def test_get_nb_sha256(jp_fetch, contents, path, name):
     nbname = name + ".ipynb"
     nbpath = (path + "/" + nbname).lstrip("/")
-    r = await jp_fetch("api", "contents", nbpath, method="GET", params=dict(md5="1"))
+    r = await jp_fetch("api", "contents", nbpath, method="GET", params=dict(sha256="1"))
     model = json.loads(r.body.decode())
     assert model["name"] == nbname
     assert model["path"] == nbpath
     assert model["type"] == "notebook"
-    assert "md5" in model
+    assert "sha256" in model
     assert "metadata" in model["content"]
     assert isinstance(model["content"]["metadata"], dict)
 
@@ -201,14 +201,14 @@ async def test_get_text_file_contents(jp_fetch, contents, path, name):
 
 
 @pytest.mark.parametrize("path,name", dirs)
-async def test_get_text_file_md5(jp_fetch, contents, path, name):
+async def test_get_text_file_sha256(jp_fetch, contents, path, name):
     txtname = name + ".txt"
     txtpath = (path + "/" + txtname).lstrip("/")
-    r = await jp_fetch("api", "contents", txtpath, method="GET", params=dict(md5="1"))
+    r = await jp_fetch("api", "contents", txtpath, method="GET", params=dict(sha256="1"))
     model = json.loads(r.body.decode())
     assert model["name"] == txtname
     assert model["path"] == txtpath
-    assert "md5" in model
+    assert "sha256" in model
     assert model["format"] == "text"
     assert model["type"] == "file"
 

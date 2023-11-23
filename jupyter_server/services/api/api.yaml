@@ -106,9 +106,9 @@ paths:
           in: query
           description: "Return content (0 for no content, 1 for return content)"
           type: integer
-        - name: md5
+        - name: sha256
           in: query
-          description: "Return md5 hexdigest string of content (0 for no md5, 1 for return md5)"
+          description: "Return sha256 hexdigest string of content (0 for no sha256, 1 for return sha256)"
           type: integer
       responses:
         404:
@@ -889,7 +889,7 @@ definitions:
       kernel:
         $ref: "#/definitions/Kernel"
   Contents:
-    description: "A contents object.  The content and format keys may be null if content is not contained. The md5 maybe null if md5 is not contained.  If type is 'file', then the mimetype will be null."
+    description: "A contents object.  The content and format keys may be null if content is not contained. The sha256 maybe null if sha256 is not contained.  If type is 'file', then the mimetype will be null."
     type: object
     required:
       - type
@@ -901,7 +901,7 @@ definitions:
       - mimetype
       - format
       - content
-      - md5
+      - sha256
     properties:
       name:
         type: string
@@ -939,9 +939,9 @@ definitions:
       format:
         type: string
         description: Format of content (one of null, 'text', 'base64', 'json')
-      md5:
+      sha256:
         type: string
-        description: "The md5 hexdigest string of content, if requested (otherwise null)."
+        description: "The sha256 hexdigest string of content, if requested (otherwise null)."
   Checkpoints:
     description: A checkpoint object.
     type: object

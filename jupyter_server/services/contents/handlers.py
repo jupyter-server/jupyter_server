@@ -44,14 +44,14 @@ def _validate_in_or_not(expect_in_model: bool, model: Dict[str, Any], maybe_none
             )
 
 
-def validate_model(model, expect_content, expect_md5):
+def validate_model(model, expect_content, expect_sha256):
     """
     Validate a model returned by a ContentsManager method.
 
     If expect_content is True, then we expect non-null entries for 'content'
     and 'format'.
 
-    If expect_md5 is True, then we expect non-null entries for 'md5'.
+    If expect_sha256 is True, then we expect non-null entries for 'sha256'.
     """
     required_keys = {
         "name",
@@ -63,7 +63,7 @@ def validate_model(model, expect_content, expect_md5):
         "mimetype",
         "content",
         "format",
-        "md5",
+        "sha256",
     }
     missing = required_keys - set(model.keys())
     if missing:
@@ -73,9 +73,9 @@ def validate_model(model, expect_content, expect_md5):
         )
 
     content_keys = ["content", "format"]
-    md5_keys = ["md5"]
+    sha256_keys = ["sha256"]
     _validate_in_or_not(expect_content, model, content_keys)
-    _validate_in_or_not(expect_md5, model, md5_keys)
+    _validate_in_or_not(expect_sha256, model, sha256_keys)
 
 
 class ContentsAPIHandler(APIHandler):
@@ -136,10 +136,10 @@ class ContentsHandler(ContentsAPIHandler):
             raise web.HTTPError(400, "Content %r is invalid" % content_str)
         content = int(content_str or "")
 
-        md5_str = self.get_query_argument("md5", default="0")
-        if md5_str not in {"0", "1"}:
-            raise web.HTTPError(400, "Content %r is invalid" % md5_str)
-        md5 = int(md5_str or "")
+        sha256_str = self.get_query_argument("sha256", default="0")
+        if sha256_str not in {"0", "1"}:
+            raise web.HTTPError(400, "Content %r is invalid" % sha256_str)
+        sha256 = int(sha256_str or "")
 
         if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
             await self._finish_error(
@@ -151,12 +151,12 @@ class ContentsHandler(ContentsAPIHandler):
             "format": format,
             "content": content,
         }
-        if cm.support_md5:
-            kwargs["md5"] = md5
+        if cm.support_sha256:
+            kwargs["sha256"] = sha256
 
         try:
             model = await ensure_async(self.contents_manager.get(**kwargs))
-            validate_model(model, expect_content=content, expect_md5=md5)
+            validate_model(model, expect_content=content, expect_sha256=sha256)
             self._finish_model(model, location=False)
         except web.HTTPError as exc:
             # 404 is okay in this context, catch exception and return 404 code to prevent stack trace on client
@@ -186,7 +186,7 @@ class ContentsHandler(ContentsAPIHandler):
             raise web.HTTPError(400, f"Cannot rename file or directory {path!r}")
 
         model = await ensure_async(cm.update(model, path))
-        validate_model(model, expect_content=False, expect_md5=False)
+        validate_model(model, expect_content=False, expect_sha256=False)
         self._finish_model(model)
 
     async def _copy(self, copy_from, copy_to=None):
@@ -199,7 +199,7 @@ class ContentsHandler(ContentsAPIHandler):
         )
         model = await ensure_async(self.contents_manager.copy(copy_from, copy_to))
         self.set_status(201)
-        validate_model(model, expect_content=False, expect_md5=False)
+        validate_model(model, expect_content=False, expect_sha256=False)
         self._finish_model(model)
 
     async def _upload(self, model, path):
@@ -207,7 +207,7 @@ class ContentsHandler(ContentsAPIHandler):
         self.log.info("Uploading file to %s", path)
         model = await ensure_async(self.contents_manager.new(model, path))
         self.set_status(201)
-        validate_model(model, expect_content=False, expect_md5=False)
+        validate_model(model, expect_content=False, expect_sha256=False)
         self._finish_model(model)
 
     async def _new_untitled(self, path, type="", ext=""):
@@ -217,7 +217,7 @@ class ContentsHandler(ContentsAPIHandler):
             self.contents_manager.new_untitled(path=path, type=type, ext=ext)
         )
         self.set_status(201)
-        validate_model(model, expect_content=False, expect_md5=False)
+        validate_model(model, expect_content=False, expect_sha256=False)
         self._finish_model(model)
 
     async def _save(self, model, path):
@@ -226,7 +226,7 @@ class ContentsHandler(ContentsAPIHandler):
         if not chunk or chunk == -1:  # Avoid tedious log information
             self.log.info("Saving file at %s", path)
         model = await ensure_async(self.contents_manager.save(model, path))
-        validate_model(model, expect_content=False, expect_md5=False)
+        validate_model(model, expect_content=False, expect_sha256=False)
         self._finish_model(model)
 
     @web.authenticated

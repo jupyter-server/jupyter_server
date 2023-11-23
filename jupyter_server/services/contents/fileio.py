@@ -357,11 +357,11 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
         with self.atomic_writing(os_path, text=False) as f:
             f.write(bcontent)
 
-    def _get_md5(self, os_path):
+    def _get_sha256(self, os_path):
         c, _ = self._read_file(os_path, "byte")
-        md5 = hashlib.md5()
-        md5.update(c)
-        return md5.hexdigest()
+        sha256 = hashlib.sha256()
+        sha256.update(c)
+        return sha256.hexdigest()
 
 
 class AsyncFileManagerMixin(FileManagerMixin):
@@ -475,8 +475,8 @@ class AsyncFileManagerMixin(FileManagerMixin):
         with self.atomic_writing(os_path, text=False) as f:
             await run_sync(f.write, bcontent)
 
-    async def _get_md5(self, os_path):
+    async def _get_sha256(self, os_path):
         c, _ = await self._read_file(os_path, "byte")
-        md5 = hashlib.md5()
-        await run_sync(md5.update, c)
-        return md5.hexdigest()
+        sha256 = hashlib.sha256()
+        await run_sync(sha256.update, c)
+        return sha256.hexdigest()

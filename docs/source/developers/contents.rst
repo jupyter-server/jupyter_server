@@ -63,7 +63,7 @@ Models may contain the following entries:
 |                    |``None``   |if any. (:ref:`See            |
 |                    |           |Below<modelcontent>`)         |
 +--------------------+-----------+------------------------------+
-|**md5**             |unicode or |The md5 of the contents.      |
+|**sha256**          |unicode or |The sha256 of the contents.   |
 |                    |``None``   |                              |
 |                    |           |                              |
 +--------------------+-----------+------------------------------+
@@ -80,7 +80,7 @@ model. There are three model types: **notebook**, **file**, and **directory**.
       :class:`nbformat.notebooknode.NotebookNode` representing the .ipynb file
       represented by the model.  See the `NBFormat`_ documentation for a full
       description.
-    - The ``md5`` field a hexdigest string of the md5 value of the notebook
+    - The ``sha256`` field a hexdigest string of the sha256 value of the notebook
       file.
 
 - ``file`` models
@@ -91,14 +91,14 @@ model. There are three model types: **notebook**, **file**, and **directory**.
       file models, ``content`` simply contains the file's bytes after decoding
       as UTF-8.  Non-text (``base64``) files are read as bytes, base64 encoded,
       and then decoded as UTF-8.
-    - The ``md5`` field a hexdigest string of the md5 value of the file.
+    - The ``sha256`` field a hexdigest string of the sha256 value of the file.
 
 - ``directory`` models
     - The ``format`` field is always ``"json"``.
     - The ``mimetype`` field is always ``None``.
     - The ``content`` field contains a list of :ref:`content-free<contentfree>`
       models representing the entities in the directory.
-    - The ``md5`` field is always ``None``.
+    - The ``sha256`` field is always ``None``.
 
 .. note::
 
@@ -137,7 +137,7 @@ model. There are three model types: **notebook**, **file**, and **directory**.
         "path": "foo/a.ipynb",
         "type": "notebook",
         "writable": True,
-        "md5": "7e47382b370c05a1b14706a2a8aff91a",
+        "sha256": "f5e43a0b1c2e7836ab3b4d6b1c35c19e2558688de15a6a14e137a59e4715d34b",
     }
 
     # Notebook Model without Content

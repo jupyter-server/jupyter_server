@@ -111,7 +111,7 @@ class ContentsManager(LoggingConfigurable):
         return value
 
     allow_hidden = Bool(False, config=True, help="Allow access to hidden files")
-    support_md5 = Bool(False, config=False, help="Support md5 argument in `get`")
+    support_sha256 = Bool(False, config=False, help="Support sha256 argument in `get`")
 
     notary = Instance(sign.NotebookNotary)
 
@@ -452,9 +452,9 @@ class ContentsManager(LoggingConfigurable):
         """
         Get a file or directory model.
 
-        If a ContentManager supports calculating the md5 value of a file,
-        `ContentManager.support_md5` should be True and this function will accept an `md5` parameter,
-        will return a dict with an `md5` key.
+        If a ContentManager supports calculating the sha256 value of a file,
+        `ContentManager.support_sha256` should be True and this function will accept an `sha256` parameter,
+        will return a dict with an `sha256` key.
         """
         raise NotImplementedError
 
@@ -860,9 +860,9 @@ class AsyncContentsManager(ContentsManager):
         """
         Get a file or directory model.
 
-        If a ContentManager supports calculating the md5 value of a file,
-        ContentManager.support_md5 should be True and this function will accept an md5 parameter,
-        will return a dict with an 'md5' key.
+        If a ContentManager supports calculating the sha256 value of a file,
+        ContentManager.support_sha256 should be True and this function will accept an sha256 parameter,
+        will return a dict with an 'sha256' key.
         """
         raise NotImplementedError
 
