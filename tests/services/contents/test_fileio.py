@@ -144,7 +144,7 @@ def test_file_manager_mixin(tmpdir):
     bad_content.write_text("{}", "utf8")
     # Same as `echo -n {} | sha256sum`
     assert (
-        mixin._get_sha256(bad_content)
+        mixin._get_hash_from_file(bad_content)
         == "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     )
     with pytest.raises(HTTPError):
@@ -171,7 +171,7 @@ async def test_async_file_manager_mixin(tmpdir):
     bad_content.write_text("{}", "utf8")
     # Same as `echo -n {} | sha256sum`
     assert (
-        await mixin._get_sha256(bad_content)
+        await mixin._get_hash_from_file(bad_content)
         == "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     )
     with pytest.raises(HTTPError):

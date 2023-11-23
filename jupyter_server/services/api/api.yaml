@@ -106,9 +106,9 @@ paths:
           in: query
           description: "Return content (0 for no content, 1 for return content)"
           type: integer
-        - name: sha256
+        - name: hash
           in: query
-          description: "Return sha256 hexdigest string of content (0 for no sha256, 1 for return sha256)"
+          description: "Return hash hexdigest string of content (0 for no hash, 1 for return hash), when ContentsManager not support hash, it will be ignored."
           type: integer
       responses:
         404:
@@ -889,7 +889,7 @@ definitions:
       kernel:
         $ref: "#/definitions/Kernel"
   Contents:
-    description: "A contents object.  The content and format keys may be null if content is not contained. The sha256 maybe null if sha256 is not contained.  If type is 'file', then the mimetype will be null."
+    description: "A contents object.  The content and format keys may be null if content is not contained. The hash maybe null if hash is not required.  If type is 'file', then the mimetype will be null."
     type: object
     required:
       - type
@@ -901,7 +901,8 @@ definitions:
       - mimetype
       - format
       - content
-      - sha256
+      - hash
+      - hash_algorithm
     properties:
       name:
         type: string
@@ -939,9 +940,12 @@ definitions:
       format:
         type: string
         description: Format of content (one of null, 'text', 'base64', 'json')
-      sha256:
+      hash:
         type: string
-        description: "The sha256 hexdigest string of content, if requested (otherwise null)."
+        description: "The hexdigest hash string of content, if requested (otherwise null)."
+      hash_algorithm:
+        type: string
+        ddescription: "The algorithm used to produce the hash."
   Checkpoints:
     description: A checkpoint object.
     type: object

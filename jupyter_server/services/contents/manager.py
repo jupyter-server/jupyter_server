@@ -111,7 +111,7 @@ class ContentsManager(LoggingConfigurable):
         return value
 
     allow_hidden = Bool(False, config=True, help="Allow access to hidden files")
-    support_sha256 = Bool(False, config=False, help="Support sha256 argument in `get`")
+    support_hash = Bool(False, config=False, help="Support hash argument in `get`")
 
     notary = Instance(sign.NotebookNotary)
 
@@ -452,9 +452,10 @@ class ContentsManager(LoggingConfigurable):
         """
         Get a file or directory model.
 
-        If a ContentManager supports calculating the sha256 value of a file,
-        `ContentManager.support_sha256` should be True and this function will accept an `sha256` parameter,
-        will return a dict with an `sha256` key.
+        Support for hash:
+            If a ContentManager supports calculating the hash value of a file,
+            `ContentManager.support_hash` should be True and this function will accept an `require_hash` parameter,
+            will return a dict with `hash` and `hash_algorithm` key.
         """
         raise NotImplementedError
 
@@ -860,9 +861,10 @@ class AsyncContentsManager(ContentsManager):
         """
         Get a file or directory model.
 
-        If a ContentManager supports calculating the sha256 value of a file,
-        ContentManager.support_sha256 should be True and this function will accept an sha256 parameter,
-        will return a dict with an 'sha256' key.
+        Support for hash:
+            If a ContentManager supports calculating the hash value of a file,
+            `ContentManager.support_hash` should be True and this function will accept an `require_hash` parameter,
+            will return a dict with `hash` and `hash_algorithm` key.
         """
         raise NotImplementedError
 

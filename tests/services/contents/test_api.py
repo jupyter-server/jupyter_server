@@ -97,21 +97,26 @@ async def test_get_nb_contents(jp_fetch, contents, path, name):
     assert model["path"] == nbpath
     assert model["type"] == "notebook"
     assert "content" in model
+    assert "hash" in model
+    assert model["hash"] == None
+    assert "hash_algorithm" in model
     assert model["format"] == "json"
     assert "metadata" in model["content"]
     assert isinstance(model["content"]["metadata"], dict)
 
 
 @pytest.mark.parametrize("path,name", dirs)
-async def test_get_nb_sha256(jp_fetch, contents, path, name):
+async def test_get_nb_hash(jp_fetch, contents, path, name):
     nbname = name + ".ipynb"
     nbpath = (path + "/" + nbname).lstrip("/")
-    r = await jp_fetch("api", "contents", nbpath, method="GET", params=dict(sha256="1"))
+    r = await jp_fetch("api", "contents", nbpath, method="GET", params=dict(hash="1"))
     model = json.loads(r.body.decode())
     assert model["name"] == nbname
     assert model["path"] == nbpath
     assert model["type"] == "notebook"
-    assert "sha256" in model
+    assert "hash" in model
+    assert model["hash"]
+    assert "hash_algorithm" in model
     assert "metadata" in model["content"]
     assert isinstance(model["content"]["metadata"], dict)
 
@@ -125,6 +130,9 @@ async def test_get_nb_no_contents(jp_fetch, contents, path, name):
     assert model["name"] == nbname
     assert model["path"] == nbpath
     assert model["type"] == "notebook"
+    assert "hash" in model
+    assert model["hash"] == None
+    assert "hash_algorithm" in model
     assert "content" in model
     assert model["content"] is None
 
@@ -175,6 +183,9 @@ async def test_get_text_file_contents(jp_fetch, contents, path, name):
     model = json.loads(r.body.decode())
     assert model["name"] == txtname
     assert model["path"] == txtpath
+    assert "hash" in model
+    assert model["hash"] == None
+    assert "hash_algorithm" in model
     assert "content" in model
     assert model["format"] == "text"
     assert model["type"] == "file"
@@ -201,14 +212,16 @@ async def test_get_text_file_contents(jp_fetch, contents, path, name):
 
 
 @pytest.mark.parametrize("path,name", dirs)
-async def test_get_text_file_sha256(jp_fetch, contents, path, name):
+async def test_get_text_file_hash(jp_fetch, contents, path, name):
     txtname = name + ".txt"
     txtpath = (path + "/" + txtname).lstrip("/")
-    r = await jp_fetch("api", "contents", txtpath, method="GET", params=dict(sha256="1"))
+    r = await jp_fetch("api", "contents", txtpath, method="GET", params=dict(hash="1"))
     model = json.loads(r.body.decode())
     assert model["name"] == txtname
     assert model["path"] == txtpath
-    assert "sha256" in model
+    assert "hash" in model
+    assert model["hash"]
+    assert "hash_algorithm" in model
     assert model["format"] == "text"
     assert model["type"] == "file"
 
@@ -253,6 +266,9 @@ async def test_get_binary_file_contents(jp_fetch, contents, path, name):
     assert model["name"] == blobname
     assert model["path"] == blobpath
     assert "content" in model
+    assert "hash" in model
+    assert model["hash"] == None
+    assert "hash_algorithm" in model
     assert model["format"] == "base64"
     assert model["type"] == "file"
     data_out = decodebytes(model["content"].encode("ascii"))

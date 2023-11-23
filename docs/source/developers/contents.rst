@@ -63,8 +63,12 @@ Models may contain the following entries:
 |                    |``None``   |if any. (:ref:`See            |
 |                    |           |Below<modelcontent>`)         |
 +--------------------+-----------+------------------------------+
-|**sha256**          |unicode or |The sha256 of the contents.   |
+|**hash**            |unicode or |The hash of the contents.     |
 |                    |``None``   |                              |
+|                    |           |                              |
++--------------------+-----------+------------------------------+
+|**hash_algorithm**  |unicode    |The algorithm used to compute |
+|                    |           |hash value.                   |
 |                    |           |                              |
 +--------------------+-----------+------------------------------+
 
@@ -80,8 +84,9 @@ model. There are three model types: **notebook**, **file**, and **directory**.
       :class:`nbformat.notebooknode.NotebookNode` representing the .ipynb file
       represented by the model.  See the `NBFormat`_ documentation for a full
       description.
-    - The ``sha256`` field a hexdigest string of the sha256 value of the notebook
-      file.
+    - The ``hash`` field a hexdigest string of the hash value of the file.
+      If ``ContentManager.get`` not support hash, it should always be ``None``.
+    - ``hash_algorithm`` is the algorithm used to compute the hash value.
 
 - ``file`` models
     - The ``format`` field is either ``"text"`` or ``"base64"``.
@@ -91,14 +96,16 @@ model. There are three model types: **notebook**, **file**, and **directory**.
       file models, ``content`` simply contains the file's bytes after decoding
       as UTF-8.  Non-text (``base64``) files are read as bytes, base64 encoded,
       and then decoded as UTF-8.
-    - The ``sha256`` field a hexdigest string of the sha256 value of the file.
+    - The ``hash`` field a hexdigest string of the hash value of the file.
+      If ``ContentManager.get`` not support hash, it should always be ``None``.
+    - ``hash_algorithm`` is the algorithm used to compute the hash value.
 
 - ``directory`` models
     - The ``format`` field is always ``"json"``.
     - The ``mimetype`` field is always ``None``.
     - The ``content`` field contains a list of :ref:`content-free<contentfree>`
       models representing the entities in the directory.
-    - The ``sha256`` field is always ``None``.
+    - The ``hash`` field is always ``None``.
 
 .. note::
 
@@ -137,7 +144,8 @@ model. There are three model types: **notebook**, **file**, and **directory**.
         "path": "foo/a.ipynb",
         "type": "notebook",
         "writable": True,
-        "sha256": "f5e43a0b1c2e7836ab3b4d6b1c35c19e2558688de15a6a14e137a59e4715d34b",
+        "hash": "f5e43a0b1c2e7836ab3b4d6b1c35c19e2558688de15a6a14e137a59e4715d34b",
+        "hash_algorithm": "sha256",
     }
 
     # Notebook Model without Content

@@ -48,7 +48,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
     root_dir = Unicode(config=True)
 
     max_copy_folder_size_mb = Int(500, config=True, help="The max folder size that can be copied")
-    support_sha256 = Bool(True, config=False, help="Support sha256 argument in `get`")
+    support_hash = Bool(True, config=False, help="Support require_hash argument in `get`")
 
     @default("root_dir")
     def _default_root_dir(self):
@@ -269,7 +269,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model["mimetype"] = None
         model["size"] = size
         model["writable"] = self.is_writable(path)
-        model["sha256"] = None
+        model["hash"] = None
+        model["hash_algorithm"] = self.hash_algorithm
 
         return model
 
@@ -337,7 +338,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         return model
 
-    def _file_model(self, path, content=True, format=None, sha256=False):
+    def _file_model(self, path, content=True, format=None, require_hash=False):
         """Build a model for a file
 
         if content is requested, include the file contents.
@@ -346,6 +347,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
           If 'text', the contents will be decoded as UTF-8.
           If 'base64', the raw bytes contents will be encoded as base64.
           If not specified, try to decode as UTF-8, and fall back to base64
+
+        if require_hash is true, the model will include 'hash'
         """
         model = self._base_model(path)
         model["type"] = "file"
@@ -353,8 +356,11 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path)
         model["mimetype"] = mimetypes.guess_type(os_path)[0]
 
-        if content:
-            content, format = self._read_file(os_path, format)
+        hash_value = None
+        if content or require_hash:
+            content, format, hash_value = self._read_file(
+                os_path, format, require_hash=require_hash
+            )
             if model["mimetype"] is None:
                 default_mime = {
                     "text": "text/plain",
@@ -365,18 +371,18 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             model.update(
                 content=content,
                 format=format,
+                hash=hash_value,
             )
-        if sha256:
-            sha256 = self._get_sha256(os_path)
-            model.update(sha256=sha256)
 
         return model
 
-    def _notebook_model(self, path, content=True, sha256=False):
+    def _notebook_model(self, path, content=True, require_hash=False):
         """Build a notebook model
 
         if content is requested, the notebook content will be populated
         as a JSON structure (not double-serialized)
+
+        if require_hash is true, the model will include 'hash'
         """
         model = self._base_model(path)
         model["type"] = "notebook"
@@ -391,12 +397,13 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             model["content"] = nb
             model["format"] = "json"
             self.validate_notebook_model(model, validation_error)
-        if sha256:
-            model["sha256"] = self._get_sha256(os_path)
+        if require_hash:
+            # FIXME: Here we may read file twice while content=True
+            model["hash"] = self._get_hash_from_file(os_path)
 
         return model
 
-    def get(self, path, content=True, type=None, format=None, sha256=None):
+    def get(self, path, content=True, type=None, format=None, require_hash=None):
         """Takes a path for an entity and returns its model
 
         Parameters
@@ -411,8 +418,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         format : str, optional
             The requested format for file contents. 'text' or 'base64'.
             Ignored if this returns a notebook or directory model.
-        sha256: bool, optional
-            Whether to include the sha256 of the file contents.
+        require_hash: bool, optional
+            Whether to include the hash of the file contents.
 
         Returns
         -------
@@ -440,11 +447,13 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 )
             model = self._dir_model(path, content=content)
         elif type == "notebook" or (type is None and path.endswith(".ipynb")):
-            model = self._notebook_model(path, content=content, sha256=sha256)
+            model = self._notebook_model(path, content=content, require_hash=require_hash)
         else:
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
-            model = self._file_model(path, content=content, format=format, sha256=sha256)
+            model = self._file_model(
+                path, content=content, format=format, require_hash=require_hash
+            )
         self.emit(data={"action": "get", "path": path})
         return model
 
@@ -726,8 +735,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, AsyncContentsManager):
     """An async file contents manager."""
 
-    support_sha256 = Bool(True, config=False, help="Support sha256 argument in `get`")
-
     @default("checkpoints_class")
     def _checkpoints_class_default(self):
         return AsyncFileCheckpoints
@@ -797,7 +804,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         return model
 
-    async def _file_model(self, path, content=True, format=None, sha256=False):
+    async def _file_model(self, path, content=True, format=None, require_hash=False):
         """Build a model for a file
 
         if content is requested, include the file contents.
@@ -806,6 +813,8 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
           If 'text', the contents will be decoded as UTF-8.
           If 'base64', the raw bytes contents will be encoded as base64.
           If not specified, try to decode as UTF-8, and fall back to base64
+
+        if require_hash is true, the model will include 'hash'
         """
         model = self._base_model(path)
         model["type"] = "file"
@@ -813,8 +822,10 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         os_path = self._get_os_path(path)
         model["mimetype"] = mimetypes.guess_type(os_path)[0]
 
-        if content:
-            content, format = await self._read_file(os_path, format)
+        if content or require_hash:
+            content, format, hash_value = await self._read_file(
+                os_path, format, require_hash=require_hash
+            )
             if model["mimetype"] is None:
                 default_mime = {
                     "text": "text/plain",
@@ -822,17 +833,11 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 }[format]
                 model["mimetype"] = default_mime
 
-            model.update(
-                content=content,
-                format=format,
-            )
-        if sha256:
-            sha256 = await self._get_sha256(os_path)
-            model.update(sha256=sha256)
+            model.update(content=content, format=format, hash=hash_value)
 
         return model
 
-    async def _notebook_model(self, path, content=True, sha256=False):
+    async def _notebook_model(self, path, content=True, require_hash=False):
         """Build a notebook model
 
         if content is requested, the notebook content will be populated
@@ -851,12 +856,12 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             model["content"] = nb
             model["format"] = "json"
             self.validate_notebook_model(model, validation_error)
-        if sha256:
-            model["sha256"] = await self._get_sha256(os_path)
+        if require_hash:
+            model["hash"] = await self._get_hash_from_file(os_path)
 
         return model
 
-    async def get(self, path, content=True, type=None, format=None, sha256=False):
+    async def get(self, path, content=True, type=None, format=None, require_hash=False):
         """Takes a path for an entity and returns its model
 
         Parameters
@@ -871,8 +876,8 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         format : str, optional
             The requested format for file contents. 'text' or 'base64'.
             Ignored if this returns a notebook or directory model.
-        sha256: bool, optional
-            Whether to include the sha256 of the file contents.
+        require_hash: bool, optional
+            Whether to include the hash of the file contents.
 
         Returns
         -------
@@ -895,11 +900,13 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 )
             model = await self._dir_model(path, content=content)
         elif type == "notebook" or (type is None and path.endswith(".ipynb")):
-            model = await self._notebook_model(path, content=content, sha256=sha256)
+            model = await self._notebook_model(path, content=content, require_hash=require_hash)
         else:
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
-            model = await self._file_model(path, content=content, format=format, sha256=sha256)
+            model = await self._file_model(
+                path, content=content, format=format, require_hash=require_hash
+            )
         self.emit(data={"action": "get", "path": path})
         return model
 

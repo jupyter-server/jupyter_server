@@ -14,7 +14,7 @@ from functools import partial
 import nbformat
 from anyio.to_thread import run_sync
 from tornado.web import HTTPError
-from traitlets import Bool
+from traitlets import Bool, Unicode
 from traitlets.config import Configurable
 from traitlets.config.configurable import LoggingConfigurable
 
@@ -193,6 +193,12 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
       If set to False, the new notebook is written directly on the old one which could fail (eg: full filesystem or quota )""",
     )
 
+    hash_algorithm = Unicode(
+        "sha256",
+        config=True,
+        help="hash algorithm to use for file content, support by hashlib",
+    )
+
     @contextmanager
     def open(self, os_path, *args, **kwargs):
         """wrapper around io.open that turns permission errors into 403"""
@@ -305,7 +311,16 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
                 capture_validation_error=capture_validation_error,
             )
 
-    def _read_file(self, os_path, format):
+    def _get_hash_from_file(self, os_path):
+        _, _, h = self._read_file(os_path, "byte", require_hash=True)
+        return h
+
+    def _get_hash_from_content(self, bcontent: bytes):
+        h = hashlib.new(self.hash_algorithm)
+        h.update(bcontent)
+        return h.hexdigest()
+
+    def _read_file(self, os_path, format, require_hash=False):
         """Read a non-notebook file.
 
         os_path: The path to be read.
@@ -314,21 +329,27 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
           If 'base64', the raw bytes contents will be encoded as base64.
           If 'byte', the raw bytes contents will be returned.
           If not specified, try to decode as UTF-8, and fall back to base64
+        hash:
+          If require_hash is 'True', return the hash of the file contents as a hex string.
         """
         if not os.path.isfile(os_path):
             raise HTTPError(400, "Cannot read non-file %s" % os_path)
 
         with self.open(os_path, "rb") as f:
             bcontent = f.read()
+
+        # Calculate hash value if required
+        hash_value = self._get_hash_from_content(bcontent) if require_hash else None
+
         if format == "byte":
             # Not for http response but internal use
-            return bcontent, "byte"
+            return bcontent, "byte", hash_value
 
         if format is None or format == "text":
             # Try to interpret as unicode if format is unknown or if unicode
             # was explicitly requested.
             try:
-                return bcontent.decode("utf8"), "text"
+                return bcontent.decode("utf8"), "text", hash_value
             except UnicodeError as e:
                 if format == "text":
                     raise HTTPError(
@@ -336,7 +357,7 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
                         "%s is not UTF-8 encoded" % os_path,
                         reason="bad format",
                     ) from e
-        return encodebytes(bcontent).decode("ascii"), "base64"
+        return encodebytes(bcontent).decode("ascii"), "base64", hash_value
 
     def _save_file(self, os_path, content, format):
         """Save content of a generic file."""
@@ -356,12 +377,6 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
 
         with self.atomic_writing(os_path, text=False) as f:
             f.write(bcontent)
-
-    def _get_sha256(self, os_path):
-        c, _ = self._read_file(os_path, "byte")
-        sha256 = hashlib.sha256()
-        sha256.update(c)
-        return sha256.hexdigest()
 
 
 class AsyncFileManagerMixin(FileManagerMixin):
@@ -423,7 +438,7 @@ class AsyncFileManagerMixin(FileManagerMixin):
                 f,
             )
 
-    async def _read_file(self, os_path, format):
+    async def _read_file(self, os_path, format, require_hash=False):
         """Read a non-notebook file.
 
         os_path: The path to be read.
@@ -432,21 +447,29 @@ class AsyncFileManagerMixin(FileManagerMixin):
           If 'base64', the raw bytes contents will be encoded as base64.
           If 'byte', the raw bytes contents will be returned.
           If not specified, try to decode as UTF-8, and fall back to base64
+        hash:
+          If require_hash is 'True', return the hash of the file contents as a hex string.
         """
         if not os.path.isfile(os_path):
             raise HTTPError(400, "Cannot read non-file %s" % os_path)
 
         with self.open(os_path, "rb") as f:
             bcontent = await run_sync(f.read)
+
+        if require_hash:
+            hash_value = await self._get_hash_from_content(bcontent)
+        else:
+            hash_value = None
+
         if format == "byte":
             # Not for http response but internal use
-            return bcontent, "byte"
+            return bcontent, "byte", hash_value
 
         if format is None or format == "text":
             # Try to interpret as unicode if format is unknown or if unicode
             # was explicitly requested.
             try:
-                return bcontent.decode("utf8"), "text"
+                return bcontent.decode("utf8"), "text", hash_value
             except UnicodeError as e:
                 if format == "text":
                     raise HTTPError(
@@ -454,7 +477,7 @@ class AsyncFileManagerMixin(FileManagerMixin):
                         "%s is not UTF-8 encoded" % os_path,
                         reason="bad format",
                     ) from e
-        return encodebytes(bcontent).decode("ascii"), "base64"
+        return encodebytes(bcontent).decode("ascii"), "base64", hash_value
 
     async def _save_file(self, os_path, content, format):
         """Save content of a generic file."""
@@ -475,8 +498,11 @@ class AsyncFileManagerMixin(FileManagerMixin):
         with self.atomic_writing(os_path, text=False) as f:
             await run_sync(f.write, bcontent)
 
-    async def _get_sha256(self, os_path):
-        c, _ = await self._read_file(os_path, "byte")
-        sha256 = hashlib.sha256()
-        await run_sync(sha256.update, c)
-        return sha256.hexdigest()
+    async def _get_hash_from_content(self, bcontent: bytes):
+        h = hashlib.new(self.hash_algorithm)
+        await run_sync(h.update, bcontent)
+        return h.hexdigest()
+
+    async def _get_hash_from_file(self, os_path):
+        _, _, h = await self._read_file(os_path, "byte", require_hash=True)
+        return h
