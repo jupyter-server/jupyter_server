@@ -1,6 +1,8 @@
 """A contents manager that uses the local file system for storage."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import errno
 import math
 import mimetypes
@@ -10,6 +12,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import typing as t
 import warnings
 from datetime import datetime
 from pathlib import Path
@@ -265,6 +268,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model["mimetype"] = None
         model["size"] = size
         model["writable"] = self.is_writable(path)
+        model["hash"] = None
+        model["hash_algorithm"] = None
 
         return model
 
@@ -332,7 +337,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         return model
 
-    def _file_model(self, path, content=True, format=None):
+    def _file_model(self, path, content=True, format=None, require_hash=False):
         """Build a model for a file
 
         if content is requested, include the file contents.
@@ -341,6 +346,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
           If 'text', the contents will be decoded as UTF-8.
           If 'base64', the raw bytes contents will be encoded as base64.
           If not specified, try to decode as UTF-8, and fall back to base64
+
+        if require_hash is true, the model will include 'hash'
         """
         model = self._base_model(path)
         model["type"] = "file"
@@ -348,8 +355,9 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path)
         model["mimetype"] = mimetypes.guess_type(os_path)[0]
 
+        bytes_content = None
         if content:
-            content, format = self._read_file(os_path, format)
+            content, format, bytes_content = self._read_file(os_path, format, raw=True)  # type: ignore[misc]
             if model["mimetype"] is None:
                 default_mime = {
                     "text": "text/plain",
@@ -362,31 +370,44 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 format=format,
             )
 
+        if require_hash:
+            if bytes_content is None:
+                bytes_content, _ = self._read_file(os_path, "byte")  # type: ignore[assignment,misc]
+            model.update(**self._get_hash(bytes_content))  # type: ignore[arg-type]
+
         return model
 
-    def _notebook_model(self, path, content=True):
+    def _notebook_model(self, path, content=True, require_hash=False):
         """Build a notebook model
 
         if content is requested, the notebook content will be populated
         as a JSON structure (not double-serialized)
+
+        if require_hash is true, the model will include 'hash'
         """
         model = self._base_model(path)
         model["type"] = "notebook"
         os_path = self._get_os_path(path)
 
+        bytes_content = None
         if content:
-            validation_error: dict = {}
-            nb = self._read_notebook(
-                os_path, as_version=4, capture_validation_error=validation_error
+            validation_error: dict[str, t.Any] = {}
+            nb, bytes_content = self._read_notebook(
+                os_path, as_version=4, capture_validation_error=validation_error, raw=True
             )
             self.mark_trusted_cells(nb, path)
             model["content"] = nb
             model["format"] = "json"
             self.validate_notebook_model(model, validation_error)
 
+        if require_hash:
+            if bytes_content is None:
+                bytes_content, _ = self._read_file(os_path, "byte")  # type: ignore[misc]
+            model.update(**self._get_hash(bytes_content))  # type: ignore[arg-type]
+
         return model
 
-    def get(self, path, content=True, type=None, format=None):
+    def get(self, path, content=True, type=None, format=None, require_hash=False):
         """Takes a path for an entity and returns its model
 
         Parameters
@@ -401,6 +422,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         format : str, optional
             The requested format for file contents. 'text' or 'base64'.
             Ignored if this returns a notebook or directory model.
+        require_hash: bool, optional
+            Whether to include the hash of the file contents.
 
         Returns
         -------
@@ -428,11 +451,13 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 )
             model = self._dir_model(path, content=content)
         elif type == "notebook" or (type is None and path.endswith(".ipynb")):
-            model = self._notebook_model(path, content=content)
+            model = self._notebook_model(path, content=content, require_hash=require_hash)
         else:
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
-            model = self._file_model(path, content=content, format=format)
+            model = self._file_model(
+                path, content=content, format=format, require_hash=require_hash
+            )
         self.emit(data={"action": "get", "path": path})
         return model
 
@@ -465,7 +490,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         self.log.debug("Saving %s", os_path)
 
-        validation_error: dict = {}
+        validation_error: dict[str, t.Any] = {}
         try:
             if model["type"] == "notebook":
                 nb = nbformat.from_dict(model["content"])
@@ -683,7 +708,9 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 ).stdout.split()
             else:
                 result = subprocess.run(
-                    ["du", "-s", "--block-size=1", path], capture_output=True, check=True
+                    ["du", "-s", "--block-size=1", path],
+                    capture_output=True,
+                    check=True,
                 ).stdout.split()
 
             self.log.info(f"current status of du command {result}")
@@ -781,7 +808,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         return model
 
-    async def _file_model(self, path, content=True, format=None):
+    async def _file_model(self, path, content=True, format=None, require_hash=False):
         """Build a model for a file
 
         if content is requested, include the file contents.
@@ -790,6 +817,8 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
           If 'text', the contents will be decoded as UTF-8.
           If 'base64', the raw bytes contents will be encoded as base64.
           If not specified, try to decode as UTF-8, and fall back to base64
+
+        if require_hash is true, the model will include 'hash'
         """
         model = self._base_model(path)
         model["type"] = "file"
@@ -797,8 +826,9 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         os_path = self._get_os_path(path)
         model["mimetype"] = mimetypes.guess_type(os_path)[0]
 
+        bytes_content = None
         if content:
-            content, format = await self._read_file(os_path, format)
+            content, format, bytes_content = await self._read_file(os_path, format, raw=True)  # type: ignore[misc]
             if model["mimetype"] is None:
                 default_mime = {
                     "text": "text/plain",
@@ -811,9 +841,14 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 format=format,
             )
 
+        if require_hash:
+            if bytes_content is None:
+                bytes_content, _ = await self._read_file(os_path, "byte")  # type: ignore[assignment,misc]
+            model.update(**self._get_hash(bytes_content))  # type: ignore[arg-type]
+
         return model
 
-    async def _notebook_model(self, path, content=True):
+    async def _notebook_model(self, path, content=True, require_hash=False):
         """Build a notebook model
 
         if content is requested, the notebook content will be populated
@@ -823,19 +858,25 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         model["type"] = "notebook"
         os_path = self._get_os_path(path)
 
+        bytes_content = None
         if content:
-            validation_error: dict = {}
-            nb = await self._read_notebook(
-                os_path, as_version=4, capture_validation_error=validation_error
+            validation_error: dict[str, t.Any] = {}
+            nb, bytes_content = await self._read_notebook(
+                os_path, as_version=4, capture_validation_error=validation_error, raw=True
             )
             self.mark_trusted_cells(nb, path)
             model["content"] = nb
             model["format"] = "json"
             self.validate_notebook_model(model, validation_error)
 
+        if require_hash:
+            if bytes_content is None:
+                bytes_content, _ = await self._read_file(os_path, "byte")  # type: ignore[misc]
+            model.update(**(self._get_hash(bytes_content)))  # type: ignore[arg-type]
+
         return model
 
-    async def get(self, path, content=True, type=None, format=None):
+    async def get(self, path, content=True, type=None, format=None, require_hash=False):
         """Takes a path for an entity and returns its model
 
         Parameters
@@ -850,6 +891,8 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         format : str, optional
             The requested format for file contents. 'text' or 'base64'.
             Ignored if this returns a notebook or directory model.
+        require_hash: bool, optional
+            Whether to include the hash of the file contents.
 
         Returns
         -------
@@ -872,11 +915,13 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 )
             model = await self._dir_model(path, content=content)
         elif type == "notebook" or (type is None and path.endswith(".ipynb")):
-            model = await self._notebook_model(path, content=content)
+            model = await self._notebook_model(path, content=content, require_hash=require_hash)
         else:
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
-            model = await self._file_model(path, content=content, format=format)
+            model = await self._file_model(
+                path, content=content, format=format, require_hash=require_hash
+            )
         self.emit(data={"action": "get", "path": path})
         return model
 
@@ -906,7 +951,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         os_path = self._get_os_path(path)
         self.log.debug("Saving %s", os_path)
 
-        validation_error: dict = {}
+        validation_error: dict[str, t.Any] = {}
         try:
             if model["type"] == "notebook":
                 nb = nbformat.from_dict(model["content"])
@@ -1094,7 +1139,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
     async def _copy_dir(
         self, from_path: str, to_path_original: str, to_name: str, to_path: str
-    ) -> dict:
+    ) -> dict[str, t.Any]:
         """
         handles copying directories
         returns the model for the copied directory
@@ -1111,7 +1156,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 f"Can't copy '{from_path}' into read-only Folder '{to_path}'",
             ) from err
 
-        return model
+        return model  # type:ignore[no-any-return]
 
     async def check_folder_size(self, path: str) -> None:
         """
@@ -1144,7 +1189,9 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 ).stdout.split()
             else:
                 result = subprocess.run(
-                    ["du", "-s", "--block-size=1", path], capture_output=True, check=True
+                    ["du", "-s", "--block-size=1", path],
+                    capture_output=True,
+                    check=True,
                 ).stdout.split()
 
             self.log.info(f"current status of du command {result}")

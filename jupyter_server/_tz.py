@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone, tzinfo
 ZERO = timedelta(0)
 
 
-class tzUTC(tzinfo):  # noqa
+class tzUTC(tzinfo):
     """tzinfo object for UTC (zero offset)"""
 
     def utcoffset(self, d: datetime | None) -> timedelta:
@@ -30,7 +30,7 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def utcfromtimestamp(timestamp):
+def utcfromtimestamp(timestamp: float) -> datetime:
     return datetime.fromtimestamp(timestamp, timezone.utc)
 
 

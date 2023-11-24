@@ -99,8 +99,8 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
     _open_sessions: dict[str, KernelWebsocketHandler] = {}
     _open_sockets: t.MutableSet[ZMQChannelsWebsocketConnection] = weakref.WeakSet()
 
-    _kernel_info_future: Future
-    _close_future: Future
+    _kernel_info_future: Future[t.Any]
+    _close_future: Future[t.Any]
 
     channels = Dict({})
     kernel_info_channel = Any(allow_none=True)
@@ -154,7 +154,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.channels[channel] = stream = meth(identity=identity)
             stream.channel = channel
 
-    def nudge(self):  # noqa
+    def nudge(self):
         """Nudge the zmq connections with kernel_info_requests
         Returns a Future that will resolve when we have received
         a shell or control reply and at least one iopub message,
@@ -170,7 +170,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # establishing its zmq subscriptions before processing the next request.
         if getattr(self.kernel_manager, "execution_state", None) == "busy":
             self.log.debug("Nudge: not nudging busy kernel %s", self.kernel_id)
-            f: Future = Future()
+            f: Future[t.Any] = Future()
             f.set_result(None)
             return _ensure_future(f)
         # Use a transient shell channel to prevent leaking
@@ -182,8 +182,8 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # The IOPub used by the client, whose subscriptions we are verifying.
         iopub_channel = self.channels["iopub"]
 
-        info_future: Future = Future()
-        iopub_future: Future = Future()
+        info_future: Future[t.Any] = Future()
+        iopub_future: Future[t.Any] = Future()
         both_done = gen.multi([info_future, iopub_future])
 
         def finish(_=None):
@@ -376,7 +376,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     if not stream.closed():
                         stream.close()
                 self.disconnect()
-                return
+                return None
 
         self.multi_kernel_manager.add_restart_callback(self.kernel_id, self.on_kernel_restarted)
         self.multi_kernel_manager.add_restart_callback(
@@ -438,7 +438,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         try:
             ZMQChannelsWebsocketConnection._open_sockets.remove(self)
             self._close_future.set_result(None)
-        except Exception:  # noqa
+        except Exception:
             pass
 
     def handle_incoming_message(self, incoming_msg: str) -> None:
@@ -486,7 +486,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             else:
                 self.session.send(stream, msg)
 
-    def handle_outgoing_message(self, stream: str, outgoing_msg: list) -> None:
+    def handle_outgoing_message(self, stream: str, outgoing_msg: list[t.Any]) -> None:
         """Handle the outgoing messages from ZMQ sockets to Websocket."""
         msg_list = outgoing_msg
         _, fed_msg_list = self.session.feed_identities(msg_list)

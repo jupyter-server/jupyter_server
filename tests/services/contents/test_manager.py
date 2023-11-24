@@ -296,7 +296,7 @@ async def test_403(jp_file_contents_manager_class, tmp_path):
         assert e.status_code == 403
 
 
-async def test_400(jp_file_contents_manager_class, tmp_path):  # noqa
+async def test_400(jp_file_contents_manager_class, tmp_path):
     # Test Delete behavior
     # Test delete of file in hidden directory
     td = str(tmp_path)
@@ -406,35 +406,44 @@ async def test_400(jp_file_contents_manager_class, tmp_path):  # noqa
 
 
 async def test_404(jp_file_contents_manager_class, tmp_path):
-    # Test visible file in hidden folder
-    with pytest.raises(HTTPError) as excinfo:
-        td = str(tmp_path)
-        cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = ".hidden"
-        file_in_hidden_path = os.path.join(hidden_dir, "visible.txt")
-        _make_dir(cm, hidden_dir)
-        model = await ensure_async(cm.new(path=file_in_hidden_path))
-        os_path = cm._get_os_path(model["path"])
+    # setup
+    td = str(tmp_path)
+    cm = jp_file_contents_manager_class(root_dir=td)
 
-        try:
-            result = await ensure_async(cm.get(os_path, "w"))
-        except HTTPError as e:
-            assert e.status_code == 404
+    # Test visible file in hidden folder
+    cm.allow_hidden = True
+    hidden_dir = ".hidden"
+    file_in_hidden_path = os.path.join(hidden_dir, "visible.txt")
+    _make_dir(cm, hidden_dir)
+    model = await ensure_async(cm.new(path=file_in_hidden_path))
+    os_path = cm._get_os_path(model["path"])
+    cm.allow_hidden = False
+
+    with pytest.raises(HTTPError) as excinfo:
+        await ensure_async(cm.get(os_path))
+        assert excinfo.value.status_code == 404
 
     # Test hidden file in visible folder
-    with pytest.raises(HTTPError) as excinfo:
-        td = str(tmp_path)
-        cm = jp_file_contents_manager_class(root_dir=td)
-        hidden_dir = "visible"
-        file_in_hidden_path = os.path.join(hidden_dir, ".hidden.txt")
-        _make_dir(cm, hidden_dir)
-        model = await ensure_async(cm.new(path=file_in_hidden_path))
-        os_path = cm._get_os_path(model["path"])
+    cm.allow_hidden = True
+    hidden_dir = "visible"
+    file_in_hidden_path = os.path.join(hidden_dir, ".hidden.txt")
+    _make_dir(cm, hidden_dir)
+    model = await ensure_async(cm.new(path=file_in_hidden_path))
+    os_path = cm._get_os_path(model["path"])
+    cm.allow_hidden = False
 
-        try:
-            result = await ensure_async(cm.get(os_path, "w"))
-        except HTTPError as e:
-            assert e.status_code == 404
+    with pytest.raises(HTTPError) as excinfo:
+        await ensure_async(cm.get(os_path))
+        assert excinfo.value.status_code == 404
+
+    # Test file not found
+    td = str(tmp_path)
+    cm = jp_file_contents_manager_class(root_dir=td)
+    not_a_file = "foo.bar"
+
+    with pytest.raises(HTTPError) as excinfo:
+        await ensure_async(cm.get(not_a_file))
+        assert excinfo.value.status_code == 404
 
 
 async def test_escape_root(jp_file_contents_manager_class, tmp_path):
@@ -538,7 +547,7 @@ async def test_modified_date(jp_contents_manager):
     assert renamed["last_modified"] >= saved["last_modified"]
 
 
-async def test_get(jp_contents_manager):  # noqa
+async def test_get(jp_contents_manager):
     cm = jp_contents_manager
     # Create a notebook
     model = await ensure_async(cm.new_untitled(type="notebook"))
@@ -562,6 +571,17 @@ async def test_get(jp_contents_manager):  # noqa
     nb_as_bin_file = await ensure_async(cm.get(path, content=True, type="file", format="base64"))
     assert nb_as_bin_file["format"] == "base64"
 
+    nb_with_hash = await ensure_async(cm.get(path, require_hash=True))
+    assert nb_with_hash["hash"]
+    assert nb_with_hash["hash_algorithm"]
+
+    # Get the hash without the content
+    nb_with_hash = await ensure_async(cm.get(path, content=False, require_hash=True))
+    assert nb_with_hash["content"] is None
+    assert nb_with_hash["format"] is None
+    assert nb_with_hash["hash"]
+    assert nb_with_hash["hash_algorithm"]
+
     # Test in sub-directory
     sub_dir = "/foo/"
     _make_dir(cm, "foo")
@@ -576,7 +596,7 @@ async def test_get(jp_contents_manager):  # noqa
 
     # Test with a regular file.
     file_model_path = (await ensure_async(cm.new_untitled(path=sub_dir, ext=".txt")))["path"]
-    file_model = await ensure_async(cm.get(file_model_path))
+    file_model = await ensure_async(cm.get(file_model_path, require_hash=True))
     expected_model = {
         "content": "",
         "format": "text",
@@ -585,12 +605,34 @@ async def test_get(jp_contents_manager):  # noqa
         "path": "foo/untitled.txt",
         "type": "file",
         "writable": True,
+        "hash_algorithm": cm.hash_algorithm,
     }
     # Assert expected model is in file_model
     for key, value in expected_model.items():
         assert file_model[key] == value
     assert "created" in file_model
     assert "last_modified" in file_model
+    assert file_model["hash"]
+
+    # Get hash without content
+    file_model = await ensure_async(cm.get(file_model_path, content=False, require_hash=True))
+    expected_model = {
+        "content": None,
+        "format": None,
+        "mimetype": "text/plain",
+        "name": "untitled.txt",
+        "path": "foo/untitled.txt",
+        "type": "file",
+        "writable": True,
+        "hash_algorithm": cm.hash_algorithm,
+    }
+
+    # Assert expected model is in file_model
+    for key, value in expected_model.items():
+        assert file_model[key] == value
+    assert "created" in file_model
+    assert "last_modified" in file_model
+    assert file_model["hash"]
 
     # Create a sub-sub directory to test getting directory contents with a
     # subdir.

@@ -447,8 +447,16 @@ class ContentsManager(LoggingConfigurable):
         """
         return self.file_exists(path) or self.dir_exists(path)
 
-    def get(self, path, content=True, type=None, format=None):
-        """Get a file or directory model."""
+    def get(self, path, content=True, type=None, format=None, require_hash=False):
+        """Get a file or directory model.
+
+        Parameters
+        ----------
+        require_hash : bool
+            Whether the file hash must be returned or not.
+
+        *Changed in version 2.11*: The *require_hash* parameter was added.
+        """
         raise NotImplementedError
 
     def save(self, model, path):
@@ -849,8 +857,16 @@ class AsyncContentsManager(ContentsManager):
             self.dir_exists(path)
         )
 
-    async def get(self, path, content=True, type=None, format=None):
-        """Get a file or directory model."""
+    async def get(self, path, content=True, type=None, format=None, require_hash=False):
+        """Get a file or directory model.
+
+        Parameters
+        ----------
+        require_hash : bool
+            Whether the file hash must be returned or not.
+
+        *Changed in version 2.11*: The *require_hash* parameter was added.
+        """
         raise NotImplementedError
 
     async def save(self, model, path):

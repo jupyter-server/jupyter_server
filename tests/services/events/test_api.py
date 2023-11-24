@@ -9,7 +9,7 @@ import tornado
 from tests.utils import expected_http_error
 
 
-@pytest.fixture
+@pytest.fixture()
 def event_logger_sink(jp_serverapp):
     event_logger = jp_serverapp.event_logger
     # Register the event schema defined in this directory.
@@ -21,7 +21,7 @@ def event_logger_sink(jp_serverapp):
     return event_logger, sink
 
 
-@pytest.fixture
+@pytest.fixture()
 def event_logger(event_logger_sink):
     event_logger, sink = event_logger_sink
     return event_logger

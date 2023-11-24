@@ -1,6 +1,7 @@
 """Gateway connection classes."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
 
 import asyncio
 import logging
@@ -41,11 +42,11 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
             "channels",
         )
         self.log.info(f"Connecting to {ws_url}")
-        kwargs: dict = {}
+        kwargs: dict[str, Any] = {}
         kwargs = GatewayClient.instance().load_connection_args(**kwargs)
 
         request = HTTPRequest(ws_url, **kwargs)
-        self.ws_future = cast(Future, tornado_websocket.websocket_connect(request))
+        self.ws_future = cast("Future[Any]", tornado_websocket.websocket_connect(request))
         self.ws_future.add_done_callback(self._connection_done)
 
         loop = IOLoop.current()
@@ -103,7 +104,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
 
         # NOTE(esevan): if websocket is not disconnected by client, try to reconnect.
         if not self.disconnected and self.retry < GatewayClient.instance().gateway_retry_max:
-            jitter = random.randint(10, 100) * 0.01  # noqa
+            jitter = random.randint(10, 100) * 0.01
             retry_interval = (
                 min(
                     GatewayClient.instance().gateway_retry_interval * (2**self.retry),

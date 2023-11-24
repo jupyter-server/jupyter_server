@@ -373,7 +373,7 @@ class MappingKernelManager(MultiKernelManager):
         """
         self.log.debug("Getting buffer for %s", kernel_id)
         if kernel_id not in self._kernel_buffers:
-            return
+            return None
 
         buffer_info = self._kernel_buffers[kernel_id]
         if buffer_info["session_key"] == session_key:
@@ -440,7 +440,7 @@ class MappingKernelManager(MultiKernelManager):
         kernel = self.get_kernel(kernel_id)
         # return a Future that will resolve when the kernel has successfully restarted
         channel = kernel.connect_shell()
-        future: Future = Future()
+        future: Future[Any] = Future()
 
         def finish():
             """Common cleanup when restart finishes/fails for any reason."""
@@ -710,7 +710,7 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager): 
         self.last_kernel_activity = utcnow()
 
 
-def emit_kernel_action_event(success_msg: str = "") -> t.Callable:
+def emit_kernel_action_event(success_msg: str = "") -> t.Callable[..., t.Any]:
     """Decorate kernel action methods to
     begin emitting jupyter kernel action events.
 
@@ -802,7 +802,7 @@ class ServerKernelManager(AsyncIOLoopKernelManager):
 
     # This trait is intended for subclasses to override and define
     # custom event schemas.
-    extra_event_schema_paths: List[str] = List(  # type:ignore[assignment]
+    extra_event_schema_paths: List[str] = List(
         default_value=[],
         help="""
         A list of pathlib.Path objects pointing at to register with

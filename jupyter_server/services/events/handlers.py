@@ -2,6 +2,8 @@
 
 .. versionadded:: 2.0
 """
+from __future__ import annotations
+
 import json
 from datetime import datetime
 from typing import Any, Dict, Optional, cast
@@ -48,7 +50,7 @@ class SubscribeWebsocket(
             await res
 
     async def event_listener(
-        self, logger: jupyter_events.logger.EventLogger, schema_id: str, data: dict
+        self, logger: jupyter_events.logger.EventLogger, schema_id: str, data: dict[str, Any]
     ) -> None:
         """Write an event message."""
         capsule = dict(schema_id=schema_id, **data)
@@ -65,7 +67,7 @@ class SubscribeWebsocket(
         self.event_logger.remove_listener(listener=self.event_listener)
 
 
-def validate_model(data: Dict[str, Any]) -> None:
+def validate_model(data: dict[str, Any]) -> None:
     """Validates for required fields in the JSON request body"""
     required_keys = {"schema_id", "version", "data"}
     for key in required_keys:
@@ -73,7 +75,7 @@ def validate_model(data: Dict[str, Any]) -> None:
             raise web.HTTPError(400, f"Missing `{key}` in the JSON request body.")
 
 
-def get_timestamp(data: Dict[str, Any]) -> Optional[datetime]:
+def get_timestamp(data: dict[str, Any]) -> Optional[datetime]:
     """Parses timestamp from the JSON request body"""
     try:
         if "timestamp" in data:

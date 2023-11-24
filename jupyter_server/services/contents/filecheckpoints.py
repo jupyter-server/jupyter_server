@@ -252,7 +252,7 @@ class GenericFileCheckpoints(GenericCheckpointsMixin, FileCheckpoints):
         if not os.path.isfile(os_checkpoint_path):
             self.no_such_checkpoint(path, checkpoint_id)
 
-        content, format = self._read_file(os_checkpoint_path, format=None)
+        content, format = self._read_file(os_checkpoint_path, format=None)  # type: ignore[misc]
         return {
             "type": "file",
             "content": content,
@@ -318,7 +318,7 @@ class AsyncGenericFileCheckpoints(AsyncGenericCheckpointsMixin, AsyncFileCheckpo
         if not os.path.isfile(os_checkpoint_path):
             self.no_such_checkpoint(path, checkpoint_id)
 
-        content, format = await self._read_file(os_checkpoint_path, format=None)
+        content, format = await self._read_file(os_checkpoint_path, format=None)  # type: ignore[misc]
         return {
             "type": "file",
             "content": content,

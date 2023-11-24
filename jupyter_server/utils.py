@@ -157,7 +157,7 @@ def check_version(v: str, check: str) -> bool:
     Users on dev branches are responsible for keeping their own packages up to date.
     """
     try:
-        return Version(v) >= Version(check)
+        return bool(Version(v) >= Version(check))
     except TypeError:
         return True
 
@@ -382,7 +382,7 @@ def filefind(filename: str, path_dirs: Sequence[str] | str | None = None) -> str
 
     for path in path_dirs:
         if path == ".":
-            path = os.getcwd()  # noqa
+            path = os.getcwd()  # noqa: PLW2901
         testname = expand_path(os.path.join(path, filename))
         if os.path.isfile(testname):
             return os.path.abspath(testname)
@@ -427,7 +427,7 @@ def import_item(name: str) -> Any:
     """
 
     parts = name.rsplit(".", 1)
-    if len(parts) == 2:  # noqa
+    if len(parts) == 2:
         # called with 'foo.bar....'
         package, obj = parts
         module = __import__(package, fromlist=[obj])

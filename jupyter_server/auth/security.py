@@ -52,8 +52,7 @@ def passwd(passphrase=None, algorithm="argon2"):
             if p0 == p1:
                 passphrase = p0
                 break
-            else:
-                warnings.warn("Passwords do not match.", stacklevel=2)
+            warnings.warn("Passwords do not match.", stacklevel=2)
         else:
             msg = "No matching passwords found. Giving up."
             raise ValueError(msg)

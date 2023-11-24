@@ -164,7 +164,7 @@ class SessionClient:
         time.sleep(0.1)
 
 
-@pytest.fixture
+@pytest.fixture()
 def session_is_ready(jp_serverapp):
     """Wait for the kernel started by a session to be ready.
 
@@ -187,7 +187,7 @@ def session_is_ready(jp_serverapp):
     return _
 
 
-@pytest.fixture
+@pytest.fixture()
 def session_client(jp_root_dir, jp_fetch):
     subdir = jp_root_dir.joinpath("foo")
     subdir.mkdir()

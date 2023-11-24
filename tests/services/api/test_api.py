@@ -59,7 +59,7 @@ class MockAuthorizer(Authorizer):
         return action in actions
 
 
-@pytest.fixture
+@pytest.fixture()
 def identity_provider(jp_serverapp):
     idp = MockIdentityProvider(parent=jp_serverapp)
     authorizer = MockAuthorizer(parent=jp_serverapp)

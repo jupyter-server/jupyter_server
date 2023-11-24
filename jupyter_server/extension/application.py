@@ -28,7 +28,7 @@ def _preparse_for_subcommand(application_klass, argv):
     """Preparse command line to look for subcommands."""
     # Read in arguments from command line.
     if len(argv) == 0:
-        return
+        return None
 
     # Find any subcommands.
     if application_klass.subcommands and len(argv) > 0:
@@ -144,7 +144,7 @@ class ExtensionApp(JupyterApp):
     # A useful class property that subclasses can override to
     # configure the underlying Jupyter Server when this extension
     # is launched directly (using its `launch_instance` method).
-    serverapp_config: dict = {}
+    serverapp_config: dict[str, t.Any] = {}
 
     # Some subclasses will likely override this trait to flip
     # the default value to False if they don't offer a browser
@@ -174,7 +174,7 @@ class ExtensionApp(JupyterApp):
     # file, jupyter_{name}_config.
     # This should also match the jupyter subcommand used to launch
     # this extension from the CLI, e.g. `jupyter {name}`.
-    name: str | Unicode = "ExtensionApp"  # type:ignore[assignment]
+    name: str | Unicode[str, str] = "ExtensionApp"  # type:ignore[assignment]
 
     @classmethod
     def get_extension_package(cls):
@@ -218,7 +218,7 @@ class ExtensionApp(JupyterApp):
         if ServerApp.initialized():
             try:
                 return ServerApp.instance()
-            except Exception:  # noqa
+            except Exception:
                 # error retrieving instance, e.g. MultipleInstanceError
                 pass
 
@@ -271,7 +271,7 @@ class ExtensionApp(JupyterApp):
 
     handlers: List[tuple[t.Any, ...]] = List(
         help=_i18n("""Handlers appended to the server.""")
-    ).tag(config=True)  # type:ignore[assignment]
+    ).tag(config=True)
 
     def _config_file_name_default(self):
         """The default config file name."""
@@ -281,15 +281,12 @@ class ExtensionApp(JupyterApp):
 
     def initialize_settings(self):
         """Override this method to add handling of settings."""
-        pass
 
     def initialize_handlers(self):
         """Override this method to append handlers to a Jupyter Server."""
-        pass
 
     def initialize_templates(self):
         """Override this method to add handling of template files."""
-        pass
 
     def _prepare_config(self):
         """Builds a Config object from the extension's traits and passes
@@ -336,7 +333,7 @@ class ExtensionApp(JupyterApp):
             handler = handler_items[1]
 
             # Get handler kwargs, if given
-            kwargs: dict = {}
+            kwargs: dict[str, t.Any] = {}
             if issubclass(handler, ExtensionHandlerMixin):
                 kwargs["name"] = self.name
 
@@ -599,7 +596,7 @@ class ExtensionApp(JupyterApp):
         extension's landing page.
         """
         # Handle arguments.
-        if argv is None:  # noqa
+        if argv is None:  # noqa: SIM108
             args = sys.argv[1:]  # slice out extension config.
         else:
             args = argv

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-#
 # Jupyter Server documentation build configuration file, created by
 # sphinx-quickstart on Mon Apr 13 09:51:11 2015.
 #
@@ -44,7 +42,7 @@ extensions = [
 ]
 
 try:
-    import enchant  # type:ignore[import-not-found]  # noqa
+    import enchant  # type:ignore[import-not-found]
 
     extensions += ["sphinxcontrib.spelling"]
 except ImportError:
@@ -338,7 +336,7 @@ spelling_lang = "en_US"
 spelling_word_list_filename = "spelling_wordlist.txt"
 
 # import before any doc is built, so _ is guaranteed to be injected
-import jupyter_server.transutils  # noqa: F401
+import jupyter_server.transutils
 
 CONFIG_HEADER = """\
 .. _other-full-config:

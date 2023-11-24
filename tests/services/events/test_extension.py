@@ -3,7 +3,7 @@ import json
 import pytest
 
 
-@pytest.fixture
+@pytest.fixture()
 def jp_server_config():
     config = {
         "ServerApp": {

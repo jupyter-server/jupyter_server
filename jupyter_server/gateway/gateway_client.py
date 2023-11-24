@@ -1,6 +1,8 @@
 """A kernel gateway client."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -44,8 +46,6 @@ if ty.TYPE_CHECKING:
 class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore[misc]
     """The metaclass necessary for proper ABC behavior in a Configurable."""
 
-    pass
-
 
 class GatewayTokenRenewerBase(  # type:ignore[misc]
     ABC, LoggingConfigurable, metaclass=GatewayTokenRenewerMeta
@@ -69,7 +69,6 @@ class GatewayTokenRenewerBase(  # type:ignore[misc]
         Given the current authorization header key, scheme, and token, this method returns
         a (potentially renewed) token for use against the Gateway server.
         """
-        pass
 
 
 class NoOpTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
@@ -538,7 +537,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
     # Ensure KERNEL_LAUNCH_TIMEOUT has a default value.
     KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", 40))
 
-    _connection_args: dict  # initialized on first use
+    _connection_args: dict[str, ty.Any]  # initialized on first use
 
     gateway_token_renewer: GatewayTokenRenewerBase
 
@@ -549,7 +548,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         self.gateway_token_renewer = self.gateway_token_renewer_class(parent=self, log=self.log)  # type:ignore[abstract]
 
         # store of cookies with store time
-        self._cookies: ty.Dict[str, ty.Tuple[Morsel, datetime]] = {}
+        self._cookies: dict[str, tuple[Morsel[ty.Any], datetime]] = {}
 
     def init_connection_args(self):
         """Initialize arguments used on every request.  Since these are primarily static values,
@@ -661,7 +660,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         for key in expired_keys:
             self._cookies.pop(key)
 
-    def _update_cookie_header(self, connection_args: dict) -> None:
+    def _update_cookie_header(self, connection_args: dict[str, ty.Any]) -> None:
         """Update a cookie header."""
         self._clear_expired_cookies()
 
@@ -698,9 +697,9 @@ class RetryableHTTPClient:
     MAX_RETRIES_CAP = 10  # The upper limit to max_retries value.
     max_retries: int = int(os.getenv("JUPYTER_GATEWAY_MAX_REQUEST_RETRIES", MAX_RETRIES_DEFAULT))
     max_retries = max(0, min(max_retries, MAX_RETRIES_CAP))  # Enforce boundaries
-    retried_methods: ty.Set[str] = {"GET", "DELETE"}
-    retried_errors: ty.Set[int] = {502, 503, 504, 599}
-    retried_exceptions: ty.Set[type] = {ConnectionError}
+    retried_methods: set[str] = {"GET", "DELETE"}
+    retried_errors: set[int] = {502, 503, 504, 599}
+    retried_exceptions: set[type] = {ConnectionError}
     backoff_factor: float = 0.1
 
     def __init__(self):

@@ -1,13 +1,15 @@
 """Gateway API handlers."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import asyncio
 import logging
 import mimetypes
 import os
 import random
 import warnings
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 from jupyter_client.session import Session
 from tornado import web
@@ -47,7 +49,6 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
     def set_default_headers(self):
         """Undo the set_default_headers in JupyterHandler which doesn't make sense for websockets"""
-        pass
 
     def get_compression_options(self):
         """Get the compression options for the socket."""
@@ -159,7 +160,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         super().__init__()
         self.kernel_id = None
         self.ws = None
-        self.ws_future: Future = Future()
+        self.ws_future: Future[Any] = Future()
         self.disconnected = False
         self.retry = 0
 
@@ -178,11 +179,11 @@ class GatewayWebSocketClient(LoggingConfigurable):
             "channels",
         )
         self.log.info(f"Connecting to {ws_url}")
-        kwargs: dict = {}
+        kwargs: dict[str, Any] = {}
         kwargs = client.load_connection_args(**kwargs)
 
         request = HTTPRequest(ws_url, **kwargs)
-        self.ws_future = cast(Future, websocket_connect(request))
+        self.ws_future = cast("Future[Any]", websocket_connect(request))
         self.ws_future.add_done_callback(self._connection_done)
 
         loop = IOLoop.current()
@@ -238,7 +239,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
 
         # NOTE(esevan): if websocket is not disconnected by client, try to reconnect.
         if not self.disconnected and self.retry < GatewayClient.instance().gateway_retry_max:
-            jitter = random.randint(10, 100) * 0.01  # noqa
+            jitter = random.randint(10, 100) * 0.01
             retry_interval = (
                 min(
                     GatewayClient.instance().gateway_retry_interval * (2**self.retry),

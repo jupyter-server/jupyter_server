@@ -381,7 +381,7 @@ class ServerExtensionApp(BaseExtensionApp):
     description: str = "Work with Jupyter server extensions"
     examples = _examples
 
-    subcommands: dict = {
+    subcommands: dict[str, t.Any] = {
         "enable": (EnableServerExtensionApp, "Enable a server extension"),
         "disable": (DisableServerExtensionApp, "Disable a server extension"),
         "list": (ListServerExtensionsApp, "List server extensions"),

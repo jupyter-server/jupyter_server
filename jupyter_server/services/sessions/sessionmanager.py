@@ -5,7 +5,7 @@
 import os
 import pathlib
 import uuid
-from typing import Any, Dict, List, NewType, Optional, Union
+from typing import Any, Dict, List, NewType, Optional, Union, cast
 
 KernelName = NewType("KernelName", str)
 ModelName = NewType("ModelName", str)
@@ -30,8 +30,6 @@ class KernelSessionRecordConflict(Exception):
     """Exception class to use when two KernelSessionRecords cannot
     merge because of conflicting data.
     """
-
-    pass
 
 
 @dataclass
@@ -293,7 +291,7 @@ class SessionManager(LoggingConfigurable):
             session_id, path=path, name=name, type=type, kernel_id=kernel_id
         )
         self._pending_sessions.remove(record)
-        return result
+        return cast(Dict[str, Any], result)
 
     def get_kernel_env(
         self, path: Optional[str], name: Optional[ModelName] = None
@@ -347,7 +345,7 @@ class SessionManager(LoggingConfigurable):
             kernel_name=kernel_name,
             env=kernel_env,
         )
-        return kernel_id
+        return cast(str, kernel_id)
 
     async def save_session(self, session_id, path=None, name=None, type=None, kernel_id=None):
         """Saves the items for the session with the given session_id
@@ -410,7 +408,7 @@ class SessionManager(LoggingConfigurable):
                 raise TypeError(msg)
             conditions.append("%s=?" % column)
 
-        query = "SELECT * FROM session WHERE %s" % (" AND ".join(conditions))  # noqa
+        query = "SELECT * FROM session WHERE %s" % (" AND ".join(conditions))
 
         self.cursor.execute(query, list(kwargs.values()))
         try:
@@ -458,7 +456,7 @@ class SessionManager(LoggingConfigurable):
             if column not in self._columns:
                 raise TypeError("No such column: %r" % column)
             sets.append("%s=?" % column)
-        query = "UPDATE session SET %s WHERE session_id=?" % (", ".join(sets))  # noqa
+        query = "UPDATE session SET %s WHERE session_id=?" % (", ".join(sets))
         self.cursor.execute(query, [*list(kwargs.values()), session_id])
 
         if hasattr(self.kernel_manager, "update_env"):
@@ -492,7 +490,7 @@ class SessionManager(LoggingConfigurable):
             )
             if tolerate_culled:
                 self.log.warning(f"{msg}  Continuing...")
-                return
+                return None
             raise KeyError(msg)
 
         kernel_model = await ensure_async(self.kernel_manager.kernel_model(row["kernel_id"]))
