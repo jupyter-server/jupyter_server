@@ -259,6 +259,17 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
         if os.path.splitdrive(path)[0]:
             raise HTTPError(404, "%s is not a relative API path" % path)
         os_path = to_os_path(ApiPath(path), root)
+        # validate os path
+        # e.g. "foo\0" raises ValueError: embedded null byte
+        try:
+            os.lstat(os_path)
+        except OSError:
+            # OSError could be FileNotFound, PermissionError, etc.
+            # those should raise (or not) elsewhere
+            pass
+        except ValueError:
+            raise HTTPError(404, f"{path} is not a valid path") from None
+
         if not (os.path.abspath(os_path) + os.path.sep).startswith(root):
             raise HTTPError(404, "%s is outside root contents directory" % path)
         return os_path
