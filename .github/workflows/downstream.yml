@@ -107,6 +107,23 @@ jobs:
           test_command: pip install pytest-jupyter[server] && pytest -vv -raXxs -W default --durations 10 --color=yes
           package_name: jupyter_server_terminals
 
+  jupytext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
+      - name: Test jupytext
+        uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
+        with:
+          package_name: jupytext
+          test_command: pip install pytest-jupyter[server] gitpython pre-commit && python -m ipykernel install --name jupytext-dev --user && pytest -vv -raXxs -W default --durations 10 --color=yes --ignore=tests/test_doc_files_are_notebooks.py --ignore=tests/test_changelog.py
+
   downstream_check: # This job does nothing and is only used for the branch protection
     if: always()
     needs:
@@ -115,6 +132,7 @@ jobs:
       - jupyterlab_server
       - notebook
       - nbclassic
+      - jupytext
     runs-on: ubuntu-latest
     steps:
       - name: Decide whether the needed jobs succeeded or failed
