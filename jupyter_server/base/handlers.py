@@ -10,7 +10,6 @@ import json
 import mimetypes
 import os
 import re
-import traceback
 import types
 import warnings
 from http.client import responses
@@ -748,7 +747,9 @@ class APIHandler(JupyterHandler):
             else:
                 reply["message"] = "Unhandled error"
                 reply["reason"] = None
-                reply["traceback"] = "".join(traceback.format_exception(*exc_info))
+                # backward-compatibility: traceback field is present,
+                # but always empty
+                reply["traceback"] = ""
         self.log.warning("wrote error: %r", reply["message"], exc_info=True)
         self.finish(json.dumps(reply))
 

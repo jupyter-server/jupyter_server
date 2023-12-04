@@ -5,7 +5,6 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
-from traceback import format_tb
 
 try:
     from jupyter_client.jsonutil import json_default
@@ -102,8 +101,7 @@ class KernelActionHandler(KernelsAPIHandler):
             except Exception as e:
                 message = "Exception restarting kernel"
                 self.log.error(message, exc_info=True)
-                traceback = format_tb(e.__traceback__)
-                self.write(json.dumps({"message": message, "traceback": traceback}))
+                self.write(json.dumps({"message": message, "traceback": ""}))
                 self.set_status(500)
             else:
                 model = await ensure_async(km.kernel_model(kernel_id))
