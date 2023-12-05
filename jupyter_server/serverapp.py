@@ -3,7 +3,6 @@
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
-import asyncio
 import datetime
 import errno
 import gettext
@@ -2291,11 +2290,7 @@ class ServerApp(JupyterApp):
         # set it back to original SIGINT handler
         # use IOLoop.add_callback because signal.signal must be called
         # from main thread
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            pass
-        loop.add_signal_handler(self._restore_sigint_handler)
+        self.io_loop.add_callback_from_signal(self._restore_sigint_handler)
 
     def _signal_stop(self, sig: t.Any, frame: t.Any) -> None:
         """Handle a stop signal."""
@@ -2989,11 +2984,7 @@ class ServerApp(JupyterApp):
             # use IOLoop.add_callback because signal.signal must be called
             # from main thread
             if from_signal:
-                try:
-                    loop = asyncio.get_event_loop()
-                except RuntimeError:
-                    pass
-                loop.add_signal_handler(self._stop)
+                self.io_loop.add_callback_from_signal(self._stop)
             else:
                 self.io_loop.add_callback(self._stop)
 
