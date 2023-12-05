@@ -230,7 +230,7 @@ class AsyncAuthorizerTest(Authorizer):
 
     called = Bool(False)
 
-    async def mock_async_fetch(self):
+    async def mock_async_fetch(self) -> True:
         """Mock an async fetch"""
         # Mock a hang for a half a second.
         await asyncio.sleep(0.5)
@@ -238,7 +238,7 @@ class AsyncAuthorizerTest(Authorizer):
 
     async def is_authorized(
         self, handler: JupyterHandler, user: User, action: str, resource: str
-    ) -> Awaitable | bool:
+    ) -> Awaitable[bool]:
         response = await self.mock_async_fetch()
         self.called = True
         return response

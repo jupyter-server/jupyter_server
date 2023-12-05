@@ -44,7 +44,7 @@ class Authorizer(LoggingConfigurable):
 
     def is_authorized(
         self, handler: JupyterHandler, user: User, action: str, resource: str
-    ) -> Awaitable | bool:
+    ) -> Awaitable[bool] | bool:
         """A method to determine if ``user`` is authorized to perform ``action``
         (read, write, or execute) on the ``resource`` type.
 
