@@ -243,6 +243,7 @@ filterwarnings = [
   "ignore:jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0:DeprecationWarning",
   "ignore:datetime.datetime.utc:DeprecationWarning:dateutil",
   "ignore:datetime.datetime.utc:DeprecationWarning:tornado",
+  "module:add_callback_from_signal is deprecated:DeprecationWarning",
 ]
 
 [tool.coverage.report]
