@@ -1,12 +1,18 @@
 """Tests for authorization"""
+import asyncio
 import json
 import os
+from typing import Awaitable
 
 import pytest
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 from nbformat import writes
 from nbformat.v4 import new_notebook
+from traitlets import Bool
 
+from jupyter_server.auth.authorizer import Authorizer
+from jupyter_server.auth.identity import User
+from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.services.security import csp_report_uri
 
 
@@ -217,3 +223,45 @@ async def test_authorized_requests(
 
     code = await send_request(url, body=body, method=method)
     assert code in expected_codes
+
+
+class AsyncAuthorizerTest(Authorizer):
+    """Test that an asynchronous authorizer would still work."""
+
+    called = Bool(False)
+
+    async def mock_async_fetch(self) -> True:
+        """Mock an async fetch"""
+        # Mock a hang for a half a second.
+        await asyncio.sleep(0.5)
+        return True
+
+    async def is_authorized(
+        self, handler: JupyterHandler, user: User, action: str, resource: str
+    ) -> Awaitable[bool]:
+        response = await self.mock_async_fetch()
+        self.called = True
+        return response
+
+
+@pytest.mark.parametrize(
+    "jp_server_config,",
+    [
+        {
+            "ServerApp": {"authorizer_class": AsyncAuthorizerTest},
+            "jpserver_extensions": {"jupyter_server_terminals": True},
+        }
+    ],
+)
+async def test_async_authorizer(
+    request,
+    io_loop,
+    send_request,
+    tmp_path,
+    jp_serverapp,
+):
+    code = await send_request("/api/status", method="GET")
+    assert code == 200
+    # Ensure that the authorizor method finished its request.
+    assert hasattr(jp_serverapp.authorizer, "called")
+    assert jp_serverapp.authorizer.called is True

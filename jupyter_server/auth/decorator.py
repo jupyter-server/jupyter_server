@@ -2,9 +2,11 @@
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import asyncio
 from functools import wraps
 from typing import Any, Callable, Optional, TypeVar, Union, cast
 
+from jupyter_core.utils import ensure_async
 from tornado.log import app_log
 from tornado.web import HTTPError
 
@@ -42,7 +44,7 @@ def authorized(
 
     def wrapper(method):
         @wraps(method)
-        def inner(self, *args, **kwargs):
+        async def inner(self, *args, **kwargs):
             # default values for action, resource
             nonlocal action
             nonlocal resource
@@ -61,8 +63,15 @@ def authorized(
                 raise HTTPError(status_code=403, log_message=message)
             # If the user is allowed to do this action,
             # call the method.
-            if self.authorizer.is_authorized(self, user, action, resource):
-                return method(self, *args, **kwargs)
+            authorized = await ensure_async(
+                self.authorizer.is_authorized(self, user, action, resource)
+            )
+            if authorized:
+                out = method(self, *args, **kwargs)
+                # If the method is a coroutine, await it
+                if asyncio.iscoroutine(out):
+                    return await out
+                return out
             # else raise an exception.
             else:
                 raise HTTPError(status_code=403, log_message=message)
