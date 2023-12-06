@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional, cast
 
 import jupyter_events.logger
+from jupyter_core.utils import ensure_async
 from tornado import web, websocket
 
 from jupyter_server.auth.decorator import authorized
@@ -27,7 +28,7 @@ class SubscribeWebsocket(
 
     auth_resource = AUTH_RESOURCE
 
-    def pre_get(self):
+    async def pre_get(self):
         """Handles authentication/authorization when
         attempting to subscribe to events emitted by
         Jupyter Server's eventbus.
@@ -39,12 +40,15 @@ class SubscribeWebsocket(
             raise web.HTTPError(403)
 
         # authorize the user.
-        if not self.authorizer.is_authorized(self, user, "execute", "events"):
+        authorized = await ensure_async(
+            self.authorizer.is_authorized(self, user, "execute", "events")
+        )
+        if not authorized:
             raise web.HTTPError(403)
 
     async def get(self, *args, **kwargs):
         """Get an event socket."""
-        self.pre_get()
+        await ensure_async(self.pre_get())
         res = super().get(*args, **kwargs)
         if res is not None:
             await res
