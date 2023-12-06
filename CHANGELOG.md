@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.12.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.12.0...a59beb9b7bf3decc00af782821561435f47bbb16))
+
+### Enhancements made
+
+- log extension import time at debug level unless it's actually slow [#1375](https://github.com/jupyter-server/jupyter_server/pull/1375) ([@minrk](https://github.com/minrk))
+- Add support for async Authorizers (part 2) [#1374](https://github.com/jupyter-server/jupyter_server/pull/1374) ([@Zsailer](https://github.com/Zsailer))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-12-05&to=2023-12-06&type=c))
+
+[@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-12-05..2023-12-06&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2023-12-05..2023-12-06&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.12.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.11.2...3bd347b6f2ead5897a18c6171db1174eaaf6176d))
@@ -22,8 +39,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-12-04&to=2023-12-05&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-12-04..2023-12-05&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-12-04..2023-12-05&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2023-12-04..2023-12-05&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.11.2
 
