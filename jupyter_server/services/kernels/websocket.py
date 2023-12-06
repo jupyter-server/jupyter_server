@@ -2,6 +2,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from jupyter_core.utils import ensure_async
 from tornado import web
 from tornado.websocket import WebSocketHandler
 
@@ -40,7 +41,10 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
             raise web.HTTPError(403)
 
         # authorize the user.
-        if not self.authorizer.is_authorized(self, user, "execute", "kernels"):
+        authorized = await ensure_async(
+            self.authorizer.is_authorized(self, user, "execute", "kernels")
+        )
+        if not authorized:
             raise web.HTTPError(403)
 
         kernel = self.kernel_manager.get_kernel(self.kernel_id)
