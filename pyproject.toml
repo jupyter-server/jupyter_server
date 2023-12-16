@@ -142,6 +142,9 @@ optional-editable-build = true
 [tool.ruff]
 line-length = 100
 
+[tool.ruff.format]
+docstring-code-format = true
+
 [tool.ruff.lint]
 select = [
   "B",           # flake8-bugbear
@@ -295,4 +298,4 @@ exclude = ["docs", "test"]
 ignore = ["W002"]
 
 [tool.repo-review]
-ignore = ["GH102"]
+ignore = ["GH102", "PC111"]
