@@ -41,7 +41,7 @@ def passwd(passphrase=None, algorithm="argon2"):
 
     Examples
     --------
-    >>> passwd('mypassword')  # doctest: +ELLIPSIS
+    >>> passwd("mypassword")  # doctest: +ELLIPSIS
     'argon2:...'
 
     """
@@ -93,15 +93,14 @@ def passwd_check(hashed_passphrase, passphrase):
 
     Examples
     --------
-    >>> myhash = passwd('mypassword')
-    >>> passwd_check(myhash, 'mypassword')
+    >>> myhash = passwd("mypassword")
+    >>> passwd_check(myhash, "mypassword")
     True
 
-    >>> passwd_check(myhash, 'otherpassword')
+    >>> passwd_check(myhash, "otherpassword")
     False
 
-    >>> passwd_check('sha1:0e112c3ddfce:a68df677475c2b47b6e86d0467eec97ac5f4b85a',
-    ...              'mypassword')
+    >>> passwd_check("sha1:0e112c3ddfce:a68df677475c2b47b6e86d0467eec97ac5f4b85a", "mypassword")
     True
     """
     if hashed_passphrase.startswith("argon2:"):

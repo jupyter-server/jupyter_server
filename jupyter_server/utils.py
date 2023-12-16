@@ -344,11 +344,11 @@ def filefind(filename: str, path_dirs: Sequence[str] | str | None = None) -> str
     path dirs is given, the filename is tested as is, after running through
     :func:`expandvars` and :func:`expanduser`.  Thus a simple call::
 
-        filefind('myfile.txt')
+        filefind("myfile.txt")
 
     will find the file in the current working dir, but::
 
-        filefind('~/myfile.txt')
+        filefind("~/myfile.txt")
 
     Will find the file in the users home directory.  This function does not
     automatically try any paths, such as the cwd or the user's home directory.
