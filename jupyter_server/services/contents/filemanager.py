@@ -1025,7 +1025,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             try:
                 send2trash(os_path)
             except OSError as e:
-                raise web.HTTPError(400, "send2trash f`1ailed: %s" % e) from e
+                raise web.HTTPError(400, "send2trash failed: %s" % e) from e
             return
 
         if os.path.isdir(os_path):
