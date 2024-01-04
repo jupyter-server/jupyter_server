@@ -4,7 +4,7 @@
 from jupyter_core.utils import ensure_async
 from tornado import web
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 
 from ..base.handlers import JupyterHandler, path_regex
 from ..utils import url_escape, url_path_join

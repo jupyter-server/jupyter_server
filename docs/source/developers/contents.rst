@@ -33,36 +33,48 @@ which we refer to as **models**.
 
 Models may contain the following entries:
 
-+--------------------+-----------+------------------------------+
-| Key                | Type      |Info                          |
-+====================+===========+==============================+
-|**name**            |unicode    |Basename of the entity.       |
-+--------------------+-----------+------------------------------+
-|**path**            |unicode    |Full                          |
-|                    |           |(:ref:`API-style<apipaths>`)  |
-|                    |           |path to the entity.           |
-+--------------------+-----------+------------------------------+
-|**type**            |unicode    |The entity type. One of       |
-|                    |           |``"notebook"``, ``"file"`` or |
-|                    |           |``"directory"``.              |
-+--------------------+-----------+------------------------------+
-|**created**         |datetime   |Creation date of the entity.  |
-+--------------------+-----------+------------------------------+
-|**last_modified**   |datetime   |Last modified date of the     |
-|                    |           |entity.                       |
-+--------------------+-----------+------------------------------+
-|**content**         |variable   |The "content" of the entity.  |
-|                    |           |(:ref:`See                    |
-|                    |           |Below<modelcontent>`)         |
-+--------------------+-----------+------------------------------+
-|**mimetype**        |unicode or |The mimetype of ``content``,  |
-|                    |``None``   |if any.  (:ref:`See           |
-|                    |           |Below<modelcontent>`)         |
-+--------------------+-----------+------------------------------+
-|**format**          |unicode or |The format of ``content``,    |
-|                    |``None``   |if any. (:ref:`See            |
-|                    |           |Below<modelcontent>`)         |
-+--------------------+-----------+------------------------------+
++--------------------+------------+-------------------------------+
+|        Key         |    Type    |             Info              |
++====================+============+===============================+
+| **name**           | unicode    | Basename of the entity.       |
++--------------------+------------+-------------------------------+
+| **path**           | unicode    | Full                          |
+|                    |            | (:ref:`API-style<apipaths>`)  |
+|                    |            | path to the entity.           |
++--------------------+------------+-------------------------------+
+| **type**           | unicode    | The entity type. One of       |
+|                    |            | ``"notebook"``, ``"file"`` or |
+|                    |            | ``"directory"``.              |
++--------------------+------------+-------------------------------+
+| **created**        | datetime   | Creation date of the entity.  |
++--------------------+------------+-------------------------------+
+| **last_modified**  | datetime   | Last modified date of the     |
+|                    |            | entity.                       |
++--------------------+------------+-------------------------------+
+| **content**        | variable   | The "content" of the entity.  |
+|                    |            | (:ref:`See                    |
+|                    |            | Below<modelcontent>`)         |
++--------------------+------------+-------------------------------+
+| **mimetype**       | unicode or | The mimetype of ``content``,  |
+|                    | ``None``   | if any.  (:ref:`See           |
+|                    |            | Below<modelcontent>`)         |
++--------------------+------------+-------------------------------+
+| **format**         | unicode or | The format of ``content``,    |
+|                    | ``None``   | if any. (:ref:`See            |
+|                    |            | Below<modelcontent>`)         |
++--------------------+------------+-------------------------------+
+| [optional]         |            |                               |
+| **hash**           | unicode or | The hash of the contents.     |
+|                    | ``None``   | It cannot be null if          |
+|                    |            | ``hash_algorithm`` is         |
+|                    |            | defined.                      |
++--------------------+------------+-------------------------------+
+| [optional]         |            |                               |
+| **hash_algorithm** | unicode or | The algorithm used to compute |
+|                    | ``None``   | hash value.                   |
+|                    |            | It cannot be null             |
+|                    |            | if ``hash`` is defined.       |
++--------------------+------------+-------------------------------+
 
 .. _modelcontent:
 
@@ -76,6 +88,9 @@ model. There are three model types: **notebook**, **file**, and **directory**.
       :class:`nbformat.notebooknode.NotebookNode` representing the .ipynb file
       represented by the model.  See the `NBFormat`_ documentation for a full
       description.
+    - The ``hash`` field a hexdigest string of the hash value of the file.
+      If ``ContentManager.get`` not support hash, it should always be ``None``.
+    - ``hash_algorithm`` is the algorithm used to compute the hash value.
 
 - ``file`` models
     - The ``format`` field is either ``"text"`` or ``"base64"``.
@@ -85,12 +100,16 @@ model. There are three model types: **notebook**, **file**, and **directory**.
       file models, ``content`` simply contains the file's bytes after decoding
       as UTF-8.  Non-text (``base64``) files are read as bytes, base64 encoded,
       and then decoded as UTF-8.
+    - The ``hash`` field a hexdigest string of the hash value of the file.
+      If ``ContentManager.get`` not support hash, it should always be ``None``.
+    - ``hash_algorithm`` is the algorithm used to compute the hash value.
 
 - ``directory`` models
     - The ``format`` field is always ``"json"``.
     - The ``mimetype`` field is always ``None``.
     - The ``content`` field contains a list of :ref:`content-free<contentfree>`
       models representing the entities in the directory.
+    - The ``hash`` field is always ``None``.
 
 .. note::
 
@@ -107,41 +126,43 @@ model. There are three model types: **notebook**, **file**, and **directory**.
 
 .. code-block:: python
 
-    # Notebook Model with Content
+    # Notebook Model with Content and Hash
     {
-        'content': {
-            'metadata': {},
-            'nbformat': 4,
-            'nbformat_minor': 0,
-            'cells': [
+        "content": {
+            "metadata": {},
+            "nbformat": 4,
+            "nbformat_minor": 0,
+            "cells": [
                 {
-                    'cell_type': 'markdown',
-                    'metadata': {},
-                    'source': 'Some **Markdown**',
+                    "cell_type": "markdown",
+                    "metadata": {},
+                    "source": "Some **Markdown**",
                 },
             ],
         },
-        'created': datetime(2015, 7, 25, 19, 50, 19, 19865),
-        'format': 'json',
-        'last_modified': datetime(2015, 7, 25, 19, 50, 19, 19865),
-        'mimetype': None,
-        'name': 'a.ipynb',
-        'path': 'foo/a.ipynb',
-        'type': 'notebook',
-        'writable': True,
+        "created": datetime(2015, 7, 25, 19, 50, 19, 19865),
+        "format": "json",
+        "last_modified": datetime(2015, 7, 25, 19, 50, 19, 19865),
+        "mimetype": None,
+        "name": "a.ipynb",
+        "path": "foo/a.ipynb",
+        "type": "notebook",
+        "writable": True,
+        "hash": "f5e43a0b1c2e7836ab3b4d6b1c35c19e2558688de15a6a14e137a59e4715d34b",
+        "hash_algorithm": "sha256",
     }
 
     # Notebook Model without Content
     {
-        'content': None,
-        'created': datetime.datetime(2015, 7, 25, 20, 17, 33, 271931),
-        'format': None,
-        'last_modified': datetime.datetime(2015, 7, 25, 20, 17, 33, 271931),
-        'mimetype': None,
-        'name': 'a.ipynb',
-        'path': 'foo/a.ipynb',
-        'type': 'notebook',
-        'writable': True
+        "content": None,
+        "created": datetime.datetime(2015, 7, 25, 20, 17, 33, 271931),
+        "format": None,
+        "last_modified": datetime.datetime(2015, 7, 25, 20, 17, 33, 271931),
+        "mimetype": None,
+        "name": "a.ipynb",
+        "path": "foo/a.ipynb",
+        "type": "notebook",
+        "writable": True,
     }
 
 
@@ -227,21 +248,28 @@ return for a more complete implementation.
 
     class NoOpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         """requires the following methods:"""
+
         def create_file_checkpoint(self, content, format, path):
-            """ -> checkpoint model"""
+            """-> checkpoint model"""
+
         def create_notebook_checkpoint(self, nb, path):
-            """ -> checkpoint model"""
+            """-> checkpoint model"""
+
         def get_file_checkpoint(self, checkpoint_id, path):
-            """ -> {'type': 'file', 'content': <str>, 'format': {'text', 'base64'}}"""
+            """-> {'type': 'file', 'content': <str>, 'format': {'text', 'base64'}}"""
+
         def get_notebook_checkpoint(self, checkpoint_id, path):
-            """ -> {'type': 'notebook', 'content': <output of nbformat.read>}"""
+            """-> {'type': 'notebook', 'content': <output of nbformat.read>}"""
+
         def delete_checkpoint(self, checkpoint_id, path):
             """deletes a checkpoint for a file"""
+
         def list_checkpoints(self, path):
             """returns a list of checkpoint models for a given file,
             default just does one per file
             """
             return []
+
         def rename_checkpoint(self, checkpoint_id, old_path, new_path):
             """renames checkpoint from old path to new path"""
 
@@ -262,7 +290,7 @@ ContentsManager.
    PGContents_ is an example of a complete implementation of a custom
    ``ContentsManager``.  It stores notebooks and files in PostgreSQL_ and encodes
    directories as SQL relations.  PGContents also provides an example of how to
-   re-use the notebook's tests.
+   reuse the notebook's tests.
 
 .. _NBFormat: https://nbformat.readthedocs.io/en/latest/index.html
 .. _PGContents: https://github.com/quantopian/pgcontents

@@ -5,42 +5,39 @@ Just UTC-awareness right now
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-from datetime import datetime, timedelta, tzinfo
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone, tzinfo
 
 # constant for zero offset
 ZERO = timedelta(0)
 
 
-class tzUTC(tzinfo):  # noqa
+class tzUTC(tzinfo):
     """tzinfo object for UTC (zero offset)"""
 
-    def utcoffset(self, d):
+    def utcoffset(self, d: datetime | None) -> timedelta:
         """Compute utcoffset."""
         return ZERO
 
-    def dst(self, d):
+    def dst(self, d: datetime | None) -> timedelta:
         """Compute dst."""
         return ZERO
 
 
-UTC = tzUTC()  # type:ignore
+def utcnow() -> datetime:
+    """Return timezone-aware UTC timestamp"""
+    return datetime.now(timezone.utc)
 
 
-def utc_aware(unaware):
-    """decorator for adding UTC tzinfo to datetime's utcfoo methods"""
-
-    def utc_method(*args, **kwargs):
-        dt = unaware(*args, **kwargs)
-        return dt.replace(tzinfo=UTC)
-
-    return utc_method
+def utcfromtimestamp(timestamp: float) -> datetime:
+    return datetime.fromtimestamp(timestamp, timezone.utc)
 
 
-utcfromtimestamp = utc_aware(datetime.utcfromtimestamp)
-utcnow = utc_aware(datetime.utcnow)
+UTC = tzUTC()  # type:ignore[abstract]
 
 
-def isoformat(dt):
+def isoformat(dt: datetime) -> str:
     """Return iso-formatted timestamp
 
     Like .isoformat(), but uses Z for UTC instead of +00:00

@@ -1,6 +1,7 @@
 """Gateway connection classes."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
 
 import asyncio
 import logging
@@ -16,7 +17,7 @@ from traitlets import Bool, Instance, Int, Unicode
 
 from ..services.kernels.connection.base import BaseKernelWebsocketConnection
 from ..utils import url_path_join
-from .managers import GatewayClient
+from .gateway_client import GatewayClient
 
 
 class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
@@ -40,17 +41,17 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
         # websocket is initialized before connection
         self.ws = None
         ws_url = url_path_join(
-            GatewayClient.instance().ws_url,
+            GatewayClient.instance().ws_url or "",
             GatewayClient.instance().kernels_endpoint,
             url_escape(self.kernel_id),
             "channels",
         )
         self.log.info(f"Connecting to {ws_url}")
-        kwargs: dict = {}
+        kwargs: dict[str, Any] = {}
         kwargs = GatewayClient.instance().load_connection_args(**kwargs)
 
         request = HTTPRequest(ws_url, **kwargs)
-        self.ws_future = cast(Future, tornado_websocket.websocket_connect(request))
+        self.ws_future = cast("Future[Any]", tornado_websocket.websocket_connect(request))
         self.ws_future.add_done_callback(self._connection_done)
 
         loop = IOLoop.current()
@@ -78,7 +79,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
         if self.ws is not None:
             # Close connection
             self.ws.close()
-        elif not self.ws_future.done():
+        elif self.ws_future and not self.ws_future.done():
             # Cancel pending connection.  Since future.cancel() is a noop on tornado, we'll track cancellation locally
             self.ws_future.cancel()
             self.log.debug(f"_disconnect: future cancelled, disconnected: {self.disconnected}")
@@ -98,6 +99,8 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
                     if not self.disconnected:
                         self.log.warning(f"Lost connection to Gateway: {self.kernel_id}")
                     break
+                if isinstance(message, bytes):
+                    message = message.decode("utf8")
                 self.handle_outgoing_message(
                     message
                 )  # pass back to notebook client (see self.on_open and WebSocketChannelsHandler.open)
@@ -106,7 +109,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
 
         # NOTE(esevan): if websocket is not disconnected by client, try to reconnect.
         if not self.disconnected and self.retry < GatewayClient.instance().gateway_retry_max:
-            jitter = random.randint(10, 100) * 0.01  # noqa
+            jitter = random.randint(10, 100) * 0.01
             retry_interval = (
                 min(
                     GatewayClient.instance().gateway_retry_interval * (2**self.retry),
@@ -136,14 +139,12 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
                     json_decode(utf8(incoming_msg))
                 )
                 self.log.debug(
-                    "Notebook client closed websocket connection - message dropped: {}".format(
-                        msg_summary
-                    )
+                    f"Notebook client closed websocket connection - message dropped: {msg_summary}"
                 )
 
     def handle_incoming_message(self, message: str) -> None:
         """Send message to gateway server."""
-        if self.ws is None:
+        if self.ws is None and self.ws_future is not None:
             loop = IOLoop.current()
             loop.add_future(self.ws_future, lambda future: self.handle_incoming_message(message))
         else:

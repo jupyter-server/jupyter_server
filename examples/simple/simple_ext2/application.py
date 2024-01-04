@@ -17,19 +17,19 @@ class SimpleApp2(ExtensionAppJinjaMixin, ExtensionApp):
     # The name of the extension.
     name = "simple_ext2"
 
-    # Te url that your extension will serve its homepage.
+    # The url that your extension will serve its homepage.
     extension_url = "/simple_ext2"
 
     # Should your extension expose other server extensions when launched directly?
     load_other_extensions = True
 
     # Local path to static files directory.
-    static_paths = [DEFAULT_STATIC_FILES_PATH]
+    static_paths = [DEFAULT_STATIC_FILES_PATH]  # type:ignore[assignment]
 
     # Local path to templates directory.
-    template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
+    template_paths = [DEFAULT_TEMPLATE_FILES_PATH]  # type:ignore[assignment]
 
-    configD = Unicode("", config=True, help="Config D example.")  # noqa
+    configD = Unicode("", config=True, help="Config D example.")
 
     def initialize_handlers(self):
         """Initialize handlers."""

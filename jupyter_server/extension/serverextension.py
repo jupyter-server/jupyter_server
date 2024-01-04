@@ -1,9 +1,12 @@
 """Utilities for installing extensions"""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import logging
 import os
 import sys
+import typing as t
 
 from jupyter_core.application import JupyterApp
 from jupyter_core.paths import ENV_CONFIG_PATH, SYSTEM_CONFIG_PATH, jupyter_config_dir
@@ -15,7 +18,7 @@ from jupyter_server.extension.config import ExtensionConfigManager
 from jupyter_server.extension.manager import ExtensionManager, ExtensionPackage
 
 
-def _get_config_dir(user=False, sys_prefix=False):
+def _get_config_dir(user: bool = False, sys_prefix: bool = False) -> str:
     """Get the location of config files for the current context
 
     Returns the string to the environment
@@ -38,7 +41,9 @@ def _get_config_dir(user=False, sys_prefix=False):
     return extdir
 
 
-def _get_extmanager_for_context(write_dir="jupyter_server_config.d", user=False, sys_prefix=False):
+def _get_extmanager_for_context(
+    write_dir: str = "jupyter_server_config.d", user: bool = False, sys_prefix: bool = False
+) -> tuple[str, ExtensionManager]:
     """Get an extension manager pointing at the current context
 
     Returns the path to the current context and an ExtensionManager object.
@@ -67,7 +72,7 @@ class ArgumentConflict(ValueError):
     pass
 
 
-_base_flags = {}
+_base_flags: dict[str, t.Any] = {}
 _base_flags.update(JupyterApp.flags)
 _base_flags.pop("y", None)
 _base_flags.pop("generate-config", None)
@@ -110,7 +115,7 @@ _base_flags.update(
 )
 _base_flags["python"] = _base_flags["py"]
 
-_base_aliases = {}
+_base_aliases: dict[str, t.Any] = {}
 _base_aliases.update(JupyterApp.aliases)
 
 
@@ -126,12 +131,12 @@ class BaseExtensionApp(JupyterApp):
     sys_prefix = Bool(True, config=True, help="Use the sys.prefix as the prefix")
     python = Bool(False, config=True, help="Install from a Python package")
 
-    def _log_format_default(self):
+    def _log_format_default(self) -> str:
         """A default format for messages"""
         return "%(message)s"
 
     @property
-    def config_dir(self):
+    def config_dir(self) -> str:  # type:ignore[override]
         return _get_config_dir(user=self.user, sys_prefix=self.sys_prefix)
 
 
@@ -148,8 +153,12 @@ RED_X = "\033[31m X\033[0m" if os.name != "nt" else " X"
 
 
 def toggle_server_extension_python(
-    import_name, enabled=None, parent=None, user=False, sys_prefix=True
-):
+    import_name: str,
+    enabled: bool | None = None,
+    parent: t.Any = None,
+    user: bool = False,
+    sys_prefix: bool = True,
+) -> None:
     """Toggle the boolean setting for a given server extension
     in a Jupyter config file.
     """
@@ -228,7 +237,7 @@ class ToggleServerExtensionApp(BaseExtensionApp):
     _toggle_pre_message = ""
     _toggle_post_message = ""
 
-    def toggle_server_extension(self, import_name):
+    def toggle_server_extension(self, import_name: str) -> None:
         """Change the status of a named server extension.
 
         Uses the value of `self._toggle_value`.
@@ -257,17 +266,18 @@ class ToggleServerExtensionApp(BaseExtensionApp):
 
             # Toggle extension config.
             config = extension_manager.config_manager
-            if self._toggle_value is True:
-                config.enable(import_name)
-            else:
-                config.disable(import_name)
+            if config:
+                if self._toggle_value is True:
+                    config.enable(import_name)
+                else:
+                    config.disable(import_name)
 
             # If successful, let's log.
             self.log.info(f"    - Extension successfully {self._toggle_post_message}.")
         except Exception as err:
             self.log.info(f"     {RED_X} Validation failed: {err}")
 
-    def start(self):
+    def start(self) -> None:
         """Perform the App's actions as configured"""
         if not self.extra_args:
             sys.exit("Please specify a server extension/package to enable or disable")
@@ -312,7 +322,7 @@ class ListServerExtensionsApp(BaseExtensionApp):
     version = __version__
     description = "List all server extensions known by the configuration system"
 
-    def list_server_extensions(self):
+    def list_server_extensions(self) -> None:
         """List all enabled and disabled server extensions, by config path
 
         Enabled extensions are validated, potentially generating warnings.
@@ -345,13 +355,13 @@ class ListServerExtensionsApp(BaseExtensionApp):
                     self.log.info(f"      {name} {version} {GREEN_OK}")
                 except Exception as err:
                     exc_info = False
-                    if int(self.log_level) <= logging.DEBUG:
+                    if int(self.log_level) <= logging.DEBUG:  # type:ignore[call-overload]
                         exc_info = True
                     self.log.warning(f"      {RED_X} {err}", exc_info=exc_info)
             # Add a blank line between paths.
             self.log.info("")
 
-    def start(self):
+    def start(self) -> None:
         """Perform the App's actions as configured"""
         self.list_server_extensions()
 
@@ -371,13 +381,13 @@ class ServerExtensionApp(BaseExtensionApp):
     description: str = "Work with Jupyter server extensions"
     examples = _examples
 
-    subcommands: dict = {
+    subcommands: dict[str, t.Any] = {
         "enable": (EnableServerExtensionApp, "Enable a server extension"),
         "disable": (DisableServerExtensionApp, "Disable a server extension"),
         "list": (ListServerExtensionsApp, "List server extensions"),
     }
 
-    def start(self):
+    def start(self) -> None:
         """Perform the App's actions as configured"""
         super().start()
 

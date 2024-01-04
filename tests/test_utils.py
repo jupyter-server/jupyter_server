@@ -95,11 +95,11 @@ def test_path_utils(tmp_path):
 def test_check_version():
     assert check_version("1.0.2", "1.0.1")
     assert not check_version("1.0.0", "1.0.1")
-    assert check_version(1.0, "1.0.1")
+    assert check_version(1.0, "1.0.1")  # type:ignore[arg-type]
 
 
 def test_check_pid():
-    proc = subprocess.Popen([sys.executable])  # noqa
+    proc = subprocess.Popen([sys.executable])
     proc.kill()
     proc.wait()
     check_pid(proc.pid)

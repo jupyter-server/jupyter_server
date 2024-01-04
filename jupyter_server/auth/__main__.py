@@ -7,7 +7,7 @@ from getpass import getpass
 from jupyter_core.paths import jupyter_config_dir
 from traitlets.log import get_logger
 
-from jupyter_server.auth import passwd
+from jupyter_server.auth import passwd  # type:ignore[attr-defined]
 from jupyter_server.config_manager import BaseJSONConfigManager
 
 
@@ -20,7 +20,7 @@ def set_password(args):
         password_repeat = getpass("" if args.quiet else "Repeat password:  ")
         if password1 != password_repeat:
             warnings.warn("Passwords do not match, try again", stacklevel=2)
-        elif len(password1) < 4:  # noqa
+        elif len(password1) < 4:
             warnings.warn("Please provide at least 4 characters", stacklevel=2)
         else:
             password = password1

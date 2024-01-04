@@ -7,25 +7,17 @@ import warnings
 class ExtensionLoadingError(Exception):
     """An extension loading error."""
 
-    pass
-
 
 class ExtensionMetadataError(Exception):
     """An extension metadata error."""
-
-    pass
 
 
 class ExtensionModuleNotFound(Exception):
     """An extension module not found error."""
 
-    pass
-
 
 class NotAnExtensionApp(Exception):
     """An error raised when a module is not an extension."""
-
-    pass
 
 
 def get_loader(obj, logger=None):
@@ -36,22 +28,22 @@ def get_loader(obj, logger=None):
     underscore prefix.
     """
     try:
-        return getattr(obj, "_load_jupyter_server_extension")  # noqa B009
+        return obj._load_jupyter_server_extension
     except AttributeError:
         pass
 
     try:
-        func = getattr(obj, "load_jupyter_server_extension")  # noqa B009
+        func = obj.load_jupyter_server_extension
     except AttributeError:
         msg = "_load_jupyter_server_extension function was not found."
         raise ExtensionLoadingError(msg) from None
 
     warnings.warn(
         "A `_load_jupyter_server_extension` function was not "
-        "found in {name!s}. Instead, a `load_jupyter_server_extension` "
+        f"found in {obj!s}. Instead, a `load_jupyter_server_extension` "
         "function was found and will be used for now. This function "
         "name will be deprecated in future releases "
-        "of Jupyter Server.".format(name=obj),
+        "of Jupyter Server.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -63,7 +55,7 @@ def get_metadata(package_name, logger=None):
 
     This looks for a `_jupyter_server_extension_points` function
     that returns metadata about all extension points within a Jupyter
-    Server Extension pacakge.
+    Server Extension package.
 
     If it doesn't exist, return a basic metadata packet given
     the module name.
@@ -76,7 +68,8 @@ def get_metadata(package_name, logger=None):
     # each module took to import. This makes it much easier for users to report
     # slow loading modules upstream, as slow loading modules will block server startup
     if logger:
-        logger.info(f"Package {package_name} took {duration:.4f}s to import")
+        log = logger.info if duration > 0.1 else logger.debug
+        log(f"Extension package {package_name} took {duration:.4f}s to import")
 
     try:
         return module, module._jupyter_server_extension_points()
@@ -91,10 +84,10 @@ def get_metadata(package_name, logger=None):
         if logger:
             logger.warning(
                 "A `_jupyter_server_extension_points` function was not "
-                "found in {name}. Instead, a `_jupyter_server_extension_paths` "
+                f"found in {package_name}. Instead, a `_jupyter_server_extension_paths` "
                 "function was found and will be used for now. This function "
                 "name will be deprecated in future releases "
-                "of Jupyter Server.".format(name=package_name)
+                "of Jupyter Server."
             )
         return module, extension_points
     except AttributeError:
@@ -105,9 +98,9 @@ def get_metadata(package_name, logger=None):
     if logger:
         logger.debug(
             "A `_jupyter_server_extension_points` function was "
-            "not found in {name}, so Jupyter Server will look "
+            f"not found in {package_name}, so Jupyter Server will look "
             "for extension points in the extension pacakge's "
-            "root.".format(name=package_name)
+            "root."
         )
     return module, [{"module": package_name, "name": package_name}]
 

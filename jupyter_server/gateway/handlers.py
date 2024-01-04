@@ -1,13 +1,15 @@
 """Gateway API handlers."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import asyncio
 import logging
 import mimetypes
 import os
 import random
 import warnings
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 from jupyter_client.session import Session
 from tornado import web
@@ -20,7 +22,7 @@ from traitlets.config.configurable import LoggingConfigurable
 
 from ..base.handlers import APIHandler, JupyterHandler
 from ..utils import url_path_join
-from .managers import GatewayClient
+from .gateway_client import GatewayClient
 
 warnings.warn(
     "The jupyter_server.gateway.handlers module is deprecated and will not be supported in Jupyter Server 3.0",
@@ -47,7 +49,6 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
     def set_default_headers(self):
         """Undo the set_default_headers in JupyterHandler which doesn't make sense for websockets"""
-        pass
 
     def get_compression_options(self):
         """Get the compression options for the socket."""
@@ -67,12 +68,12 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
         if self.get_argument("session_id", None):
             assert self.session is not None
-            self.session.session = self.get_argument("session_id")
+            self.session.session = self.get_argument("session_id")  # type:ignore[unreachable]
         else:
             self.log.warning("No session ID specified")
 
     def initialize(self):
-        """Intialize the socket."""
+        """Initialize the socket."""
         self.log.debug("Initializing websocket connection %s", self.request.path)
         self.session = Session(config=self.config)
         self.gateway = GatewayWebSocketClient(gateway_url=GatewayClient.instance().url)
@@ -87,7 +88,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
     def send_ping(self):
         """Send a ping to the socket."""
         if self.ws_connection is None and self.ping_callback is not None:
-            self.ping_callback.stop()
+            self.ping_callback.stop()  # type:ignore[unreachable]
             return
 
         self.ping(b"")
@@ -118,9 +119,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
         elif self.log.isEnabledFor(logging.DEBUG):
             msg_summary = WebSocketChannelsHandler._get_message_summary(json_decode(utf8(message)))
             self.log.debug(
-                "Notebook client closed websocket connection - message dropped: {}".format(
-                    msg_summary
-                )
+                f"Notebook client closed websocket connection - message dropped: {msg_summary}"
             )
 
     def on_close(self):
@@ -161,7 +160,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         super().__init__()
         self.kernel_id = None
         self.ws = None
-        self.ws_future: Future = Future()
+        self.ws_future: Future[Any] = Future()
         self.disconnected = False
         self.retry = 0
 
@@ -170,18 +169,21 @@ class GatewayWebSocketClient(LoggingConfigurable):
         # websocket is initialized before connection
         self.ws = None
         self.kernel_id = kernel_id
+        client = GatewayClient.instance()
+        assert client.ws_url is not None
+
         ws_url = url_path_join(
-            GatewayClient.instance().ws_url,
-            GatewayClient.instance().kernels_endpoint,
+            client.ws_url,
+            client.kernels_endpoint,
             url_escape(kernel_id),
             "channels",
         )
         self.log.info(f"Connecting to {ws_url}")
-        kwargs: dict = {}
-        kwargs = GatewayClient.instance().load_connection_args(**kwargs)
+        kwargs: dict[str, Any] = {}
+        kwargs = client.load_connection_args(**kwargs)
 
         request = HTTPRequest(ws_url, **kwargs)
-        self.ws_future = cast(Future, websocket_connect(request))
+        self.ws_future = cast("Future[Any]", websocket_connect(request))
         self.ws_future.add_done_callback(self._connection_done)
 
         loop = IOLoop.current()
@@ -237,7 +239,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
 
         # NOTE(esevan): if websocket is not disconnected by client, try to reconnect.
         if not self.disconnected and self.retry < GatewayClient.instance().gateway_retry_max:
-            jitter = random.randint(10, 100) * 0.01  # noqa
+            jitter = random.randint(10, 100) * 0.01
             retry_interval = (
                 min(
                     GatewayClient.instance().gateway_retry_interval * (2**self.retry),
@@ -291,7 +293,9 @@ class GatewayResourceHandler(APIHandler):
         """Get a gateway resource by name and path."""
         mimetype: Optional[str] = None
         ksm = self.kernel_spec_manager
-        kernel_spec_res = await ksm.get_kernel_spec_resource(kernel_name, path)
+        kernel_spec_res = await ksm.get_kernel_spec_resource(  # type:ignore[attr-defined]
+            kernel_name, path
+        )
         if kernel_spec_res is None:
             self.log.warning(
                 "Kernelspec resource '{}' for '{}' not found.  Gateway may not support"

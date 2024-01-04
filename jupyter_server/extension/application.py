@@ -1,4 +1,6 @@
 """An extension application."""
+from __future__ import annotations
+
 import logging
 import re
 import sys
@@ -26,7 +28,7 @@ def _preparse_for_subcommand(application_klass, argv):
     """Preparse command line to look for subcommands."""
     # Read in arguments from command line.
     if len(argv) == 0:
-        return
+        return None
 
     # Find any subcommands.
     if application_klass.subcommands and len(argv) > 0:
@@ -142,7 +144,7 @@ class ExtensionApp(JupyterApp):
     # A useful class property that subclasses can override to
     # configure the underlying Jupyter Server when this extension
     # is launched directly (using its `launch_instance` method).
-    serverapp_config: dict = {}
+    serverapp_config: dict[str, t.Any] = {}
 
     # Some subclasses will likely override this trait to flip
     # the default value to False if they don't offer a browser
@@ -158,19 +160,21 @@ class ExtensionApp(JupyterApp):
 
     @default("open_browser")
     def _default_open_browser(self):
+        assert self.serverapp is not None
         return self.serverapp.config["ServerApp"].get("open_browser", True)
 
     @property
     def config_file_paths(self):
         """Look on the same path as our parent for config files"""
         # rely on parent serverapp, which should control all config loading
+        assert self.serverapp is not None
         return self.serverapp.config_file_paths
 
     # The extension name used to name the jupyter config
     # file, jupyter_{name}_config.
     # This should also match the jupyter subcommand used to launch
     # this extension from the CLI, e.g. `jupyter {name}`.
-    name: t.Union[str, Unicode] = "ExtensionApp"  # type:ignore[assignment]
+    name: str | Unicode[str, str] = "ExtensionApp"  # type:ignore[assignment]
 
     @classmethod
     def get_extension_package(cls):
@@ -206,7 +210,7 @@ class ExtensionApp(JupyterApp):
     ]
 
     # A ServerApp is not defined yet, but will be initialized below.
-    serverapp = Any()
+    serverapp: ServerApp | None = Any()  # type:ignore[assignment]
 
     @default("serverapp")
     def _default_serverapp(self):
@@ -214,7 +218,7 @@ class ExtensionApp(JupyterApp):
         if ServerApp.initialized():
             try:
                 return ServerApp.instance()
-            except Exception:  # noqa
+            except Exception:
                 # error retrieving instance, e.g. MultipleInstanceError
                 pass
 
@@ -242,6 +246,7 @@ class ExtensionApp(JupyterApp):
     @default("static_url_prefix")
     def _default_static_url_prefix(self):
         static_url = f"static/{self.name}/"
+        assert self.serverapp is not None
         return url_path_join(self.serverapp.base_url, static_url)
 
     static_paths = List(
@@ -264,7 +269,9 @@ class ExtensionApp(JupyterApp):
 
     settings = Dict(help=_i18n("""Settings that will passed to the server.""")).tag(config=True)
 
-    handlers = List(help=_i18n("""Handlers appended to the server.""")).tag(config=True)
+    handlers: List[tuple[t.Any, ...]] = List(
+        help=_i18n("""Handlers appended to the server.""")
+    ).tag(config=True)
 
     def _config_file_name_default(self):
         """The default config file name."""
@@ -274,15 +281,12 @@ class ExtensionApp(JupyterApp):
 
     def initialize_settings(self):
         """Override this method to add handling of settings."""
-        pass
 
     def initialize_handlers(self):
         """Override this method to append handlers to a Jupyter Server."""
-        pass
 
     def initialize_templates(self):
         """Override this method to add handling of template files."""
-        pass
 
     def _prepare_config(self):
         """Builds a Config object from the extension's traits and passes
@@ -295,6 +299,7 @@ class ExtensionApp(JupyterApp):
     def _prepare_settings(self):
         """Prepare the settings."""
         # Make webapp settings accessible to initialize_settings method
+        assert self.serverapp is not None
         webapp = self.serverapp.web_app
         self.settings.update(**webapp.settings)
 
@@ -314,6 +319,7 @@ class ExtensionApp(JupyterApp):
 
     def _prepare_handlers(self):
         """Prepare the handlers."""
+        assert self.serverapp is not None
         webapp = self.serverapp.web_app
 
         # Get handlers defined by extension subclass.
@@ -327,7 +333,7 @@ class ExtensionApp(JupyterApp):
             handler = handler_items[1]
 
             # Get handler kwargs, if given
-            kwargs: dict = {}
+            kwargs: dict[str, t.Any] = {}
             if issubclass(handler, ExtensionHandlerMixin):
                 kwargs["name"] = self.name
 
@@ -352,7 +358,7 @@ class ExtensionApp(JupyterApp):
             )
             new_handlers.append(handler)
 
-        webapp.add_handlers(".*$", new_handlers)
+        webapp.add_handlers(".*$", new_handlers)  # type:ignore[arg-type]
 
     def _prepare_templates(self):
         """Add templates to web app settings if extension has templates."""
@@ -372,7 +378,7 @@ class ExtensionApp(JupyterApp):
         base_config["ServerApp"].update(self.serverapp_config)
         return base_config
 
-    def _link_jupyter_server_extension(self, serverapp):
+    def _link_jupyter_server_extension(self, serverapp: ServerApp) -> None:
         """Link the ExtensionApp to an initialized ServerApp.
 
         The ServerApp is stored as an attribute and config
@@ -436,6 +442,7 @@ class ExtensionApp(JupyterApp):
         """
         super().start()
         # Start the server.
+        assert self.serverapp is not None
         self.serverapp.start()
 
     def current_activity(self):
@@ -447,6 +454,7 @@ class ExtensionApp(JupyterApp):
 
     def stop(self):
         """Stop the underlying Jupyter server."""
+        assert self.serverapp is not None
         self.serverapp.stop()
         self.serverapp.clear_instance()
 
@@ -550,7 +558,7 @@ class ExtensionApp(JupyterApp):
     serverapp_class = ServerApp
 
     @classmethod
-    def make_serverapp(cls, **kwargs):
+    def make_serverapp(cls, **kwargs: t.Any) -> ServerApp:
         """Instantiate the ServerApp
 
         Override to customize the ServerApp before it loads any configuration
@@ -560,7 +568,7 @@ class ExtensionApp(JupyterApp):
     @classmethod
     def initialize_server(cls, argv=None, load_other_extensions=True, **kwargs):
         """Creates an instance of ServerApp and explicitly sets
-        this extension to enabled=True (i.e. superceding disabling
+        this extension to enabled=True (i.e. superseding disabling
         found in other config from files).
 
         The `launch_instance` method uses this method to initialize
@@ -573,7 +581,7 @@ class ExtensionApp(JupyterApp):
             cls.serverapp_config["jpserver_extensions"] = jpserver_extensions
             find_extensions = False
         serverapp = cls.make_serverapp(jpserver_extensions=jpserver_extensions, **kwargs)
-        serverapp.aliases.update(cls.aliases)
+        serverapp.aliases.update(cls.aliases)  # type:ignore[has-type]
         serverapp.initialize(
             argv=argv or [],
             starter_extension=cls.name,
@@ -588,7 +596,7 @@ class ExtensionApp(JupyterApp):
         extension's landing page.
         """
         # Handle arguments.
-        if argv is None:  # noqa
+        if argv is None:  # noqa: SIM108
             args = sys.argv[1:]  # slice out extension config.
         else:
             args = argv
@@ -608,10 +616,7 @@ class ExtensionApp(JupyterApp):
 
         # Log if extension is blocking other extensions from loading.
         if not cls.load_other_extensions:
-            serverapp.log.info(
-                "{ext_name} is running without loading "
-                "other extensions.".format(ext_name=cls.name)
-            )
+            serverapp.log.info(f"{cls.name} is running without loading other extensions.")
         # Start the server.
         try:
             serverapp.start()

@@ -4,7 +4,7 @@ import mimetypes
 from jupyter_core.utils import ensure_async
 from tornado import web
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 
 from ..base.handlers import JupyterHandler
 from ..services.kernelspecs.handlers import kernel_name_regex
@@ -41,7 +41,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
                 mimetype: str = mimetypes.guess_type(path)[0] or "text/plain"
                 self.set_header("Content-Type", mimetype)
                 self.finish(kernel_spec_res)
-                return
+                return None
             else:
                 self.log.warning(
                     "Kernelspec resource '{}' for '{}' not found.  Kernel spec manager may"
@@ -60,7 +60,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
     @web.authenticated
     @authorized
     async def head(self, kernel_name, path):
-        """Get the head infor for a kernel resource."""
+        """Get the head info for a kernel resource."""
         return await ensure_async(self.get(kernel_name, path, include_body=False))
 
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-#
 # Jupyter Server documentation build configuration file, created by
 # sphinx-quickstart on Mon Apr 13 09:51:11 2015.
 #
@@ -44,7 +42,7 @@ extensions = [
 ]
 
 try:
-    import enchant  # type:ignore  # noqa
+    import enchant  # type:ignore[import-not-found]
 
     extensions += ["sphinxcontrib.spelling"]
 except ImportError:
@@ -152,7 +150,7 @@ html_logo = "_static/jupyter_server_logo.svg"
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-# html_theme_options = {}
+html_theme_options = {"navigation_with_keys": False}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -338,7 +336,7 @@ spelling_lang = "en_US"
 spelling_word_list_filename = "spelling_wordlist.txt"
 
 # import before any doc is built, so _ is guaranteed to be injected
-import jupyter_server.transutils  # noqa: F401
+import jupyter_server.transutils
 
 CONFIG_HEADER = """\
 .. _other-full-config:

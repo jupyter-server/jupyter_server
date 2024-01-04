@@ -40,11 +40,11 @@ from any directory in your system with::
 
 Code Styling and Quality Checks
 -------------------------------
-`jupyter_server` has adopted automatic code formatting so you shouldn't
+``jupyter_server`` has adopted automatic code formatting so you shouldn't
 need to worry too much about your code style.
 As long as your code is valid,
 the pre-commit hook should take care of how it should look.
-`pre-commit` and its associated hooks will automatically be installed when
+``pre-commit`` and its associated hooks will automatically be installed when
 you run ``pip install -e ".[test]"``
 
 To install ``pre-commit`` hook manually, run the following::
@@ -70,8 +70,7 @@ Some of the hooks only run on CI by default, but you can invoke them by
 running with the ``--hook-stage manual`` argument.
 
 There are three hatch scripts that can be run locally as well:
-``hatch run lint:style`` will check styling.  ``hatch run lint:fmt``
-will attempt to auto-format files.  ``hatch run typing:test`` will
+``hatch run lint:build`` will enforce styling.  ``hatch run typing:test`` will
 run the type checker.
 
 Troubleshooting the Installation

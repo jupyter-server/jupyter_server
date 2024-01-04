@@ -2,14 +2,17 @@
 
 .. versionadded:: 2.0
 """
+from __future__ import annotations
+
 import json
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
-from jupyter_events import EventLogger
+import jupyter_events.logger
+from jupyter_core.utils import ensure_async
 from tornado import web, websocket
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 from jupyter_server.base.handlers import JupyterHandler
 
 from ...base.handlers import APIHandler
@@ -25,7 +28,7 @@ class SubscribeWebsocket(
 
     auth_resource = AUTH_RESOURCE
 
-    def pre_get(self):
+    async def pre_get(self):
         """Handles authentication/authorization when
         attempting to subscribe to events emitted by
         Jupyter Server's eventbus.
@@ -37,16 +40,22 @@ class SubscribeWebsocket(
             raise web.HTTPError(403)
 
         # authorize the user.
-        if not self.authorizer.is_authorized(self, user, "execute", "events"):
+        authorized = await ensure_async(
+            self.authorizer.is_authorized(self, user, "execute", "events")
+        )
+        if not authorized:
             raise web.HTTPError(403)
 
     async def get(self, *args, **kwargs):
         """Get an event socket."""
-        self.pre_get()
+        await ensure_async(self.pre_get())
         res = super().get(*args, **kwargs)
-        await res
+        if res is not None:
+            await res
 
-    async def event_listener(self, logger: EventLogger, schema_id: str, data: dict) -> None:
+    async def event_listener(
+        self, logger: jupyter_events.logger.EventLogger, schema_id: str, data: dict[str, Any]
+    ) -> None:
         """Write an event message."""
         capsule = dict(schema_id=schema_id, **data)
         self.write_message(json.dumps(capsule))
@@ -62,7 +71,7 @@ class SubscribeWebsocket(
         self.event_logger.remove_listener(listener=self.event_listener)
 
 
-def validate_model(data: Dict[str, Any]) -> None:
+def validate_model(data: dict[str, Any]) -> None:
     """Validates for required fields in the JSON request body"""
     required_keys = {"schema_id", "version", "data"}
     for key in required_keys:
@@ -70,7 +79,7 @@ def validate_model(data: Dict[str, Any]) -> None:
             raise web.HTTPError(400, f"Missing `{key}` in the JSON request body.")
 
 
-def get_timestamp(data: Dict[str, Any]) -> Optional[datetime]:
+def get_timestamp(data: dict[str, Any]) -> Optional[datetime]:
     """Parses timestamp from the JSON request body"""
     try:
         if "timestamp" in data:
@@ -104,12 +113,14 @@ class EventHandler(APIHandler):
         try:
             validate_model(payload)
             self.event_logger.emit(
-                schema_id=payload.get("schema_id"),
-                data=payload.get("data"),
+                schema_id=cast(str, payload.get("schema_id")),
+                data=cast("Dict[str, Any]", payload.get("data")),
                 timestamp_override=get_timestamp(payload),
             )
             self.set_status(204)
             self.finish()
+        except web.HTTPError:
+            raise
         except Exception as e:
             raise web.HTTPError(500, str(e)) from e
 

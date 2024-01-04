@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 
 import pytest
 from tornado import web
@@ -18,10 +19,13 @@ from jupyter_server.services.sessions.sessionmanager import (
 
 class DummyKernel:
     execution_state: str
-    last_activity: str
+    last_activity: datetime
 
     def __init__(self, kernel_name="python"):
         self.kernel_name = kernel_name
+
+    def update_env(self, *args, **kwargs):
+        pass
 
 
 dummy_date = utcnow()
@@ -62,7 +66,7 @@ class SlowStartingKernelsMKM(MockMKM):
         await super().shutdown_kernel(kernel_id, now=now)
 
 
-@pytest.fixture
+@pytest.fixture()
 def session_manager():
     return SessionManager(kernel_manager=MockMKM(), contents_manager=ContentsManager())
 

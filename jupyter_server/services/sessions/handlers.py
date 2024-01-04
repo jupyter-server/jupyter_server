@@ -16,7 +16,7 @@ from jupyter_client.kernelspec import NoSuchKernel
 from jupyter_core.utils import ensure_async
 from tornado import web
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 from jupyter_server.utils import url_path_join
 
 from ...base.handlers import APIHandler
@@ -83,10 +83,10 @@ class SessionRootHandler(SessionsAPIHandler):
 
         exists = await ensure_async(sm.session_exists(path=path))
         if exists:
-            model = await sm.get_session(path=path)
+            s_model = await sm.get_session(path=path)
         else:
             try:
-                model = await sm.create_session(
+                s_model = await sm.create_session(
                     path=path,
                     kernel_name=kernel_name,
                     kernel_id=kernel_id,
@@ -106,10 +106,10 @@ class SessionRootHandler(SessionsAPIHandler):
             except Exception as e:
                 raise web.HTTPError(500, str(e)) from e
 
-        location = url_path_join(self.base_url, "api", "sessions", model["id"])
+        location = url_path_join(self.base_url, "api", "sessions", s_model["id"])
         self.set_header("Location", location)
         self.set_status(201)
-        self.finish(json.dumps(model, default=json_default))
+        self.finish(json.dumps(s_model, default=json_default))
 
 
 class SessionHandler(SessionsAPIHandler):
@@ -170,16 +170,16 @@ class SessionHandler(SessionsAPIHandler):
                 changes["kernel_id"] = kernel_id
 
         await sm.update_session(session_id, **changes)
-        model = await sm.get_session(session_id=session_id)
+        s_model = await sm.get_session(session_id=session_id)
 
-        if model["kernel"]["id"] != before["kernel"]["id"]:
+        if s_model["kernel"]["id"] != before["kernel"]["id"]:
             # kernel_id changed because we got a new kernel
             # shutdown the old one
             fut = asyncio.ensure_future(ensure_async(km.shutdown_kernel(before["kernel"]["id"])))
             # If we are not using pending kernels, wait for the kernel to shut down
             if not getattr(km, "use_pending_kernels", None):
                 await fut
-        self.finish(json.dumps(model, default=json_default))
+        self.finish(json.dumps(s_model, default=json_default))
 
     @web.authenticated
     @authorized

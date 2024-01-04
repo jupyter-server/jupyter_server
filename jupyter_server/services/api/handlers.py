@@ -3,13 +3,13 @@
 # Distributed under the terms of the Modified BSD License.
 import json
 import os
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from jupyter_core.utils import ensure_async
 from tornado import web
 
 from jupyter_server._tz import isoformat, utcfromtimestamp
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 
 from ...base.handlers import APIHandler, JupyterHandler
 
@@ -67,7 +67,7 @@ class IdentityHandler(APIHandler):
     """Get the current user's identity model"""
 
     @web.authenticated
-    def get(self):
+    async def get(self):
         """Get the identity model."""
         permissions_json: str = self.get_argument("permissions", "")
         bad_permissions_msg = f'permissions should be a JSON dict of {{"resource": ["action",]}}, got {permissions_json!r}'
@@ -94,10 +94,13 @@ class IdentityHandler(APIHandler):
 
             allowed = permissions[resource] = []
             for action in actions:
-                if self.authorizer.is_authorized(self, user=user, resource=resource, action=action):
+                authorized = await ensure_async(
+                    self.authorizer.is_authorized(self, user, action, resource)
+                )
+                if authorized:
                     allowed.append(action)
 
-        identity: Dict = self.identity_provider.identity_model(user)
+        identity: Dict[str, Any] = self.identity_provider.identity_model(user)
         model = {
             "identity": identity,
             "permissions": permissions,

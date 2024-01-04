@@ -55,12 +55,12 @@ def log_request(handler):
     except AttributeError:
         logger = access_log
 
-    if status < 300 or status == 304:  # noqa[PLR2004]
+    if status < 300 or status == 304:
         # Successes (or 304 FOUND) are debug-level
         log_method = logger.debug
-    elif status < 400:  # noqa[PLR2004]
+    elif status < 400:
         log_method = logger.info
-    elif status < 500:  # noqa[PLR2004]
+    elif status < 500:
         log_method = logger.warning
     else:
         log_method = logger.error
@@ -84,11 +84,11 @@ def log_request(handler):
     ns["username"] = username
 
     msg = "{status} {method} {uri} ({username}@{ip}) {request_time:.2f}ms"
-    if status >= 400:  # noqa[PLR2004]
-        # log bad referers
+    if status >= 400:
+        # log bad referrers
         ns["referer"] = _scrub_uri(request.headers.get("Referer", "None"))
         msg = msg + " referer={referer}"
-    if status >= 500 and status != 502:  # noqa[PLR2004]
+    if status >= 500 and status != 502:
         # Log a subset of the headers if it caused an error.
         headers = {}
         for header in ["Host", "Accept", "Referer", "User-Agent"]:

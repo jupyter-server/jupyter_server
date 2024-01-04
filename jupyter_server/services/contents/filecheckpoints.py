@@ -43,10 +43,9 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
     root_dir = Unicode(config=True)
 
     def _root_dir_default(self):
-        try:
-            return self.parent.root_dir
-        except AttributeError:
+        if not self.parent:
             return os.getcwd()
+        return self.parent.root_dir
 
     # ContentsManager-dependent checkpoint API
     def create_checkpoint(self, contents_mgr, path):
@@ -108,11 +107,7 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
         parent, name = ("/" + path).rsplit("/", 1)
         parent = parent.strip("/")
         basename, ext = os.path.splitext(name)
-        filename = "{name}-{checkpoint_id}{ext}".format(
-            name=basename,
-            checkpoint_id=checkpoint_id,
-            ext=ext,
-        )
+        filename = f"{basename}-{checkpoint_id}{ext}"
         os_path = self._get_os_path(path=parent)
         cp_dir = os.path.join(os_path, self.checkpoint_dir)
         with self.perm_to_403():
@@ -257,7 +252,7 @@ class GenericFileCheckpoints(GenericCheckpointsMixin, FileCheckpoints):
         if not os.path.isfile(os_checkpoint_path):
             self.no_such_checkpoint(path, checkpoint_id)
 
-        content, format = self._read_file(os_checkpoint_path, format=None)
+        content, format = self._read_file(os_checkpoint_path, format=None)  # type: ignore[misc]
         return {
             "type": "file",
             "content": content,
@@ -323,7 +318,7 @@ class AsyncGenericFileCheckpoints(AsyncGenericCheckpointsMixin, AsyncFileCheckpo
         if not os.path.isfile(os_checkpoint_path):
             self.no_such_checkpoint(path, checkpoint_id)
 
-        content, format = await self._read_file(os_checkpoint_path, format=None)
+        content, format = await self._read_file(os_checkpoint_path, format=None)  # type: ignore[misc]
         return {
             "type": "file",
             "content": content,

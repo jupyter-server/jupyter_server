@@ -113,7 +113,7 @@ def test_user_defaults(fields, expected):
         assert value is None or isinstance(value, str)
 
 
-@pytest.fixture
+@pytest.fixture()
 def identity_provider_class():
     """Allow override in other test modules"""
     return PasswordIdentityProvider

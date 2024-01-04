@@ -81,11 +81,11 @@ The message can be deserialized by parsing ``msg`` as a JSON object (after decod
 .. code-block:: python
 
     msg = {
-        'channel': channel,
-        'header': header,
-        'parent_header': parent_header,
-        'metadata': metadata,
-        'content': content
+        "channel": channel,
+        "header": header,
+        "parent_header": parent_header,
+        "metadata": metadata,
+        "content": content,
     }
 
 Then retrieving the channel name, and updating with the buffers, if any:
@@ -147,7 +147,8 @@ Where:
 .. code-block:: python
 
     import json
-    channel = bin_msg[offset_0:offset_1].decode('utf-8')
+
+    channel = bin_msg[offset_0:offset_1].decode("utf-8")
     header = json.loads(bin_msg[offset_1:offset_2])
     parent_header = json.loads(bin_msg[offset_2:offset_3])
     metadata = json.loads(bin_msg[offset_3:offset_4])

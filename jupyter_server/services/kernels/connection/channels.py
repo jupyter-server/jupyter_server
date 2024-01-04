@@ -1,14 +1,15 @@
 """An implementation of a kernel connection."""
+from __future__ import annotations
+
 import asyncio
 import json
 import time
+import typing as t
 import weakref
 from concurrent.futures import Future
 from textwrap import dedent
-from typing import Dict as Dict_t
-from typing import MutableSet
 
-from jupyter_client import protocol_version as client_protocol_version
+from jupyter_client import protocol_version as client_protocol_version  # type:ignore[attr-defined]
 from tornado import gen, web
 from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketClosedError
@@ -85,6 +86,8 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         ),
     )
 
+    websocket_handler = Instance(KernelWebsocketHandler)
+
     @property
     def write_message(self):
         """Alias to the websocket handler's write_message method."""
@@ -93,11 +96,11 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
     # class-level registry of open sessions
     # allows checking for conflict on session-id,
     # which is used as a zmq identity and must be unique.
-    _open_sessions: Dict_t[str, KernelWebsocketHandler] = {}
-    _open_sockets: MutableSet["ZMQChannelsWebsocketConnection"] = weakref.WeakSet()
+    _open_sessions: dict[str, KernelWebsocketHandler] = {}
+    _open_sockets: t.MutableSet[ZMQChannelsWebsocketConnection] = weakref.WeakSet()
 
-    _kernel_info_future: Future
-    _close_future: Future
+    _kernel_info_future: Future[t.Any]
+    _close_future: Future[t.Any]
 
     channels = Dict({})
     kernel_info_channel = Any(allow_none=True)
@@ -125,7 +128,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
     # Queue of (time stamp, byte count)
     # Allows you to specify that the byte count should be lowered
     # by a delta amount at some point in the future.
-    _iopub_window_byte_queue = List([])
+    _iopub_window_byte_queue: List[t.Any] = List([])
 
     @classmethod
     async def close_all(cls):
@@ -151,7 +154,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.channels[channel] = stream = meth(identity=identity)
             stream.channel = channel
 
-    def nudge(self):  # noqa
+    def nudge(self):
         """Nudge the zmq connections with kernel_info_requests
         Returns a Future that will resolve when we have received
         a shell or control reply and at least one iopub message,
@@ -167,7 +170,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # establishing its zmq subscriptions before processing the next request.
         if getattr(self.kernel_manager, "execution_state", None) == "busy":
             self.log.debug("Nudge: not nudging busy kernel %s", self.kernel_id)
-            f: Future = Future()
+            f: Future[t.Any] = Future()
             f.set_result(None)
             return _ensure_future(f)
         # Use a transient shell channel to prevent leaking
@@ -179,8 +182,8 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # The IOPub used by the client, whose subscriptions we are verifying.
         iopub_channel = self.channels["iopub"]
 
-        info_future: Future = Future()
-        iopub_future: Future = Future()
+        info_future: Future[t.Any] = Future()
+        iopub_future: Future[t.Any] = Future()
         both_done = gen.multi([info_future, iopub_future])
 
         def finish(_=None):
@@ -283,7 +286,9 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         if (
             self.kernel_id in self.multi_kernel_manager
         ):  # only update open sessions if kernel is actively managed
-            self._open_sessions[self.session_key] = self.websocket_handler
+            self._open_sessions[self.session_key] = t.cast(
+                KernelWebsocketHandler, self.websocket_handler
+            )
 
     async def prepare(self):
         """Prepare a kernel connection."""
@@ -371,7 +376,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     if not stream.closed():
                         stream.close()
                 self.disconnect()
-                return
+                return None
 
         self.multi_kernel_manager.add_restart_callback(self.kernel_id, self.on_kernel_restarted)
         self.multi_kernel_manager.add_restart_callback(
@@ -410,7 +415,10 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             )
 
             # start buffering instead of closing if this was the last connection
-            if self.multi_kernel_manager._kernel_connections[self.kernel_id] == 0:
+            if (
+                self.kernel_id in self.multi_kernel_manager._kernel_connections
+                and self.multi_kernel_manager._kernel_connections[self.kernel_id] == 0
+            ):
                 self.multi_kernel_manager.start_buffering(
                     self.kernel_id, self.session_key, self.channels
                 )
@@ -430,7 +438,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         try:
             ZMQChannelsWebsocketConnection._open_sockets.remove(self)
             self._close_future.set_result(None)
-        except Exception:  # noqa
+        except Exception:
             pass
 
     def handle_incoming_message(self, incoming_msg: str) -> None:
@@ -447,8 +455,8 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                 "header": None,
             }
         else:
-            if isinstance(ws_msg, bytes):
-                msg = deserialize_binary_message(ws_msg)
+            if isinstance(ws_msg, bytes):  # type:ignore[unreachable]
+                msg = deserialize_binary_message(ws_msg)  # type:ignore[unreachable]
             else:
                 msg = json.loads(ws_msg)
             msg_list = []
@@ -465,7 +473,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         if am:
             msg["header"] = self.get_part("header", msg["header"], msg_list)
             assert msg["header"] is not None
-            if msg["header"]["msg_type"] not in am:
+            if msg["header"]["msg_type"] not in am:  # type:ignore[unreachable]
                 self.log.warning(
                     'Received message of type "%s", which is not allowed. Ignoring.'
                     % msg["header"]["msg_type"]
@@ -478,7 +486,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             else:
                 self.session.send(stream, msg)
 
-    def handle_outgoing_message(self, stream: str, outgoing_msg: list) -> None:
+    def handle_outgoing_message(self, stream: str, outgoing_msg: list[t.Any]) -> None:
         """Handle the outgoing messages from ZMQ sockets to Websocket."""
         msg_list = outgoing_msg
         _, fed_msg_list = self.session.feed_identities(msg_list)
@@ -620,11 +628,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         if protocol_version != client_protocol_version:
             self.session.adapt_version = int(protocol_version.split(".")[0])
             self.log.info(
-                "Adapting from protocol version {protocol_version} (kernel {kernel_id}) to {client_protocol_version} (client).".format(
-                    protocol_version=protocol_version,
-                    kernel_id=self.kernel_id,
-                    client_protocol_version=client_protocol_version,
-                )
+                f"Adapting from protocol version {protocol_version} (kernel {self.kernel_id}) to {client_protocol_version} (client)."
             )
         if not self._kernel_info_future.done():
             self._kernel_info_future.set_result(info)
@@ -700,7 +704,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     )
                     self.write_stderr(
                         dedent(
-                            """\
+                            f"""\
                     IOPub message rate exceeded.
                     The Jupyter server will temporarily stop sending output
                     to the client in order to avoid crashing it.
@@ -708,11 +712,9 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     `--ServerApp.iopub_msg_rate_limit`.
 
                     Current values:
-                    ServerApp.iopub_msg_rate_limit={} (msgs/sec)
-                    ServerApp.rate_limit_window={} (secs)
-                    """.format(
-                                self.iopub_msg_rate_limit, self.rate_limit_window
-                            )
+                    ServerApp.iopub_msg_rate_limit={self.iopub_msg_rate_limit} (msgs/sec)
+                    ServerApp.rate_limit_window={self.rate_limit_window} (secs)
+                    """
                         ),
                         msg["parent_header"],
                     )
@@ -731,7 +733,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     )
                     self.write_stderr(
                         dedent(
-                            """\
+                            f"""\
                     IOPub data rate exceeded.
                     The Jupyter server will temporarily stop sending output
                     to the client in order to avoid crashing it.
@@ -739,11 +741,9 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     `--ServerApp.iopub_data_rate_limit`.
 
                     Current values:
-                    ServerApp.iopub_data_rate_limit={} (bytes/sec)
-                    ServerApp.rate_limit_window={} (secs)
-                    """.format(
-                                self.iopub_data_rate_limit, self.rate_limit_window
-                            )
+                    ServerApp.iopub_data_rate_limit={self.iopub_data_rate_limit} (bytes/sec)
+                    ServerApp.rate_limit_window={self.rate_limit_window} (secs)
+                    """
                         ),
                         msg["parent_header"],
                     )

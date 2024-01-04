@@ -1,14 +1,16 @@
 """Serve files directly from the ContentsManager."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import mimetypes
 from base64 import decodebytes
-from typing import List
+from typing import Awaitable
 
 from jupyter_core.utils import ensure_async
 from tornado import web
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 from jupyter_server.base.handlers import JupyterHandler
 
 AUTH_RESOURCE = "contents"
@@ -34,7 +36,7 @@ class FilesHandler(JupyterHandler, web.StaticFileHandler):
 
     @web.authenticated
     @authorized
-    def head(self, path):
+    def head(self, path: str) -> Awaitable[None] | None:  # type:ignore[override]
         """The head response."""
         self.get(path, include_body=False)
         self.check_xsrf_cookie()
@@ -91,4 +93,4 @@ class FilesHandler(JupyterHandler, web.StaticFileHandler):
             self.flush()
 
 
-default_handlers: List[JupyterHandler] = []
+default_handlers: list[JupyterHandler] = []

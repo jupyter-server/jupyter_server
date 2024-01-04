@@ -18,7 +18,7 @@ class MockHandler(WebSocketMixin, WebSocketHandler):
     log = logging.getLogger()
 
 
-@pytest.fixture
+@pytest.fixture()
 def mixin(jp_serverapp):
     app: ServerApp = jp_serverapp
     headers = HTTPHeaders({"Host": "foo"})

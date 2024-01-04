@@ -12,7 +12,7 @@ from nbformat import from_dict
 from tornado import web
 from tornado.log import app_log
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 
 from ..base.handlers import FilesRedirectHandler, JupyterHandler, path_regex
 
@@ -139,7 +139,7 @@ class NbconvertFileHandler(JupyterHandler):
             raise web.HTTPError(500, "nbconvert failed: %s" % e) from e
 
         if respond_zip(self, name, output, resources):
-            return
+            return None
 
         # Force download if requested
         if self.get_argument("download", "false").lower() == "true":
@@ -167,6 +167,7 @@ class NbconvertPostHandler(JupyterHandler):
         exporter = get_exporter(format, config=self.config)
 
         model = self.get_json_body()
+        assert model is not None
         name = model.get("name", "notebook.ipynb")
         nbnode = from_dict(model["content"])
 

@@ -5,7 +5,6 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
-from traceback import format_tb
 
 try:
     from jupyter_client.jsonutil import json_default
@@ -15,7 +14,7 @@ except ImportError:
 from jupyter_core.utils import ensure_async
 from tornado import web
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 from jupyter_server.utils import url_escape, url_path_join
 
 from ...base.handlers import APIHandler
@@ -53,7 +52,9 @@ class MainKernelHandler(KernelsAPIHandler):
             model.setdefault("name", km.default_kernel_name)
 
         kernel_id = await ensure_async(
-            km.start_kernel(kernel_name=model["name"], path=model.get("path"))
+            km.start_kernel(  # type:ignore[has-type]
+                kernel_name=model["name"], path=model.get("path")
+            )
         )
         model = await ensure_async(km.kernel_model(kernel_id))
         location = url_path_join(self.base_url, "api", "kernels", url_escape(kernel_id))
@@ -92,7 +93,7 @@ class KernelActionHandler(KernelsAPIHandler):
         """Interrupt or restart a kernel."""
         km = self.kernel_manager
         if action == "interrupt":
-            await ensure_async(km.interrupt_kernel(kernel_id))
+            await ensure_async(km.interrupt_kernel(kernel_id))  # type:ignore[func-returns-value]
             self.set_status(204)
         if action == "restart":
             try:
@@ -100,8 +101,7 @@ class KernelActionHandler(KernelsAPIHandler):
             except Exception as e:
                 message = "Exception restarting kernel"
                 self.log.error(message, exc_info=True)
-                traceback = format_tb(e.__traceback__)
-                self.write(json.dumps({"message": message, "traceback": traceback}))
+                self.write(json.dumps({"message": message, "traceback": ""}))
                 self.set_status(500)
             else:
                 model = await ensure_async(km.kernel_model(kernel_id))

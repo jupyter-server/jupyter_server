@@ -4,16 +4,19 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-25%3A-
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import glob
 import json
 import os
+from typing import Any
 
 pjoin = os.path.join
 
 from jupyter_core.utils import ensure_async
 from tornado import web
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 
 from ...base.handlers import APIHandler
 from ...utils import url_path_join, url_unescape
@@ -26,7 +29,6 @@ def kernelspec_model(handler, name, spec_dict, resource_dir):
     d = {"name": name, "spec": spec_dict, "resources": {}}
 
     # Add resource files if they exist
-    resource_dir = resource_dir
     for resource in ["kernel.js", "kernel.css"]:
         if os.path.exists(pjoin(resource_dir, resource)):
             d["resources"][resource] = url_path_join(
@@ -64,7 +66,7 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
         """Get the list of kernel specs."""
         ksm = self.kernel_spec_manager
         km = self.kernel_manager
-        model = {}
+        model: dict[str, Any] = {}
         model["default"] = km.default_kernel_name
         model["kernelspecs"] = specs = {}
         kspecs = await ensure_async(ksm.get_all_specs())

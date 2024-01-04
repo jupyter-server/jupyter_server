@@ -41,12 +41,25 @@ class LoginFormHandler(JupyterHandler):
         # \ is not valid in urls, but some browsers treat it as /
         # instead of %5C, causing `\\` to behave as `//`
         url = url.replace("\\", "%5C")
+        # urllib and browsers interpret extra '/' in the scheme separator (`scheme:///host/path`)
+        # differently.
+        # urllib gives scheme=scheme, netloc='', path='/host/path', while
+        # browsers get scheme=scheme, netloc='host', path='/path'
+        # so make sure ':///*' collapses to '://' by splitting and stripping any additional leading slash
+        # don't allow any kind of `:/` shenanigans by splitting on ':' only
+        # and replacing `:/*` with exactly `://`
+        if ":" in url:
+            scheme, _, rest = url.partition(":")
+            url = f"{scheme}://{rest.lstrip('/')}"
         parsed = urlparse(url)
-        if parsed.netloc or not (parsed.path + "/").startswith(self.base_url):
+        # full url may be `//host/path` (empty scheme == same scheme as request)
+        # or `https://host/path`
+        # or even `https:///host/path` (invalid, but accepted and ambiguously interpreted)
+        if (parsed.scheme or parsed.netloc) or not (parsed.path + "/").startswith(self.base_url):
             # require that next_url be absolute path within our path
             allow = False
             # OR pass our cross-origin check
-            if parsed.netloc:
+            if parsed.scheme or parsed.netloc:
                 # if full URL, run our cross-origin check:
                 origin = f"{parsed.scheme}://{parsed.netloc}"
                 origin = origin.lower()
@@ -110,9 +123,10 @@ class LegacyLoginHandler(LoginFormHandler):
                 if new_password and getattr(self.identity_provider, "allow_password_change", False):
                     config_dir = self.settings.get("config_dir", "")
                     config_file = os.path.join(config_dir, "jupyter_server_config.json")
-                    self.identity_provider.hashed_password = self.settings[
-                        "password"
-                    ] = set_password(new_password, config_file=config_file)
+                    if hasattr(self.identity_provider, "hashed_password"):
+                        self.identity_provider.hashed_password = self.settings[
+                            "password"
+                        ] = set_password(new_password, config_file=config_file)
                     self.log.info("Wrote hashed password to %s" % config_file)
             else:
                 self.set_status(401)
@@ -165,7 +179,7 @@ class LegacyLoginHandler(LoginFormHandler):
         """DEPRECATED in 2.0, use IdentityProvider API"""
         if getattr(handler, "_user_id", None) is None:
             # ensure get_user has been called, so we know if we're token-authenticated
-            handler.current_user  # noqa
+            handler.current_user  # noqa: B018
         return getattr(handler, "_token_authenticated", False)
 
     @classmethod
@@ -219,7 +233,7 @@ class LegacyLoginHandler(LoginFormHandler):
         """DEPRECATED in 2.0, use IdentityProvider API"""
         token = handler.token
         if not token:
-            return
+            return None
         # check login token from URL argument or Authorization header
         user_token = cls.get_token(handler)
         authenticated = False

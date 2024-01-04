@@ -1,7 +1,7 @@
 import pytest
 
 
-@pytest.fixture
+@pytest.fixture()
 def jp_server_config(jp_template_dir):
     return {
         "ServerApp": {"jpserver_extensions": {"tests.extension.mockextensions": True}},

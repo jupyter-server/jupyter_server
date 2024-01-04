@@ -1,6 +1,8 @@
 """A kernel gateway client."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -41,10 +43,8 @@ if ty.TYPE_CHECKING:
     from http.cookies import Morsel
 
 
-class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore
+class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore[misc]
     """The metaclass necessary for proper ABC behavior in a Configurable."""
-
-    pass
 
 
 class GatewayTokenRenewerBase(  # type:ignore[misc]
@@ -69,7 +69,6 @@ class GatewayTokenRenewerBase(  # type:ignore[misc]
         Given the current authorization header key, scheme, and token, this method returns
         a (potentially renewed) token for use against the Gateway server.
         """
-        pass
 
 
 class NoOpTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
@@ -156,7 +155,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
     @default("ws_url")
     def _ws_url_default(self):
         default_value = os.environ.get(self.ws_url_env)
-        if default_value is None and self.gateway_enabled:
+        if self.url is not None and default_value is None and self.gateway_enabled:
             default_value = self.url.lower().replace("http", "ws")
         return default_value
 
@@ -526,15 +525,8 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
             # protects backward-compatible config from warnings
             # if they set the same value under both names
             self.log.warning(
-                (
-                    "{cls}.{old} is deprecated in jupyter_server "
-                    "{version}, use {cls}.{new} instead"
-                ).format(
-                    cls=self.__class__.__name__,
-                    old=old_attr,
-                    new=new_attr,
-                    version=version,
-                )
+                f"{self.__class__.__name__}.{old_attr} is deprecated in jupyter_server "
+                f"{version}, use {self.__class__.__name__}.{new_attr} instead"
             )
             setattr(self, new_attr, change.new)
 
@@ -545,7 +537,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
     # Ensure KERNEL_LAUNCH_TIMEOUT has a default value.
     KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", 40))
 
-    _connection_args: dict  # initialized on first use
+    _connection_args: dict[str, ty.Any]  # initialized on first use
 
     gateway_token_renewer: GatewayTokenRenewerBase
 
@@ -553,10 +545,10 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         """Initialize a gateway client."""
         super().__init__(**kwargs)
         self._connection_args = {}  # initialized on first use
-        self.gateway_token_renewer = self.gateway_token_renewer_class(parent=self, log=self.log)
+        self.gateway_token_renewer = self.gateway_token_renewer_class(parent=self, log=self.log)  # type:ignore[abstract]
 
         # store of cookies with store time
-        self._cookies: ty.Dict[str, ty.Tuple[Morsel, datetime]] = {}
+        self._cookies: dict[str, tuple[Morsel[ty.Any], datetime]] = {}
 
     def init_connection_args(self):
         """Initialize arguments used on every request.  Since these are primarily static values,
@@ -577,11 +569,12 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         # Ensure any adjustments are reflected in env.
         os.environ["KERNEL_LAUNCH_TIMEOUT"] = str(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
 
-        self._connection_args["headers"] = json.loads(self.headers)
-        if self.auth_header_key not in self._connection_args["headers"].keys():
-            self._connection_args["headers"].update(
-                {f"{self.auth_header_key}": f"{self.auth_scheme} {self.auth_token}"}
-            )
+        if self.headers:
+            self._connection_args["headers"] = json.loads(self.headers)
+            if self.auth_header_key not in self._connection_args["headers"]:
+                self._connection_args["headers"].update(
+                    {f"{self.auth_header_key}": f"{self.auth_scheme} {self.auth_token}"}
+                )
         self._connection_args["connect_timeout"] = self.connect_timeout
         self._connection_args["request_timeout"] = self.request_timeout
         self._connection_args["validate_cert"] = self.validate_cert
@@ -596,8 +589,8 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
             self._connection_args["auth_password"] = self.http_pwd
 
     def load_connection_args(self, **kwargs):
-        """Merges the static args relative to the connection, with the given keyword arguments.  If statics
-        have yet to be initialized, we'll do that here.
+        """Merges the static args relative to the connection, with the given keyword arguments.  If static
+        args have yet to be initialized, we'll do that here.
 
         """
         if len(self._connection_args) == 0:
@@ -605,18 +598,19 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
 
         # Give token renewal a shot at renewing the token
         prev_auth_token = self.auth_token
-        try:
-            self.auth_token = self.gateway_token_renewer.get_token(
-                self.auth_header_key, self.auth_scheme, self.auth_token
-            )
-        except Exception as ex:
-            self.log.error(
-                f"An exception occurred attempting to renew the "
-                f"Gateway authorization token using an instance of class "
-                f"'{self.gateway_token_renewer_class}'.  The request will "
-                f"proceed using the current token value.  Exception was: {ex}"
-            )
-            self.auth_token = prev_auth_token
+        if self.auth_token is not None:
+            try:
+                self.auth_token = self.gateway_token_renewer.get_token(
+                    self.auth_header_key, self.auth_scheme, self.auth_token
+                )
+            except Exception as ex:
+                self.log.error(
+                    f"An exception occurred attempting to renew the "
+                    f"Gateway authorization token using an instance of class "
+                    f"'{self.gateway_token_renewer_class}'.  The request will "
+                    f"proceed using the current token value.  Exception was: {ex}"
+                )
+                self.auth_token = prev_auth_token
 
         for arg, value in self._connection_args.items():
             if arg == "headers":
@@ -666,7 +660,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         for key in expired_keys:
             self._cookies.pop(key)
 
-    def _update_cookie_header(self, connection_args: dict) -> None:
+    def _update_cookie_header(self, connection_args: dict[str, ty.Any]) -> None:
         """Update a cookie header."""
         self._clear_expired_cookies()
 
@@ -703,9 +697,9 @@ class RetryableHTTPClient:
     MAX_RETRIES_CAP = 10  # The upper limit to max_retries value.
     max_retries: int = int(os.getenv("JUPYTER_GATEWAY_MAX_REQUEST_RETRIES", MAX_RETRIES_DEFAULT))
     max_retries = max(0, min(max_retries, MAX_RETRIES_CAP))  # Enforce boundaries
-    retried_methods: ty.Set[str] = {"GET", "DELETE"}
-    retried_errors: ty.Set[int] = {502, 503, 504, 599}
-    retried_exceptions: ty.Set[type] = {ConnectionError}
+    retried_methods: set[str] = {"GET", "DELETE"}
+    retried_errors: set[int] = {502, 503, 504, 599}
+    retried_exceptions: set[type] = {ConnectionError}
     backoff_factor: float = 0.1
 
     def __init__(self):

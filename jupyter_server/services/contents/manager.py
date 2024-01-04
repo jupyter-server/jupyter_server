@@ -1,15 +1,17 @@
 """A base class for contents managers."""
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import itertools
 import json
 import os
 import re
+import typing as t
 import warnings
 from fnmatch import fnmatch
 
-from jupyter_client.utils import run_sync
-from jupyter_core.utils import ensure_async
+from jupyter_core.utils import ensure_async, run_sync
 from jupyter_events import EventLogger
 from nbformat import ValidationError, sign
 from nbformat import validate as validate_nb
@@ -100,11 +102,12 @@ class ContentsManager(LoggingConfigurable):
             raise TraitError(e.log_message) from e
         if not dir_exists:
             raise TraitError(_i18n("Preferred directory not found: %r") % value)
-        try:
-            if value != self.parent.preferred_dir:
-                self.parent.preferred_dir = os.path.join(self.root_dir, *value.split("/"))
-        except (AttributeError, TraitError):
-            pass
+        if self.parent:
+            try:
+                if value != self.parent.preferred_dir:
+                    self.parent.preferred_dir = os.path.join(self.root_dir, *value.split("/"))
+            except TraitError:
+                pass
         return value
 
     allow_hidden = Bool(False, config=True, help="Allow access to hidden files")
@@ -258,8 +261,8 @@ class ContentsManager(LoggingConfigurable):
                 msg = "fUnexpected error while running post hook save: {e}"
                 raise HTTPError(500, msg) from None
 
-    _pre_save_hooks = List()
-    _post_save_hooks = List()
+    _pre_save_hooks: List[t.Any] = List()
+    _post_save_hooks: List[t.Any] = List()
 
     def register_pre_save_hook(self, hook):
         """Register a pre save hook."""
@@ -444,8 +447,16 @@ class ContentsManager(LoggingConfigurable):
         """
         return self.file_exists(path) or self.dir_exists(path)
 
-    def get(self, path, content=True, type=None, format=None):
-        """Get a file or directory model."""
+    def get(self, path, content=True, type=None, format=None, require_hash=False):
+        """Get a file or directory model.
+
+        Parameters
+        ----------
+        require_hash : bool
+            Whether the file hash must be returned or not.
+
+        *Changed in version 2.11*: The *require_hash* parameter was added.
+        """
         raise NotImplementedError
 
     def save(self, model, path):
@@ -466,7 +477,7 @@ class ContentsManager(LoggingConfigurable):
         """Rename a file or directory."""
         raise NotImplementedError
 
-    # ContentsManager API part 2: methods that have useable default
+    # ContentsManager API part 2: methods that have usable default
     # implementations, but can be overridden in subclasses.
 
     def delete(self, path):
@@ -540,9 +551,7 @@ class ContentsManager(LoggingConfigurable):
 
         for i in itertools.count():
             insert_i = f"{insert}{i}" if i else ""
-            name = "{basename}{insert}{suffix}".format(
-                basename=basename, insert=insert_i, suffix=suffix
-            )
+            name = f"{basename}{insert_i}{suffix}"
             if not self.exists(f"{path}/{name}"):
                 break
         return name
@@ -848,8 +857,16 @@ class AsyncContentsManager(ContentsManager):
             self.dir_exists(path)
         )
 
-    async def get(self, path, content=True, type=None, format=None):
-        """Get a file or directory model."""
+    async def get(self, path, content=True, type=None, format=None, require_hash=False):
+        """Get a file or directory model.
+
+        Parameters
+        ----------
+        require_hash : bool
+            Whether the file hash must be returned or not.
+
+        *Changed in version 2.11*: The *require_hash* parameter was added.
+        """
         raise NotImplementedError
 
     async def save(self, model, path):
@@ -870,7 +887,7 @@ class AsyncContentsManager(ContentsManager):
         """Rename a file or directory."""
         raise NotImplementedError
 
-    # ContentsManager API part 2: methods that have useable default
+    # ContentsManager API part 2: methods that have usable default
     # implementations, but can be overridden in subclasses.
 
     async def delete(self, path):
@@ -929,9 +946,7 @@ class AsyncContentsManager(ContentsManager):
 
         for i in itertools.count():
             insert_i = f"{insert}{i}" if i else ""
-            name = "{basename}{insert}{suffix}".format(
-                basename=basename, insert=insert_i, suffix=suffix
-            )
+            name = f"{basename}{insert_i}{suffix}"
             file_exists = await ensure_async(self.exists(f"{path}/{name}"))
             if not file_exists:
                 break

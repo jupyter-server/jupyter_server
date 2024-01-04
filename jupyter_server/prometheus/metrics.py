@@ -9,7 +9,7 @@ try:
     # Jupyter Notebook also defines these metrics.  Re-defining them results in a ValueError.
     # Try to de-duplicate by using the ones in Notebook if available.
     # See https://github.com/jupyter/jupyter_server/issues/209
-    from notebook.prometheus.metrics import (  # type:ignore
+    from notebook.prometheus.metrics import (
         HTTP_REQUEST_DURATION_SECONDS,
         KERNEL_CURRENTLY_RUNNING_TOTAL,
         TERMINAL_CURRENTLY_RUNNING_TOTAL,
@@ -34,3 +34,10 @@ except ImportError:
         "counter for how many kernels are running labeled by type",
         ["type"],
     )
+
+
+__all__ = [
+    "HTTP_REQUEST_DURATION_SECONDS",
+    "TERMINAL_CURRENTLY_RUNNING_TOTAL",
+    "KERNEL_CURRENTLY_RUNNING_TOTAL",
+]

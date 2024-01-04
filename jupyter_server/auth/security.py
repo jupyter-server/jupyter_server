@@ -11,7 +11,8 @@ import warnings
 from contextlib import contextmanager
 
 from jupyter_core.paths import jupyter_config_dir
-from traitlets.config import Config, ConfigFileNotFound, JSONFileConfigLoader
+from traitlets.config import Config
+from traitlets.config.loader import ConfigFileNotFound, JSONFileConfigLoader
 
 # Length of the salt in nr of hex chars, which implies salt_len * 4
 # bits of randomness.
@@ -40,7 +41,7 @@ def passwd(passphrase=None, algorithm="argon2"):
 
     Examples
     --------
-    >>> passwd('mypassword')  # doctest: +ELLIPSIS
+    >>> passwd("mypassword")  # doctest: +ELLIPSIS
     'argon2:...'
 
     """
@@ -51,8 +52,7 @@ def passwd(passphrase=None, algorithm="argon2"):
             if p0 == p1:
                 passphrase = p0
                 break
-            else:
-                warnings.warn("Passwords do not match.", stacklevel=2)
+            warnings.warn("Passwords do not match.", stacklevel=2)
         else:
             msg = "No matching passwords found. Giving up."
             raise ValueError(msg)
@@ -93,15 +93,14 @@ def passwd_check(hashed_passphrase, passphrase):
 
     Examples
     --------
-    >>> myhash = passwd('mypassword')
-    >>> passwd_check(myhash, 'mypassword')
+    >>> myhash = passwd("mypassword")
+    >>> passwd_check(myhash, "mypassword")
     True
 
-    >>> passwd_check(myhash, 'otherpassword')
+    >>> passwd_check(myhash, "otherpassword")
     False
 
-    >>> passwd_check('sha1:0e112c3ddfce:a68df677475c2b47b6e86d0467eec97ac5f4b85a',
-    ...              'mypassword')
+    >>> passwd_check("sha1:0e112c3ddfce:a68df677475c2b47b6e86d0467eec97ac5f4b85a", "mypassword")
     True
     """
     if hashed_passphrase.startswith("argon2:"):

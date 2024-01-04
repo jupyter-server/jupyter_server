@@ -5,6 +5,8 @@
 """
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import asyncio
 import os
 import pathlib
@@ -13,8 +15,6 @@ import warnings
 from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import partial, wraps
-from typing import Dict as DictType
-from typing import Optional
 
 from jupyter_client.ioloop.manager import AsyncIOLoopKernelManager
 from jupyter_client.multikernelmanager import AsyncMultiKernelManager, MultiKernelManager
@@ -64,7 +64,7 @@ class MappingKernelManager(MultiKernelManager):
 
     _kernel_connections = Dict()
 
-    _kernel_ports: DictType[str, t.List[int]] = Dict()  # type: ignore
+    _kernel_ports: dict[str, list[int]] = Dict()  # type: ignore[assignment]
 
     _culler_callback = None
 
@@ -72,10 +72,9 @@ class MappingKernelManager(MultiKernelManager):
 
     @default("root_dir")
     def _default_root_dir(self):
-        try:
-            return self.parent.root_dir
-        except AttributeError:
+        if not self.parent:
             return os.getcwd()
+        return self.parent.root_dir
 
     @validate("root_dir")
     def _update_root_dir(self, proposal):
@@ -207,7 +206,7 @@ class MappingKernelManager(MultiKernelManager):
     # TODO DEC 2022: Revise the type-ignore once the signatures have been changed upstream
     # https://github.com/jupyter/jupyter_client/pull/905
     async def _async_start_kernel(  # type:ignore[override]
-        self, *, kernel_id: Optional[str] = None, path: Optional[ApiPath] = None, **kwargs: str
+        self, *, kernel_id: str | None = None, path: ApiPath | None = None, **kwargs: str
     ) -> str:
         """Start a kernel for a session and return its kernel_id.
 
@@ -374,7 +373,7 @@ class MappingKernelManager(MultiKernelManager):
         """
         self.log.debug("Getting buffer for %s", kernel_id)
         if kernel_id not in self._kernel_buffers:
-            return
+            return None
 
         buffer_info = self._kernel_buffers[kernel_id]
         if buffer_info["session_key"] == session_key:
@@ -441,7 +440,7 @@ class MappingKernelManager(MultiKernelManager):
         kernel = self.get_kernel(kernel_id)
         # return a Future that will resolve when the kernel has successfully restarted
         channel = kernel.connect_shell()
-        future: Future = Future()
+        future: Future[Any] = Future()
 
         def finish():
             """Common cleanup when restart finishes/fails for any reason."""
@@ -646,6 +645,9 @@ class MappingKernelManager(MultiKernelManager):
             await ensure_async(self.shutdown_kernel(kernel_id))
             return
 
+        kernel_spec_metadata = kernel.kernel_spec.metadata
+        cull_idle_timeout = kernel_spec_metadata.get("cull_idle_timeout", self.cull_idle_timeout)
+
         if hasattr(
             kernel, "last_activity"
         ):  # last_activity is monkey-patched, so ensure that has occurred
@@ -658,7 +660,7 @@ class MappingKernelManager(MultiKernelManager):
             dt_now = utcnow()
             dt_idle = dt_now - kernel.last_activity
             # Compute idle properties
-            is_idle_time = dt_idle > timedelta(seconds=self.cull_idle_timeout)
+            is_idle_time = dt_idle > timedelta(seconds=cull_idle_timeout)
             is_idle_execute = self.cull_busy or (kernel.execution_state != "busy")
             connections = self._kernel_connections.get(kernel_id, 0)
             is_idle_connected = self.cull_connected or not connections
@@ -708,21 +710,21 @@ class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager): 
         self.last_kernel_activity = utcnow()
 
 
-def emit_kernel_action_event(success_msg: str = ""):  # type: ignore
+def emit_kernel_action_event(success_msg: str = "") -> t.Callable[..., t.Any]:
     """Decorate kernel action methods to
     begin emitting jupyter kernel action events.
 
     Parameters
     ----------
     success_msg: str
-        A formattable string thats passed to the message field of
+        A formattable string that's passed to the message field of
         the emitted event when the action succeeds. You can include
         the kernel_id, kernel_name, or action in the message using
         a formatted string argument,
         e.g. "{kernel_id} succeeded to {action}."
 
     error_msg: str
-        A formattable string thats passed to the message field of
+        A formattable string that's passed to the message field of
         the emitted event when the action fails. You can include
         the kernel_id, kernel_name, or action in the message using
         a formatted string argument,
@@ -733,7 +735,7 @@ def emit_kernel_action_event(success_msg: str = ""):  # type: ignore
         @wraps(method)
         async def wrapped_method(self, *args, **kwargs):
             """"""
-            # Get the method name from teh
+            # Get the method name from the
             action = method.__name__.replace("_kernel", "")
             # If the method succeeds, emit a success event.
             try:
@@ -795,12 +797,12 @@ class ServerKernelManager(AsyncIOLoopKernelManager):
     # schema to register with this kernel manager's eventlogger.
     # This trait should not be overridden.
     @property
-    def core_event_schema_paths(self) -> t.List[pathlib.Path]:
+    def core_event_schema_paths(self) -> list[pathlib.Path]:
         return [DEFAULT_EVENTS_SCHEMA_PATH / "kernel_actions" / "v1.yaml"]
 
     # This trait is intended for subclasses to override and define
     # custom event schemas.
-    extra_event_schema_paths = List(
+    extra_event_schema_paths: List[str] = List(
         default_value=[],
         help="""
         A list of pathlib.Path objects pointing at to register with

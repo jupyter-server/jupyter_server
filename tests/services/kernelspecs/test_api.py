@@ -57,7 +57,7 @@ async def test_get_kernelspecs(jp_fetch, jp_kernelspecs):
 
 async def test_get_nonexistant_kernelspec(jp_fetch, jp_kernelspecs):
     with pytest.raises(HTTPClientError) as e:
-        await jp_fetch("api", "kernelspecs", "nonexistant", method="GET")
+        await jp_fetch("api", "kernelspecs", "nonexistent", method="GET")
     assert expected_http_error(e, 404)
 
 
@@ -69,9 +69,9 @@ async def test_get_kernel_resource_file(jp_fetch, jp_kernelspecs):
 
 async def test_get_nonexistant_resource(jp_fetch, jp_kernelspecs):
     with pytest.raises(HTTPClientError) as e:
-        await jp_fetch("kernelspecs", "nonexistant", "resource.txt", method="GET")
+        await jp_fetch("kernelspecs", "nonexistent", "resource.txt", method="GET")
     assert expected_http_error(e, 404)
 
     with pytest.raises(HTTPClientError) as e:
-        await jp_fetch("kernelspecs", "sample", "nonexistant.txt", method="GET")
+        await jp_fetch("kernelspecs", "sample", "nonexistent.txt", method="GET")
     assert expected_http_error(e, 404)

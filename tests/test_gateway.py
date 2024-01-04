@@ -78,7 +78,7 @@ omitted_kernels: Dict[str, bool] = {}
 
 def generate_model(name):
     """Generate a mocked kernel model.  Caller is responsible for adding model to running_kernels dictionary."""
-    dt = datetime.utcnow().isoformat() + "Z"  # noqa
+    dt = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     kernel_id = str(uuid.uuid4())
     model = {
         "id": kernel_id,
@@ -90,7 +90,7 @@ def generate_model(name):
     return model
 
 
-async def mock_gateway_request(url, **kwargs):  # noqa
+async def mock_gateway_request(url, **kwargs):
     method = "GET"
     if kwargs["method"]:
         method = kwargs["method"]
@@ -217,9 +217,9 @@ class CustomTestTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
 
     # The following are configured by the config test to ensure they flow
     # configured to: 42
-    config_var_1: int = Int(config=True)  # type:ignore
+    config_var_1: int = Int(config=True)  # type:ignore[assignment]
     # configured to: "Use this token value: "
-    config_var_2: str = Unicode(config=True)  # type:ignore
+    config_var_2: str = Unicode(config=True)  # type:ignore[assignment]
 
     def get_token(
         self, auth_header_key: str, auth_scheme: Union[str, None], auth_token: str, **kwargs: Any
@@ -234,7 +234,7 @@ def jp_server_config():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def init_gateway(monkeypatch):
     """Initializes the server for use as a gateway client."""
     # Clear the singleton first since previous tests may not have used a gateway.
@@ -303,13 +303,19 @@ def test_gateway_cli_options(jp_configurable_serverapp, capsys):
     GatewayClient.clear_instance()
 
 
-@pytest.mark.parametrize("renewer_type", ["default", "custom"])
-def test_token_renewer_config(jp_server_config, jp_configurable_serverapp, renewer_type):
+@pytest.mark.parametrize(
+    "renewer_type,initial_auth_token", [("default", ""), ("custom", None), ("custom", "")]
+)
+def test_token_renewer_config(
+    jp_server_config, jp_configurable_serverapp, renewer_type, initial_auth_token
+):
     argv = ["--gateway-url=" + mock_gateway_url]
     if renewer_type == "custom":
         argv.append(
             "--GatewayClient.gateway_token_renewer_class=tests.test_gateway.CustomTestTokenRenewer"
         )
+    if initial_auth_token is None:
+        argv.append("--GatewayClient.auth_token=None")
 
     GatewayClient.clear_instance()
     app = jp_configurable_serverapp(argv=argv)
@@ -322,15 +328,20 @@ def test_token_renewer_config(jp_server_config, jp_configurable_serverapp, renew
     if renewer_type == "default":
         assert isinstance(gw_client.gateway_token_renewer, NoOpTokenRenewer)
         token = gw_client.gateway_token_renewer.get_token(
-            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token
+            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token or ""
         )
         assert token == gw_client.auth_token
     else:
         assert isinstance(gw_client.gateway_token_renewer, CustomTestTokenRenewer)
         token = gw_client.gateway_token_renewer.get_token(
-            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token
+            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token or ""
         )
         assert token == CustomTestTokenRenewer.TEST_EXPECTED_TOKEN_VALUE
+    gw_client.load_connection_args()
+    if renewer_type == "default" or initial_auth_token is None:
+        assert gw_client.auth_token == initial_auth_token
+    else:
+        assert gw_client.auth_token == CustomTestTokenRenewer.TEST_EXPECTED_TOKEN_VALUE
 
 
 @pytest.mark.parametrize(
@@ -617,7 +628,7 @@ async def test_kernel_client_response_router_notifies_channel_queue_when_finishe
         kc.hb_channel,
         kc.control_channel,
     ]
-    assert all(channel.response_router_finished if True else False for channel in all_channels)
+    assert all(channel.response_router_finished for channel in all_channels)
 
     await ensure_async(kc.stop_channels())
 
@@ -787,7 +798,7 @@ async def is_kernel_running(jp_fetch, kernel_id):
 
 
 async def create_kernel(jp_fetch, kernel_name):
-    """Issues request to retart the given kernel"""
+    """Issues request to restart the given kernel"""
     with mocked_gateway:
         body = json.dumps({"name": kernel_name})
 
@@ -825,7 +836,7 @@ async def interrupt_kernel(jp_fetch, kernel_id):
 
 
 async def restart_kernel(jp_fetch, kernel_id):
-    """Issues request to retart the given kernel"""
+    """Issues request to restart the given kernel"""
     with mocked_gateway:
         r = await jp_fetch(
             "api",

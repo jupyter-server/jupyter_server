@@ -16,7 +16,7 @@ png_green_pixel = encodebytes(
 ).decode("ascii")
 
 
-@pytest.fixture
+@pytest.fixture()
 def notebook(jp_root_dir):
     # Build sub directory.
     subdir = jp_root_dir / "foo"
