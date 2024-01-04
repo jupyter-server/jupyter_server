@@ -13,7 +13,7 @@ from tornado.concurrent import Future
 from tornado.escape import json_decode, url_escape, utf8
 from tornado.httpclient import HTTPRequest
 from tornado.ioloop import IOLoop
-from traitlets import Bool, Instance, Int
+from traitlets import Bool, Instance, Int, Unicode
 
 from ..services.kernels.connection.base import BaseKernelWebsocketConnection
 from ..utils import url_path_join
@@ -30,6 +30,11 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
     disconnected = Bool(False)
 
     retry = Int(0)
+
+    # When opening ws connection to gateway, server already negotiated subprotocol with notebook client.
+    # Same protocol must be used for client and gateway, so legacy ws subprotocol for client is enforced here.
+
+    kernel_ws_protocol = Unicode("", allow_none=True, config=True)
 
     async def connect(self):
         """Connect to the socket."""
