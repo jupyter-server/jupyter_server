@@ -32,7 +32,13 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
 
     # When opening ws connection to gateway, server already negotiated subprotocol with notebook client.
     # Same protocol must be used for client and gateway, so legacy ws subprotocol for client is enforced here.
-    kernel_ws_protocol = Unicode("")
+
+    kernel_ws_protocol = Unicode(
+        "",
+        allow_none=True,
+        config=True
+    )
+
 
     async def connect(self):
         """Connect to the socket."""
