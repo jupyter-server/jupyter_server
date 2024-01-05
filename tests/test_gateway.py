@@ -373,15 +373,12 @@ def test_gateway_request_timeout_pad_option(
     GatewayClient.clear_instance()
 
 
-cookie_expire_time = format_datetime(datetime.now(tz=timezone.utc) + timedelta(seconds=180))
-
-
 @pytest.mark.parametrize(
     "accept_cookies,expire_arg,expire_param,existing_cookies,cookie_exists",
     [
         (False, None, None, "EXISTING=1", False),
         (True, None, None, "EXISTING=1", True),
-        (True, "Expires", cookie_expire_time, None, True),
+        (True, "Expires", 180, None, True),
         (True, "Max-Age", "-360", "EXISTING=1", False),
     ],
 )
@@ -400,6 +397,10 @@ def test_gateway_request_with_expiring_cookies(
 
     cookie: SimpleCookie = SimpleCookie()
     cookie.load("SERVERID=1234567; Path=/")
+    if expire_arg == "Expires":
+        expire_param = format_datetime(
+            datetime.now(tz=timezone.utc) + timedelta(seconds=expire_param)
+        )
     if expire_arg:
         cookie["SERVERID"][expire_arg] = expire_param
 
