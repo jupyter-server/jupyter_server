@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.12.3
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.12.2...99b9126853b69aafb700b4c92b50b83b7ca00e32))
+
+### Bugs fixed
+
+- Import User unconditionally [#1384](https://github.com/jupyter-server/jupyter_server/pull/1384) ([@yuvipanda](https://github.com/yuvipanda))
+
+### Maintenance and upkeep improvements
+
+- Simplify the jupytext downstream test [#1383](https://github.com/jupyter-server/jupyter_server/pull/1383) ([@mwouts](https://github.com/mwouts))
+- Fix test param for pytest-xdist [#1382](https://github.com/jupyter-server/jupyter_server/pull/1382) ([@tornaria](https://github.com/tornaria))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-01-04&to=2024-01-09&type=c))
+
+[@mwouts](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amwouts+updated%3A2024-01-04..2024-01-09&type=Issues) | [@tornaria](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Atornaria+updated%3A2024-01-04..2024-01-09&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2024-01-04..2024-01-09&type=Issues) | [@yuvipanda](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ayuvipanda+updated%3A2024-01-04..2024-01-09&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.12.2
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.12.1...49915685531ce90baae9d2a4d6baa9c533beffcc))
@@ -27,8 +48,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-12-06&to=2024-01-04&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-12-06..2024-01-04&type=Issues) | [@bollwyvl](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abollwyvl+updated%3A2023-12-06..2024-01-04&type=Issues) | [@epignot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aepignot+updated%3A2023-12-06..2024-01-04&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2023-12-06..2024-01-04&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.12.1
 
