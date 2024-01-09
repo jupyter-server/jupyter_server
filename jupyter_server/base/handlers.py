@@ -30,6 +30,7 @@ from jupyter_server import CallContext
 from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
 from jupyter_server.auth.decorator import authorized
+from jupyter_server.auth.identity import User
 from jupyter_server.i18n import combine_translations
 from jupyter_server.services.security import csp_report_uri
 from jupyter_server.utils import (
@@ -47,7 +48,7 @@ if TYPE_CHECKING:
     from tornado.concurrent import Future
 
     from jupyter_server.auth.authorizer import Authorizer
-    from jupyter_server.auth.identity import IdentityProvider, User
+    from jupyter_server.auth.identity import IdentityProvider
     from jupyter_server.serverapp import ServerApp
     from jupyter_server.services.config.manager import ConfigManager
     from jupyter_server.services.contents.manager import ContentsManager
