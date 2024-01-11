@@ -757,11 +757,12 @@ class RetryableHTTPClient:
 
 async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
     """Make an async request to kernel gateway endpoint, returns a response"""
-    kwargs = GatewayClient.instance().load_connection_args(**kwargs)
+    gateway_client = GatewayClient.instance()
+    kwargs = gateway_client.load_connection_args(**kwargs)
     rhc = RetryableHTTPClient()
     try:
         response = await rhc.fetch(endpoint, **kwargs)
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: SUCCESS_STATUS, STATUS_CODE_KEY: 200, MESSAGE_KEY: "success"}
         )
     # Trap a set of common exceptions so that we can inform the user that their Gateway url is incorrect
@@ -769,10 +770,12 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
     # NOTE: We do this here since this handler is called during the server's startup and subsequent refreshes
     # of the tree view.
     except HTTPClientError as e:
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: e.code, MESSAGE_KEY: str(e.message)}
         )
-        error_reason = f"Exception while attempting to connect to Gateway server url '{GatewayClient.instance().url}'"
+        error_reason = (
+            f"Exception while attempting to connect to Gateway server url '{gateway_client.url}'"
+        )
         error_message = e.message
         if e.response:
             try:
@@ -788,38 +791,39 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
             "Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
     except ConnectionError as e:
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 503, MESSAGE_KEY: str(e)}
         )
         raise web.HTTPError(
             503,
-            f"ConnectionError was received from Gateway server url '{GatewayClient.instance().url}'.  "
+            f"ConnectionError was received from Gateway server url '{gateway_client.url}'.  "
             "Check to be sure the Gateway instance is running.",
         ) from e
     except gaierror as e:
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 404, MESSAGE_KEY: str(e)}
         )
         raise web.HTTPError(
             404,
-            f"The Gateway server specified in the gateway_url '{GatewayClient.instance().url}' doesn't "
+            f"The Gateway server specified in the gateway_url '{gateway_client.url}' doesn't "
             f"appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
     except Exception as e:
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 505, MESSAGE_KEY: str(e)}
         )
         logging.getLogger("ServerApp").error(
-            f"Exception while trying to launch kernel via Gateway URL {GatewayClient.instance().url} , {e}",
+            "Exception while trying to launch kernel via Gateway URL %s: %s",
+            gateway_client.url,
             e,
         )
         raise e
 
-    if GatewayClient.instance().accept_cookies:
+    if gateway_client.accept_cookies:
         # Update cookies on GatewayClient from server if configured.
         cookie_values = response.headers.get("Set-Cookie")
         if cookie_values:
             cookie: SimpleCookie = SimpleCookie()
             cookie.load(cookie_values)
-            GatewayClient.instance().update_cookies(cookie)
+            gateway_client.update_cookies(cookie)
     return response
