@@ -810,7 +810,8 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 505, MESSAGE_KEY: str(e)}
         )
         logging.getLogger("ServerApp").error(
-            f"Exception while trying to launch kernel via Gateway URL {GatewayClient.instance().url} , {e}",
+            "Exception while trying to launch kernel via Gateway URL %s: %s",
+            GatewayClient.instance().url,
             e,
         )
         raise e
