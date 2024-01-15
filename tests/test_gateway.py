@@ -715,20 +715,21 @@ async def test_websocket_connection_closed(init_gateway, jp_serverapp, jp_fetch,
     handler.ws_connection.is_closing = lambda: True
 
     # Create the GatewayWebSocketConnection and attach it to the handler...
-    conn = GatewayWebSocketConnection(parent=km, websocket_handler=handler)
-    handler.connection = conn
-    await conn.connect()
+    with mocked_gateway:
+        conn = GatewayWebSocketConnection(parent=km, websocket_handler=handler)
+        handler.connection = conn
+        await conn.connect()
 
-    # Processing websocket messages happens in separate coroutines and any
-    # errors in that process will show up in logs, but not bubble up to the
-    # caller.
-    #
-    # To check for these, we wait for the server to stop and then check the
-    # logs for errors.
-    await jp_serverapp._cleanup()
-    for _, level, message in caplog.record_tuples:
-        if level >= logging.ERROR:
-            pytest.fail(f"Logs contain an error: {message}")
+        # Processing websocket messages happens in separate coroutines and any
+        # errors in that process will show up in logs, but not bubble up to the
+        # caller.
+        #
+        # To check for these, we wait for the server to stop and then check the
+        # logs for errors.
+        await jp_serverapp._cleanup()
+        for _, level, message in caplog.record_tuples:
+            if level >= logging.ERROR:
+                pytest.fail(f"Logs contain an error: {message}")
 
 
 #

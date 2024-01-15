@@ -1,7 +1,9 @@
+import asyncio
 import json
 from io import StringIO
 from logging import StreamHandler
 from typing import Any
+from unittest import mock
 
 import pytest
 from traitlets.config import Config
@@ -121,12 +123,14 @@ OPEN_BROWSER_COMBINATIONS: Any = (
 
 @pytest.mark.parametrize("expected_value, config", OPEN_BROWSER_COMBINATIONS)
 async def test_browser_open(monkeypatch, jp_environ, config, expected_value):
-    serverapp = MockExtensionApp.initialize_server(config=Config(config))
+    with mock.patch("jupyter_server.serverapp.ServerApp.init_httpserver"):
+        serverapp = MockExtensionApp.initialize_server(config=Config(config))
     assert serverapp.open_browser == expected_value
 
 
 async def test_load_parallel_extensions(monkeypatch, jp_environ):
-    serverapp = MockExtensionApp.initialize_server()
+    with mock.patch("jupyter_server.serverapp.ServerApp.init_httpserver"):
+        serverapp = MockExtensionApp.initialize_server()
     exts = serverapp.extension_manager.extensions
     assert "tests.extension.mockextensions.mock1" in exts
     assert "tests.extension.mockextensions" in exts
