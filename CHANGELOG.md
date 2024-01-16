@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.12.5
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.12.4...a3a9d3deea7a798d13fe09a41e53f6f825caf21b))
+
+### Maintenance and upkeep improvements
+
+- Improve warning handling [#1386](https://github.com/jupyter-server/jupyter_server/pull/1386) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-01-11&to=2024-01-16&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2024-01-11..2024-01-16&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.12.4
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.12.3...7bb21b45392c889b5c87eb0d1b48662a497ba15a))
@@ -17,8 +33,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-01-09&to=2024-01-11&type=c))
 
 [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2024-01-09..2024-01-11&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.12.3
 
