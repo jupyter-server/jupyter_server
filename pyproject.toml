@@ -239,13 +239,7 @@ timeout = 100
 timeout_method = "thread"
 filterwarnings = [
   "error",
-  "ignore:Passing a schema to Validator.iter_errors:DeprecationWarning",
-  "ignore:run_pre_save_hook is deprecated:DeprecationWarning",
-  "always:unclosed <socket.socket:ResourceWarning",
-  "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
-  "ignore:jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0:DeprecationWarning",
-  "ignore:datetime.datetime.utc:DeprecationWarning:dateutil",
-  "ignore:datetime.datetime.utc:DeprecationWarning:tornado",
+  "ignore:datetime.datetime.utc:DeprecationWarning",
   "module:add_callback_from_signal is deprecated:DeprecationWarning",
 ]
 

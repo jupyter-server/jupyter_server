@@ -1,5 +1,10 @@
 import os
 
+# isort: off
+# This must come before any Jupyter imports.
+os.environ["JUPYTER_PLATFORM_DIRS"] = "1"
+# isort: on
+
 import pytest
 from nbformat import writes
 from nbformat.v4 import new_notebook
