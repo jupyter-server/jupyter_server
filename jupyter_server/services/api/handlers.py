@@ -117,20 +117,12 @@ class PathResolverHandler(APIHandler):
         """Resolve the path."""
         path = self.get_query_argument("path")
         kernel_uuid = self.get_query_argument("kernel", default=None)
-
-        scopes = [
-            self.contents_manager,
-            # TODO vs multi_kernel_manager?
-            # TODO: kernel lives in client so we may need to implement it there.
-            self.kernel_manager.get_kernel(kernel_uuid),
-            # *self.get_additional_scopes(kernel_uuid)
-        ]
-        # TODO: maybe client should be able to define their own scope? this way
-        # ipykernel can return {"scope": "source"} or {scope: 'kernel'}
-        # TODO: how to plug in the additional scopes? a traitlet? maybe...
+        scopes = {"server": self.contents_manager}
+        if kernel_uuid:
+            scopes["kernel"] = self.kernel_manager.get_kernel(kernel_uuid)
         resolved = [
-            {"scope": scope, "path": await scope.resolve_path(path)}
-            for scope in scopes
+            {"scope": name, "path": await ensure_async(scope.resolve_path(path))}
+            for name, scope in scopes.items()
             if hasattr(scope, "resolve_path")
         ]
         response = {"resolved": [entry for entry in resolved if entry["path"] is not None]}
