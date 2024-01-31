@@ -352,6 +352,26 @@ paths:
       responses:
         204:
           description: Checkpoint deleted
+  /api/resolvePath:
+    parameters:
+      - name: path
+        required: true
+        in: query
+        description: file path
+        type: string
+      - name: kernel_id
+        required: false
+        in: query
+        description: kernel uuid
+        type: string
+        format: uuid
+    get:
+      summary: Resolve path to a file
+      responses:
+        200:
+          description: Resolved path with scope details
+          schema:
+            $ref: "#/definitions/ResolvedPath"
   /api/sessions/{session}:
     parameters:
       - $ref: "#/parameters/session"
@@ -947,3 +967,24 @@ definitions:
           ISO 8601 timestamp for the last-seen activity on this terminal.  Use
           this to identify which terminals have been inactive since a given time.
           Timestamps will be UTC, indicated 'Z' suffix.
+  ResolvedPath:
+    description: Resolved file path details
+    type: object
+    required:
+      - resolved
+    properties:
+      resolved:
+        type: array
+        description: array of paths to which the query path resolves
+        items:
+          type: object
+          required:
+            - scope
+            - path
+          properties:
+            scope:
+              type: string
+              description: the scope which owns the path
+            path:
+              type: string
+              description: fully specified path for file
