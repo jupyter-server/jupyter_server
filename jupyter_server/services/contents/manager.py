@@ -875,7 +875,7 @@ class AsyncContentsManager(ContentsManager):
 
     async def resolve_path(self, path: str):
         """Resolve path relative to root resource."""
-        return None
+        return
 
     async def delete(self, path):
         """Delete a file/directory and any associated checkpoints."""
