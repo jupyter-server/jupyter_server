@@ -2268,7 +2268,7 @@ class ServerApp(JupyterApp):
         info(self.running_server_info())
         yes = _i18n("y")
         no = _i18n("n")
-        sys.stdout.write(_i18n("Shutdown this Jupyter server (%s/[%s])? ") % (yes, no))
+        sys.stdout.write(_i18n("Shut down this Jupyter server (%s/[%s])? ") % (yes, no))
         sys.stdout.flush()
         r, w, x = select.select([sys.stdin], [], [], 5)
         if r:
