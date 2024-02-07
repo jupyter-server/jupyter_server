@@ -1525,7 +1525,7 @@ class ServerApp(JupyterApp):
 
     websocket_ping_interval = Integer(
         config=True,
-        help='''
+        help="""
             Configure the websocket ping interval in seconds.
 
             Websockets are long-lived connections that are used by some Jupyter
@@ -1538,15 +1538,15 @@ class ServerApp(JupyterApp):
             When a ping is sent, the client has ``websocket_ping_timeout``
             seconds to respond. If no response is received within this period,
             the connection will be closed from the server side.
-        ''',
+        """,
     )
     websocket_ping_timeout = Integer(
         config=True,
-        help='''
+        help="""
             Configure the websocket ping timeout in seconds.
 
             See ``websocket_ping_interval`` for details.
-        ''',
+        """,
     )
 
     config_manager_class = Type(
