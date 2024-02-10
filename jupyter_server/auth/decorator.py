@@ -85,3 +85,30 @@ def authorized(
         return cast(FuncT, wrapper(method))
 
     return cast(FuncT, wrapper)
+
+
+def allow_unauthenticated(method: FuncT) -> FuncT:
+    """A decorator for tornado.web.RequestHandler methods
+    that allows any user to make the following request.
+
+    Selectively disables the 'authentication' layer of REST API which
+    is active when `ServerApp.allow_unauthenticated_access = False`.
+
+    To be used exclusively on endpoints which may be considered public,
+    for example the logic page handler.
+
+    .. versionadded:: 2.13
+
+    Parameters
+    ----------
+    method : bound callable
+        the endpoint method to remove authentication from.
+    """
+
+    @wraps(method)
+    async def wrapper(self, *args, **kwargs):
+        return method(self, *args, **kwargs)
+
+    setattr(wrapper, "__allow_unauthenticated", True)
+
+    return cast(FuncT, wrapper)

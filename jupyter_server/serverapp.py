@@ -1214,6 +1214,21 @@ class ServerApp(JupyterApp):
         """,
     )
 
+    allow_unauthenticated_access = Bool(
+        True,
+        config=True,
+        help="""Allow requests unauthenticated access to endpoints without authentication rules.
+
+        When set to `True` (default in jupyter-server 2.0, subject to change
+        in the future), any request to an endpoint without an authentication rule
+        (either `@tornado.web.authenticated`, or `@allow_unauthenticated`)
+        will be permitted, regardless of whether user has logged in or not.
+
+        When set to `False`, logging in will be required for access to each endpoint,
+        excluding the endpoints marked with `@allow_unauthenticated` decorator.
+        """,
+    )
+
     allow_remote_access = Bool(
         config=True,
         help="""Allow requests where the Host header doesn't point to a local server

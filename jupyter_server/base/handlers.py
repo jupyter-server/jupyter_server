@@ -630,6 +630,16 @@ class JupyterHandler(AuthenticatedHandler):
         self.set_cors_headers()
         if self.request.method not in {"GET", "HEAD", "OPTIONS"}:
             self.check_xsrf_cookie()
+
+        if not self.settings.get("allow_unauthenticated_access", False):
+            if not self.request.method:
+                raise HTTPError(403)
+            method = getattr(self, self.request.method.lower())
+            if not getattr(method, "__allow_unauthenticated", False):
+                # reuse `web.authenticated` logic, which redirects to the login
+                # page on GET and HEAD and otherwise raises 403
+                return web.authenticated(lambda _method: None)(self)
+
         return super().prepare()
 
     # ---------------------------------------------------------------

@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 from tornado.escape import url_escape
 
 from ..base.handlers import JupyterHandler
+from .decorator import allow_unauthenticated
 from .security import passwd_check, set_password
 
 
@@ -73,6 +74,7 @@ class LoginFormHandler(JupyterHandler):
                 url = default
         self.redirect(url)
 
+    @allow_unauthenticated
     def get(self):
         """Get the login form."""
         if self.current_user:
@@ -81,6 +83,7 @@ class LoginFormHandler(JupyterHandler):
         else:
             self._render()
 
+    @allow_unauthenticated
     def post(self):
         """Post a login."""
         user = self.current_user = self.identity_provider.process_login_form(self)
@@ -110,6 +113,7 @@ class LegacyLoginHandler(LoginFormHandler):
         """Check a passwd."""
         return passwd_check(a, b)
 
+    @allow_unauthenticated
     def post(self):
         """Post a login form."""
         typed_password = self.get_argument("password", default="")
