@@ -370,6 +370,7 @@ class ServerWebApplication(web.Application):
             "login_url": url_path_join(base_url, "/login"),
             "xsrf_cookies": True,
             "disable_check_xsrf": jupyter_app.disable_check_xsrf,
+            "allow_unauthenticated_access": jupyter_app.allow_unauthenticated_access,
             "allow_remote_access": jupyter_app.allow_remote_access,
             "local_hostnames": jupyter_app.local_hostnames,
             "authenticate_prometheus": jupyter_app.authenticate_prometheus,

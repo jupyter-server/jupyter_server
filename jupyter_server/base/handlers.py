@@ -29,7 +29,7 @@ import jupyter_server
 from jupyter_server import CallContext
 from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
-from jupyter_server.auth.decorator import authorized
+from jupyter_server.auth.decorator import allow_unauthenticated, authorized
 from jupyter_server.auth.identity import User
 from jupyter_server.i18n import combine_translations
 from jupyter_server.services.security import csp_report_uri
@@ -804,6 +804,7 @@ class APIHandler(JupyterHandler):
         self.set_header("Content-Type", set_content_type)
         return super().finish(*args, **kwargs)
 
+    @allow_unauthenticated
     def options(self, *args: Any, **kwargs: Any) -> None:
         """Get the options."""
         if "Access-Control-Allow-Headers" in self.settings.get("headers", {}):
@@ -1012,6 +1013,18 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
         """Compute the etag."""
         return None
 
+    # access is allowed as this class is used to serve static assets on login page
+    # TODO: create an allow-list of files used on login page and remove this decorator
+    @allow_unauthenticated
+    def get(self, *args, **kwargs) -> None:
+        return super().get(*args, **kwargs)
+
+    # access is allowed as this class is used to serve static assets on login page
+    # TODO: create an allow-list of files used on login page and remove this decorator
+    @allow_unauthenticated
+    def head(self, *args, **kwargs) -> None:
+        return super().head(*args, **kwargs)
+
     @classmethod
     def get_absolute_path(cls, roots: Sequence[str], path: str) -> str:
         """locate a file to serve on our static file search path"""
@@ -1046,6 +1059,7 @@ class APIVersionHandler(APIHandler):
 
     _track_activity = False
 
+    @allow_unauthenticated
     def get(self) -> None:
         """Get the server version info."""
         # not authenticated, so give as few info as possible
@@ -1058,6 +1072,7 @@ class TrailingSlashHandler(web.RequestHandler):
     This should be the first, highest priority handler.
     """
 
+    # does not require `allow_unauthenticated` (inherits from `web.RequestHandler`)
     def get(self) -> None:
         """Handle trailing slashes in a get."""
         assert self.request.uri is not None
@@ -1074,6 +1089,7 @@ class TrailingSlashHandler(web.RequestHandler):
 class MainHandler(JupyterHandler):
     """Simple handler for base_url."""
 
+    @allow_unauthenticated
     def get(self) -> None:
         """Get the main template."""
         html = self.render_template("main.html")
@@ -1114,6 +1130,7 @@ class FilesRedirectHandler(JupyterHandler):
         self.log.debug("Redirecting %s to %s", self.request.path, url)
         self.redirect(url)
 
+    @web.authenticated
     async def get(self, path: str = "") -> None:
         return await self.redirect_to_files(self, path)
 
@@ -1126,6 +1143,7 @@ class RedirectWithParams(web.RequestHandler):
         self._url = url
         self._permanent = permanent
 
+    # does not require `allow_unauthenticated` (inherits from `web.RequestHandler`)
     def get(self) -> None:
         """Get a redirect."""
         sep = "&" if "?" in self._url else "?"
@@ -1138,6 +1156,7 @@ class PrometheusMetricsHandler(JupyterHandler):
     Return prometheus metrics for this server
     """
 
+    @allow_unauthenticated
     def get(self) -> None:
         """Get prometheus metrics."""
         if self.settings["authenticate_prometheus"] and not self.logged_in:
