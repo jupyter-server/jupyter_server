@@ -106,12 +106,8 @@ def allow_unauthenticated(method: FuncT) -> FuncT:
     """
 
     @wraps(method)
-    async def wrapper(self, *args, **kwargs):
-        out = method(self, *args, **kwargs)
-        # If the method is a coroutine, await it
-        if asyncio.iscoroutine(out):
-            return await out
-        return out
+    def wrapper(self, *args, **kwargs):
+        return method(self, *args, **kwargs)
 
     setattr(wrapper, "__allow_unauthenticated", True)
 
