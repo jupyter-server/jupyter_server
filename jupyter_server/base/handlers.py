@@ -1130,7 +1130,7 @@ class FilesRedirectHandler(JupyterHandler):
         self.log.debug("Redirecting %s to %s", self.request.path, url)
         self.redirect(url)
 
-    @web.authenticated
+    @allow_unauthenticated
     async def get(self, path: str = "") -> None:
         return await self.redirect_to_files(self, path)
 
