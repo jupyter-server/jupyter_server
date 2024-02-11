@@ -89,12 +89,12 @@ async def test_jupyter_handler_auth_permissive(jp_serverapp, jp_fetch):
         ],
     )
 
-    # should allow access by default when no authentication rules are set up
-    res = await jp_fetch("no-rules", method="OPTIONS", headers={"Authorization": ""})
+    # should always permit access when `@allow_unauthenticated` is used
+    res = await jp_fetch("permissive", method="OPTIONS", headers={"Authorization": ""})
     assert res.code == 200
 
-    # should allow access by default when `@allow_unauthenticated` is used
-    res = await jp_fetch("permissive", method="OPTIONS", headers={"Authorization": ""})
+    # should allow access when no authentication rules are set up
+    res = await jp_fetch("no-rules", method="OPTIONS", headers={"Authorization": ""})
     assert res.code == 200
 
 
@@ -111,7 +111,7 @@ async def test_jupyter_handler_auth_required(jp_serverapp, jp_fetch):
         ],
     )
 
-    # should permit access when `@allow_unauthenticated` is used
+    # should always permit access when `@allow_unauthenticated` is used
     res = await jp_fetch("permissive", method="OPTIONS", headers={"Authorization": ""})
     assert res.code == 200
 
