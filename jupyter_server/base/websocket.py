@@ -3,7 +3,7 @@ import re
 from typing import Optional, no_type_check
 from urllib.parse import urlparse
 
-from tornado import ioloop
+from tornado import ioloop, web
 from tornado.iostream import IOStream
 
 # ping interval for keeping websockets alive (30 seconds)
@@ -81,6 +81,26 @@ class WebSocketMixin:
 
     def clear_cookie(self, *args, **kwargs):
         """meaningless for websockets"""
+
+    @no_type_check
+    def _maybe_auth(self):
+        """Verify authentication if required"""
+        if not self.settings.get("allow_unauthenticated_access", False):
+            if not self.request.method:
+                raise web.HTTPError(403)
+            method = getattr(self, self.request.method.lower())
+            if not getattr(method, "__allow_unauthenticated", False):
+                # rather than re-using `web.authenticated` which also redirects
+                # to login page on GET, just raise 403 if user is not known
+                user = self.current_user
+                if user is None:
+                    self.log.warning("Couldn't authenticate WebSocket connection")
+                    raise web.HTTPError(403)
+
+    def prepare(self, *args, **kwargs):
+        """Handle a get request."""
+        self._maybe_auth()
+        return super().prepare(*args, **kwargs)
 
     @no_type_check
     def open(self, *args, **kwargs):

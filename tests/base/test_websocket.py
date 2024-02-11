@@ -4,12 +4,15 @@ import time
 from unittest.mock import MagicMock
 
 import pytest
+from tornado.httpclient import HTTPClientError
 from tornado.httpserver import HTTPRequest
 from tornado.httputil import HTTPHeaders
 from tornado.websocket import WebSocketClosedError, WebSocketHandler
 
+from jupyter_server.auth.decorator import allow_unauthenticated
 from jupyter_server.base.websocket import WebSocketMixin
 from jupyter_server.serverapp import ServerApp
+from jupyter_server.utils import url_path_join
 
 
 class MockHandler(WebSocketMixin, WebSocketHandler):
@@ -60,3 +63,58 @@ async def test_ping_client_timeout(mixin):
     mixin.send_ping()
     with pytest.raises(WebSocketClosedError):
         mixin.write_message("hello")
+
+
+class NoAuthRulesWebsocketHandler(MockHandler):
+    pass
+
+
+class PermissiveWebsocketHandler(MockHandler):
+    @allow_unauthenticated
+    def get(self, *args, **kwargs) -> None:
+        return super().get(*args, **kwargs)
+
+
+@pytest.mark.parametrize(
+    "jp_server_config", [{"ServerApp": {"allow_unauthenticated_access": True}}]
+)
+async def test_websocket_auth_permissive(jp_serverapp, jp_ws_fetch):
+    app: ServerApp = jp_serverapp
+    app.web_app.add_handlers(
+        ".*$",
+        [
+            (url_path_join(app.base_url, "no-rules"), NoAuthRulesWebsocketHandler),
+            (url_path_join(app.base_url, "permissive"), PermissiveWebsocketHandler),
+        ],
+    )
+
+    # should always permit access when `@allow_unauthenticated` is used
+    ws = await jp_ws_fetch("permissive", headers={"Authorization": ""})
+    ws.close()
+
+    # should allow access when no authentication rules are set up
+    ws = await jp_ws_fetch("no-rules", headers={"Authorization": ""})
+    ws.close()
+
+
+@pytest.mark.parametrize(
+    "jp_server_config", [{"ServerApp": {"allow_unauthenticated_access": False}}]
+)
+async def test_websocket_auth_required(jp_serverapp, jp_ws_fetch):
+    app: ServerApp = jp_serverapp
+    app.web_app.add_handlers(
+        ".*$",
+        [
+            (url_path_join(app.base_url, "no-rules"), NoAuthRulesWebsocketHandler),
+            (url_path_join(app.base_url, "permissive"), PermissiveWebsocketHandler),
+        ],
+    )
+
+    # should always permit access when `@allow_unauthenticated` is used
+    ws = await jp_ws_fetch("permissive", headers={"Authorization": ""})
+    ws.close()
+
+    # should forbid access when no authentication rules are set up
+    with pytest.raises(HTTPClientError) as exception:
+        ws = await jp_ws_fetch("no-rules", headers={"Authorization": ""})
+    assert exception.value.code == 403
