@@ -41,6 +41,7 @@ from tornado import httpserver, ioloop, web
 from tornado.httputil import url_concat
 from tornado.log import LogFormatter, access_log, app_log, gen_log
 from tornado.netutil import bind_sockets
+from tornado.routing import Matcher, Rule
 
 if not sys.platform.startswith("win"):
     from tornado.netutil import bind_unix_socket
@@ -280,7 +281,51 @@ class ServerWebApplication(web.Application):
         )
         handlers = self.init_handlers(default_services, settings)
 
+        undecorated_methods = []
+        for matcher, handler, *_ in handlers:
+            undecorated_methods.extend(self._check_handler_auth(matcher, handler))
+
+        if undecorated_methods:
+            message = (
+                "Core endpoints without @allow_unauthenticated, @ws_authenticated, nor @web.authenticated:\n"
+                + "\n".join(undecorated_methods)
+            )
+            if jupyter_app.allow_unauthenticated_access:
+                warnings.warn(
+                    message,
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+            else:
+                raise Exception(message)
+
         super().__init__(handlers, **settings)
+
+    def add_handlers(self, host_pattern, host_handlers):
+        undecorated_methods = []
+        for rule in host_handlers:
+            if isinstance(rule, Rule):
+                matcher = rule.matcher
+                handler = rule.target
+            else:
+                matcher, handler, *_ = rule
+            undecorated_methods.extend(self._check_handler_auth(matcher, handler))
+
+        if undecorated_methods:
+            message = (
+                "Extension endpoints without @allow_unauthenticated, @ws_authenticated, nor @web.authenticated:\n"
+                + "\n".join(undecorated_methods)
+            )
+            if self.settings["allow_unauthenticated_access"]:
+                warnings.warn(
+                    message,
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+            else:
+                raise Exception(message)
+
+        return super().add_handlers(host_pattern, host_handlers)
 
     def init_settings(
         self,
@@ -486,6 +531,21 @@ class ServerWebApplication(web.Application):
         )
         sources.extend(self.settings["last_activity_times"].values())
         return max(sources)
+
+    def _check_handler_auth(self, matcher: t.Union[str, Matcher], handler: web.RequestHandler):
+        missing_authentication = []
+        for method_name in handler.SUPPORTED_METHODS:
+            method = getattr(handler, method_name.lower())
+            is_unimplemented = method == web.RequestHandler._unimplemented_method
+            is_allowlisted = hasattr(method, "__allow_unauthenticated")
+            possibly_blocklisted = hasattr(
+                method, "__wrapped__"
+            )  # TODO: can we make web.auth leave a better footprint?
+            if not is_unimplemented and not is_allowlisted and not possibly_blocklisted:
+                missing_authentication.append(
+                    f"- {method_name} of {handler.__class__.__name__} registered for {matcher}"
+                )
+        return missing_authentication
 
 
 class JupyterPasswordApp(JupyterApp):

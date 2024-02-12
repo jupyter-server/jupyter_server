@@ -27,6 +27,11 @@ class APISpecHandler(web.StaticFileHandler, JupyterHandler):
 
     @web.authenticated
     @authorized
+    def head(self):
+        return self.get("api.yaml", include_body=False)
+
+    @web.authenticated
+    @authorized
     def get(self):
         """Get the API spec."""
         self.log.warning("Serving api spec (experimental, incomplete)")

@@ -358,7 +358,7 @@ class ExtensionApp(JupyterApp):
             )
             new_handlers.append(handler)
 
-        webapp.add_handlers(".*$", new_handlers)  # type:ignore[arg-type]
+        webapp.add_handlers(".*$", new_handlers)
 
     def _prepare_templates(self):
         """Add templates to web app settings if extension has templates."""

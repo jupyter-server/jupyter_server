@@ -97,6 +97,7 @@ class WebSocketMixin:
                     self.log.warning("Couldn't authenticate WebSocket connection")
                     raise web.HTTPError(403)
 
+    @no_type_check
     def prepare(self, *args, **kwargs):
         """Handle a get request."""
         self._maybe_auth()

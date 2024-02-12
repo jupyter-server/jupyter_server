@@ -112,3 +112,31 @@ def allow_unauthenticated(method: FuncT) -> FuncT:
     setattr(wrapper, "__allow_unauthenticated", True)
 
     return cast(FuncT, wrapper)
+
+
+def ws_authenticated(method: FuncT) -> FuncT:
+    """A decorator for websockets derived from `WebSocketHandler`
+    that authenticates user before allowing to proceed.
+
+    Differently from tornado.web.authenticated, does not redirect
+    to the login page, which would be meaningless for websockets.
+
+    .. versionadded:: 2.13
+
+    Parameters
+    ----------
+    method : bound callable
+        the endpoint method to add authentication for.
+    """
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        user = self.current_user
+        if user is None:
+            self.log.warning("Couldn't authenticate WebSocket connection")
+            raise HTTPError(403)
+        return method(self, *args, **kwargs)
+
+    setattr(wrapper, "__allow_unauthenticated", False)
+
+    return cast(FuncT, wrapper)

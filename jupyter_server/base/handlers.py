@@ -14,7 +14,7 @@ import types
 import warnings
 from http.client import responses
 from logging import Logger
-from typing import TYPE_CHECKING, Any, Awaitable, Sequence, cast
+from typing import TYPE_CHECKING, Any, Awaitable, Coroutine, Sequence, cast
 from urllib.parse import urlparse
 
 import prometheus_client
@@ -1016,14 +1016,14 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
     # access is allowed as this class is used to serve static assets on login page
     # TODO: create an allow-list of files used on login page and remove this decorator
     @allow_unauthenticated
-    def get(self, *args, **kwargs) -> None:
-        return super().get(*args, **kwargs)
+    def get(self, path: str, include_body: bool = True) -> Coroutine[Any, Any, None]:
+        return super().get(path, include_body)
 
     # access is allowed as this class is used to serve static assets on login page
     # TODO: create an allow-list of files used on login page and remove this decorator
     @allow_unauthenticated
-    def head(self, *args, **kwargs) -> None:
-        return super().head(*args, **kwargs)
+    def head(self, path: str) -> Awaitable[None]:
+        return super().head(path)
 
     @classmethod
     def get_absolute_path(cls, roots: Sequence[str], path: str) -> str:
@@ -1072,7 +1072,7 @@ class TrailingSlashHandler(web.RequestHandler):
     This should be the first, highest priority handler.
     """
 
-    # does not require `allow_unauthenticated` (inherits from `web.RequestHandler`)
+    @allow_unauthenticated
     def get(self) -> None:
         """Handle trailing slashes in a get."""
         assert self.request.uri is not None
@@ -1136,14 +1136,14 @@ class FilesRedirectHandler(JupyterHandler):
 
 
 class RedirectWithParams(web.RequestHandler):
-    """Sam as web.RedirectHandler, but preserves URL parameters"""
+    """Same as web.RedirectHandler, but preserves URL parameters"""
 
     def initialize(self, url: str, permanent: bool = True) -> None:
         """Initialize a redirect handler."""
         self._url = url
         self._permanent = permanent
 
-    # does not require `allow_unauthenticated` (inherits from `web.RequestHandler`)
+    @allow_unauthenticated
     def get(self) -> None:
         """Get a redirect."""
         sep = "&" if "?" in self._url else "?"
@@ -1166,6 +1166,18 @@ class PrometheusMetricsHandler(JupyterHandler):
         self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
 
 
+class PublicStaticFileHandler(web.StaticFileHandler):
+    """Same as web.StaticFileHandler, but decorated to acknowledge that auth is not required."""
+
+    @allow_unauthenticated
+    def head(self, path: str) -> Awaitable[None]:
+        return super().head(path)
+
+    @allow_unauthenticated
+    def get(self, path: str, include_body: bool = True) -> Coroutine[Any, Any, None]:
+        return super().get(path, include_body)
+
+
 # -----------------------------------------------------------------------------
 # URL pattern fragments for reuse
 # -----------------------------------------------------------------------------
@@ -1181,6 +1193,6 @@ path_regex = r"(?P<path>(?:(?:/[^/]+)+|/?))"
 default_handlers = [
     (r".*/", TrailingSlashHandler),
     (r"api", APIVersionHandler),
-    (r"/(robots\.txt|favicon\.ico)", web.StaticFileHandler),
+    (r"/(robots\.txt|favicon\.ico)", PublicStaticFileHandler),
     (r"/metrics", PrometheusMetricsHandler),
 ]
