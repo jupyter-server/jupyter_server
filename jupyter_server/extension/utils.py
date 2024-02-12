@@ -110,7 +110,7 @@ def validate_extension(name):
     hook or metadata field.
     An extension is valid if:
     1) name is an importable Python package.
-    1) the package has a _jupyter_server_extension_paths function
+    1) the package has a _jupyter_server_extension_points function
     2) each extension path has a _load_jupyter_server_extension function
 
     If this works, nothing should happen.
