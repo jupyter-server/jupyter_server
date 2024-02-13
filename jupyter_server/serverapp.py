@@ -538,10 +538,9 @@ class ServerWebApplication(web.Application):
             method = getattr(handler, method_name.lower())
             is_unimplemented = method == web.RequestHandler._unimplemented_method
             is_allowlisted = hasattr(method, "__allow_unauthenticated")
-            possibly_blocklisted = hasattr(
-                method, "__wrapped__"
-            )  # TODO: can we make web.auth leave a better footprint?
-            if not is_unimplemented and not is_allowlisted and not possibly_blocklisted:
+            # TODO: modify `tornado.web.authenticated` upstream?
+            is_blocklisted = method.__code__.co_qualname.startswith("authenticated")
+            if not is_unimplemented and not is_allowlisted and not is_blocklisted:
                 missing_authentication.append(
                     f"- {method_name} of {handler.__name__} registered for {matcher}"
                 )
