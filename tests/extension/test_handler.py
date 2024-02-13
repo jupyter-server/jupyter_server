@@ -22,12 +22,30 @@ async def test_handler_template(jp_fetch, mock_template):
 
 
 @pytest.mark.parametrize(
-    "jp_server_config", [{"ServerApp": {"allow_unauthenticated_access": False}}]
+    "jp_server_config",
+    [
+        {
+            "ServerApp": {
+                "allow_unauthenticated_access": False,
+                "jpserver_extensions": {"tests.extension.mockextensions": True},
+            }
+        }
+    ],
 )
-async def test_handler_gets_blocked(jp_fetch):
-    with pytest.raises(HTTPClientError) as exception:
-        await jp_fetch("mock", method="GET")
-    assert exception.value.code == 403
+async def test_handler_gets_blocked(jp_fetch, jp_server_config):
+    # should redirect to login page if authorization token is missing
+    r = await jp_fetch(
+        "mock",
+        method="GET",
+        headers={"Authorization": ""},
+        follow_redirects=False,
+        raise_error=False,
+    )
+    assert r.code == 302
+    assert "/login" in r.headers["Location"]
+    # should still work if authorization token is present
+    r = await jp_fetch("mock", method="GET")
+    assert r.code == 200
 
 
 def test_serverapp_warns_of_unauthenticated_handler(jp_configurable_serverapp):

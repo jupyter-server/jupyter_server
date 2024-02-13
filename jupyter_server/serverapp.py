@@ -116,6 +116,7 @@ from jupyter_server.services.kernels.kernelmanager import (
 )
 from jupyter_server.services.sessions.sessionmanager import SessionManager
 from jupyter_server.utils import (
+    JupyterServerAuthWarning,
     check_pid,
     fetch,
     unix_socket_in_use,
@@ -256,7 +257,7 @@ class ServerWebApplication(web.Application):
             warnings.warn(
                 "authorizer unspecified. Using permissive AllowAllAuthorizer."
                 " Specify an authorizer to avoid this message.",
-                RuntimeWarning,
+                JupyterServerAuthWarning,
                 stacklevel=2,
             )
             authorizer = AllowAllAuthorizer(parent=jupyter_app, identity_provider=identity_provider)
@@ -293,7 +294,7 @@ class ServerWebApplication(web.Application):
             if jupyter_app.allow_unauthenticated_access:
                 warnings.warn(
                     message,
-                    RuntimeWarning,
+                    JupyterServerAuthWarning,
                     stacklevel=2,
                 )
             else:
@@ -318,7 +319,7 @@ class ServerWebApplication(web.Application):
             )
             warnings.warn(
                 message,
-                RuntimeWarning,
+                JupyterServerAuthWarning,
                 stacklevel=2,
             )
 

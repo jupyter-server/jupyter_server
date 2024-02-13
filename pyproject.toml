@@ -241,6 +241,7 @@ filterwarnings = [
   "error",
   "ignore:datetime.datetime.utc:DeprecationWarning",
   "module:add_callback_from_signal is deprecated:DeprecationWarning",
+  "ignore::jupyter_server.utils.JupyterServerAuthWarning"
 ]
 
 [tool.coverage.report]

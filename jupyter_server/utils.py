@@ -439,3 +439,7 @@ def import_item(name: str) -> Any:
     else:
         # called with un-dotted string
         return __import__(parts[0])
+
+
+class JupyterServerAuthWarning(RuntimeWarning):
+    """A subclass of runtime warnings to allow for filtering in tests"""
