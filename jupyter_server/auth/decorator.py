@@ -95,7 +95,7 @@ def allow_unauthenticated(method: FuncT) -> FuncT:
     is active when `ServerApp.allow_unauthenticated_access = False`.
 
     To be used exclusively on endpoints which may be considered public,
-    for example the logic page handler.
+    for example the login page handler.
 
     .. versionadded:: 2.13
 

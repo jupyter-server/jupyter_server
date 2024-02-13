@@ -442,4 +442,8 @@ def import_item(name: str) -> Any:
 
 
 class JupyterServerAuthWarning(RuntimeWarning):
-    """A subclass of runtime warnings to allow for filtering in tests"""
+    """Emitted when authentication configuration issue is detected.
+
+    Intended for filtering out expected warnings in tests, including
+    downstream tests, rather than for users to silence this warning.
+    """
