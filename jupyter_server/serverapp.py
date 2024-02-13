@@ -529,7 +529,9 @@ class ServerWebApplication(web.Application):
         sources.extend(self.settings["last_activity_times"].values())
         return max(sources)
 
-    def _check_handler_auth(self, matcher: t.Union[str, Matcher], handler: web.RequestHandler):
+    def _check_handler_auth(
+        self, matcher: t.Union[str, Matcher], handler: type[web.RequestHandler]
+    ):
         missing_authentication = []
         for method_name in handler.SUPPORTED_METHODS:
             method = getattr(handler, method_name.lower())
@@ -540,7 +542,7 @@ class ServerWebApplication(web.Application):
             )  # TODO: can we make web.auth leave a better footprint?
             if not is_unimplemented and not is_allowlisted and not possibly_blocklisted:
                 missing_authentication.append(
-                    f"- {method_name} of {handler.__class__.__name__} registered for {matcher}"
+                    f"- {method_name} of {handler.__name__} registered for {matcher}"
                 )
         return missing_authentication
 

@@ -1,4 +1,5 @@
 import pytest
+from tornado.httpclient import HTTPClientError
 
 
 @pytest.fixture()
@@ -18,6 +19,29 @@ async def test_handler(jp_fetch):
 async def test_handler_template(jp_fetch, mock_template):
     r = await jp_fetch("mock_template", method="GET")
     assert r.code == 200
+
+
+@pytest.mark.parametrize(
+    "jp_server_config", [{"ServerApp": {"allow_unauthenticated_access": False}}]
+)
+async def test_handler_gets_blocked(jp_fetch):
+    with pytest.raises(HTTPClientError) as exception:
+        await jp_fetch("mock", method="GET")
+    assert exception.value.code == 403
+
+
+def test_serverapp_warns_of_unauthenticated_handler(jp_configurable_serverapp):
+    # should warn about the handler missing decorator when unauthenticated access forbidden
+    expected_warning = "Extension endpoints without @allow_unauthenticated, @ws_authenticated, nor @web.authenticated:"
+    with pytest.warns(RuntimeWarning, match=expected_warning) as record:
+        jp_configurable_serverapp(allow_unauthenticated_access=False)
+    assert any(
+        [
+            "GET of MockExtensionTemplateHandler registered for /a%40b/mock_template"
+            in r.message.args[0]
+            for r in record
+        ]
+    )
 
 
 @pytest.mark.parametrize(
