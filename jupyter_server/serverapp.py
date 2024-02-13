@@ -311,19 +311,16 @@ class ServerWebApplication(web.Application):
                 matcher, handler, *_ = rule
             undecorated_methods.extend(self._check_handler_auth(matcher, handler))
 
-        if undecorated_methods:
+        if undecorated_methods and not self.settings["allow_unauthenticated_access"]:
             message = (
                 "Extension endpoints without @allow_unauthenticated, @ws_authenticated, nor @web.authenticated:\n"
                 + "\n".join(undecorated_methods)
             )
-            if self.settings["allow_unauthenticated_access"]:
-                warnings.warn(
-                    message,
-                    RuntimeWarning,
-                    stacklevel=2,
-                )
-            else:
-                raise Exception(message)
+            warnings.warn(
+                message,
+                RuntimeWarning,
+                stacklevel=2,
+            )
 
         return super().add_handlers(host_pattern, host_handlers)
 
