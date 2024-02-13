@@ -163,6 +163,26 @@ def test_server_password(tmp_path, jp_configurable_serverapp):
         passwd_check(sv.identity_provider.hashed_password, password)
 
 
+@pytest.mark.parametrize(
+    "env,expected",
+    [
+        ["yes", True],
+        ["Yes", True],
+        ["True", True],
+        ["true", True],
+        ["TRUE", True],
+        ["no", False],
+        ["nooo", False],
+        ["FALSE", False],
+        ["false", False],
+    ],
+)
+def test_allow_unauthenticated_env_var(jp_configurable_serverapp, env, expected):
+    with patch.dict("os.environ", {"JUPYTER_SERVER_ALLOW_UNAUTHENTICATED_ACCESS": env}):
+        app = jp_configurable_serverapp()
+        assert app.allow_unauthenticated_access == expected
+
+
 def test_list_running_servers(jp_serverapp, jp_web_app):
     servers = list(list_running_servers(jp_serverapp.runtime_dir))
     assert len(servers) >= 1

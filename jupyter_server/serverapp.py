@@ -1275,10 +1275,12 @@ class ServerApp(JupyterApp):
         """,
     )
 
+    _allow_unauthenticated_access_env = "JUPYTER_SERVER_ALLOW_UNAUTHENTICATED_ACCESS"
+
     allow_unauthenticated_access = Bool(
         True,
         config=True,
-        help="""Allow requests unauthenticated access to endpoints without authentication rules.
+        help=f"""Allow unauthenticated access to endpoints without authentication rule.
 
         When set to `True` (default in jupyter-server 2.0, subject to change
         in the future), any request to an endpoint without an authentication rule
@@ -1287,8 +1289,18 @@ class ServerApp(JupyterApp):
 
         When set to `False`, logging in will be required for access to each endpoint,
         excluding the endpoints marked with `@allow_unauthenticated` decorator.
+
+        This option can be configured using `{_allow_unauthenticated_access_env}`
+        environment variable: any non-empty value other than "true" and "yes" will
+        prevent unauthenticated access to endpoints without `@allow_unauthenticated`.
         """,
     )
+
+    @default("allow_unauthenticated_access")
+    def _allow_unauthenticated_access_default(self):
+        if os.getenv(self._allow_unauthenticated_access_env):
+            return os.environ[self._allow_unauthenticated_access_env].lower() in ["true", "yes"]
+        return True
 
     allow_remote_access = Bool(
         config=True,
