@@ -69,6 +69,9 @@ class NoAuthRulesHandler(JupyterHandler):
     def options(self) -> None:
         self.finish({})
 
+    def get(self) -> None:
+        self.finish({})
+
 
 class PermissiveHandler(JupyterHandler):
     @allow_unauthenticated
@@ -115,11 +118,20 @@ async def test_jupyter_handler_auth_required(jp_serverapp, jp_fetch):
     res = await jp_fetch("permissive", method="OPTIONS", headers={"Authorization": ""})
     assert res.code == 200
 
-    # should forbid access when no authentication rules are set up
+    # should forbid access when no authentication rules are set up:
+    # - by redirecting to login page for GET and HEAD
+    res = await jp_fetch(
+        "no-rules",
+        method="GET",
+        headers={"Authorization": ""},
+        follow_redirects=False,
+        raise_error=False,
+    )
+    assert res.code == 302
+    assert "/login" in res.headers["Location"]
+
+    # - by returning 403 immediately for other requests
     with pytest.raises(HTTPClientError) as exception:
-        # note: using OPTIONS because GET and HEAD cause redirects to login page
-        # which prevents the test from finishing; disabling `follow_redirects`
-        # is not supported by `jp_fetch` yet.
         res = await jp_fetch("no-rules", method="OPTIONS", headers={"Authorization": ""})
     assert exception.value.code == 403
 
