@@ -9,16 +9,19 @@ from unittest.mock import patch
 
 import pytest
 from jupyter_core.application import NoStart
+from tornado import web
 from traitlets import TraitError
 from traitlets.config import Config
 from traitlets.tests.utils import check_help_all_output
 
+from jupyter_server.auth.decorator import allow_unauthenticated, authorized
 from jupyter_server.auth.security import passwd_check
 from jupyter_server.serverapp import (
     JupyterPasswordApp,
     JupyterServerListApp,
     ServerApp,
     ServerWebApplication,
+    _has_tornado_web_authenticated,
     list_running_servers,
     random_ports,
 )
@@ -637,3 +640,22 @@ def test_immutable_cache_trait():
     serverapp.init_configurables()
     serverapp.init_webapp()
     assert serverapp.web_app.settings["static_immutable_cache"] == ["/test/immutable"]
+
+
+def test():
+    pass
+
+
+@pytest.mark.parametrize(
+    "method, expected",
+    [
+        [test, False],
+        [allow_unauthenticated(test), False],
+        [authorized(test), False],
+        [web.authenticated(test), True],
+        [web.authenticated(authorized(test)), True],
+        [authorized(web.authenticated(test)), False],  # wrong order!
+    ],
+)
+def test_tornado_authentication_detection(method, expected):
+    assert _has_tornado_web_authenticated(method) == expected

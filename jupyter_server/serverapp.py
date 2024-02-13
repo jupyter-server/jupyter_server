@@ -538,13 +538,31 @@ class ServerWebApplication(web.Application):
             method = getattr(handler, method_name.lower())
             is_unimplemented = method == web.RequestHandler._unimplemented_method
             is_allowlisted = hasattr(method, "__allow_unauthenticated")
-            # TODO: modify `tornado.web.authenticated` upstream?
-            is_blocklisted = method.__code__.co_qualname.startswith("authenticated")
+            is_blocklisted = _has_tornado_web_authenticated(method)
             if not is_unimplemented and not is_allowlisted and not is_blocklisted:
                 missing_authentication.append(
                     f"- {method_name} of {handler.__name__} registered for {matcher}"
                 )
         return missing_authentication
+
+
+def _has_tornado_web_authenticated(method: t.Callable[..., t.Any]) -> bool:
+    """Check if given method was decorated with @web.authenticated.
+
+    Note: it is ok if we reject on @authorized @web.authenticated
+    because the correct order is @web.authenticated @authorized.
+    """
+    if not hasattr(method, "__wrapped__"):
+        return False
+    if not hasattr(method, "__code__"):
+        return False
+    code = method.__code__
+    if hasattr(code, "co_qualname"):
+        # new in 3.11
+        return code.co_qualname.startswith("authenticated")  # type:ignore[no-any-return]
+    elif hasattr(code, "co_filename"):
+        return code.co_filename.replace("\\", "/").endswith("tornado/web.py")
+    return False
 
 
 class JupyterPasswordApp(JupyterApp):
