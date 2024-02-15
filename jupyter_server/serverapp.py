@@ -1740,7 +1740,9 @@ class ServerApp(JupyterApp):
 
     preferred_dir = Unicode(
         config=True,
-        help=trans.gettext("Preferred starting directory to use for notebooks and kernels. ServerApp.preferred_dir is deprecated in jupyter-server 2.0. Use FileContentsManager.preferred_dir instead"),
+        help=trans.gettext(
+            "Preferred starting directory to use for notebooks and kernels. ServerApp.preferred_dir is deprecated in jupyter-server 2.0. Use FileContentsManager.preferred_dir instead"
+        ),
     )
 
     @default("preferred_dir")
