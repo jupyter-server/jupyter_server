@@ -242,6 +242,8 @@ class ServerWebApplication(web.Application):
         authorizer=None,
         identity_provider=None,
         kernel_websocket_connection_class=None,
+        websocket_ping_interval=None,
+        websocket_ping_timeout=None,
     ):
         """Initialize a server web application."""
         if identity_provider is None:
@@ -279,6 +281,8 @@ class ServerWebApplication(web.Application):
             authorizer=authorizer,
             identity_provider=identity_provider,
             kernel_websocket_connection_class=kernel_websocket_connection_class,
+            websocket_ping_interval=websocket_ping_interval,
+            websocket_ping_timeout=websocket_ping_timeout,
         )
         handlers = self.init_handlers(default_services, settings)
 
@@ -344,6 +348,8 @@ class ServerWebApplication(web.Application):
         authorizer=None,
         identity_provider=None,
         kernel_websocket_connection_class=None,
+        websocket_ping_interval=None,
+        websocket_ping_timeout=None,
     ):
         """Initialize settings for the web application."""
         _template_path = settings_overrides.get(
@@ -427,6 +433,8 @@ class ServerWebApplication(web.Application):
             "identity_provider": identity_provider,
             "event_logger": event_logger,
             "kernel_websocket_connection_class": kernel_websocket_connection_class,
+            "websocket_ping_interval": websocket_ping_interval,
+            "websocket_ping_timeout": websocket_ping_timeout,
             # handlers
             "extra_services": extra_services,
             # Jupyter stuff
@@ -1620,6 +1628,32 @@ class ServerApp(JupyterApp):
             return "jupyter_server.gateway.connections.GatewayWebSocketConnection"
         return ZMQChannelsWebsocketConnection
 
+    websocket_ping_interval = Integer(
+        config=True,
+        help="""
+            Configure the websocket ping interval in seconds.
+
+            Websockets are long-lived connections that are used by some Jupyter
+            Server extensions.
+
+            Periodic pings help to detect disconnected clients and keep the
+            connection active. If this is set to None, then no pings will be
+            performed.
+
+            When a ping is sent, the client has ``websocket_ping_timeout``
+            seconds to respond. If no response is received within this period,
+            the connection will be closed from the server side.
+        """,
+    )
+    websocket_ping_timeout = Integer(
+        config=True,
+        help="""
+            Configure the websocket ping timeout in seconds.
+
+            See ``websocket_ping_interval`` for details.
+        """,
+    )
+
     config_manager_class = Type(
         default_value=ConfigManager,
         config=True,
@@ -2206,6 +2240,8 @@ class ServerApp(JupyterApp):
             authorizer=self.authorizer,
             identity_provider=self.identity_provider,
             kernel_websocket_connection_class=self.kernel_websocket_connection_class,
+            websocket_ping_interval=self.websocket_ping_interval,
+            websocket_ping_timeout=self.websocket_ping_timeout,
         )
         if self.certfile:
             self.ssl_options["certfile"] = self.certfile
