@@ -45,6 +45,14 @@ from tornado.netutil import bind_sockets
 if not sys.platform.startswith("win"):
     from tornado.netutil import bind_unix_socket
 
+if sys.platform.startswith("win"):
+    try:
+        import colorama
+
+        colorama.init()
+    except ImportError:
+        pass
+
 from traitlets import (
     Any,
     Bool,
