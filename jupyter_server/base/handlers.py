@@ -638,7 +638,7 @@ class JupyterHandler(AuthenticatedHandler):
             if not getattr(method, "__allow_unauthenticated", False):
                 # reuse `web.authenticated` logic, which redirects to the login
                 # page on GET and HEAD and otherwise raises 403
-                return web.authenticated(lambda _method: None)(self)
+                return web.authenticated(lambda _: super().prepare)(self)
 
         return super().prepare()
 

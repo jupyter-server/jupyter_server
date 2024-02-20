@@ -1,5 +1,4 @@
 import pytest
-from tornado.httpclient import HTTPClientError
 
 
 @pytest.fixture()

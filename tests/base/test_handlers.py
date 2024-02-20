@@ -1,7 +1,7 @@
 """Test Base Handlers"""
 import os
 import warnings
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from tornado.httpclient import HTTPClientError
@@ -134,6 +134,32 @@ async def test_jupyter_handler_auth_required(jp_serverapp, jp_fetch):
     with pytest.raises(HTTPClientError) as exception:
         res = await jp_fetch("no-rules", method="OPTIONS", headers={"Authorization": ""})
     assert exception.value.code == 403
+
+
+@pytest.mark.parametrize(
+    "jp_server_config", [{"ServerApp": {"allow_unauthenticated_access": False}}]
+)
+async def test_jupyter_handler_auth_calls_prepare(jp_serverapp, jp_fetch):
+    app: ServerApp = jp_serverapp
+    app.web_app.add_handlers(
+        ".*$",
+        [
+            (url_path_join(app.base_url, "no-rules"), NoAuthRulesHandler),
+            (url_path_join(app.base_url, "permissive"), PermissiveHandler),
+        ],
+    )
+
+    # should call `super.prepare()` in `@allow_unauthenticated` code path
+    with patch.object(JupyterHandler, "prepare", return_value=None) as mock:
+        res = await jp_fetch("permissive", method="OPTIONS")
+        assert res.code == 200
+        assert mock.call_count == 1
+
+    # should call `super.prepare()` in code path that checks authentication
+    with patch.object(JupyterHandler, "prepare", return_value=None) as mock:
+        res = await jp_fetch("no-rules", method="OPTIONS")
+        assert res.code == 200
+        assert mock.call_count == 1
 
 
 def test_api_handler(jp_serverapp):
