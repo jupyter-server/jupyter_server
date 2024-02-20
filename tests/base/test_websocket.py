@@ -11,9 +11,10 @@ from tornado.websocket import WebSocketClosedError, WebSocketHandler
 
 from jupyter_server.auth import IdentityProvider, User
 from jupyter_server.auth.decorator import allow_unauthenticated
+from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.base.websocket import WebSocketMixin
 from jupyter_server.serverapp import ServerApp
-from jupyter_server.utils import url_path_join
+from jupyter_server.utils import JupyterServerAuthWarning, url_path_join
 
 
 class MockHandler(WebSocketMixin, WebSocketHandler):
@@ -66,11 +67,15 @@ async def test_ping_client_timeout(mixin):
         mixin.write_message("hello")
 
 
-class NoAuthRulesWebsocketHandler(MockHandler):
+class MockJupyterHandler(MockHandler, JupyterHandler):
     pass
 
 
-class PermissiveWebsocketHandler(MockHandler):
+class NoAuthRulesWebsocketHandler(MockJupyterHandler):
+    pass
+
+
+class PermissiveWebsocketHandler(MockJupyterHandler):
     @allow_unauthenticated
     def get(self, *args, **kwargs) -> None:
         return super().get(*args, **kwargs)
@@ -148,5 +153,38 @@ async def test_websocket_auth_respsects_identity_provider(jp_serverapp, jp_ws_fe
     iidp = IndiscriminateIdentityProvider()
     # should allow access with the user set be the identity provider
     with patch.dict(jp_serverapp.web_app.settings, {"identity_provider": iidp}):
-        res = await fetch()
-        assert res.code == 200
+        ws = await fetch()
+        ws.close()
+
+
+class PermissivePlainWebsocketHandler(MockHandler):
+    # note: inherits from MockHandler not MockJupyterHandler
+    @allow_unauthenticated
+    def get(self, *args, **kwargs) -> None:
+        return super().get(*args, **kwargs)
+
+
+@pytest.mark.parametrize(
+    "jp_server_config",
+    [
+        {
+            "ServerApp": {
+                "allow_unauthenticated_access": False,
+                "identity_provider": IndiscriminateIdentityProvider(),
+            }
+        }
+    ],
+)
+async def test_websocket_auth_warns_mixin_lacks_jupyter_handler(jp_serverapp, jp_ws_fetch):
+    app: ServerApp = jp_serverapp
+    app.web_app.add_handlers(
+        ".*$",
+        [(url_path_join(app.base_url, "permissive"), PermissivePlainWebsocketHandler)],
+    )
+
+    with pytest.warns(
+        JupyterServerAuthWarning,
+        match="WebSocketMixin sub-class does not inherit from JupyterHandler",
+    ):
+        ws = await jp_ws_fetch("permissive", headers={"Authorization": ""})
+        ws.close()

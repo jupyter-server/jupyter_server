@@ -589,7 +589,7 @@ class JupyterHandler(AuthenticatedHandler):
             )
         return allow
 
-    async def prepare(self) -> Awaitable[None] | None:  # type:ignore[override]
+    async def prepare(self, *, _redirect_to_login=True) -> Awaitable[None] | None:  # type:ignore[override]
         """Prepare a response."""
         # Set the current Jupyter Handler context variable.
         CallContext.set(CallContext.JUPYTER_HANDLER, self)
@@ -636,9 +636,18 @@ class JupyterHandler(AuthenticatedHandler):
                 raise HTTPError(403)
             method = getattr(self, self.request.method.lower())
             if not getattr(method, "__allow_unauthenticated", False):
-                # reuse `web.authenticated` logic, which redirects to the login
-                # page on GET and HEAD and otherwise raises 403
-                return web.authenticated(lambda _: super().prepare)(self)
+                if _redirect_to_login:
+                    # reuse `web.authenticated` logic, which redirects to the login
+                    # page on GET and HEAD and otherwise raises 403
+                    return web.authenticated(lambda _: super().prepare())(self)
+                else:
+                    # raise 403 if user is not known without redirecting to login page
+                    user = self.current_user
+                    if user is None:
+                        self.log.warning(
+                            f"Couldn't authenticate {self.__class__.__name__} connection"
+                        )
+                        raise web.HTTPError(403)
 
         return super().prepare()
 
@@ -736,7 +745,7 @@ class JupyterHandler(AuthenticatedHandler):
 class APIHandler(JupyterHandler):
     """Base class for API handlers"""
 
-    async def prepare(self) -> None:
+    async def prepare(self) -> None:  # type:ignore[override]
         """Prepare an API response."""
         await super().prepare()
         if not self.check_origin():
@@ -848,7 +857,7 @@ class APIHandler(JupyterHandler):
 class Template404(JupyterHandler):
     """Render our 404 template"""
 
-    async def prepare(self) -> None:
+    async def prepare(self) -> None:  # type:ignore[override]
         """Prepare a 404 response."""
         await super().prepare()
         raise web.HTTPError(404)
