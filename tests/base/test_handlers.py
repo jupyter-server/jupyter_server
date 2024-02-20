@@ -8,7 +8,7 @@ from tornado.httpclient import HTTPClientError
 from tornado.httpserver import HTTPRequest
 from tornado.httputil import HTTPHeaders
 
-from jupyter_server.auth import AllowAllAuthorizer, IdentityProvider
+from jupyter_server.auth import AllowAllAuthorizer, IdentityProvider, User
 from jupyter_server.auth.decorator import allow_unauthenticated
 from jupyter_server.base.handlers import (
     APIHandler,
@@ -160,6 +160,37 @@ async def test_jupyter_handler_auth_calls_prepare(jp_serverapp, jp_fetch):
         res = await jp_fetch("no-rules", method="OPTIONS")
         assert res.code == 200
         assert mock.call_count == 1
+
+
+class IndiscriminateIdentityProvider(IdentityProvider):
+    async def get_user(self, handler):
+        return User(username="test")
+
+
+@pytest.mark.parametrize(
+    "jp_server_config", [{"ServerApp": {"allow_unauthenticated_access": False}}]
+)
+async def test_jupyter_handler_auth_respsects_identity_provider(jp_serverapp, jp_fetch):
+    app: ServerApp = jp_serverapp
+    app.web_app.add_handlers(
+        ".*$",
+        [(url_path_join(app.base_url, "no-rules"), NoAuthRulesHandler)],
+    )
+
+    def fetch():
+        return jp_fetch("no-rules", method="OPTIONS", headers={"Authorization": ""})
+
+    # If no identity provider is set the following request should fail
+    # because the default tornado user would not be found:
+    with pytest.raises(HTTPClientError) as exception:
+        await fetch()
+    assert exception.value.code == 403
+
+    iidp = IndiscriminateIdentityProvider()
+    # should allow access with the user set be the identity provider
+    with patch.dict(jp_serverapp.web_app.settings, {"identity_provider": iidp}):
+        res = await fetch()
+        assert res.code == 200
 
 
 def test_api_handler(jp_serverapp):
