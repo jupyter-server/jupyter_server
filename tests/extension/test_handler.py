@@ -24,6 +24,47 @@ async def test_handler_template(jp_fetch, mock_template):
     "jp_server_config",
     [
         {
+            "ServerApp": {
+                "allow_unauthenticated_access": False,
+                "jpserver_extensions": {"tests.extension.mockextensions": True},
+            }
+        }
+    ],
+)
+async def test_handler_gets_blocked(jp_fetch, jp_server_config):
+    # should redirect to login page if authorization token is missing
+    r = await jp_fetch(
+        "mock",
+        method="GET",
+        headers={"Authorization": ""},
+        follow_redirects=False,
+        raise_error=False,
+    )
+    assert r.code == 302
+    assert "/login" in r.headers["Location"]
+    # should still work if authorization token is present
+    r = await jp_fetch("mock", method="GET")
+    assert r.code == 200
+
+
+def test_serverapp_warns_of_unauthenticated_handler(jp_configurable_serverapp):
+    # should warn about the handler missing decorator when unauthenticated access forbidden
+    expected_warning = "Extension endpoints without @allow_unauthenticated, @ws_authenticated, nor @web.authenticated:"
+    with pytest.warns(RuntimeWarning, match=expected_warning) as record:
+        jp_configurable_serverapp(allow_unauthenticated_access=False)
+    assert any(
+        [
+            "GET of MockExtensionTemplateHandler registered for /a%40b/mock_template"
+            in r.message.args[0]
+            for r in record
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "jp_server_config",
+    [
+        {
             "ServerApp": {"jpserver_extensions": {"tests.extension.mockextensions": True}},
             "MockExtensionApp": {
                 # Change a trait in the MockExtensionApp using

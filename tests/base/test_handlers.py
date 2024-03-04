@@ -1,12 +1,15 @@
 """Test Base Handlers"""
 import os
 import warnings
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+import pytest
+from tornado.httpclient import HTTPClientError
 from tornado.httpserver import HTTPRequest
 from tornado.httputil import HTTPHeaders
 
-from jupyter_server.auth import AllowAllAuthorizer, IdentityProvider
+from jupyter_server.auth import AllowAllAuthorizer, IdentityProvider, User
+from jupyter_server.auth.decorator import allow_unauthenticated
 from jupyter_server.base.handlers import (
     APIHandler,
     APIVersionHandler,
@@ -18,6 +21,7 @@ from jupyter_server.base.handlers import (
     RedirectWithParams,
 )
 from jupyter_server.serverapp import ServerApp
+from jupyter_server.utils import url_path_join
 
 
 def test_authenticated_handler(jp_serverapp):
@@ -59,6 +63,134 @@ def test_jupyter_handler(jp_serverapp):
     handler.settings["allow_credentials"] = True
     handler.set_cors_headers()
     assert handler.check_referer() is True
+
+
+class NoAuthRulesHandler(JupyterHandler):
+    def options(self) -> None:
+        self.finish({})
+
+    def get(self) -> None:
+        self.finish({})
+
+
+class PermissiveHandler(JupyterHandler):
+    @allow_unauthenticated
+    def options(self) -> None:
+        self.finish({})
+
+
+@pytest.mark.parametrize(
+    "jp_server_config", [{"ServerApp": {"allow_unauthenticated_access": True}}]
+)
+async def test_jupyter_handler_auth_permissive(jp_serverapp, jp_fetch):
+    app: ServerApp = jp_serverapp
+    app.web_app.add_handlers(
+        ".*$",
+        [
+            (url_path_join(app.base_url, "no-rules"), NoAuthRulesHandler),
+            (url_path_join(app.base_url, "permissive"), PermissiveHandler),
+        ],
+    )
+
+    # should always permit access when `@allow_unauthenticated` is used
+    res = await jp_fetch("permissive", method="OPTIONS", headers={"Authorization": ""})
+    assert res.code == 200
+
+    # should allow access when no authentication rules are set up
+    res = await jp_fetch("no-rules", method="OPTIONS", headers={"Authorization": ""})
+    assert res.code == 200
+
+
+@pytest.mark.parametrize(
+    "jp_server_config", [{"ServerApp": {"allow_unauthenticated_access": False}}]
+)
+async def test_jupyter_handler_auth_required(jp_serverapp, jp_fetch):
+    app: ServerApp = jp_serverapp
+    app.web_app.add_handlers(
+        ".*$",
+        [
+            (url_path_join(app.base_url, "no-rules"), NoAuthRulesHandler),
+            (url_path_join(app.base_url, "permissive"), PermissiveHandler),
+        ],
+    )
+
+    # should always permit access when `@allow_unauthenticated` is used
+    res = await jp_fetch("permissive", method="OPTIONS", headers={"Authorization": ""})
+    assert res.code == 200
+
+    # should forbid access when no authentication rules are set up:
+    # - by redirecting to login page for GET and HEAD
+    res = await jp_fetch(
+        "no-rules",
+        method="GET",
+        headers={"Authorization": ""},
+        follow_redirects=False,
+        raise_error=False,
+    )
+    assert res.code == 302
+    assert "/login" in res.headers["Location"]
+
+    # - by returning 403 immediately for other requests
+    with pytest.raises(HTTPClientError) as exception:
+        res = await jp_fetch("no-rules", method="OPTIONS", headers={"Authorization": ""})
+    assert exception.value.code == 403
+
+
+@pytest.mark.parametrize(
+    "jp_server_config", [{"ServerApp": {"allow_unauthenticated_access": False}}]
+)
+async def test_jupyter_handler_auth_calls_prepare(jp_serverapp, jp_fetch):
+    app: ServerApp = jp_serverapp
+    app.web_app.add_handlers(
+        ".*$",
+        [
+            (url_path_join(app.base_url, "no-rules"), NoAuthRulesHandler),
+            (url_path_join(app.base_url, "permissive"), PermissiveHandler),
+        ],
+    )
+
+    # should call `super.prepare()` in `@allow_unauthenticated` code path
+    with patch.object(JupyterHandler, "prepare", return_value=None) as mock:
+        res = await jp_fetch("permissive", method="OPTIONS")
+        assert res.code == 200
+        assert mock.call_count == 1
+
+    # should call `super.prepare()` in code path that checks authentication
+    with patch.object(JupyterHandler, "prepare", return_value=None) as mock:
+        res = await jp_fetch("no-rules", method="OPTIONS")
+        assert res.code == 200
+        assert mock.call_count == 1
+
+
+class IndiscriminateIdentityProvider(IdentityProvider):
+    async def get_user(self, handler):
+        return User(username="test")
+
+
+@pytest.mark.parametrize(
+    "jp_server_config", [{"ServerApp": {"allow_unauthenticated_access": False}}]
+)
+async def test_jupyter_handler_auth_respsects_identity_provider(jp_serverapp, jp_fetch):
+    app: ServerApp = jp_serverapp
+    app.web_app.add_handlers(
+        ".*$",
+        [(url_path_join(app.base_url, "no-rules"), NoAuthRulesHandler)],
+    )
+
+    def fetch():
+        return jp_fetch("no-rules", method="OPTIONS", headers={"Authorization": ""})
+
+    # If no identity provider is set the following request should fail
+    # because the default tornado user would not be found:
+    with pytest.raises(HTTPClientError) as exception:
+        await fetch()
+    assert exception.value.code == 403
+
+    iidp = IndiscriminateIdentityProvider()
+    # should allow access with the user set be the identity provider
+    with patch.dict(jp_serverapp.web_app.settings, {"identity_provider": iidp}):
+        res = await fetch()
+        assert res.code == 200
 
 
 def test_api_handler(jp_serverapp):

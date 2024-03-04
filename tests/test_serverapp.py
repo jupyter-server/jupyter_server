@@ -9,16 +9,19 @@ from unittest.mock import patch
 
 import pytest
 from jupyter_core.application import NoStart
+from tornado import web
 from traitlets import TraitError
 from traitlets.config import Config
 from traitlets.tests.utils import check_help_all_output
 
+from jupyter_server.auth.decorator import allow_unauthenticated, authorized
 from jupyter_server.auth.security import passwd_check
 from jupyter_server.serverapp import (
     JupyterPasswordApp,
     JupyterServerListApp,
     ServerApp,
     ServerWebApplication,
+    _has_tornado_web_authenticated,
     list_running_servers,
     random_ports,
 )
@@ -161,6 +164,26 @@ def test_server_password(tmp_path, jp_configurable_serverapp):
         sv.load_config_file()
         assert sv.identity_provider.hashed_password != ""
         passwd_check(sv.identity_provider.hashed_password, password)
+
+
+@pytest.mark.parametrize(
+    "env,expected",
+    [
+        ["yes", True],
+        ["Yes", True],
+        ["True", True],
+        ["true", True],
+        ["TRUE", True],
+        ["no", False],
+        ["nooo", False],
+        ["FALSE", False],
+        ["false", False],
+    ],
+)
+def test_allow_unauthenticated_env_var(jp_configurable_serverapp, env, expected):
+    with patch.dict("os.environ", {"JUPYTER_SERVER_ALLOW_UNAUTHENTICATED_ACCESS": env}):
+        app = jp_configurable_serverapp()
+        assert app.allow_unauthenticated_access == expected
 
 
 def test_list_running_servers(jp_serverapp, jp_web_app):
@@ -617,3 +640,22 @@ def test_immutable_cache_trait():
     serverapp.init_configurables()
     serverapp.init_webapp()
     assert serverapp.web_app.settings["static_immutable_cache"] == ["/test/immutable"]
+
+
+def test():
+    pass
+
+
+@pytest.mark.parametrize(
+    "method, expected",
+    [
+        [test, False],
+        [allow_unauthenticated(test), False],
+        [authorized(test), False],
+        [web.authenticated(test), True],
+        [web.authenticated(authorized(test)), True],
+        [authorized(web.authenticated(test)), False],  # wrong order!
+    ],
+)
+def test_tornado_authentication_detection(method, expected):
+    assert _has_tornado_web_authenticated(method) == expected

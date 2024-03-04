@@ -6,6 +6,7 @@ from jupyter_core.utils import ensure_async
 from tornado import web
 from tornado.websocket import WebSocketHandler
 
+from jupyter_server.auth.decorator import ws_authenticated
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.base.websocket import WebSocketMixin
 
@@ -34,11 +35,7 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
 
     async def pre_get(self):
         """Handle a pre_get."""
-        # authenticate first
         user = self.current_user
-        if user is None:
-            self.log.warning("Couldn't authenticate WebSocket connection")
-            raise web.HTTPError(403)
 
         # authorize the user.
         authorized = await ensure_async(
@@ -61,6 +58,7 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
         if hasattr(self.connection, "prepare"):
             await self.connection.prepare()
 
+    @ws_authenticated
     async def get(self, kernel_id):
         """Handle a get request for a kernel."""
         self.kernel_id = kernel_id

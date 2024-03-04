@@ -56,7 +56,7 @@ test = [
     "ipykernel",
     "pytest-console-scripts",
     "pytest-timeout",
-    "pytest-jupyter[server]>=0.4",
+    "pytest-jupyter[server]>=0.7",
     "pytest>=7.0",
     "requests",
     "pre-commit",
@@ -241,6 +241,7 @@ filterwarnings = [
   "error",
   "ignore:datetime.datetime.utc:DeprecationWarning",
   "module:add_callback_from_signal is deprecated:DeprecationWarning",
+  "ignore::jupyter_server.utils.JupyterServerAuthWarning"
 ]
 
 [tool.coverage.report]

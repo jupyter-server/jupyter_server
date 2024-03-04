@@ -12,7 +12,7 @@ import jupyter_events.logger
 from jupyter_core.utils import ensure_async
 from tornado import web, websocket
 
-from jupyter_server.auth.decorator import authorized
+from jupyter_server.auth.decorator import authorized, ws_authenticated
 from jupyter_server.base.handlers import JupyterHandler
 
 from ...base.handlers import APIHandler
@@ -29,16 +29,11 @@ class SubscribeWebsocket(
     auth_resource = AUTH_RESOURCE
 
     async def pre_get(self):
-        """Handles authentication/authorization when
+        """Handles authorization when
         attempting to subscribe to events emitted by
         Jupyter Server's eventbus.
         """
-        # authenticate the request before opening the websocket
         user = self.current_user
-        if user is None:
-            self.log.warning("Couldn't authenticate WebSocket connection")
-            raise web.HTTPError(403)
-
         # authorize the user.
         authorized = await ensure_async(
             self.authorizer.is_authorized(self, user, "execute", "events")
@@ -46,6 +41,7 @@ class SubscribeWebsocket(
         if not authorized:
             raise web.HTTPError(403)
 
+    @ws_authenticated
     async def get(self, *args, **kwargs):
         """Get an event socket."""
         await ensure_async(self.pre_get())

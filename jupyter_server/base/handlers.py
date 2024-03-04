@@ -14,7 +14,7 @@ import types
 import warnings
 from http.client import responses
 from logging import Logger
-from typing import TYPE_CHECKING, Any, Awaitable, Sequence, cast
+from typing import TYPE_CHECKING, Any, Awaitable, Coroutine, Sequence, cast
 from urllib.parse import urlparse
 
 import prometheus_client
@@ -29,7 +29,7 @@ import jupyter_server
 from jupyter_server import CallContext
 from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
-from jupyter_server.auth.decorator import authorized
+from jupyter_server.auth.decorator import allow_unauthenticated, authorized
 from jupyter_server.auth.identity import User
 from jupyter_server.i18n import combine_translations
 from jupyter_server.services.security import csp_report_uri
@@ -589,7 +589,7 @@ class JupyterHandler(AuthenticatedHandler):
             )
         return allow
 
-    async def prepare(self) -> Awaitable[None] | None:  # type:ignore[override]
+    async def prepare(self, *, _redirect_to_login=True) -> Awaitable[None] | None:  # type:ignore[override]
         """Prepare a response."""
         # Set the current Jupyter Handler context variable.
         CallContext.set(CallContext.JUPYTER_HANDLER, self)
@@ -630,6 +630,25 @@ class JupyterHandler(AuthenticatedHandler):
         self.set_cors_headers()
         if self.request.method not in {"GET", "HEAD", "OPTIONS"}:
             self.check_xsrf_cookie()
+
+        if not self.settings.get("allow_unauthenticated_access", False):
+            if not self.request.method:
+                raise HTTPError(403)
+            method = getattr(self, self.request.method.lower())
+            if not getattr(method, "__allow_unauthenticated", False):
+                if _redirect_to_login:
+                    # reuse `web.authenticated` logic, which redirects to the login
+                    # page on GET and HEAD and otherwise raises 403
+                    return web.authenticated(lambda _: super().prepare())(self)
+                else:
+                    # raise 403 if user is not known without redirecting to login page
+                    user = self.current_user
+                    if user is None:
+                        self.log.warning(
+                            f"Couldn't authenticate {self.__class__.__name__} connection"
+                        )
+                        raise web.HTTPError(403)
+
         return super().prepare()
 
     # ---------------------------------------------------------------
@@ -726,7 +745,7 @@ class JupyterHandler(AuthenticatedHandler):
 class APIHandler(JupyterHandler):
     """Base class for API handlers"""
 
-    async def prepare(self) -> None:
+    async def prepare(self) -> None:  # type:ignore[override]
         """Prepare an API response."""
         await super().prepare()
         if not self.check_origin():
@@ -794,6 +813,7 @@ class APIHandler(JupyterHandler):
         self.set_header("Content-Type", set_content_type)
         return super().finish(*args, **kwargs)
 
+    @allow_unauthenticated
     def options(self, *args: Any, **kwargs: Any) -> None:
         """Get the options."""
         if "Access-Control-Allow-Headers" in self.settings.get("headers", {}):
@@ -837,7 +857,7 @@ class APIHandler(JupyterHandler):
 class Template404(JupyterHandler):
     """Render our 404 template"""
 
-    async def prepare(self) -> None:
+    async def prepare(self) -> None:  # type:ignore[override]
         """Prepare a 404 response."""
         await super().prepare()
         raise web.HTTPError(404)
@@ -1002,6 +1022,18 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
         """Compute the etag."""
         return None
 
+    # access is allowed as this class is used to serve static assets on login page
+    # TODO: create an allow-list of files used on login page and remove this decorator
+    @allow_unauthenticated
+    def get(self, path: str, include_body: bool = True) -> Coroutine[Any, Any, None]:
+        return super().get(path, include_body)
+
+    # access is allowed as this class is used to serve static assets on login page
+    # TODO: create an allow-list of files used on login page and remove this decorator
+    @allow_unauthenticated
+    def head(self, path: str) -> Awaitable[None]:
+        return super().head(path)
+
     @classmethod
     def get_absolute_path(cls, roots: Sequence[str], path: str) -> str:
         """locate a file to serve on our static file search path"""
@@ -1036,6 +1068,7 @@ class APIVersionHandler(APIHandler):
 
     _track_activity = False
 
+    @allow_unauthenticated
     def get(self) -> None:
         """Get the server version info."""
         # not authenticated, so give as few info as possible
@@ -1048,6 +1081,7 @@ class TrailingSlashHandler(web.RequestHandler):
     This should be the first, highest priority handler.
     """
 
+    @allow_unauthenticated
     def get(self) -> None:
         """Handle trailing slashes in a get."""
         assert self.request.uri is not None
@@ -1064,6 +1098,7 @@ class TrailingSlashHandler(web.RequestHandler):
 class MainHandler(JupyterHandler):
     """Simple handler for base_url."""
 
+    @allow_unauthenticated
     def get(self) -> None:
         """Get the main template."""
         html = self.render_template("main.html")
@@ -1104,18 +1139,20 @@ class FilesRedirectHandler(JupyterHandler):
         self.log.debug("Redirecting %s to %s", self.request.path, url)
         self.redirect(url)
 
+    @allow_unauthenticated
     async def get(self, path: str = "") -> None:
         return await self.redirect_to_files(self, path)
 
 
 class RedirectWithParams(web.RequestHandler):
-    """Sam as web.RedirectHandler, but preserves URL parameters"""
+    """Same as web.RedirectHandler, but preserves URL parameters"""
 
     def initialize(self, url: str, permanent: bool = True) -> None:
         """Initialize a redirect handler."""
         self._url = url
         self._permanent = permanent
 
+    @allow_unauthenticated
     def get(self) -> None:
         """Get a redirect."""
         sep = "&" if "?" in self._url else "?"
@@ -1128,6 +1165,7 @@ class PrometheusMetricsHandler(JupyterHandler):
     Return prometheus metrics for this server
     """
 
+    @allow_unauthenticated
     def get(self) -> None:
         """Get prometheus metrics."""
         if self.settings["authenticate_prometheus"] and not self.logged_in:
@@ -1135,6 +1173,18 @@ class PrometheusMetricsHandler(JupyterHandler):
 
         self.set_header("Content-Type", prometheus_client.CONTENT_TYPE_LATEST)
         self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
+
+
+class PublicStaticFileHandler(web.StaticFileHandler):
+    """Same as web.StaticFileHandler, but decorated to acknowledge that auth is not required."""
+
+    @allow_unauthenticated
+    def head(self, path: str) -> Awaitable[None]:
+        return super().head(path)
+
+    @allow_unauthenticated
+    def get(self, path: str, include_body: bool = True) -> Coroutine[Any, Any, None]:
+        return super().get(path, include_body)
 
 
 # -----------------------------------------------------------------------------
@@ -1152,6 +1202,6 @@ path_regex = r"(?P<path>(?:(?:/[^/]+)+|/?))"
 default_handlers = [
     (r".*/", TrailingSlashHandler),
     (r"api", APIVersionHandler),
-    (r"/(robots\.txt|favicon\.ico)", web.StaticFileHandler),
+    (r"/(robots\.txt|favicon\.ico)", PublicStaticFileHandler),
     (r"/metrics", PrometheusMetricsHandler),
 ]

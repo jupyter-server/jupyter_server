@@ -1,10 +1,14 @@
 """Base websocket classes."""
 import re
+import warnings
 from typing import Optional, no_type_check
 from urllib.parse import urlparse
 
-from tornado import ioloop
+from tornado import ioloop, web
 from tornado.iostream import IOStream
+
+from jupyter_server.base.handlers import JupyterHandler
+from jupyter_server.utils import JupyterServerAuthWarning
 
 # ping interval for keeping websockets alive (30 seconds)
 WS_PING_INTERVAL = 30000
@@ -81,6 +85,40 @@ class WebSocketMixin:
 
     def clear_cookie(self, *args, **kwargs):
         """meaningless for websockets"""
+
+    @no_type_check
+    def _maybe_auth(self):
+        """Verify authentication if required.
+
+        Only used when the websocket class does not inherit from JupyterHandler.
+        """
+        if not self.settings.get("allow_unauthenticated_access", False):
+            if not self.request.method:
+                raise web.HTTPError(403)
+            method = getattr(self, self.request.method.lower())
+            if not getattr(method, "__allow_unauthenticated", False):
+                # rather than re-using `web.authenticated` which also redirects
+                # to login page on GET, just raise 403 if user is not known
+                user = self.current_user
+                if user is None:
+                    self.log.warning("Couldn't authenticate WebSocket connection")
+                    raise web.HTTPError(403)
+
+    @no_type_check
+    def prepare(self, *args, **kwargs):
+        """Handle a get request."""
+        if not isinstance(self, JupyterHandler):
+            should_authenticate = not self.settings.get("allow_unauthenticated_access", False)
+            if "identity_provider" in self.settings and should_authenticate:
+                warnings.warn(
+                    "WebSocketMixin sub-class does not inherit from JupyterHandler"
+                    " preventing proper authentication using custom identity provider.",
+                    JupyterServerAuthWarning,
+                    stacklevel=2,
+                )
+            self._maybe_auth()
+            return super().prepare(*args, **kwargs)
+        return super().prepare(*args, **kwargs, _redirect_to_login=False)
 
     @no_type_check
     def open(self, *args, **kwargs):

@@ -439,3 +439,11 @@ def import_item(name: str) -> Any:
     else:
         # called with un-dotted string
         return __import__(parts[0])
+
+
+class JupyterServerAuthWarning(RuntimeWarning):
+    """Emitted when authentication configuration issue is detected.
+
+    Intended for filtering out expected warnings in tests, including
+    downstream tests, rather than for users to silence this warning.
+    """

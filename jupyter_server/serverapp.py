@@ -41,6 +41,7 @@ from tornado import httpserver, ioloop, web
 from tornado.httputil import url_concat
 from tornado.log import LogFormatter, access_log, app_log, gen_log
 from tornado.netutil import bind_sockets
+from tornado.routing import Matcher, Rule
 
 if not sys.platform.startswith("win"):
     from tornado.netutil import bind_unix_socket
@@ -123,6 +124,7 @@ from jupyter_server.services.kernels.kernelmanager import (
 )
 from jupyter_server.services.sessions.sessionmanager import SessionManager
 from jupyter_server.utils import (
+    JupyterServerAuthWarning,
     check_pid,
     fetch,
     unix_socket_in_use,
@@ -265,7 +267,7 @@ class ServerWebApplication(web.Application):
             warnings.warn(
                 "authorizer unspecified. Using permissive AllowAllAuthorizer."
                 " Specify an authorizer to avoid this message.",
-                RuntimeWarning,
+                JupyterServerAuthWarning,
                 stacklevel=2,
             )
             authorizer = AllowAllAuthorizer(parent=jupyter_app, identity_provider=identity_provider)
@@ -292,7 +294,48 @@ class ServerWebApplication(web.Application):
         )
         handlers = self.init_handlers(default_services, settings)
 
+        undecorated_methods = []
+        for matcher, handler, *_ in handlers:
+            undecorated_methods.extend(self._check_handler_auth(matcher, handler))
+
+        if undecorated_methods:
+            message = (
+                "Core endpoints without @allow_unauthenticated, @ws_authenticated, nor @web.authenticated:\n"
+                + "\n".join(undecorated_methods)
+            )
+            if jupyter_app.allow_unauthenticated_access:
+                warnings.warn(
+                    message,
+                    JupyterServerAuthWarning,
+                    stacklevel=2,
+                )
+            else:
+                raise Exception(message)
+
         super().__init__(handlers, **settings)
+
+    def add_handlers(self, host_pattern, host_handlers):
+        undecorated_methods = []
+        for rule in host_handlers:
+            if isinstance(rule, Rule):
+                matcher = rule.matcher
+                handler = rule.target
+            else:
+                matcher, handler, *_ = rule
+            undecorated_methods.extend(self._check_handler_auth(matcher, handler))
+
+        if undecorated_methods and not self.settings["allow_unauthenticated_access"]:
+            message = (
+                "Extension endpoints without @allow_unauthenticated, @ws_authenticated, nor @web.authenticated:\n"
+                + "\n".join(undecorated_methods)
+            )
+            warnings.warn(
+                message,
+                JupyterServerAuthWarning,
+                stacklevel=2,
+            )
+
+        return super().add_handlers(host_pattern, host_handlers)
 
     def init_settings(
         self,
@@ -384,6 +427,7 @@ class ServerWebApplication(web.Application):
             "login_url": url_path_join(base_url, "/login"),
             "xsrf_cookies": True,
             "disable_check_xsrf": jupyter_app.disable_check_xsrf,
+            "allow_unauthenticated_access": jupyter_app.allow_unauthenticated_access,
             "allow_remote_access": jupyter_app.allow_remote_access,
             "local_hostnames": jupyter_app.local_hostnames,
             "authenticate_prometheus": jupyter_app.authenticate_prometheus,
@@ -501,6 +545,40 @@ class ServerWebApplication(web.Application):
         )
         sources.extend(self.settings["last_activity_times"].values())
         return max(sources)
+
+    def _check_handler_auth(
+        self, matcher: t.Union[str, Matcher], handler: type[web.RequestHandler]
+    ):
+        missing_authentication = []
+        for method_name in handler.SUPPORTED_METHODS:
+            method = getattr(handler, method_name.lower())
+            is_unimplemented = method == web.RequestHandler._unimplemented_method
+            is_allowlisted = hasattr(method, "__allow_unauthenticated")
+            is_blocklisted = _has_tornado_web_authenticated(method)
+            if not is_unimplemented and not is_allowlisted and not is_blocklisted:
+                missing_authentication.append(
+                    f"- {method_name} of {handler.__name__} registered for {matcher}"
+                )
+        return missing_authentication
+
+
+def _has_tornado_web_authenticated(method: t.Callable[..., t.Any]) -> bool:
+    """Check if given method was decorated with @web.authenticated.
+
+    Note: it is ok if we reject on @authorized @web.authenticated
+    because the correct order is @web.authenticated @authorized.
+    """
+    if not hasattr(method, "__wrapped__"):
+        return False
+    if not hasattr(method, "__code__"):
+        return False
+    code = method.__code__
+    if hasattr(code, "co_qualname"):
+        # new in 3.11
+        return code.co_qualname.startswith("authenticated")  # type:ignore[no-any-return]
+    elif hasattr(code, "co_filename"):
+        return code.co_filename.replace("\\", "/").endswith("tornado/web.py")
+    return False
 
 
 class JupyterPasswordApp(JupyterApp):
@@ -1229,6 +1307,33 @@ class ServerApp(JupyterApp):
         with the full knowledge of what that implies.
         """,
     )
+
+    _allow_unauthenticated_access_env = "JUPYTER_SERVER_ALLOW_UNAUTHENTICATED_ACCESS"
+
+    allow_unauthenticated_access = Bool(
+        True,
+        config=True,
+        help=f"""Allow unauthenticated access to endpoints without authentication rule.
+
+        When set to `True` (default in jupyter-server 2.0, subject to change
+        in the future), any request to an endpoint without an authentication rule
+        (either `@tornado.web.authenticated`, or `@allow_unauthenticated`)
+        will be permitted, regardless of whether user has logged in or not.
+
+        When set to `False`, logging in will be required for access to each endpoint,
+        excluding the endpoints marked with `@allow_unauthenticated` decorator.
+
+        This option can be configured using `{_allow_unauthenticated_access_env}`
+        environment variable: any non-empty value other than "true" and "yes" will
+        prevent unauthenticated access to endpoints without `@allow_unauthenticated`.
+        """,
+    )
+
+    @default("allow_unauthenticated_access")
+    def _allow_unauthenticated_access_default(self):
+        if os.getenv(self._allow_unauthenticated_access_env):
+            return os.environ[self._allow_unauthenticated_access_env].lower() in ["true", "yes"]
+        return True
 
     allow_remote_access = Bool(
         config=True,
