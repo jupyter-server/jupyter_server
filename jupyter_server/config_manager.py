@@ -103,7 +103,10 @@ class BaseJSONConfigManager(LoggingConfigurable):
         for path in paths:
             if os.path.isfile(path):
                 with open(path, encoding="utf-8") as f:
-                    recursive_update(data, json.load(f))
+                    try:
+                        recursive_update(data, json.load(f))
+                    except json.decoder.JSONDecodeError:
+                        self.log.warn("Invalid JSON in %s, skipping", path)
         return data
 
     def set(self, section_name: str, data: t.Any) -> None:
