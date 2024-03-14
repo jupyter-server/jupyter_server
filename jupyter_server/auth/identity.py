@@ -19,6 +19,7 @@ from dataclasses import asdict, dataclass
 from http.cookies import Morsel
 
 from tornado import escape, httputil, web
+from tornado.websocket import WebSocketHandler
 from traitlets import Bool, Dict, Type, Unicode, default
 from traitlets.config import LoggingConfigurable
 
@@ -104,6 +105,9 @@ def _backward_compat_user(got_user: t.Any) -> User:
     else:
         msg = f"Unrecognized user: {got_user}"
         raise ValueError(msg)
+
+
+_TOKEN_SUBPROTOCOL = "v1.token.websocket.jupyter.org"
 
 
 class IdentityProvider(LoggingConfigurable):
@@ -424,6 +428,15 @@ class IdentityProvider(LoggingConfigurable):
             m = self.auth_header_pat.match(handler.request.headers.get("Authorization", ""))
             if m:
                 user_token = m.group(2)
+        if not user_token and isinstance(handler, WebSocketHandler):
+            subprotocol_header = handler.request.headers.get("Sec-WebSocket-Protocol")
+            if subprotocol_header:
+                subprotocols = [s.strip() for s in subprotocol_header.split(",")]
+                for subprotocol in subprotocols:
+                    if subprotocol.startswith(_TOKEN_SUBPROTOCOL + "."):
+                        user_token = subprotocol[len(_TOKEN_SUBPROTOCOL) + 1 :]
+                        break
+
         return user_token
 
     async def get_user_token(self, handler: web.RequestHandler) -> User | None:
