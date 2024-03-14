@@ -149,10 +149,11 @@ async def test_websocket_token_subprotocol_auth(jp_serverapp, jp_ws_fetch):
         "ws",
         headers={
             "Authorization": "",
-            "Sec-WebSocket-Protocol": "v1.kernel.websocket.jupyter.org, v1.token.websocket.jupyter.org."
+            "Sec-WebSocket-Protocol": "v1.kernel.websocket.jupyter.org, v1.token.websocket.jupyter.org, v1.token.websocket.jupyter.org."
             + token,
         },
     )
+    assert ws.protocol.selected_subprotocol == "v1.token.websocket.jupyter.org"
     ws.close()
 
 

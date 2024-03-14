@@ -14,6 +14,7 @@ from tornado import web, websocket
 
 from jupyter_server.auth.decorator import authorized, ws_authenticated
 from jupyter_server.base.handlers import JupyterHandler
+from jupyter_server.base.websocket import WebSocketMixin
 
 from ...base.handlers import APIHandler
 
@@ -21,6 +22,7 @@ AUTH_RESOURCE = "events"
 
 
 class SubscribeWebsocket(
+    WebSocketMixin,
     JupyterHandler,
     websocket.WebSocketHandler,
 ):
