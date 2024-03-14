@@ -90,6 +90,12 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
             preferred_protocol = "v1.kernel.websocket.jupyter.org"
         elif preferred_protocol == "":
             preferred_protocol = None
-        selected_subprotocol = preferred_protocol if preferred_protocol in subprotocols else None
+
+        # super() subprotocol enables token authentication via subprotocol
+        selected_subprotocol = (
+            preferred_protocol
+            if preferred_protocol in subprotocols
+            else super().select_subprotocol(subprotocols)
+        )
         # None is the default, "legacy" protocol
         return selected_subprotocol

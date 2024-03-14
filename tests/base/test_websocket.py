@@ -10,7 +10,7 @@ from tornado.httputil import HTTPHeaders
 from tornado.websocket import WebSocketClosedError, WebSocketHandler
 
 from jupyter_server.auth import IdentityProvider, User
-from jupyter_server.auth.decorator import allow_unauthenticated
+from jupyter_server.auth.decorator import allow_unauthenticated, ws_authenticated
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.base.websocket import WebSocketMixin
 from jupyter_server.serverapp import ServerApp
@@ -75,6 +75,12 @@ class NoAuthRulesWebsocketHandler(MockJupyterHandler):
     pass
 
 
+class AuthenticatedWebsocketHandler(MockJupyterHandler):
+    @ws_authenticated
+    def get(self, *args, **kwargs) -> None:
+        return super().get(*args, **kwargs)
+
+
 class PermissiveWebsocketHandler(MockJupyterHandler):
     @allow_unauthenticated
     def get(self, *args, **kwargs) -> None:
@@ -124,6 +130,31 @@ async def test_websocket_auth_required(jp_serverapp, jp_ws_fetch):
     with pytest.raises(HTTPClientError) as exception:
         ws = await jp_ws_fetch("no-rules", headers={"Authorization": ""})
     assert exception.value.code == 403
+
+
+async def test_websocket_token_subprotocol_auth(jp_serverapp, jp_ws_fetch):
+    app: ServerApp = jp_serverapp
+    app.web_app.add_handlers(
+        ".*$",
+        [
+            (url_path_join(app.base_url, "ws"), AuthenticatedWebsocketHandler),
+        ],
+    )
+
+    with pytest.raises(HTTPClientError) as exception:
+        ws = await jp_ws_fetch("ws", headers={"Authorization": ""})
+    assert exception.value.code == 403
+    token = jp_serverapp.identity_provider.token
+    ws = await jp_ws_fetch(
+        "ws",
+        headers={
+            "Authorization": "",
+            "Sec-WebSocket-Protocol": "v1.kernel.websocket.jupyter.org, v1.token.websocket.jupyter.org, v1.token.websocket.jupyter.org."
+            + token,
+        },
+    )
+    assert ws.protocol.selected_subprotocol == "v1.token.websocket.jupyter.org"
+    ws.close()
 
 
 class IndiscriminateIdentityProvider(IdentityProvider):

@@ -1,4 +1,7 @@
 """Base websocket classes."""
+
+from __future__ import annotations
+
 import re
 import warnings
 from typing import Optional, no_type_check
@@ -164,3 +167,14 @@ class WebSocketMixin:
     def on_pong(self, data):
         """Handle a pong message."""
         self.last_pong = ioloop.IOLoop.current().time()
+
+    def select_subprotocol(self, subprotocols: list[str]) -> str | None:
+        # default subprotocol
+        # some clients (Chrome)
+        # require selected subprotocol to match one of the requested subprotocols
+        # otherwise connection is rejected
+        token_subprotocol = "v1.token.websocket.jupyter.org"
+        if token_subprotocol in subprotocols:
+            return token_subprotocol
+        else:
+            return None
