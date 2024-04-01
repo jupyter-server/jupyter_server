@@ -1,5 +1,4 @@
-"""A mock extension named `mock1` for testing purposes.
-"""
+"""A mock extension named `mock1` for testing purposes."""
 # by the test functions.
 
 

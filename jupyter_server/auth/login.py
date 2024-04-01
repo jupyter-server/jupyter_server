@@ -1,4 +1,5 @@
 """Tornado handlers for logging into the Jupyter Server."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import os
@@ -128,9 +129,9 @@ class LegacyLoginHandler(LoginFormHandler):
                     config_dir = self.settings.get("config_dir", "")
                     config_file = os.path.join(config_dir, "jupyter_server_config.json")
                     if hasattr(self.identity_provider, "hashed_password"):
-                        self.identity_provider.hashed_password = self.settings[
-                            "password"
-                        ] = set_password(new_password, config_file=config_file)
+                        self.identity_provider.hashed_password = self.settings["password"] = (
+                            set_password(new_password, config_file=config_file)
+                        )
                     self.log.info("Wrote hashed password to %s" % config_file)
             else:
                 self.set_status(401)

@@ -1,4 +1,5 @@
 """Test GatewayClient"""
+
 import asyncio
 import json
 import logging

@@ -1,5 +1,5 @@
-"""HTTP handler to shut down the Jupyter server.
-"""
+"""HTTP handler to shut down the Jupyter server."""
+
 from tornado import ioloop, web
 
 from jupyter_server.auth.decorator import authorized

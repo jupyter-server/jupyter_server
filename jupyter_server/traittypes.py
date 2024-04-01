@@ -1,4 +1,5 @@
 """Custom trait types."""
+
 import inspect
 from ast import literal_eval
 

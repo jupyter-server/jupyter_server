@@ -1,4 +1,5 @@
 """An implementation of a kernel connection."""
+
 from __future__ import annotations
 
 import asyncio

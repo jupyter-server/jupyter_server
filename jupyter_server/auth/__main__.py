@@ -1,4 +1,5 @@
 """The cli for auth."""
+
 import argparse
 import sys
 import warnings

@@ -270,7 +270,7 @@ async def test_get_binary_file_contents(jp_fetch, contents, path, name):
     assert model["format"] == "base64"
     assert model["type"] == "file"
     data_out = decodebytes(model["content"].encode("ascii"))
-    data_in = name.encode("utf-8") + b"\xFF"
+    data_in = name.encode("utf-8") + b"\xff"
     assert data_in == data_out
 
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
@@ -478,7 +478,7 @@ async def test_upload_txt_hidden(jp_fetch, contents, contents_dir):
 
 
 async def test_upload_b64(jp_fetch, contents, contents_dir, _check_created):
-    body = b"\xFFblob"
+    body = b"\xffblob"
     b64body = encodebytes(body).decode("ascii")
     model = {
         "content": b64body,

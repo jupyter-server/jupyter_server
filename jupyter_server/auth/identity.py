@@ -5,6 +5,7 @@ to be used in combination with Authorizer for _authorization_.
 
 .. versionadded:: 2.0
 """
+
 from __future__ import annotations
 
 import binascii

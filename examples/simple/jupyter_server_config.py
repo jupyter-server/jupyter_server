@@ -1,4 +1,5 @@
 """Configuration file for jupyter-server extensions."""
+
 # ------------------------------------------------------------------------------
 # Application(SingletonConfigurable) configuration
 # ------------------------------------------------------------------------------

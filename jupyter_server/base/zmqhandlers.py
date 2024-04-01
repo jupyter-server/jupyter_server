@@ -1,4 +1,5 @@
 """This module is deprecated in Jupyter Server 2.0"""
+
 # Raise a warning that this module is deprecated.
 import warnings
 

@@ -1,5 +1,4 @@
-"""A mock extension named `mockext_user` for testing purposes.
-"""
+"""A mock extension named `mockext_user` for testing purposes."""
 # Function that makes these extensions discoverable
 # by the test functions.
 

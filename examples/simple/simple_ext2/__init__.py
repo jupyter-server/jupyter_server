@@ -1,4 +1,5 @@
 """The extension entry point."""
+
 from .application import SimpleApp2
 
 

@@ -1,4 +1,5 @@
 """A Jupyter Server example application."""
+
 import os
 
 from simple_ext1.application import SimpleApp1  # type:ignore[import-not-found]

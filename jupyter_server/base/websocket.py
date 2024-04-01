@@ -1,4 +1,5 @@
 """Base websocket classes."""
+
 import re
 import warnings
 from typing import Optional, no_type_check

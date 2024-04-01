@@ -1,5 +1,5 @@
-"""Server functions for loading translations
-"""
+"""Server functions for loading translations"""
+
 from __future__ import annotations
 
 import errno

@@ -1,5 +1,5 @@
-"""Tornado handlers for logging out of the Jupyter Server.
-"""
+"""Tornado handlers for logging out of the Jupyter Server."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from ..base.handlers import JupyterHandler

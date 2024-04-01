@@ -1,4 +1,5 @@
 """The extension manager."""
+
 from __future__ import annotations
 
 import importlib
