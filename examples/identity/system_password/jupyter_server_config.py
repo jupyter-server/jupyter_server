@@ -1,4 +1,5 @@
 """Jupyter server system password identity provider example."""
+
 import pwd
 from getpass import getuser
 

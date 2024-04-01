@@ -1,4 +1,5 @@
 """Gateway connection classes."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
@@ -68,9 +69,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
         else:
             self.log.warning(
                 "Websocket connection has been closed via client disconnect or due to error.  "
-                "Kernel with ID '{}' may not be terminated on GatewayClient: {}".format(
-                    self.kernel_id, GatewayClient.instance().url
-                )
+                f"Kernel with ID '{self.kernel_id}' may not be terminated on GatewayClient: {GatewayClient.instance().url}"
             )
 
     def disconnect(self):

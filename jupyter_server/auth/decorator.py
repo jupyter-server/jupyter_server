@@ -1,5 +1,5 @@
-"""Decorator for layering authorization into JupyterHandlers.
-"""
+"""Decorator for layering authorization into JupyterHandlers."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import asyncio

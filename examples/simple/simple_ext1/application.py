@@ -1,4 +1,5 @@
 """Jupyter server example application."""
+
 import os
 
 from traitlets import Unicode

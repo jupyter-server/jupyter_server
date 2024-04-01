@@ -1,5 +1,5 @@
-"""A module with various utility methods for authorization in Jupyter Server.
-"""
+"""A module with various utility methods for authorization in Jupyter Server."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import importlib

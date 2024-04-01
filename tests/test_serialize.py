@@ -1,4 +1,5 @@
 """Test serialize/deserialize messages with buffers"""
+
 import os
 
 from jupyter_client.session import Session

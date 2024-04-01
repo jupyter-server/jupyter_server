@@ -1,4 +1,5 @@
 """A tornado based Jupyter server."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
@@ -2188,9 +2189,9 @@ class ServerApp(JupyterApp):
 
         # deprecate accessing these directly, in favor of identity_provider?
         self.tornado_settings["cookie_options"] = self.identity_provider.cookie_options
-        self.tornado_settings[
-            "get_secure_cookie_kwargs"
-        ] = self.identity_provider.get_secure_cookie_kwargs
+        self.tornado_settings["get_secure_cookie_kwargs"] = (
+            self.identity_provider.get_secure_cookie_kwargs
+        )
         self.tornado_settings["token"] = self.identity_provider.token
 
         if self.static_immutable_cache:
@@ -3037,9 +3038,9 @@ class ServerApp(JupyterApp):
                             "",
                             (
                                 "UNIX sockets are not browser-connectable, but you can tunnel to "
-                                "the instance via e.g.`ssh -L 8888:{} -N user@this_host` and then "
-                                "open e.g. {} in a browser."
-                            ).format(self.sock, self.connection_url),
+                                f"the instance via e.g.`ssh -L 8888:{self.sock} -N user@this_host` and then "
+                                f"open e.g. {self.connection_url} in a browser."
+                            ),
                         ]
                     )
                 )

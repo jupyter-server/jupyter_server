@@ -1,4 +1,5 @@
 """An extension application."""
+
 from __future__ import annotations
 
 import logging

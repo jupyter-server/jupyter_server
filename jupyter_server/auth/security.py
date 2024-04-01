@@ -1,6 +1,7 @@
 """
 Password generation for the Jupyter Server.
 """
+
 import getpass
 import hashlib
 import json

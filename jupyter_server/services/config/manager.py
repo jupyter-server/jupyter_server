@@ -1,5 +1,5 @@
-"""Manager to read and modify frontend config data in JSON files.
-"""
+"""Manager to read and modify frontend config data in JSON files."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import os.path

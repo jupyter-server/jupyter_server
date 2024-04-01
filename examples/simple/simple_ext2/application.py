@@ -1,4 +1,5 @@
 """A simple Jupyter Server extension example."""
+
 import os
 
 from traitlets import Unicode

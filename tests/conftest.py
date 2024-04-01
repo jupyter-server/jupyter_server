@@ -134,7 +134,7 @@ def contents(contents_dir):
         paths["textfiles"].append(txtname.relative_to(contents_dir))
 
         # Create a random blob
-        blob = name.encode("utf-8") + b"\xFF"
+        blob = name.encode("utf-8") + b"\xff"
         blobname = p.joinpath(f"{name}.blob")
         blobname.write_bytes(blob)
         paths["blobs"].append(blobname.relative_to(contents_dir))

@@ -1,6 +1,7 @@
 """Test launching Jupyter Server Applications
 through as ExtensionApp launch_instance.
 """
+
 import os
 import subprocess
 import sys

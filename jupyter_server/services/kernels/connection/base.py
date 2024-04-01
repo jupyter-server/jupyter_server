@@ -1,4 +1,5 @@
 """Kernel connection helpers."""
+
 import json
 import struct
 from typing import Any, List

@@ -1,4 +1,5 @@
 """Tests for authorization"""
+
 import asyncio
 import json
 import os

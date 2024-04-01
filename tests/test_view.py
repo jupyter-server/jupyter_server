@@ -1,4 +1,5 @@
 """test view handler"""
+
 from html.parser import HTMLParser
 
 import pytest

@@ -1,4 +1,5 @@
 """Log functions for prometheus"""
+
 from .metrics import HTTP_REQUEST_DURATION_SECONDS  # type:ignore[unused-ignore]
 
 

@@ -1,4 +1,5 @@
 """Nbclassic temporary server auth example."""
+
 from jupyter_server.auth import Authorizer
 
 

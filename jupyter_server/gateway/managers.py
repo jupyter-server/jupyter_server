@@ -1,4 +1,5 @@
 """Kernel gateway managers."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
@@ -671,9 +672,7 @@ class ChannelQueue(Queue):  # type:ignore[type-arg]
                 return
             if len(msgs):
                 self.log.warning(
-                    "Stopping channel '{}' with {} unprocessed non-status messages: {}.".format(
-                        self.channel_name, len(msgs), msgs
-                    )
+                    f"Stopping channel '{self.channel_name}' with {len(msgs)} unprocessed non-status messages: {msgs}."
                 )
 
     def is_alive(self) -> bool:

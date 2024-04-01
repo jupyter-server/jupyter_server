@@ -1,4 +1,5 @@
 """Tests for login redirects"""
+
 import json
 from functools import partial
 from urllib.parse import urlencode

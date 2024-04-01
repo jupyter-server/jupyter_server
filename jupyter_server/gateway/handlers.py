@@ -1,4 +1,5 @@
 """Gateway API handlers."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
@@ -200,9 +201,7 @@ class GatewayWebSocketClient(LoggingConfigurable):
         else:
             self.log.warning(
                 "Websocket connection has been closed via client disconnect or due to error.  "
-                "Kernel with ID '{}' may not be terminated on GatewayClient: {}".format(
-                    self.kernel_id, GatewayClient.instance().url
-                )
+                f"Kernel with ID '{self.kernel_id}' may not be terminated on GatewayClient: {GatewayClient.instance().url}"
             )
 
     def _disconnect(self):
@@ -298,8 +297,8 @@ class GatewayResourceHandler(APIHandler):
         )
         if kernel_spec_res is None:
             self.log.warning(
-                "Kernelspec resource '{}' for '{}' not found.  Gateway may not support"
-                " resource serving.".format(path, kernel_name)
+                f"Kernelspec resource '{path}' for '{kernel_name}' not found.  Gateway may not support"
+                " resource serving."
             )
         else:
             mimetype = mimetypes.guess_type(path)[0] or "text/plain"

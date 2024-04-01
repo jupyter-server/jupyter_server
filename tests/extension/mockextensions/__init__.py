@@ -1,6 +1,7 @@
 """A mock extension module with a list of extensions
 to load in various tests.
 """
+
 from .app import MockExtensionApp
 
 
