@@ -9,7 +9,7 @@ You need `python3` to build and run the server extensions.
 ```bash
 # Clone, create a conda env and install from source.
 git clone https://github.com/jupyter/jupyter_server && \
-  cd examples/simple && \
+  cd jupyter_server/examples/simple && \
   conda create -y -n jupyter-server-example python=3.9 && \
   conda activate jupyter-server-example && \
   pip install -e .[test]
