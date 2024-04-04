@@ -24,24 +24,24 @@ classifiers = [
 requires-python = ">=3.8"
 dependencies = [
     "anyio>=3.1.0",
-    "argon2-cffi",
-    "jinja2",
+    "argon2-cffi>=21.1",
+    "jinja2>=3.0.3",
     "jupyter_client>=7.4.4",
     "jupyter_core>=4.12,!=5.0.*",
-    "jupyter_server_terminals",
+    "jupyter_server_terminals>=0.4.4",
     "nbconvert>=6.4.4",
     "nbformat>=5.3.0",
-    "packaging",
-    "prometheus_client",
-    "pywinpty;os_name=='nt'",
+    "packaging>=22.0",
+    "prometheus_client>=0.9",
+    "pywinpty>=2.0.1;os_name=='nt'",
     "pyzmq>=24",
     "Send2Trash>=1.8.2",
     "terminado>=0.8.3",
     "tornado>=6.2.0",
     "traitlets>=5.6.0",
-    "websocket-client",
+    "websocket-client>=1.7",
     "jupyter_events>=0.9.0",
-    "overrides"
+    "overrides>=5.0"
 ]
 
 [project.urls]
