@@ -3,7 +3,7 @@ Welcome!
 
 You've landed on the documentation pages for the **Jupyter Server** Project. Some other pages you may have been looking for:
 
-* `Jupyter Server Github Repo <https://github.com/jupyter/jupyter_server>`_, the source code we describe in this code.
+* `Jupyter Server Github Repo <https://github.com/jupyter-server/jupyter_server>`_, the source code we describe in this code.
 * `Jupyter Notebook Github Repo <https://github.com/jupyter/notebook>`_ , the source code for the classic Notebook.
 * `JupyterLab Github Repo <https://github.com/jupyterlab/jupyterlab>`_, the JupyterLab server which runs on the Jupyter Server.
 
@@ -60,7 +60,7 @@ The Jupyter Server is a highly technical piece of the Jupyter Stack, so we've se
 3. :ref:`Developers <developers>`: people writing Jupyter Server extensions and web applications.
 4. :ref:`Contributors <contributors>`: people contributing directly to the Jupyter Server library.
 
-If you finds gaps in our documentation, please open an issue (or better, a pull request) on the Jupyter Server `Github repo <https://github.com/jupyter/jupyter_server>`_.
+If you finds gaps in our documentation, please open an issue (or better, a pull request) on the Jupyter Server `Github repo <https://github.com/jupyter-server/jupyter_server>`_.
 
 
 Table of Contents

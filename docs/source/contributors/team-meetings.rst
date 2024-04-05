@@ -23,7 +23,7 @@ Also check out Jupyter Server's roadmap where we track future plans for Jupyter 
 
 `Jupyter Server 2.0 Discussion <https://github.com/jupyter-server/team-compass/issues/24>`_
 
-`Archived roadmap <https://github.com/jupyter/jupyter_server/issues/127>`_
+`Archived roadmap <https://github.com/jupyter-server/jupyter_server/issues/127>`_
 
 Jupyter Calendar
 ----------------

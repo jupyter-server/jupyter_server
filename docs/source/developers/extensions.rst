@@ -10,7 +10,7 @@ For examples of jupyter server extensions, see the
 :ref:`homepage <examples of jupyter server extensions>`.
 
 To get started writing your own extension, see the simple examples in the `examples folder
-<https://github.com/jupyter/jupyter_server/tree/main/examples/simple>`_ in the GitHub jupyter_server repository.
+<https://github.com/jupyter-server/jupyter_server/tree/main/examples/simple>`_ in the GitHub jupyter_server repository.
 
 
 Authoring a basic server extension
