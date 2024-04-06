@@ -1,8 +1,10 @@
 export default [
     {
-        "parserOptions": {
-            "ecmaVersion": 6,
-            "sourceType": "module"
+        "languageOptions": {
+            "parserOptions": {
+                "ecmaVersion": 6,
+                "sourceType": "module"
+            }
         },
         "rules": {
             "semi": 1,
