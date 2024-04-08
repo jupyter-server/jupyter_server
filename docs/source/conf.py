@@ -70,7 +70,7 @@ copyright = "2020, Jupyter Team, https://jupyter.org"
 author = "The Jupyter Team"
 
 # ghissue config
-github_project_url = "https://github.com/jupyter/jupyter_server"
+github_project_url = "https://github.com/jupyter-server/jupyter_server"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
