@@ -159,7 +159,7 @@ html_theme_options = {
         }
     ],
     "navigation_with_keys": False,
-    "use_edit_page_button": True
+    "use_edit_page_button": True,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
