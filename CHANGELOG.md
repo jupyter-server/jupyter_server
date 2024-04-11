@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.14.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.13.0...074628806d6b2ec3304d60ab5cfba1c326f67730))
+
+### Enhancements made
+
+- Do not include token in dashboard link, when available [#1406](https://github.com/jupyter-server/jupyter_server/pull/1406) ([@minrk](https://github.com/minrk))
+
+### Bugs fixed
+
+- Ignore zero-length page_config.json, restore previous behavior of crashing for invalid JSON [#1405](https://github.com/jupyter-server/jupyter_server/pull/1405) ([@holzman](https://github.com/holzman))
+- Don't crash on invalid JSON in page_config (#1403) [#1404](https://github.com/jupyter-server/jupyter_server/pull/1404) ([@holzman](https://github.com/holzman))
+
+### Maintenance and upkeep improvements
+
+- Fix jupytext and lint CI failures [#1413](https://github.com/jupyter-server/jupyter_server/pull/1413) ([@blink1073](https://github.com/blink1073))
+- Set all min deps [#1411](https://github.com/jupyter-server/jupyter_server/pull/1411) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1409](https://github.com/jupyter-server/jupyter_server/pull/1409) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Update pytest requirement from \<8,>=7.0 to >=7.0,\<9 [#1402](https://github.com/jupyter-server/jupyter_server/pull/1402) ([@dependabot](https://github.com/dependabot))
+- Pin to Pytest 7 [#1401](https://github.com/jupyter-server/jupyter_server/pull/1401) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Link to GitHub repo from the docs [#1415](https://github.com/jupyter-server/jupyter_server/pull/1415) ([@krassowski](https://github.com/krassowski))
+- docs: list server extensions [#1412](https://github.com/jupyter-server/jupyter_server/pull/1412) ([@oliver-sanders](https://github.com/oliver-sanders))
+- Update simple extension README to cd into correct subdirectory [#1410](https://github.com/jupyter-server/jupyter_server/pull/1410) ([@markypizz](https://github.com/markypizz))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-03-04&to=2024-04-11&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2024-03-04..2024-04-11&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2024-03-04..2024-04-11&type=Issues) | [@holzman](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aholzman+updated%3A2024-03-04..2024-04-11&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2024-03-04..2024-04-11&type=Issues) | [@markypizz](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amarkypizz+updated%3A2024-03-04..2024-04-11&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2024-03-04..2024-04-11&type=Issues) | [@oliver-sanders](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aoliver-sanders+updated%3A2024-03-04..2024-04-11&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2024-03-04..2024-04-11&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2024-03-04..2024-04-11&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2024-03-04..2024-04-11&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.13.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.12.5...1369a5364d36a977fbec5957ed21d69acbbeda5a))
@@ -33,8 +68,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-01-16&to=2024-03-04&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2024-01-16..2024-03-04&type=Issues) | [@hansepac](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ahansepac+updated%3A2024-01-16..2024-03-04&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2024-01-16..2024-03-04&type=Issues) | [@manics](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amanics+updated%3A2024-01-16..2024-03-04&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2024-01-16..2024-03-04&type=Issues) | [@oliver-sanders](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aoliver-sanders+updated%3A2024-01-16..2024-03-04&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2024-01-16..2024-03-04&type=Issues) | [@Timeroot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ATimeroot+updated%3A2024-01-16..2024-03-04&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2024-01-16..2024-03-04&type=Issues) | [@yuvipanda](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ayuvipanda+updated%3A2024-01-16..2024-03-04&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.12.5
 
