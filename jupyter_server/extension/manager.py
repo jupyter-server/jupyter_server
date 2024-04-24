@@ -367,6 +367,16 @@ class ExtensionManager(LoggingConfigurable):
             else:
                 self.log.info("%s | extension was successfully loaded.", name)
 
+    async def start_extension(self, name, apps):
+        """Call the start hooks in the specified apps."""
+        for app in apps:
+            self.log.debug("%s | extension app %r starting", name, app.name)
+            try:
+                await app.start_extension()
+                self.log.debug("%s | extension app %r started", name, app.name)
+            except Exception as err:
+                self.log.error(err)
+
     async def stop_extension(self, name, apps):
         """Call the shutdown hooks in the specified apps."""
         for app in apps:
@@ -391,6 +401,10 @@ class ExtensionManager(LoggingConfigurable):
         # order.
         for name in self.sorted_extensions:
             self.load_extension(name)
+
+    async def start_all_extensions(self):
+        """Call the start hooks in all extensions."""
+        await multi(list(starmap(self.start_extension, sorted(dict(self.extension_apps).items()))))
 
     async def stop_all_extensions(self):
         """Call the shutdown hooks in all extensions."""

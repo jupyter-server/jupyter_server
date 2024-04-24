@@ -5,7 +5,7 @@ import os
 from jupyter_events import EventLogger
 from jupyter_events.schema_registry import SchemaRegistryException
 from tornado import web
-from traitlets import List, Unicode
+from traitlets import Bool, List, Unicode
 
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
@@ -56,6 +56,7 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     static_paths = [STATIC_PATH]  # type:ignore[assignment]
     mock_trait = Unicode("mock trait", config=True)
     loaded = False
+    started = Bool(False)
 
     serverapp_config = {
         "jpserver_extensions": {
@@ -95,6 +96,9 @@ class MockExtensionNoTemplateApp(ExtensionApp):
     def initialize_handlers(self):
         self.handlers.append(("/mock_error_notemplate", MockExtensionErrorHandler))
         self.loaded = True
+
+    async def start_extension(self):
+        self.started = True
 
 
 if __name__ == "__main__":

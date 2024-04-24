@@ -140,6 +140,11 @@ async def test_load_parallel_extensions(monkeypatch, jp_environ):
     assert exts["tests.extension.mockextensions"]
 
 
+async def test_start_extension(jp_serverapp, mock_extension):
+    await jp_serverapp._post_start()
+    assert mock_extension.started
+
+
 async def test_stop_extension(jp_serverapp, caplog):
     """Test the stop_extension method.
 

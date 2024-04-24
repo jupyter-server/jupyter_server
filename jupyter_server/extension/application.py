@@ -446,6 +446,9 @@ class ExtensionApp(JupyterApp):
         assert self.serverapp is not None
         self.serverapp.start()
 
+    async def start_extension(self):
+        """An async hook to start e.g. tasks after the server's event loop is running."""
+
     def current_activity(self):
         """Return a list of activity happening in this extension."""
         return
