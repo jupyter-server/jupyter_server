@@ -416,7 +416,7 @@ class ExtensionManager(LoggingConfigurable):
                     "%s | extension failed starting with message: %r", name, e, exc_info=True
                 )
             else:
-                self.log.info("%s | extension was successfully started.", name)
+                self.log.debug("%s | extension was successfully started.", name)
 
     async def stop_extension(self, name, apps):
         """Call the shutdown hooks in the specified apps."""
