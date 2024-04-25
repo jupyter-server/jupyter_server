@@ -120,16 +120,20 @@ class ExtensionPoint(HasTraits):
         return loader
 
     def _get_starter(self):
-        """Get a linker."""
+        """Get a starter function."""
         if self.app:
             linker = self.app._start_jupyter_server_extension
         else:
+
+            async def _noop_start(serverapp):
+                return
+
             linker = getattr(
                 self.module,
                 # Search for a _start_jupyter_extension
                 "_start_jupyter_server_extension",
-                # Otherwise return a dummy function.
-                lambda serverapp: None,
+                # Otherwise return a no-op function.
+                _noop_start,
             )
         return linker
 
