@@ -356,7 +356,8 @@ Starting asynchronous tasks from an ExtensionApp
 .. versionadded:: 2.15.0
 
 
-An ``ExtensionApp`` can start asynchronous tasks after Jupyter Server's event loop is started by overriding its ``_start_jupyter_server_extension()`` method. This can be helpful for setting up e.g. background tasks.
+An ``ExtensionApp`` can start asynchronous tasks after Jupyter Server's event loop is started by overriding its
+``_start_jupyter_server_extension()`` method. This can be helpful for setting up e.g. background tasks.
 
 Here is a basic (pseudo) code example:
 
