@@ -446,9 +446,6 @@ class ExtensionApp(JupyterApp):
         assert self.serverapp is not None
         self.serverapp.start()
 
-    async def start_extension(self):
-        """An async hook to start e.g. tasks after the server's event loop is running."""
-
     def current_activity(self):
         """Return a list of activity happening in this extension."""
         return
@@ -477,6 +474,18 @@ class ExtensionApp(JupyterApp):
             extension._link_jupyter_server_extension(serverapp)
         extension.initialize()
         return extension
+
+    async def _start_jupyter_server_extension(self, serverapp):
+        """
+        An async hook to start e.g. tasks from the extension after
+        the server's event loop is running.
+
+        Override this method (no need to call `super()`) to
+        start (async) tasks from an extension.
+
+        This is useful for starting e.g. background tasks from
+        an extension.
+        """
 
     @classmethod
     def load_classic_server_extension(cls, serverapp):

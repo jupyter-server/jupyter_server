@@ -97,7 +97,7 @@ class MockExtensionNoTemplateApp(ExtensionApp):
         self.handlers.append(("/mock_error_notemplate", MockExtensionErrorHandler))
         self.loaded = True
 
-    async def start_extension(self):
+    async def _start_jupyter_server_extension(self, serverapp):
         self.started = True
 
 

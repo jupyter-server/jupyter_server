@@ -65,6 +65,29 @@ Then add this handler to Jupyter Server's Web Application through the ``_load_ju
         serverapp.web_app.add_handlers(".*$", handlers)
 
 
+Starting asynchronous tasks from an extension
+---------------------------------------------
+
+.. versionadded:: 2.15.0
+
+Jupyter Server offers a simple API for starting asynchronous tasks from a server extension. This is useful for calling
+async tasks after the event loop is running.
+
+The function should be named ``_start_jupyter_server_extension`` and found next to the ``_load_jupyter_server_extension`` function.
+
+Here is basic example:
+
+.. code-block:: python
+
+    import asyncio
+
+    async def _start_jupyter_server_extension(serverapp: jupyter_server.serverapp.ServerApp):
+        """
+        This function is called after the server's event loop is running.
+        """
+        await asyncio.sleep(.1)
+
+
 Making an extension discoverable
 --------------------------------
 
@@ -117,6 +140,7 @@ An ExtensionApp:
     - has an entrypoint, ``jupyter <name>``.
     - can serve static content from the ``/static/<name>/`` endpoint.
     - can add new endpoints to the Jupyter Server.
+    - can start asynchronous tasks after the server has started.
 
 The basic structure of an ExtensionApp is shown below:
 
@@ -156,6 +180,11 @@ The basic structure of an ExtensionApp is shown below:
             ...
             # Change the jinja templating environment
 
+        async def _start_jupyter_server_extension(self):
+            ...
+            # Extend this method to start any (e.g. async) tasks
+            # after the main Server's Event Loop is running.
+
         async def stop_extension(self):
             ...
             # Perform any required shut down steps
@@ -171,6 +200,7 @@ Methods
 * ``initialize_settings()``: adds custom settings to the Tornado Web Application.
 * ``initialize_handlers()``: appends handlers to the Tornado Web Application.
 * ``initialize_templates()``: initialize the templating engine (e.g. jinja2) for your frontend.
+* ``_start_jupyter_server_extension()``: enables the extension to start (async) tasks _after_ the server's main Event Loop has started.
 * ``stop_extension()``: called on server shut down.
 
 Properties
@@ -318,6 +348,42 @@ pointing at the ``load_classic_server_extension`` method:
 
 
 If the extension is enabled, the extension will be loaded when the server starts.
+
+
+Starting asynchronous tasks from an ExtensionApp
+------------------------------------------------
+
+.. versionadded:: 2.15.0
+
+
+An ``ExtensionApp`` can start asynchronous tasks after Jupyter Server's event loop is started by overriding its ``_start_jupyter_server_extension()`` method. This can be helpful for setting up e.g. background tasks.
+
+Here is a basic (pseudo) code example:
+
+.. code-block:: python
+
+    import asyncio
+    import time
+
+
+    async def log_time_periodically(log, dt=1):
+        """Log the current time from a periodic loop."""
+        while True:
+            current_time = time.time()
+            log.info(current_time)
+            await sleep(dt)
+
+
+    class MyExtension(ExtensionApp):
+        ...
+
+        async def _start_jupyter_server_extension(self):
+            self.my_background_task = asyncio.create_task(
+                log_time_periodically(self.log)
+            )
+
+        async def stop_extension(self):
+            self.my_background_task.cancel()
 
 
 Distributing a server extension

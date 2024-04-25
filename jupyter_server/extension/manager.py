@@ -119,6 +119,20 @@ class ExtensionPoint(HasTraits):
         loader = get_loader(loc)
         return loader
 
+    def _get_starter(self):
+        """Get a linker."""
+        if self.app:
+            linker = self.app._start_jupyter_server_extension
+        else:
+            linker = getattr(
+                self.module,
+                # Search for a _start_jupyter_extension
+                "_start_jupyter_server_extension",
+                # Otherwise return a dummy function.
+                lambda serverapp: None,
+            )
+        return linker
+
     def validate(self):
         """Check that both a linker and loader exists."""
         try:
@@ -149,6 +163,13 @@ class ExtensionPoint(HasTraits):
         """
         loader = self._get_loader()
         return loader(serverapp)
+
+    def start(self, serverapp):
+        """Call's the extensions 'start' hook where it can
+        start (possibly async) tasks _after_ the event loop is running.
+        """
+        starter = self._get_starter()
+        return starter(serverapp)
 
 
 class ExtensionPackage(LoggingConfigurable):
@@ -222,6 +243,11 @@ class ExtensionPackage(LoggingConfigurable):
         point = self.extension_points[point_name]
         return point.load(serverapp)
 
+    def start_point(self, point_name, serverapp):
+        """Load an extension point."""
+        point = self.extension_points[point_name]
+        return point.start(serverapp)
+
     def link_all_points(self, serverapp):
         """Link all extension points."""
         for point_name in self.extension_points:
@@ -231,9 +257,14 @@ class ExtensionPackage(LoggingConfigurable):
         """Load all extension points."""
         return [self.load_point(point_name, serverapp) for point_name in self.extension_points]
 
+    async def start_all_points(self, serverapp):
+        """Load all extension points."""
+        for point_name in self.extension_points:
+            await self.start_point(point_name, serverapp)
+
 
 class ExtensionManager(LoggingConfigurable):
-    """High level interface for findind, validating,
+    """High level interface for finding, validating,
     linking, loading, and managing Jupyter Server extensions.
 
     Usage:
@@ -367,15 +398,21 @@ class ExtensionManager(LoggingConfigurable):
             else:
                 self.log.info("%s | extension was successfully loaded.", name)
 
-    async def start_extension(self, name, apps):
-        """Call the start hooks in the specified apps."""
-        for app in apps:
-            self.log.debug("%s | extension app %r starting", name, app.name)
+    async def start_extension(self, name):
+        """Start an extension by name."""
+        extension = self.extensions.get(name)
+
+        if extension and extension.enabled:
             try:
-                await app.start_extension()
-                self.log.debug("%s | extension app %r started", name, app.name)
-            except Exception as err:
-                self.log.error(err)
+                await extension.start_all_points(self.serverapp)
+            except Exception as e:
+                if self.serverapp and self.serverapp.reraise_server_extension_failures:
+                    raise
+                self.log.warning(
+                    "%s | extension failed starting with message: %r", name, e, exc_info=True
+                )
+            else:
+                self.log.info("%s | extension was successfully started.", name)
 
     async def stop_extension(self, name, apps):
         """Call the shutdown hooks in the specified apps."""
@@ -403,8 +440,11 @@ class ExtensionManager(LoggingConfigurable):
             self.load_extension(name)
 
     async def start_all_extensions(self):
-        """Call the start hooks in all extensions."""
-        await multi(list(starmap(self.start_extension, sorted(dict(self.extension_apps).items()))))
+        """Start all enabled extensions."""
+        # Sort the extension names to enforce deterministic loading
+        # order.
+        for name in self.sorted_extensions:
+            await self.start_extension(name)
 
     async def stop_all_extensions(self):
         """Call the shutdown hooks in all extensions."""
