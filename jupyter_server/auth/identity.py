@@ -17,6 +17,7 @@ import typing as t
 import uuid
 from dataclasses import asdict, dataclass
 from http.cookies import Morsel
+from urllib.parse import unquote
 
 from tornado import escape, httputil, web
 from tornado.websocket import WebSocketHandler
@@ -435,6 +436,12 @@ class IdentityProvider(LoggingConfigurable):
                 for subprotocol in subprotocols:
                     if subprotocol.startswith(_TOKEN_SUBPROTOCOL + "."):
                         user_token = subprotocol[len(_TOKEN_SUBPROTOCOL) + 1 :]
+                        try:
+                            user_token = unquote(user_token)
+                        except ValueError:
+                            # leave tokens that fail to decode
+                            # these won't be accepted, but proceed with validation
+                            pass
                         break
 
         return user_token
