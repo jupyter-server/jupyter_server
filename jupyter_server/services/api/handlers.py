@@ -43,6 +43,18 @@ class APISpecHandler(web.StaticFileHandler, JupyterHandler):
         return "text/x-yaml"
 
 
+class APIDocsHandler(JupyterHandler):
+    """A handler for the documentation of the REST API."""
+
+    auth_resource = AUTH_RESOURCE
+
+    @web.authenticated
+    @authorized
+    async def get(self):
+        """Get the REST API documentation."""
+        return self.finish(self.render_template("apidocs.html"))
+
+
 class APIStatusHandler(APIHandler):
     """An API status handler."""
 
@@ -115,6 +127,7 @@ class IdentityHandler(APIHandler):
 
 
 default_handlers = [
+    (r"/api/apidocs", APIDocsHandler),
     (r"/api/spec.yaml", APISpecHandler),
     (r"/api/status", APIStatusHandler),
     (r"/api/me", IdentityHandler),

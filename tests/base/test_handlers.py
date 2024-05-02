@@ -13,6 +13,7 @@ from jupyter_server.auth import AllowAllAuthorizer, IdentityProvider, User
 from jupyter_server.auth.decorator import allow_unauthenticated
 from jupyter_server.base.handlers import (
     APIHandler,
+    APIDocsHandler,
     APIVersionHandler,
     AuthenticatedFileHandler,
     AuthenticatedHandler,
@@ -234,6 +235,15 @@ async def test_api_version_handler(jp_serverapp):
     request.connection = MagicMock()
     handler = APIVersionHandler(app.web_app, request)
     handler._transforms = []
+    handler.get()
+    assert handler.get_status() == 200
+
+
+async def test_api_docs_handler(jp_serverapp):
+    app: ServerApp = jp_serverapp
+    request = HTTPRequest("GET")
+    request.connection = MagicMock()
+    handler = APIDocsHandler(app.web_app, request)
     handler.get()
     assert handler.get_status() == 200
 

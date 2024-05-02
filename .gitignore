@@ -9,6 +9,7 @@ docs/gh-pages
 jupyter_server/i18n/*/LC_MESSAGES/*.mo
 jupyter_server/i18n/*/LC_MESSAGES/nbjs.json
 jupyter_server/static/style/*.min.css*
+jupyter_server/static/vendor/
 node_modules
 *.py[co]
 __pycache__
