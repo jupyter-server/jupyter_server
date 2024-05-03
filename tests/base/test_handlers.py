@@ -12,8 +12,8 @@ from tornado.httputil import HTTPHeaders
 from jupyter_server.auth import AllowAllAuthorizer, IdentityProvider, User
 from jupyter_server.auth.decorator import allow_unauthenticated
 from jupyter_server.base.handlers import (
-    APIHandler,
     APIDocsHandler,
+    APIHandler,
     APIVersionHandler,
     AuthenticatedFileHandler,
     AuthenticatedHandler,
