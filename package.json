@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npm run build:bootstrap && npm run build:swagger-ui",
     "build:bootstrap": "copyfiles -f node_modules/bootstrap/dist/css/*.min.* jupyter_server/static/style",
-    "build:swagger-ui": "copyfiles -f \"node_modules/swagger-ui-dist/{NOTICE,LICENSE}\" \"node_modules/swagger-ui-dist/swagger-ui{.css,-bundle.js}\" jupyter_server/static/vendor/swagger-ui"
+    "build:swagger-ui": "copyfiles -f \"node_modules/swagger-ui-dist/{NOTICE,LICENSE,swagger-ui.css,swagger-ui-bundle.js}\" jupyter_server/static/vendor/swagger-ui-dist"
   },
   "dependencies": {
     "bootstrap": "^3.4.0",
