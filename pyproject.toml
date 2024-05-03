@@ -126,7 +126,10 @@ path = "jupyter_server/_version.py"
 validate-bump = false
 
 [tool.hatch.build]
-artifacts = ["jupyter_server/static/style"]
+artifacts = [
+  "jupyter_server/static/style",
+  "jupyter_server/static/vendor",
+]
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.8.1"]
