@@ -13,6 +13,11 @@ async def test_get_spec(jp_fetch):
     assert response.code == 200
 
 
+async def test_get_api_docs(jp_fetch):
+    response = await jp_fetch("api", "apidocs", method="GET")
+    assert response.code == 200
+
+
 async def test_get_status(jp_fetch):
     response = await jp_fetch("api", "status", method="GET")
     assert response.code == 200

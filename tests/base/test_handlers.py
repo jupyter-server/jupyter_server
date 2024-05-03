@@ -22,7 +22,6 @@ from jupyter_server.base.handlers import (
     RedirectWithParams,
 )
 from jupyter_server.serverapp import ServerApp
-from jupyter_server.services.api.handlers import APIDocsHandler
 from jupyter_server.utils import url_path_join
 
 
@@ -235,15 +234,6 @@ async def test_api_version_handler(jp_serverapp):
     request.connection = MagicMock()
     handler = APIVersionHandler(app.web_app, request)
     handler._transforms = []
-    handler.get()
-    assert handler.get_status() == 200
-
-
-async def test_api_docs_handler(jp_serverapp):
-    app: ServerApp = jp_serverapp
-    request = HTTPRequest("GET")
-    request.connection = MagicMock()
-    handler = APIDocsHandler(app.web_app, request)
     handler.get()
     assert handler.get_status() == 200
 
