@@ -12,7 +12,6 @@ from tornado.httputil import HTTPHeaders
 from jupyter_server.auth import AllowAllAuthorizer, IdentityProvider, User
 from jupyter_server.auth.decorator import allow_unauthenticated
 from jupyter_server.base.handlers import (
-    APIDocsHandler,
     APIHandler,
     APIVersionHandler,
     AuthenticatedFileHandler,
@@ -23,6 +22,7 @@ from jupyter_server.base.handlers import (
     RedirectWithParams,
 )
 from jupyter_server.serverapp import ServerApp
+from jupyter_server.services.api.handlers import APIDocsHandler
 from jupyter_server.utils import url_path_join
 
 
