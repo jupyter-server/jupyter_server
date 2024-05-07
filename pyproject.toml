@@ -190,6 +190,8 @@ ignore = [
   "RUF012",
   # Use `X | Y` for type annotations
   "UP007",
+  # Use format specifiers instead of percent format
+  "UP031",
 ]
 unfixable = [
   # Don't touch print statements
