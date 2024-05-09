@@ -264,7 +264,8 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
         ------
         404: if path is outside root
         """
-        self.log.debug("Reading path from disk: %s", path)
+        # This statement can cause excessive logging, uncomment if necessary when troubleshooting.
+        # self.log.debug("Reading path from disk: %s", path)
         root = os.path.abspath(self.root_dir)  # type:ignore[attr-defined]
         # to_os_path is not safe if path starts with a drive, since os.path.join discards first part
         if os.path.splitdrive(path)[0]:
