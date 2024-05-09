@@ -434,10 +434,12 @@ class MappingKernelManager(MultiKernelManager):
 
     shutdown_kernel = _async_shutdown_kernel
 
-    async def _async_restart_kernel(self, kernel_id, now=False):
+    async def _async_restart_kernel(self, kernel_id, now=False, restart_in_place=False):
         """Restart a kernel by kernel_id"""
         self._check_kernel_id(kernel_id)
-        await self.pinned_superclass._async_restart_kernel(self, kernel_id, now=now)
+        await self.pinned_superclass._async_restart_kernel(
+            self, kernel_id, now=now, restart_in_place=restart_in_place
+        )
         kernel = self.get_kernel(kernel_id)
         # return a Future that will resolve when the kernel has successfully restarted
         channel = kernel.connect_shell()
