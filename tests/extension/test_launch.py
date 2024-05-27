@@ -15,17 +15,17 @@ import requests
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture()
+@pytest.fixture
 def port():
     return 9999
 
 
-@pytest.fixture()
+@pytest.fixture
 def token():
     return hexlify(os.urandom(4)).decode("ascii")
 
 
-@pytest.fixture()
+@pytest.fixture
 def auth_header(token):
     return {"Authorization": "token %s" % token}
 
@@ -43,7 +43,7 @@ def wait_up(url, interval=0.1, check=None):
             break
 
 
-@pytest.fixture()
+@pytest.fixture
 def launch_instance(request, port, token):
     def _run_in_subprocess(argv=None, add_token=True):
         argv = argv or []
@@ -87,7 +87,7 @@ def launch_instance(request, port, token):
     return _run_in_subprocess
 
 
-@pytest.fixture()
+@pytest.fixture
 def fetch(port, auth_header):
     def _get(endpoint):
         url = f"http://127.0.0.1:{port}" + endpoint

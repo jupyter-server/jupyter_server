@@ -1,7 +1,7 @@
 import base64
 import os
 
-from anyio.to_thread import run_sync
+import aiofiles
 from tornado import web
 
 from jupyter_server.services.contents.filemanager import (
@@ -151,5 +151,5 @@ class AsyncLargeFileManager(AsyncFileContentsManager):
         with self.perm_to_403(os_path):
             if os.path.islink(os_path):
                 os_path = os.path.join(os.path.dirname(os_path), os.readlink(os_path))
-            with open(os_path, "ab") as f:
-                await run_sync(f.write, bcontent)
+            async with aiofiles.open(os_path, "ab") as f:
+                await f.write(bcontent)

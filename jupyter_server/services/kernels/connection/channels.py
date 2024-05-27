@@ -373,7 +373,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     pass
                 # WebSockets don't respond to traditional error codes so we
                 # close the connection.
-                for _, stream in self.channels.items():
+                for stream in self.channels.values():
                     if not stream.closed():
                         stream.close()
                 self.disconnect()
@@ -385,7 +385,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         )
 
         def subscribe(value):
-            for _, stream in self.channels.items():
+            for stream in self.channels.values():
                 stream.on_recv_stream(self.handle_outgoing_message)
 
         connected.add_done_callback(subscribe)
@@ -430,7 +430,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # This method can be called twice, once by self.kernel_died and once
         # from the WebSocket close event. If the WebSocket connection is
         # closed before the ZMQ streams are setup, they could be None.
-        for _, stream in self.channels.items():
+        for stream in self.channels.values():
             if stream is not None and not stream.closed():
                 stream.on_recv(None)
                 stream.close()

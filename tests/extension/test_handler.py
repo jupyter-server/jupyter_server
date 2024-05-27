@@ -1,7 +1,7 @@
 import pytest
 
 
-@pytest.fixture()
+@pytest.fixture
 def jp_server_config(jp_template_dir):
     return {
         "ServerApp": {"jpserver_extensions": {"tests.extension.mockextensions": True}},
@@ -53,11 +53,9 @@ def test_serverapp_warns_of_unauthenticated_handler(jp_configurable_serverapp):
     with pytest.warns(RuntimeWarning, match=expected_warning) as record:
         jp_configurable_serverapp(allow_unauthenticated_access=False)
     assert any(
-        [
-            "GET of MockExtensionTemplateHandler registered for /a%40b/mock_template"
-            in r.message.args[0]
-            for r in record
-        ]
+        "GET of MockExtensionTemplateHandler registered for /a%40b/mock_template"
+        in r.message.args[0]
+        for r in record
     )
 
 

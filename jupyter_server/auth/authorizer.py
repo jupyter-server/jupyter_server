@@ -66,7 +66,7 @@ class Authorizer(LoggingConfigurable):
         bool
             True if user authorized to make request; False, otherwise
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class AllowAllAuthorizer(Authorizer):

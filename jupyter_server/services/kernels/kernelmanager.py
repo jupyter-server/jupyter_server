@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-import pathlib
 import typing as t
 import warnings
 from collections import defaultdict
@@ -46,6 +45,9 @@ from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH
 from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
 from jupyter_server.utils import ApiPath, import_item, to_os_path
+
+if t.TYPE_CHECKING:
+    import pathlib
 
 
 class MappingKernelManager(MultiKernelManager):
@@ -204,7 +206,7 @@ class MappingKernelManager(MultiKernelManager):
         self._kernel_connections.pop(kernel_id, None)
         self._kernel_ports.pop(kernel_id, None)
 
-    # TODO DEC 2022: Revise the type-ignore once the signatures have been changed upstream
+    # TODO: DEC 2022: Revise the type-ignore once the signatures have been changed upstream
     # https://github.com/jupyter/jupyter_client/pull/905
     async def _async_start_kernel(  # type:ignore[override]
         self, *, kernel_id: str | None = None, path: ApiPath | None = None, **kwargs: str
@@ -337,7 +339,7 @@ class MappingKernelManager(MultiKernelManager):
         """
 
         if not self.buffer_offline_messages:
-            for _, stream in channels.items():
+            for stream in channels.values():
                 stream.close()
             return
 

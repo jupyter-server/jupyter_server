@@ -107,7 +107,7 @@ class BaseJSONConfigManager(LoggingConfigurable):
                     try:
                         recursive_update(data, json.load(f))
                     except json.decoder.JSONDecodeError:
-                        self.log.warn("Invalid JSON in %s, skipping", path)
+                        self.log.warning("Invalid JSON in %s, skipping", path)
         return data
 
     def set(self, section_name: str, data: t.Any) -> None:
