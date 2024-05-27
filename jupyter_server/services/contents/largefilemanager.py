@@ -1,7 +1,7 @@
 import base64
 import os
 
-from anyio import run_sync
+from anyio.to_thread import run_sync
 from tornado import web
 
 from jupyter_server.services.contents.filemanager import (
