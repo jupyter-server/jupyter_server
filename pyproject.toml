@@ -143,6 +143,14 @@ extend-select = [
   "I",  # isort
   "UP",  # pyupgrade
 ]
+unfixable = [
+  # Don't touch print statements
+  "T201",
+  # Don't touch unused imports
+  "F401",
+  # Don't touch noqa lines
+  "RUF100"
+]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "jupyter_server/*" = ["S101", "RET", "S110", "UP031", "FBT", "FA100", "SLF001", "A002",
