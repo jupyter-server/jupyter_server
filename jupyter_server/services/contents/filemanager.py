@@ -1198,6 +1198,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             stdout, _ = await proc.communicate()
             result = await proc.wait()
             self.log.info(f"current status of du command {result}")
+            assert result == 0
             size = stdout.decode("utf-8").split()[0]
         except Exception:
             self.log.warning(
