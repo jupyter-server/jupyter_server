@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import pathlib  # noqa: TCH003
 import typing as t
 import warnings
 from collections import defaultdict
@@ -45,9 +46,6 @@ from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH
 from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
 from jupyter_server.utils import ApiPath, import_item, to_os_path
-
-if t.TYPE_CHECKING:
-    import pathlib
 
 
 class MappingKernelManager(MultiKernelManager):
