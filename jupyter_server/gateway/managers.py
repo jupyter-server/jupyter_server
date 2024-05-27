@@ -128,7 +128,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         # Remove any of our kernels that may have been culled on the gateway server
         our_kernels = self._kernels.copy()
         culled_ids = []
-        for kid in our_kernels():
+        for kid in our_kernels:
             if kid not in kernel_models:
                 # The upstream kernel was not reported in the list of kernels.
                 self.log.warning(

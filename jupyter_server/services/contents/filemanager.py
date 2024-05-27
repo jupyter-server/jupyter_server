@@ -1192,11 +1192,11 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
             else:
                 args = ["-s", "--block-size=1", path]
             proc = await asyncio.create_subprocess_exec(
-                "du", args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+                "du", *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
 
             stdout, _ = await proc.communicate()
-            result = await proc.wait
+            result = await proc.wait()
             self.log.info(f"current status of du command {result}")
             size = stdout.decode("utf-8").split()[0]
         except Exception:
