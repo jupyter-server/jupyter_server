@@ -300,3 +300,7 @@ def test_shell_command_override(
 def test_importing_shims():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
+        from jupyter_server.terminal import initialize
+        from jupyter_server.terminal.api_handlers import TerminalRootHandler
+        from jupyter_server.terminal.handlers import TermSocket
+        from jupyter_server.terminal.terminalmanager import TerminalManager
