@@ -354,6 +354,7 @@ spelling_lang = "en_US"
 spelling_word_list_filename = "spelling_wordlist.txt"
 
 # import before any doc is built, so _ is guaranteed to be injected
+import jupyter_server.transutils
 
 CONFIG_HEADER = """\
 .. _other-full-config:
