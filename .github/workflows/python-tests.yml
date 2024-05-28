@@ -46,7 +46,7 @@ jobs:
         run: hatch test -py ${{matrix.python-version}} --cover
       - name: Run the tests on pypy
         if: ${{ startsWith(matrix.python-version, 'pypy') }}
-        run: hatch test -py pypy3.8 -W default
+        run: hatch -v test -py pypy3.8 -W default
       - name: Run the tests on windows
         if: ${{ startsWith(matrix.os, 'windows') }}
         run: hatch test -py ${{matrix.python-version}} --cover -W default
