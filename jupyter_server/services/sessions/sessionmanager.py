@@ -408,7 +408,7 @@ class SessionManager(LoggingConfigurable):
                 raise TypeError(msg)
             conditions.append("%s=?" % column)
 
-        query = "SELECT * FROM session WHERE %s" % (" AND ".join(conditions))
+        query = "SELECT * FROM session WHERE %s" % (" AND ".join(conditions))  # noqa: S608
 
         self.cursor.execute(query, list(kwargs.values()))
         try:
@@ -456,7 +456,7 @@ class SessionManager(LoggingConfigurable):
             if column not in self._columns:
                 raise TypeError("No such column: %r" % column)
             sets.append("%s=?" % column)
-        query = "UPDATE session SET %s WHERE session_id=?" % (", ".join(sets))
+        query = "UPDATE session SET %s WHERE session_id=?" % (", ".join(sets))  # noqa: S608
         self.cursor.execute(query, [*list(kwargs.values()), session_id])
 
         if hasattr(self.kernel_manager, "update_env"):

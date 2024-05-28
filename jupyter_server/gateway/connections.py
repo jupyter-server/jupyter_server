@@ -108,7 +108,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
 
         # NOTE(esevan): if websocket is not disconnected by client, try to reconnect.
         if not self.disconnected and self.retry < GatewayClient.instance().gateway_retry_max:
-            jitter = random.randint(10, 100) * 0.01
+            jitter = random.randint(10, 100) * 0.01  # noqa: S311
             retry_interval = (
                 min(
                     GatewayClient.instance().gateway_retry_interval * (2**self.retry),

@@ -21,7 +21,6 @@ from urllib.parse import urlparse
 import prometheus_client
 from jinja2 import TemplateNotFound
 from jupyter_core.paths import is_hidden
-from jupyter_events import EventLogger
 from tornado import web
 from tornado.log import app_log
 from traitlets.config import Application
@@ -45,6 +44,7 @@ from jupyter_server.utils import (
 
 if TYPE_CHECKING:
     from jupyter_client.kernelspec import KernelSpecManager
+    from jupyter_events import EventLogger
     from jupyter_server_terminals.terminalmanager import TerminalManager
     from tornado.concurrent import Future
 
@@ -785,7 +785,7 @@ class APIHandler(JupyterHandler):
 
     @property
     def content_security_policy(self) -> str:
-        csp = "; ".join(
+        csp = "; ".join(  # noqa: FLY002
             [
                 super().content_security_policy,
                 "default-src 'none'",
