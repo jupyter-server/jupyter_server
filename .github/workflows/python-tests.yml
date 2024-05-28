@@ -56,7 +56,7 @@ jobs:
         run: hatch test --cover
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
         with:
-          artifact_name: coverage-${{ github.job }}
+          artifact_name: coverage-${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
 
   test_docs:
     name: Test Docs
@@ -198,7 +198,7 @@ jobs:
         run: hatch test --cover
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
         with:
-          artifact_name: coverage-${{ github.job }}
+          artifact_name: coverage-${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
 
   integration_check_pypy:
     runs-on: ubuntu-latest
