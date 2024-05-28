@@ -59,7 +59,7 @@ test = [
     "pytest-jupyter[server]>=0.7",
     "pytest>=7.0,<9",
     "requests>=2.0",
-    "pre-commit>=3.7",
+    "pre-commit>=3.0",
     'flaky>=3.8'
 ]
 docs = [
