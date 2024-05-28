@@ -90,6 +90,9 @@ jupyter-server = "jupyter_server.serverapp:main"
 features = ["test"]
 retries = 2
 
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.12", "3.11", "3.10", "3.9", "3.8", "pypy3.10", "pypy3.9"]
+
 [tool.hatch.envs.docs]
 features = ["docs"]
 [tool.hatch.envs.docs.scripts]
