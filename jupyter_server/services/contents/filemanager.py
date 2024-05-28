@@ -4,6 +4,7 @@
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
+import asyncio
 import errno
 import math
 import mimetypes
@@ -705,11 +706,13 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             if platform.system() == "Darwin":
                 # returns the size of the folder in KB
                 result = subprocess.run(
-                    ["du", "-sk", path], capture_output=True, check=True
+                    ["du", "-sk", path],  # noqa: S607
+                    capture_output=True,
+                    check=True,
                 ).stdout.split()
             else:
                 result = subprocess.run(
-                    ["du", "-s", "--block-size=1", path],
+                    ["du", "-s", "--block-size=1", path],  # noqa: S607
                     capture_output=True,
                     check=True,
                 ).stdout.split()
@@ -1185,18 +1188,18 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         try:
             if platform.system() == "Darwin":
                 # returns the size of the folder in KB
-                result = subprocess.run(
-                    ["du", "-sk", path], capture_output=True, check=True
-                ).stdout.split()
+                args = ["-sk", path]
             else:
-                result = subprocess.run(
-                    ["du", "-s", "--block-size=1", path],
-                    capture_output=True,
-                    check=True,
-                ).stdout.split()
+                args = ["-s", "--block-size=1", path]
+            proc = await asyncio.create_subprocess_exec(
+                "du", *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            )
 
+            stdout, _ = await proc.communicate()
+            result = await proc.wait()
             self.log.info(f"current status of du command {result}")
-            size = result[0].decode("utf-8")
+            assert result == 0
+            size = stdout.decode("utf-8").split()[0]
         except Exception:
             self.log.warning(
                 "Not able to get the size of the %s directory. Copying might be slow if the directory is large!",

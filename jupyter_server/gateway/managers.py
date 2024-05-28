@@ -8,11 +8,10 @@ import asyncio
 import datetime
 import json
 import os
-from logging import Logger
 from queue import Empty, Queue
 from threading import Thread
 from time import monotonic
-from typing import Any, Optional, cast
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 import websocket
 from jupyter_client.asynchronous.client import AsyncKernelClient
@@ -33,6 +32,9 @@ from ..services.kernels.kernelmanager import (
 from ..services.sessions.sessionmanager import SessionManager
 from ..utils import url_path_join
 from .gateway_client import GatewayClient, gateway_request
+
+if TYPE_CHECKING:
+    from logging import Logger
 
 
 class GatewayMappingKernelManager(AsyncMappingKernelManager):
@@ -126,7 +128,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         # Remove any of our kernels that may have been culled on the gateway server
         our_kernels = self._kernels.copy()
         culled_ids = []
-        for kid, _ in our_kernels.items():
+        for kid in our_kernels:
             if kid not in kernel_models:
                 # The upstream kernel was not reported in the list of kernels.
                 self.log.warning(
@@ -231,7 +233,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
         """Get the endpoint for a user filter."""
         kernel_user = os.environ.get("KERNEL_USERNAME")
         if kernel_user:
-            return "?user=".join([default_endpoint, kernel_user])
+            return f"{default_endpoint}?user={kernel_user}"
         return default_endpoint
 
     def _replace_path_kernelspec_resources(self, kernel_specs):

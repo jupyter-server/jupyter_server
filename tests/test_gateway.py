@@ -228,14 +228,14 @@ class CustomTestTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
         return f"{self.config_var_2}{self.config_var_1}"
 
 
-@pytest.fixture()
+@pytest.fixture
 def jp_server_config():
     return Config(
         {"CustomTestTokenRenewer": {"config_var_1": 42, "config_var_2": "Use this token value: "}}
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def init_gateway(monkeypatch):
     """Initializes the server for use as a gateway client."""
     # Clear the singleton first since previous tests may not have used a gateway.

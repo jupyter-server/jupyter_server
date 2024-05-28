@@ -67,7 +67,7 @@ def test_atomic_writing(tmp_path):
             assert f.read() == "written from symlink"
 
 
-@pytest.fixture()
+@pytest.fixture
 def handle_umask():
     global umask
     umask = os.umask(0)

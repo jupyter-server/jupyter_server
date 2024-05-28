@@ -12,12 +12,12 @@ from jupyter_server.utils import url_path_join
 
 
 # override default config to ensure a non-empty base url is used
-@pytest.fixture()
+@pytest.fixture
 def jp_base_url():
     return "/a%40b/"
 
 
-@pytest.fixture()
+@pytest.fixture
 def jp_server_config(jp_base_url):
     return {
         "ServerApp": {
@@ -67,7 +67,7 @@ async def _login(
     return resp
 
 
-@pytest.fixture()
+@pytest.fixture
 def login_headers():
     """Extra headers to pass to login
 
@@ -76,7 +76,7 @@ def login_headers():
     return {}
 
 
-@pytest.fixture()
+@pytest.fixture
 def login(jp_serverapp, http_server_client, jp_base_url, login_headers):
     """Fixture to return a function to login to a Jupyter server
 

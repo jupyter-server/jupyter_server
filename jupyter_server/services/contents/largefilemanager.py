@@ -151,5 +151,5 @@ class AsyncLargeFileManager(AsyncFileContentsManager):
         with self.perm_to_403(os_path):
             if os.path.islink(os_path):
                 os_path = os.path.join(os.path.dirname(os_path), os.readlink(os_path))
-            with open(os_path, "ab") as f:
+            with open(os_path, "ab") as f:  # noqa: ASYNC101
                 await run_sync(f.write, bcontent)
