@@ -117,7 +117,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
-          python-version: "3.8"
+          python_version: "3.8"
       - name: Run the unit tests
         env:
           PYTHONWARNINGS: default
