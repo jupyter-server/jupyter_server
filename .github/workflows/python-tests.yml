@@ -43,17 +43,17 @@ jobs:
           wget https://github.com/jgm/pandoc/releases/download/3.1.2/pandoc-3.1.2-1-amd64.deb && sudo dpkg -i pandoc-3.1.2-1-amd64.deb
       - name: Run the tests on posix
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: hatch test --cover
+        run: hatch test -py ${{matrix.python-version}} --cover
       - name: Run the tests on pypy
         if: ${{ startsWith(matrix.python-version, 'pypy') }}
         env:
           PYTHONWARNINGS: default
-        run: hatch test
+        run: hatch test -py ${{matrix.python-version}}
       - name: Run the tests on windows
         if: ${{ startsWith(matrix.os, 'windows') }}
         env:
           PYTHONWARNINGS: default
-        run: hatch test --cover
+        run: hatch test -py ${{matrix.python-version}} --cover
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
         with:
           artifact_name: coverage-${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
@@ -116,14 +116,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-        with:
-          python_version: "3.8"
       - name: Run the unit tests
         env:
           PYTHONWARNINGS: default
           UV_RESOLUTION: lowest-direct
         run: |
-          hatch test
+          hatch test -py 3.8
 
   test_prereleases:
     name: Test Prereleases
@@ -137,7 +135,7 @@ jobs:
           PYTHONWARNINGS: default
           UV_PRERELEASE: allow
         run: |
-          hatch test
+          hatch test -py 3.12
 
   make_sdist:
     name: Make SDist
@@ -197,7 +195,7 @@ jobs:
       - name: Run the tests
         env:
           INTEGRATION_TEST: 1
-        run: hatch test --cover
+        run: hatch test -py ${{matrix.python-version}} --cover
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
         with:
           artifact_name: coverage-${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
@@ -213,7 +211,7 @@ jobs:
         env:
           INTEGRATION_TEST: 1
           PYTHONWARNINGS: default
-        run: hatch test
+        run: hatch test -py pypy-3.8
 
   coverage:
     runs-on: ubuntu-latest
