@@ -41,11 +41,9 @@ jobs:
           sudo apt-get install xvfb x11-utils libxkbcommon-x11-0
           # pandoc is not up to date in the ubuntu repos, so we install directly
           wget https://github.com/jgm/pandoc/releases/download/3.1.2/pandoc-3.1.2-1-amd64.deb && sudo dpkg -i pandoc-3.1.2-1-amd64.deb
-      - name: Debug python
-        run: which -a python
       - name: Run the tests on posix
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: hatch test -py ${{matrix.python-version}} --cover
+        run: hatch test -py pypy3.8 --cover
       - name: Run the tests on pypy
         if: ${{ startsWith(matrix.python-version, 'pypy') }}
         run: hatch test -py ${{matrix.python-version}} -W default
