@@ -13,6 +13,7 @@ from traitlets.tests.utils import check_help_all_output
 from jupyter_server.utils import (
     check_pid,
     check_version,
+    filefind,
     is_namespace_package,
     path2url,
     run_sync_in_loop,
@@ -125,3 +126,41 @@ def test_unix_socket_in_use(tmp_path):
     sock.listen(0)
     assert unix_socket_in_use(server_address)
     sock.close()
+
+
+@pytest.mark.parametrize(
+    "filename, result",
+    [
+        ("/foo", OSError),
+        ("../c/in-c", OSError),
+        ("in-a", "a/in-a"),
+        ("in-b", "b/in-b"),
+        ("in-both", "a/in-both"),
+        (r"\in-a", OSError),
+        ("not-found", OSError),
+    ],
+)
+def test_filefind(tmp_path, filename, result):
+    a = tmp_path / "a"
+    a.mkdir()
+    b = tmp_path / "b"
+    b.mkdir()
+    c = tmp_path / "c"
+    c.mkdir()
+    for parent in (a, b):
+        with parent.joinpath("in-both").open("w"):
+            pass
+    with a.joinpath("in-a").open("w"):
+        pass
+    with b.joinpath("in-b").open("w"):
+        pass
+    with c.joinpath("in-c").open("w"):
+        pass
+
+    if isinstance(result, str):
+        found = filefind(filename, [str(a), str(b)])
+        found_relative = Path(found).relative_to(tmp_path)
+        assert str(found_relative) == result
+    else:
+        with pytest.raises(result):
+            filefind(filename, [str(a), str(b)])
