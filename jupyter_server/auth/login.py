@@ -1,4 +1,5 @@
 """Tornado handlers for logging into the Jupyter Server."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import os
@@ -9,6 +10,7 @@ from urllib.parse import urlparse
 from tornado.escape import url_escape
 
 from ..base.handlers import JupyterHandler
+from .decorator import allow_unauthenticated
 from .security import passwd_check, set_password
 
 
@@ -73,6 +75,7 @@ class LoginFormHandler(JupyterHandler):
                 url = default
         self.redirect(url)
 
+    @allow_unauthenticated
     def get(self):
         """Get the login form."""
         if self.current_user:
@@ -81,6 +84,7 @@ class LoginFormHandler(JupyterHandler):
         else:
             self._render()
 
+    @allow_unauthenticated
     def post(self):
         """Post a login."""
         user = self.current_user = self.identity_provider.process_login_form(self)
@@ -110,6 +114,7 @@ class LegacyLoginHandler(LoginFormHandler):
         """Check a passwd."""
         return passwd_check(a, b)
 
+    @allow_unauthenticated
     def post(self):
         """Post a login form."""
         typed_password = self.get_argument("password", default="")
@@ -124,9 +129,9 @@ class LegacyLoginHandler(LoginFormHandler):
                     config_dir = self.settings.get("config_dir", "")
                     config_file = os.path.join(config_dir, "jupyter_server_config.json")
                     if hasattr(self.identity_provider, "hashed_password"):
-                        self.identity_provider.hashed_password = self.settings[
-                            "password"
-                        ] = set_password(new_password, config_file=config_file)
+                        self.identity_provider.hashed_password = self.settings["password"] = (
+                            set_password(new_password, config_file=config_file)
+                        )
                     self.log.info("Wrote hashed password to %s" % config_file)
             else:
                 self.set_status(401)
@@ -179,7 +184,7 @@ class LegacyLoginHandler(LoginFormHandler):
         """DEPRECATED in 2.0, use IdentityProvider API"""
         if getattr(handler, "_user_id", None) is None:
             # ensure get_user has been called, so we know if we're token-authenticated
-            handler.current_user  # noqa
+            handler.current_user  # noqa: B018
         return getattr(handler, "_token_authenticated", False)
 
     @classmethod
@@ -233,7 +238,7 @@ class LegacyLoginHandler(LoginFormHandler):
         """DEPRECATED in 2.0, use IdentityProvider API"""
         token = handler.token
         if not token:
-            return
+            return None
         # check login token from URL argument or Authorization header
         user_token = cls.get_token(handler)
         authenticated = False

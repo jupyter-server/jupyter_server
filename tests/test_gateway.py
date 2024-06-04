@@ -1,4 +1,5 @@
 """Test GatewayClient"""
+
 import asyncio
 import json
 import logging
@@ -90,7 +91,7 @@ def generate_model(name):
     return model
 
 
-async def mock_gateway_request(url, **kwargs):  # noqa
+async def mock_gateway_request(url, **kwargs):
     method = "GET"
     if kwargs["method"]:
         method = kwargs["method"]
@@ -227,7 +228,7 @@ class CustomTestTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
         return f"{self.config_var_2}{self.config_var_1}"
 
 
-@pytest.fixture()
+@pytest.fixture
 def jp_server_config():
     return Config(
         {"CustomTestTokenRenewer": {"config_var_1": 42, "config_var_2": "Use this token value: "}}
@@ -373,15 +374,12 @@ def test_gateway_request_timeout_pad_option(
     GatewayClient.clear_instance()
 
 
-cookie_expire_time = format_datetime(datetime.now(tz=timezone.utc) + timedelta(seconds=180))
-
-
 @pytest.mark.parametrize(
     "accept_cookies,expire_arg,expire_param,existing_cookies,cookie_exists",
     [
         (False, None, None, "EXISTING=1", False),
         (True, None, None, "EXISTING=1", True),
-        (True, "Expires", cookie_expire_time, None, True),
+        (True, "Expires", 180, None, True),
         (True, "Max-Age", "-360", "EXISTING=1", False),
     ],
 )
@@ -400,6 +398,10 @@ def test_gateway_request_with_expiring_cookies(
 
     cookie: SimpleCookie = SimpleCookie()
     cookie.load("SERVERID=1234567; Path=/")
+    if expire_arg == "Expires":
+        expire_param = format_datetime(
+            datetime.now(tz=timezone.utc) + timedelta(seconds=expire_param)
+        )
     if expire_arg:
         cookie["SERVERID"][expire_arg] = expire_param
 
@@ -714,20 +716,21 @@ async def test_websocket_connection_closed(init_gateway, jp_serverapp, jp_fetch,
     handler.ws_connection.is_closing = lambda: True
 
     # Create the GatewayWebSocketConnection and attach it to the handler...
-    conn = GatewayWebSocketConnection(parent=km, websocket_handler=handler)
-    handler.connection = conn
-    await conn.connect()
+    with mocked_gateway:
+        conn = GatewayWebSocketConnection(parent=km, websocket_handler=handler)
+        handler.connection = conn
+        await conn.connect()
 
-    # Processing websocket messages happens in separate coroutines and any
-    # errors in that process will show up in logs, but not bubble up to the
-    # caller.
-    #
-    # To check for these, we wait for the server to stop and then check the
-    # logs for errors.
-    await jp_serverapp._cleanup()
-    for _, level, message in caplog.record_tuples:
-        if level >= logging.ERROR:
-            pytest.fail(f"Logs contain an error: {message}")
+        # Processing websocket messages happens in separate coroutines and any
+        # errors in that process will show up in logs, but not bubble up to the
+        # caller.
+        #
+        # To check for these, we wait for the server to stop and then check the
+        # logs for errors.
+        await jp_serverapp._cleanup()
+        for _, level, message in caplog.record_tuples:
+            if level >= logging.ERROR:
+                pytest.fail(f"Logs contain an error: {message}")
 
 
 #

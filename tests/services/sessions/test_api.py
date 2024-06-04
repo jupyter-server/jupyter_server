@@ -389,8 +389,6 @@ async def test_create_with_bad_kernel_id(session_client, jp_serverapp, session_i
     newsession = j(resp)
     sid = newsession["id"]
     await session_is_ready(sid)
-
-    # TODO
     assert newsession["path"] == "foo/nb1.py"
     assert newsession["type"] == "file"
 

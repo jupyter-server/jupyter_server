@@ -1,6 +1,7 @@
 """
 Password generation for the Jupyter Server.
 """
+
 import getpass
 import hashlib
 import json
@@ -41,7 +42,7 @@ def passwd(passphrase=None, algorithm="argon2"):
 
     Examples
     --------
-    >>> passwd('mypassword')  # doctest: +ELLIPSIS
+    >>> passwd("mypassword")  # doctest: +ELLIPSIS
     'argon2:...'
 
     """
@@ -52,8 +53,7 @@ def passwd(passphrase=None, algorithm="argon2"):
             if p0 == p1:
                 passphrase = p0
                 break
-            else:
-                warnings.warn("Passwords do not match.", stacklevel=2)
+            warnings.warn("Passwords do not match.", stacklevel=2)
         else:
             msg = "No matching passwords found. Giving up."
             raise ValueError(msg)
@@ -68,13 +68,13 @@ def passwd(passphrase=None, algorithm="argon2"):
         )
         h_ph = ph.hash(passphrase)
 
-        return ":".join((algorithm, h_ph))
+        return f"{algorithm}:{h_ph}"
 
     h = hashlib.new(algorithm)
     salt = ("%0" + str(salt_len) + "x") % random.getrandbits(4 * salt_len)
     h.update(passphrase.encode("utf-8") + salt.encode("ascii"))
 
-    return ":".join((algorithm, salt, h.hexdigest()))
+    return f"{algorithm}:{salt}:{h.hexdigest()}"
 
 
 def passwd_check(hashed_passphrase, passphrase):
@@ -94,15 +94,14 @@ def passwd_check(hashed_passphrase, passphrase):
 
     Examples
     --------
-    >>> myhash = passwd('mypassword')
-    >>> passwd_check(myhash, 'mypassword')
+    >>> myhash = passwd("mypassword")
+    >>> passwd_check(myhash, "mypassword")
     True
 
-    >>> passwd_check(myhash, 'otherpassword')
+    >>> passwd_check(myhash, "otherpassword")
     False
 
-    >>> passwd_check('sha1:0e112c3ddfce:a68df677475c2b47b6e86d0467eec97ac5f4b85a',
-    ...              'mypassword')
+    >>> passwd_check("sha1:0e112c3ddfce:a68df677475c2b47b6e86d0467eec97ac5f4b85a", "mypassword")
     True
     """
     if hashed_passphrase.startswith("argon2:"):

@@ -43,13 +43,13 @@ jobs:
           wget https://github.com/jgm/pandoc/releases/download/3.1.2/pandoc-3.1.2-1-amd64.deb && sudo dpkg -i pandoc-3.1.2-1-amd64.deb
       - name: Run the tests on posix
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: hatch run cov:test --cov-fail-under 75 || hatch run test:test --lf
+        run: hatch run cov:test --cov-fail-under 75 || hatch -v run test:test --lf
       - name: Run the tests on pypy
         if: ${{ startsWith(matrix.python-version, 'pypy') }}
-        run: hatch run test:nowarn || hatch run test:nowarn --lf
+        run: hatch run test:nowarn || hatch -v run test:nowarn --lf
       - name: Run the tests on windows
         if: ${{ startsWith(matrix.os, 'windows') }}
-        run: hatch run cov:nowarn -s || hatch run cov:nowarn --lf
+        run: hatch run cov:nowarn -s || hatch -v run cov:nowarn --lf
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
 
   test_docs:
@@ -64,14 +64,14 @@ jobs:
           sudo apt-get install enchant-2  # for spell checking
       - name: Build API docs
         run: |
-          hatch run docs:api
+          hatch -v run docs:api
           # If this fails run `hatch run docs:api` locally
           # and commit.
           git status --porcelain
           git status -s | grep "A" && exit 1
           git status -s | grep "M" && exit 1
           echo "API docs done"
-      - run: hatch run docs:build
+      - run: hatch -v run docs:build
 
   test_lint:
     name: Test Lint
@@ -81,8 +81,8 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Run Linters
         run: |
-          hatch run typing:test
-          hatch run lint:build
+          hatch -v run typing:test
+          hatch fmt
           pipx run interrogate -v .
           pipx run doc8 --max-line-length=200  --ignore-path=docs/source/other/full-config.rst
           npm install -g eslint
@@ -114,7 +114,7 @@ jobs:
           dependency_type: minimum
       - name: Run the unit tests
         run: |
-          hatch -vv run test:nowarn || hatch run test:nowarn --lf
+          hatch -vv run test:nowarn || hatch -v run test:nowarn --lf
 
   test_prereleases:
     name: Test Prereleases
@@ -127,7 +127,7 @@ jobs:
           dependency_type: pre
       - name: Run the tests
         run: |
-          hatch run test:nowarn || hatch run test:nowarn --lf
+          hatch run test:nowarn || hatch -v run test:nowarn --lf
 
   make_sdist:
     name: Make SDist
@@ -148,7 +148,7 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/test-sdist@v1
         with:
           package_spec: -vv .
-          test_command: hatch run test:test || hatch run test:test --lf
+          test_command: hatch run test:test || hatch -v run test:test --lf
 
   check_release:
     runs-on: ubuntu-latest
@@ -185,7 +185,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Run the tests
-        run: hatch run cov:integration
+        run: hatch -v run cov:integration
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
 
   integration_check_pypy:
@@ -196,7 +196,7 @@ jobs:
         with:
           python_version: "pypy-3.8"
       - name: Run the tests
-        run: hatch run test:nowarn --integration_tests=true
+        run: hatch -v run test:nowarn --integration_tests=true
 
   coverage:
     runs-on: ubuntu-latest

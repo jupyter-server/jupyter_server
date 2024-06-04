@@ -1,4 +1,5 @@
 """Gateway connection classes."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
@@ -13,7 +14,7 @@ from tornado.concurrent import Future
 from tornado.escape import json_decode, url_escape, utf8
 from tornado.httpclient import HTTPRequest
 from tornado.ioloop import IOLoop
-from traitlets import Bool, Instance, Int
+from traitlets import Bool, Instance, Int, Unicode
 
 from ..services.kernels.connection.base import BaseKernelWebsocketConnection
 from ..utils import url_path_join
@@ -30,6 +31,11 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
     disconnected = Bool(False)
 
     retry = Int(0)
+
+    # When opening ws connection to gateway, server already negotiated subprotocol with notebook client.
+    # Same protocol must be used for client and gateway, so legacy ws subprotocol for client is enforced here.
+
+    kernel_ws_protocol = Unicode("", allow_none=True, config=True)
 
     async def connect(self):
         """Connect to the socket."""
@@ -63,9 +69,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
         else:
             self.log.warning(
                 "Websocket connection has been closed via client disconnect or due to error.  "
-                "Kernel with ID '{}' may not be terminated on GatewayClient: {}".format(
-                    self.kernel_id, GatewayClient.instance().url
-                )
+                f"Kernel with ID '{self.kernel_id}' may not be terminated on GatewayClient: {GatewayClient.instance().url}"
             )
 
     def disconnect(self):
@@ -104,7 +108,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
 
         # NOTE(esevan): if websocket is not disconnected by client, try to reconnect.
         if not self.disconnected and self.retry < GatewayClient.instance().gateway_retry_max:
-            jitter = random.randint(10, 100) * 0.01  # noqa
+            jitter = random.randint(10, 100) * 0.01  # noqa: S311
             retry_interval = (
                 min(
                     GatewayClient.instance().gateway_retry_interval * (2**self.retry),

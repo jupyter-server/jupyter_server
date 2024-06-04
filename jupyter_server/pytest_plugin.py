@@ -1,7 +1,9 @@
 """Pytest Fixtures exported by Jupyter Server."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
+from pathlib import Path
 
 import pytest
 
@@ -17,8 +19,8 @@ sample_kernel_json = {
 }
 
 
-@pytest.fixture
-def jp_kernelspecs(jp_data_dir):
+@pytest.fixture  # type:ignore[misc]
+def jp_kernelspecs(jp_data_dir: Path) -> None:
     """Configures some sample kernelspecs in the Jupyter data directory."""
     spec_names = ["sample", "sample2", "bad"]
     for name in spec_names:

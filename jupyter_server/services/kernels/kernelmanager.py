@@ -3,13 +3,14 @@
 - raises HTTPErrors
 - creates REST API models
 """
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
 import asyncio
 import os
-import pathlib
+import pathlib  # noqa: TCH003
 import typing as t
 import warnings
 from collections import defaultdict
@@ -202,7 +203,7 @@ class MappingKernelManager(MultiKernelManager):
         self._kernel_connections.pop(kernel_id, None)
         self._kernel_ports.pop(kernel_id, None)
 
-    # TODO DEC 2022: Revise the type-ignore once the signatures have been changed upstream
+    # TODO: DEC 2022: Revise the type-ignore once the signatures have been changed upstream
     # https://github.com/jupyter/jupyter_client/pull/905
     async def _async_start_kernel(  # type:ignore[override]
         self, *, kernel_id: str | None = None, path: ApiPath | None = None, **kwargs: str
@@ -335,7 +336,7 @@ class MappingKernelManager(MultiKernelManager):
         """
 
         if not self.buffer_offline_messages:
-            for _, stream in channels.items():
+            for stream in channels.values():
                 stream.close()
             return
 
@@ -372,7 +373,7 @@ class MappingKernelManager(MultiKernelManager):
         """
         self.log.debug("Getting buffer for %s", kernel_id)
         if kernel_id not in self._kernel_buffers:
-            return
+            return None
 
         buffer_info = self._kernel_buffers[kernel_id]
         if buffer_info["session_key"] == session_key:
@@ -761,7 +762,7 @@ class ServerKernelManager(AsyncIOLoopKernelManager):
 
     # This trait is intended for subclasses to override and define
     # custom event schemas.
-    extra_event_schema_paths: List[str] = List(  # type:ignore[assignment]
+    extra_event_schema_paths: List[str] = List(
         default_value=[],
         help="""
         A list of pathlib.Path objects pointing at to register with

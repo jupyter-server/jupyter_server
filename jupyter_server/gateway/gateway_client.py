@@ -1,4 +1,5 @@
 """A kernel gateway client."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
@@ -46,8 +47,6 @@ if ty.TYPE_CHECKING:
 class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore[misc]
     """The metaclass necessary for proper ABC behavior in a Configurable."""
 
-    pass
-
 
 class GatewayTokenRenewerBase(  # type:ignore[misc]
     ABC, LoggingConfigurable, metaclass=GatewayTokenRenewerMeta
@@ -71,7 +70,6 @@ class GatewayTokenRenewerBase(  # type:ignore[misc]
         Given the current authorization header key, scheme, and token, this method returns
         a (potentially renewed) token for use against the Gateway server.
         """
-        pass
 
 
 class NoOpTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
@@ -298,7 +296,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         help="""The password for HTTP authentication.  (JUPYTER_GATEWAY_HTTP_PWD env var)
         """,
     )
-    http_pwd_env = "JUPYTER_GATEWAY_HTTP_PWD"
+    http_pwd_env = "JUPYTER_GATEWAY_HTTP_PWD"  # noqa: S105
 
     @default("http_pwd")
     def _http_pwd_default(self):
@@ -349,7 +347,7 @@ If the authorization header key takes a single value, `auth_scheme` should be se
 
 (JUPYTER_GATEWAY_AUTH_TOKEN env var)""",
     )
-    auth_token_env = "JUPYTER_GATEWAY_AUTH_TOKEN"
+    auth_token_env = "JUPYTER_GATEWAY_AUTH_TOKEN"  # noqa: S105
 
     @default("auth_token")
     def _auth_token_default(self):
@@ -460,9 +458,9 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
         return int(os.environ.get(self.gateway_retry_max_env, self.gateway_retry_max_default_value))
 
     gateway_token_renewer_class_default_value = (
-        "jupyter_server.gateway.gateway_client.NoOpTokenRenewer"
+        "jupyter_server.gateway.gateway_client.NoOpTokenRenewer"  # noqa: S105
     )
-    gateway_token_renewer_class_env = "JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS"
+    gateway_token_renewer_class_env = "JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS"  # noqa: S105
     gateway_token_renewer_class = Type(
         klass=GatewayTokenRenewerBase,
         config=True,
@@ -632,7 +630,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
 
         return kwargs
 
-    def update_cookies(self, cookie: SimpleCookie[ty.Any]) -> None:
+    def update_cookies(self, cookie: SimpleCookie) -> None:
         """Update cookies from existing requests for load balancers"""
         if not self.accept_cookies:
             return
@@ -760,11 +758,12 @@ class RetryableHTTPClient:
 
 async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
     """Make an async request to kernel gateway endpoint, returns a response"""
-    kwargs = GatewayClient.instance().load_connection_args(**kwargs)
+    gateway_client = GatewayClient.instance()
+    kwargs = gateway_client.load_connection_args(**kwargs)
     rhc = RetryableHTTPClient()
     try:
         response = await rhc.fetch(endpoint, **kwargs)
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: SUCCESS_STATUS, STATUS_CODE_KEY: 200, MESSAGE_KEY: "success"}
         )
     # Trap a set of common exceptions so that we can inform the user that their Gateway url is incorrect
@@ -772,10 +771,12 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
     # NOTE: We do this here since this handler is called during the server's startup and subsequent refreshes
     # of the tree view.
     except HTTPClientError as e:
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: e.code, MESSAGE_KEY: str(e.message)}
         )
-        error_reason = f"Exception while attempting to connect to Gateway server url '{GatewayClient.instance().url}'"
+        error_reason = (
+            f"Exception while attempting to connect to Gateway server url '{gateway_client.url}'"
+        )
         error_message = e.message
         if e.response:
             try:
@@ -791,38 +792,39 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
             "Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
     except ConnectionError as e:
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 503, MESSAGE_KEY: str(e)}
         )
         raise web.HTTPError(
             503,
-            f"ConnectionError was received from Gateway server url '{GatewayClient.instance().url}'.  "
+            f"ConnectionError was received from Gateway server url '{gateway_client.url}'.  "
             "Check to be sure the Gateway instance is running.",
         ) from e
     except gaierror as e:
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 404, MESSAGE_KEY: str(e)}
         )
         raise web.HTTPError(
             404,
-            f"The Gateway server specified in the gateway_url '{GatewayClient.instance().url}' doesn't "
+            f"The Gateway server specified in the gateway_url '{gateway_client.url}' doesn't "
             f"appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
     except Exception as e:
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 505, MESSAGE_KEY: str(e)}
         )
         logging.getLogger("ServerApp").error(
-            f"Exception while trying to launch kernel via Gateway URL {GatewayClient.instance().url} , {e}",
+            "Exception while trying to launch kernel via Gateway URL %s: %s",
+            gateway_client.url,
             e,
         )
         raise e
 
-    if GatewayClient.instance().accept_cookies:
+    if gateway_client.accept_cookies:
         # Update cookies on GatewayClient from server if configured.
         cookie_values = response.headers.get("Set-Cookie")
         if cookie_values:
-            cookie: SimpleCookie[ty.Any] = SimpleCookie()
+            cookie: SimpleCookie = SimpleCookie()
             cookie.load(cookie_values)
-            GatewayClient.instance().update_cookies(cookie)
+            gateway_client.update_cookies(cookie)
     return response

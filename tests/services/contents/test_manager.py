@@ -296,7 +296,7 @@ async def test_403(jp_file_contents_manager_class, tmp_path):
         assert e.status_code == 403
 
 
-async def test_400(jp_file_contents_manager_class, tmp_path):  # noqa
+async def test_400(jp_file_contents_manager_class, tmp_path):
     # Test Delete behavior
     # Test delete of file in hidden directory
     td = str(tmp_path)
@@ -547,7 +547,7 @@ async def test_modified_date(jp_contents_manager):
     assert renamed["last_modified"] >= saved["last_modified"]
 
 
-async def test_get(jp_contents_manager):  # noqa
+async def test_get(jp_contents_manager):
     cm = jp_contents_manager
     # Create a notebook
     model = await ensure_async(cm.new_untitled(type="notebook"))
@@ -571,6 +571,17 @@ async def test_get(jp_contents_manager):  # noqa
     nb_as_bin_file = await ensure_async(cm.get(path, content=True, type="file", format="base64"))
     assert nb_as_bin_file["format"] == "base64"
 
+    nb_with_hash = await ensure_async(cm.get(path, require_hash=True))
+    assert nb_with_hash["hash"]
+    assert nb_with_hash["hash_algorithm"]
+
+    # Get the hash without the content
+    nb_with_hash = await ensure_async(cm.get(path, content=False, require_hash=True))
+    assert nb_with_hash["content"] is None
+    assert nb_with_hash["format"] is None
+    assert nb_with_hash["hash"]
+    assert nb_with_hash["hash_algorithm"]
+
     # Test in sub-directory
     sub_dir = "/foo/"
     _make_dir(cm, "foo")
@@ -585,7 +596,7 @@ async def test_get(jp_contents_manager):  # noqa
 
     # Test with a regular file.
     file_model_path = (await ensure_async(cm.new_untitled(path=sub_dir, ext=".txt")))["path"]
-    file_model = await ensure_async(cm.get(file_model_path))
+    file_model = await ensure_async(cm.get(file_model_path, require_hash=True))
     expected_model = {
         "content": "",
         "format": "text",
@@ -594,12 +605,34 @@ async def test_get(jp_contents_manager):  # noqa
         "path": "foo/untitled.txt",
         "type": "file",
         "writable": True,
+        "hash_algorithm": cm.hash_algorithm,
     }
     # Assert expected model is in file_model
     for key, value in expected_model.items():
         assert file_model[key] == value
     assert "created" in file_model
     assert "last_modified" in file_model
+    assert file_model["hash"]
+
+    # Get hash without content
+    file_model = await ensure_async(cm.get(file_model_path, content=False, require_hash=True))
+    expected_model = {
+        "content": None,
+        "format": None,
+        "mimetype": "text/plain",
+        "name": "untitled.txt",
+        "path": "foo/untitled.txt",
+        "type": "file",
+        "writable": True,
+        "hash_algorithm": cm.hash_algorithm,
+    }
+
+    # Assert expected model is in file_model
+    for key, value in expected_model.items():
+        assert file_model[key] == value
+    assert "created" in file_model
+    assert "last_modified" in file_model
+    assert file_model["hash"]
 
     # Create a sub-sub directory to test getting directory contents with a
     # subdir.
@@ -893,6 +926,7 @@ async def test_copy_dir(jp_contents_manager):
     assert copy["path"] == f"{nonExistantDir}/{sourceDir}"
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Copying big dirs on Window")
 async def test_copy_big_dir(jp_contents_manager):
     # this tests how the Content API limits preventing copying folders that are more than
     # the size limit specified in max_copy_folder_size_mb trait

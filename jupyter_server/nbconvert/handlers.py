@@ -1,4 +1,5 @@
 """Tornado handlers for nbconvert."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import io
@@ -73,15 +74,15 @@ def get_exporter(format, **kwargs):
         raise web.HTTPError(500, "Could not import nbconvert: %s" % e) from e
 
     try:
-        Exporter = get_exporter(format)
+        exporter = get_exporter(format)
     except KeyError as e:
         # should this be 400?
         raise web.HTTPError(404, "No exporter for format: %s" % format) from e
 
     try:
-        return Exporter(**kwargs)
+        return exporter(**kwargs)
     except Exception as e:
-        app_log.exception("Could not construct Exporter: %s", Exporter)
+        app_log.exception("Could not construct Exporter: %s", exporter)
         raise web.HTTPError(500, "Could not construct Exporter: %s" % e) from e
 
 
@@ -139,7 +140,7 @@ class NbconvertFileHandler(JupyterHandler):
             raise web.HTTPError(500, "nbconvert failed: %s" % e) from e
 
         if respond_zip(self, name, output, resources):
-            return
+            return None
 
         # Force download if requested
         if self.get_argument("download", "false").lower() == "true":

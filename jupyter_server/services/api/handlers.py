@@ -1,4 +1,5 @@
 """Tornado handlers for api specifications."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
@@ -24,6 +25,11 @@ class APISpecHandler(web.StaticFileHandler, JupyterHandler):
     def initialize(self):
         """Initialize the API spec handler."""
         web.StaticFileHandler.initialize(self, path=os.path.dirname(__file__))
+
+    @web.authenticated
+    @authorized
+    def head(self):
+        return self.get("api.yaml", include_body=False)
 
     @web.authenticated
     @authorized
@@ -67,7 +73,7 @@ class IdentityHandler(APIHandler):
     """Get the current user's identity model"""
 
     @web.authenticated
-    def get(self):
+    async def get(self):
         """Get the identity model."""
         permissions_json: str = self.get_argument("permissions", "")
         bad_permissions_msg = f'permissions should be a JSON dict of {{"resource": ["action",]}}, got {permissions_json!r}'
@@ -94,7 +100,10 @@ class IdentityHandler(APIHandler):
 
             allowed = permissions[resource] = []
             for action in actions:
-                if self.authorizer.is_authorized(self, user=user, resource=resource, action=action):
+                authorized = await ensure_async(
+                    self.authorizer.is_authorized(self, user, action, resource)
+                )
+                if authorized:
                     allowed.append(action)
 
         identity: Dict[str, Any] = self.identity_provider.identity_model(user)

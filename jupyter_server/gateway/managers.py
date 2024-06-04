@@ -1,4 +1,5 @@
 """Kernel gateway managers."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
@@ -7,11 +8,10 @@ import asyncio
 import datetime
 import json
 import os
-from logging import Logger
 from queue import Empty, Queue
 from threading import Thread
 from time import monotonic
-from typing import Any, Optional, cast
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 import websocket
 from jupyter_client.asynchronous.client import AsyncKernelClient
@@ -32,6 +32,9 @@ from ..services.kernels.kernelmanager import (
 from ..services.sessions.sessionmanager import SessionManager
 from ..utils import url_path_join
 from .gateway_client import GatewayClient, gateway_request
+
+if TYPE_CHECKING:
+    from logging import Logger
 
 
 class GatewayMappingKernelManager(AsyncMappingKernelManager):
@@ -125,7 +128,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         # Remove any of our kernels that may have been culled on the gateway server
         our_kernels = self._kernels.copy()
         culled_ids = []
-        for kid, _ in our_kernels.items():
+        for kid in our_kernels:
             if kid not in kernel_models:
                 # The upstream kernel was not reported in the list of kernels.
                 self.log.warning(
@@ -230,7 +233,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
         """Get the endpoint for a user filter."""
         kernel_user = os.environ.get("KERNEL_USERNAME")
         if kernel_user:
-            return "?user=".join([default_endpoint, kernel_user])
+            return f"{default_endpoint}?user={kernel_user}"
         return default_endpoint
 
     def _replace_path_kernelspec_resources(self, kernel_specs):
@@ -313,7 +316,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
         try:
             response = await gateway_request(kernel_spec_url, method="GET")
         except web.HTTPError as error:
-            if error.status_code == 404:  # noqa: PLR2004
+            if error.status_code == 404:
                 # Convert not found to KeyError since that's what the Notebook handler expects
                 # message is not used, but might as well make it useful for troubleshooting
                 msg = f"kernelspec {kernel_name} not found on Gateway server at: {GatewayClient.instance().url}"
@@ -342,7 +345,7 @@ class GatewayKernelSpecManager(KernelSpecManager):
         try:
             response = await gateway_request(kernel_spec_resource_url, method="GET")
         except web.HTTPError as error:
-            if error.status_code == 404:  # noqa: PLR2004
+            if error.status_code == 404:
                 kernel_spec_resource = None
             else:
                 raise
@@ -368,7 +371,7 @@ class GatewaySessionManager(SessionManager):
             # Note that should the redundant polling be consolidated, or replaced with an event-based
             # notification model, this will need to be revisited.
             km = self.kernel_manager.get_kernel(kernel_id)
-        except Exception:  # noqa
+        except Exception:
             # Let exceptions here reflect culled kernel
             pass
         return km is None
@@ -439,7 +442,7 @@ class GatewayKernelManager(ServerKernelManager):
                 response = await gateway_request(self.kernel_url, method="GET")
 
             except web.HTTPError as error:
-                if error.status_code == 404:  # noqa: PLR2004
+                if error.status_code == 404:
                     self.log.warning("Kernel not found at: %s" % self.kernel_url)
                     model = None
                 else:
@@ -533,7 +536,7 @@ class GatewayKernelManager(ServerKernelManager):
                 response = await gateway_request(self.kernel_url, method="DELETE")
                 self.log.debug("Shutdown kernel response: %d %s", response.code, response.reason)
             except web.HTTPError as error:
-                if error.status_code == 404:  # noqa: PLR2004
+                if error.status_code == 404:
                     self.log.debug("Shutdown kernel response: kernel not found (ignored)")
                 else:
                     raise
@@ -585,7 +588,6 @@ class GatewayKernelManager(ServerKernelManager):
 
     def cleanup_resources(self, restart=False):
         """Clean up resources when the kernel is shut down"""
-        pass
 
 
 KernelManagerABC.register(GatewayKernelManager)
@@ -656,7 +658,6 @@ class ChannelQueue(Queue):  # type:ignore[type-arg]
 
     def start(self) -> None:
         """Start the queue."""
-        pass
 
     def stop(self) -> None:
         """Stop the queue."""
@@ -673,9 +674,7 @@ class ChannelQueue(Queue):  # type:ignore[type-arg]
                 return
             if len(msgs):
                 self.log.warning(
-                    "Stopping channel '{}' with {} unprocessed non-status messages: {}.".format(
-                        self.channel_name, len(msgs), msgs
-                    )
+                    f"Stopping channel '{self.channel_name}' with {len(msgs)} unprocessed non-status messages: {msgs}."
                 )
 
     def is_alive(self) -> bool:

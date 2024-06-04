@@ -1,4 +1,5 @@
 """An extension handler."""
+
 from __future__ import annotations
 
 from logging import Logger

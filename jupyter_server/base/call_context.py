@@ -44,7 +44,7 @@ class CallContext:
 
         if name in name_value_map:
             return name_value_map[name]
-        return None  # TODO - should this raise `LookupError` (or a custom error derived from said)
+        return None  # TODO: should this raise `LookupError` (or a custom error derived from said)
 
     @classmethod
     def set(cls, name: str, value: Any) -> None:

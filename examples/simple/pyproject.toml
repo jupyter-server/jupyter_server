@@ -31,6 +31,9 @@ source = "nodejs"
 [tool.hatch.build.targets.wheel.shared-data]
 "etc/jupyter/jupyter_server_config.d" = "etc/jupyter/jupyter_server_config.d"
 
+[tool.hatch.build.targets.wheel]
+packages = ["simple_ext1", "simple_ext2", "simple_ext11"]
+
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = [
     "hatch-jupyter-builder>=0.8.2",

@@ -1,4 +1,5 @@
 """The cli for auth."""
+
 import argparse
 import sys
 import warnings
@@ -20,7 +21,7 @@ def set_password(args):
         password_repeat = getpass("" if args.quiet else "Repeat password:  ")
         if password1 != password_repeat:
             warnings.warn("Passwords do not match, try again", stacklevel=2)
-        elif len(password1) < 4:  # noqa
+        elif len(password1) < 4:
             warnings.warn("Please provide at least 4 characters", stacklevel=2)
         else:
             password = password1

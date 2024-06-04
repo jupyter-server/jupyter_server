@@ -1,4 +1,5 @@
 """Base Tornado handlers for the Jupyter server."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
@@ -10,18 +11,16 @@ import json
 import mimetypes
 import os
 import re
-import traceback
 import types
 import warnings
 from http.client import responses
 from logging import Logger
-from typing import TYPE_CHECKING, Any, Awaitable, Sequence, cast
+from typing import TYPE_CHECKING, Any, Awaitable, Coroutine, Sequence, cast
 from urllib.parse import urlparse
 
 import prometheus_client
 from jinja2 import TemplateNotFound
 from jupyter_core.paths import is_hidden
-from jupyter_events import EventLogger
 from tornado import web
 from tornado.log import app_log
 from traitlets.config import Application
@@ -30,7 +29,8 @@ import jupyter_server
 from jupyter_server import CallContext
 from jupyter_server._sysinfo import get_sys_info
 from jupyter_server._tz import utcnow
-from jupyter_server.auth.decorator import authorized
+from jupyter_server.auth.decorator import allow_unauthenticated, authorized
+from jupyter_server.auth.identity import User
 from jupyter_server.i18n import combine_translations
 from jupyter_server.services.security import csp_report_uri
 from jupyter_server.utils import (
@@ -44,11 +44,12 @@ from jupyter_server.utils import (
 
 if TYPE_CHECKING:
     from jupyter_client.kernelspec import KernelSpecManager
+    from jupyter_events import EventLogger
     from jupyter_server_terminals.terminalmanager import TerminalManager
     from tornado.concurrent import Future
 
     from jupyter_server.auth.authorizer import Authorizer
-    from jupyter_server.auth.identity import IdentityProvider, User
+    from jupyter_server.auth.identity import IdentityProvider
     from jupyter_server.serverapp import ServerApp
     from jupyter_server.services.config.manager import ConfigManager
     from jupyter_server.services.contents.manager import ContentsManager
@@ -64,7 +65,7 @@ _sys_info_cache = None
 
 def json_sys_info():
     """Get sys info as json."""
-    global _sys_info_cache  # noqa
+    global _sys_info_cache  # noqa: PLW0603
     if _sys_info_cache is None:
         _sys_info_cache = json.dumps(get_sys_info())
     return _sys_info_cache
@@ -527,11 +528,11 @@ class JupyterHandler(AuthenticatedHandler):
         """Bypass xsrf cookie checks when token-authenticated"""
         if not hasattr(self, "_jupyter_current_user"):
             # Called too early, will be checked later
-            return
+            return None
         if self.token_authenticated or self.settings.get("disable_check_xsrf", False):
             # Token-authenticated requests do not need additional XSRF-check
             # Servers without authentication are vulnerable to XSRF
-            return
+            return None
         try:
             return super().check_xsrf_cookie()
         except web.HTTPError as e:
@@ -589,7 +590,7 @@ class JupyterHandler(AuthenticatedHandler):
             )
         return allow
 
-    async def prepare(self) -> Awaitable[None] | None:  # type:ignore[override]
+    async def prepare(self, *, _redirect_to_login=True) -> Awaitable[None] | None:  # type:ignore[override]
         """Prepare a response."""
         # Set the current Jupyter Handler context variable.
         CallContext.set(CallContext.JUPYTER_HANDLER, self)
@@ -608,11 +609,11 @@ class JupyterHandler(AuthenticatedHandler):
             # check for overridden get_current_user + default IdentityProvider
             # deprecated way to override auth (e.g. JupyterHub < 3.0)
             # allow deprecated, overridden get_current_user
-            warnings.warn(  # noqa
+            warnings.warn(
                 "Overriding JupyterHandler.get_current_user is deprecated in jupyter-server 2.0."
                 " Use an IdentityProvider class.",
                 DeprecationWarning,
-                # stacklevel not useful here
+                stacklevel=1,
             )
             user = User(self.get_current_user())
         else:
@@ -630,6 +631,25 @@ class JupyterHandler(AuthenticatedHandler):
         self.set_cors_headers()
         if self.request.method not in {"GET", "HEAD", "OPTIONS"}:
             self.check_xsrf_cookie()
+
+        if not self.settings.get("allow_unauthenticated_access", False):
+            if not self.request.method:
+                raise HTTPError(403)
+            method = getattr(self, self.request.method.lower())
+            if not getattr(method, "__allow_unauthenticated", False):
+                if _redirect_to_login:
+                    # reuse `web.authenticated` logic, which redirects to the login
+                    # page on GET and HEAD and otherwise raises 403
+                    return web.authenticated(lambda _: super().prepare())(self)
+                else:
+                    # raise 403 if user is not known without redirecting to login page
+                    user = self.current_user
+                    if user is None:
+                        self.log.warning(
+                            f"Couldn't authenticate {self.__class__.__name__} connection"
+                        )
+                        raise web.HTTPError(403)
+
         return super().prepare()
 
     # ---------------------------------------------------------------
@@ -695,7 +715,7 @@ class JupyterHandler(AuthenticatedHandler):
             # get the custom message, if defined
             try:
                 message = exception.log_message % exception.args
-            except Exception:  # noqa
+            except Exception:
                 pass
 
             # construct the custom reason, if defined
@@ -726,7 +746,7 @@ class JupyterHandler(AuthenticatedHandler):
 class APIHandler(JupyterHandler):
     """Base class for API handlers"""
 
-    async def prepare(self) -> None:
+    async def prepare(self) -> None:  # type:ignore[override]
         """Prepare an API response."""
         await super().prepare()
         if not self.check_origin():
@@ -748,7 +768,9 @@ class APIHandler(JupyterHandler):
             else:
                 reply["message"] = "Unhandled error"
                 reply["reason"] = None
-                reply["traceback"] = "".join(traceback.format_exception(*exc_info))
+                # backward-compatibility: traceback field is present,
+                # but always empty
+                reply["traceback"] = ""
         self.log.warning("wrote error: %r", reply["message"], exc_info=True)
         self.finish(json.dumps(reply))
 
@@ -763,7 +785,7 @@ class APIHandler(JupyterHandler):
 
     @property
     def content_security_policy(self) -> str:
-        csp = "; ".join(
+        csp = "; ".join(  # noqa: FLY002
             [
                 super().content_security_policy,
                 "default-src 'none'",
@@ -792,6 +814,7 @@ class APIHandler(JupyterHandler):
         self.set_header("Content-Type", set_content_type)
         return super().finish(*args, **kwargs)
 
+    @allow_unauthenticated
     def options(self, *args: Any, **kwargs: Any) -> None:
         """Get the options."""
         if "Access-Control-Allow-Headers" in self.settings.get("headers", {}):
@@ -835,7 +858,7 @@ class APIHandler(JupyterHandler):
 class Template404(JupyterHandler):
     """Render our 404 template"""
 
-    async def prepare(self) -> None:
+    async def prepare(self) -> None:  # type:ignore[override]
         """Prepare a 404 response."""
         await super().prepare()
         raise web.HTTPError(404)
@@ -1000,6 +1023,18 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
         """Compute the etag."""
         return None
 
+    # access is allowed as this class is used to serve static assets on login page
+    # TODO: create an allow-list of files used on login page and remove this decorator
+    @allow_unauthenticated
+    def get(self, path: str, include_body: bool = True) -> Coroutine[Any, Any, None]:
+        return super().get(path, include_body)
+
+    # access is allowed as this class is used to serve static assets on login page
+    # TODO: create an allow-list of files used on login page and remove this decorator
+    @allow_unauthenticated
+    def head(self, path: str) -> Awaitable[None]:
+        return super().head(path)
+
     @classmethod
     def get_absolute_path(cls, roots: Sequence[str], path: str) -> str:
         """locate a file to serve on our static file search path"""
@@ -1034,6 +1069,7 @@ class APIVersionHandler(APIHandler):
 
     _track_activity = False
 
+    @allow_unauthenticated
     def get(self) -> None:
         """Get the server version info."""
         # not authenticated, so give as few info as possible
@@ -1046,6 +1082,7 @@ class TrailingSlashHandler(web.RequestHandler):
     This should be the first, highest priority handler.
     """
 
+    @allow_unauthenticated
     def get(self) -> None:
         """Handle trailing slashes in a get."""
         assert self.request.uri is not None
@@ -1062,6 +1099,7 @@ class TrailingSlashHandler(web.RequestHandler):
 class MainHandler(JupyterHandler):
     """Simple handler for base_url."""
 
+    @allow_unauthenticated
     def get(self) -> None:
         """Get the main template."""
         html = self.render_template("main.html")
@@ -1102,18 +1140,20 @@ class FilesRedirectHandler(JupyterHandler):
         self.log.debug("Redirecting %s to %s", self.request.path, url)
         self.redirect(url)
 
+    @allow_unauthenticated
     async def get(self, path: str = "") -> None:
         return await self.redirect_to_files(self, path)
 
 
 class RedirectWithParams(web.RequestHandler):
-    """Sam as web.RedirectHandler, but preserves URL parameters"""
+    """Same as web.RedirectHandler, but preserves URL parameters"""
 
     def initialize(self, url: str, permanent: bool = True) -> None:
         """Initialize a redirect handler."""
         self._url = url
         self._permanent = permanent
 
+    @allow_unauthenticated
     def get(self) -> None:
         """Get a redirect."""
         sep = "&" if "?" in self._url else "?"
@@ -1126,6 +1166,7 @@ class PrometheusMetricsHandler(JupyterHandler):
     Return prometheus metrics for this server
     """
 
+    @allow_unauthenticated
     def get(self) -> None:
         """Get prometheus metrics."""
         if self.settings["authenticate_prometheus"] and not self.logged_in:
@@ -1133,6 +1174,18 @@ class PrometheusMetricsHandler(JupyterHandler):
 
         self.set_header("Content-Type", prometheus_client.CONTENT_TYPE_LATEST)
         self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
+
+
+class PublicStaticFileHandler(web.StaticFileHandler):
+    """Same as web.StaticFileHandler, but decorated to acknowledge that auth is not required."""
+
+    @allow_unauthenticated
+    def head(self, path: str) -> Awaitable[None]:
+        return super().head(path)
+
+    @allow_unauthenticated
+    def get(self, path: str, include_body: bool = True) -> Coroutine[Any, Any, None]:
+        return super().get(path, include_body)
 
 
 # -----------------------------------------------------------------------------
@@ -1150,6 +1203,6 @@ path_regex = r"(?P<path>(?:(?:/[^/]+)+|/?))"
 default_handlers = [
     (r".*/", TrailingSlashHandler),
     (r"api", APIVersionHandler),
-    (r"/(robots\.txt|favicon\.ico)", web.StaticFileHandler),
+    (r"/(robots\.txt|favicon\.ico)", PublicStaticFileHandler),
     (r"/metrics", PrometheusMetricsHandler),
 ]

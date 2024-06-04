@@ -5,11 +5,12 @@ allows all authenticated requests
 
 .. versionadded:: 2.0
 """
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Awaitable
 
 from traitlets import Instance
 from traitlets.config import LoggingConfigurable
@@ -44,7 +45,7 @@ class Authorizer(LoggingConfigurable):
 
     def is_authorized(
         self, handler: JupyterHandler, user: User, action: str, resource: str
-    ) -> bool:
+    ) -> Awaitable[bool] | bool:
         """A method to determine if ``user`` is authorized to perform ``action``
         (read, write, or execute) on the ``resource`` type.
 
@@ -65,7 +66,7 @@ class Authorizer(LoggingConfigurable):
         bool
             True if user authorized to make request; False, otherwise
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class AllowAllAuthorizer(Authorizer):

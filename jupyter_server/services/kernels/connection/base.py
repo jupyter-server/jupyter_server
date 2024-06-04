@@ -1,4 +1,5 @@
 """Kernel connection helpers."""
+
 import json
 import struct
 from typing import Any, List
@@ -162,19 +163,19 @@ class BaseKernelWebsocketConnection(LoggingConfigurable):
 
     async def connect(self):
         """Handle a connect."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     async def disconnect(self):
         """Handle a disconnect."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def handle_incoming_message(self, incoming_msg: str) -> None:
         """Handle an incoming message."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def handle_outgoing_message(self, stream: str, outgoing_msg: List[Any]) -> None:
         """Handle an outgoing message."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 KernelWebsocketConnectionABC.register(BaseKernelWebsocketConnection)

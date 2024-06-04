@@ -12,3 +12,8 @@ python:
       path: .
       extra_requirements:
         - docs
+formats:
+  - epub
+  - htmlzip
+  # TODO: evaluate, see https://github.com/jupyter-server/jupyter_server/issues/1378
+  # - pdf

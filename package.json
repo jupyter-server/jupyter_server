@@ -10,19 +10,6 @@
     "bootstrap": "^3.4.0",
     "copyfiles": "^2.4.1"
   },
-  "eslintConfig": {
-    "parserOptions": {
-      "ecmaVersion": 6,
-      "sourceType": "module"
-    },
-    "rules": {
-      "semi": 1,
-      "no-cond-assign": 2,
-      "no-debugger": 2,
-      "comma-dangle": 0,
-      "no-unreachable": 2
-    }
-  },
   "eslintIgnore": [
     "*.min.js",
     "*components*",

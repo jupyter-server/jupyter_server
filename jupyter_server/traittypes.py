@@ -1,4 +1,5 @@
 """Custom trait types."""
+
 import inspect
 from ast import literal_eval
 
@@ -76,7 +77,7 @@ class TypeFromClasses(ClassBasedTraitType):  # type:ignore[type-arg]
         try:
             if self.subclass_from_klasses(value):
                 return value
-        except Exception:  # noqa
+        except Exception:
             pass
 
         self.error(obj, value)
@@ -86,10 +87,10 @@ class TypeFromClasses(ClassBasedTraitType):  # type:ignore[type-arg]
         result = "a subclass of "
         for klass in self.klasses:
             if not isinstance(klass, str):
-                klass = klass.__module__ + "." + klass.__name__  # noqa
+                klass = klass.__module__ + "." + klass.__name__  # noqa: PLW2901
             result += f"{klass} or "
         # Strip the last "or"
-        result = result.strip(" or ")  # noqa
+        result = result.strip(" or ")  # noqa: B005
         if self.allow_none:
             return result + " or None"
         return result
@@ -106,9 +107,9 @@ class TypeFromClasses(ClassBasedTraitType):  # type:ignore[type-arg]
             if isinstance(klass, str):
                 # Try importing the classes to compare. Silently, ignore if not importable.
                 try:
-                    klass = self._resolve_string(klass)  # noqa
+                    klass = self._resolve_string(klass)  # noqa: PLW2901
                     self.importable_klasses.append(klass)
-                except Exception:  # noqa
+                except Exception:
                     pass
             else:
                 self.importable_klasses.append(klass)
@@ -156,7 +157,7 @@ class InstanceFromClasses(ClassBasedTraitType):  # type:ignore[type-arg]
         None, the None is replaced by ``()`` or ``{}``, respectively.
         """
         # If class
-        if klasses is None:  # noqa
+        if klasses is None:  # noqa: SIM114
             self.klasses = klasses
         # Verify all elements are either classes or strings.
         elif all(inspect.isclass(k) or isinstance(k, str) for k in klasses):
@@ -200,7 +201,7 @@ class InstanceFromClasses(ClassBasedTraitType):  # type:ignore[type-arg]
             else:
                 result += describe("a", klass)
             result += " or "
-        result = result.strip(" or ")  # noqa
+        result = result.strip(" or ")  # noqa: B005
         if self.allow_none:
             result += " or None"
         return result
@@ -218,9 +219,9 @@ class InstanceFromClasses(ClassBasedTraitType):  # type:ignore[type-arg]
             if isinstance(klass, str):
                 # Try importing the classes to compare. Silently, ignore if not importable.
                 try:
-                    klass = self._resolve_string(klass)  # noqa
+                    klass = self._resolve_string(klass)  # noqa: PLW2901
                     self.importable_klasses.append(klass)
-                except Exception:  # noqa
+                except Exception:
                     pass
             else:
                 self.importable_klasses.append(klass)

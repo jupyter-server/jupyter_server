@@ -24,24 +24,24 @@ classifiers = [
 requires-python = ">=3.8"
 dependencies = [
     "anyio>=3.1.0",
-    "argon2-cffi",
-    "jinja2",
+    "argon2-cffi>=21.1",
+    "jinja2>=3.0.3",
     "jupyter_client>=7.4.4",
     "jupyter_core>=4.12,!=5.0.*",
-    "jupyter_server_terminals",
+    "jupyter_server_terminals>=0.4.4",
     "nbconvert>=6.4.4",
     "nbformat>=5.3.0",
-    "packaging",
-    "prometheus_client",
-    "pywinpty;os_name=='nt'",
+    "packaging>=22.0",
+    "prometheus_client>=0.9",
+    "pywinpty>=2.0.1;os_name=='nt'",
     "pyzmq>=24",
     "Send2Trash>=1.8.2",
     "terminado>=0.8.3",
     "tornado>=6.2.0",
     "traitlets>=5.6.0",
-    "websocket-client",
+    "websocket-client>=1.7",
     "jupyter_events>=0.9.0",
-    "overrides"
+    "overrides>=5.0"
 ]
 
 [project.urls]
@@ -56,8 +56,8 @@ test = [
     "ipykernel",
     "pytest-console-scripts",
     "pytest-timeout",
-    "pytest-jupyter[server]>=0.4",
-    "pytest>=7.0",
+    "pytest-jupyter[server]>=0.7",
+    "pytest>=7.0,<9",
     "requests",
     "pre-commit",
     'flaky'
@@ -112,15 +112,6 @@ test = "python -m pytest -vv --cov jupyter_server --cov-branch --cov-report term
 nowarn = "test -W default {args}"
 integration = "test --integration_tests=true {args}"
 
-[tool.hatch.envs.lint]
-detached = true
-dependencies = ["pre-commit"]
-[tool.hatch.envs.lint.scripts]
-build = [
-  "pre-commit run --all-files ruff",
-  "pre-commit run --all-files ruff-format",
-]
-
 [tool.hatch.version]
 path = "jupyter_server/_version.py"
 validate-bump = false
@@ -142,72 +133,15 @@ optional-editable-build = true
 [tool.ruff]
 line-length = 100
 
+[tool.ruff.format]
+docstring-code-format = true
+
 [tool.ruff.lint]
-select = [
-  "A",
-  "B",
-  "C",
-  "DTZ",
-  "E",
-  "EM",
-  "F",
-  "FBT",
-  "I",
-  "ICN",
-  "N",
-  "PLC",
-  "PLE",
-  "PLR",
-  "PLW",
-  "Q",
-  "RUF",
-  "S",
-  "SIM",
-  "T",
-  "TID",
-  "UP",
-  "W",
-  "YTT",
-]
-ignore = [
-  # Allow non-abstract empty methods in abstract base classes
-  "B027",
-  # Ignore McCabe complexity
-  "C901",
-  # Allow boolean positional values in function calls, like `dict.get(... True)`
-  "FBT003",
-  # Use of `assert` detected
-  "S101",
-  # Line too long
-  "E501",
-  # Relative imports are banned
-  "TID252",
-  # Boolean ... in function definition
-  "FBT001",
-  "FBT002",
-  # Module level import not at top of file
-  "E402",
-  # A001/A002/A003 .. is shadowing a python builtin
-  "A001",
-  "A002",
-  "A003",
-  # Possible hardcoded password
-  "S105",
-  "S106",
-  # Variable `xxx` in function should be lowercase
-  "N806",
-  # Exception name `KernelSessionRecordConflict` should be named with an Error suffix
-  "N818",
-  # SIM105 Use `contextlib.suppress(...)`
-  "SIM105",
-  # PLR0913 Too many arguments to function call
-  "PLR0913",
-  # PLR0912 Too many branches
-  "PLR0912",
-  # RUF012 Mutable class attributes should be annotated with `typing.ClassVar`
-  "RUF012",
-  # Use `X | Y` for type annotations
-  "UP007",
+ignore = ["ARG", "TRY", "RUF012", "TID252", "G", "INP001", "E402", "F401", "BLE001"]
+extend-select = [
+  "B",  # flake8-bugbear
+  "I",  # isort
+  "UP",  # pyupgrade
 ]
 unfixable = [
   # Don't touch print statements
@@ -215,34 +149,16 @@ unfixable = [
   # Don't touch unused imports
   "F401",
   # Don't touch noqa lines
-  "RUF100",
+  "RUF100"
 ]
 
-[tool.ruff.lint.per-file-ignores]
-# B011 Do not call assert False since python -O removes these calls
-# F841 local variable 'foo' is assigned to but never used
-# C408 Unnecessary `dict` call
-# E402 Module level import not at top of file
-# T201 `print` found
-# EM101 Exception must not use a string literal
-# PLR2004 Magic value used in comparison
-# S108 Probable insecure usage of temporary file or directory
-# PLC1901 `ext_pkg.version == ""` can be simplified to `not ext_pkg.version` as an empty string is falsey
-"tests/*" = ["B011", "F841", "C408", "E402", "T201", "EM101", "EM102", "EM103", "PLR2004", "S108", "PLC1901"]
-# print should be used in applications
-"**/*app.py" = ["T201"]
-# Ignore flake 8 errors from shimmed imports
-"jupyter_server/base/zmqhandlers.py" = ["F401"]
-# PLR2004 Magic value used in comparison
-"test_handlers.py" = ["PLR2004"]
-# F821 Undefined name `c`
-"**/*_config.py" = ["F821"]
-# F401 `jupyter_server_terminals.TerminalAPIHandler` imported but unused
-"jupyter_server/terminal/api_handlers.py" = ["F401"]
-# S607 Starting a process with a partial executable path
-# S603 `subprocess` call: check for execution of untrusted input
-"jupyter_server/services/contents/filemanager.py" = ["S603", "S607"]
-"tests/unix_sockets/test_serverapp_integration.py" = ["S603", "S607"]
+[tool.ruff.lint.extend-per-file-ignores]
+"jupyter_server/*" = ["S101", "RET", "S110", "UP031", "FBT", "FA100", "SLF001", "A002",
+                      "SIM105", "A001", "UP007", "PLR2004", "T201", "N818", "F403"]
+"tests/*" = ["UP031", "PT", 'EM', "TRY", "RET", "SLF", "C408", "F841", "FBT", "A002", "FLY", "N",
+            "PERF", "ASYNC", "T201", "FA100", "E711", "INP", "TCH", "SIM105", "A001", "PLW0603"]
+"examples/*_config.py" = ["F821"]
+"examples/*" = ["N815"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -260,13 +176,9 @@ timeout = 100
 timeout_method = "thread"
 filterwarnings = [
   "error",
-  "ignore:Passing a schema to Validator.iter_errors:DeprecationWarning",
-  "ignore:run_pre_save_hook is deprecated:DeprecationWarning",
-  "always:unclosed <socket.socket:ResourceWarning",
-  "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
-  "ignore:jupyter_server.base.zmqhandlers module is deprecated in Jupyter Server 2.0:DeprecationWarning",
-  "ignore:datetime.datetime.utc:DeprecationWarning:dateutil",
-  "ignore:datetime.datetime.utc:DeprecationWarning:tornado",
+  "ignore:datetime.datetime.utc:DeprecationWarning",
+  "module:add_callback_from_signal is deprecated:DeprecationWarning",
+  "ignore::jupyter_server.utils.JupyterServerAuthWarning"
 ]
 
 [tool.coverage.report]
@@ -300,7 +212,6 @@ python_version = "3.8"
 explicit_package_bases = true
 strict = true
 pretty = true
-show_error_codes = true
 warn_unreachable = true
 disable_error_code = ["no-untyped-def", "no-untyped-call"]
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
@@ -319,4 +230,4 @@ exclude = ["docs", "test"]
 ignore = ["W002"]
 
 [tool.repo-review]
-ignore = ["PY007", "GH102"]
+ignore = ["GH102", "PC111"]

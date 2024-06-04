@@ -97,7 +97,24 @@ async def test_get_nb_contents(jp_fetch, contents, path, name):
     assert model["path"] == nbpath
     assert model["type"] == "notebook"
     assert "content" in model
+    assert model["hash"] is None
+    assert model["hash_algorithm"] is None
     assert model["format"] == "json"
+    assert "metadata" in model["content"]
+    assert isinstance(model["content"]["metadata"], dict)
+
+
+@pytest.mark.parametrize("path,name", dirs)
+async def test_get_nb_hash(jp_fetch, contents, path, name):
+    nbname = name + ".ipynb"
+    nbpath = (path + "/" + nbname).lstrip("/")
+    r = await jp_fetch("api", "contents", nbpath, method="GET", params=dict(hash="1"))
+    model = json.loads(r.body.decode())
+    assert model["name"] == nbname
+    assert model["path"] == nbpath
+    assert model["type"] == "notebook"
+    assert model["hash"]
+    assert model["hash_algorithm"]
     assert "metadata" in model["content"]
     assert isinstance(model["content"]["metadata"], dict)
 
@@ -111,6 +128,9 @@ async def test_get_nb_no_contents(jp_fetch, contents, path, name):
     assert model["name"] == nbname
     assert model["path"] == nbpath
     assert model["type"] == "notebook"
+    assert "hash" in model
+    assert model["hash"] == None
+    assert "hash_algorithm" in model
     assert "content" in model
     assert model["content"] is None
 
@@ -161,6 +181,9 @@ async def test_get_text_file_contents(jp_fetch, contents, path, name):
     model = json.loads(r.body.decode())
     assert model["name"] == txtname
     assert model["path"] == txtpath
+    assert "hash" in model
+    assert model["hash"] == None
+    assert "hash_algorithm" in model
     assert "content" in model
     assert model["format"] == "text"
     assert model["type"] == "file"
@@ -184,6 +207,21 @@ async def test_get_text_file_contents(jp_fetch, contents, path, name):
             params=dict(type="file", format="text"),
         )
     assert expected_http_error(e, 400)
+
+
+@pytest.mark.parametrize("path,name", dirs)
+async def test_get_text_file_hash(jp_fetch, contents, path, name):
+    txtname = name + ".txt"
+    txtpath = (path + "/" + txtname).lstrip("/")
+    r = await jp_fetch("api", "contents", txtpath, method="GET", params=dict(hash="1"))
+    model = json.loads(r.body.decode())
+    assert model["name"] == txtname
+    assert model["path"] == txtpath
+    assert "hash" in model
+    assert model["hash"]
+    assert model["hash_algorithm"]
+    assert model["format"] == "text"
+    assert model["type"] == "file"
 
 
 async def test_get_404_hidden(jp_fetch, contents, contents_dir):
@@ -226,10 +264,13 @@ async def test_get_binary_file_contents(jp_fetch, contents, path, name):
     assert model["name"] == blobname
     assert model["path"] == blobpath
     assert "content" in model
+    assert "hash" in model
+    assert model["hash"] == None
+    assert "hash_algorithm" in model
     assert model["format"] == "base64"
     assert model["type"] == "file"
     data_out = decodebytes(model["content"].encode("ascii"))
-    data_in = name.encode("utf-8") + b"\xFF"
+    data_in = name.encode("utf-8") + b"\xff"
     assert data_in == data_out
 
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
@@ -437,7 +478,7 @@ async def test_upload_txt_hidden(jp_fetch, contents, contents_dir):
 
 
 async def test_upload_b64(jp_fetch, contents, contents_dir, _check_created):
-    body = b"\xFFblob"
+    body = b"\xffblob"
     b64body = encodebytes(body).decode("ascii")
     model = {
         "content": b64body,

@@ -1,4 +1,5 @@
 """API handlers for the Jupyter Server example."""
+
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.extension.handler import ExtensionHandlerJinjaMixin, ExtensionHandlerMixin
 from jupyter_server.utils import url_escape
@@ -19,8 +20,6 @@ class ParameterHandler(ExtensionHandlerMixin, JupyterHandler):
 
 class BaseTemplateHandler(ExtensionHandlerJinjaMixin, ExtensionHandlerMixin, JupyterHandler):
     """A base template handler."""
-
-    pass
 
 
 class IndexHandler(BaseTemplateHandler):

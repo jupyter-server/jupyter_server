@@ -1,4 +1,5 @@
 """A simple Jupyter Server extension example."""
+
 import os
 
 from traitlets import Unicode
@@ -29,7 +30,7 @@ class SimpleApp2(ExtensionAppJinjaMixin, ExtensionApp):
     # Local path to templates directory.
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]  # type:ignore[assignment]
 
-    configD = Unicode("", config=True, help="Config D example.")  # noqa
+    configD = Unicode("", config=True, help="Config D example.")
 
     def initialize_handlers(self):
         """Initialize handlers."""

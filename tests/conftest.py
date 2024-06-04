@@ -1,5 +1,10 @@
 import os
 
+# isort: off
+# This must come before any Jupyter imports.
+os.environ["JUPYTER_PLATFORM_DIRS"] = "1"
+# isort: on
+
 import pytest
 from nbformat import writes
 from nbformat.v4 import new_notebook
@@ -129,7 +134,7 @@ def contents(contents_dir):
         paths["textfiles"].append(txtname.relative_to(contents_dir))
 
         # Create a random blob
-        blob = name.encode("utf-8") + b"\xFF"
+        blob = name.encode("utf-8") + b"\xff"
         blobname = p.joinpath(f"{name}.blob")
         blobname.write_bytes(blob)
         paths["blobs"].append(blobname.relative_to(contents_dir))

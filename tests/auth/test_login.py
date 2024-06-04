@@ -1,4 +1,5 @@
 """Tests for login redirects"""
+
 import json
 from functools import partial
 from urllib.parse import urlencode
@@ -81,7 +82,7 @@ def login(jp_serverapp, http_server_client, jp_base_url, login_headers):
 
     by submitting the login page form
     """
-    yield partial(_login, jp_serverapp, http_server_client, jp_base_url, login_headers)
+    return partial(_login, jp_serverapp, http_server_client, jp_base_url, login_headers)
 
 
 @pytest.mark.parametrize(

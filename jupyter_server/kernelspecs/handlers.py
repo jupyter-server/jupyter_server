@@ -1,4 +1,5 @@
 """Kernelspecs API Handlers."""
+
 import mimetypes
 
 from jupyter_core.utils import ensure_async
@@ -41,13 +42,11 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
                 mimetype: str = mimetypes.guess_type(path)[0] or "text/plain"
                 self.set_header("Content-Type", mimetype)
                 self.finish(kernel_spec_res)
-                return
+                return None
             else:
                 self.log.warning(
-                    "Kernelspec resource '{}' for '{}' not found.  Kernel spec manager may"
-                    " not support resource serving. Falling back to reading from disk".format(
-                        path, kernel_name
-                    )
+                    f"Kernelspec resource '{path}' for '{kernel_name}' not found.  Kernel spec manager may"
+                    " not support resource serving. Falling back to reading from disk"
                 )
         try:
             kspec = await ensure_async(ksm.get_kernel_spec(kernel_name))

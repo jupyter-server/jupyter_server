@@ -1,4 +1,5 @@
 """Manager to read and modify config data in JSON files."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
@@ -101,9 +102,12 @@ class BaseJSONConfigManager(LoggingConfigurable):
         )
         data: dict[str, t.Any] = {}
         for path in paths:
-            if os.path.isfile(path):
+            if os.path.isfile(path) and os.path.getsize(path):
                 with open(path, encoding="utf-8") as f:
-                    recursive_update(data, json.load(f))
+                    try:
+                        recursive_update(data, json.load(f))
+                    except json.decoder.JSONDecodeError:
+                        self.log.warning("Invalid JSON in %s, skipping", path)
         return data
 
     def set(self, section_name: str, data: t.Any) -> None:

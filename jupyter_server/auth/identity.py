@@ -5,6 +5,7 @@ to be used in combination with Authorizer for _authorization_.
 
 .. versionadded:: 2.0
 """
+
 from __future__ import annotations
 
 import binascii
@@ -496,7 +497,7 @@ class IdentityProvider(LoggingConfigurable):
         - skip origin-checks for scripts
         """
         # ensure get_user has been called, so we know if we're token-authenticated
-        handler.current_user  # noqa
+        handler.current_user  # noqa: B018
         return getattr(handler, "_token_authenticated", False)
 
     def validate_security(

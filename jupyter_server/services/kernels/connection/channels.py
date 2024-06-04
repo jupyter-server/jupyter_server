@@ -1,4 +1,5 @@
 """An implementation of a kernel connection."""
+
 from __future__ import annotations
 
 import asyncio
@@ -154,7 +155,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.channels[channel] = stream = meth(identity=identity)
             stream.channel = channel
 
-    def nudge(self):  # noqa
+    def nudge(self):
         """Nudge the zmq connections with kernel_info_requests
         Returns a Future that will resolve when we have received
         a shell or control reply and at least one iopub message,
@@ -372,11 +373,11 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                     pass
                 # WebSockets don't respond to traditional error codes so we
                 # close the connection.
-                for _, stream in self.channels.items():
+                for stream in self.channels.values():
                     if not stream.closed():
                         stream.close()
                 self.disconnect()
-                return
+                return None
 
         self.multi_kernel_manager.add_restart_callback(self.kernel_id, self.on_kernel_restarted)
         self.multi_kernel_manager.add_restart_callback(
@@ -384,7 +385,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         )
 
         def subscribe(value):
-            for _, stream in self.channels.items():
+            for stream in self.channels.values():
                 stream.on_recv_stream(self.handle_outgoing_message)
 
         connected.add_done_callback(subscribe)
@@ -429,7 +430,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # This method can be called twice, once by self.kernel_died and once
         # from the WebSocket close event. If the WebSocket connection is
         # closed before the ZMQ streams are setup, they could be None.
-        for _, stream in self.channels.items():
+        for stream in self.channels.values():
             if stream is not None and not stream.closed():
                 stream.on_recv(None)
                 stream.close()
@@ -438,7 +439,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         try:
             ZMQChannelsWebsocketConnection._open_sockets.remove(self)
             self._close_future.set_result(None)
-        except Exception:  # noqa
+        except Exception:
             pass
 
     def handle_incoming_message(self, incoming_msg: str) -> None:

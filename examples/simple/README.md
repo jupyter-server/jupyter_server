@@ -9,7 +9,7 @@ You need `python3` to build and run the server extensions.
 ```bash
 # Clone, create a conda env and install from source.
 git clone https://github.com/jupyter/jupyter_server && \
-  cd examples/simple && \
+  cd jupyter_server/examples/simple && \
   conda create -y -n jupyter-server-example python=3.9 && \
   conda activate jupyter-server-example && \
   pip install -e .[test]
@@ -187,8 +187,6 @@ open http://localhost:8888/
 # TODO Fix Default URL, it does not show on startup.
 # Home page as defined by default_url = '/default'.
 open http://localhost:8888/simple_ext11/default
-# HTML static page.
-open http://localhost:8888/static/simple_ext11/test.html
 # Content from Handlers.
 open http://localhost:8888/simple_ext11/params/test?var1=foo
 # Content from Template.
