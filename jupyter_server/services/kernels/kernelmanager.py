@@ -534,12 +534,14 @@ class MappingKernelManager(MultiKernelManager):
 
     def start_watching_activity(self, kernel_id):
         kernel = self._kernels[kernel_id]
-        kernel.start_watching_activity()
+        if getattr(kernel, "start_watching_activity", None):
+            kernel.start_watching_activity()
 
     def stop_watching_activity(self, kernel_id):
         """Stop watching IOPub messages on a kernel for activity."""
         kernel = self._kernels[kernel_id]
-        kernel.stop_watching_activity()
+        if getattr(kernel, "stop_watching_activity", None):
+            kernel.stop_watching_activity()
 
     def initialize_culler(self):
         """Start idle culler if 'cull_idle_timeout' is greater than zero.
