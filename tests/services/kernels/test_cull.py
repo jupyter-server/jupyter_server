@@ -141,7 +141,7 @@ async def test_cull_connected(jp_fetch, jp_ws_fetch):
             {
                 "channel": "shell",
                 "header": {
-                    "date": datetime.datetime.now().isoformat(),
+                    "date": datetime.datetime.now(tz=datetime.UTC).isoformat(),
                     "session": session_id,
                     "msg_id": message_id,
                     "msg_type": "execute_request",
