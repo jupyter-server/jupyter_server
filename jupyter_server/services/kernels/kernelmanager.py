@@ -532,16 +532,81 @@ class MappingKernelManager(MultiKernelManager):
 
     # monitoring activity:
 
+    tracked_message_types = List(
+        trait=Unicode(),
+        config=True,
+        default_value=[
+            "comm_close",
+            "comm_msg",
+            "comm_open",
+            "complete_request",
+            "execute_input",
+            "execute_reply",
+            "execute_request",
+            "inspect_request",
+        ],
+        help="""List of kernel message types included in activity tracking.""",
+    )
+
     def start_watching_activity(self, kernel_id):
+        """Start watching IOPub messages on a kernel for activity.
+
+        - update last_activity on every message
+        - record execution_state from status messages
+        """
         kernel = self._kernels[kernel_id]
-        if getattr(kernel, "start_watching_activity", None):
-            kernel.start_watching_activity()
+        # add busy/activity markers:
+        kernel.execution_state = "starting"
+        kernel.reason = ""
+        kernel.last_activity = utcnow()
+        kernel._busy_requests = set({})
+        kernel._activity_stream = kernel.connect_iopub()
+
+        def record_activity(msg_list):
+            if kernel.execution_state == "starting":
+                # Starting is just the state we use until the kernel is up and running...
+                #
+                # If we've received a message from the kernel, then we know it is no longer
+                # starting and we need to change its state accordingly.
+                kernel.execution_state = "idle"
+            _, fed_msg_list = kernel.session.feed_identities(msg_list)
+            msg = kernel.session.deserialize(fed_msg_list)
+            msg_type = msg.get("header", {}).get("msg_type", "")
+            parent_msg_type = msg.get("parent_header", {}).get("msg_type", "")
+            parent_id = msg.get("parent_header", {}).get("msg_id", "")
+            if (
+                (msg_type in self.tracked_message_types)
+                or (parent_msg_type in self.tracked_message_types)
+                or kernel.execution_state == "busy"
+            ):
+                self.last_kernel_activity = kernel.last_activity = utcnow()
+            if msg_type == "status" and parent_msg_type in self.tracked_message_types:
+                execution_state = msg.get("content", {}).get("execution_state", "")
+                if execution_state == "busy":
+                    kernel._busy_requests = kernel._busy_requests | set({parent_id})
+                elif execution_state == "idle":
+                    kernel._busy_requests = kernel._busy_requests - set({parent_id})
+                kernel.execution_state = "idle" if len(kernel._busy_requests) == 0 else "busy"
+                self.log.debug(
+                    "activity on %s: %s (%s)",
+                    kernel_id,
+                    msg_type,
+                    kernel.execution_state,
+                )
+            else:
+                self.log.debug("activity on %s: %s", kernel_id, msg_type)
+
+        kernel._activity_stream.on_recv(record_activity)
 
     def stop_watching_activity(self, kernel_id):
         """Stop watching IOPub messages on a kernel for activity."""
         kernel = self._kernels[kernel_id]
-        if getattr(kernel, "stop_watching_activity", None):
-            kernel.stop_watching_activity()
+        if getattr(kernel, "_activity_stream", None):
+            if not kernel._activity_stream.socket.closed:
+                kernel._activity_stream.close()
+            kernel._activity_stream = None
+        if getattr(kernel, "_pending_restart_cleanup", None):
+            kernel._pending_restart_cleanup()
 
     def initialize_culler(self):
         """Start idle culler if 'cull_idle_timeout' is greater than zero.
@@ -796,80 +861,6 @@ class ServerKernelManager(AsyncIOLoopKernelManager):
             except SchemaRegistryException:
                 pass
         return logger
-
-    tracked_message_types = List(
-        trait=Unicode(),
-        config=True,
-        default_value=[
-            "comm_close",
-            "comm_msg",
-            "comm_open",
-            "complete_request",
-            "execute_input",
-            "execute_reply",
-            "execute_request",
-            "inspect_request",
-        ],
-        help="""List of kernel message types included in activity tracking.""",
-    )
-
-    def reset_execution_state(self):
-        self.execution_state = "starting"
-        self.reason = ""
-        self.last_activity = utcnow()
-        self._busy_requests = set({})
-
-    def record_activity(self, msg_list):
-        if self.execution_state == "starting":
-            # Starting is just the state we use unti the kernel is up and running...
-            #
-            # If we've received a message from the kernel, then we know it is no longer
-            # starting and we need to change its state accordingly.
-            self.execution_state = "idle"
-        _, fed_msg_list = self.session.feed_identities(msg_list)
-        msg = self.session.deserialize(fed_msg_list)
-        msg_type = msg.get("header", {}).get("msg_type", "")
-        parent_msg_type = msg.get("parent_header", {}).get("msg_type", "")
-        parent_id = msg.get("parent_header", {}).get("msg_id", "")
-        if (
-            (msg_type in self.tracked_message_types)
-            or (parent_msg_type in self.tracked_message_types)
-            or self.execution_state == "busy"
-        ):
-            self.last_activity = utcnow()
-        if msg_type == "status" and parent_msg_type in self.tracked_message_types:
-            execution_state = msg.get("content", {}).get("execution_state", "")
-            if execution_state == "busy":
-                self._busy_requests = self._busy_requests | set({parent_id})
-            elif execution_state == "idle":
-                self._busy_requests = self._busy_requests - set({parent_id})
-            self.execution_state = "idle" if len(self._busy_requests) == 0 else "busy"
-            self.log.debug(
-                "activity on %s: %s (%s)",
-                self.kernel_id,
-                msg_type,
-                self.execution_state,
-            )
-        else:
-            self.log.debug("activity on %s: %s", self.kernel_id, msg_type)
-
-    def start_watching_activity(self):
-        """Start watching IOPub messages on the kernel for activity.
-
-        - update last_activity on every tracked message
-        - record execution_state from the cumulative status of tracked messages.
-        """
-        self.reset_execution_state()
-        self._activity_stream = self.connect_iopub()
-        self._activity_stream.on_recv(self.record_activity)
-
-    def stop_watching_activity(self):
-        activity_stream = getattr(self, "_activity_stream", None)
-        if activity_stream:
-            activity_stream.close()
-        pending_restart_cleanup = getattr(self, "_pending_restart_cleanup", None)
-        if pending_restart_cleanup:
-            pending_restart_cleanup()
 
     def emit(self, schema_id, data):
         """Emit an event from the kernel manager."""
