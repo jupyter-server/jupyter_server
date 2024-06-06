@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import platform
+import time
 import uuid
 import warnings
 
@@ -11,7 +12,6 @@ import pytest
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
 
-POLL_TIMEOUT = 10
 POLL_INTERVAL = 1
 
 
@@ -19,11 +19,10 @@ async def test_execution_state(jp_fetch, jp_ws_fetch):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
     kid = kernel["id"]
+    await poll_for_execution_state(kid, "idle", jp_fetch)
 
     # Open a websocket connection.
     ws = await jp_ws_fetch("api", "kernels", kid, "channels")
-    await poll_for_execution_state(kid, "idle", jp_fetch)
-
     session_id = uuid.uuid1().hex
     message_id = uuid.uuid1().hex
     await ws.write_message(
@@ -31,7 +30,7 @@ async def test_execution_state(jp_fetch, jp_ws_fetch):
             {
                 "channel": "shell",
                 "header": {
-                    "date": datetime.datetime.now(tz=datetime.UTC).isoformat(),
+                    "date": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
                     "session": session_id,
                     "msg_id": message_id,
                     "msg_type": "execute_request",
@@ -41,7 +40,7 @@ async def test_execution_state(jp_fetch, jp_ws_fetch):
                 "parent_header": {},
                 "metadata": {},
                 "content": {
-                    "code": f"import time\ntime.sleep({POLL_TIMEOUT-1})",
+                    "code": "while True:\n\tpass",
                     "silent": False,
                     "allow_stdin": False,
                     "stop_on_error": True,
@@ -50,41 +49,52 @@ async def test_execution_state(jp_fetch, jp_ws_fetch):
             }
         )
     )
-    await poll_for_execution_state(kid, "busy", jp_fetch)
+    await poll_for_parent_message_status(kid, message_id, "busy", ws)
+    es = await get_execution_state(kid, jp_fetch)
+    assert es == "busy"
 
     message_id_2 = uuid.uuid1().hex
     await ws.write_message(
         json.dumps(
             {
-                "channel": "shell",
+                "channel": "control",
                 "header": {
-                    "date": datetime.datetime.now(tz=datetime.UTC).isoformat(),
+                    "date": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
                     "session": session_id,
                     "msg_id": message_id_2,
-                    "msg_type": "execute_request",
+                    "msg_type": "debug_request",
                     "username": "",
                     "version": "5.2",
                 },
                 "parent_header": {},
                 "metadata": {},
                 "content": {
-                    "code": "pass",
-                    "silent": False,
-                    "allow_stdin": False,
-                    "stop_on_error": True,
+                    "type": "request",
+                    "command": "debugInfo",
                 },
                 "buffers": [],
             }
         )
     )
-    await get_idle_reply(kid, message_id_2, ws)
+    await poll_for_parent_message_status(kid, message_id_2, "idle", ws)
     es = await get_execution_state(kid, jp_fetch)
 
     # Verify that the overall kernel status is still "busy" even though one
     # "idle" response was already seen for the second execute request.
     assert es == "busy"
 
-    await poll_for_execution_state(kid, "idle", jp_fetch)
+    await jp_fetch(
+        "api",
+        "kernels",
+        kid,
+        "interrupt",
+        method="POST",
+        allow_nonstandard_methods=True,
+    )
+
+    await poll_for_parent_message_status(kid, message_id, "idle", ws)
+    es = await get_execution_state(kid, jp_fetch)
+    assert es == "idle"
     ws.close()
 
 
@@ -95,19 +105,18 @@ async def get_execution_state(kid, jp_fetch):
 
 
 async def poll_for_execution_state(kid, target_state, jp_fetch):
-    for _ in range(int(POLL_TIMEOUT / POLL_INTERVAL)):
+    while True:
         es = await get_execution_state(kid, jp_fetch)
         if es == target_state:
-            return True
-        else:
-            await asyncio.sleep(POLL_INTERVAL)
-    raise AssertionError(f"Timed out waiting for kernel execution state {target_state}")
+            return
+        time.sleep(POLL_INTERVAL)
 
 
-async def get_idle_reply(kid, parent_message_id, ws):
+async def poll_for_parent_message_status(kid, parent_message_id, target_status, ws):
     while True:
         resp = await ws.read_message()
         resp_json = json.loads(resp)
+        print(resp_json)
         parent_message = resp_json.get("parent_header", {}).get("msg_id", None)
         if parent_message != parent_message_id:
             continue
@@ -117,5 +126,5 @@ async def get_idle_reply(kid, parent_message_id, ws):
             continue
 
         execution_state = resp_json.get("content", {}).get("execution_state", "")
-        if execution_state == "idle":
+        if execution_state == target_status:
             return
