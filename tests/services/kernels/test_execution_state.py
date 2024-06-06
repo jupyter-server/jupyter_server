@@ -12,9 +12,9 @@ import pytest
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
 
-MAX_POLL_ATTEMPTS = 5
+MAX_POLL_ATTEMPTS = 10
 POLL_INTERVAL = 1
-MINIMUM_CONSISTENT_COUNT = 3
+MINIMUM_CONSISTENT_COUNT = 4
 
 
 async def test_execution_state(jp_fetch, jp_ws_fetch):
