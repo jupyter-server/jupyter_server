@@ -583,10 +583,14 @@ class MappingKernelManager(MultiKernelManager):
                 self.last_kernel_activity = kernel.last_activity = utcnow()
             if msg_type == "status":
                 msg = session.deserialize(fed_msg_list)
-                if kernel.execution_state == "starting":
-                    kernel.execution_state = "idle"
+                execution_state = msg["content"]["execution_state"]
                 if parent_msg_type in self.tracked_message_types:
-                    kernel.execution_state = msg["content"]["execution_state"]
+                    kernel.execution_state = execution_state
+                elif kernel.execution_state == "starting" and execution_state != "starting":
+                    # We always normalize post-starting execution state to "idle"
+                    # unless we know that the status is in response to one of our
+                    # tracked message types.
+                    kernel.execution_state = "idle"
                 self.log.debug(
                     "activity on %s: %s (%s)",
                     kernel_id,
