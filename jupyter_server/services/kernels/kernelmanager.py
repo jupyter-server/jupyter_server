@@ -563,6 +563,7 @@ class MappingKernelManager(MultiKernelManager):
         kernel._activity_stream = kernel.connect_iopub()
 
         def record_activity(msg_list):
+            """Record an IOPub message arriving from a kernel"""
             _, fed_msg_list = kernel.session.feed_identities(msg_list)
             msg = kernel.session.deserialize(fed_msg_list)
             msg_type = msg.get("header", {}).get("msg_type", "")
