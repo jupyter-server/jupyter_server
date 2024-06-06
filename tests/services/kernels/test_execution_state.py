@@ -12,6 +12,9 @@ import pytest
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
 
+MAX_POLL_ATTEMPTS = 3
+POLL_INTERVAL = 1
+
 
 async def test_execution_state(jp_fetch, jp_ws_fetch):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
@@ -96,9 +99,23 @@ async def test_execution_state(jp_fetch, jp_ws_fetch):
 
 
 async def get_execution_state(kid, jp_fetch):
-    r = await jp_fetch("api", "kernels", kid, method="GET")
-    model = json.loads(r.body.decode())
-    return model["execution_state"]
+    # There is an inherent race condition when getting the kernel execution status
+    # where we might fetch the status right before an expected state change occurs.
+    #
+    # To work-around this, we don't return the status until we've been able to fetch
+    # it twice in a row and get the same result both times.
+    last_execution_state = None
+
+    for _ in range(MAX_POLL_ATTEMPTS):
+        r = await jp_fetch("api", "kernels", kid, method="GET")
+        model = json.loads(r.body.decode())
+        execution_state = model["execution_state"]
+        if execution_state == last_execution_state:
+            return execution_state
+        last_execution_state = execution_state
+        time.sleep(POLL_INTERVAL)
+
+    raise AssertionError("failed to get a consistent execution state")
 
 
 async def poll_for_parent_message_status(kid, parent_message_id, target_status, ws):
