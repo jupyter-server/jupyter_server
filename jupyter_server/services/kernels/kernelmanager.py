@@ -563,12 +563,6 @@ class MappingKernelManager(MultiKernelManager):
         kernel._activity_stream = kernel.connect_iopub()
 
         def record_activity(msg_list):
-            if kernel.execution_state == "starting":
-                # Starting is just the state we use until the kernel is up and running...
-                #
-                # If we've received a message from the kernel, then we know it is no longer
-                # starting and we need to change its state accordingly.
-                kernel.execution_state = "idle"
             _, fed_msg_list = kernel.session.feed_identities(msg_list)
             msg = kernel.session.deserialize(fed_msg_list)
             msg_type = msg.get("header", {}).get("msg_type", "")
@@ -580,12 +574,13 @@ class MappingKernelManager(MultiKernelManager):
                 or kernel.execution_state == "busy"
             ):
                 self.last_kernel_activity = kernel.last_activity = utcnow()
-            if msg_type == "status" and parent_msg_type in self.tracked_message_types:
+            if msg_type == "status":
                 execution_state = msg.get("content", {}).get("execution_state", "")
-                if execution_state == "busy":
-                    kernel._busy_requests = kernel._busy_requests | set({parent_id})
-                elif execution_state == "idle":
-                    kernel._busy_requests = kernel._busy_requests - set({parent_id})
+                if parent_msg_type in self.tracked_message_types:
+                    if execution_state == "busy":
+                        kernel._busy_requests = kernel._busy_requests | set({parent_id})
+                    elif execution_state == "idle":
+                        kernel._busy_requests = kernel._busy_requests - set({parent_id})
                 kernel.execution_state = "idle" if len(kernel._busy_requests) == 0 else "busy"
                 self.log.debug(
                     "activity on %s: %s (%s)",
