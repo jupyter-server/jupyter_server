@@ -19,6 +19,7 @@ from functools import partial, wraps
 
 from jupyter_client.ioloop.manager import AsyncIOLoopKernelManager
 from jupyter_client.multikernelmanager import AsyncMultiKernelManager, MultiKernelManager
+from jupyter_client.session import Session
 from jupyter_core.paths import exists
 from jupyter_core.utils import ensure_async
 from jupyter_events import EventLogger
@@ -531,7 +532,6 @@ class MappingKernelManager(MultiKernelManager):
             raise web.HTTPError(404, "Kernel does not exist: %s" % kernel_id)
 
     # monitoring activity:
-
     tracked_message_types = List(
         trait=Unicode(),
         config=True,
@@ -540,12 +540,15 @@ class MappingKernelManager(MultiKernelManager):
             "comm_msg",
             "comm_open",
             "complete_request",
+            "is_complete_request",
             "execute_input",
             "execute_reply",
             "execute_request",
             "inspect_request",
         ],
-        help="""List of kernel message types included in activity tracking.""",
+        help="""List of kernel message types included in user activity tracking.
+
+        This should be a subset of the message types sent on the shell channel.""",
     )
 
     def start_watching_activity(self, kernel_id):
@@ -559,16 +562,19 @@ class MappingKernelManager(MultiKernelManager):
         kernel.execution_state = "starting"
         kernel.reason = ""
         kernel.last_activity = utcnow()
-        kernel._busy_requests = set({})
         kernel._activity_stream = kernel.connect_iopub()
+        session = Session(
+            config=kernel.session.config,
+            key=kernel.session.key,
+        )
 
         def record_activity(msg_list):
             """Record an IOPub message arriving from a kernel"""
-            _, fed_msg_list = kernel.session.feed_identities(msg_list)
-            msg = kernel.session.deserialize(fed_msg_list)
-            msg_type = msg.get("header", {}).get("msg_type", "")
-            parent_msg_type = msg.get("parent_header", {}).get("msg_type", "")
-            parent_id = msg.get("parent_header", {}).get("msg_id", "")
+            idents, fed_msg_list = session.feed_identities(msg_list)
+            msg = session.deserialize(fed_msg_list, content=False)
+
+            msg_type = msg["header"]["msg_type"]
+            parent_msg_type = msg.get("parent_header", {}).get("msg_type", None)
             if (
                 (msg_type in self.tracked_message_types)
                 or (parent_msg_type in self.tracked_message_types)
@@ -576,13 +582,11 @@ class MappingKernelManager(MultiKernelManager):
             ):
                 self.last_kernel_activity = kernel.last_activity = utcnow()
             if msg_type == "status":
-                execution_state = msg.get("content", {}).get("execution_state", "")
+                msg = session.deserialize(fed_msg_list)
+                if kernel.execution_state == "starting":
+                    kernel.execution_state = "idle"
                 if parent_msg_type in self.tracked_message_types:
-                    if execution_state == "busy":
-                        kernel._busy_requests = kernel._busy_requests | set({parent_id})
-                    elif execution_state == "idle":
-                        kernel._busy_requests = kernel._busy_requests - set({parent_id})
-                kernel.execution_state = "idle" if len(kernel._busy_requests) == 0 else "busy"
+                    kernel.execution_state = msg["content"]["execution_state"]
                 self.log.debug(
                     "activity on %s: %s (%s)",
                     kernel_id,
