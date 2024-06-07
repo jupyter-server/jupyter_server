@@ -232,11 +232,7 @@ class MappingKernelManager(MultiKernelManager):
                 kwargs["kernel_id"] = kernel_id
             kernel_id = await self.pinned_superclass._async_start_kernel(self, **kwargs)
             self._kernel_connections[kernel_id] = 0
-            task = asyncio.create_task(self._finish_kernel_start(kernel_id))
-            if not getattr(self, "use_pending_kernels", None):
-                await task
-            else:
-                self._pending_kernel_tasks[kernel_id] = task
+
             # add busy/activity markers:
             kernel = self.get_kernel(kernel_id)
             kernel.execution_state = "starting"  # type:ignore[attr-defined]
@@ -244,6 +240,12 @@ class MappingKernelManager(MultiKernelManager):
             kernel.last_activity = utcnow()  # type:ignore[attr-defined]
             self.log.info("Kernel started: %s", kernel_id)
             self.log.debug("Kernel args: %r", kwargs)
+
+            task = asyncio.create_task(self._finish_kernel_start(kernel_id))
+            if not getattr(self, "use_pending_kernels", None):
+                await task
+            else:
+                self._pending_kernel_tasks[kernel_id] = task
 
             # Increase the metric of number of kernels running
             # for the relevant kernel type by 1
