@@ -4,8 +4,6 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
-<!-- START SILENT CHANGELOG ENTRY -->
-
 ## 2.14.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.14.0...f1379164fa209bc4bfeadf43ab0e7f473b03a0ce))
@@ -28,6 +26,8 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-04-11&to=2024-05-31&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2024-04-11..2024-05-31&type=Issues) | [@lresende](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Alresende+updated%3A2024-04-11..2024-05-31&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2024-04-11..2024-05-31&type=Issues)
+
+<!-- END NEW CHANGELOG ENTRY -->
 
 ## 2.14.0
 
