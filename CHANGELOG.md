@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Security Fix
 
 - [Filefind: avoid handling absolute paths](https://github.com/jupyter-server/jupyter_server/security/advisories/GHSA-hrw6-wg82-cm62)
-  
+
 ### Maintenance and upkeep improvements
 
 - Use hatch fmt command [#1424](https://github.com/jupyter-server/jupyter_server/pull/1424) ([@blink1073](https://github.com/blink1073))
