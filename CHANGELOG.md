@@ -27,7 +27,7 @@ All notable changes to this project will be documented in this file.
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2024-04-11..2024-05-31&type=Issues) | [@lresende](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Alresende+updated%3A2024-04-11..2024-05-31&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2024-04-11..2024-05-31&type=Issues)
 
-<!-- END NEW CHANGELOG ENTRY -->
+<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.14.0
 
