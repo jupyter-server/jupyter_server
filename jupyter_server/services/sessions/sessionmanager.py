@@ -340,7 +340,7 @@ class SessionManager(LoggingConfigurable):
         kernel_name : str
             the name of the kernel specification to use.  The default kernel name will be used if not provided.
         custom_kernel_specs: dict
-            dictionary of kernek custom specifications
+            dictionary of kernel custom specifications
         """
         # allow contents manager to specify kernels cwd
         kernel_path = await ensure_async(self.contents_manager.get_kernel_path(path=path))
