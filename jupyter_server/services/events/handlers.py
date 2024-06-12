@@ -7,9 +7,8 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import Any, Dict, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 
-import jupyter_events.logger
 from jupyter_core.utils import ensure_async
 from tornado import web, websocket
 
@@ -19,6 +18,10 @@ from jupyter_server.base.handlers import JupyterHandler
 from ...base.handlers import APIHandler
 
 AUTH_RESOURCE = "events"
+
+
+if TYPE_CHECKING:
+    import jupyter_events.logger
 
 
 class SubscribeWebsocket(

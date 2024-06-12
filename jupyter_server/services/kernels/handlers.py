@@ -99,7 +99,7 @@ class KernelActionHandler(KernelsAPIHandler):
         if action == "restart":
             try:
                 await km.restart_kernel(kernel_id)
-            except Exception as e:
+            except Exception:
                 message = "Exception restarting kernel"
                 self.log.error(message, exc_info=True)
                 self.write(json.dumps({"message": message, "traceback": ""}))

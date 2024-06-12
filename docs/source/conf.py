@@ -66,7 +66,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Jupyter Server"
-copyright = "2020, Jupyter Team, https://jupyter.org"
+copyright = "2020, Jupyter Team, https://jupyter.org"  # noqa: A001
 author = "The Jupyter Team"
 
 # ghissue config

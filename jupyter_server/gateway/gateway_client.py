@@ -296,7 +296,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         help="""The password for HTTP authentication.  (JUPYTER_GATEWAY_HTTP_PWD env var)
         """,
     )
-    http_pwd_env = "JUPYTER_GATEWAY_HTTP_PWD"
+    http_pwd_env = "JUPYTER_GATEWAY_HTTP_PWD"  # noqa: S105
 
     @default("http_pwd")
     def _http_pwd_default(self):
@@ -347,7 +347,7 @@ If the authorization header key takes a single value, `auth_scheme` should be se
 
 (JUPYTER_GATEWAY_AUTH_TOKEN env var)""",
     )
-    auth_token_env = "JUPYTER_GATEWAY_AUTH_TOKEN"
+    auth_token_env = "JUPYTER_GATEWAY_AUTH_TOKEN"  # noqa: S105
 
     @default("auth_token")
     def _auth_token_default(self):
@@ -458,9 +458,9 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
         return int(os.environ.get(self.gateway_retry_max_env, self.gateway_retry_max_default_value))
 
     gateway_token_renewer_class_default_value = (
-        "jupyter_server.gateway.gateway_client.NoOpTokenRenewer"
+        "jupyter_server.gateway.gateway_client.NoOpTokenRenewer"  # noqa: S105
     )
-    gateway_token_renewer_class_env = "JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS"
+    gateway_token_renewer_class_env = "JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS"  # noqa: S105
     gateway_token_renewer_class = Type(
         klass=GatewayTokenRenewerBase,
         config=True,

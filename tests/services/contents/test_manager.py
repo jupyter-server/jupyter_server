@@ -926,6 +926,7 @@ async def test_copy_dir(jp_contents_manager):
     assert copy["path"] == f"{nonExistantDir}/{sourceDir}"
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Copying big dirs on Window")
 async def test_copy_big_dir(jp_contents_manager):
     # this tests how the Content API limits preventing copying folders that are more than
     # the size limit specified in max_copy_folder_size_mb trait

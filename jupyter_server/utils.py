@@ -10,7 +10,9 @@ import os
 import socket
 import sys
 import warnings
+from _frozen_importlib_external import _NamespacePath
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Any, Generator, NewType, Sequence
 from urllib.parse import (
     SplitResult,
@@ -25,7 +27,6 @@ from urllib.parse import (
 )
 from urllib.request import pathname2url as _pathname2url
 
-from _frozen_importlib_external import _NamespacePath
 from jupyter_core.utils import ensure_async as _ensure_async
 from packaging.version import Version
 from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest, HTTPResponse
@@ -338,79 +339,63 @@ def is_namespace_package(namespace: str) -> bool | None:
     return isinstance(spec.submodule_search_locations, _NamespacePath)
 
 
-def filefind(filename: str, path_dirs: Sequence[str] | str | None = None) -> str:
+def filefind(filename: str, path_dirs: Sequence[str]) -> str:
     """Find a file by looking through a sequence of paths.
-    This iterates through a sequence of paths looking for a file and returns
-    the full, absolute path of the first occurrence of the file.  If no set of
-    path dirs is given, the filename is tested as is, after running through
-    :func:`expandvars` and :func:`expanduser`.  Thus a simple call::
 
-        filefind("myfile.txt")
+    For use in FileFindHandler.
 
-    will find the file in the current working dir, but::
+    Iterates through a sequence of paths looking for a file and returns
+    the full, absolute path of the first occurrence of the file.
 
-        filefind("~/myfile.txt")
+    Absolute paths are not accepted for inputs.
 
-    Will find the file in the users home directory.  This function does not
-    automatically try any paths, such as the cwd or the user's home directory.
+    This function does not automatically try any paths,
+    such as the cwd or the user's home directory.
 
     Parameters
     ----------
     filename : str
-        The filename to look for.
-    path_dirs : str, None or sequence of str
-        The sequence of paths to look for the file in.  If None, the filename
-        need to be absolute or be in the cwd.  If a string, the string is
-        put into a sequence and the searched.  If a sequence, walk through
-        each element and join with ``filename``, calling :func:`expandvars`
-        and :func:`expanduser` before testing for existence.
+        The filename to look for. Must be a relative path.
+    path_dirs : sequence of str
+        The sequence of paths to look in for the file.
+        Walk through each element and join with ``filename``.
+        Only after ensuring the path resolves within the directory is it checked for existence.
 
     Returns
     -------
-    Raises :exc:`IOError` or returns absolute path to file.
+    Raises :exc:`OSError` or returns absolute path to file.
     """
+    file_path = Path(filename)
 
-    # If paths are quoted, abspath gets confused, strip them...
-    filename = filename.strip('"').strip("'")
-    # If the input is an absolute path, just check it exists
-    if os.path.isabs(filename) and os.path.isfile(filename):
-        return filename
+    # If the input is an absolute path, reject it
+    if file_path.is_absolute():
+        msg = f"{filename} is absolute, filefind only accepts relative paths."
+        raise OSError(msg)
 
-    if path_dirs is None:
-        path_dirs = ("",)
-    elif isinstance(path_dirs, str):
-        path_dirs = (path_dirs,)
-
-    for path in path_dirs:
-        if path == ".":
-            path = os.getcwd()  # noqa: PLW2901
-        testname = expand_path(os.path.join(path, filename))
-        if os.path.isfile(testname):
-            return os.path.abspath(testname)
+    for path_str in path_dirs:
+        path = Path(path_str).absolute()
+        test_path = path / file_path
+        # os.path.abspath resolves '..', but Path.absolute() doesn't
+        # Path.resolve() does, but traverses symlinks, which we don't want
+        test_path = Path(os.path.abspath(test_path))
+        if sys.version_info >= (3, 9):
+            if not test_path.is_relative_to(path):
+                # points outside root, e.g. via `filename='../foo'`
+                continue
+        else:
+            # is_relative_to is new in 3.9
+            try:
+                test_path.relative_to(path)
+            except ValueError:
+                # points outside root, e.g. via `filename='../foo'`
+                continue
+        # make sure we don't call is_file before we know it's a file within a prefix
+        # GHSA-hrw6-wg82-cm62 - can leak password hash on windows.
+        if test_path.is_file():
+            return os.path.abspath(test_path)
 
     msg = f"File {filename!r} does not exist in any of the search paths: {path_dirs!r}"
     raise OSError(msg)
-
-
-def expand_path(s: str) -> str:
-    """Expand $VARS and ~names in a string, like a shell
-
-    :Examples:
-       In [2]: os.environ['FOO']='test'
-       In [3]: expand_path('variable FOO is $FOO')
-       Out[3]: 'variable FOO is test'
-    """
-    # This is a pretty subtle hack. When expand user is given a UNC path
-    # on Windows (\\server\share$\%username%), os.path.expandvars, removes
-    # the $ to get (\\server\share\%username%). I think it considered $
-    # alone an empty var. But, we need the $ to remains there (it indicates
-    # a hidden share).
-    if os.name == "nt":
-        s = s.replace("$\\", "IPYTHON_TEMP")
-    s = os.path.expandvars(os.path.expanduser(s))
-    if os.name == "nt":
-        s = s.replace("IPYTHON_TEMP", "$\\")
-    return s
 
 
 def import_item(name: str) -> Any:

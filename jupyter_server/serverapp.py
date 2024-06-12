@@ -214,7 +214,7 @@ def random_ports(port: int, n: int) -> t.Generator[int, None, None]:
     for i in range(min(5, n)):
         yield port + i
     for _ in range(n - 5):
-        yield max(1, port + random.randint(-2 * n, 2 * n))
+        yield max(1, port + random.randint(-2 * n, 2 * n))  # noqa: S311
 
 
 def load_handlers(name: str) -> t.Any:
@@ -372,7 +372,7 @@ class ServerWebApplication(web.Application):
         jenv_opt: dict[str, t.Any] = {"autoescape": True}
         jenv_opt.update(jinja_env_options if jinja_env_options else {})
 
-        env = Environment(
+        env = Environment(  # noqa: S701
             loader=FileSystemLoader(template_path), extensions=["jinja2.ext.i18n"], **jenv_opt
         )
         sys_info = get_sys_info()
@@ -1210,9 +1210,9 @@ class ServerApp(JupyterApp):
 
         soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
 
-        DEFAULT_SOFT = 4096
-        if hard >= DEFAULT_SOFT:
-            return DEFAULT_SOFT
+        default_soft = 4096
+        if hard >= default_soft:
+            return default_soft
 
         self.log.debug(
             "Default value for min_open_files_limit is ignored (hard=%r, soft=%r)",
@@ -2315,7 +2315,7 @@ class ServerApp(JupyterApp):
             if not self.ip:
                 ip = "localhost"
             # Handle nonexplicit hostname.
-            elif self.ip in ("0.0.0.0", "::"):
+            elif self.ip in ("0.0.0.0", "::"):  # noqa: S104
                 ip = "%s" % socket.gethostname()
             else:
                 ip = f"[{self.ip}]" if ":" in self.ip else self.ip

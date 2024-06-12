@@ -3,7 +3,7 @@
 from .application import SimpleApp2
 
 
-def _jupyter_server_extension_paths():
+def _jupyter_server_extension_points():
     return [
         {"module": "simple_ext2.application", "app": SimpleApp2},
     ]

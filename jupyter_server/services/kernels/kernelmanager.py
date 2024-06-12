@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-import pathlib
+import pathlib  # noqa: TCH003
 import typing as t
 import warnings
 from collections import defaultdict
@@ -204,7 +204,7 @@ class MappingKernelManager(MultiKernelManager):
         self._kernel_connections.pop(kernel_id, None)
         self._kernel_ports.pop(kernel_id, None)
 
-    # TODO DEC 2022: Revise the type-ignore once the signatures have been changed upstream
+    # TODO: DEC 2022: Revise the type-ignore once the signatures have been changed upstream
     # https://github.com/jupyter/jupyter_client/pull/905
     async def _async_start_kernel(  # type:ignore[override]
         self, *, kernel_id: str | None = None, path: ApiPath | None = None, **kwargs: str
@@ -337,7 +337,7 @@ class MappingKernelManager(MultiKernelManager):
         """
 
         if not self.buffer_offline_messages:
-            for _, stream in channels.items():
+            for stream in channels.values():
                 stream.close()
             return
 

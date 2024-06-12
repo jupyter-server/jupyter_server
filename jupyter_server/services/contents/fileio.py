@@ -191,7 +191,7 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
     use_atomic_writing = Bool(
         True,
         config=True,
-        help="""By default notebooks are saved on disk on a temporary file and then if succefully written, it replaces the old ones.
+        help="""By default notebooks are saved on disk on a temporary file and then if successfully written, it replaces the old ones.
       This procedure, namely 'atomic_writing', causes some bugs on file system without operation order enforcement (like some networked fs).
       If set to False, the new notebook is written directly on the old one which could fail (eg: full filesystem or quota )""",
     )
@@ -264,7 +264,8 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
         ------
         404: if path is outside root
         """
-        self.log.debug("Reading path from disk: %s", path)
+        # This statement can cause excessive logging, uncomment if necessary when troubleshooting.
+        # self.log.debug("Reading path from disk: %s", path)
         root = os.path.abspath(self.root_dir)  # type:ignore[attr-defined]
         # to_os_path is not safe if path starts with a drive, since os.path.join discards first part
         if os.path.splitdrive(path)[0]:

@@ -32,19 +32,19 @@ class CustomLoginHandler(LoginHandler):
             return None
 
 
-@pytest.fixture()
+@pytest.fixture
 def login_headers():
     return {"test-user": "super"}
 
 
-@pytest.fixture()
+@pytest.fixture
 def jp_server_config():
     cfg = Config()
     cfg.ServerApp.login_handler_class = CustomLoginHandler
     return cfg
 
 
-@pytest.fixture()
+@pytest.fixture
 def identity_provider_class():
     # for tests imported from test_identity.py
     return LegacyIdentityProvider
