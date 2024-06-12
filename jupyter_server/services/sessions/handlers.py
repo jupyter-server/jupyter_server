@@ -94,7 +94,7 @@ class SessionRootHandler(SessionsAPIHandler):
                     kernel_id=kernel_id,
                     name=name,
                     type=mtype,
-                    custom_kernel_specs=custom_kernel_specs
+                    custom_kernel_specs=custom_kernel_specs,
                 )
             except NoSuchKernel:
                 msg = (
@@ -156,7 +156,7 @@ class SessionHandler(SessionsAPIHandler):
             changes["type"] = model["type"]
         if "custom_kernel_specs" in model:
             changes["custom_kernel_specs"] = model["custom_kernel_specs"]
-        
+
         if "kernel" in model:
             # Kernel id takes precedence over name.
             if model["kernel"].get("id") is not None:
@@ -176,7 +176,7 @@ class SessionHandler(SessionsAPIHandler):
                     name=before["name"],
                     path=before["path"],
                     type=before["type"],
-                    custom_kernel_specs = custom_kernel_specs
+                    custom_kernel_specs=custom_kernel_specs,
                 )
                 changes["kernel_id"] = kernel_id
 
