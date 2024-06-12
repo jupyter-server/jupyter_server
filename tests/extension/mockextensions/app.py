@@ -4,7 +4,7 @@ import os
 
 from jupyter_events import EventLogger
 from jupyter_events.schema_registry import SchemaRegistryException
-from traitlets import List, Unicode
+from traitlets import Bool, List, Unicode
 
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
@@ -50,6 +50,7 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     static_paths = [STATIC_PATH]  # type:ignore[assignment]
     mock_trait = Unicode("mock trait", config=True)
     loaded = False
+    started = Bool(False)
 
     serverapp_config = {"jpserver_extensions": {"tests.extension.mockextensions.mock1": True}}
 
@@ -70,6 +71,9 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         self.handlers.append(("/mock", MockExtensionHandler))
         self.handlers.append(("/mock_template", MockExtensionTemplateHandler))
         self.loaded = True
+
+    async def _start_jupyter_server_extension(self, serverapp):
+        self.started = True
 
 
 if __name__ == "__main__":
