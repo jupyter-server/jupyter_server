@@ -1432,7 +1432,6 @@ class ServerApp(JupyterApp):
         help="""Allows to switch to Parameterized kernel mode""",
     )
 
-
     browser = Unicode(
         "",
         config=True,
@@ -2186,7 +2185,6 @@ class ServerApp(JupyterApp):
             self.event_logger.register_event_schema(schema_path)
 
     def init_webapp(self) -> None:
-        
         #
         """initialize tornado webapp"""
         self.tornado_settings["allow_origin"] = self.allow_origin
@@ -2995,7 +2993,7 @@ class ServerApp(JupyterApp):
     def start_app(self) -> None:
         """Start the Jupyter Server application."""
         super().start()
-#
+        #
         if not self.allow_root:
             # check if we are running as root, and abort if it's not allowed
             try:
