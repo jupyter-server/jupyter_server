@@ -3033,9 +3033,11 @@ class ServerApp(JupyterApp):
         if self.open_browser and not self.sock:
             self.launch_browser()
         if self.allow_insecure_kernelspec_params:
-            print('yesssssssssssssssss')
+            print("yesssssssssssssssss")
             print(self.allow_insecure_kernelspec_params)
-            self.kernel_spec_manager.allow_insecure_kernelspec_params(self.allow_insecure_kernelspec_params)
+            self.kernel_spec_manager.allow_insecure_kernelspec_params(
+                self.allow_insecure_kernelspec_params
+            )
 
         if self.identity_provider.token and self.identity_provider.token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
