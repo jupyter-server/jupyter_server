@@ -1426,10 +1426,10 @@ class ServerApp(JupyterApp):
                         """,
     )
 
-    parameterized_kernels = Bool(
+    allow_insecure_kernelspec_params = Bool(
         False,
         config=True,
-        help="""Allows to switch to Parameterized kernel mode""",
+        help="""Allow to use insecure kernelspec parameters""",
     )
 
 
@@ -3034,8 +3034,10 @@ class ServerApp(JupyterApp):
         # Handle the browser opening.
         if self.open_browser and not self.sock:
             self.launch_browser()
-        if self.parameterized_kernels:
-            self.kernel_spec_manager.allow_parameterized_kernels(True)
+        if self.allow_insecure_kernelspec_params:
+            print('yesssssssssssssssss')
+            print(self.allow_insecure_kernelspec_params)
+            self.kernel_spec_manager.allow_insecure_kernelspec_params(self.allow_insecure_kernelspec_params)
 
         if self.identity_provider.token and self.identity_provider.token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
