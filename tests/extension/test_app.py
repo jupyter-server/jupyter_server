@@ -170,12 +170,14 @@ async def test_stop_extension(jp_serverapp, caplog):
         "Shutting down 2 extensions",
         "jupyter_server_terminals | extension app 'jupyter_server_terminals' stopping",
         f"{extension_name} | extension app 'mockextension' stopping",
+        f"{extension_name} | extension app 'mockextension_notemplate' stopping",
         "jupyter_server_terminals | extension app 'jupyter_server_terminals' stopped",
         f"{extension_name} | extension app 'mockextension' stopped",
+        f"{extension_name} | extension app 'mockextension_notemplate' stopped",
     }
 
     # check the shutdown method was called twice
-    assert calls == 2
+    assert calls == 3
 
 
 async def test_events(jp_serverapp, jp_fetch):
