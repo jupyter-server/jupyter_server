@@ -243,7 +243,7 @@ class MappingKernelManager(MultiKernelManager):
             kernel.reason = ""  # type:ignore[attr-defined]
             kernel.last_activity = utcnow()  # type:ignore[attr-defined]
             self.log.info("Kernel started: %s", kernel_id)
-            self.log.debug("Kernel args: %r", kwargs)
+            self.log.debug("Kernel args: %r", {k: v for k, v in kwargs.items() if k != "env"})
 
             # Increase the metric of number of kernels running
             # for the relevant kernel type by 1
