@@ -401,6 +401,8 @@ class ServerWebApplication(web.Application):
             # collapse $HOME to ~
             root_dir = "~" + root_dir[len(home) :]
 
+        self.allow_insecure_kernelspec_params = jupyter_app.allow_insecure_kernelspec_params
+
         settings = {
             # basics
             "log_function": log_request,
@@ -460,6 +462,7 @@ class ServerWebApplication(web.Application):
             "server_root_dir": root_dir,
             "jinja2_env": env,
             "serverapp": jupyter_app,
+            "page_config_hook": (self.page_config_hook),
         }
 
         # allow custom overrides for the tornado web app.
@@ -469,6 +472,10 @@ class ServerWebApplication(web.Application):
             # default: set xsrf cookie on base_url
             settings["xsrf_cookie_kwargs"] = {"path": base_url}
         return settings
+
+    def page_config_hook(self, handler, page_config):
+        page_config["allow_insecure_kernelspec_params "] = self.allow_insecure_kernelspec_params 
+        return page_config
 
     def init_handlers(self, default_services, settings):
         """Load the (URL pattern, handler) tuples for each component."""
