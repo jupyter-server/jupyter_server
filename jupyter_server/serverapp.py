@@ -474,7 +474,7 @@ class ServerWebApplication(web.Application):
         return settings
 
     def page_config_hook(self, handler, page_config):
-        page_config["allow_insecure_kernelspec_params"] = self.allow_insecure_kernelspec_params 
+        page_config["allow_insecure_kernelspec_params"] = self.allow_insecure_kernelspec_params
         return page_config
 
     def init_handlers(self, default_services, settings):
