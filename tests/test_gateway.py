@@ -733,6 +733,7 @@ async def test_websocket_connection_closed(init_gateway, jp_serverapp, jp_fetch,
             if level >= logging.ERROR:
                 pytest.fail(f"Logs contain an error: {message}")
 
+
 @patch("tornado.websocket.websocket_connect", mock_websocket_connect())
 async def test_websocket_connection_with_session_id(init_gateway, jp_serverapp, jp_fetch, caplog):
     # Create the session and kernel and get the kernel manager...
@@ -747,10 +748,14 @@ async def test_websocket_connection_with_session_id(init_gateway, jp_serverapp, 
     with mocked_gateway:
         conn = GatewayWebSocketConnection(parent=km, websocket_handler=handler)
         handler.connection = conn
-        await conn.connect()        
+        await conn.connect()
         assert conn.session_id != None
-        expected_ws_url = f"{mock_gateway_ws_url}/api/kernels/{kernel_id}/channels?session_id={conn.session_id}"
-        assert expected_ws_url in caplog.text, "WebSocket URL does not contain the expected session_id."
+        expected_ws_url = (
+            f"{mock_gateway_ws_url}/api/kernels/{kernel_id}/channels?session_id={conn.session_id}"
+        )
+        assert (
+            expected_ws_url in caplog.text
+        ), "WebSocket URL does not contain the expected session_id."
 
         # Processing websocket messages happens in separate coroutines and any
         # errors in that process will show up in logs, but not bubble up to the
@@ -762,6 +767,7 @@ async def test_websocket_connection_with_session_id(init_gateway, jp_serverapp, 
         for _, level, message in caplog.record_tuples:
             if level >= logging.ERROR:
                 pytest.fail(f"Logs contain an error: {message}")
+
 
 #
 # Test methods below...
