@@ -160,7 +160,7 @@ def test_filefind(tmp_path, filename, result):
     if isinstance(result, str):
         found = filefind(filename, [str(a), str(b)])
         found_relative = Path(found).relative_to(tmp_path)
-        assert str(found_relative) == result
+        assert str(found_relative).replace(os.sep, "/") == result
     else:
         with pytest.raises(result):
             filefind(filename, [str(a), str(b)])
