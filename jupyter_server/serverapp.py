@@ -1436,7 +1436,7 @@ class ServerApp(JupyterApp):
     allow_custom_env_variables = Bool(
         False,
         config=True,
-        help="""Allow to use insecure kernelspec parameters""",
+        help="""Allow to use custom env variables""",
     )
 
 
