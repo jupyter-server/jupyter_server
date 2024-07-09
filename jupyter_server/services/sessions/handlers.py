@@ -77,6 +77,7 @@ class SessionRootHandler(SessionsAPIHandler):
         kernel = model.get("kernel", {})
         kernel_name = kernel.get("name", None)
         kernel_id = kernel.get("id", None)
+        custom_env = kernel.get("custom_env", {})
 
         if not kernel_id and not kernel_name:
             self.log.debug("No kernel specified, using default kernel")
@@ -93,6 +94,7 @@ class SessionRootHandler(SessionsAPIHandler):
                     kernel_id=kernel_id,
                     name=name,
                     type=mtype,
+                    custom_env=custom_env,
                 )
             except NoSuchKernel:
                 msg = (
@@ -152,6 +154,8 @@ class SessionHandler(SessionsAPIHandler):
             changes["name"] = model["name"]
         if "type" in model:
             changes["type"] = model["type"]
+        if "custom_env" in model:
+            changes["custom_env"] = model["custom_env"]
         if "kernel" in model:
             # Kernel id takes precedence over name.
             if model["kernel"].get("id") is not None:
@@ -160,6 +164,10 @@ class SessionHandler(SessionsAPIHandler):
                     raise web.HTTPError(400, "No such kernel: %s" % kernel_id)
                 changes["kernel_id"] = kernel_id
             elif model["kernel"].get("name") is not None:
+                if "custom_env" in model["kernel"]:
+                    custom_env = model["kernel"]["custom_env"]
+                else:
+                    custom_env = None
                 kernel_name = model["kernel"]["name"]
                 kernel_id = await sm.start_kernel_for_session(
                     session_id,
@@ -167,6 +175,7 @@ class SessionHandler(SessionsAPIHandler):
                     name=before["name"],
                     path=before["path"],
                     type=before["type"],
+                    custom_env=custom_env,
                 )
                 changes["kernel_id"] = kernel_id
 

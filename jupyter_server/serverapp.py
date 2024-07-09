@@ -401,6 +401,8 @@ class ServerWebApplication(web.Application):
             # collapse $HOME to ~
             root_dir = "~" + root_dir[len(home) :]
 
+        self.allow_custom_env_variables = jupyter_app.allow_custom_env_variables
+
         settings = {
             # basics
             "log_function": log_request,
@@ -460,6 +462,7 @@ class ServerWebApplication(web.Application):
             "server_root_dir": root_dir,
             "jinja2_env": env,
             "serverapp": jupyter_app,
+            "page_config_hook": (self.page_config_hook),
         }
 
         # allow custom overrides for the tornado web app.
@@ -469,6 +472,10 @@ class ServerWebApplication(web.Application):
             # default: set xsrf cookie on base_url
             settings["xsrf_cookie_kwargs"] = {"path": base_url}
         return settings
+    
+    def page_config_hook(self, handler, page_config):
+        page_config["allow_custom_env_variables"] = self.allow_custom_env_variables
+        return page_config
 
     def init_handlers(self, default_services, settings):
         """Load the (URL pattern, handler) tuples for each component."""
@@ -1425,6 +1432,13 @@ class ServerApp(JupyterApp):
                         (ServerApp.browser) configuration option.
                         """,
     )
+
+    allow_custom_env_variables = Bool(
+        False,
+        config=True,
+        help="""Allow to use insecure kernelspec parameters""",
+    )
+
 
     browser = Unicode(
         "",
@@ -3025,6 +3039,13 @@ class ServerApp(JupyterApp):
         # Handle the browser opening.
         if self.open_browser and not self.sock:
             self.launch_browser()
+        
+        if self.allow_custom_env_variables:
+            print("allow_custom_env_variables present")
+            print(self.allow_custom_env_variables)
+            self.kernel_spec_manager.allow_custom_env_variables(
+                self.allow_custom_env_variables
+            )
 
         if self.identity_provider.token and self.identity_provider.token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
