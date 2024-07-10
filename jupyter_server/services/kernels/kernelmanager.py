@@ -247,8 +247,8 @@ class MappingKernelManager(MultiKernelManager):
                 "Kernel args (excluding env): %r", {k: v for k, v in kwargs.items() if k != "env"}
             )
             env = kwargs.get("env", None)
-            if env and isinstance(env, dict):
-                self.log.debug("Kernel argument 'env' passed with: %r", list(env.keys()))
+            if env and isinstance(env, dict):  # type:ignore[unreachable]
+                self.log.debug("Kernel argument 'env' passed with: %r", list(env.keys()))  # type:ignore[unreachable]
 
             # Increase the metric of number of kernels running
             # for the relevant kernel type by 1
