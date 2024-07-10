@@ -239,7 +239,12 @@ class MappingKernelManager(MultiKernelManager):
             kernel.reason = ""  # type:ignore[attr-defined]
             kernel.last_activity = utcnow()  # type:ignore[attr-defined]
             self.log.info("Kernel started: %s", kernel_id)
-            self.log.debug("Kernel args: %r", kwargs)
+            self.log.debug(
+                "Kernel args (excluding env): %r", {k: v for k, v in kwargs.items() if k != "env"}
+            )
+            env = kwargs.get("env", None)
+            if env and isinstance(env, dict):  # type:ignore[unreachable]
+                self.log.debug("Kernel argument 'env' passed with: %r", list(env.keys()))  # type:ignore[unreachable]
 
             task = asyncio.create_task(self._finish_kernel_start(kernel_id))
             if not getattr(self, "use_pending_kernels", None):
