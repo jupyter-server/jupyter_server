@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.14.2
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.14.1...b961d4eb499071c0c60e24f429c20d1e6a908a32))
+
+### Bugs fixed
+
+- Pass session_id during Websocket connect [#1440](https://github.com/jupyter-server/jupyter_server/pull/1440) ([@gogasca](https://github.com/gogasca))
+- Do not log environment variables passed to kernels [#1437](https://github.com/jupyter-server/jupyter_server/pull/1437) ([@krassowski](https://github.com/krassowski))
+
+### Maintenance and upkeep improvements
+
+- chore: update pre-commit hooks [#1441](https://github.com/jupyter-server/jupyter_server/pull/1441) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- chore: update pre-commit hooks [#1427](https://github.com/jupyter-server/jupyter_server/pull/1427) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+
+### Documentation improvements
+
+- Update documentation for `cookie_secret` [#1433](https://github.com/jupyter-server/jupyter_server/pull/1433) ([@krassowski](https://github.com/krassowski))
+- Add Changelog for 2.14.1 [#1430](https://github.com/jupyter-server/jupyter_server/pull/1430) ([@blink1073](https://github.com/blink1073))
+- Update simple extension examples: \_jupyter_server_extension_points [#1426](https://github.com/jupyter-server/jupyter_server/pull/1426) ([@manics](https://github.com/manics))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-05-31&to=2024-07-12&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2024-05-31..2024-07-12&type=Issues) | [@gogasca](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Agogasca+updated%3A2024-05-31..2024-07-12&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2024-05-31..2024-07-12&type=Issues) | [@manics](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amanics+updated%3A2024-05-31..2024-07-12&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2024-05-31..2024-07-12&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.14.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.14.0...f1379164fa209bc4bfeadf43ab0e7f473b03a0ce))
@@ -26,8 +54,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-04-11&to=2024-05-31&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2024-04-11..2024-05-31&type=Issues) | [@lresende](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Alresende+updated%3A2024-04-11..2024-05-31&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2024-04-11..2024-05-31&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.14.0
 
