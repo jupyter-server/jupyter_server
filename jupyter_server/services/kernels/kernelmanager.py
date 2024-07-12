@@ -539,24 +539,40 @@ class MappingKernelManager(MultiKernelManager):
             raise web.HTTPError(404, "Kernel does not exist: %s" % kernel_id)
 
     # monitoring activity:
-    tracked_message_types = List(
+    untracked_message_types = List(
         trait=Unicode(),
         config=True,
         default_value=[
-            "comm_close",
-            "comm_msg",
-            "comm_open",
-            "complete_request",
-            "is_complete_request",
+            "comm_info_request",
+            "comm_info_reply",
+            "kernel_info_request",
+            "kernel_info_reply",
+            "shutdown_request",
+            "shutdown_reply",
+            "interrupt_request",
+            "interrupt_reply",
+            "debug_request",
+            "debug_reply",
+            "stream",
+            "display_data",
+            "update_display_data",
             "execute_input",
-            "execute_reply",
-            "execute_request",
-            "inspect_request",
+            "execute_result",
+            "error",
+            "status",
+            "clear_output",
+            "debug_event",
+            "input_request",
+            "input_reply",
         ],
-        help="""List of kernel message types included in user activity tracking.
+        help="""List of kernel message types excluded from user activity tracking.
 
-        This should be a subset of the message types sent on the shell channel.""",
+        This should be a superset of the message types sent on any channel other
+        than the shell channel.""",
     )
+
+    def track_message_type(self, message_type):
+        return message_type not in self.untracked_message_types
 
     def start_watching_activity(self, kernel_id):
         """Start watching IOPub messages on a kernel for activity.
@@ -583,15 +599,15 @@ class MappingKernelManager(MultiKernelManager):
             msg_type = msg["header"]["msg_type"]
             parent_msg_type = msg.get("parent_header", {}).get("msg_type", None)
             if (
-                (msg_type in self.tracked_message_types)
-                or (parent_msg_type in self.tracked_message_types)
+                self.track_message_type(msg_type)
+                or self.track_message_type(parent_msg_type)
                 or kernel.execution_state == "busy"
             ):
                 self.last_kernel_activity = kernel.last_activity = utcnow()
             if msg_type == "status":
                 msg = session.deserialize(fed_msg_list)
                 execution_state = msg["content"]["execution_state"]
-                if parent_msg_type in self.tracked_message_types:
+                if self.track_message_type(parent_msg_type):
                     kernel.execution_state = execution_state
                 elif kernel.execution_state == "starting" and execution_state != "starting":
                     # We always normalize post-starting execution state to "idle"
