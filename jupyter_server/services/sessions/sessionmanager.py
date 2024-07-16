@@ -209,7 +209,7 @@ class SessionManager(LoggingConfigurable):
     _cursor = None
     _connection = None
     _columns = {"session_id", "path", "name", "type", "kernel_id"}
-    _custom_envs = None
+    _custom_envs = {}
 
     @property
     def cursor(self):
@@ -268,7 +268,7 @@ class SessionManager(LoggingConfigurable):
         type: Optional[str] = None,
         kernel_name: Optional[KernelName] = None,
         kernel_id: Optional[str] = None,
-        custom_env: Optional[Dict[str, Any]] = None,
+        custom_env_vars: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Creates a session and returns its model
 
@@ -285,12 +285,12 @@ class SessionManager(LoggingConfigurable):
             pass
         else:
             kernel_id = await self.start_kernel_for_session(
-                session_id, path, name, type, kernel_name
+                session_id, path, name, type, kernel_name, custom_env_vars
             )
         record.kernel_id = kernel_id
         self._pending_sessions.update(record)
         result = await self.save_session(
-             session_id, path, name, type, kernel_name, custom_env
+             session_id, path, name, type, kernel_name
         )
         self._pending_sessions.remove(record)
         return cast(Dict[str, Any], result)
@@ -321,7 +321,7 @@ class SessionManager(LoggingConfigurable):
         name: Optional[ModelName],
         type: Optional[str],
         kernel_name: Optional[KernelName],
-        custom_env: Optional[Dict[str, Any]] = None,
+        custom_env_vars: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Start a new kernel for a given session.
 
@@ -338,25 +338,29 @@ class SessionManager(LoggingConfigurable):
             the type of the session
         kernel_name : str
             the name of the kernel specification to use.  The default kernel name will be used if not provided.
-        custom_env: dict
+        custom_env_vars: dict
             dictionary of custom env variables
         """
         # allow contents manager to specify kernels cwd
         kernel_path = await ensure_async(self.contents_manager.get_kernel_path(path=path))
-
-        # if we have custom env than we have to add them to available env variables
-        if custom_env is not None and isinstance(custom_env, dict):
-            for key, value in custom_env.items():
-                kernel_env[key] = value
-
         kernel_env = self.get_kernel_env(path, name)
+        print('kernel_env before changing')
+        print(kernel_env)
+        # if we have custom env than we have to add them to available env variables
+        if custom_env_vars is not None and isinstance(custom_env_vars, dict):
+            for key, value in custom_env_vars.items():
+                kernel_env[key] = value
+        print('kernel_env after changing')
+        print(kernel_env)
+
         kernel_id = await self.kernel_manager.start_kernel(
             path=kernel_path,
             kernel_name=kernel_name,
             env=kernel_env,
-            custom_env=custom_env,
         )
-        self._custom_envs[kernel_id] = custom_env
+        print('----kernel_id----')
+        print(kernel_id)
+        self._custom_envs[kernel_id] = custom_env_vars
         return cast(str, kernel_id)
 
     async def save_session(self, session_id, path=None, name=None, type=None, kernel_id=None):
@@ -388,6 +392,8 @@ class SessionManager(LoggingConfigurable):
             "INSERT INTO session VALUES (?,?,?,?,?)",
             (session_id, path, name, type, kernel_id),
         )
+        print('session_id')
+        print(session_id)
         result = await self.get_session(session_id=session_id)
         return result
 
@@ -457,6 +463,7 @@ class SessionManager(LoggingConfigurable):
             and the value replaces the current value in the session
             with session_id.
         """
+        print('update-session')
         await self.get_session(session_id=session_id)
 
         if not kwargs:
@@ -495,6 +502,10 @@ class SessionManager(LoggingConfigurable):
     async def row_to_model(self, row, tolerate_culled=False):
         """Takes sqlite database session row and turns it into a dictionary"""
         kernel_culled: bool = await ensure_async(self.kernel_culled(row["kernel_id"]))
+        print('---row----')
+        print(row["kernel_id"])
+        print('-kernel_culled---')
+        print(kernel_culled)
         if kernel_culled:
             # The kernel was culled or died without deleting the session.
             # We can't use delete_session here because that tries to find

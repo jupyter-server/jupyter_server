@@ -224,6 +224,8 @@ class MappingKernelManager(MultiKernelManager):
             The name identifying which kernel spec to launch. This is ignored if
             an existing kernel is returned, but it may be checked in the future.
         """
+
+        print('??????????????????????????????????/')
         if kernel_id is None or kernel_id not in self:
             if path is not None:
                 kwargs["cwd"] = self.cwd_for_path(path, env=kwargs.get("env", {}))
