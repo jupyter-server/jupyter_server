@@ -11,6 +11,7 @@ import json
 import mimetypes
 import os
 import re
+import sqlite3
 import types
 import warnings
 from http.client import responses
@@ -765,6 +766,12 @@ class APIHandler(JupyterHandler):
             if isinstance(e, HTTPError):
                 reply["message"] = e.log_message or message
                 reply["reason"] = e.reason
+            elif (
+                isinstance(e, sqlite3.OperationalError)
+                and e.sqlite_errorcode == sqlite3.SQLITE_FULL
+            ):
+                reply["message"] = "Disk is full"
+                reply["reason"] = e.sqlite_errorname
             else:
                 reply["message"] = "Unhandled error"
                 reply["reason"] = None
