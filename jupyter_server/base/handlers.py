@@ -11,7 +11,6 @@ import json
 import mimetypes
 import os
 import re
-import sqlite3
 import types
 import warnings
 from http.client import responses
@@ -37,6 +36,7 @@ from jupyter_server.services.security import csp_report_uri
 from jupyter_server.utils import (
     ensure_async,
     filefind,
+    is_sqlite_disk_full_error,
     url_escape,
     url_is_absolute,
     url_path_join,
@@ -766,12 +766,9 @@ class APIHandler(JupyterHandler):
             if isinstance(e, HTTPError):
                 reply["message"] = e.log_message or message
                 reply["reason"] = e.reason
-            elif (
-                isinstance(e, sqlite3.OperationalError)
-                and e.sqlite_errorcode == sqlite3.SQLITE_FULL
-            ):
+            elif is_sqlite_disk_full_error(e):
                 reply["message"] = "Disk is full"
-                reply["reason"] = e.sqlite_errorname
+                reply["reason"] = str(e)
             else:
                 reply["message"] = "Unhandled error"
                 reply["reason"] = None

@@ -433,3 +433,12 @@ class JupyterServerAuthWarning(RuntimeWarning):
     Intended for filtering out expected warnings in tests, including
     downstream tests, rather than for users to silence this warning.
     """
+
+
+def is_sqlite_disk_full_error(e: Exception) -> bool:
+    try:
+        import sqlite3
+
+        return isinstance(e, sqlite3.OperationalError) and e.sqlite_errorcode == sqlite3.SQLITE_FULL  # type: ignore[attr-defined]
+    except (AttributeError, ImportError) as e:
+        return "database or disk is full" in str(e)
