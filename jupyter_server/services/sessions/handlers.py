@@ -168,7 +168,7 @@ class SessionHandler(SessionsAPIHandler):
                     custom_env_vars = model["kernel"]["custom_env_vars"]
                 else:
                     custom_env_vars = {}
-                
+
                 kernel_name = model["kernel"]["name"]
                 kernel_id = await sm.start_kernel_for_session(
                     session_id,

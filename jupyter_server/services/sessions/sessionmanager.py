@@ -290,7 +290,7 @@ class SessionManager(LoggingConfigurable):
         record.kernel_id = kernel_id
         self._pending_sessions.update(record)
         result = await self.save_session(
-              session_id, path=path, name=name, type=type, kernel_id=kernel_id
+            session_id, path=path, name=name, type=type, kernel_id=kernel_id
         )
         self._pending_sessions.remove(record)
         return cast(Dict[str, Any], result)
@@ -482,10 +482,11 @@ class SessionManager(LoggingConfigurable):
 
             # if we have custom env than we have to add them to available env variables
             if self._custom_envs is not None and isinstance(self._custom_envs, dict):
-                if self._custom_envs[kernel_id] is not None and isinstance(self._custom_envs[kernel_id], dict):
+                if self._custom_envs[kernel_id] is not None and isinstance(
+                    self._custom_envs[kernel_id], dict
+                ):
                     for key, value in self._custom_envs[kernel_id].items():
                         env[key] = value
-
 
             self.kernel_manager.update_env(kernel_id=kernel_id, env=env)
 

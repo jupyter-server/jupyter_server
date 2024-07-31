@@ -472,7 +472,7 @@ class ServerWebApplication(web.Application):
             # default: set xsrf cookie on base_url
             settings["xsrf_cookie_kwargs"] = {"path": base_url}
         return settings
-    
+
     def page_config_hook(self, handler, page_config):
         page_config["allow_custom_env_variables"] = self.allow_custom_env_variables
         return page_config
@@ -1438,7 +1438,6 @@ class ServerApp(JupyterApp):
         config=True,
         help="""Allow to use custom env variables""",
     )
-
 
     browser = Unicode(
         "",
