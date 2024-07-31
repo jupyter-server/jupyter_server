@@ -140,7 +140,9 @@ class ContentsHandler(ContentsAPIHandler):
 
         hash_str = self.get_query_argument("hash", default="0")
         if hash_str not in {"0", "1"}:
-            raise web.HTTPError(400, f"Content {hash_str!r} is invalid")
+            raise web.HTTPError(
+                400, f"Hash argument {hash_str!r} is invalid. It must be '0' or '1'."
+            )
         require_hash = int(hash_str)
 
         if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
