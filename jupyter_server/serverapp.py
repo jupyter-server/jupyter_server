@@ -3039,13 +3039,6 @@ class ServerApp(JupyterApp):
         # Handle the browser opening.
         if self.open_browser and not self.sock:
             self.launch_browser()
-        
-        if self.allow_custom_env_variables:
-            print("allow_custom_env_variables present")
-            print(self.allow_custom_env_variables)
-            #self.kernel_spec_manager.allow_custom_env_variables(
-            #    self.allow_custom_env_variables
-            #)
 
         if self.identity_provider.token and self.identity_provider.token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
