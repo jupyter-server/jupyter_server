@@ -3040,8 +3040,6 @@ class ServerApp(JupyterApp):
         if self.open_browser and not self.sock:
             self.launch_browser()
         if self.allow_insecure_kernelspec_params:
-            print("yesssssssssssssssss")
-            print(self.allow_insecure_kernelspec_params)
             self.kernel_spec_manager.allow_insecure_kernelspec_params(
                 self.allow_insecure_kernelspec_params
             )
