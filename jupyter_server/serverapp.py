@@ -3000,7 +3000,6 @@ class ServerApp(JupyterApp):
     def start_app(self) -> None:
         """Start the Jupyter Server application."""
         super().start()
-        #
         if not self.allow_root:
             # check if we are running as root, and abort if it's not allowed
             try:

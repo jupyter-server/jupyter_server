@@ -283,7 +283,6 @@ class SessionManager(LoggingConfigurable):
         if kernel_id is not None and kernel_id in self.kernel_manager:
             pass
         else:
-            #
             kernel_id = await self.start_kernel_for_session(
                 session_id, path, name, type, kernel_name, custom_kernel_specs
             )
@@ -308,7 +307,6 @@ class SessionManager(LoggingConfigurable):
             Here the name is likely to be the name of the associated file
             with the current kernel at startup time.
         """
-        #
         if name is not None:
             cwd = self.kernel_manager.cwd_for_path(path)
             path = os.path.join(cwd, name)
