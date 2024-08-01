@@ -401,6 +401,8 @@ class ServerWebApplication(web.Application):
             # collapse $HOME to ~
             root_dir = "~" + root_dir[len(home) :]
 
+        self.allow_insecure_kernelspec_params = jupyter_app.allow_insecure_kernelspec_params
+
         settings = {
             # basics
             "log_function": log_request,
@@ -460,6 +462,7 @@ class ServerWebApplication(web.Application):
             "server_root_dir": root_dir,
             "jinja2_env": env,
             "serverapp": jupyter_app,
+            "page_config_hook": (self.page_config_hook),
         }
 
         # allow custom overrides for the tornado web app.
@@ -469,6 +472,10 @@ class ServerWebApplication(web.Application):
             # default: set xsrf cookie on base_url
             settings["xsrf_cookie_kwargs"] = {"path": base_url}
         return settings
+
+    def page_config_hook(self, handler, page_config):
+        page_config["allow_insecure_kernelspec_params"] = self.allow_insecure_kernelspec_params
+        return page_config
 
     def init_handlers(self, default_services, settings):
         """Load the (URL pattern, handler) tuples for each component."""
@@ -1427,6 +1434,12 @@ class ServerApp(JupyterApp):
                         """,
     )
 
+    allow_insecure_kernelspec_params = Bool(
+        False,
+        config=True,
+        help="""Allow to use insecure kernelspec parameters""",
+    )
+
     browser = Unicode(
         "",
         config=True,
@@ -2180,6 +2193,7 @@ class ServerApp(JupyterApp):
             self.event_logger.register_event_schema(schema_path)
 
     def init_webapp(self) -> None:
+        #
         """initialize tornado webapp"""
         self.tornado_settings["allow_origin"] = self.allow_origin
         self.tornado_settings["websocket_compression_options"] = self.websocket_compression_options
@@ -2991,7 +3005,6 @@ class ServerApp(JupyterApp):
     def start_app(self) -> None:
         """Start the Jupyter Server application."""
         super().start()
-
         if not self.allow_root:
             # check if we are running as root, and abort if it's not allowed
             try:
@@ -3030,6 +3043,10 @@ class ServerApp(JupyterApp):
         # Handle the browser opening.
         if self.open_browser and not self.sock:
             self.launch_browser()
+        if self.allow_insecure_kernelspec_params:
+            self.kernel_spec_manager.allow_insecure_kernelspec_params(
+                self.allow_insecure_kernelspec_params
+            )
 
         if self.identity_provider.token and self.identity_provider.token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
