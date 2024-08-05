@@ -21,7 +21,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.6
+    rev: 0.29.1
     hooks:
       - id: check-github-workflows
 
@@ -52,7 +52,7 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.10.1"
+    rev: "v1.11.1"
     hooks:
       - id: mypy
         files: jupyter_server
@@ -61,7 +61,7 @@ repos:
           ["traitlets>=5.13", "jupyter_core>=5.5", "jupyter_client>=8.5"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.0
+    rev: v0.5.6
     hooks:
       - id: ruff
         types_or: [python, jupyter]
