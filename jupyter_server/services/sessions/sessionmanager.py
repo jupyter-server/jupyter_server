@@ -205,12 +205,11 @@ class SessionManager(LoggingConfigurable):
         super().__init__(*args, **kwargs)
         self._pending_sessions = KernelSessionRecordList()
 
+    _custom_envs: Dict[str, str] = {}
     # Session database initialized below
     _cursor = None
     _connection = None
     _columns = {"session_id", "path", "name", "type", "kernel_id"}
-    _custom_envs = {}
-
     @property
     def cursor(self):
         """Start a cursor and create a database called 'session'"""
@@ -481,7 +480,7 @@ class SessionManager(LoggingConfigurable):
             env = self.get_kernel_env(path, name)
 
             # if we have custom env than we have to add them to available env variables
-            if self._custom_envs is not None and isinstance(self._custom_envs, dict):
+            if isinstance(self._custom_envs, dict):
                 if self._custom_envs[kernel_id] is not None and isinstance(
                     self._custom_envs[kernel_id], dict
                 ):
