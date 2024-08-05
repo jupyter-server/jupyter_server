@@ -210,6 +210,7 @@ class SessionManager(LoggingConfigurable):
     _cursor = None
     _connection = None
     _columns = {"session_id", "path", "name", "type", "kernel_id"}
+
     @property
     def cursor(self):
         """Start a cursor and create a database called 'session'"""
