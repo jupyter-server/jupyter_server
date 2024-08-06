@@ -459,7 +459,7 @@ class ServerWebApplication(web.Application):
             "allow_password_change": jupyter_app.allow_password_change,
             "server_root_dir": root_dir,
             "jinja2_env": env,
-            "serverapp": jupyter_app
+            "serverapp": jupyter_app,
         }
 
         # allow custom overrides for the tornado web app.
