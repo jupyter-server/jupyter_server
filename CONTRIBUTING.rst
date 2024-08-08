@@ -70,7 +70,7 @@ Some of the hooks only run on CI by default, but you can invoke them by
 running with the ``--hook-stage manual`` argument.
 
 There are three hatch scripts that can be run locally as well:
-``hatch run lint:build`` will enforce styling.  ``hatch run typing:test`` will
+``hatch fmt`` will enforce styling.  ``hatch run typing:test`` will
 run the type checker.
 
 Troubleshooting the Installation
@@ -104,15 +104,15 @@ To run the Python tests, use::
 You can also run the tests using ``hatch`` without installing test dependencies in your local environment::
 
     pip install hatch
-    hatch run test:test
+    hatch test
 
 The command takes any argument that you can give to ``pytest``, e.g.::
 
-    hatch run test:test -k name_of_method_to_test
+    hatch test -k name_of_method_to_test
 
 You can also drop into a shell in the test environment by running::
 
-    hatch -e test shell
+    hatch -e hatch-test shell
 
 Building the Docs
 =================

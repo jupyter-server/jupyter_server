@@ -53,14 +53,14 @@ Tracker = "https://github.com/jupyter-server/jupyter_server/issues"
 
 [project.optional-dependencies]
 test = [
-    "ipykernel",
-    "pytest-console-scripts",
-    "pytest-timeout",
+    "ipykernel>=6.0",
+    "pytest-console-scripts>=1.4",
+    "pytest-timeout>=2.0",
     "pytest-jupyter[server]>=0.7",
     "pytest>=7.0,<9",
-    "requests",
-    "pre-commit",
-    'flaky'
+    "requests>=2.0",
+    "pre-commit>=3.0",
+    'flaky>=3.8'
 ]
 docs = [
     "ipykernel",
@@ -86,31 +86,24 @@ docs = [
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
 
+[tool.hatch.envs.hatch-test]
+features = ["test"]
+retries = 2
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.12", "3.11", "3.10", "3.9", "3.8", "pypy3.10", "pypy3.9"]
+
 [tool.hatch.envs.docs]
 features = ["docs"]
 [tool.hatch.envs.docs.scripts]
 build = "make -C docs html SPHINXOPTS='-W'"
 api = "sphinx-apidoc -o docs/source/api -f -E jupyter_server */terminal jupyter_server/pytest_plugin.py"
 
-[tool.hatch.envs.test]
-features = ["test"]
-[tool.hatch.envs.test.scripts]
-test = "python -m pytest -vv {args}"
-nowarn = "test -W default {args}"
-
 [tool.hatch.envs.typing]
 dependencies = [ "pre-commit"]
 detached = true
 [tool.hatch.envs.typing.scripts]
 test = "pre-commit run --all-files --hook-stage manual mypy"
-
-[tool.hatch.envs.cov]
-features = ["test"]
-dependencies = ["coverage[toml]", "pytest-cov"]
-[tool.hatch.envs.cov.scripts]
-test = "python -m pytest -vv --cov jupyter_server --cov-branch --cov-report term-missing:skip-covered {args}"
-nowarn = "test -W default {args}"
-integration = "test --integration_tests=true {args}"
 
 [tool.hatch.version]
 path = "jupyter_server/_version.py"

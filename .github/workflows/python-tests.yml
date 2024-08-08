@@ -23,7 +23,7 @@ jobs:
           - os: windows-latest
             python-version: "3.9"
           - os: ubuntu-latest
-            python-version: "pypy-3.8"
+            python-version: "pypy-3.9"
           - os: macos-latest
             python-version: "3.10"
           - os: ubuntu-latest
@@ -43,14 +43,16 @@ jobs:
           wget https://github.com/jgm/pandoc/releases/download/3.1.2/pandoc-3.1.2-1-amd64.deb && sudo dpkg -i pandoc-3.1.2-1-amd64.deb
       - name: Run the tests on posix
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: hatch run cov:test --cov-fail-under 75 || hatch -v run test:test --lf
+        run: hatch test -py ${{matrix.python-version}} --cover
       - name: Run the tests on pypy
         if: ${{ startsWith(matrix.python-version, 'pypy') }}
-        run: hatch run test:nowarn || hatch -v run test:nowarn --lf
+        run: hatch -v test -py pypy3.9 -W default
       - name: Run the tests on windows
         if: ${{ startsWith(matrix.os, 'windows') }}
-        run: hatch run cov:nowarn -s || hatch -v run cov:nowarn --lf
+        run: hatch test -py ${{matrix.python-version}} --cover -W default
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
+        with:
+          artifact_name: coverage-${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
 
   test_docs:
     name: Test Docs
@@ -110,11 +112,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-        with:
-          dependency_type: minimum
       - name: Run the unit tests
+        env:
+          UV_RESOLUTION: lowest-direct
         run: |
-          hatch -vv run test:nowarn || hatch -v run test:nowarn --lf
+          hatch test -py 3.8 -W default
 
   test_prereleases:
     name: Test Prereleases
@@ -123,11 +125,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-        with:
-          dependency_type: pre
-      - name: Run the tests
+      - name: Run the unit tests
+        env:
+          UV_PRERELEASE: allow
         run: |
-          hatch run test:nowarn || hatch -v run test:nowarn --lf
+          hatch test -py 3.12 -W default
 
   make_sdist:
     name: Make SDist
@@ -148,7 +150,7 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/test-sdist@v1
         with:
           package_spec: -vv .
-          test_command: hatch run test:test || hatch -v run test:test --lf
+          test_command: hatch test
 
   check_release:
     runs-on: ubuntu-latest
@@ -185,8 +187,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Run the tests
-        run: hatch -v run cov:integration
+        env:
+          INTEGRATION_TEST: 1
+        run: hatch test -py ${{matrix.python-version}} --cover
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
+        with:
+          artifact_name: coverage-${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
 
   integration_check_pypy:
     runs-on: ubuntu-latest
@@ -196,7 +202,9 @@ jobs:
         with:
           python_version: "pypy-3.8"
       - name: Run the tests
-        run: hatch -v run test:nowarn --integration_tests=true
+        env:
+          INTEGRATION_TEST: 1
+        run: hatch test -py pypy-3.8 -W default
 
   coverage:
     runs-on: ubuntu-latest
@@ -208,6 +216,7 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/report-coverage@v1
         with:
           fail_under: 80
+          artifact_pattern: "coverage-*"
 
   tests_check: # This job does nothing and is only used for the branch protection
     if: always()

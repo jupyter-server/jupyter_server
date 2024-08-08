@@ -33,9 +33,12 @@ def pytest_configure(config):
 
 
 def pytest_runtest_setup(item):
+    run_integration_tests = (
+        item.config.getoption("--integration_tests") is True or "INTEGRATION_TEST" in os.environ
+    )
     is_integration_test = any(mark for mark in item.iter_markers(name="integration_test"))
 
-    if item.config.getoption("--integration_tests") is True:
+    if run_integration_tests:
         if not is_integration_test:
             pytest.skip("Only running tests marked as 'integration_test'.")
     elif is_integration_test:
