@@ -1427,6 +1427,12 @@ class ServerApp(JupyterApp):
                         """,
     )
 
+    allow_setup_custom_env_variables = Bool(
+        False,
+        config=True,
+        help="""Allow a user to setup custom env variables while launching or selecting a kernel""",
+    )
+
     browser = Unicode(
         "",
         config=True,

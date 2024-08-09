@@ -319,6 +319,20 @@ async def test_update_session(session_manager):
     assert model == expected
 
 
+async def test_update_session_with_custom_env_vars(session_manager):
+    custom_env_vars = {"test_env_name": "test_env_value"}
+    await session_manager.create_session(
+        path="/path/to/test.ipynb",
+        kernel_name="julia",
+        type="notebook",
+        custom_env_vars=custom_env_vars,
+    )
+    kernel_id = "A"
+    custom_envs = session_manager._custom_envs[kernel_id]
+    expected = "test_env_value"
+    assert custom_envs["test_env_name"] == expected
+
+
 async def test_bad_update_session(session_manager):
     # try to update a session with a bad keyword ~ raise error
     session = await session_manager.create_session(

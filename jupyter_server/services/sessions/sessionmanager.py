@@ -205,6 +205,7 @@ class SessionManager(LoggingConfigurable):
         super().__init__(*args, **kwargs)
         self._pending_sessions = KernelSessionRecordList()
 
+    _custom_envs: Dict[str, Optional[Dict[str, Any]]] = {}
     # Session database initialized below
     _cursor = None
     _connection = None
@@ -267,6 +268,7 @@ class SessionManager(LoggingConfigurable):
         type: Optional[str] = None,
         kernel_name: Optional[KernelName] = None,
         kernel_id: Optional[str] = None,
+        custom_env_vars: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Creates a session and returns its model
 
@@ -283,7 +285,7 @@ class SessionManager(LoggingConfigurable):
             pass
         else:
             kernel_id = await self.start_kernel_for_session(
-                session_id, path, name, type, kernel_name
+                session_id, path, name, type, kernel_name, custom_env_vars
             )
         record.kernel_id = kernel_id
         self._pending_sessions.update(record)
@@ -319,6 +321,7 @@ class SessionManager(LoggingConfigurable):
         name: Optional[ModelName],
         type: Optional[str],
         kernel_name: Optional[KernelName],
+        custom_env_vars: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Start a new kernel for a given session.
 
@@ -335,16 +338,25 @@ class SessionManager(LoggingConfigurable):
             the type of the session
         kernel_name : str
             the name of the kernel specification to use.  The default kernel name will be used if not provided.
+        custom_env_vars: dict
+            dictionary of custom env variables
         """
         # allow contents manager to specify kernels cwd
         kernel_path = await ensure_async(self.contents_manager.get_kernel_path(path=path))
-
         kernel_env = self.get_kernel_env(path, name)
+
+        # if we have custom env than we have to add them to available env variables
+        if custom_env_vars is not None and isinstance(custom_env_vars, dict):
+            for key, value in custom_env_vars.items():
+                kernel_env[key] = value
+
         kernel_id = await self.kernel_manager.start_kernel(
             path=kernel_path,
             kernel_name=kernel_name,
             env=kernel_env,
         )
+
+        self._custom_envs[kernel_id] = custom_env_vars
         return cast(str, kernel_id)
 
     async def save_session(self, session_id, path=None, name=None, type=None, kernel_id=None):
@@ -445,8 +457,8 @@ class SessionManager(LoggingConfigurable):
             and the value replaces the current value in the session
             with session_id.
         """
-        await self.get_session(session_id=session_id)
 
+        await self.get_session(session_id=session_id)
         if not kwargs:
             # no changes
             return
@@ -464,7 +476,15 @@ class SessionManager(LoggingConfigurable):
                 "SELECT path, name, kernel_id FROM session WHERE session_id=?", [session_id]
             )
             path, name, kernel_id = self.cursor.fetchone()
-            self.kernel_manager.update_env(kernel_id=kernel_id, env=self.get_kernel_env(path, name))
+            env = self.get_kernel_env(path, name)
+
+            # if we have custom env than we have to add them to available env variables
+            if isinstance(self._custom_envs, dict):
+                custom_env = self._custom_envs.get(kernel_id)
+                if custom_env is not None and isinstance(custom_env, dict):
+                    for key, value in custom_env.items():
+                        env[key] = value
+            self.kernel_manager.update_env(kernel_id=kernel_id, env=env)
 
     async def kernel_culled(self, kernel_id: str) -> bool:
         """Checks if the kernel is still considered alive and returns true if its not found."""
@@ -526,6 +546,9 @@ class SessionManager(LoggingConfigurable):
         record = KernelSessionRecord(session_id=session_id)
         self._pending_sessions.update(record)
         session = await self.get_session(session_id=session_id)
-        await ensure_async(self.kernel_manager.shutdown_kernel(session["kernel"]["id"]))
+        kernel_id = session["kernel"]["id"]
+        if kernel_id in self._custom_envs:
+            del self._custom_envs[kernel_id]
+        await ensure_async(self.kernel_manager.shutdown_kernel(kernel_id))
         self.cursor.execute("DELETE FROM session WHERE session_id=?", (session_id,))
         self._pending_sessions.remove(record)
