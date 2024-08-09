@@ -2388,7 +2388,14 @@ class ServerApp(JupyterApp):
             signal.signal(signal.SIGINFO, self._signal_info)
 
     def _handle_sigint(self, sig: t.Any, frame: t.Any) -> None:
-        """SIGINT handler spawns confirmation dialog"""
+        """SIGINT handler spawns confirmation dialog
+
+        Note:
+            JupyterHub replaces this method with _signal_stop
+            in order to bypass the interactive prompt.
+            https://github.com/jupyterhub/jupyterhub/pull/4864
+
+        """
         # register more forceful signal handler for ^C^C case
         signal.signal(signal.SIGINT, self._signal_stop)
         # request confirmation dialog in bg thread, to avoid
@@ -2446,7 +2453,13 @@ class ServerApp(JupyterApp):
         self.io_loop.add_callback_from_signal(self._restore_sigint_handler)
 
     def _signal_stop(self, sig: t.Any, frame: t.Any) -> None:
-        """Handle a stop signal."""
+        """Handle a stop signal.
+
+        Note:
+            JupyterHub configures this method to be called for SIGINT.
+            https://github.com/jupyterhub/jupyterhub/pull/4864
+
+        """
         self.log.critical(_i18n("received signal %s, stopping"), sig)
         self.stop(from_signal=True)
 
