@@ -459,7 +459,6 @@ class SessionManager(LoggingConfigurable):
         """
 
         await self.get_session(session_id=session_id)
-
         if not kwargs:
             # no changes
             return
@@ -477,7 +476,6 @@ class SessionManager(LoggingConfigurable):
                 "SELECT path, name, kernel_id FROM session WHERE session_id=?", [session_id]
             )
             path, name, kernel_id = self.cursor.fetchone()
-
             env = self.get_kernel_env(path, name)
 
             # if we have custom env than we have to add them to available env variables
@@ -486,7 +484,6 @@ class SessionManager(LoggingConfigurable):
                 if custom_env is not None and isinstance(custom_env, dict):
                     for key, value in custom_env.items():
                         env[key] = value
-
             self.kernel_manager.update_env(kernel_id=kernel_id, env=env)
 
     async def kernel_culled(self, kernel_id: str) -> bool:
