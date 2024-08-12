@@ -1146,8 +1146,9 @@ class ServerApp(JupyterApp):
         b"",
         config=True,
         help="""The random bytes used to secure cookies.
-        By default this is a new random number every time you start the server.
-        Set it to a value in a config file to enable logins to persist across server sessions.
+        By default this is generated on first start of the server and persisted across server
+        sessions by writing the cookie secret into the `cookie_secret_file` file.
+        When using an executable config file you can override this to be random at each server restart.
 
         Note: Cookie secrets should be kept private, do not share config files with
         cookie_secret stored in plaintext (you can read the value from a file).
@@ -2737,7 +2738,11 @@ class ServerApp(JupyterApp):
         self._init_asyncio_patch()
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
+        # preserve jpserver_extensions, which may have been set by starter_extension
+        # don't let config clobber this value
+        jpserver_extensions = self.jpserver_extensions.copy()
         super().initialize(argv=argv)
+        self.jpserver_extensions.update(jpserver_extensions)
         if self._dispatching:
             return
         # initialize io loop as early as possible,
