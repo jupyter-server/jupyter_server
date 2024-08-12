@@ -267,6 +267,7 @@ class SessionManager(LoggingConfigurable):
         type: Optional[str] = None,
         kernel_name: Optional[KernelName] = None,
         kernel_id: Optional[str] = None,
+        custom_kernel_specs: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Creates a session and returns its model
 
@@ -283,7 +284,7 @@ class SessionManager(LoggingConfigurable):
             pass
         else:
             kernel_id = await self.start_kernel_for_session(
-                session_id, path, name, type, kernel_name
+                session_id, path, name, type, kernel_name, custom_kernel_specs
             )
         record.kernel_id = kernel_id
         self._pending_sessions.update(record)
@@ -319,6 +320,7 @@ class SessionManager(LoggingConfigurable):
         name: Optional[ModelName],
         type: Optional[str],
         kernel_name: Optional[KernelName],
+        custom_kernel_specs: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Start a new kernel for a given session.
 
@@ -335,6 +337,8 @@ class SessionManager(LoggingConfigurable):
             the type of the session
         kernel_name : str
             the name of the kernel specification to use.  The default kernel name will be used if not provided.
+        custom_kernel_specs: dict
+            dictionary of kernel custom specifications
         """
         # allow contents manager to specify kernels cwd
         kernel_path = await ensure_async(self.contents_manager.get_kernel_path(path=path))
@@ -344,6 +348,7 @@ class SessionManager(LoggingConfigurable):
             path=kernel_path,
             kernel_name=kernel_name,
             env=kernel_env,
+            custom_kernel_specs=custom_kernel_specs,
         )
         return cast(str, kernel_id)
 
