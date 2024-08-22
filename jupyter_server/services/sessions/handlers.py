@@ -164,10 +164,7 @@ class SessionHandler(SessionsAPIHandler):
                     raise web.HTTPError(400, "No such kernel: %s" % kernel_id)
                 changes["kernel_id"] = kernel_id
             elif model["kernel"].get("name") is not None:
-                if "env" in model["kernel"]:
-                    custom_env_vars = model["kernel"]["env"]
-                else:
-                    custom_env_vars = {}
+                custom_env_vars = model["kernel"]["env"] if "env" in model["kernel"] else {}
 
                 kernel_name = model["kernel"]["name"]
                 kernel_id = await sm.start_kernel_for_session(
