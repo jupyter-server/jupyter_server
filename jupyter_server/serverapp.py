@@ -457,6 +457,7 @@ class ServerWebApplication(web.Application):
             "config": jupyter_app.config,
             "config_dir": jupyter_app.config_dir,
             "allow_password_change": jupyter_app.allow_password_change,
+            "accept_kernel_env_var": jupyter_app.accept_kernel_env_var,
             "server_root_dir": root_dir,
             "jinja2_env": env,
             "serverapp": jupyter_app,
@@ -1427,7 +1428,7 @@ class ServerApp(JupyterApp):
                         """,
     )
 
-    allow_setup_custom_env_variables = Bool(
+    accept_kernel_env_vars = Bool(
         False,
         config=True,
         help="""Allow a user to setup custom env variables while launching or selecting a kernel""",
