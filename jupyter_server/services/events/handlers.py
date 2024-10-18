@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 
 from jupyter_core.utils import ensure_async
+from jupyter_events.logger import SchemaNotRegistered
 from tornado import web, websocket
 
 from jupyter_server.auth.decorator import authorized, ws_authenticated
@@ -121,6 +122,9 @@ class EventHandler(APIHandler):
             self.finish()
         except web.HTTPError:
             raise
+        except SchemaNotRegistered as e:
+            message = f"Unregistered event schema: ${str(e)}"
+            raise web.HTTPError(400, message) from e
         except Exception as e:
             raise web.HTTPError(500, str(e)) from e
 
