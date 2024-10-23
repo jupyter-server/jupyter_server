@@ -251,8 +251,8 @@ class ContentsHandler(ContentsAPIHandler):
         self.log.info(f"Appending file chunk {chunk} at path: {path}")
         existing_model = self.contents_manager.get(path)
         # TODO: Test binary files encoding works properly:
-        assert existing_model['format'] == to_append_model['format']
-        existing_model['content'] = existing_model['content'] + to_append_model['content']
+        assert existing_model["format"] == to_append_model["format"]
+        existing_model["content"] = existing_model["content"] + to_append_model["content"]
         model = await ensure_async(self.contents_manager.save(existing_model, path))
         validate_model(model)
         self._finish_model(model)
