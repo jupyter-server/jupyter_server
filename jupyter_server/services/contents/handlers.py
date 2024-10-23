@@ -238,12 +238,22 @@ class ContentsHandler(ContentsAPIHandler):
         validate_model(model)
         self._finish_model(model)
 
-    async def _save(self, model, path):
-        """Save an existing file."""
-        chunk = model.get("chunk", None)
-        if not chunk or chunk == -1:  # Avoid tedious log information
-            self.log.info("Saving file at %s", path)
+    async def _overwrite(self, model, path):
+        """Overwrite an existing file."""
+        self.log.info(f"Overwriting file at {path}")
         model = await ensure_async(self.contents_manager.save(model, path))
+        validate_model(model)
+        self._finish_model(model)
+
+    async def _append(self, to_append_model, path):
+        """Append to an existing file."""
+        chunk = to_append_model.get("chunk", None)
+        self.log.info(f"Appending file chunk {chunk} at path: {path}")
+        existing_model = self.contents_manager.get(path)
+        # TODO: Test binary files encoding works properly:
+        assert existing_model['format'] == to_append_model['format']
+        existing_model['content'] = existing_model['content'] + to_append_model['content']
+        model = await ensure_async(self.contents_manager.save(existing_model, path))
         validate_model(model)
         self._finish_model(model)
 
@@ -318,7 +328,10 @@ class ContentsHandler(ContentsAPIHandler):
                 # fall back to file if unknown type
                 model["type"] = "file"
             if exists:
-                await self._save(model, path)
+                if not model.get("chunk") or model.get("chunk") == 1:
+                    await self._overwrite(model, path)
+                else:
+                    await self._append(model, path)
             else:
                 await self._upload(model, path)
         else:
