@@ -16,8 +16,8 @@ except ImportError:
 
 
 if (
-    notebook_version_info is not None # No notebook package found
-    and notebook_version_info < (7,) # Notebook package found, is version 6
+    notebook_version_info is not None  # No notebook package found
+    and notebook_version_info < (7,)  # Notebook package found, is version 6
     # Notebook package found, but its version is the same as jupyter_server
     # version. This means some package (lookin at you, nbclassic) has shimmed
     # the notebook package to instead be imports from the jupyter_server package.
