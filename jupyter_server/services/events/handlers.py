@@ -10,7 +10,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 
 from jupyter_core.utils import ensure_async
-from jupyter_events.logger import SchemaNotRegistered
 from tornado import web, websocket
 
 from jupyter_server.auth.decorator import authorized, ws_authenticated
@@ -72,12 +71,19 @@ class SubscribeWebsocket(
         self.event_logger.remove_listener(listener=self.event_listener)
 
 
-def validate_model(data: dict[str, Any]) -> None:
-    """Validates for required fields in the JSON request body"""
+def validate_model(data: dict[str, Any], schema: jupyter_events.schema.EventSchema) -> None:
+    """Validates for required fields in the JSON request body and verifies that
+    a registered schema/version exists"""
     required_keys = {"schema_id", "version", "data"}
     for key in required_keys:
         if key not in data:
-            raise web.HTTPError(400, f"Missing `{key}` in the JSON request body.")
+            raise Exception(f"Missing `{key}` in the JSON request body.")
+    schema_id = cast(str, data.get("schema_id"))
+    version = cast(int, data.get("version"))
+    if schema is None:
+        raise Exception(f"Unregistered schema: `{schema_id}`")
+    if schema.version != version:
+        raise Exception(f"Unregistered version: `{version}` for `{schema_id}`")
 
 
 def get_timestamp(data: dict[str, Any]) -> Optional[datetime]:
@@ -112,21 +118,19 @@ class EventHandler(APIHandler):
             raise web.HTTPError(400, "No JSON data provided")
 
         try:
-            validate_model(payload)
+            schema = self.event_logger.schemas.get(cast(str, payload.get("schema_id")))
+            validate_model(payload, schema)
             self.event_logger.emit(
-                schema_id=cast(str, payload.get("schema_id")),
+                schema_id=schema.id,
                 data=cast("Dict[str, Any]", payload.get("data")),
                 timestamp_override=get_timestamp(payload),
             )
             self.set_status(204)
             self.finish()
-        except web.HTTPError:
-            raise
-        except SchemaNotRegistered as e:
-            message = f"Unregistered event schema: ${str(e)}"
-            raise web.HTTPError(400, message) from e
         except Exception as e:
-            raise web.HTTPError(500, str(e)) from e
+            # All known exceptions are raised by bad requests, e.g., bad
+            # version, unregistered schema, invalid emission data payload, etc.
+            raise web.HTTPError(400, str(e)) from e
 
 
 default_handlers = [
