@@ -11,7 +11,7 @@ try:
 except ImportError:
     notebook_version_info = None
 
-if not notebook_version_info >= (7,):
+if notebook_version_info is not None and notebook_version_info < (7,):
     # Jupyter Notebook v6 also defined these metrics.  Re-defining them results in a ValueError,
     # so we simply re-export them if we are co-existing with the notebook v6 package.
     # See https://github.com/jupyter/jupyter_server/issues/209
