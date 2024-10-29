@@ -77,13 +77,16 @@ def validate_model(data: dict[str, Any], schema: jupyter_events.schema.EventSche
     required_keys = {"schema_id", "version", "data"}
     for key in required_keys:
         if key not in data:
-            raise Exception(f"Missing `{key}` in the JSON request body.")
+            message = f"Missing `{key}` in the JSON request body."
+            raise Exception(message)
     schema_id = cast(str, data.get("schema_id"))
     version = cast(int, data.get("version"))
     if schema is None:
-        raise Exception(f"Unregistered schema: `{schema_id}`")
+        message = f"Unregistered schema: `{schema_id}`"
+        raise Exception(message)
     if schema.version != version:
-        raise Exception(f"Unregistered version: `{version}` for `{schema_id}`")
+        message = f"Unregistered version: `{version}` for `{schema_id}`"
+        raise Exception(message)
 
 
 def get_timestamp(data: dict[str, Any]) -> Optional[datetime]:
