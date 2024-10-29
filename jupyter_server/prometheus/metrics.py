@@ -19,7 +19,7 @@ if (
     notebook_version_info is not None  # No notebook package found
     and notebook_version_info < (7,)  # Notebook package found, is version 6
     # Notebook package found, but its version is the same as jupyter_server
-    # version. This means some package (lookin at you, nbclassic) has shimmed
+    # version. This means some package (looking at you, nbclassic) has shimmed
     # the notebook package to instead be imports from the jupyter_server package.
     # In such cases, notebook.prometheus.metrics is actually *this file*, so
     # trying to import it will cause a circular import. So we don't.
