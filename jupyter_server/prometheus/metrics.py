@@ -41,7 +41,6 @@ from prometheus_client import Info
 from .._version import __version__
 
 SERVER_INFO = Info("jupyter_server_info", "Jupyter Server Version information")
-SERVER_INFO.info({"version": __version__})
 
 __all__ = [
     "HTTP_REQUEST_DURATION_SECONDS",
