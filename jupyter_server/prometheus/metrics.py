@@ -4,7 +4,8 @@ Prometheus metrics exported by Jupyter Server
 Read https://prometheus.io/docs/practices/naming/ for naming
 conventions for metrics & labels.
 """
-from prometheus_client import Info, Gauge, Histogram
+
+from prometheus_client import Gauge, Histogram, Info
 
 try:
     from notebook._version import version_info as notebook_version_info
