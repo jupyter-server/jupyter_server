@@ -4,6 +4,12 @@ Prometheus metrics exported by Jupyter Server
 Read https://prometheus.io/docs/practices/naming/ for naming
 conventions for metrics & labels.
 """
+# Do this to see if we end up in an import loop?
+from notebook.prometheus.metrics import (
+    HTTP_REQUEST_DURATION_SECONDS,
+    KERNEL_CURRENTLY_RUNNING_TOTAL,
+    TERMINAL_CURRENTLY_RUNNING_TOTAL,
+)
 
 try:
     # Jupyter Notebook also defines these metrics.  Re-defining them results in a ValueError.
