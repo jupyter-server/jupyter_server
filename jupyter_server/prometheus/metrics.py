@@ -38,8 +38,6 @@ except ImportError:
 
 from prometheus_client import Info
 
-from .._version import __version__
-
 SERVER_INFO = Info("jupyter_server_info", "Jupyter Server Version information")
 
 __all__ = [
