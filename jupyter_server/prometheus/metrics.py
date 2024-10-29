@@ -6,6 +6,7 @@ conventions for metrics & labels.
 """
 
 from prometheus_client import Gauge, Histogram, Info
+from jupyter_server._version import version_info as server_version_info
 
 try:
     from notebook._version import version_info as notebook_version_info
@@ -13,7 +14,7 @@ except ImportError:
     notebook_version_info = None
 
 
-if notebook_version_info is not None and notebook_version_info < (7,):
+if notebook_version_info is not None and notebook_version_info < (7,) and notebook_version_info != server_version_info:
     print("yes, we think we have an unshimmed notebook package")
     print(notebook_version_info)
     # Jupyter Notebook v6 also defined these metrics.  Re-defining them results in a ValueError,
