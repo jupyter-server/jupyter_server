@@ -16,12 +16,15 @@ except ImportError:
 
 
 if (
-    notebook_version_info is not None
-    and notebook_version_info < (7,)
+    notebook_version_info is not None # No notebook package found
+    and notebook_version_info < (7,) # Notebook package found, is version 6
+    # Notebook package found, but its version is the same as jupyter_server
+    # version. This means some package (lookin at you, nbclassic) has shimmed
+    # the notebook package to instead be imports from the jupyter_server package.
+    # In such cases, notebook.prometheus.metrics is actually *this file*, so
+    # trying to import it will cause a circular import. So we don't.
     and notebook_version_info != server_version_info
 ):
-    print("yes, we think we have an unshimmed notebook package")
-    print(notebook_version_info)
     # Jupyter Notebook v6 also defined these metrics.  Re-defining them results in a ValueError,
     # so we simply re-export them if we are co-existing with the notebook v6 package.
     # See https://github.com/jupyter/jupyter_server/issues/209
