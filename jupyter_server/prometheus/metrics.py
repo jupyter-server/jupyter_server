@@ -38,7 +38,7 @@ except ImportError:
 
 from prometheus_client import Info
 
-SERVER_INFO = Info("jupyter_server_info", "Jupyter Server Version information")
+SERVER_INFO = Info("jupyter_server", "Jupyter Server Version information")
 
 __all__ = [
     "HTTP_REQUEST_DURATION_SECONDS",
