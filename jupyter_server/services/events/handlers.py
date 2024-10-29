@@ -71,7 +71,9 @@ class SubscribeWebsocket(
         self.event_logger.remove_listener(listener=self.event_listener)
 
 
-def validate_model(data: dict[str, Any], schema: jupyter_events.schema.EventSchema) -> None:
+def validate_model(
+    data: dict[str, Any], registry: jupyter_events.schema_registry.SchemaRegistry
+) -> None:
     """Validates for required fields in the JSON request body and verifies that
     a registered schema/version exists"""
     required_keys = {"schema_id", "version", "data"}
@@ -81,9 +83,7 @@ def validate_model(data: dict[str, Any], schema: jupyter_events.schema.EventSche
             raise Exception(message)
     schema_id = cast(str, data.get("schema_id"))
     version = cast(int, data.get("version"))
-    if schema is None:
-        message = f"Unregistered schema: `{schema_id}`"
-        raise Exception(message)
+    schema = registry.get(schema_id)
     if schema.version != version:
         message = f"Unregistered version: `{version}` for `{schema_id}`"
         raise Exception(message)
@@ -121,10 +121,9 @@ class EventHandler(APIHandler):
             raise web.HTTPError(400, "No JSON data provided")
 
         try:
-            schema = self.event_logger.schemas.get(cast(str, payload.get("schema_id")))
-            validate_model(payload, schema)
+            validate_model(payload, self.event_logger.schemas)
             self.event_logger.emit(
-                schema_id=schema.id,
+                schema_id=cast(str, payload.get("schema_id")),
                 data=cast("Dict[str, Any]", payload.get("data")),
                 timestamp_override=get_timestamp(payload),
             )

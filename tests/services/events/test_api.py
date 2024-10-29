@@ -155,4 +155,5 @@ payload_9 = """\
 async def test_post_event_400(jp_fetch, event_logger, payload):
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch("api", "events", method="POST", body=payload)
+
     assert expected_http_error(e, 400)
