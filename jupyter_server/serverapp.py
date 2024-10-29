@@ -110,6 +110,7 @@ from jupyter_server.gateway.managers import (
     GatewaySessionManager,
 )
 from jupyter_server.log import log_request
+from jupyter_server.prometheus.metrics import SERVER_INFO
 from jupyter_server.services.config import ConfigManager
 from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
@@ -123,7 +124,6 @@ from jupyter_server.services.kernels.kernelmanager import (
     AsyncMappingKernelManager,
     MappingKernelManager,
 )
-from jupyter_server.prometheus.metrics import SERVER_INFO
 from jupyter_server.services.sessions.sessionmanager import SessionManager
 from jupyter_server.utils import (
     JupyterServerAuthWarning,
