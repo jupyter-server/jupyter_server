@@ -82,10 +82,10 @@ def validate_model(
             message = f"Missing `{key}` in the JSON request body."
             raise Exception(message)
     schema_id = cast(str, data.get("schema_id"))
-    version = cast(int, data.get("version"))
     schema = registry.get(schema_id)
+    version = int(cast(int, data.get("version")))
     if schema.version != version:
-        message = f"Unregistered version: `{version}` for `{schema_id}`"
+        message = f"Unregistered version: {version}≠{schema.version} for `{schema_id}`"
         raise Exception(message)
 
 
