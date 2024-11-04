@@ -82,7 +82,7 @@ def validate_model(
             message = f"Missing `{key}` in the JSON request body."
             raise Exception(message)
     schema_id = cast(str, data.get("schema_id"))
-    # The case where a given schema_id isn't found, 
+    # The case where a given schema_id isn't found,
     # jupyter_events raises a useful error, so there's no need to
     # handle that case here.
     schema = registry.get(schema_id)
