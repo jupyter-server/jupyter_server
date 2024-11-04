@@ -4,7 +4,6 @@
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
-from functools import partial
 import datetime
 import errno
 import gettext
@@ -29,6 +28,7 @@ import typing as t
 import urllib
 import warnings
 from base64 import encodebytes
+from functools import partial
 from pathlib import Path
 
 import jupyter_client
@@ -411,7 +411,9 @@ class ServerWebApplication(web.Application):
 
         settings = {
             # basics
-            "log_function": partial(log_request, record_prometheus_metrics=jupyter_app.record_http_request_metrics),
+            "log_function": partial(
+                log_request, record_prometheus_metrics=jupyter_app.record_http_request_metrics
+            ),
             "base_url": base_url,
             "default_url": default_url,
             "template_path": template_path,
@@ -2003,7 +2005,7 @@ class ServerApp(JupyterApp):
         *lot* of metrics, creating operational challenges for multitenant deployments.
 
         Set to False to disable recording the http_request_duration_seconds metric.
-        """
+        """,
     )
 
     static_immutable_cache = List(
