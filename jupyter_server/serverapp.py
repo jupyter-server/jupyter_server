@@ -1999,7 +1999,7 @@ class ServerApp(JupyterApp):
     record_http_request_metrics = Bool(
         True,
         help="""
-        REcord http_request_duration_seconds metric in the metrics endpoint.
+        Record http_request_duration_seconds metric in the metrics endpoint.
 
         Since a histogram is exposed for each request handler, this can create a
         *lot* of metrics, creating operational challenges for multitenant deployments.
