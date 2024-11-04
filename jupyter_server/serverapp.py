@@ -110,6 +110,7 @@ from jupyter_server.gateway.managers import (
     GatewaySessionManager,
 )
 from jupyter_server.log import log_request
+from jupyter_server.prometheus.metrics import SERVER_INFO
 from jupyter_server.services.config import ConfigManager
 from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
@@ -2696,6 +2697,12 @@ class ServerApp(JupyterApp):
                     # prefer Selector to Proactor for tornado + pyzmq
                     asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
+    def init_metrics(self) -> None:
+        """
+        Initialize any prometheus metrics that need to be set up on server startup
+        """
+        SERVER_INFO.info({"version": __version__})
+
     @catch_config_error
     def initialize(
         self,
@@ -2763,6 +2770,7 @@ class ServerApp(JupyterApp):
         self.load_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
+        self.init_metrics()
         if new_httpserver:
             self.init_httpserver()
 
