@@ -2703,7 +2703,7 @@ class ServerApp(JupyterApp):
         """
         SERVER_INFO.info({"version": __version__})
 
-        for k, ext in self.extension_manager.extensions.items():
+        for ext in self.extension_manager.extensions.values():
             SERVER_EXTENSION_INFO.labels(
                 name=ext.name, version=ext.version, enabled=str(ext.enabled).lower()
             )
