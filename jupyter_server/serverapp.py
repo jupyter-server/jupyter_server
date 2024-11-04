@@ -4,6 +4,7 @@
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
+from functools import partial
 import datetime
 import errno
 import gettext
@@ -410,7 +411,7 @@ class ServerWebApplication(web.Application):
 
         settings = {
             # basics
-            "log_function": log_request,
+            "log_function": partial(log_request, record_prometheus_metrics=jupyter_app.record_http_request_metrics),
             "base_url": base_url,
             "default_url": default_url,
             "template_path": template_path,
@@ -1991,6 +1992,18 @@ class ServerApp(JupyterApp):
         Require authentication to access prometheus metrics.
         """,
         config=True,
+    )
+
+    record_http_request_metrics = Bool(
+        True,
+        help="""
+        REcord http_request_duration_seconds metric in the metrics endpoint.
+
+        Since a histogram is exposed for each request handler, this can create a
+        *lot* of metrics, creating operational challenges for multitenant deployments.
+
+        Set to False to disable recording the http_request_duration_seconds metric.
+        """
     )
 
     static_immutable_cache = List(
