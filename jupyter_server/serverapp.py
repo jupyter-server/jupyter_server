@@ -110,7 +110,7 @@ from jupyter_server.gateway.managers import (
     GatewaySessionManager,
 )
 from jupyter_server.log import log_request
-from jupyter_server.prometheus.metrics import SERVER_INFO
+from jupyter_server.prometheus.metrics import SERVER_INFO, SERVER_EXTENSION_INFO
 from jupyter_server.services.config import ConfigManager
 from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
@@ -2702,6 +2702,14 @@ class ServerApp(JupyterApp):
         Initialize any prometheus metrics that need to be set up on server startup
         """
         SERVER_INFO.info({"version": __version__})
+
+        for k, ext in self.extension_manager.extensions.items():
+            SERVER_EXTENSION_INFO.labels(
+                package_name=k,
+                extension_name=ext.name,
+                version=ext.version,
+                enabled=str(ext.enabled).lower()
+            )
 
     @catch_config_error
     def initialize(
