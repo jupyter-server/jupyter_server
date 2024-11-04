@@ -198,10 +198,11 @@ async def test_extension_web_apps(jp_serverapp):
 
     # there should be (at least) two extension applications
     assert set(jp_serverapp.extension_manager.extension_apps) == {
-        'tests.extension.mockextensions', 'jupyter_server_terminals'
+        "tests.extension.mockextensions",
+        "jupyter_server_terminals",
     }
 
     # but only one extension web application
     assert jp_serverapp.extension_manager.extension_web_apps == {
-        'mockextension': '/a%40b/mockextension'
+        "mockextension": "/a%40b/mockextension"
     }

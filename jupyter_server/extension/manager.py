@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import importlib
-from itertools import starmap
 import re
+from itertools import starmap
 
 from tornado.gen import multi
 from traitlets import Any, Bool, Dict, HasTraits, Instance, List, Unicode, default, observe
@@ -14,8 +14,7 @@ from traitlets.config import LoggingConfigurable
 from .config import ExtensionConfigManager
 from .utils import ExtensionMetadataError, ExtensionModuleNotFound, get_loader, get_metadata
 
-
-RE_SLASH = x = re.compile(r'/+')  # match any number of slashes
+RE_SLASH = x = re.compile(r"/+")  # match any number of slashes
 
 
 class ExtensionPoint(HasTraits):
@@ -306,11 +305,12 @@ class ExtensionManager(LoggingConfigurable):
         extensions which provide a default_url (i.e. a web application).
         """
         return {
-            app.name: RE_SLASH.sub('/', f'{self.serverapp.base_url}/{app.default_url}')
+            app.name: RE_SLASH.sub("/", f"{self.serverapp.base_url}/{app.default_url}")
             for extension_apps in self.serverapp.extension_manager.extension_apps.values()
             # filter out extensions that do not provide a default_url OR
             # set it to the root endpoint.
-            for app in extension_apps if getattr(app, 'default_url', '/') != '/'
+            for app in extension_apps
+            if getattr(app, "default_url", "/") != "/"
         }
 
     @property
