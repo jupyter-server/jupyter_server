@@ -110,7 +110,13 @@ from jupyter_server.gateway.managers import (
     GatewaySessionManager,
 )
 from jupyter_server.log import log_request
-from jupyter_server.prometheus.metrics import SERVER_EXTENSION_INFO, SERVER_INFO, SERVER_STARTED, LAST_ACTIVITY, ACTIVE_DURATION
+from jupyter_server.prometheus.metrics import (
+    ACTIVE_DURATION,
+    LAST_ACTIVITY,
+    SERVER_EXTENSION_INFO,
+    SERVER_INFO,
+    SERVER_STARTED,
+)
 from jupyter_server.services.config import ConfigManager
 from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
@@ -2712,7 +2718,11 @@ class ServerApp(JupyterApp):
         SERVER_STARTED.set(started.timestamp())
 
         LAST_ACTIVITY.set_function(lambda: self.web_app.last_activity().timestamp())
-        ACTIVE_DURATION.set_function(lambda: (self.web_app.last_activity() - self.web_app.settings["started"]).total_seconds())
+        ACTIVE_DURATION.set_function(
+            lambda: (
+                self.web_app.last_activity() - self.web_app.settings["started"]
+            ).total_seconds()
+        )
 
     @catch_config_error
     def initialize(

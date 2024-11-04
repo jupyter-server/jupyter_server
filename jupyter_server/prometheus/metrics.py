@@ -58,9 +58,17 @@ SERVER_EXTENSION_INFO = Info(
     "Jupyter Server Extensiom Version Information",
     ["name", "version", "enabled"],
 )
-LAST_ACTIVITY = Gauge("jupyter_server_last_activity_timestamp_seconds", "Timestamp of last seen activity on this Jupyter Server")
-SERVER_STARTED = Gauge("jupyter_server_started_timestamp_seconds", "Timestamp of when this Jupyter Server was started")
-ACTIVE_DURATION = Gauge("jupyter_server_active_duration_seconds", "Number of seconds this Jupyter Server has been active")
+LAST_ACTIVITY = Gauge(
+    "jupyter_server_last_activity_timestamp_seconds",
+    "Timestamp of last seen activity on this Jupyter Server",
+)
+SERVER_STARTED = Gauge(
+    "jupyter_server_started_timestamp_seconds", "Timestamp of when this Jupyter Server was started"
+)
+ACTIVE_DURATION = Gauge(
+    "jupyter_server_active_duration_seconds",
+    "Number of seconds this Jupyter Server has been active",
+)
 
 __all__ = [
     "HTTP_REQUEST_DURATION_SECONDS",
