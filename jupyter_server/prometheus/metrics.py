@@ -53,6 +53,11 @@ else:
 
 # New prometheus metrics that do not exist in notebook v6 go here
 SERVER_INFO = Info("jupyter_server", "Jupyter Server Version information")
+SERVER_EXTENSION_INFO = Info(
+    "jupyter_server_extension",
+    "Jupyter Server Extensiom Version Information",
+    ["name", "version", "enabled"],
+)
 
 __all__ = [
     "HTTP_REQUEST_DURATION_SECONDS",
