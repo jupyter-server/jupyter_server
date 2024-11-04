@@ -50,6 +50,7 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     static_paths = [STATIC_PATH]  # type:ignore[assignment]
     mock_trait = Unicode("mock trait", config=True)
     loaded = False
+    default_url = '/mockextension'
 
     serverapp_config = {"jpserver_extensions": {"tests.extension.mockextensions.mock1": True}}
 

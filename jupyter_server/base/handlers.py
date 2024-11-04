@@ -1188,6 +1188,23 @@ class PublicStaticFileHandler(web.StaticFileHandler):
         return super().get(path, include_body)
 
 
+class ExtensionAppsHandler(JupyterHandler):
+    """Return Jupyter Server extension web applications."""
+
+    @allow_unauthenticated
+    def get(self) -> None:
+        self.set_header("Content-Type", "application/json")
+        if self.serverapp:
+            self.finish(
+                json.dumps(
+                    self.serverapp.extension_manager.extension_web_apps()
+                )
+            )
+        else:
+            # self.serverapp can be None
+            raise web.HTTPError(500, 'Server has not started correctly.')
+
+
 # -----------------------------------------------------------------------------
 # URL pattern fragments for reuse
 # -----------------------------------------------------------------------------
@@ -1205,4 +1222,5 @@ default_handlers = [
     (r"api", APIVersionHandler),
     (r"/(robots\.txt|favicon\.ico)", PublicStaticFileHandler),
     (r"/metrics", PrometheusMetricsHandler),
+    (r"/extensions", ExtensionAppsHandler),
 ]

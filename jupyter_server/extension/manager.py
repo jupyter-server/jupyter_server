@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 from itertools import starmap
+import re
 
 from tornado.gen import multi
 from traitlets import Any, Bool, Dict, HasTraits, Instance, List, Unicode, default, observe
@@ -12,6 +13,9 @@ from traitlets.config import LoggingConfigurable
 
 from .config import ExtensionConfigManager
 from .utils import ExtensionMetadataError, ExtensionModuleNotFound, get_loader, get_metadata
+
+
+RE_SLASH = x = re.compile(r'/+')  # match any number of slashes
 
 
 class ExtensionPoint(HasTraits):
@@ -289,6 +293,24 @@ class ExtensionManager(LoggingConfigurable):
         return {
             name: {point.app for point in extension.extension_points.values() if point.app}
             for name, extension in self.extensions.items()
+        }
+
+    @property
+    def extension_web_apps(self):
+        """Return Jupyter Server extension web applications.
+
+        Some Jupyter Server extensions provide web applications
+        (e.g. Jupyter Lab), other's don't (e.g. Jupyter LSP).
+
+        This returns a mapping of {extension_name: web_app_endpoint} for all
+        extensions which provide a default_url (i.e. a web application).
+        """
+        return {
+            app.name: RE_SLASH.sub('/', f'{self.serverapp.base_url}/{app.default_url}')
+            for extension_apps in self.serverapp.extension_manager.extension_apps.values()
+            # filter out extensions that do not provide a default_url OR
+            # set it to the root endpoint.
+            for app in extension_apps if getattr(app, 'default_url', '/') != '/'
         }
 
     @property

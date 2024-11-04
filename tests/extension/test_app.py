@@ -191,3 +191,17 @@ async def test_events(jp_serverapp, jp_fetch):
     stream.truncate(0)
     stream.seek(0)
     assert output["msg"] == "Hello, world!"
+
+
+async def test_extension_web_apps(jp_serverapp):
+    jp_serverapp.extension_manager.load_all_extensions()
+
+    # there should be (at least) two extension applications
+    assert set(jp_serverapp.extension_manager.extension_apps) == {
+        'tests.extension.mockextensions', 'jupyter_server_terminals'
+    }
+
+    # but only one extension web application
+    assert jp_serverapp.extension_manager.extension_web_apps == {
+        'mockextension': '/a%40b/mockextension'
+    }
