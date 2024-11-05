@@ -3061,6 +3061,72 @@ class ServerApp(JupyterApp):
                 )
                 self.exit(1)
 
+        self.write_server_info_file()
+
+        if not self.no_browser_open_file:
+            self.write_browser_open_files()
+
+        # Handle the browser opening.
+        if self.open_browser and not self.sock:
+            self.launch_browser()
+
+    async def _cleanup(self) -> None:
+        """General cleanup of files, extensions and kernels created
+        by this instance ServerApp.
+        """
+        self.remove_server_info_file()
+        self.remove_browser_open_files()
+        await self.cleanup_extensions()
+        await self.cleanup_kernels()
+        try:
+            await self.kernel_websocket_connection_class.close_all()  # type:ignore[attr-defined]
+        except AttributeError:
+            # This can happen in two different scenarios:
+            #
+            # 1. During tests, where the _cleanup method is invoked without
+            #    the corresponding initialize method having been invoked.
+            # 2. If the provided `kernel_websocket_connection_class` does not
+            #    implement the `close_all` class method.
+            #
+            # In either case, we don't need to do anything and just want to treat
+            # the raised error as a no-op.
+            pass
+        if getattr(self, "kernel_manager", None):
+            self.kernel_manager.__del__()
+        if getattr(self, "session_manager", None):
+            self.session_manager.close()
+        if hasattr(self, "http_server"):
+            # Stop a server if its set.
+            self.http_server.stop()
+
+    def start_ioloop(self) -> None:
+        """Start the IO Loop."""
+        if sys.platform.startswith("win"):
+            # add no-op to wake every 5s
+            # to handle signals that may be ignored by the inner loop
+            pc = ioloop.PeriodicCallback(lambda: None, 5000)
+            pc.start()
+        try:
+            self.io_loop.add_callback(self._post_start)
+            self.io_loop.start()
+        except KeyboardInterrupt:
+            self.log.info(_i18n("Interrupted..."))
+
+    def init_ioloop(self) -> None:
+        """init self.io_loop so that an extension can use it by io_loop.call_later() to create background tasks"""
+        self.io_loop = ioloop.IOLoop.current()
+
+    async def _post_start(self):
+        """Add an async hook to start tasks after the event loop is running.
+
+        This will also attempt to start all tasks found in
+        the `start_extension` method in Extension Apps.
+        """
+        try:
+            await self.extension_manager.start_all_extensions()
+        except Exception as err:
+            self.log.error(err)
+
         info = self.log.info
         for line in self.running_server_info(kernel_count=False).split("\n"):
             info(line)
@@ -3078,15 +3144,6 @@ class ServerApp(JupyterApp):
                     " resources section at https://jupyter.org/community.html."
                 )
             )
-
-        self.write_server_info_file()
-
-        if not self.no_browser_open_file:
-            self.write_browser_open_files()
-
-        # Handle the browser opening.
-        if self.open_browser and not self.sock:
-            self.launch_browser()
 
         if self.identity_provider.token and self.identity_provider.token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
@@ -3127,51 +3184,6 @@ class ServerApp(JupyterApp):
                     ]
 
                 self.log.critical("\n".join(message))
-
-    async def _cleanup(self) -> None:
-        """General cleanup of files, extensions and kernels created
-        by this instance ServerApp.
-        """
-        self.remove_server_info_file()
-        self.remove_browser_open_files()
-        await self.cleanup_extensions()
-        await self.cleanup_kernels()
-        try:
-            await self.kernel_websocket_connection_class.close_all()  # type:ignore[attr-defined]
-        except AttributeError:
-            # This can happen in two different scenarios:
-            #
-            # 1. During tests, where the _cleanup method is invoked without
-            #    the corresponding initialize method having been invoked.
-            # 2. If the provided `kernel_websocket_connection_class` does not
-            #    implement the `close_all` class method.
-            #
-            # In either case, we don't need to do anything and just want to treat
-            # the raised error as a no-op.
-            pass
-        if getattr(self, "kernel_manager", None):
-            self.kernel_manager.__del__()
-        if getattr(self, "session_manager", None):
-            self.session_manager.close()
-        if hasattr(self, "http_server"):
-            # Stop a server if its set.
-            self.http_server.stop()
-
-    def start_ioloop(self) -> None:
-        """Start the IO Loop."""
-        if sys.platform.startswith("win"):
-            # add no-op to wake every 5s
-            # to handle signals that may be ignored by the inner loop
-            pc = ioloop.PeriodicCallback(lambda: None, 5000)
-            pc.start()
-        try:
-            self.io_loop.start()
-        except KeyboardInterrupt:
-            self.log.info(_i18n("Interrupted..."))
-
-    def init_ioloop(self) -> None:
-        """init self.io_loop so that an extension can use it by io_loop.call_later() to create background tasks"""
-        self.io_loop = ioloop.IOLoop.current()
 
     def start(self) -> None:
         """Start the Jupyter server app, after initialization

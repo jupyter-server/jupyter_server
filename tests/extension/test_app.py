@@ -139,6 +139,15 @@ async def test_load_parallel_extensions(monkeypatch, jp_environ):
     assert exts["tests.extension.mockextensions"]
 
 
+async def test_start_extension(jp_serverapp, mock_extension):
+    await jp_serverapp._post_start()
+    assert mock_extension.started
+    assert hasattr(
+        jp_serverapp, "mock1_started"
+    ), "Failed because the `_start_jupyter_server_extension` function in 'mock1.py' was never called"
+    assert jp_serverapp.mock1_started
+
+
 async def test_stop_extension(jp_serverapp, caplog):
     """Test the stop_extension method.
 
