@@ -41,13 +41,16 @@ def _scrub_uri(uri: str) -> str:
     return uri
 
 
-def log_request(handler):
+def log_request(handler, record_prometheus_metrics=True):
     """log a bit more information about each request than tornado's default
 
     - move static file get success to debug-level (reduces noise)
     - get proxied IP instead of proxy IP
     - log referer for redirect and failed requests
     - log user-agent for failed requests
+
+    if record_prometheus_metrics is true, will record a histogram prometheus
+    metric (http_request_duration_seconds) for each request handler
     """
     status = handler.get_status()
     request = handler.request
@@ -97,4 +100,5 @@ def log_request(handler):
                 headers[header] = request.headers[header]
         log_method(json.dumps(headers, indent=2))
     log_method(msg.format(**ns))
-    prometheus_log_method(handler)
+    if record_prometheus_metrics:
+        prometheus_log_method(handler)
