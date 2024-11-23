@@ -1437,6 +1437,12 @@ class ServerApp(JupyterApp):
                         """,
     )
 
+    allow_insecure_kernelspec_params = Bool(
+        False,
+        config=True,
+        help="""Allow to use insecure kernelspec parameters""",
+    )
+
     browser = Unicode(
         "",
         config=True,
@@ -2202,6 +2208,7 @@ class ServerApp(JupyterApp):
             self.event_logger.register_event_schema(schema_path)
 
     def init_webapp(self) -> None:
+        #
         """initialize tornado webapp"""
         self.tornado_settings["allow_origin"] = self.allow_origin
         self.tornado_settings["websocket_compression_options"] = self.websocket_compression_options
@@ -3048,7 +3055,6 @@ class ServerApp(JupyterApp):
     def start_app(self) -> None:
         """Start the Jupyter Server application."""
         super().start()
-
         if not self.allow_root:
             # check if we are running as root, and abort if it's not allowed
             try:
@@ -3087,6 +3093,10 @@ class ServerApp(JupyterApp):
         # Handle the browser opening.
         if self.open_browser and not self.sock:
             self.launch_browser()
+        if self.allow_insecure_kernelspec_params:
+            self.kernel_spec_manager.allow_insecure_kernelspec_params(
+                self.allow_insecure_kernelspec_params
+            )
 
         if self.identity_provider.token and self.identity_provider.token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
