@@ -49,6 +49,8 @@ class SessionRootHandler(SessionsAPIHandler):
         # (unless a session already exists for the named session)
         sm = self.session_manager
 
+        accept_kernel_env_vars = self.settings.get("accept_kernel_env_vars", False)
+
         model = self.get_json_body()
         if model is None:
             raise web.HTTPError(400, "No JSON data provided")
@@ -77,6 +79,7 @@ class SessionRootHandler(SessionsAPIHandler):
         kernel = model.get("kernel", {})
         kernel_name = kernel.get("name", None)
         kernel_id = kernel.get("id", None)
+        custom_env_vars = kernel["env"] if "env" in kernel and accept_kernel_env_vars else {}
 
         if not kernel_id and not kernel_name:
             self.log.debug("No kernel specified, using default kernel")
@@ -93,6 +96,7 @@ class SessionRootHandler(SessionsAPIHandler):
                     kernel_id=kernel_id,
                     name=name,
                     type=mtype,
+                    custom_env_vars=custom_env_vars,
                 )
             except NoSuchKernel:
                 msg = (
@@ -141,6 +145,8 @@ class SessionHandler(SessionsAPIHandler):
         # get the previous session model
         before = await sm.get_session(session_id=session_id)
 
+        accept_kernel_env_vars = self.settings.get("accept_kernel_env_vars", False)
+
         changes = {}
         if "notebook" in model and "path" in model["notebook"]:
             self.log.warning("Sessions API changed, see updated swagger docs")
@@ -152,6 +158,8 @@ class SessionHandler(SessionsAPIHandler):
             changes["name"] = model["name"]
         if "type" in model:
             changes["type"] = model["type"]
+        if "env" in model and accept_kernel_env_vars:
+            changes["custom_env_vars"] = model["env"]
         if "kernel" in model:
             # Kernel id takes precedence over name.
             if model["kernel"].get("id") is not None:
@@ -160,6 +168,12 @@ class SessionHandler(SessionsAPIHandler):
                     raise web.HTTPError(400, "No such kernel: %s" % kernel_id)
                 changes["kernel_id"] = kernel_id
             elif model["kernel"].get("name") is not None:
+                custom_env_vars = (
+                    model["kernel"]["env"]
+                    if "env" in model["kernel"] and accept_kernel_env_vars
+                    else {}
+                )
+
                 kernel_name = model["kernel"]["name"]
                 kernel_id = await sm.start_kernel_for_session(
                     session_id,
@@ -167,6 +181,7 @@ class SessionHandler(SessionsAPIHandler):
                     name=before["name"],
                     path=before["path"],
                     type=before["type"],
+                    custom_env_vars=custom_env_vars,
                 )
                 changes["kernel_id"] = kernel_id
 
