@@ -632,7 +632,7 @@ class ChannelQueue(Queue):  # type:ignore[type-arg]
         timeout = kwargs.get("timeout", 1)
         msg = await self._async_get(timeout=timeout)
         self.log.debug(
-            "Received message on channel: {}, msg_id: {}, msg_type: {}",
+            "Received message on channel: %s, msg_id: %s, msg_type: %s",
             self.channel_name,
             msg["msg_id"],
             msg["msg_type"] if msg else "null",
