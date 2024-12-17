@@ -11,10 +11,9 @@ import socket
 import sys
 import warnings
 from _frozen_importlib_external import _NamespacePath
-from collections.abc import Generator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, NewType
+from typing import TYPE_CHECKING, Any, NewType
 from urllib.parse import (
     SplitResult,
     quote,
@@ -32,6 +31,9 @@ from jupyter_core.utils import ensure_async as _ensure_async
 from packaging.version import Version
 from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest, HTTPResponse
 from tornado.netutil import Resolver
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Sequence
 
 ApiPath = NewType("ApiPath", str)
 
