@@ -2552,8 +2552,6 @@ class ServerApp(JupyterApp):
         # ensure css, js are correct, which are required for pages to function
         mimetypes.add_type("text/css", ".css")
         mimetypes.add_type("application/javascript", ".js")
-        # for python <3.8
-        mimetypes.add_type("application/wasm", ".wasm")
 
     def shutdown_no_activity(self) -> None:
         """Shutdown server on timeout when there are no kernels or terminals."""
@@ -2718,7 +2716,7 @@ class ServerApp(JupyterApp):
         at least until asyncio adds *_reader methods
         to proactor.
         """
-        if sys.platform.startswith("win") and sys.version_info >= (3, 8):
+        if sys.platform.startswith("win"):
             import asyncio
 
             try:
