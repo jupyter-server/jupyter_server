@@ -45,7 +45,7 @@ async def test_subscribe_websocket(event_logger, jp_ws_fetch):
 payload_1 = """\
 {
     "schema_id": "http://event.mock.jupyter.org/message",
-    "version": 1,
+    "version": "1",
     "data": {
         "event_message": "Hello, world!"
     },
@@ -56,7 +56,7 @@ payload_1 = """\
 payload_2 = """\
 {
     "schema_id": "http://event.mock.jupyter.org/message",
-    "version": 1,
+    "version": "1",
     "data": {
         "event_message": "Hello, world!"
     }
@@ -92,7 +92,7 @@ payload_3 = """\
 
 payload_4 = """\
 {
-    "version": 1,
+    "version": "1",
     "data": {
         "event_message": "Hello, world!"
     }
@@ -102,14 +102,14 @@ payload_4 = """\
 payload_5 = """\
 {
     "schema_id": "http://event.mock.jupyter.org/message",
-    "version": 1
+    "version": "1"
 }
 """
 
 payload_6 = """\
 {
     "schema_id": "event.mock.jupyter.org/message",
-    "version": 1,
+    "version": "1",
     "data": {
         "event_message": "Hello, world!"
     },
@@ -120,7 +120,7 @@ payload_6 = """\
 payload_7 = """\
 {
     "schema_id": "http://event.mock.jupyter.org/UNREGISTERED-SCHEMA",
-    "version": 1,
+    "version": "1",
     "data": {
         "event_message": "Hello, world!"
     }
@@ -130,7 +130,7 @@ payload_7 = """\
 payload_8 = """\
 {
     "schema_id": "http://event.mock.jupyter.org/message",
-    "version": 1,
+    "version": "1",
     "data": {
         "message": "Hello, world!"
     }

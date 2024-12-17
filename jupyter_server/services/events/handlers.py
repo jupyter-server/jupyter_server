@@ -86,9 +86,9 @@ def validate_model(
     # jupyter_events raises a useful error, so there's no need to
     # handle that case here.
     schema = registry.get(schema_id)
-    version = int(cast(int, data.get("version")))
+    version = str(cast(str, data.get("version")))
     if schema.version != version:
-        message = f"Unregistered version: {version}≠{schema.version} for `{schema_id}`"
+        message = f"Unregistered version: {version!r}≠{schema.version!r} for `{schema_id}`"
         raise Exception(message)
 
 

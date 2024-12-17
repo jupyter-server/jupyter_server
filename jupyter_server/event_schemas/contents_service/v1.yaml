@@ -1,5 +1,5 @@
 "$id": https://events.jupyter.org/jupyter_server/contents_service/v1
-version: 1
+version: "1"
 title: Contents Manager activities
 personal-data: true
 description: |
