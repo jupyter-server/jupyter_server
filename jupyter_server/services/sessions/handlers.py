@@ -175,7 +175,7 @@ class SessionHandler(SessionsAPIHandler):
                     # the error message may contain sensitive information, so we want to
                     # be careful with it, thus we only give the short repr of the exception
                     # and the full traceback.
-                    # this should be fine as we are exposing here the same info as when we strt a new kernel
+                    # this should be fine as we are exposing here the same info as when we start a new kernel
                     msg = "The '%s' kernel could not be started: %s" % (
                         kernel_name,
                         repr(str(e)),
