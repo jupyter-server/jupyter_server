@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import mimetypes
 from base64 import decodebytes
-from typing import Awaitable
+from collections.abc import Awaitable
 
 from jupyter_core.utils import ensure_async
 from tornado import web

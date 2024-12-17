@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, Optional, cast
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 from jupyter_core.utils import ensure_async
 from tornado import web, websocket
@@ -127,7 +127,7 @@ class EventHandler(APIHandler):
             validate_model(payload, self.event_logger.schemas)
             self.event_logger.emit(
                 schema_id=cast(str, payload.get("schema_id")),
-                data=cast("Dict[str, Any]", payload.get("data")),
+                data=cast("dict[str, Any]", payload.get("data")),
                 timestamp_override=get_timestamp(payload),
             )
             self.set_status(204)

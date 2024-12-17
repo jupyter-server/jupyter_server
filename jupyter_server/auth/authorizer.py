@@ -10,7 +10,8 @@ allows all authenticated requests
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Awaitable
+from collections.abc import Awaitable
+from typing import TYPE_CHECKING
 
 from traitlets import Instance
 from traitlets.config import LoggingConfigurable

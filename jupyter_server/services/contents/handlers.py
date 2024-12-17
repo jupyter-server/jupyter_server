@@ -7,7 +7,7 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-27%3A-
 # Distributed under the terms of the Modified BSD License.
 import json
 from http import HTTPStatus
-from typing import Any, Dict, List
+from typing import Any
 
 try:
     from jupyter_client.jsonutil import json_default
@@ -24,7 +24,7 @@ from jupyter_server.utils import url_escape, url_path_join
 AUTH_RESOURCE = "contents"
 
 
-def _validate_keys(expect_defined: bool, model: Dict[str, Any], keys: List[str]):
+def _validate_keys(expect_defined: bool, model: dict[str, Any], keys: list[str]):
     """
     Validate that the keys are defined (i.e. not None) or not (i.e. None)
     """
