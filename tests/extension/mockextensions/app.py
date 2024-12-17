@@ -14,7 +14,7 @@ STATIC_PATH = os.path.join(os.path.dirname(__file__), "static")
 
 EVENT_SCHEMA = """\
 $id: https://events.jupyter.org/mockapp/v1/test
-version: 1
+version: '1'
 properties:
   msg:
     type: string
