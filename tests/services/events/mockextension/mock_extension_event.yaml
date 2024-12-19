@@ -1,5 +1,5 @@
 $id: http://event.mockextension.jupyter.org/message
-version: 1
+version: "1"
 title: Message
 description: |
   Emit a message

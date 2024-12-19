@@ -10,7 +10,7 @@ from email.utils import format_datetime
 from http.cookies import SimpleCookie
 from io import BytesIO
 from queue import Empty
-from typing import Any, Dict, Union
+from typing import Any, Union
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -74,7 +74,7 @@ running_kernels = {}
 #
 # This is used to simulate inconsistency in list results from the Gateway server
 # due to issues like race conditions, bugs, etc.
-omitted_kernels: Dict[str, bool] = {}
+omitted_kernels: dict[str, bool] = {}
 
 
 def generate_model(name):

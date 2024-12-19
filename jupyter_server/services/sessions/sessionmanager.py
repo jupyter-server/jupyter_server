@@ -5,7 +5,7 @@
 import os
 import pathlib
 import uuid
-from typing import Any, Dict, List, NewType, Optional, Union, cast
+from typing import Any, NewType, Optional, Union, cast
 
 KernelName = NewType("KernelName", str)
 ModelName = NewType("ModelName", str)
@@ -100,7 +100,7 @@ class KernelSessionRecordList:
     it will be appended.
     """
 
-    _records: List[KernelSessionRecord]
+    _records: list[KernelSessionRecord]
 
     def __init__(self, *records: KernelSessionRecord):
         """Initialize a record list."""
@@ -267,7 +267,7 @@ class SessionManager(LoggingConfigurable):
         type: Optional[str] = None,
         kernel_name: Optional[KernelName] = None,
         kernel_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Creates a session and returns its model
 
         Parameters
@@ -291,11 +291,11 @@ class SessionManager(LoggingConfigurable):
             session_id, path=path, name=name, type=type, kernel_id=kernel_id
         )
         self._pending_sessions.remove(record)
-        return cast(Dict[str, Any], result)
+        return cast(dict[str, Any], result)
 
     def get_kernel_env(
         self, path: Optional[str], name: Optional[ModelName] = None
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """Return the environment variables that need to be set in the kernel
 
         Parameters
