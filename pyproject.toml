@@ -142,6 +142,7 @@ extend-select = [
   "B",  # flake8-bugbear
   "I",  # isort
   "UP",  # pyupgrade
+  "G001", # no % or f formatting in logs, prevents sttructured logging
 ]
 unfixable = [
   # Don't touch print statements

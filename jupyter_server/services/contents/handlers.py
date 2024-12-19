@@ -210,10 +210,9 @@ class ContentsHandler(ContentsAPIHandler):
     async def _copy(self, copy_from, copy_to=None):
         """Copy a file, optionally specifying a target directory."""
         self.log.info(
-            "Copying {copy_from} to {copy_to}".format(
-                copy_from=copy_from,
-                copy_to=copy_to or "",
-            )
+            "Copying %r to %r",
+            copy_from,
+            copy_to or "",
         )
         model = await ensure_async(self.contents_manager.copy(copy_from, copy_to))
         self.set_status(201)

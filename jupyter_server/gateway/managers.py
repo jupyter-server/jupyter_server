@@ -632,9 +632,10 @@ class ChannelQueue(Queue):  # type:ignore[type-arg]
         timeout = kwargs.get("timeout", 1)
         msg = await self._async_get(timeout=timeout)
         self.log.debug(
-            "Received message on channel: {}, msg_id: {}, msg_type: {}".format(
-                self.channel_name, msg["msg_id"], msg["msg_type"] if msg else "null"
-            )
+            "Received message on channel: %s, msg_id: %s, msg_type: %s",
+            self.channel_name,
+            msg["msg_id"],
+            msg["msg_type"] if msg else "null",
         )
         self.task_done()
         return cast("dict[str, Any]", msg)
@@ -643,9 +644,10 @@ class ChannelQueue(Queue):  # type:ignore[type-arg]
         """Send a message to the queue."""
         message = json.dumps(msg, default=ChannelQueue.serialize_datetime).replace("</", "<\\/")
         self.log.debug(
-            "Sending message on channel: {}, msg_id: {}, msg_type: {}".format(
-                self.channel_name, msg["msg_id"], msg["msg_type"] if msg else "null"
-            )
+            "Sending message on channel: %s, msg_id: %s, msg_type: %s",
+            self.channel_name,
+            msg["msg_id"],
+            msg["msg_type"] if msg else "null",
         )
         self.channel_socket.send(message)
 
