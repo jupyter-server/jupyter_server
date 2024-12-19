@@ -47,7 +47,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://jupyter-server.readthedocs.io"
 Documentation = "https://jupyter-server.readthedocs.io"
-Funding = "https://numfocus.org/donate"
+Funding = "https://jupyter.org/about#donate"
 Source = "https://github.com/jupyter-server/jupyter_server"
 Tracker = "https://github.com/jupyter-server/jupyter_server/issues"
 
