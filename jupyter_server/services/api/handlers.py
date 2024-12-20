@@ -4,7 +4,7 @@
 # Distributed under the terms of the Modified BSD License.
 import json
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 from jupyter_core.utils import ensure_async
 from tornado import web
@@ -87,7 +87,7 @@ class IdentityHandler(APIHandler):
         else:
             permissions_to_check = {}
 
-        permissions: Dict[str, List[str]] = {}
+        permissions: dict[str, list[str]] = {}
         user = self.current_user
 
         for resource, actions in permissions_to_check.items():
@@ -106,7 +106,7 @@ class IdentityHandler(APIHandler):
                 if authorized:
                     allowed.append(action)
 
-        identity: Dict[str, Any] = self.identity_provider.identity_model(user)
+        identity: dict[str, Any] = self.identity_provider.identity_model(user)
         model = {
             "identity": identity,
             "permissions": permissions,

@@ -154,8 +154,9 @@ async def test_generate_config(tmp_path, jp_configurable_serverapp):
 
 def test_server_password(tmp_path, jp_configurable_serverapp):
     password = "secret"
-    with patch.dict("os.environ", {"JUPYTER_CONFIG_DIR": str(tmp_path)}), patch.object(
-        getpass, "getpass", return_value=password
+    with (
+        patch.dict("os.environ", {"JUPYTER_CONFIG_DIR": str(tmp_path)}),
+        patch.object(getpass, "getpass", return_value=password),
     ):
         app = JupyterPasswordApp(log_level=logging.ERROR)
         app.initialize([])

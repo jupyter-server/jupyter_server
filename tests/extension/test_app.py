@@ -32,6 +32,7 @@ def mock_extension(extension_manager):
     pkg = extension_manager.extensions[name]
     point = pkg.extension_points["mockextension"]
     app = point.app
+    app.initialize()
     return app
 
 

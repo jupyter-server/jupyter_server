@@ -232,18 +232,25 @@ class MappingKernelManager(MultiKernelManager):
                 kwargs["kernel_id"] = kernel_id
             kernel_id = await self.pinned_superclass._async_start_kernel(self, **kwargs)
             self._kernel_connections[kernel_id] = 0
-            task = asyncio.create_task(self._finish_kernel_start(kernel_id))
-            if not getattr(self, "use_pending_kernels", None):
-                await task
-            else:
-                self._pending_kernel_tasks[kernel_id] = task
+
             # add busy/activity markers:
             kernel = self.get_kernel(kernel_id)
             kernel.execution_state = "starting"  # type:ignore[attr-defined]
             kernel.reason = ""  # type:ignore[attr-defined]
             kernel.last_activity = utcnow()  # type:ignore[attr-defined]
             self.log.info("Kernel started: %s", kernel_id)
-            self.log.debug("Kernel args: %r", kwargs)
+            self.log.debug(
+                "Kernel args (excluding env): %r", {k: v for k, v in kwargs.items() if k != "env"}
+            )
+            env = kwargs.get("env", None)
+            if env and isinstance(env, dict):  # type:ignore[unreachable]
+                self.log.debug("Kernel argument 'env' passed with: %r", list(env.keys()))  # type:ignore[unreachable]
+
+            task = asyncio.create_task(self._finish_kernel_start(kernel_id))
+            if not getattr(self, "use_pending_kernels", None):
+                await task
+            else:
+                self._pending_kernel_tasks[kernel_id] = task
 
             # Increase the metric of number of kernels running
             # for the relevant kernel type by 1
@@ -532,6 +539,40 @@ class MappingKernelManager(MultiKernelManager):
             raise web.HTTPError(404, "Kernel does not exist: %s" % kernel_id)
 
     # monitoring activity:
+    untracked_message_types = List(
+        trait=Unicode(),
+        config=True,
+        default_value=[
+            "comm_info_request",
+            "comm_info_reply",
+            "kernel_info_request",
+            "kernel_info_reply",
+            "shutdown_request",
+            "shutdown_reply",
+            "interrupt_request",
+            "interrupt_reply",
+            "debug_request",
+            "debug_reply",
+            "stream",
+            "display_data",
+            "update_display_data",
+            "execute_input",
+            "execute_result",
+            "error",
+            "status",
+            "clear_output",
+            "debug_event",
+            "input_request",
+            "input_reply",
+        ],
+        help="""List of kernel message types excluded from user activity tracking.
+
+        This should be a superset of the message types sent on any channel other
+        than the shell channel.""",
+    )
+
+    def track_message_type(self, message_type):
+        return message_type not in self.untracked_message_types
 
     def start_watching_activity(self, kernel_id):
         """Start watching IOPub messages on a kernel for activity.
@@ -552,15 +593,27 @@ class MappingKernelManager(MultiKernelManager):
 
         def record_activity(msg_list):
             """Record an IOPub message arriving from a kernel"""
-            self.last_kernel_activity = kernel.last_activity = utcnow()
-
             idents, fed_msg_list = session.feed_identities(msg_list)
             msg = session.deserialize(fed_msg_list, content=False)
 
             msg_type = msg["header"]["msg_type"]
+            parent_msg_type = msg.get("parent_header", {}).get("msg_type", None)
+            if (
+                self.track_message_type(msg_type)
+                or self.track_message_type(parent_msg_type)
+                or kernel.execution_state == "busy"
+            ):
+                self.last_kernel_activity = kernel.last_activity = utcnow()
             if msg_type == "status":
                 msg = session.deserialize(fed_msg_list)
-                kernel.execution_state = msg["content"]["execution_state"]
+                execution_state = msg["content"]["execution_state"]
+                if self.track_message_type(parent_msg_type):
+                    kernel.execution_state = execution_state
+                elif kernel.execution_state == "starting" and execution_state != "starting":
+                    # We always normalize post-starting execution state to "idle"
+                    # unless we know that the status is in response to one of our
+                    # tracked message types.
+                    kernel.execution_state = "idle"
                 self.log.debug(
                     "activity on %s: %s (%s)",
                     kernel_id,

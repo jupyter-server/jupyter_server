@@ -161,14 +161,30 @@ class SessionHandler(SessionsAPIHandler):
                 changes["kernel_id"] = kernel_id
             elif model["kernel"].get("name") is not None:
                 kernel_name = model["kernel"]["name"]
-                kernel_id = await sm.start_kernel_for_session(
-                    session_id,
-                    kernel_name=kernel_name,
-                    name=before["name"],
-                    path=before["path"],
-                    type=before["type"],
-                )
-                changes["kernel_id"] = kernel_id
+
+                try:
+                    kernel_id = await sm.start_kernel_for_session(
+                        session_id,
+                        kernel_name=kernel_name,
+                        name=before["name"],
+                        path=before["path"],
+                        type=before["type"],
+                    )
+                    changes["kernel_id"] = kernel_id
+                except Exception as e:
+                    # the error message may contain sensitive information, so we want to
+                    # be careful with it, thus we only give the short repr of the exception
+                    # and the full traceback.
+                    # this should be fine as we are exposing here the same info as when we start a new kernel
+                    msg = "The '%s' kernel could not be started: %s" % (
+                        kernel_name,
+                        repr(str(e)),
+                    )
+                    status_msg = "Error starting kernel %s" % kernel_name
+                    self.log.error("Error starting kernel: %s", kernel_name)
+                    self.set_status(501)
+                    self.finish(json.dumps({"message": msg, "short_message": status_msg}))
+                    return
 
         await sm.update_session(session_id, **changes)
         s_model = await sm.get_session(session_id=session_id)

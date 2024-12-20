@@ -14,7 +14,7 @@ import typing as t
 from traitlets.config import LoggingConfigurable
 from traitlets.traitlets import Bool, Unicode
 
-StrDict = t.Dict[str, t.Any]
+StrDict = dict[str, t.Any]
 
 
 def recursive_update(target: StrDict, new: StrDict) -> None:

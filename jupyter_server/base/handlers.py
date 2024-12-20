@@ -13,9 +13,10 @@ import os
 import re
 import types
 import warnings
+from collections.abc import Awaitable, Coroutine, Sequence
 from http.client import responses
 from logging import Logger
-from typing import TYPE_CHECKING, Any, Awaitable, Coroutine, Sequence, cast
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlparse
 
 import prometheus_client

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, Optional, cast
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 from jupyter_core.utils import ensure_async
 from tornado import web, websocket
@@ -71,12 +71,25 @@ class SubscribeWebsocket(
         self.event_logger.remove_listener(listener=self.event_listener)
 
 
-def validate_model(data: dict[str, Any]) -> None:
-    """Validates for required fields in the JSON request body"""
+def validate_model(
+    data: dict[str, Any], registry: jupyter_events.schema_registry.SchemaRegistry
+) -> None:
+    """Validates for required fields in the JSON request body and verifies that
+    a registered schema/version exists"""
     required_keys = {"schema_id", "version", "data"}
     for key in required_keys:
         if key not in data:
-            raise web.HTTPError(400, f"Missing `{key}` in the JSON request body.")
+            message = f"Missing `{key}` in the JSON request body."
+            raise Exception(message)
+    schema_id = cast(str, data.get("schema_id"))
+    # The case where a given schema_id isn't found,
+    # jupyter_events raises a useful error, so there's no need to
+    # handle that case here.
+    schema = registry.get(schema_id)
+    version = str(cast(str, data.get("version")))
+    if schema.version != version:
+        message = f"Unregistered version: {version!r}≠{schema.version!r} for `{schema_id}`"
+        raise Exception(message)
 
 
 def get_timestamp(data: dict[str, Any]) -> Optional[datetime]:
@@ -111,18 +124,18 @@ class EventHandler(APIHandler):
             raise web.HTTPError(400, "No JSON data provided")
 
         try:
-            validate_model(payload)
+            validate_model(payload, self.event_logger.schemas)
             self.event_logger.emit(
                 schema_id=cast(str, payload.get("schema_id")),
-                data=cast("Dict[str, Any]", payload.get("data")),
+                data=cast("dict[str, Any]", payload.get("data")),
                 timestamp_override=get_timestamp(payload),
             )
             self.set_status(204)
             self.finish()
-        except web.HTTPError:
-            raise
         except Exception as e:
-            raise web.HTTPError(500, str(e)) from e
+            # All known exceptions are raised by bad requests, e.g., bad
+            # version, unregistered schema, invalid emission data payload, etc.
+            raise web.HTTPError(400, str(e)) from e
 
 
 default_handlers = [
