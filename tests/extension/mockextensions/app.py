@@ -4,6 +4,7 @@ import os
 
 from jupyter_events import EventLogger
 from jupyter_events.schema_registry import SchemaRegistryException
+from tornado import web
 from traitlets import List, Unicode
 
 from jupyter_server.base.handlers import JupyterHandler
@@ -44,6 +45,11 @@ class MockExtensionTemplateHandler(
         self.write(self.render_template("index.html"))
 
 
+class MockExtensionErrorHandler(ExtensionHandlerMixin, JupyterHandler):
+    def get(self):
+        raise web.HTTPError(418)
+
+
 class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     name = "mockextension"
     template_paths: List[str] = List().tag(config=True)  # type:ignore[assignment]
@@ -51,7 +57,12 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     mock_trait = Unicode("mock trait", config=True)
     loaded = False
 
-    serverapp_config = {"jpserver_extensions": {"tests.extension.mockextensions.mock1": True}}
+    serverapp_config = {
+        "jpserver_extensions": {
+            "tests.extension.mockextensions.mock1": True,
+            "tests.extension.mockextensions.app.mockextension_notemplate": True,
+        }
+    }
 
     @staticmethod
     def get_extension_package():
@@ -69,6 +80,20 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     def initialize_handlers(self):
         self.handlers.append(("/mock", MockExtensionHandler))
         self.handlers.append(("/mock_template", MockExtensionTemplateHandler))
+        self.handlers.append(("/mock_error_template", MockExtensionErrorHandler))
+        self.loaded = True
+
+
+class MockExtensionNoTemplateApp(ExtensionApp):
+    name = "mockextension_notemplate"
+    loaded = False
+
+    @staticmethod
+    def get_extension_package():
+        return "tests.extension.mockextensions"
+
+    def initialize_handlers(self):
+        self.handlers.append(("/mock_error_notemplate", MockExtensionErrorHandler))
         self.loaded = True
 
 

@@ -2,7 +2,7 @@
 to load in various tests.
 """
 
-from .app import MockExtensionApp
+from .app import MockExtensionApp, MockExtensionNoTemplateApp
 
 
 # Function that makes these extensions discoverable
@@ -12,6 +12,10 @@ def _jupyter_server_extension_points():
         {
             "module": "tests.extension.mockextensions.app",
             "app": MockExtensionApp,
+        },
+        {
+            "module": "tests.extension.mockextensions.app",
+            "app": MockExtensionNoTemplateApp,
         },
         {"module": "tests.extension.mockextensions.mock1"},
         {"module": "tests.extension.mockextensions.mock2"},
