@@ -146,10 +146,10 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
     def handle_incoming_message(self, message: str) -> None:
         """Send message to gateway server."""
         if self.ws is None and self.ws_future is not None:
-            loop = IOLoop.current()
-            if self.ws_future.done():
-                self.log.error(f"Exception connect to  gateway server {self.ws_future.exception()}")
+            if self.ws_future.done() and isinstance(self.ws_future.exception, Exception):
+                self.log.warning(f"Exception connect to websocket {self.ws_future.exception()}")
                 return
+            loop = IOLoop.current()
             loop.add_future(self.ws_future, lambda future: self.handle_incoming_message(message))
         else:
             self._write_message(message)
