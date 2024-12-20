@@ -179,7 +179,10 @@ filterwarnings = [
   "error",
   "ignore:datetime.datetime.utc:DeprecationWarning",
   "module:add_callback_from_signal is deprecated:DeprecationWarning",
-  "ignore::jupyter_server.utils.JupyterServerAuthWarning"
+  "ignore::jupyter_server.utils.JupyterServerAuthWarning",
+
+  # ignore unclosed sqlite in traits
+  "ignore:unclosed database in <sqlite3.Connection:ResourceWarning",
 ]
 
 [tool.coverage.report]
