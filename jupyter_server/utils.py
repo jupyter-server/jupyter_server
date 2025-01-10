@@ -13,7 +13,7 @@ import warnings
 from _frozen_importlib_external import _NamespacePath
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator, NewType, Sequence
+from typing import TYPE_CHECKING, Any, NewType
 from urllib.parse import (
     SplitResult,
     quote,
@@ -31,6 +31,9 @@ from jupyter_core.utils import ensure_async as _ensure_async
 from packaging.version import Version
 from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest, HTTPResponse
 from tornado.netutil import Resolver
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Sequence
 
 ApiPath = NewType("ApiPath", str)
 
@@ -378,17 +381,9 @@ def filefind(filename: str, path_dirs: Sequence[str]) -> str:
         # os.path.abspath resolves '..', but Path.absolute() doesn't
         # Path.resolve() does, but traverses symlinks, which we don't want
         test_path = Path(os.path.abspath(test_path))
-        if sys.version_info >= (3, 9):
-            if not test_path.is_relative_to(path):
-                # points outside root, e.g. via `filename='../foo'`
-                continue
-        else:
-            # is_relative_to is new in 3.9
-            try:
-                test_path.relative_to(path)
-            except ValueError:
-                # points outside root, e.g. via `filename='../foo'`
-                continue
+        if not test_path.is_relative_to(path):
+            # points outside root, e.g. via `filename='../foo'`
+            continue
         # make sure we don't call is_file before we know it's a file within a prefix
         # GHSA-hrw6-wg82-cm62 - can leak password hash on windows.
         if test_path.is_file():

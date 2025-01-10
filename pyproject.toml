@@ -21,7 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "anyio>=3.1.0",
     "argon2-cffi>=21.1",
@@ -40,14 +40,14 @@ dependencies = [
     "tornado>=6.2.0",
     "traitlets>=5.6.0",
     "websocket-client>=1.7",
-    "jupyter_events>=0.9.0",
+    "jupyter_events>=0.11.0",
     "overrides>=5.0"
 ]
 
 [project.urls]
 Homepage = "https://jupyter-server.readthedocs.io"
 Documentation = "https://jupyter-server.readthedocs.io"
-Funding = "https://numfocus.org/donate"
+Funding = "https://jupyter.org/about#donate"
 Source = "https://github.com/jupyter-server/jupyter_server"
 Tracker = "https://github.com/jupyter-server/jupyter_server/issues"
 
@@ -142,6 +142,7 @@ extend-select = [
   "B",  # flake8-bugbear
   "I",  # isort
   "UP",  # pyupgrade
+  "G001", # no % or f formatting in logs, prevents sttructured logging
 ]
 unfixable = [
   # Don't touch print statements
@@ -178,7 +179,10 @@ filterwarnings = [
   "error",
   "ignore:datetime.datetime.utc:DeprecationWarning",
   "module:add_callback_from_signal is deprecated:DeprecationWarning",
-  "ignore::jupyter_server.utils.JupyterServerAuthWarning"
+  "ignore::jupyter_server.utils.JupyterServerAuthWarning",
+
+  # ignore unclosed sqlite in traits
+  "ignore:unclosed database in <sqlite3.Connection:ResourceWarning",
 ]
 
 [tool.coverage.report]
@@ -208,7 +212,7 @@ pydist_resource_paths = ["jupyter_server/static/style/bootstrap.min.css", "jupyt
 post-version-spec = "dev"
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.9"
 explicit_package_bases = true
 strict = true
 pretty = true

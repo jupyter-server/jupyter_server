@@ -47,6 +47,8 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
             url_escape(self.kernel_id),
             "channels",
         )
+        if self.session_id:
+            ws_url += f"?session_id={url_escape(self.session_id)}"
         self.log.info(f"Connecting to {ws_url}")
         kwargs: dict[str, Any] = {}
         kwargs = GatewayClient.instance().load_connection_args(**kwargs)

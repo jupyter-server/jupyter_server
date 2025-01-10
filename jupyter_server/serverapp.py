@@ -28,6 +28,7 @@ import typing as t
 import urllib
 import warnings
 from base64 import encodebytes
+from functools import partial
 from pathlib import Path
 
 import jupyter_client
@@ -110,6 +111,13 @@ from jupyter_server.gateway.managers import (
     GatewaySessionManager,
 )
 from jupyter_server.log import log_request
+from jupyter_server.prometheus.metrics import (
+    ACTIVE_DURATION,
+    LAST_ACTIVITY,
+    SERVER_EXTENSION_INFO,
+    SERVER_INFO,
+    SERVER_STARTED,
+)
 from jupyter_server.services.config import ConfigManager
 from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
@@ -403,7 +411,9 @@ class ServerWebApplication(web.Application):
 
         settings = {
             # basics
-            "log_function": log_request,
+            "log_function": partial(
+                log_request, record_prometheus_metrics=jupyter_app.record_http_request_metrics
+            ),
             "base_url": base_url,
             "default_url": default_url,
             "template_path": template_path,
@@ -1139,8 +1149,9 @@ class ServerApp(JupyterApp):
         b"",
         config=True,
         help="""The random bytes used to secure cookies.
-        By default this is a new random number every time you start the server.
-        Set it to a value in a config file to enable logins to persist across server sessions.
+        By default this is generated on first start of the server and persisted across server
+        sessions by writing the cookie secret into the `cookie_secret_file` file.
+        When using an executable config file you can override this to be random at each server restart.
 
         Note: Cookie secrets should be kept private, do not share config files with
         cookie_secret stored in plaintext (you can read the value from a file).
@@ -1985,6 +1996,18 @@ class ServerApp(JupyterApp):
         config=True,
     )
 
+    record_http_request_metrics = Bool(
+        True,
+        help="""
+        Record http_request_duration_seconds metric in the metrics endpoint.
+
+        Since a histogram is exposed for each request handler, this can create a
+        *lot* of metrics, creating operational challenges for multitenant deployments.
+
+        Set to False to disable recording the http_request_duration_seconds metric.
+        """,
+    )
+
     static_immutable_cache = List(
         Unicode(),
         help="""
@@ -2387,7 +2410,14 @@ class ServerApp(JupyterApp):
             signal.signal(signal.SIGINFO, self._signal_info)
 
     def _handle_sigint(self, sig: t.Any, frame: t.Any) -> None:
-        """SIGINT handler spawns confirmation dialog"""
+        """SIGINT handler spawns confirmation dialog
+
+        Note:
+            JupyterHub replaces this method with _signal_stop
+            in order to bypass the interactive prompt.
+            https://github.com/jupyterhub/jupyterhub/pull/4864
+
+        """
         # register more forceful signal handler for ^C^C case
         signal.signal(signal.SIGINT, self._signal_stop)
         # request confirmation dialog in bg thread, to avoid
@@ -2445,7 +2475,13 @@ class ServerApp(JupyterApp):
         self.io_loop.add_callback_from_signal(self._restore_sigint_handler)
 
     def _signal_stop(self, sig: t.Any, frame: t.Any) -> None:
-        """Handle a stop signal."""
+        """Handle a stop signal.
+
+        Note:
+            JupyterHub configures this method to be called for SIGINT.
+            https://github.com/jupyterhub/jupyterhub/pull/4864
+
+        """
         self.log.critical(_i18n("received signal %s, stopping"), sig)
         self.stop(from_signal=True)
 
@@ -2516,8 +2552,6 @@ class ServerApp(JupyterApp):
         # ensure css, js are correct, which are required for pages to function
         mimetypes.add_type("text/css", ".css")
         mimetypes.add_type("application/javascript", ".js")
-        # for python <3.8
-        mimetypes.add_type("application/wasm", ".wasm")
 
     def shutdown_no_activity(self) -> None:
         """Shutdown server on timeout when there are no kernels or terminals."""
@@ -2682,7 +2716,7 @@ class ServerApp(JupyterApp):
         at least until asyncio adds *_reader methods
         to proactor.
         """
-        if sys.platform.startswith("win") and sys.version_info >= (3, 8):
+        if sys.platform.startswith("win"):
             import asyncio
 
             try:
@@ -2694,6 +2728,27 @@ class ServerApp(JupyterApp):
                 if type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy:
                     # prefer Selector to Proactor for tornado + pyzmq
                     asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
+
+    def init_metrics(self) -> None:
+        """
+        Initialize any prometheus metrics that need to be set up on server startup
+        """
+        SERVER_INFO.info({"version": __version__})
+
+        for ext in self.extension_manager.extensions.values():
+            SERVER_EXTENSION_INFO.labels(
+                name=ext.name, version=ext.version, enabled=str(ext.enabled).lower()
+            )
+
+        started = self.web_app.settings["started"]
+        SERVER_STARTED.set(started.timestamp())
+
+        LAST_ACTIVITY.set_function(lambda: self.web_app.last_activity().timestamp())
+        ACTIVE_DURATION.set_function(
+            lambda: (
+                self.web_app.last_activity() - self.web_app.settings["started"]
+            ).total_seconds()
+        )
 
     @catch_config_error
     def initialize(
@@ -2723,7 +2778,11 @@ class ServerApp(JupyterApp):
         self._init_asyncio_patch()
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
+        # preserve jpserver_extensions, which may have been set by starter_extension
+        # don't let config clobber this value
+        jpserver_extensions = self.jpserver_extensions.copy()
         super().initialize(argv=argv)
+        self.jpserver_extensions.update(jpserver_extensions)
         if self._dispatching:
             return
         # initialize io loop as early as possible,
@@ -2758,6 +2817,7 @@ class ServerApp(JupyterApp):
         self.load_server_extensions()
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
+        self.init_metrics()
         if new_httpserver:
             self.init_httpserver()
 

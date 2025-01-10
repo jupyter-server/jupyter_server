@@ -1,5 +1,5 @@
 import json
-from typing import Awaitable, Dict, List
+from collections.abc import Awaitable
 from unittest import mock
 
 import pytest
@@ -31,7 +31,7 @@ async def test_get_status(jp_fetch):
 
 
 class MockUser(User):
-    permissions: Dict[str, List[str]]
+    permissions: dict[str, list[str]]
 
 
 class MockIdentityProvider(IdentityProvider):

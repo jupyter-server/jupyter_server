@@ -7,7 +7,7 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-27%3A-
 # Distributed under the terms of the Modified BSD License.
 import json
 from http import HTTPStatus
-from typing import Any, Dict, List
+from typing import Any
 
 try:
     from jupyter_client.jsonutil import json_default
@@ -24,7 +24,7 @@ from jupyter_server.utils import url_escape, url_path_join
 AUTH_RESOURCE = "contents"
 
 
-def _validate_keys(expect_defined: bool, model: Dict[str, Any], keys: List[str]):
+def _validate_keys(expect_defined: bool, model: dict[str, Any], keys: list[str]):
     """
     Validate that the keys are defined (i.e. not None) or not (i.e. None)
     """
@@ -140,7 +140,9 @@ class ContentsHandler(ContentsAPIHandler):
 
         hash_str = self.get_query_argument("hash", default="0")
         if hash_str not in {"0", "1"}:
-            raise web.HTTPError(400, f"Content {hash_str!r} is invalid")
+            raise web.HTTPError(
+                400, f"Hash argument {hash_str!r} is invalid. It must be '0' or '1'."
+            )
         require_hash = int(hash_str)
 
         if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
@@ -208,10 +210,9 @@ class ContentsHandler(ContentsAPIHandler):
     async def _copy(self, copy_from, copy_to=None):
         """Copy a file, optionally specifying a target directory."""
         self.log.info(
-            "Copying {copy_from} to {copy_to}".format(
-                copy_from=copy_from,
-                copy_to=copy_to or "",
-            )
+            "Copying %r to %r",
+            copy_from,
+            copy_to or "",
         )
         model = await ensure_async(self.contents_manager.copy(copy_from, copy_to))
         self.set_status(201)

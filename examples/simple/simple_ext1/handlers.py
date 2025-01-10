@@ -18,7 +18,8 @@ class DefaultHandler(ExtensionHandlerMixin, JupyterHandler):
         self.log.info(f"Extension Name in {self.name} Default Handler: {self.name}")
         # A method for getting the url to static files (prefixed with /static/<name>).
         self.log.info(
-            "Static URL for / in simple_ext1 Default Handler: {}".format(self.static_url(path="/"))
+            "Static URL for / in simple_ext1 Default Handler: %s",
+            self.static_url(path="/"),
         )
         self.write("<h1>Hello Simple 1 - I am the default...</h1>")
         self.write(f"Config in {self.name} Default Handler: {self.config}")

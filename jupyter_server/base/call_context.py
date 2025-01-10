@@ -3,7 +3,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 from contextvars import Context, ContextVar, copy_context
-from typing import Any, Dict, List
+from typing import Any
 
 
 class CallContext:
@@ -22,7 +22,7 @@ class CallContext:
     # easier management over maintaining a set of ContextVar instances, since the Context is a
     # map of ContextVar instances to their values, and the "name" is no longer a lookup key.
     _NAME_VALUE_MAP = "_name_value_map"
-    _name_value_map: ContextVar[Dict[str, Any]] = ContextVar(_NAME_VALUE_MAP)
+    _name_value_map: ContextVar[dict[str, Any]] = ContextVar(_NAME_VALUE_MAP)
 
     @classmethod
     def get(cls, name: str) -> Any:
@@ -65,7 +65,7 @@ class CallContext:
         name_value_map[name] = value
 
     @classmethod
-    def context_variable_names(cls) -> List[str]:
+    def context_variable_names(cls) -> list[str]:
         """Returns a list of variable names set for this call context.
 
         Returns
@@ -77,7 +77,7 @@ class CallContext:
         return list(name_value_map.keys())
 
     @classmethod
-    def _get_map(cls) -> Dict[str, Any]:
+    def _get_map(cls) -> dict[str, Any]:
         """Get the map of names to their values from the _NAME_VALUE_MAP context var.
 
         If the map does not exist in the current context, an empty map is created and returned.
