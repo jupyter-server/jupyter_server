@@ -55,7 +55,7 @@ else:
 SERVER_INFO = Info("jupyter_server", "Jupyter Server Version information")
 SERVER_EXTENSION_INFO = Info(
     "jupyter_server_extension",
-    "Jupyter Server Extensiom Version Information",
+    "Jupyter Server Extension Version Information",
     ["name", "version", "enabled"],
 )
 LAST_ACTIVITY = Gauge(
