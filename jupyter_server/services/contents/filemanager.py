@@ -293,9 +293,12 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model = self._base_model(path)
         model["type"] = "directory"
         model["size"] = None
+        model["item_count"] = None
         if content:
             model["content"] = contents = []
             os_dir = self._get_os_path(path)
+            dir_contents = os.listdir(os_dir)
+            model["item_count"] = len(dir_contents)
             for name in os.listdir(os_dir):
                 try:
                     os_path = os.path.join(os_dir, name)
@@ -334,7 +337,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                             os_path,
                             exc_info=True,
                         )
-
             model["format"] = "json"
 
         return model
@@ -470,6 +472,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if not os.path.exists(os_path):
             with self.perm_to_403():
                 os.mkdir(os_path)
+            model["item_count"] = 0
         elif not os.path.isdir(os_path):
             raise web.HTTPError(400, "Not a directory: %s" % (os_path))
         else:
@@ -765,10 +768,12 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         model = self._base_model(path)
         model["type"] = "directory"
         model["size"] = None
+        model["item_count"] = None
         if content:
             model["content"] = contents = []
             os_dir = self._get_os_path(path)
             dir_contents = await run_sync(os.listdir, os_dir)
+            model["item_count"] = len(dir_contents)
             for name in dir_contents:
                 try:
                     os_path = os.path.join(os_dir, name)
