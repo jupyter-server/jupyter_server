@@ -272,6 +272,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model["writable"] = self.is_writable(path)
         model["hash"] = None
         model["hash_algorithm"] = None
+        model["item_count"] = None
 
         return model
 
@@ -293,12 +294,18 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model = self._base_model(path)
         model["type"] = "directory"
         model["size"] = None
-        model["item_count"] = None
+        os_dir = self._get_os_path(path)
+        dir_contents = os.listdir(os_dir)
+        model["item_count"] = len(
+            [
+                name
+                for name in dir_contents
+                if self.should_list(name)
+                and (self.allow_hidden or not is_file_hidden(os.path.join(os_dir, name)))
+            ]
+        )
         if content:
             model["content"] = contents = []
-            os_dir = self._get_os_path(path)
-            dir_contents = os.listdir(os_dir)
-            model["item_count"] = len(dir_contents)
             for name in os.listdir(os_dir):
                 try:
                     os_path = os.path.join(os_dir, name)
@@ -768,12 +775,18 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         model = self._base_model(path)
         model["type"] = "directory"
         model["size"] = None
-        model["item_count"] = None
+        os_dir = self._get_os_path(path)
+        dir_contents = await run_sync(os.listdir, os_dir)
+        model["item_count"] = len(
+            [
+                name
+                for name in dir_contents
+                if self.should_list(name)
+                and (self.allow_hidden or not is_file_hidden(os.path.join(os_dir, name)))
+            ]
+        )
         if content:
             model["content"] = contents = []
-            os_dir = self._get_os_path(path)
-            dir_contents = await run_sync(os.listdir, os_dir)
-            model["item_count"] = len(dir_contents)
             for name in dir_contents:
                 try:
                     os_path = os.path.join(os_dir, name)

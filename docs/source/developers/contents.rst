@@ -59,6 +59,10 @@ Models may contain the following entries:
 |                    | ``None``   | if any.  (:ref:`See           |
 |                    |            | Below<modelcontent>`)         |
 +--------------------+------------+-------------------------------+
+| **item_count**     | int or     | The number of items in a      |
+|                    | ``None``   | directory, or ``None`` for    |
+|                    |            | files and notebooks.          |
++--------------------+------------+-------------------------------+
 | **format**         | unicode or | The format of ``content``,    |
 |                    | ``None``   | if any. (:ref:`See            |
 |                    |            | Below<modelcontent>`)         |
@@ -110,6 +114,7 @@ model. There are three model types: **notebook**, **file**, and **directory**.
     - The ``content`` field contains a list of :ref:`content-free<contentfree>`
       models representing the entities in the directory.
     - The ``hash`` field is always ``None``.
+    - The ``item_count`` field contains the number of items in the directory
 
 .. note::
 
