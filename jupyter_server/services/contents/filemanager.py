@@ -296,7 +296,16 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model["size"] = None
         os_dir = self._get_os_path(path)
         dir_contents = os.listdir(os_dir)
-        model["item_count"] = len(dir_contents)
+        filtered_count = 0
+        for name in dir_contents:
+            try:
+                os_path = os.path.join(os_dir, name)
+                if self.should_list(name) and (self.allow_hidden or not is_file_hidden(os_path)):
+                    filtered_count += 1
+            except OSError as e:
+                self.log.warning("Error accessing %s: %s", os.path.join(os_dir, name), e)
+
+        model["item_count"] = filtered_count
         if content:
             model["content"] = contents = []
             for name in os.listdir(os_dir):
@@ -770,7 +779,16 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         model["size"] = None
         os_dir = self._get_os_path(path)
         dir_contents = await run_sync(os.listdir, os_dir)
-        model["item_count"] = len(dir_contents)
+        filtered_count = 0
+        for name in dir_contents:
+            try:
+                os_path = os.path.join(os_dir, name)
+                if self.should_list(name) and (self.allow_hidden or not is_file_hidden(os_path)):
+                    filtered_count += 1
+            except OSError as e:
+                self.log.warning("Error accessing %s: %s", os.path.join(os_dir, name), e)
+
+        model["item_count"] = filtered_count
         if content:
             model["content"] = contents = []
             for name in dir_contents:
