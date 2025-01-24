@@ -296,14 +296,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model["size"] = None
         os_dir = self._get_os_path(path)
         dir_contents = os.listdir(os_dir)
-        model["item_count"] = len(
-            [
-                name
-                for name in dir_contents
-                if self.should_list(name)
-                and (self.allow_hidden or not is_file_hidden(os.path.join(os_dir, name)))
-            ]
-        )
+        model["item_count"] = len(dir_contents)
         if content:
             model["content"] = contents = []
             for name in os.listdir(os_dir):
@@ -777,14 +770,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         model["size"] = None
         os_dir = self._get_os_path(path)
         dir_contents = await run_sync(os.listdir, os_dir)
-        model["item_count"] = len(
-            [
-                name
-                for name in dir_contents
-                if self.should_list(name)
-                and (self.allow_hidden or not is_file_hidden(os.path.join(os_dir, name)))
-            ]
-        )
+        model["item_count"] = len(dir_contents)
         if content:
             model["content"] = contents = []
             for name in dir_contents:

@@ -644,7 +644,7 @@ async def test_get(jp_contents_manager):
     assert "item_count" in dirmodel
     assert isinstance(dirmodel["content"], list)
     assert len(dirmodel["content"]) == 3
-    assert dirmodel["item_count"] == 3
+    assert dirmodel["item_count"] == 4
     assert dirmodel["path"] == "foo"
     assert dirmodel["name"] == "foo"
 
