@@ -2377,7 +2377,8 @@ class ServerApp(JupyterApp):
         parts = self._get_urlparts(include_token=True)
         # Update with custom pieces.
         if not self.sock:
-            parts = parts._replace(netloc=f"127.0.0.1:{self.port}")
+            localhost = "[::1]" if ":" in self.ip else "127.0.0.1"
+            parts = parts._replace(netloc=f"{localhost}:{self.port}")
         return parts.geturl()
 
     @property
