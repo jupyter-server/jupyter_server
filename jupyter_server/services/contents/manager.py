@@ -126,8 +126,6 @@ class ContentsManager(LoggingConfigurable):
             "*.pyc",
             "*.pyo",
             ".DS_Store",
-            "*.so",
-            "*.dylib",
             "*~",
         ],
         config=True,
