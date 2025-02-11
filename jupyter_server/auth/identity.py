@@ -651,7 +651,7 @@ class PasswordIdentityProvider(IdentityProvider):
                 config_dir = handler.settings.get("config_dir", "")
                 config_file = os.path.join(config_dir, "jupyter_server_config.json")
                 self.hashed_password = set_password(new_password, config_file=config_file)
-                self.log.info(_i18n(f"Wrote hashed password to {config_file}"))
+                self.log.info(_i18n("Wrote hashed password to {file}").format(file=config_file))
 
         return user
 
