@@ -597,7 +597,8 @@ class MappingKernelManager(MultiKernelManager):
             msg = session.deserialize(fed_msg_list, content=False)
 
             msg_type = msg["header"]["msg_type"]
-            parent_msg_type = msg.get("parent_header", {}).get("msg_type", None)
+            parent_header = msg.get("parent_header")
+            parent_msg_type = None if parent_header is None else parent_header.get("msg_type")
             if (
                 self.track_message_type(msg_type)
                 or self.track_message_type(parent_msg_type)
