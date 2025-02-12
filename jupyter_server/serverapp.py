@@ -3060,6 +3060,24 @@ class ServerApp(JupyterApp):
                 )
                 self.exit(1)
 
+        info = self.log.info
+        for line in self.running_server_info(kernel_count=False).split("\n"):
+            info(line)
+        info(
+            _i18n(
+                "Use Control-C to stop this server and shut down all kernels (twice to skip confirmation)."
+            )
+        )
+        if "dev" in __version__:
+            info(
+                _i18n(
+                    "Welcome to Project Jupyter! Explore the various tools available"
+                    " and their corresponding documentation. If you are interested"
+                    " in contributing to the platform, please visit the community"
+                    " resources section at https://jupyter.org/community.html."
+                )
+            )
+
         self.write_server_info_file()
 
         if not self.no_browser_open_file:
@@ -3068,6 +3086,46 @@ class ServerApp(JupyterApp):
         # Handle the browser opening.
         if self.open_browser and not self.sock:
             self.launch_browser()
+
+        if self.identity_provider.token and self.identity_provider.token_generated:
+            # log full URL with generated token, so there's a copy/pasteable link
+            # with auth info.
+            if self.sock:
+                self.log.critical(
+                    "\n".join(
+                        [
+                            "\n",
+                            "Jupyter Server is listening on %s" % self.display_url,
+                            "",
+                            (
+                                "UNIX sockets are not browser-connectable, but you can tunnel to "
+                                f"the instance via e.g.`ssh -L 8888:{self.sock} -N user@this_host` and then "
+                                f"open e.g. {self.connection_url} in a browser."
+                            ),
+                        ]
+                    )
+                )
+            else:
+                if self.no_browser_open_file:
+                    message = [
+                        "\n",
+                        _i18n("To access the server, copy and paste one of these URLs:"),
+                        "    %s" % self.display_url,
+                    ]
+                else:
+                    message = [
+                        "\n",
+                        _i18n(
+                            "To access the server, open this file in a browser:",
+                        ),
+                        "    %s" % urljoin("file:", pathname2url(self.browser_open_file)),
+                        _i18n(
+                            "Or copy and paste one of these URLs:",
+                        ),
+                        "    %s" % self.display_url,
+                    ]
+
+                self.log.critical("\nDP_DAI2\n" + "\n".join(message))
 
     async def _cleanup(self) -> None:
         """General cleanup of files, extensions and kernels created
@@ -3125,64 +3183,6 @@ class ServerApp(JupyterApp):
             await self.extension_manager.start_all_extensions()
         except Exception as err:
             self.log.error(err)
-
-        info = self.log.info
-        for line in self.running_server_info(kernel_count=False).split("\n"):
-            info(line)
-        info(
-            _i18n(
-                "Use Control-C to stop this server and shut down all kernels (twice to skip confirmation)."
-            )
-        )
-        if "dev" in __version__:
-            info(
-                _i18n(
-                    "Welcome to Project Jupyter! Explore the various tools available"
-                    " and their corresponding documentation. If you are interested"
-                    " in contributing to the platform, please visit the community"
-                    " resources section at https://jupyter.org/community.html."
-                )
-            )
-
-        if self.identity_provider.token and self.identity_provider.token_generated:
-            # log full URL with generated token, so there's a copy/pasteable link
-            # with auth info.
-            if self.sock:
-                self.log.critical(
-                    "\n".join(
-                        [
-                            "\n",
-                            "Jupyter Server is listening on %s" % self.display_url,
-                            "",
-                            (
-                                "UNIX sockets are not browser-connectable, but you can tunnel to "
-                                f"the instance via e.g.`ssh -L 8888:{self.sock} -N user@this_host` and then "
-                                f"open e.g. {self.connection_url} in a browser."
-                            ),
-                        ]
-                    )
-                )
-            else:
-                if self.no_browser_open_file:
-                    message = [
-                        "\n",
-                        _i18n("To access the server, copy and paste one of these URLs:"),
-                        "    %s" % self.display_url,
-                    ]
-                else:
-                    message = [
-                        "\n",
-                        _i18n(
-                            "To access the server, open this file in a browser:",
-                        ),
-                        "    %s" % urljoin("file:", pathname2url(self.browser_open_file)),
-                        _i18n(
-                            "Or copy and paste one of these URLs:",
-                        ),
-                        "    %s" % self.display_url,
-                    ]
-
-                self.log.critical("\n".join(message))
 
     def start(self) -> None:
         """Start the Jupyter server app, after initialization

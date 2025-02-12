@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "jupyter-server-example"
 description = "Jupyter Server Example"
 readme = "README.md"
-license = "MIT"
+license = "BSD-3-Clause"
 requires-python = ">=3.9"
 dependencies = [
     "jinja2",
