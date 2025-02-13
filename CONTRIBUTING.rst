@@ -119,17 +119,14 @@ Building the Docs
 
 Install the docs requirements using ``pip``::
 
-    pip install ".[doc]"
+    pip install ".[docs]"
 
 Once you have installed the required packages, you can build the docs with::
 
     cd docs
     make html
 
-The above may run into issues related to unavailability of sphinx and related dependencies. You can `install sphinx <https://www.sphinx-doc.org/en/master/usage/installation.html>`_ and the following dependencies.::
-
-    pip install myst_parser sphinxcontrib_github_alt sphinxcontrib.openapi \
-    sphinxemoji sphinx_autodoc_typehints pydata-sphinx-theme
+The above may run into issues related to unavailability of sphinx. You can `install sphinx <https://www.sphinx-doc.org/en/master/usage/installation.html>`_ to resolve them.
 
 You can also run the tests using ``hatch`` without installing test dependencies
 in your local environment.::
