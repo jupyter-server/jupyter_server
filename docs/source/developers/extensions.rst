@@ -87,6 +87,10 @@ Here is basic example:
         """
         await asyncio.sleep(.1)
 
+.. note:: The server startup banner (displaying server info and access URLs) is printed before starting asynchronous tasks, so those tasks might still be running even after the banner appears.
+
+..  WARNING: This note is also present in the "Starting asynchronous tasks from an ExtensionApp" section.
+   If you update it here, please update it there as well.
 
 Making an extension discoverable
 --------------------------------
@@ -385,6 +389,11 @@ Here is a basic (pseudo) code example:
 
         async def stop_extension(self):
             self.my_background_task.cancel()
+
+.. note:: The server startup banner (displaying server info and access URLs) is printed before starting asynchronous tasks, so those tasks might still be running even after the banner appears.
+
+..  WARNING: This note is also present in the "Starting asynchronous tasks from an extension" section.
+   If you update it here, please update it there as well.
 
 
 Distributing a server extension
