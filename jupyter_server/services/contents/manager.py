@@ -458,9 +458,14 @@ class ContentsManager(LoggingConfigurable):
         """
         raise NotImplementedError
 
-    def save(self, model, path):
+    def save(self, model, path, require_hash=False):
         """
         Save a file or directory model to path.
+
+        Parameters
+        ----------
+        require_hash : bool
+            Whether the file hash must be returned or not.
 
         Should return the saved model with no content.  Save implementations
         should call self.run_pre_save_hook(model=model, path=path) prior to
@@ -868,9 +873,14 @@ class AsyncContentsManager(ContentsManager):
         """
         raise NotImplementedError
 
-    async def save(self, model, path):
+    async def save(self, model, path, require_hash=False):
         """
         Save a file or directory model to path.
+
+        Parameters
+        ----------
+        require_hash : bool
+            Whether the file hash must be returned or not.
 
         Should return the saved model with no content.  Save implementations
         should call self.run_pre_save_hook(model=model, path=path) prior to
