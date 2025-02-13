@@ -65,6 +65,9 @@ class MockExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         }
     }
 
+    async def _start_jupyter_server_extension(self, serverapp):
+        self.started = True
+
     @staticmethod
     def get_extension_package():
         return "tests.extension.mockextensions"

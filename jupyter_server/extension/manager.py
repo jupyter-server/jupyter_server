@@ -168,12 +168,12 @@ class ExtensionPoint(HasTraits):
         loader = self._get_loader()
         return loader(serverapp)
 
-    def start(self, serverapp):
+    async def start(self, serverapp):
         """Call's the extensions 'start' hook where it can
         start (possibly async) tasks _after_ the event loop is running.
         """
         starter = self._get_starter()
-        return starter(serverapp)
+        return await starter(serverapp)
 
 
 class ExtensionPackage(LoggingConfigurable):
@@ -247,10 +247,10 @@ class ExtensionPackage(LoggingConfigurable):
         point = self.extension_points[point_name]
         return point.load(serverapp)
 
-    def start_point(self, point_name, serverapp):
+    async def start_point(self, point_name, serverapp):
         """Load an extension point."""
         point = self.extension_points[point_name]
-        return point.start(serverapp)
+        return await point.start(serverapp)
 
     def link_all_points(self, serverapp):
         """Link all extension points."""
@@ -447,8 +447,7 @@ class ExtensionManager(LoggingConfigurable):
         """Start all enabled extensions."""
         # Sort the extension names to enforce deterministic loading
         # order.
-        for name in self.sorted_extensions:
-            await self.start_extension(name)
+        await multi([self.start_extension(name) for name in self.sorted_extensions])
 
     async def stop_all_extensions(self):
         """Call the shutdown hooks in all extensions."""
