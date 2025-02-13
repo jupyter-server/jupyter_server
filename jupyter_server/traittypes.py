@@ -164,8 +164,7 @@ class InstanceFromClasses(ClassBasedTraitType):  # type:ignore[type-arg]
             self.klasses = klasses
         else:
             raise TraitError(
-                "The klasses attribute must be a list of class names or classes"
-                " not: %r" % klasses
+                "The klasses attribute must be a list of class names or classes not: %r" % klasses
             )
 
         if (kw is not None) and not isinstance(kw, dict):
