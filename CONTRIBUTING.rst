@@ -126,10 +126,8 @@ Once you have installed the required packages, you can build the docs with::
     cd docs
     make html
 
-The above may run into issues related to unavailability of sphinx. You can `install sphinx <https://www.sphinx-doc.org/en/master/usage/installation.html>`_ to resolve them.
-
 You can also run the tests using ``hatch`` without installing test dependencies
-in your local environment.::
+in your local environment::
 
     pip install hatch
     hatch run docs:build
