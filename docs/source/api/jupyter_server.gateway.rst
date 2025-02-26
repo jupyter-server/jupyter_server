@@ -7,31 +7,31 @@ Submodules
 
 .. automodule:: jupyter_server.gateway.connections
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.gateway.gateway_client
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.gateway.handlers
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.gateway.managers
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: jupyter_server.gateway
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

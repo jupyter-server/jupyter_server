@@ -25,43 +25,43 @@ Submodules
 
 .. automodule:: jupyter_server.config_manager
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.log
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.serverapp
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.traittypes
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.transutils
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.utils
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: jupyter_server
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
