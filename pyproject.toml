@@ -117,16 +117,26 @@ path = "jupyter_server/_version.py"
 validate-bump = false
 
 [tool.hatch.build]
-artifacts = ["jupyter_server/static/style"]
+artifacts = [
+  "jupyter_server/static/style",
+  "jupyter_server/static/vendor",
+]
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.8.1"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
   "jupyter_server/static/style/bootstrap.min.css",
-  "jupyter_server/static/style/bootstrap-theme.min.css"
+  "jupyter_server/static/style/bootstrap-theme.min.css",
+  "jupyter_server/static/vendor/swagger-ui-dist/LICENSE",
+  "jupyter_server/static/vendor/swagger-ui-dist/NOTICE",
+  "jupyter_server/static/vendor/swagger-ui-dist/swagger-ui-bundle.js",
+  "jupyter_server/static/vendor/swagger-ui-dist/swagger-ui.css",
 ]
-skip-if-exists = ["jupyter_server/static/style/bootstrap.min.css"]
+skip-if-exists = [
+  "jupyter_server/static/style/bootstrap.min.css",
+  "jupyter_server/static/vendor/swagger-ui-dist/swagger-ui.css",
+]
 install-pre-commit-hook = true
 optional-editable-build = true
 
