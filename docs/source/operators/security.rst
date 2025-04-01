@@ -30,15 +30,24 @@ a token is generated to use for authentication.
 This token is logged to the terminal, so that you can copy/paste the URL into your browser::
 
     [I 11:59:16.597 ServerApp] The Jupyter Server is running at:
+    [I 11:59:16.597 ServerApp]
     http://localhost:8888/?token=c8de56fa4deed24899803e93c227592aef6538f93025fe01
 
+    [I 11:59:16.597 ServerApp]
+    http://127.0.0.1:8888/?token=c8de56fa4deed24899803e93c227592aef6538f93025fe01
 
-If the Jupyter server is going to open your browser automatically,
-an *additional* token is generated for launching the browser.
-This additional token can be used only once,
-and is used to set a cookie for your browser once it connects.
-After your browser has made its first request with this one-time-token,
-the token is discarded and a cookie is set in your browser.
+    [I 11:59:16.597 ServerApp]
+        To access the server, open this file in a browser:
+        file:///Users/username/Library/Jupyter/runtime/jpserver-46320-open.html
+    Or copy and paste one of these URLs:
+        http://localhost:8888/?token=c8de56fa4deed24899803e93c227592aef6538f93025fe01
+        http://127.0.0.1:8888/?token=c8de56fa4deed24899803e93c227592aef6538f93025fe01
+
+Copy either of the HTTP URLs and paste it into your browser to see the server running with a
+message - "A Jupyter Server is running." If you are using the file link,
+opening it in your browser should automatically redirect you to the Jupyter server launch page,
+including the authentication token.  In case it doesn't redirect automatically, you'll
+find an HTTP link on the page; clicking this link will take you to the Jupyter server landing page.
 
 At any later time, you can see the tokens and URLs for all of your running servers with :command:`jupyter server list`::
 
