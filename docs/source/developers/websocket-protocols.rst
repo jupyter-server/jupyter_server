@@ -53,12 +53,14 @@ The Jupyter Server must support the default protocol, in which a kernel message 
    * - 0
      - 4
      - 8
+     - 12
      - ...
      - offset_0
      - offset_1
      - offset_2
      - ...
-   * - offset_0
+   * - offset_number
+     - offset_0
      - offset_1
      - offset_2
      - ...
@@ -69,6 +71,7 @@ The Jupyter Server must support the default protocol, in which a kernel message 
 
 Where:
 
+* ``offset_number`` is the number of the following offsets (is equal to the number of binary buffers plus one).
 * ``offset_0`` is the position of the kernel message (``msg``) from the beginning of this message, in bytes.
 * ``offset_1`` is the position of the first binary buffer (``buffer_0``) from the beginning of this message, in bytes (optional).
 * ``offset_2`` is the position of the second binary buffer (``buffer_1``) from the beginning of this message, in bytes (optional).
