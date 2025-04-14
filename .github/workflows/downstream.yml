@@ -122,6 +122,7 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/downstream-test@v1
         with:
           package_name: jupytext
+          package_spec: '."[test,test-functional]"'
           test_command: pip install pytest-jupyter[server] gitpython pre-commit && python -m ipykernel install --name jupytext-dev --user && pytest -vv -raXxs -W default --durations 10 --ignore=tests/functional/others --color=yes
 
   downstream_check: # This job does nothing and is only used for the branch protection
