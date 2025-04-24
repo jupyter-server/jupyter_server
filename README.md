@@ -47,7 +47,7 @@ If you are interested in contributing to the project, see [`CONTRIBUTING.rst`](C
 ## Team Meetings and Roadmap
 
 - When: Thursdays [8:00am, Pacific time](https://www.thetimezoneconverter.com/?t=8%3A00%20am&tz=San%20Francisco&)
-- Where: [Jovyan Zoom](https://zoom.us/my/jovyan?pwd=c0JZTHlNdS9Sek9vdzR3aTJ4SzFTQT09)
+- Where: [Jovyan Zoom](https://zoom.us/j/95228013874?pwd=Ep7HIk8t9JP6VToxt1Wj4P7K5PshC0.1)
 - What: [Meeting notes](https://hackmd.io/Wmz_wjrLRHuUbgWphjwRWw)
 
 See our tentative [roadmap here](https://github.com/jupyter/jupyter_server/issues/127).
