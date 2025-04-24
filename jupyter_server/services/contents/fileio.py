@@ -107,9 +107,9 @@ def atomic_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
         mode = "w" if text else "wb"
         # direct open on the target file
         if text:
-            fileobj = open(path, mode, encoding=encoding, **kwargs)
+            fileobj = open(path, mode, encoding=encoding, **kwargs)  # noqa: SIM115
         else:
-            fileobj = open(path, mode, **kwargs)
+            fileobj = open(path, mode, **kwargs)  # noqa: SIM115
         try:
             yield fileobj
         finally:

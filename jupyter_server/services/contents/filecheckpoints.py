@@ -112,7 +112,7 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
         filename = f"{basename}-{checkpoint_id}{ext}"
         os_path = self._get_os_path(path=parent)
         cp_dir = os.path.join(os_path, self.checkpoint_dir)
-        # If parent directory isn’t writable, use system temp
+        # If parent directory isn't writable, use system temp
         if not os.access(os.path.dirname(cp_dir), os.W_OK):
             rel = os.path.relpath(os_path, start=self.root_dir)
             cp_dir = os.path.join(tempfile.gettempdir(), "jupyter_checkpoints", rel)
