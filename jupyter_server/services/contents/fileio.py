@@ -60,7 +60,7 @@ async def async_copy2_safe(src, dst, log=None):
     """
     if not os.access(src, os.W_OK):
         if log:
-            log.debug("Source file, %s, is not writeable", src, exc_info=True)
+            log.debug("Source file, %s, is not writable", src, exc_info=True)
         raise PermissionError(errno.EACCES, f"File is not writable: {src}")
 
     await run_sync(shutil.copyfile, src, dst)
