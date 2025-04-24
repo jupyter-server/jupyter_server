@@ -136,6 +136,26 @@ def test_path_to_invalid(tmpdir):
     assert path_to_invalid(tmpdir) == str(tmpdir) + ".invalid"
 
 
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="requires POSIX directory perms")
+def test_atomic_writing_in_readonly_dir(tmp_path):
+    # Setup: non-writable dir but a writable file inside
+    nonw = tmp_path / "nonwritable"
+    nonw.mkdir()
+    f = nonw / "file.txt"
+    f.write_text("original content")
+    os.chmod(str(nonw), 0o500)
+    os.chmod(str(f), 0o700)
+
+    # direct write fallback succeeds
+    with atomic_writing(str(f)) as ff:
+        ff.write("new content")
+    assert f.read_text() == "new content"
+
+    # dir perms unchanged
+    mode = stat.S_IMODE(os.stat(str(nonw)).st_mode)
+    assert mode == 0o500
+
+
 @pytest.mark.skipif(os.name == "nt", reason="test fails on Windows")
 def test_file_manager_mixin(tmp_path):
     mixin = FileManagerMixin()
