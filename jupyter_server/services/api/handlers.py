@@ -4,14 +4,14 @@
 # Distributed under the terms of the Modified BSD License.
 import json
 import os
-from typing import Any
+from typing import Any, cast
 
 from jupyter_core.utils import ensure_async
 from tornado import web
 
 from jupyter_server._tz import isoformat, utcfromtimestamp
 from jupyter_server.auth.decorator import authorized
-from jupyter_server.auth.identity import IdentityProvider
+from jupyter_server.auth.identity import IdentityProvider, UpdatableField
 
 from ...base.handlers import APIHandler, JupyterHandler
 
@@ -118,7 +118,7 @@ class IdentityHandler(APIHandler):
     @web.authenticated
     async def patch(self):
         """Update user information."""
-        user_data = self.get_json_body()
+        user_data = cast(dict[UpdatableField, str], self.get_json_body())
         if not user_data:
             raise web.HTTPError(400, "Invalid or missing JSON body")
 

@@ -20,7 +20,7 @@ from dataclasses import asdict, dataclass
 from http.cookies import Morsel
 
 from tornado import escape, httputil, web
-from traitlets import Bool, Dict, List, TraitError, Type, Unicode, default, validate
+from traitlets import Bool, Dict, Enum, List, TraitError, Type, Unicode, default, validate
 from traitlets.config import LoggingConfigurable
 
 from jupyter_server.transutils import _i18n
@@ -194,7 +194,7 @@ class IdentityProvider(LoggingConfigurable):
 
     # Define the fields that can be updated
     updatable_fields = List(
-        trait=Unicode(),
+        trait=Enum(list(t.get_args(UpdatableField))),
         default_value=["color"],  # Default updatable field
         config=True,
         help=_i18n("List of fields in the User model that can be updated."),
@@ -296,7 +296,7 @@ class IdentityProvider(LoggingConfigurable):
         self, handler: web.RequestHandler, user_data: dict[UpdatableField, str]
     ) -> User:
         """Update user information."""
-        current_user = handler.current_user  # type:ignore[attr-defined]
+        current_user = t.cast(User, handler.current_user)
 
         for field in user_data:
             if field not in self.updatable_fields:
