@@ -227,7 +227,8 @@ class IdentityProvider(LoggingConfigurable):
             field for field in proposal["value"] if field not in valid_updatable_fields
         ]
         if invalid_fields:
-            raise TraitError(f"Invalid fields in updatable_fields: {invalid_fields}")
+            msg = f"Invalid fields in updatable_fields: {invalid_fields}"
+            raise TraitError(msg)
         return proposal["value"]
 
     need_token: bool | Bool[bool, t.Union[bool, int]] = Bool(True)
@@ -300,7 +301,8 @@ class IdentityProvider(LoggingConfigurable):
 
         for field in user_data:
             if field not in self.updatable_fields:
-                raise ValueError(f"Field {field} is not updatable")
+                msg = f"Field {field} is not updatable"
+                raise ValueError(msg)
 
         # Update fields
         for field in self.updatable_fields:
