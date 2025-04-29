@@ -11,6 +11,7 @@ from tornado import web
 
 from jupyter_server._tz import isoformat, utcfromtimestamp
 from jupyter_server.auth.decorator import authorized
+from jupyter_server.auth.identity import IdentityProvider
 
 from ...base.handlers import APIHandler, JupyterHandler
 
@@ -70,7 +71,7 @@ class APIStatusHandler(APIHandler):
 
 
 class IdentityHandler(APIHandler):
-    """Get the current user's identity model"""
+    """Get or patch the current user's identity model"""
 
     @web.authenticated
     async def get(self):
@@ -110,8 +111,29 @@ class IdentityHandler(APIHandler):
         model = {
             "identity": identity,
             "permissions": permissions,
+            "updatable_fields": self.identity_provider.updatable_fields,
         }
         self.write(json.dumps(model))
+
+    @web.authenticated
+    async def patch(self):
+        """Update user information."""
+        user_data = self.get_json_body()
+        if not user_data:
+            raise web.HTTPError(400, "Invalid or missing JSON body")
+
+        # Update user information
+        identity_provider = self.settings["identity_provider"]
+        if not isinstance(identity_provider, IdentityProvider):
+            raise web.HTTPError(500, "Identity provider not configured properly")
+
+        try:
+            updated_user = identity_provider.update_user(self, user_data)
+            self.write(
+                {"status": "success", "user": identity_provider.identity_model(updated_user)}
+            )
+        except ValueError as e:
+            raise web.HTTPError(400, str(e)) from e
 
 
 default_handlers = [
