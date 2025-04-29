@@ -108,13 +108,95 @@ async def test_identity(jp_fetch, identity, expected, identity_provider):
 
     assert r.code == 200
     response = json.loads(r.body.decode())
-    assert set(response.keys()) == {"identity", "permissions"}
+    assert set(response.keys()) == {"identity", "permissions", "updatable_fields"}
     identity_model = response["identity"]
     print(identity_model)
     for key, value in expected.items():
         assert identity_model[key] == value
 
     assert set(identity_model.keys()) == set(User.__dataclass_fields__)
+
+
+@pytest.mark.parametrize("identity", [{"username": "user.username"}])
+async def test_update_user_success(jp_fetch, identity, identity_provider):
+    """Test successful user update."""
+    identity_provider.mock_user = MockUser(**identity)
+    payload = {
+        "color": "#000000",
+    }
+    r = await jp_fetch(
+        "/api/me",
+        method="PATCH",
+        body=json.dumps(payload),
+        headers={"Content-Type": "application/json"},
+    )
+    assert r.code == 200
+    response = json.loads(r.body.decode())
+    assert response["status"] == "success"
+    assert response["identity"]["color"] == "#000000"
+
+
+@pytest.mark.parametrize("identity", [{"username": "user.username"}])
+async def test_update_user_raise(jp_fetch, identity, identity_provider):
+    """Test failing user update."""
+    identity_provider.mock_user = MockUser(**identity)
+    payload = {
+        "name": "Updated Name",
+        "color": "#000000",
+    }
+    with pytest.raises(HTTPError) as exc:
+        await jp_fetch(
+            "/api/me",
+            method="PATCH",
+            body=json.dumps(payload),
+            headers={"Content-Type": "application/json"},
+        )
+
+
+@pytest.mark.parametrize(
+    "identity, expected",
+    [
+        (
+            {"username": "user.username"},
+            {
+                "username": "user.username",
+                "name": "Updated Name",
+                "display_name": "Updated Display Name",
+                "color": "#000000",
+            },
+        )
+    ],
+)
+async def test_update_user_success_custom_updatable_fields(
+    jp_fetch, identity, expected, identity_provider
+):
+    """Test successful user update."""
+    identity_provider.mock_user = MockUser(**identity)
+    identity_provider.updatable_fields = ["name", "display_name", "color"]
+    payload = {
+        "name": expected["name"],
+        "display_name": expected["display_name"],
+        "color": expected["color"],
+    }
+    r = await jp_fetch(
+        "/api/me",
+        method="PATCH",
+        body=json.dumps(payload),
+        headers={"Content-Type": "application/json"},
+    )
+    assert r.code == 200
+    response = json.loads(r.body.decode())
+    identity_model = response["identity"]
+    for key, value in expected.items():
+        assert identity_model[key] == value
+
+    # Test GET request to ensure the updated fields are returned
+    r = await jp_fetch("api/me")
+    assert r.code == 200
+    response = json.loads(r.body.decode())
+    identity_model = response["identity"]
+    for key, value in expected.items():
+        assert identity_model[key] == value
 
 
 @pytest.mark.parametrize(
@@ -157,7 +239,7 @@ async def test_identity_permissions(
     assert r is not None
     assert r.code == 200
     response = json.loads(r.body.decode())
-    assert set(response.keys()) == {"identity", "permissions"}
+    assert set(response.keys()) == {"identity", "permissions", "updatable_fields"}
     assert response["permissions"] == expected
 
 

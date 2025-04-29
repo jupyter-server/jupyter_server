@@ -130,7 +130,7 @@ class IdentityHandler(APIHandler):
         try:
             updated_user = identity_provider.update_user(self, user_data)
             self.write(
-                {"status": "success", "user": identity_provider.identity_model(updated_user)}
+                {"status": "success", "identity": identity_provider.identity_model(updated_user)}
             )
         except ValueError as e:
             raise web.HTTPError(400, str(e)) from e
