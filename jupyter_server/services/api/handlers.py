@@ -11,7 +11,7 @@ from tornado import web
 
 from jupyter_server._tz import isoformat, utcfromtimestamp
 from jupyter_server.auth.decorator import authorized
-from jupyter_server.auth.identity import IdentityProvider, UpdatableField
+from jupyter_server.auth.identity import IdentityProvider, UpdatableField, User
 
 from ...base.handlers import APIHandler, JupyterHandler
 
@@ -134,6 +134,8 @@ class IdentityHandler(APIHandler):
             )
         except ValueError as e:
             raise web.HTTPError(400, str(e)) from e
+        except NotImplementedError as e:
+            raise web.HTTPError(501, str(e)) from e
 
 
 default_handlers = [

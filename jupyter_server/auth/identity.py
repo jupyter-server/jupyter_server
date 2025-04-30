@@ -296,22 +296,27 @@ class IdentityProvider(LoggingConfigurable):
     def update_user(
         self, handler: web.RequestHandler, user_data: dict[UpdatableField, str]
     ) -> User:
-        """Update user information."""
+        """Update user information and persist the user model."""
+        self.check_update(user_data)
         current_user = t.cast(User, handler.current_user)
+        updated_user = self.update_user_model(current_user, user_data)
+        self.persist_user_model(handler)
+        return updated_user
 
+    def check_update(self, user_data: dict[UpdatableField, str]) -> None:
+        """Raises if some fields to update are not updatable."""
         for field in user_data:
             if field not in self.updatable_fields:
                 msg = f"Field {field} is not updatable"
                 raise ValueError(msg)
 
-        # Update fields
-        for field in self.updatable_fields:
-            if field in user_data:
-                setattr(current_user, field, user_data[field])
+    def update_user_model(self, current_user: User, user_data: dict[UpdatableField, str]) -> User:
+        """Update user information."""
+        raise NotImplementedError
 
-        # Persist changes (if applicable)
-        self.set_login_cookie(handler, current_user)  # Save updated user to cookie/session
-        return current_user
+    def persist_user_model(self, handler: web.RequestHandler) -> None:
+        """Persist the user model (i.e. a cookie)."""
+        raise NotImplementedError
 
     def identity_model(self, user: User) -> dict[str, t.Any]:
         """Return a User as an Identity model"""
@@ -680,6 +685,17 @@ class PasswordIdentityProvider(IdentityProvider):
     def auth_enabled(self) -> bool:
         """Return whether any auth is enabled"""
         return bool(self.hashed_password or self.token)
+
+    def update_user_model(self, current_user: User, user_data: dict[UpdatableField, str]) -> User:
+        """Update user information."""
+        for field in self.updatable_fields:
+            if field in user_data:
+                setattr(current_user, field, user_data[field])
+        return current_user
+
+    def persist_user_model(self, handler: web.RequestHandler) -> None:
+        """Persist the user model to a cookie."""
+        self.set_login_cookie(handler, handler.current_user)
 
     def passwd_check(self, password):
         """Check password against our stored hashed password"""

@@ -6,6 +6,7 @@ import pytest
 from tornado.httpclient import HTTPError
 
 from jupyter_server.auth import Authorizer, IdentityProvider, User
+from jupyter_server.auth.identity import PasswordIdentityProvider
 
 
 async def test_get_spec(jp_fetch):
@@ -50,6 +51,22 @@ class MockIdentityProvider(IdentityProvider):
             return self.mock_user
 
 
+class MockPasswordIdentityProvider(PasswordIdentityProvider):
+    mock_user: MockUser
+
+    async def get_user(self, handler):
+        # super returns a UUID
+        # return our mock user instead, as long as the request is authorized
+        _authenticated = super().get_user(handler)
+        if isinstance(_authenticated, Awaitable):
+            _authenticated = await _authenticated
+        authenticated = _authenticated
+        if isinstance(self.mock_user, dict):
+            self.mock_user = MockUser(**self.mock_user)
+        if authenticated:
+            return self.mock_user
+
+
 class MockAuthorizer(Authorizer):
     def is_authorized(self, handler, user, action, resource):
         permissions = user.permissions
@@ -62,6 +79,17 @@ class MockAuthorizer(Authorizer):
 @pytest.fixture
 def identity_provider(jp_serverapp):
     idp = MockIdentityProvider(parent=jp_serverapp)
+    authorizer = MockAuthorizer(parent=jp_serverapp)
+    with mock.patch.dict(
+        jp_serverapp.web_app.settings,
+        {"identity_provider": idp, "authorizer": authorizer},
+    ):
+        yield idp
+
+
+@pytest.fixture
+def password_identity_provider(jp_serverapp):
+    idp = MockPasswordIdentityProvider(parent=jp_serverapp)
     authorizer = MockAuthorizer(parent=jp_serverapp)
     with mock.patch.dict(
         jp_serverapp.web_app.settings,
@@ -118,9 +146,44 @@ async def test_identity(jp_fetch, identity, expected, identity_provider):
 
 
 @pytest.mark.parametrize("identity", [{"username": "user.username"}])
-async def test_update_user_success(jp_fetch, identity, identity_provider):
+async def test_update_user_not_implemented_update(jp_fetch, identity, identity_provider):
     """Test successful user update."""
     identity_provider.mock_user = MockUser(**identity)
+    payload = {
+        "color": "#000000",
+    }
+    with pytest.raises(HTTPError) as exc:
+        await jp_fetch(
+            "/api/me",
+            method="PATCH",
+            body=json.dumps(payload),
+            headers={"Content-Type": "application/json"},
+        )
+    assert exc.value.code == 501
+
+
+@pytest.mark.parametrize("identity", [{"username": "user.username"}])
+async def test_update_user_not_implemented_persist(jp_fetch, identity, identity_provider):
+    """Test successful user update."""
+    identity_provider.mock_user = MockUser(**identity)
+    identity_provider.update_user_model = lambda *args, **kwargs: identity_provider.mock_user
+    payload = {
+        "color": "#000000",
+    }
+    with pytest.raises(HTTPError) as exc:
+        await jp_fetch(
+            "/api/me",
+            method="PATCH",
+            body=json.dumps(payload),
+            headers={"Content-Type": "application/json"},
+        )
+    assert exc.value.code == 501
+
+
+@pytest.mark.parametrize("identity", [{"username": "user.username"}])
+async def test_update_user_success(jp_fetch, identity, password_identity_provider):
+    """Test successful user update."""
+    password_identity_provider.mock_user = MockUser(**identity)
     payload = {
         "color": "#000000",
     }
@@ -137,12 +200,12 @@ async def test_update_user_success(jp_fetch, identity, identity_provider):
 
 
 @pytest.mark.parametrize("identity", [{"username": "user.username"}])
-async def test_update_user_raise(jp_fetch, identity, identity_provider):
+async def test_update_user_raise(jp_fetch, identity, password_identity_provider):
     """Test failing user update."""
-    identity_provider.mock_user = MockUser(**identity)
+    password_identity_provider.mock_user = MockUser(**identity)
     payload = {
         "name": "Updated Name",
-        "color": "#000000",
+        "fake_prop": "anything",
     }
     with pytest.raises(HTTPError) as exc:
         await jp_fetch(
@@ -151,6 +214,7 @@ async def test_update_user_raise(jp_fetch, identity, identity_provider):
             body=json.dumps(payload),
             headers={"Content-Type": "application/json"},
         )
+    assert exc.value.code == 400
 
 
 @pytest.mark.parametrize(
@@ -168,10 +232,10 @@ async def test_update_user_raise(jp_fetch, identity, identity_provider):
     ],
 )
 async def test_update_user_success_custom_updatable_fields(
-    jp_fetch, identity, expected, identity_provider
+    jp_fetch, identity, expected, password_identity_provider
 ):
     """Test successful user update."""
-    identity_provider.mock_user = MockUser(**identity)
+    password_identity_provider.mock_user = MockUser(**identity)
     identity_provider.updatable_fields = ["name", "display_name", "color"]
     payload = {
         "name": expected["name"],
