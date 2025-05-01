@@ -272,6 +272,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model["writable"] = self.is_writable(path)
         model["hash"] = None
         model["hash_algorithm"] = None
+        model["item_count"] = None
 
         return model
 
@@ -293,9 +294,20 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model = self._base_model(path)
         model["type"] = "directory"
         model["size"] = None
+        os_dir = self._get_os_path(path)
+        dir_contents = os.listdir(os_dir)
+        filtered_count = 0
+        for name in dir_contents:
+            try:
+                os_path = os.path.join(os_dir, name)
+                if self.should_list(name) and (self.allow_hidden or not is_file_hidden(os_path)):
+                    filtered_count += 1
+            except OSError as e:
+                self.log.warning("Error accessing %s: %s", os.path.join(os_dir, name), e)
+
+        model["item_count"] = filtered_count
         if content:
             model["content"] = contents = []
-            os_dir = self._get_os_path(path)
             for name in os.listdir(os_dir):
                 try:
                     os_path = os.path.join(os_dir, name)
@@ -334,7 +346,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                             os_path,
                             exc_info=True,
                         )
-
             model["format"] = "json"
 
         return model
@@ -470,6 +481,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if not os.path.exists(os_path):
             with self.perm_to_403():
                 os.mkdir(os_path)
+            model["item_count"] = 0
         elif not os.path.isdir(os_path):
             raise web.HTTPError(400, "Not a directory: %s" % (os_path))
         else:
@@ -765,10 +777,20 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         model = self._base_model(path)
         model["type"] = "directory"
         model["size"] = None
+        os_dir = self._get_os_path(path)
+        dir_contents = await run_sync(os.listdir, os_dir)
+        filtered_count = 0
+        for name in dir_contents:
+            try:
+                os_path = os.path.join(os_dir, name)
+                if self.should_list(name) and (self.allow_hidden or not is_file_hidden(os_path)):
+                    filtered_count += 1
+            except OSError as e:
+                self.log.warning("Error accessing %s: %s", os.path.join(os_dir, name), e)
+
+        model["item_count"] = filtered_count
         if content:
             model["content"] = contents = []
-            os_dir = self._get_os_path(path)
-            dir_contents = await run_sync(os.listdir, os_dir)
             for name in dir_contents:
                 try:
                     os_path = os.path.join(os_dir, name)
