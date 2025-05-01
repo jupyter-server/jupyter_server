@@ -112,6 +112,21 @@ def atomic_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     if os.path.islink(path):
         path = os.path.join(os.path.dirname(path), os.readlink(path))
 
+    # Fall back to direct write for existing file in a non-writable dir
+    dirpath = os.path.dirname(path) or os.getcwd()
+    if os.path.isfile(path) and not os.access(dirpath, os.W_OK) and os.access(path, os.W_OK):
+        mode = "w" if text else "wb"
+        # direct open on the target file
+        if text:
+            fileobj = open(path, mode, encoding=encoding, **kwargs)  # noqa: SIM115
+        else:
+            fileobj = open(path, mode, **kwargs)  # noqa: SIM115
+        try:
+            yield fileobj
+        finally:
+            fileobj.close()
+        return
+
     tmp_path = path_to_intermediate(path)
 
     if os.path.isfile(path):
