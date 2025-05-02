@@ -39,6 +39,12 @@ def copy2_safe(src, dst, log=None):
 
     like shutil.copy2, but log errors in copystat instead of raising
     """
+    # if src file is not writable, avoid creating a back-up
+    if not os.access(src, os.W_OK):
+        if log:
+            log.debug("Source file, %s, is not writable", src, exc_info=True)
+        raise PermissionError(errno.EACCES, f"File is not writable: {src}")
+
     shutil.copyfile(src, dst)
     try:
         shutil.copystat(src, dst)
@@ -52,6 +58,11 @@ async def async_copy2_safe(src, dst, log=None):
 
     like shutil.copy2, but log errors in copystat instead of raising
     """
+    if not os.access(src, os.W_OK):
+        if log:
+            log.debug("Source file, %s, is not writable", src, exc_info=True)
+        raise PermissionError(errno.EACCES, f"File is not writable: {src}")
+
     await run_sync(shutil.copyfile, src, dst)
     try:
         await run_sync(shutil.copystat, src, dst)
@@ -100,6 +111,21 @@ def atomic_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     # any of its directories, so this will suffice:
     if os.path.islink(path):
         path = os.path.join(os.path.dirname(path), os.readlink(path))
+
+    # Fall back to direct write for existing file in a non-writable dir
+    dirpath = os.path.dirname(path) or os.getcwd()
+    if os.path.isfile(path) and not os.access(dirpath, os.W_OK) and os.access(path, os.W_OK):
+        mode = "w" if text else "wb"
+        # direct open on the target file
+        if text:
+            fileobj = open(path, mode, encoding=encoding, **kwargs)  # noqa: SIM115
+        else:
+            fileobj = open(path, mode, **kwargs)  # noqa: SIM115
+        try:
+            yield fileobj
+        finally:
+            fileobj.close()
+        return
 
     tmp_path = path_to_intermediate(path)
 
