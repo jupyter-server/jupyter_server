@@ -59,7 +59,12 @@ def passwd(passphrase=None, algorithm="argon2"):
             raise ValueError(msg)
 
     if algorithm == "argon2":
-        import argon2
+        try:
+            import argon2
+        except ModuleNotFoundError:
+            raise ImportError(
+                "argon2 password hashing requires argon2-cffi package. `pip install 'jupyter-server[password]'` for support."
+            ) from None
 
         ph = argon2.PasswordHasher(
             memory_cost=10240,
@@ -105,6 +110,12 @@ def passwd_check(hashed_passphrase, passphrase):
     True
     """
     if hashed_passphrase.startswith("argon2:"):
+        try:
+            import argon2
+        except ModuleNotFoundError:
+            raise ImportError(
+                "argon2 password hashing requires argon2-cffi package. `pip install 'jupyter-server[password]'` for support."
+            ) from None
         import argon2
         import argon2.exceptions
 
