@@ -136,7 +136,7 @@ async def test_identity(jp_fetch, identity, expected, identity_provider):
 
     assert r.code == 200
     response = json.loads(r.body.decode())
-    assert set(response.keys()) == {"identity", "permissions", "updatable_fields"}
+    assert set(response.keys()) == {"identity", "permissions"}
     identity_model = response["identity"]
     print(identity_model)
     for key, value in expected.items():
@@ -266,7 +266,7 @@ async def test_update_user_success_custom_updatable_fields(
 @pytest.mark.parametrize(
     "have_permissions, check_permissions, expected",
     [
-        ("*", None, {}),
+        ("*", None, {"updatable_fields": ["color"]}),
         (
             {
                 "contents": ["read"],
@@ -282,9 +282,10 @@ async def test_update_user_success_custom_updatable_fields(
                 "contents": ["read"],
                 "kernels": ["read", "write"],
                 "terminals": [],
+                "updatable_fields": ["color"],
             },
         ),
-        ("*", {"contents": ["write"]}, {"contents": ["write"]}),
+        ("*", {"contents": ["write"]}, {"contents": ["write"], "updatable_fields": ["color"]}),
     ],
 )
 async def test_identity_permissions(
@@ -303,7 +304,45 @@ async def test_identity_permissions(
     assert r is not None
     assert r.code == 200
     response = json.loads(r.body.decode())
-    assert set(response.keys()) == {"identity", "permissions", "updatable_fields"}
+    assert set(response.keys()) == {"identity", "permissions"}
+    assert response["permissions"] == expected
+
+
+@pytest.mark.parametrize(
+    "have_permissions, check_permissions, expected",
+    [
+        (
+            "*",
+            None,
+            {
+                "updatable_fields": [
+                    "name",
+                    "display_name",
+                    "initials",
+                    "avatar_url",
+                    "color",
+                ]
+            },
+        ),
+    ],
+)
+async def test_password_identity_permissions(
+    jp_fetch, have_permissions, check_permissions, expected, password_identity_provider
+):
+    user = MockUser("username")
+    user.permissions = have_permissions
+    password_identity_provider.mock_user = user
+
+    if check_permissions is not None:
+        params = {"permissions": json.dumps(check_permissions)}
+    else:
+        params = None
+
+    r = await jp_fetch("api/me", params=params)
+    assert r is not None
+    assert r.code == 200
+    response = json.loads(r.body.decode())
+    assert set(response.keys()) == {"identity", "permissions"}
     assert response["permissions"] == expected
 
 

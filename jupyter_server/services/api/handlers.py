@@ -11,7 +11,7 @@ from tornado import web
 
 from jupyter_server._tz import isoformat, utcfromtimestamp
 from jupyter_server.auth.decorator import authorized
-from jupyter_server.auth.identity import IdentityProvider, UpdatableField, User
+from jupyter_server.auth.identity import IdentityProvider, UpdatableField
 
 from ...base.handlers import APIHandler, JupyterHandler
 
@@ -107,11 +107,13 @@ class IdentityHandler(APIHandler):
                 if authorized:
                     allowed.append(action)
 
+        # Add permission to user to update their own identity
+        permissions["updatable_fields"] = self.identity_provider.updatable_fields
+
         identity: dict[str, Any] = self.identity_provider.identity_model(user)
         model = {
             "identity": identity,
             "permissions": permissions,
-            "updatable_fields": self.identity_provider.updatable_fields,
         }
         self.write(json.dumps(model))
 
