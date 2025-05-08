@@ -423,6 +423,12 @@ class TrustNotebooksHandler(JupyterHandler):
         self.set_status(201)
         self.finish()
 
+class ListToolInfoHandler(APIHandler):
+    @web.authenticated
+    async def get(self):
+        tools = self.serverapp.extension_manager.discover_tools()
+        self.finish({"discovered_tools": tools})
+
 
 # -----------------------------------------------------------------------------
 # URL to handler mappings
@@ -441,4 +447,6 @@ default_handlers = [
     (r"/api/contents%s/trust" % path_regex, TrustNotebooksHandler),
     (r"/api/contents%s" % path_regex, ContentsHandler),
     (r"/api/notebooks/?(.*)", NotebooksRedirectHandler),
+    (r"/api/tools", ListToolInfoHandler),
+
 ]
