@@ -2540,6 +2540,9 @@ class ServerApp(JupyterApp):
         """
         self.extension_manager.load_all_extensions()
 
+    def get_tools(self): 
+        return self.extension_manager.get_tools()
+
     def init_mime_overrides(self) -> None:
         # On some Windows machines, an application has registered incorrect
         # mimetypes in the registry.
