@@ -16,6 +16,7 @@ from .config import ExtensionConfigManager
 from .utils import ExtensionMetadataError, ExtensionModuleNotFound, get_loader, get_metadata
 
 
+# probably this should go in it's own file? Not sure where though
 MCP_TOOL_SCHEMA = {
     "type": "object",
     "properties": {
@@ -144,10 +145,11 @@ class ExtensionPoint(HasTraits):
         try:
             definitions = tools_func()
             for name, tool in definitions.items():
+                # not sure if we should just pick MCP schema or make the schema something the user can pass
                 jsonschema.validate(instance=tool["metadata"], schema=MCP_TOOL_SCHEMA)
                 tools[name] = tool
         except Exception as e:
-            # You could also `self.log.warning(...)` if you pass the log around
+            # not sure if this should fail quietly, raise an error, or log it? 
             print(f"[tool-discovery] Failed to load tools from {self.module_name}: {e}")
         return tools
 
@@ -508,7 +510,7 @@ class ExtensionManager(LoggingConfigurable):
                 continue
 
             for point in ext_pkg.extension_points.values():
-                for name, tool in point.tools.items():  # 🔥 <— new property!
+                for name, tool in point.tools.items():  # <— new property!
                     if name in all_tools:
                         raise ValueError(f"Duplicate tool name detected: '{name}'")
                     all_tools[name] = tool

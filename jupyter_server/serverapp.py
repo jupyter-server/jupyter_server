@@ -2540,6 +2540,7 @@ class ServerApp(JupyterApp):
         """
         self.extension_manager.load_all_extensions()
 
+    # is this how I would expose it? and Is this a good name? 
     def get_tools(self): 
         return self.extension_manager.get_tools()
 
