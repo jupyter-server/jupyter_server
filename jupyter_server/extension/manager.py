@@ -5,16 +5,14 @@ from __future__ import annotations
 import importlib
 from itertools import starmap
 
+import jsonschema
 from tornado.gen import multi
 from traitlets import Any, Bool, Dict, HasTraits, Instance, List, Unicode, default, observe
 from traitlets import validate as validate_trait
 from traitlets.config import LoggingConfigurable
-import jsonschema
-
 
 from .config import ExtensionConfigManager
 from .utils import ExtensionMetadataError, ExtensionModuleNotFound, get_loader, get_metadata
-
 
 # probably this should go in it's own file? Not sure where though
 MCP_TOOL_SCHEMA = {
@@ -27,9 +25,9 @@ MCP_TOOL_SCHEMA = {
             "properties": {
                 "type": {"type": "string", "enum": ["object"]},
                 "properties": {"type": "object"},
-                "required": {"type": "array", "items": {"type": "string"}}
+                "required": {"type": "array", "items": {"type": "string"}},
             },
-            "required": ["type", "properties"]
+            "required": ["type", "properties"],
         },
         "annotations": {
             "type": "object",
@@ -38,14 +36,15 @@ MCP_TOOL_SCHEMA = {
                 "readOnlyHint": {"type": "boolean"},
                 "destructiveHint": {"type": "boolean"},
                 "idempotentHint": {"type": "boolean"},
-                "openWorldHint": {"type": "boolean"}
+                "openWorldHint": {"type": "boolean"},
             },
-            "additionalProperties": True
-        }
+            "additionalProperties": True,
+        },
     },
     "required": ["name", "inputSchema"],
-    "additionalProperties": False
+    "additionalProperties": False,
 }
+
 
 class ExtensionPoint(HasTraits):
     """A simple API for connecting to a Jupyter Server extension
@@ -129,9 +128,9 @@ class ExtensionPoint(HasTraits):
     def module(self):
         """The imported module (using importlib.import_module)"""
         return self._module
-    
+
     @property
-    def tools(self): 
+    def tools(self):
         """Structured tools exposed by this extension point, if any."""
         loc = self.app or self.module
         if not loc:
@@ -149,7 +148,7 @@ class ExtensionPoint(HasTraits):
                 jsonschema.validate(instance=tool["metadata"], schema=MCP_TOOL_SCHEMA)
                 tools[name] = tool
         except Exception as e:
-            # not sure if this should fail quietly, raise an error, or log it? 
+            # not sure if this should fail quietly, raise an error, or log it?
             print(f"[tool-discovery] Failed to load tools from {self.module_name}: {e}")
         return tools
 
@@ -166,7 +165,6 @@ class ExtensionPoint(HasTraits):
                 lambda serverapp: None,
             )
         return linker
-
 
     def _get_loader(self):
         """Get a loader."""
@@ -500,7 +498,6 @@ class ExtensionManager(LoggingConfigurable):
         for name in self.sorted_extensions:
             self.load_extension(name)
 
-    
     def get_tools(self) -> Dict[str, Any]:
         """Aggregate tools from all extensions that expose them."""
         all_tools = {}

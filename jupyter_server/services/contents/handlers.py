@@ -423,12 +423,13 @@ class TrustNotebooksHandler(JupyterHandler):
         self.set_status(201)
         self.finish()
 
-# Somehow this doesn't feel like the right service for this to go in? 
+
+# Somehow this doesn't feel like the right service for this to go in?
 class ListToolInfoHandler(APIHandler):
     @web.authenticated
     async def get(self):
         tools = self.serverapp.extension_manager.discover_tools()
-        self.finish({"discovered_tools": tools}) 
+        self.finish({"discovered_tools": tools})
 
 
 # -----------------------------------------------------------------------------
@@ -449,5 +450,4 @@ default_handlers = [
     (r"/api/contents%s" % path_regex, ContentsHandler),
     (r"/api/notebooks/?(.*)", NotebooksRedirectHandler),
     (r"/api/tools", ListToolInfoHandler),
-
 ]
