@@ -6,7 +6,7 @@ import importlib
 from itertools import starmap
 
 from tornado.gen import multi
-from traitlets import Any, Bool, Dict, HasTraits, Instance, List, Unicode, default, observe
+from traitlets import Any, Bool, Dict, Instance, List, Unicode, default, observe
 from traitlets import validate as validate_trait
 from traitlets.config import LoggingConfigurable
 
@@ -14,7 +14,7 @@ from .config import ExtensionConfigManager
 from .utils import ExtensionMetadataError, ExtensionModuleNotFound, get_loader, get_metadata
 
 
-class ExtensionPoint(HasTraits):
+class ExtensionPoint(LoggingConfigurable):
     """A simple API for connecting to a Jupyter Server extension
     point defined by metadata and importable from a Python package.
     """
@@ -227,7 +227,7 @@ class ExtensionPackage(LoggingConfigurable):
             raise ExtensionModuleNotFound(msg) from None
         # Create extension point interfaces for each extension path.
         for m in self.metadata:
-            point = ExtensionPoint(metadata=m)
+            point = ExtensionPoint(metadata=m, parent=self)
             self.extension_points[point.name] = point
         return name
 
