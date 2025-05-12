@@ -145,10 +145,16 @@ class ExtensionPoint(HasTraits):
 
         tools = {}
         try:
-            definitions = tools_func()
-            for name, tool in definitions.items():
-                # not sure if we should just pick MCP schema or make the schema something the user can pass
-                jsonschema.validate(instance=tool["metadata"], schema=MCP_TOOL_SCHEMA)
+            result = tools_func()
+            # Support (tools_dict, schema) or just tools_dict
+            if isinstance(result, tuple) and len(result) == 2:
+                tools_dict, schema = result
+            else:
+                tools_dict = result
+                schema = MCP_TOOL_SCHEMA
+                
+            for name, tool in tools_dict.items():
+                jsonschema.validate(instance=tool["metadata"], schema=schema)
                 tools[name] = tool
         except Exception as e:
             # not sure if this should fail quietly, raise an error, or log it?
