@@ -2542,7 +2542,7 @@ class ServerApp(JupyterApp):
 
 
     def get_tools(self): 
-        """Aggregate and return tools + tool metadata from all the extensions that expose them."""
+        """Return tools exposed by all extensions."""
         return self.extension_manager.get_tools()
 
     def init_mime_overrides(self) -> None:
