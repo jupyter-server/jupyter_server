@@ -130,8 +130,11 @@ class ExtensionPoint(HasTraits):
         return self._module
 
     @property
-    def tools(self):
-        """Structured tools exposed by this extension point, if any."""
+    def tools(self): 
+        """Structured tools exposed by this extension point, if any.
+
+        Searches for a `jupyter_server_extension_tools` function on the extension module or app.
+        """
         loc = self.app or self.module
         if not loc:
             return {}
@@ -499,7 +502,7 @@ class ExtensionManager(LoggingConfigurable):
             self.load_extension(name)
 
     def get_tools(self) -> Dict[str, Any]:
-        """Aggregate tools from all extensions that expose them."""
+        """Aggregate and return structured tools (with metadata) from all enabled extensions."""
         all_tools = {}
 
         for ext_name, ext_pkg in self.extensions.items():
@@ -507,7 +510,7 @@ class ExtensionManager(LoggingConfigurable):
                 continue
 
             for point in ext_pkg.extension_points.values():
-                for name, tool in point.tools.items():  # <— new property!
+                for name, tool in point.tools.items(): 
                     if name in all_tools:
                         raise ValueError(f"Duplicate tool name detected: '{name}'")
                     all_tools[name] = tool

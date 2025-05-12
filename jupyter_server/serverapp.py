@@ -2540,8 +2540,9 @@ class ServerApp(JupyterApp):
         """
         self.extension_manager.load_all_extensions()
 
-    # is this how I would expose it? and Is this a good name?
-    def get_tools(self):
+
+    def get_tools(self): 
+        """Aggregate and return tools + tool metadata from all the extensions that expose them."""
         return self.extension_manager.get_tools()
 
     def init_mime_overrides(self) -> None:
