@@ -20,7 +20,7 @@ from dataclasses import asdict, dataclass
 from http.cookies import Morsel
 
 from tornado import escape, httputil, web
-from traitlets import Bool, Dict, Type, Unicode, default
+from traitlets import Bool, Dict, Enum, List, TraitError, Type, Unicode, default, validate
 from traitlets.config import LoggingConfigurable
 
 from jupyter_server.transutils import _i18n
@@ -29,6 +29,10 @@ from .security import passwd_check, set_password
 from .utils import get_anonymous_username
 
 _non_alphanum = re.compile(r"[^A-Za-z0-9]")
+
+
+# Define the User properties that can be updated
+UpdatableField = t.Literal["name", "display_name", "initials", "avatar_url", "color"]
 
 
 @dataclass
@@ -188,6 +192,14 @@ class IdentityProvider(LoggingConfigurable):
         help=_i18n("The logout handler class to use."),
     )
 
+    # Define the fields that can be updated
+    updatable_fields = List(
+        trait=Enum(list(t.get_args(UpdatableField))),
+        default_value=["color"],  # Default updatable field
+        config=True,
+        help=_i18n("List of fields in the User model that can be updated."),
+    )
+
     token_generated = False
 
     @default("token")
@@ -206,6 +218,18 @@ class IdentityProvider(LoggingConfigurable):
         else:
             self.token_generated = True
             return binascii.hexlify(os.urandom(24)).decode("ascii")
+
+    @validate("updatable_fields")
+    def _validate_updatable_fields(self, proposal):
+        """Validate that all fields in updatable_fields are valid."""
+        valid_updatable_fields = list(t.get_args(UpdatableField))
+        invalid_fields = [
+            field for field in proposal["value"] if field not in valid_updatable_fields
+        ]
+        if invalid_fields:
+            msg = f"Invalid fields in updatable_fields: {invalid_fields}"
+            raise TraitError(msg)
+        return proposal["value"]
 
     need_token: bool | Bool[bool, t.Union[bool, int]] = Bool(True)
 
@@ -268,6 +292,31 @@ class IdentityProvider(LoggingConfigurable):
                 self.set_login_cookie(handler, user)
 
         return user
+
+    def update_user(
+        self, handler: web.RequestHandler, user_data: dict[UpdatableField, str]
+    ) -> User:
+        """Update user information and persist the user model."""
+        self.check_update(user_data)
+        current_user = t.cast(User, handler.current_user)
+        updated_user = self.update_user_model(current_user, user_data)
+        self.persist_user_model(handler)
+        return updated_user
+
+    def check_update(self, user_data: dict[UpdatableField, str]) -> None:
+        """Raises if some fields to update are not updatable."""
+        for field in user_data:
+            if field not in self.updatable_fields:
+                msg = f"Field {field} is not updatable"
+                raise ValueError(msg)
+
+    def update_user_model(self, current_user: User, user_data: dict[UpdatableField, str]) -> User:
+        """Update user information."""
+        raise NotImplementedError
+
+    def persist_user_model(self, handler: web.RequestHandler) -> None:
+        """Persist the user model (i.e. a cookie)."""
+        raise NotImplementedError
 
     def identity_model(self, user: User) -> dict[str, t.Any]:
         """Return a User as an Identity model"""
@@ -617,6 +666,16 @@ class PasswordIdentityProvider(IdentityProvider):
     def _need_token_default(self):
         return not bool(self.hashed_password)
 
+    @default("updatable_fields")
+    def _default_updatable_fields(self):
+        return [
+            "name",
+            "display_name",
+            "initials",
+            "avatar_url",
+            "color",
+        ]
+
     @property
     def login_available(self) -> bool:
         """Whether a LoginHandler is needed - and therefore whether the login page should be displayed."""
@@ -626,6 +685,17 @@ class PasswordIdentityProvider(IdentityProvider):
     def auth_enabled(self) -> bool:
         """Return whether any auth is enabled"""
         return bool(self.hashed_password or self.token)
+
+    def update_user_model(self, current_user: User, user_data: dict[UpdatableField, str]) -> User:
+        """Update user information."""
+        for field in self.updatable_fields:
+            if field in user_data:
+                setattr(current_user, field, user_data[field])
+        return current_user
+
+    def persist_user_model(self, handler: web.RequestHandler) -> None:
+        """Persist the user model to a cookie."""
+        self.set_login_cookie(handler, handler.current_user)
 
     def passwd_check(self, password):
         """Check password against our stored hashed password"""
