@@ -644,6 +644,24 @@ def test_immutable_cache_trait():
     assert serverapp.web_app.settings["static_immutable_cache"] == ["/test/immutable"]
 
 
+# testing get_tools
+def test_serverapp_get_tools_empty(jp_serverapp):
+    # testing the default empty state
+    tools = jp_serverapp.get_tools()
+    assert tools == {}
+
+def test_serverapp_get_tools(jp_serverapp):
+    jp_serverapp.extension_manager.add_extension(
+        "tests.extension.mockextensions.mockext_tool", enabled=True
+    )
+    jp_serverapp.extension_manager.link_all_extensions()
+
+    tools = jp_serverapp.get_tools()
+    assert "mock_tool" in tools
+    metadata = tools["mock_tool"]["metadata"]
+    assert metadata["name"] == "mock_tool"
+
+
 def test():
     pass
 
