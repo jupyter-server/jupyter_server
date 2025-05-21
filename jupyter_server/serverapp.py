@@ -2359,9 +2359,7 @@ class ServerApp(JupyterApp):
         )
         return urlparts
 
-    def _customize_url(
-        self, parts: type[urllib.parse.ParseResult]
-    ) -> urllib.parse.ParseResult:
+    def _customize_url(self, parts: type[urllib.parse.ParseResult]) -> urllib.parse.ParseResult:
         # Update with custom pieces.
         if self.custom_display_url:
             # Parse custom display_url
