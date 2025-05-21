@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Enhancements made
 
-- If ServerApp.ip is ipv6 use \[::1\] as local_url [#1495](https://github.com/jupyter-server/jupyter_server/pull/1495) ([@manics](https://github.com/manics))
+- If ServerApp.ip is ipv6 use `[::1]` as local_url [#1495](https://github.com/jupyter-server/jupyter_server/pull/1495) ([@manics](https://github.com/manics))
 - Don't hide .so,.dylib files by default [#1457](https://github.com/jupyter-server/jupyter_server/pull/1457) ([@nokados](https://github.com/nokados))
 - Add async start hook to ExtensionApp API [#1417](https://github.com/jupyter-server/jupyter_server/pull/1417) ([@Zsailer](https://github.com/Zsailer))
 
