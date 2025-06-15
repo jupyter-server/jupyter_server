@@ -75,8 +75,7 @@ class PrometheusMetricsServer:
         LAST_ACTIVITY.set_function(lambda: self.app.web_app.last_activity().timestamp())
         ACTIVE_DURATION.set_function(
             lambda: (
-                self.app.web_app.last_activity()
-                - self.app.web_app.settings["started"]
+                self.app.web_app.last_activity() - self.app.web_app.settings["started"]
             ).total_seconds()
         )
 
@@ -152,13 +151,15 @@ class PrometheusMetricsServer:
         self.initialize_metrics()
 
         # Create Tornado application with metrics handler
-        app = tornado.web.Application([
-            (r"/metrics", PrometheusMetricsHandler),
-        ])
+        app = tornado.web.Application(
+            [
+                (r"/metrics", PrometheusMetricsHandler),
+            ]
+        )
 
         # Create HTTP server
         self.server = tornado.httpserver.HTTPServer(app)
-        
+
         # Try to bind to the specified port
         try:
             self.server.bind(port)
@@ -178,7 +179,7 @@ class PrometheusMetricsServer:
         # Start the server in a separate thread
         self.thread = threading.Thread(target=self._start_metrics_loop, daemon=True)
         self.thread.start()
-        
+
         # Wait for server to be ready
         self._wait_for_server_ready()
         self._running = True
@@ -188,23 +189,23 @@ class PrometheusMetricsServer:
         try:
             # Create a new IOLoop for this thread
             self.ioloop = tornado.ioloop.IOLoop()
-            
+
             # Set as current event loop for this thread
             asyncio.set_event_loop(self.ioloop.asyncio_loop)
-            
+
             # Start the server
             self.server.start(1)  # Single process
-            
+
             # Set up periodic updates in this IOLoop
             def periodic_update_wrapper():
                 if hasattr(self, "_periodic_update"):
                     self._periodic_update()
                 # Schedule next update in 30 seconds
                 self.ioloop.call_later(30, periodic_update_wrapper)
-            
+
             # Start periodic updates
             self.ioloop.call_later(30, periodic_update_wrapper)
-            
+
             # Start the IOLoop
             self.ioloop.start()
         except Exception as e:
@@ -218,9 +219,9 @@ class PrometheusMetricsServer:
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.settimeout(0.1)
-                    s.connect(('localhost', self.port))
+                    s.connect(("localhost", self.port))
                     return
-            except (socket.error, OSError):
+            except OSError:
                 time.sleep(0.1)
         raise TimeoutError(f"Server not ready after {timeout} seconds")
 
