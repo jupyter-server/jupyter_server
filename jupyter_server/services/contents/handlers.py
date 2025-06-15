@@ -37,7 +37,7 @@ def _validate_keys(expect_defined: bool, model: dict[str, Any], keys: list[str])
                 f"Keys unexpectedly None: {errors}",
             )
     else:
-        errors = {key: model[key] for key in keys if model[key] is not None}  # type: ignore[assignment]
+        errors = {key: model[key] for key in keys if model[key] is not None}
         if errors:
             raise web.HTTPError(
                 500,

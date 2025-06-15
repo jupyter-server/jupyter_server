@@ -206,20 +206,20 @@ class PrometheusMetricsServer:
 
         # Start the IOLoop in a separate thread
         def start_metrics_loop():
-            loop = tornado.ioloop.IOLoop()
-            loop.make_current()
+            self.ioloop = tornado.ioloop.IOLoop()
+            self.ioloop.make_current()
 
             # Set up periodic updates in this IOLoop
             def periodic_update_wrapper():
                 if hasattr(self, "_periodic_update"):
                     self._periodic_update()
                 # Schedule next update in 30 seconds
-                loop.call_later(30, periodic_update_wrapper)
+                self.ioloop.call_later(30, periodic_update_wrapper)
 
             # Start periodic updates
-            loop.call_later(30, periodic_update_wrapper)
+            self.ioloop.call_later(30, periodic_update_wrapper)
 
-            loop.start()
+            self.ioloop.start()
 
         self.thread = threading.Thread(target=start_metrics_loop, daemon=True)
         self.thread.start()
@@ -234,12 +234,16 @@ class PrometheusMetricsServer:
             self.http_server.stop()
             self.http_server = None
 
-        if self.thread and self.thread.is_alive():
-            # Note: Tornado IOLoop doesn't have a clean stop method
-            # The thread will exit when the process ends
-            pass
+        if hasattr(self, 'ioloop') and self.ioloop:
+            # Stop the IOLoop
+            self.ioloop.add_callback(self.ioloop.stop)
+            self.ioloop = None
 
-        self.server_app.log.info(f"Metrics server stopped on port {self.port}")
+        if self.thread and self.thread.is_alive():
+            # Wait for thread to finish (with timeout)
+            self.thread.join(timeout=1.0)
+
+        self.server_app.log.info(f"Metrics server stopped on port {getattr(self, 'port', 'unknown')}")
 
 
 def start_metrics_server(server_app, port: int) -> PrometheusMetricsServer:
