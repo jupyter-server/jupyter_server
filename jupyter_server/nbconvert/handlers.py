@@ -90,7 +90,7 @@ class NbconvertFileHandler(JupyterHandler):
     """An nbconvert file handler."""
 
     auth_resource = AUTH_RESOURCE
-    SUPPORTED_METHODS = ("GET",)
+    SUPPORTED_METHODS = ("GET",)  # type:ignore[assignment]
 
     @web.authenticated
     @authorized
@@ -158,7 +158,7 @@ class NbconvertFileHandler(JupyterHandler):
 class NbconvertPostHandler(JupyterHandler):
     """An nbconvert post handler."""
 
-    SUPPORTED_METHODS = ("POST",)
+    SUPPORTED_METHODS = ("POST",)  # type:ignore[assignment]
     auth_resource = AUTH_RESOURCE
 
     @web.authenticated
