@@ -5,8 +5,6 @@ This module provides Prometheus metrics collection and exposure for Jupyter Serv
 """
 
 from .metrics import (
-    ACTIVE_DURATION,
-    HTTP_REQUEST_DURATION_SECONDS,
     KERNEL_CURRENTLY_RUNNING_TOTAL,
     LAST_ACTIVITY,
     SERVER_EXTENSION_INFO,
@@ -17,8 +15,7 @@ from .metrics import (
 from .server import PrometheusMetricsServer, start_metrics_server
 
 __all__ = [
-    "HTTP_REQUEST_DURATION_SECONDS",
-    "KERNEL_CURRENTLY_RUNNING_TOTAL",
+    "KERNEL_CURRENTLY_RUNNING_TOTAL", 
     "TERMINAL_CURRENTLY_RUNNING_TOTAL",
     "SERVER_INFO",
     "SERVER_EXTENSION_INFO",

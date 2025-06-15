@@ -26,13 +26,12 @@ from typing import Optional
 import prometheus_client
 import tornado.httpserver
 import tornado.ioloop
-import tornado.web
+import prometheus_client
 
 from jupyter_server._version import __version__
 from jupyter_server.base.handlers import PrometheusMetricsHandler
 from jupyter_server.prometheus.metrics import (
     ACTIVE_DURATION,
-    HTTP_REQUEST_DURATION_SECONDS,
     KERNEL_CURRENTLY_RUNNING_TOTAL,
     LAST_ACTIVITY,
     SERVER_EXTENSION_INFO,

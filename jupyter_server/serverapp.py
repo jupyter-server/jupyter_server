@@ -119,7 +119,6 @@ from jupyter_server.prometheus.metrics import (
     SERVER_EXTENSION_INFO,
     SERVER_INFO,
     SERVER_STARTED,
-    TERMINAL_CURRENTLY_RUNNING_TOTAL,
 )
 from jupyter_server.services.config import ConfigManager
 from jupyter_server.services.contents.filemanager import (
@@ -2757,7 +2756,7 @@ class ServerApp(JupyterApp):
         for ext in self.extension_manager.extensions.values():
             SERVER_EXTENSION_INFO.labels(
                 name=ext.name, version=ext.version, enabled=str(ext.enabled).lower()
-            ).info({})
+            )
 
         started = self.web_app.settings["started"]
         SERVER_STARTED.set(started.timestamp())
@@ -3126,6 +3125,23 @@ class ServerApp(JupyterApp):
         if self.identity_provider.token and self.identity_provider.token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
             # with auth info.
+            
+            # Determine metrics URL based on whether separate metrics server is running
+            if self.metrics_port:
+                # Separate metrics server is running
+                if self.authenticate_prometheus:
+                    metrics_url = f"http://localhost:{self.metrics_port}/metrics?token={self.identity_provider.token}"
+                else:
+                    metrics_url = f"http://localhost:{self.metrics_port}/metrics"
+            else:
+                # Metrics are served on main server
+                # Use the connection_url as base and append /metrics
+                base_url = self.connection_url.rstrip('/')
+                if self.authenticate_prometheus:
+                    metrics_url = f"{base_url}/metrics?token={self.identity_provider.token}"
+                else:
+                    metrics_url = f"{base_url}/metrics"
+            
             if self.sock:
                 self.log.critical(
                     "\n".join(
@@ -3141,7 +3157,7 @@ class ServerApp(JupyterApp):
                             _i18n(
                                 "To access metrics, open this endpoint in a browser:",
                             ),
-                            f"    http://localhost:{self.metrics_port}/metrics",
+                            f"    {metrics_url}",
                         ]
                     )
                 )
@@ -3154,7 +3170,7 @@ class ServerApp(JupyterApp):
                         _i18n(
                             "To access metrics, open this endpoint in a browser:",
                         ),
-                        f"    http://localhost:{self.metrics_port}/metrics",
+                        f"    {metrics_url}",
                     ]
                 else:
                     message = [
@@ -3170,7 +3186,7 @@ class ServerApp(JupyterApp):
                         _i18n(
                             "To access metrics, open this endpoint in a browser:",
                         ),
-                        f"    http://localhost:{self.metrics_port}/metrics",
+                        f"    {metrics_url}",
                     ]
 
                 self.log.critical("\n".join(message))
