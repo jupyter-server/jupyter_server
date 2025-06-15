@@ -140,19 +140,8 @@ class PrometheusMetricsServer:
         # Run initial update
         periodic_update()
 
-        # Set up periodic updates every 30 seconds
-        def start_periodic_updates():
-            loop = tornado.ioloop.IOLoop.current()
-
-            def update():
-                periodic_update()
-                loop.call_later(30, update)
-
-            loop.call_later(30, update)
-
-        # Start periodic updates in the main server's IOLoop
-        if hasattr(self.server_app, "io_loop") and self.server_app.io_loop:
-            self.server_app.io_loop.add_callback(start_periodic_updates)
+        # Store the periodic update function to be called from the metrics server thread
+        self._periodic_update = periodic_update
 
     def start(self, port: int) -> None:
         """Start the metrics server on the specified port.
@@ -220,6 +209,17 @@ class PrometheusMetricsServer:
         def start_metrics_loop():
             loop = tornado.ioloop.IOLoop()
             loop.make_current()
+            
+            # Set up periodic updates in this IOLoop
+            def periodic_update_wrapper():
+                if hasattr(self, '_periodic_update'):
+                    self._periodic_update()
+                # Schedule next update in 30 seconds
+                loop.call_later(30, periodic_update_wrapper)
+            
+            # Start periodic updates
+            loop.call_later(30, periodic_update_wrapper)
+            
             loop.start()
 
         self.thread = threading.Thread(target=start_metrics_loop, daemon=True)
