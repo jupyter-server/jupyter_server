@@ -10,14 +10,24 @@ from jupyter_server.prometheus.server import PrometheusMetricsServer, start_metr
 from jupyter_server.serverapp import ServerApp
 
 
+@pytest.fixture(autouse=True)
+def cleanup_metrics_servers():
+    """Ensure metrics servers are cleaned up after each test."""
+    yield
+    # Give any remaining threads time to clean up
+    time.sleep(0.2)
+
+
 @pytest.fixture
 def metrics_server_app():
     """Create a server app with metrics enabled on a specific port."""
+    # Use a unique port for this test
+    port = 9090
     # Override the environment variable for this test
-    with patch.dict("os.environ", {"JUPYTER_SERVER_METRICS_PORT": "9090"}):
+    with patch.dict("os.environ", {"JUPYTER_SERVER_METRICS_PORT": str(port)}):
         app = ServerApp()
         # Set the metrics_port directly as a trait
-        app.metrics_port = 9090
+        app.metrics_port = port
         app.initialize([])
         return app
 
@@ -32,6 +42,8 @@ def metrics_server(metrics_server_app):
     # Cleanup
     if hasattr(server, "stop"):
         server.stop()
+        # Give time for cleanup
+        time.sleep(0.2)
 
 
 def test_metrics_server_starts(metrics_server):
@@ -86,6 +98,7 @@ def test_metrics_server_with_authentication():
     finally:
         if hasattr(server, "stop"):
             server.stop()
+            time.sleep(0.2)
 
 
 def test_metrics_server_port_conflict_handling():
@@ -109,8 +122,10 @@ def test_metrics_server_port_conflict_handling():
     finally:
         if hasattr(server1, "stop"):
             server1.stop()
+            time.sleep(0.2)
         if server2 is not None and hasattr(server2, "stop"):
             server2.stop()
+            time.sleep(0.2)
 
 
 def test_metrics_server_disabled_when_port_zero():
@@ -144,6 +159,7 @@ def test_metrics_url_logging_with_separate_server():
     finally:
         if hasattr(server, "stop"):
             server.stop()
+            time.sleep(0.2)
 
 
 def test_metrics_url_logging_with_main_server():
