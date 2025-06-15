@@ -1,4 +1,5 @@
 import os
+import time
 
 # Disable metrics server for all tests by default
 os.environ["JUPYTER_SERVER_METRICS_PORT"] = "0"
@@ -19,6 +20,14 @@ from tests.extension.mockextensions.app import MockExtensionApp
 os.environ["PYWINPTY_BACKEND"] = "1"
 
 pytest_plugins = ["jupyter_server.pytest_plugin"]
+
+
+@pytest.fixture(autouse=True)
+def cleanup_metrics_threads():
+    """Ensure metrics server threads are cleaned up between tests."""
+    yield
+    # Give any remaining daemon threads time to clean up
+    time.sleep(0.1)
 
 
 def pytest_addoption(parser):
