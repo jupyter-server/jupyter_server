@@ -15,7 +15,7 @@ from .metrics import (
 from .server import PrometheusMetricsServer, start_metrics_server
 
 __all__ = [
-    "KERNEL_CURRENTLY_RUNNING_TOTAL", 
+    "KERNEL_CURRENTLY_RUNNING_TOTAL",
     "TERMINAL_CURRENTLY_RUNNING_TOTAL",
     "SERVER_INFO",
     "SERVER_EXTENSION_INFO",

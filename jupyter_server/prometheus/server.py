@@ -26,7 +26,6 @@ from typing import Optional
 import prometheus_client
 import tornado.httpserver
 import tornado.ioloop
-import prometheus_client
 
 from jupyter_server._version import __version__
 from jupyter_server.base.handlers import PrometheusMetricsHandler

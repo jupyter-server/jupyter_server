@@ -3125,7 +3125,7 @@ class ServerApp(JupyterApp):
         if self.identity_provider.token and self.identity_provider.token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
             # with auth info.
-            
+
             # Determine metrics URL based on whether separate metrics server is running
             if self.metrics_port:
                 # Separate metrics server is running
@@ -3136,12 +3136,12 @@ class ServerApp(JupyterApp):
             else:
                 # Metrics are served on main server
                 # Use the connection_url as base and append /metrics
-                base_url = self.connection_url.rstrip('/')
+                base_url = self.connection_url.rstrip("/")
                 if self.authenticate_prometheus:
                     metrics_url = f"{base_url}/metrics?token={self.identity_provider.token}"
                 else:
                     metrics_url = f"{base_url}/metrics"
-            
+
             if self.sock:
                 self.log.critical(
                     "\n".join(
