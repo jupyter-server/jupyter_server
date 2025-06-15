@@ -234,7 +234,7 @@ class PrometheusMetricsServer:
             self.http_server.stop()
             self.http_server = None
 
-        if hasattr(self, 'ioloop') and self.ioloop:
+        if hasattr(self, "ioloop") and self.ioloop:
             # Stop the IOLoop
             self.ioloop.add_callback(self.ioloop.stop)
             self.ioloop = None
@@ -243,7 +243,9 @@ class PrometheusMetricsServer:
             # Wait for thread to finish (with timeout)
             self.thread.join(timeout=1.0)
 
-        self.server_app.log.info(f"Metrics server stopped on port {getattr(self, 'port', 'unknown')}")
+        self.server_app.log.info(
+            f"Metrics server stopped on port {getattr(self, 'port', 'unknown')}"
+        )
 
 
 def start_metrics_server(server_app, port: int) -> PrometheusMetricsServer:

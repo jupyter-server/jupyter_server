@@ -3243,7 +3243,7 @@ class ServerApp(JupyterApp):
             self.http_server.stop()
         if hasattr(self, "metrics_server"):
             # Stop the metrics server if it's running
-            if self.metrics_server is not None and hasattr(self.metrics_server, 'stop'):
+            if self.metrics_server is not None and hasattr(self.metrics_server, "stop"):
                 self.metrics_server.stop()
 
     def start_ioloop(self) -> None:
