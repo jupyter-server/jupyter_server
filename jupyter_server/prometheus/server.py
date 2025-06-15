@@ -162,8 +162,6 @@ class PrometheusMetricsServer:
         port : int
             The port to listen on for metrics requests
         """
-        self.port = port
-
         # Initialize Jupyter metrics
         self.initialize_metrics()
 
@@ -184,9 +182,38 @@ class PrometheusMetricsServer:
         authenticate_metrics = main_app.settings.get("authenticate_prometheus", True)
         auth_info = "with authentication" if authenticate_metrics else "without authentication"
 
-        # Create and start the HTTP server
+        # Create and start the HTTP server with port retry logic
         self.http_server = tornado.httpserver.HTTPServer(metrics_app)
-        self.http_server.listen(port)
+        
+        # Try to bind to the requested port, with fallback to random ports
+        actual_port = port
+        max_retries = 10
+        
+        for attempt in range(max_retries):
+            try:
+                self.http_server.listen(actual_port)
+                self.port = actual_port
+                break
+            except OSError as e:
+                if e.errno == 98:  # Address already in use
+                    if attempt == 0:
+                        # First attempt failed, try random ports
+                        import random
+                        actual_port = random.randint(49152, 65535)  # Use dynamic port range
+                    else:
+                        # Subsequent attempts, try next random port
+                        actual_port = random.randint(49152, 65535)
+                    
+                    if attempt == max_retries - 1:
+                        # Last attempt failed
+                        self.server_app.log.warning(
+                            f"Could not start metrics server on any port after {max_retries} attempts. "
+                            f"Metrics will be available on the main server at /metrics"
+                        )
+                        return
+                else:
+                    # Non-port-related error, re-raise
+                    raise
 
         # Start the IOLoop in a separate thread
         def start_metrics_loop():
@@ -198,7 +225,7 @@ class PrometheusMetricsServer:
         self.thread.start()
 
         self.server_app.log.info(
-            f"Metrics server started on port {port} {auth_info} (using Jupyter Prometheus integration)"
+            f"Metrics server started on port {self.port} {auth_info} (using Jupyter Prometheus integration)"
         )
 
     def stop(self) -> None:
