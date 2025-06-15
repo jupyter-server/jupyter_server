@@ -1,5 +1,8 @@
 import os
 
+# Disable metrics server for all tests by default
+os.environ["JUPYTER_SERVER_METRICS_PORT"] = "0"
+
 # isort: off
 # This must come before any Jupyter imports.
 os.environ["JUPYTER_PLATFORM_DIRS"] = "1"

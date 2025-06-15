@@ -2836,6 +2836,11 @@ class ServerApp(JupyterApp):
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
         self.init_metrics()
+        
+        # Start metrics server after webapp is initialized, so handlers can be properly excluded
+        if self.metrics_port:
+            self._start_metrics_server(self.metrics_port)
+
         if new_httpserver:
             self.init_httpserver()
 
@@ -2878,9 +2883,15 @@ class ServerApp(JupyterApp):
             version=ServerApp.version, url=self.display_url
         )
         info += "\n"
+        # Show metrics URL - if metrics_port is set, the separate server is guaranteed to be running
         if self.metrics_port:
             info += _i18n("Metrics server is running at:\n{url}").format(
-                url=f"http://localhost:{self.metrics_port}/metrics"
+                url=f"http://localhost:{self.metrics_server.port}/metrics"
+            )
+            info += "\n"
+        else:
+            info += _i18n("Metrics are available at:\n{url}").format(
+                url=f"{self.connection_url.rstrip('/')}/metrics"
             )
             info += "\n"
         if self.gateway_config.gateway_enabled:
@@ -3054,15 +3065,13 @@ class ServerApp(JupyterApp):
             self.metrics_server = start_metrics_server(self, port)
             # Check if the metrics server actually started (has a port)
             if not hasattr(self.metrics_server, "port") or self.metrics_server.port is None:
-                self.metrics_server = None
-                self.log.warning(
-                    "Metrics server failed to start. Metrics will be available on the main server at /metrics"
-                )
+                raise RuntimeError("Metrics server failed to start - no port assigned")
+            
+            self.log.info(f"Metrics server is running on port {self.metrics_server.port}")
+            
         except Exception as e:
-            self.metrics_server = None
-            self.log.warning(
-                f"Failed to start metrics server: {e}. Metrics will be available on the main server at /metrics"
-            )
+            self.log.error(f"Failed to start metrics server: {e}")
+            raise RuntimeError(f"Metrics server is required but failed to start: {e}")
 
     def launch_browser(self) -> None:
         """Launch the browser."""
@@ -3129,10 +3138,6 @@ class ServerApp(JupyterApp):
         # Handle the browser opening.
         if self.open_browser and not self.sock:
             self.launch_browser()
-
-        # Start metrics server on alternate port if configured
-        if self.metrics_port:
-            self._start_metrics_server(self.metrics_port)
 
         if self.identity_provider.token and self.identity_provider.token_generated:
             # log full URL with generated token, so there's a copy/pasteable link

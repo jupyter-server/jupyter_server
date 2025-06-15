@@ -198,7 +198,6 @@ class PrometheusMetricsServer:
                         # Last attempt failed
                         self.server_app.log.warning(
                             f"Could not start metrics server on any port after {max_retries} attempts. "
-                            f"Metrics will be available on the main server at /metrics"
                         )
                         return
                 else:
