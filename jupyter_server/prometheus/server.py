@@ -234,11 +234,7 @@ class PrometheusMetricsServer:
             self.http_server.stop()
             self.http_server = None
 
-<<<<<<< HEAD
-        if hasattr(self, "ioloop") and self.ioloop:
-=======
         if hasattr(self, 'ioloop') and self.ioloop is not None:
->>>>>>> 96530763b ([feat/1316] test cases fix)
             # Stop the IOLoop
             self.ioloop.add_callback(self.ioloop.stop)
             self.ioloop = None
