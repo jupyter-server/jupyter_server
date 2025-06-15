@@ -2836,7 +2836,7 @@ class ServerApp(JupyterApp):
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
         self.init_metrics()
-        
+
         # Start metrics server after webapp is initialized, so handlers can be properly excluded
         if self.metrics_port:
             self._start_metrics_server(self.metrics_port)
@@ -3066,9 +3066,9 @@ class ServerApp(JupyterApp):
             # Check if the metrics server actually started (has a port)
             if not hasattr(self.metrics_server, "port") or self.metrics_server.port is None:
                 raise RuntimeError("Metrics server failed to start - no port assigned")
-            
+
             self.log.info(f"Metrics server is running on port {self.metrics_server.port}")
-            
+
         except Exception as e:
             self.log.error(f"Failed to start metrics server: {e}")
             raise RuntimeError(f"Metrics server is required but failed to start: {e}")
