@@ -3053,12 +3053,16 @@ class ServerApp(JupyterApp):
         try:
             self.metrics_server = start_metrics_server(self, port)
             # Check if the metrics server actually started (has a port)
-            if not hasattr(self.metrics_server, 'port') or self.metrics_server.port is None:
+            if not hasattr(self.metrics_server, "port") or self.metrics_server.port is None:
                 self.metrics_server = None
-                self.log.warning("Metrics server failed to start. Metrics will be available on the main server at /metrics")
+                self.log.warning(
+                    "Metrics server failed to start. Metrics will be available on the main server at /metrics"
+                )
         except Exception as e:
             self.metrics_server = None
-            self.log.warning(f"Failed to start metrics server: {e}. Metrics will be available on the main server at /metrics")
+            self.log.warning(
+                f"Failed to start metrics server: {e}. Metrics will be available on the main server at /metrics"
+            )
 
     def launch_browser(self) -> None:
         """Launch the browser."""
@@ -3135,11 +3139,13 @@ class ServerApp(JupyterApp):
             # with auth info.
 
             # Determine metrics URL based on whether separate metrics server is running
-            if (self.metrics_port and 
-                hasattr(self, 'metrics_server') and 
-                self.metrics_server is not None and 
-                hasattr(self.metrics_server, 'port') and 
-                self.metrics_server.port is not None):
+            if (
+                self.metrics_port
+                and hasattr(self, "metrics_server")
+                and self.metrics_server is not None
+                and hasattr(self.metrics_server, "port")
+                and self.metrics_server.port is not None
+            ):
                 # Separate metrics server is running
                 if self.authenticate_prometheus:
                     metrics_url = f"http://localhost:{self.metrics_server.port}/metrics?token={self.identity_provider.token}"

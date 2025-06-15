@@ -184,11 +184,11 @@ class PrometheusMetricsServer:
 
         # Create and start the HTTP server with port retry logic
         self.http_server = tornado.httpserver.HTTPServer(metrics_app)
-        
+
         # Try to bind to the requested port, with fallback to random ports
         actual_port = port
         max_retries = 10
-        
+
         for attempt in range(max_retries):
             try:
                 self.http_server.listen(actual_port)
@@ -199,11 +199,12 @@ class PrometheusMetricsServer:
                     if attempt == 0:
                         # First attempt failed, try random ports
                         import random
+
                         actual_port = random.randint(49152, 65535)  # Use dynamic port range
                     else:
                         # Subsequent attempts, try next random port
                         actual_port = random.randint(49152, 65535)
-                    
+
                     if attempt == max_retries - 1:
                         # Last attempt failed
                         self.server_app.log.warning(
