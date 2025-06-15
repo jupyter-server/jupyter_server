@@ -209,17 +209,17 @@ class PrometheusMetricsServer:
         def start_metrics_loop():
             loop = tornado.ioloop.IOLoop()
             loop.make_current()
-            
+
             # Set up periodic updates in this IOLoop
             def periodic_update_wrapper():
-                if hasattr(self, '_periodic_update'):
+                if hasattr(self, "_periodic_update"):
                     self._periodic_update()
                 # Schedule next update in 30 seconds
                 loop.call_later(30, periodic_update_wrapper)
-            
+
             # Start periodic updates
             loop.call_later(30, periodic_update_wrapper)
-            
+
             loop.start()
 
         self.thread = threading.Thread(target=start_metrics_loop, daemon=True)
