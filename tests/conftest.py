@@ -1,8 +1,13 @@
 import os
 import time
+import warnings
 
 # Disable metrics server for all tests by default
 os.environ["JUPYTER_SERVER_METRICS_PORT"] = "0"
+
+# Suppress deprecation warnings and thread exceptions for tests
+warnings.filterwarnings("ignore", category=DeprecationWarning, message="make_current is deprecated")
+warnings.filterwarnings("ignore", category=ResourceWarning)
 
 # isort: off
 # This must come before any Jupyter imports.

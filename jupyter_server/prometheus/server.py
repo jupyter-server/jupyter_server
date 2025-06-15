@@ -20,12 +20,16 @@ The separate metrics server reuses the main server's authentication settings and
 handler infrastructure, ensuring consistent behavior.
 """
 
+import asyncio
+import socket
 import threading
+import time
+import warnings
 from typing import Optional
 
-import prometheus_client
 import tornado.httpserver
 import tornado.ioloop
+import tornado.web
 
 from jupyter_server._version import __version__
 from jupyter_server.base.handlers import PrometheusMetricsHandler
@@ -41,20 +45,16 @@ from jupyter_server.prometheus.metrics import (
 
 
 class PrometheusMetricsServer:
-    """A separate server for exposing Prometheus metrics."""
+    """A separate Tornado server for serving Prometheus metrics."""
 
-    def __init__(self, server_app):
-        """Initialize the metrics server.
-
-        Parameters
-        ----------
-        server_app : ServerApp
-            The main Jupyter server application instance
-        """
-        self.server_app = server_app
+    def __init__(self, app):
+        """Initialize the metrics server."""
+        self.app = app
         self.port = None
-        self.http_server = None
+        self.server = None
+        self.ioloop = None
         self.thread = None
+        self._running = False
 
     def initialize_metrics(self):
         """Initialize Jupyter-specific metrics for this server instance."""
@@ -62,21 +62,21 @@ class PrometheusMetricsServer:
         SERVER_INFO.info({"version": __version__})
 
         # Set up extension info
-        for ext in self.server_app.extension_manager.extensions.values():
+        for ext in self.app.extension_manager.extensions.values():
             SERVER_EXTENSION_INFO.labels(
                 name=ext.name, version=ext.version, enabled=str(ext.enabled).lower()
             ).info({})
 
         # Set server start time
-        started = self.server_app.web_app.settings["started"]
+        started = self.app.web_app.settings["started"]
         SERVER_STARTED.set(started.timestamp())
 
         # Set up activity tracking
-        LAST_ACTIVITY.set_function(lambda: self.server_app.web_app.last_activity().timestamp())
+        LAST_ACTIVITY.set_function(lambda: self.app.web_app.last_activity().timestamp())
         ACTIVE_DURATION.set_function(
             lambda: (
-                self.server_app.web_app.last_activity()
-                - self.server_app.web_app.settings["started"]
+                self.app.web_app.last_activity()
+                - self.app.web_app.settings["started"]
             ).total_seconds()
         )
 
@@ -94,7 +94,7 @@ class PrometheusMetricsServer:
         # Set up kernel count tracking
         def update_kernel_metrics():
             try:
-                kernel_manager = self.server_app.kernel_manager
+                kernel_manager = self.app.kernel_manager
                 if hasattr(kernel_manager, "list_kernel_ids"):
                     kernel_ids = kernel_manager.list_kernel_ids()
                     # Reset all kernel type metrics to 0
@@ -118,19 +118,19 @@ class PrometheusMetricsServer:
                     for kernel_type, count in kernel_types.items():
                         KERNEL_CURRENTLY_RUNNING_TOTAL.labels(type=kernel_type).set(count)
             except Exception as e:
-                self.server_app.log.debug(f"Error updating kernel metrics: {e}")
+                self.app.log.debug(f"Error updating kernel metrics: {e}")
 
         # Set up terminal count tracking
         def update_terminal_metrics():
             try:
-                terminal_manager = getattr(self.server_app, "terminal_manager", None)
+                terminal_manager = getattr(self.app, "terminal_manager", None)
                 if terminal_manager and hasattr(terminal_manager, "list"):
                     terminal_count = len(terminal_manager.list())
                     TERMINAL_CURRENTLY_RUNNING_TOTAL.set(terminal_count)
                 else:
                     TERMINAL_CURRENTLY_RUNNING_TOTAL.set(0)
             except Exception as e:
-                self.server_app.log.debug(f"Error updating terminal metrics: {e}")
+                self.app.log.debug(f"Error updating terminal metrics: {e}")
 
         # Set up periodic updates
         def periodic_update():
@@ -143,130 +143,122 @@ class PrometheusMetricsServer:
         # Store the periodic update function to be called from the metrics server thread
         self._periodic_update = periodic_update
 
-    def start(self, port: int) -> None:
-        """Start the metrics server on the specified port.
+    def start(self, port: int = 9090) -> None:
+        """Start the metrics server on the specified port."""
+        if self._running:
+            return
 
-        Parameters
-        ----------
-        port : int
-            The port to listen on for metrics requests
-        """
         # Initialize Jupyter metrics
         self.initialize_metrics()
 
-        # Reuse the main server's web application and settings
-        # This ensures identical behavior and eliminates duplication
-        main_app = self.server_app.web_app
+        # Create Tornado application with metrics handler
+        app = tornado.web.Application([
+            (r"/metrics", PrometheusMetricsHandler),
+        ])
 
-        # Create a new application that shares the same settings and handlers
-        # but only serves the metrics endpoint
-        metrics_app = tornado.web.Application(
-            [
-                (r"/metrics", PrometheusMetricsHandler),
-            ],
-            **main_app.settings,
-        )
+        # Create HTTP server
+        self.server = tornado.httpserver.HTTPServer(app)
+        
+        # Try to bind to the specified port
+        try:
+            self.server.bind(port)
+            self.port = port
+        except OSError:
+            # If port is in use, try alternative ports
+            for alt_port in range(port + 1, port + 10):
+                try:
+                    self.server.bind(alt_port)
+                    self.port = alt_port
+                    break
+                except OSError:
+                    continue
+            else:
+                raise RuntimeError(f"Could not bind to any port starting from {port}")
 
-        # Determine authentication status for logging
-        authenticate_metrics = main_app.settings.get("authenticate_prometheus", True)
-        auth_info = "with authentication" if authenticate_metrics else "without authentication"
+        # Start the server in a separate thread
+        self.thread = threading.Thread(target=self._start_metrics_loop, daemon=True)
+        self.thread.start()
+        
+        # Wait for server to be ready
+        self._wait_for_server_ready()
+        self._running = True
 
-        # Create and start the HTTP server with port retry logic
-        self.http_server = tornado.httpserver.HTTPServer(metrics_app)
-
-        # Try to bind to the requested port, with fallback to random ports
-        actual_port = port
-        max_retries = 10
-
-        for attempt in range(max_retries):
-            try:
-                self.http_server.listen(actual_port)
-                self.port = actual_port
-                break
-            except OSError as e:
-                if e.errno == 98:  # Address already in use
-                    if attempt == 0:
-                        # First attempt failed, try random ports
-                        import random
-
-                        actual_port = random.randint(49152, 65535)  # Use dynamic port range
-                    else:
-                        # Subsequent attempts, try next random port
-                        actual_port = random.randint(49152, 65535)
-
-                    if attempt == max_retries - 1:
-                        # Last attempt failed
-                        self.server_app.log.warning(
-                            f"Could not start metrics server on any port after {max_retries} attempts. "
-                        )
-                        return
-                else:
-                    # Non-port-related error, re-raise
-                    raise
-
-        # Start the IOLoop in a separate thread
-        def start_metrics_loop():
+    def _start_metrics_loop(self) -> None:
+        """Start the IOLoop in a separate thread."""
+        try:
+            # Create a new IOLoop for this thread
             self.ioloop = tornado.ioloop.IOLoop()
-            self.ioloop.make_current()
-
+            
+            # Set as current event loop for this thread
+            asyncio.set_event_loop(self.ioloop.asyncio_loop)
+            
+            # Start the server
+            self.server.start(1)  # Single process
+            
             # Set up periodic updates in this IOLoop
             def periodic_update_wrapper():
                 if hasattr(self, "_periodic_update"):
                     self._periodic_update()
                 # Schedule next update in 30 seconds
                 self.ioloop.call_later(30, periodic_update_wrapper)
-
+            
             # Start periodic updates
             self.ioloop.call_later(30, periodic_update_wrapper)
-
+            
+            # Start the IOLoop
             self.ioloop.start()
+        except Exception as e:
+            # Log error but don't raise to avoid unhandled thread exceptions
+            print(f"Metrics server error: {e}")
 
-        self.thread = threading.Thread(target=start_metrics_loop, daemon=True)
-        self.thread.start()
-
-        self.server_app.log.info(
-            f"Metrics server started on port {self.port} {auth_info} (using Jupyter Prometheus integration)"
-        )
+    def _wait_for_server_ready(self, timeout: float = 5.0) -> None:
+        """Wait for the server to be ready to accept connections."""
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.settimeout(0.1)
+                    s.connect(('localhost', self.port))
+                    return
+            except (socket.error, OSError):
+                time.sleep(0.1)
+        raise TimeoutError(f"Server not ready after {timeout} seconds")
 
     def stop(self) -> None:
         """Stop the metrics server."""
-        if self.http_server:
-            self.http_server.stop()
-            self.http_server = None
+        if not self._running:
+            return
 
-        if hasattr(self, "ioloop") and self.ioloop:
-            # Stop the IOLoop
+        self._running = False
+
+        # Stop the server
+        if self.server:
+            self.server.stop()
+
+        # Stop the IOLoop
+        if self.ioloop:
             try:
                 self.ioloop.add_callback(self.ioloop.stop)
-            except RuntimeError:
-                # IOLoop might already be stopped
+            except Exception:
                 pass
-            self.ioloop = None
 
+        # Wait for thread to finish
         if self.thread and self.thread.is_alive():
-            # Wait for thread to finish (with timeout)
-            self.thread.join(timeout=1.0)
+            self.thread.join(timeout=2.0)
 
-        self.server_app.log.info(
-            f"Metrics server stopped on port {getattr(self, 'port', 'unknown')}"
-        )
+        # Clean up
+        self.server = None
+        self.ioloop = None
+        self.thread = None
+        self.port = None
 
 
-def start_metrics_server(server_app, port: int) -> PrometheusMetricsServer:
-    """Start a Prometheus metrics server for the given Jupyter server.
-
-    Parameters
-    ----------
-    server_app : ServerApp
-        The main Jupyter server application instance
-    port : int
-        The port to listen on for metrics requests
-
-    Returns
-    -------
-    PrometheusMetricsServer
-        The metrics server instance
-    """
-    metrics_server = PrometheusMetricsServer(server_app)
-    metrics_server.start(port)
-    return metrics_server
+def start_metrics_server(app, port: int = 9090) -> Optional[PrometheusMetricsServer]:
+    """Start a metrics server for the given app."""
+    try:
+        server = PrometheusMetricsServer(app)
+        server.start(port)
+        return server
+    except Exception as e:
+        print(f"Failed to start metrics server: {e}")
+        return None

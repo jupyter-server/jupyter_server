@@ -2023,6 +2023,10 @@ class ServerApp(JupyterApp):
         config=True,
     )
 
+    @default("metrics_port")
+    def _metrics_port_default(self) -> int:
+        return int(os.getenv("JUPYTER_SERVER_METRICS_PORT", "9090"))
+
     static_immutable_cache = List(
         Unicode(),
         help="""
