@@ -102,7 +102,7 @@ class PrometheusMetricsServer:
                         KERNEL_CURRENTLY_RUNNING_TOTAL.labels(type=kernel_type).set(0)
 
                     # Count kernels by type
-                    kernel_types = {}
+                    kernel_types: dict[str, int] = {}
                     for kid in kernel_ids:
                         try:
                             kernel = kernel_manager.get_kernel(kid)
