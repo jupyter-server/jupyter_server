@@ -117,6 +117,9 @@ from jupyter_server.prometheus.metrics import (
     SERVER_EXTENSION_INFO,
     SERVER_INFO,
     SERVER_STARTED,
+    HTTP_REQUEST_DURATION_SECONDS,
+    KERNEL_CURRENTLY_RUNNING_TOTAL,
+    TERMINAL_CURRENTLY_RUNNING_TOTAL,
 )
 from jupyter_server.services.config import ConfigManager
 from jupyter_server.services.contents.filemanager import (
@@ -301,7 +304,7 @@ class ServerWebApplication(web.Application):
             websocket_ping_interval=websocket_ping_interval,
             websocket_ping_timeout=websocket_ping_timeout,
         )
-        handlers = self.init_handlers(default_services, settings)
+        handlers = self.init_handlers(default_services, settings, jupyter_app)
 
         undecorated_methods = []
         for matcher, handler, *_ in handlers:
@@ -412,8 +415,7 @@ class ServerWebApplication(web.Application):
         settings = {
             # basics
             "log_function": partial(
-                log_request, record_prometheus_metrics=jupyter_app.record_http_request_metrics
-            ),
+                log_request, record_prometheus_metrics=jupyter_app.record_http_request_metrics),
             "base_url": base_url,
             "default_url": default_url,
             "template_path": template_path,
@@ -480,7 +482,7 @@ class ServerWebApplication(web.Application):
             settings["xsrf_cookie_kwargs"] = {"path": base_url}
         return settings
 
-    def init_handlers(self, default_services, settings):
+    def init_handlers(self, default_services, settings, jupyter_app):
         """Load the (URL pattern, handler) tuples for each component."""
         # Order matters. The first handler to match the URL will handle the request.
         handlers = []
@@ -511,7 +513,13 @@ class ServerWebApplication(web.Application):
         handlers.extend(settings["identity_provider"].get_handlers())
 
         # register base handlers last
-        handlers.extend(load_handlers("jupyter_server.base.handlers"))
+        base_handlers = load_handlers("jupyter_server.base.handlers")
+        
+        # If a separate metrics server is running, exclude the /metrics handler from main server
+        if jupyter_app.metrics_port:
+            base_handlers = [h for h in base_handlers if h[0] != r"/metrics"]
+        
+        handlers.extend(base_handlers)
 
         if settings["default_url"] != settings["base_url"]:
             # set the URL that will be redirected from `/`
@@ -2006,6 +2014,13 @@ class ServerApp(JupyterApp):
 
         Set to False to disable recording the http_request_duration_seconds metric.
         """,
+        config=True,
+    )
+
+    metrics_port = Integer(
+        9090,
+        help="Port to expose metrics server on alternate port (set to 0 to disable). When set, disables /metrics endpoint on main server.",
+        config=True,
     )
 
     static_immutable_cache = List(
@@ -2741,7 +2756,7 @@ class ServerApp(JupyterApp):
         for ext in self.extension_manager.extensions.values():
             SERVER_EXTENSION_INFO.labels(
                 name=ext.name, version=ext.version, enabled=str(ext.enabled).lower()
-            )
+            ).info({})
 
         started = self.web_app.settings["started"]
         SERVER_STARTED.set(started.timestamp())
@@ -2862,6 +2877,12 @@ class ServerApp(JupyterApp):
         info += _i18n("Jupyter Server {version} is running at:\n{url}").format(
             version=ServerApp.version, url=self.display_url
         )
+        info += "\n"
+        if self.metrics_port:
+            info += _i18n("Metrics server is running at:\n{url}").format(
+                url=f"http://localhost:{self.metrics_port}/metrics"
+            )
+            info += "\n"
         if self.gateway_config.gateway_enabled:
             info += (
                 _i18n("\nKernels will be managed by the Gateway server running at:\n%s")
@@ -3024,6 +3045,12 @@ class ServerApp(JupyterApp):
             assembled_url = url_path_join(self.connection_url, uri)
 
         return assembled_url, open_file
+    
+    def _start_metrics_server(self, port):
+        """Start a separate metrics server on the specified port using Jupyter's Prometheus integration."""
+        from jupyter_server.prometheus.server import start_metrics_server
+        
+        self.metrics_server = start_metrics_server(self, port)
 
     def launch_browser(self) -> None:
         """Launch the browser."""
@@ -3091,6 +3118,10 @@ class ServerApp(JupyterApp):
         if self.open_browser and not self.sock:
             self.launch_browser()
 
+        # Start metrics server on alternate port if configured
+        if self.metrics_port:
+            self._start_metrics_server(self.metrics_port)
+
         if self.identity_provider.token and self.identity_provider.token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
             # with auth info.
@@ -3106,6 +3137,10 @@ class ServerApp(JupyterApp):
                                 f"the instance via e.g.`ssh -L 8888:{self.sock} -N user@this_host` and then "
                                 f"open e.g. {self.connection_url} in a browser."
                             ),
+                            _i18n(
+                                "To access metrics, open this endpoint in a browser:",
+                            ),
+                            f"    http://localhost:{self.metrics_port}/metrics",
                         ]
                     )
                 )
@@ -3115,6 +3150,10 @@ class ServerApp(JupyterApp):
                         "\n",
                         _i18n("To access the server, copy and paste one of these URLs:"),
                         "    %s" % self.display_url,
+                        _i18n(
+                            "To access metrics, open this endpoint in a browser:",
+                        ),
+                        f"    http://localhost:{self.metrics_port}/metrics",
                     ]
                 else:
                     message = [
@@ -3127,6 +3166,10 @@ class ServerApp(JupyterApp):
                             "Or copy and paste one of these URLs:",
                         ),
                         "    %s" % self.display_url,
+                        _i18n(
+                            "To access metrics, open this endpoint in a browser:",
+                        ),
+                        f"    http://localhost:{self.metrics_port}/metrics",
                     ]
 
                 self.log.critical("\n".join(message))
@@ -3159,6 +3202,9 @@ class ServerApp(JupyterApp):
         if hasattr(self, "http_server"):
             # Stop a server if its set.
             self.http_server.stop()
+        if hasattr(self, "metrics_server"):
+            # Stop the metrics server if it's running
+            self.metrics_server.stop()
 
     def start_ioloop(self) -> None:
         """Start the IO Loop."""
