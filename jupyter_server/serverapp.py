@@ -113,12 +113,12 @@ from jupyter_server.gateway.managers import (
 from jupyter_server.log import log_request
 from jupyter_server.prometheus.metrics import (
     ACTIVE_DURATION,
+    HTTP_REQUEST_DURATION_SECONDS,
+    KERNEL_CURRENTLY_RUNNING_TOTAL,
     LAST_ACTIVITY,
     SERVER_EXTENSION_INFO,
     SERVER_INFO,
     SERVER_STARTED,
-    HTTP_REQUEST_DURATION_SECONDS,
-    KERNEL_CURRENTLY_RUNNING_TOTAL,
     TERMINAL_CURRENTLY_RUNNING_TOTAL,
 )
 from jupyter_server.services.config import ConfigManager
@@ -415,7 +415,8 @@ class ServerWebApplication(web.Application):
         settings = {
             # basics
             "log_function": partial(
-                log_request, record_prometheus_metrics=jupyter_app.record_http_request_metrics),
+                log_request, record_prometheus_metrics=jupyter_app.record_http_request_metrics
+            ),
             "base_url": base_url,
             "default_url": default_url,
             "template_path": template_path,
@@ -514,11 +515,11 @@ class ServerWebApplication(web.Application):
 
         # register base handlers last
         base_handlers = load_handlers("jupyter_server.base.handlers")
-        
+
         # If a separate metrics server is running, exclude the /metrics handler from main server
         if jupyter_app.metrics_port:
             base_handlers = [h for h in base_handlers if h[0] != r"/metrics"]
-        
+
         handlers.extend(base_handlers)
 
         if settings["default_url"] != settings["base_url"]:
@@ -3045,11 +3046,11 @@ class ServerApp(JupyterApp):
             assembled_url = url_path_join(self.connection_url, uri)
 
         return assembled_url, open_file
-    
+
     def _start_metrics_server(self, port):
         """Start a separate metrics server on the specified port using Jupyter's Prometheus integration."""
         from jupyter_server.prometheus.server import start_metrics_server
-        
+
         self.metrics_server = start_metrics_server(self, port)
 
     def launch_browser(self) -> None:
