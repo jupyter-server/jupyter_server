@@ -535,6 +535,8 @@ class JupyterHandler(AuthenticatedHandler):
             # Servers without authentication are vulnerable to XSRF
             return None
         try:
+            if not self.check_origin():
+                raise web.HTTPError(404)
             return super().check_xsrf_cookie()
         except web.HTTPError as e:
             if self.request.method in {"GET", "HEAD"}:
