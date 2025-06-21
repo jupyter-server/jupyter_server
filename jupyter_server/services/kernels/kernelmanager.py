@@ -24,7 +24,11 @@ from jupyter_core.paths import exists
 from jupyter_core.utils import ensure_async
 from jupyter_events import EventLogger
 from jupyter_events.schema_registry import SchemaRegistryException
-from overrides import overrides
+
+try:
+    from typing import override as overrides
+except ImportError:
+    from overrides import overrides
 from tornado import web
 from tornado.concurrent import Future
 from tornado.ioloop import IOLoop, PeriodicCallback
