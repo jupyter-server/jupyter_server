@@ -113,6 +113,8 @@ from jupyter_server.gateway.managers import (
 from jupyter_server.log import log_request
 from jupyter_server.prometheus.metrics import (
     ACTIVE_DURATION,
+    HTTP_REQUEST_DURATION_SECONDS,
+    KERNEL_CURRENTLY_RUNNING_TOTAL,
     LAST_ACTIVITY,
     SERVER_EXTENSION_INFO,
     SERVER_INFO,
@@ -301,7 +303,7 @@ class ServerWebApplication(web.Application):
             websocket_ping_interval=websocket_ping_interval,
             websocket_ping_timeout=websocket_ping_timeout,
         )
-        handlers = self.init_handlers(default_services, settings)
+        handlers = self.init_handlers(default_services, settings, jupyter_app)
 
         undecorated_methods = []
         for matcher, handler, *_ in handlers:
@@ -480,7 +482,7 @@ class ServerWebApplication(web.Application):
             settings["xsrf_cookie_kwargs"] = {"path": base_url}
         return settings
 
-    def init_handlers(self, default_services, settings):
+    def init_handlers(self, default_services, settings, jupyter_app):
         """Load the (URL pattern, handler) tuples for each component."""
         # Order matters. The first handler to match the URL will handle the request.
         handlers = []
@@ -511,7 +513,13 @@ class ServerWebApplication(web.Application):
         handlers.extend(settings["identity_provider"].get_handlers())
 
         # register base handlers last
-        handlers.extend(load_handlers("jupyter_server.base.handlers"))
+        base_handlers = load_handlers("jupyter_server.base.handlers")
+
+        # If a separate metrics server is running, exclude the /metrics handler from main server
+        if jupyter_app.metrics_port:
+            base_handlers = [h for h in base_handlers if h[0] != r"/metrics"]
+
+        handlers.extend(base_handlers)
 
         if settings["default_url"] != settings["base_url"]:
             # set the URL that will be redirected from `/`
@@ -2006,7 +2014,18 @@ class ServerApp(JupyterApp):
 
         Set to False to disable recording the http_request_duration_seconds metric.
         """,
+        config=True,
     )
+
+    metrics_port = Integer(
+        9090,
+        help="Port to expose metrics server on alternate port (set to 0 to disable). When set, disables /metrics endpoint on main server.",
+        config=True,
+    )
+
+    @default("metrics_port")
+    def _metrics_port_default(self) -> int:
+        return int(os.getenv("JUPYTER_SERVER_METRICS_PORT", "9090"))
 
     static_immutable_cache = List(
         Unicode(),
@@ -2821,6 +2840,11 @@ class ServerApp(JupyterApp):
         self.init_mime_overrides()
         self.init_shutdown_no_activity()
         self.init_metrics()
+
+        # Start metrics server after webapp is initialized, so handlers can be properly excluded
+        if self.metrics_port:
+            self._start_metrics_server(self.metrics_port)
+
         if new_httpserver:
             self.init_httpserver()
 
@@ -2862,6 +2886,18 @@ class ServerApp(JupyterApp):
         info += _i18n("Jupyter Server {version} is running at:\n{url}").format(
             version=ServerApp.version, url=self.display_url
         )
+        info += "\n"
+        # Show metrics URL - if metrics_port is set, the separate server is guaranteed to be running
+        if self.metrics_port:
+            info += _i18n("Metrics server is running at:\n{url}").format(
+                url=f"http://localhost:{self.metrics_server.port}/metrics"
+            )
+            info += "\n"
+        else:
+            info += _i18n("Metrics are available at:\n{url}").format(
+                url=f"{self.connection_url.rstrip('/')}/metrics"
+            )
+            info += "\n"
         if self.gateway_config.gateway_enabled:
             info += (
                 _i18n("\nKernels will be managed by the Gateway server running at:\n%s")
@@ -3025,6 +3061,22 @@ class ServerApp(JupyterApp):
 
         return assembled_url, open_file
 
+    def _start_metrics_server(self, port):
+        """Start a separate metrics server on the specified port using Jupyter's Prometheus integration."""
+        from jupyter_server.prometheus.server import start_metrics_server
+
+        try:
+            self.metrics_server = start_metrics_server(self, port)
+            # Check if the metrics server actually started (has a port)
+            if not hasattr(self.metrics_server, "port") or self.metrics_server.port is None:
+                raise RuntimeError("Metrics server failed to start - no port assigned")
+
+            self.log.info(f"Metrics server is running on port {self.metrics_server.port}")
+
+        except Exception as e:
+            self.log.error(f"Failed to start metrics server: {e}")
+            raise RuntimeError(f"Metrics server is required but failed to start: {e}")
+
     def launch_browser(self) -> None:
         """Launch the browser."""
         # Deferred import for environments that do not have
@@ -3094,6 +3146,27 @@ class ServerApp(JupyterApp):
         if self.identity_provider.token and self.identity_provider.token_generated:
             # log full URL with generated token, so there's a copy/pasteable link
             # with auth info.
+
+            # Determine metrics URL based on whether separate metrics server is running
+            if (
+                self.metrics_port
+                and hasattr(self.metrics_server, "port")
+                and self.metrics_server.port is not None
+            ):
+                # Separate metrics server is running
+                if self.authenticate_prometheus:
+                    metrics_url = f"http://localhost:{self.metrics_server.port}/metrics?token={self.identity_provider.token}"
+                else:
+                    metrics_url = f"http://localhost:{self.metrics_server.port}/metrics"
+            else:
+                # Metrics are served on main server
+                # Use the connection_url as base and append /metrics
+                base_url = self.connection_url.rstrip("/")
+                if self.authenticate_prometheus:
+                    metrics_url = f"{base_url}/metrics?token={self.identity_provider.token}"
+                else:
+                    metrics_url = f"{base_url}/metrics"
+
             if self.sock:
                 self.log.critical(
                     "\n".join(
@@ -3106,6 +3179,10 @@ class ServerApp(JupyterApp):
                                 f"the instance via e.g.`ssh -L 8888:{self.sock} -N user@this_host` and then "
                                 f"open e.g. {self.connection_url} in a browser."
                             ),
+                            _i18n(
+                                "To access metrics, open this endpoint in a browser:",
+                            ),
+                            f"    {metrics_url}",
                         ]
                     )
                 )
@@ -3115,6 +3192,10 @@ class ServerApp(JupyterApp):
                         "\n",
                         _i18n("To access the server, copy and paste one of these URLs:"),
                         "    %s" % self.display_url,
+                        _i18n(
+                            "To access metrics, open this endpoint in a browser:",
+                        ),
+                        f"    {metrics_url}",
                     ]
                 else:
                     message = [
@@ -3127,6 +3208,10 @@ class ServerApp(JupyterApp):
                             "Or copy and paste one of these URLs:",
                         ),
                         "    %s" % self.display_url,
+                        _i18n(
+                            "To access metrics, open this endpoint in a browser:",
+                        ),
+                        f"    {metrics_url}",
                     ]
 
                 self.log.critical("\n".join(message))
@@ -3159,6 +3244,10 @@ class ServerApp(JupyterApp):
         if hasattr(self, "http_server"):
             # Stop a server if its set.
             self.http_server.stop()
+        if hasattr(self, "metrics_server"):
+            # Stop the metrics server if it's running
+            if hasattr(self.metrics_server, "stop"):
+                self.metrics_server.stop()
 
     def start_ioloop(self) -> None:
         """Start the IO Loop."""
