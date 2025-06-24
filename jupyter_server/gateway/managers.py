@@ -11,7 +11,6 @@ import json
 import os
 import time
 import typing as t
-from operator import is_
 from queue import Empty, Queue
 from threading import Thread
 from time import monotonic
