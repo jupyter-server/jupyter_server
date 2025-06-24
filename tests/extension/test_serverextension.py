@@ -134,3 +134,11 @@ def test_server_extension_apps(jp_env_config_path, jp_extension_environ):
 def test_server_extension_app():
     app = ServerExtensionApp()
     app.launch_instance(["list"])
+
+
+def test_toggle_missing_server_extension(jp_env_config_path, capsys):
+    app = ToggleServerExtensionApp()
+    app.extra_args = ["missingextension"]
+    app.start()
+    captured = capsys.readouterr()
+    assert "Validation failed: The module 'missingextension' could not be found." in captured.err

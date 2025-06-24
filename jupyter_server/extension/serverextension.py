@@ -259,9 +259,23 @@ class ToggleServerExtensionApp(BaseExtensionApp):
             self.log.info(f"- Writing config: {config_dir}")
             # Validate the server extension.
             self.log.info(f"    - Validating {import_name}...")
+            config = extension_manager.config_manager
+            enabled = False
+            if config:
+                jpserver_extensions = config.get_jpserver_extensions()
+                if import_name not in jpserver_extensions:
+                    msg = (
+                        f"The module '{import_name}' could not be found. Are you "
+                        "sure the extension is installed?"
+                    )
+                    raise ValueError(msg)
+                enabled = jpserver_extensions[import_name]
+
             # Interface with the Extension Package and validate.
-            extpkg = ExtensionPackage(name=import_name)
-            extpkg.validate()
+            extpkg = ExtensionPackage(name=import_name, enabled=enabled)
+            if not extpkg.validate():
+                msg = "validation failed"
+                raise ValueError(msg)
             version = extpkg.version
             self.log.info(f"      {import_name} {version} {GREEN_OK}")
 
