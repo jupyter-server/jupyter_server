@@ -14,6 +14,8 @@ import typing as t
 from queue import Empty, Queue
 from threading import Thread
 from time import monotonic
+from turtle import st
+from types import CoroutineType, coroutine
 from typing import TYPE_CHECKING, Any, Optional, cast
 
 import websocket
@@ -893,8 +895,8 @@ class GatewayKernelClient(AsyncKernelClient):
     async def _handle_iopub_stdin_messages(
         self,
         msg_id: str,
-        output_hook: t.Callable,
-        stdin_hook: t.Callable,
+        output_hook: t.Optional[t.Callable[[dict[str, t.Any]], t.Any]],
+        stdin_hook: t.Optional[t.Callable[[dict[str, t.Any]], t.Any]],
         timeout: t.Optional[float],
         allow_stdin: bool,
         start_time: float,
@@ -909,7 +911,8 @@ class GatewayKernelClient(AsyncKernelClient):
                     raise TimeoutError("Timeout in IOPub handling")
             else:
                 remaining = None
-            await self._handle_stdin_messages(stdin_hook, allow_stdin)
+            if stdin_hook is not None and allow_stdin:
+                await self._handle_stdin_messages(stdin_hook, allow_stdin)
             try:
                 msg = await self.iopub_channel.get_msg(timeout=remaining)
             except Exception as e:
@@ -918,7 +921,8 @@ class GatewayKernelClient(AsyncKernelClient):
             if msg["parent_header"].get("msg_id") != msg_id:
                 continue
 
-            await self._maybe_awaitable(output_hook(msg))
+            if output_hook is not None:
+                await self._maybe_awaitable(output_hook(msg))
 
             if (
                 msg["header"]["msg_type"] == "status"
@@ -928,7 +932,7 @@ class GatewayKernelClient(AsyncKernelClient):
 
     async def _handle_stdin_messages(
         self,
-        stdin_hook: t.Callable,
+        stdin_hook: t.Callable[[dict[str, t.Any]], t.Any],
         allow_stdin: bool,
     ) -> None:
         """Handle stdin messages until iopub is idle"""
@@ -990,7 +994,7 @@ class GatewayKernelClient(AsyncKernelClient):
 
                 for task in done:
                     try:
-                        msg = task.result()
+                        msg: dict[str, t.Any] = task.result()
                         if msg["parent_header"].get("msg_id") == msg_id:
                             return msg
                     except Exception:
@@ -1010,9 +1014,9 @@ class GatewayKernelClient(AsyncKernelClient):
         allow_stdin: t.Optional[bool] = None,
         stop_on_error: bool = True,
         timeout: t.Optional[float] = None,
-        output_hook: t.Optional[t.Callable[[dict], t.Any]] = None,
-        stdin_hook: t.Optional[t.Callable[[dict], t.Any]] = None,
-    ) -> dict[str, t.Any]:
+        output_hook: t.Optional[t.Callable[[dict[str, t.Any]], t.Any]] = None,
+        stdin_hook: t.Optional[t.Callable[[dict[str, t.Any]], t.Any]] = None,
+    ) -> dict[str, t.Any]:  # type: ignore[override] # Reason: base class sets `execute_interactive` via assignment, so mypy cannot infer override compatibility
         """Execute code in the kernel interactively via gateway"""
 
         # Channel alive checks
