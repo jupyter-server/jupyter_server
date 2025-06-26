@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import os
 import pathlib  # noqa: TCH003
+import sys
 import typing as t
 import warnings
 from collections import defaultdict
@@ -25,9 +26,9 @@ from jupyter_core.utils import ensure_async
 from jupyter_events import EventLogger
 from jupyter_events.schema_registry import SchemaRegistryException
 
-try:
+if sys.version_info >= (3, 12):
     from typing import override as overrides
-except ImportError:
+else:
     from overrides import overrides
 from tornado import web
 from tornado.concurrent import Future
