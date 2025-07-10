@@ -16,6 +16,12 @@ Submodules
    :show-inheritance:
    :undoc-members:
 
+
+.. automodule:: jupyter_server.prometheus.server
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

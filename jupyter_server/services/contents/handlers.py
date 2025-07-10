@@ -25,19 +25,16 @@ AUTH_RESOURCE = "contents"
 
 
 def _validate_keys(expect_defined: bool, model: dict[str, Any], keys: list[str]):
-    """
-    Validate that the keys are defined (i.e. not None) or not (i.e. None)
-    """
-
+    """Validate that keys are defined or not defined as expected."""
     if expect_defined:
-        errors = [key for key in keys if model[key] is None]
+        errors = {key: model[key] for key in keys if model[key] is None}
         if errors:
             raise web.HTTPError(
                 500,
                 f"Keys unexpectedly None: {errors}",
             )
     else:
-        errors = {key: model[key] for key in keys if model[key] is not None}  # type: ignore[assignment]
+        errors = {key: model[key] for key in keys if model[key] is not None}
         if errors:
             raise web.HTTPError(
                 500,

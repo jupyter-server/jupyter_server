@@ -1,4 +1,13 @@
 import os
+import time
+import warnings
+
+# Disable metrics server for all tests by default
+os.environ["JUPYTER_SERVER_METRICS_PORT"] = "0"
+
+# Suppress deprecation warnings and thread exceptions for tests
+warnings.filterwarnings("ignore", category=DeprecationWarning, message="make_current is deprecated")
+warnings.filterwarnings("ignore", category=ResourceWarning)
 
 # isort: off
 # This must come before any Jupyter imports.
@@ -16,6 +25,14 @@ from tests.extension.mockextensions.app import MockExtensionApp
 os.environ["PYWINPTY_BACKEND"] = "1"
 
 pytest_plugins = ["jupyter_server.pytest_plugin"]
+
+
+@pytest.fixture(autouse=True)
+def cleanup_metrics_threads():
+    """Ensure metrics server threads are cleaned up between tests."""
+    yield
+    # Give any remaining daemon threads time to clean up
+    time.sleep(0.1)
 
 
 def pytest_addoption(parser):
