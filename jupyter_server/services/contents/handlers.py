@@ -400,7 +400,7 @@ class NotebooksRedirectHandler(JupyterHandler):
         "PATCH",
         "POST",
         "DELETE",
-    )  # type:ignore[assignment]
+    )
 
     @allow_unauthenticated
     def get(self, path):
