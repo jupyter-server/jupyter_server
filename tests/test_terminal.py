@@ -297,6 +297,17 @@ def test_shell_command_override(
         assert app.web_app.settings["terminal_manager"].shell_command == expected_shell
 
 
+def test_terminal_extra_env_override(jp_configurable_serverapp):
+    config = Config({"ServerApp": {"terminado_settings": {"extra_env": {"PS1": "jupyter> "}}}})
+
+    app = jp_configurable_serverapp(config=config)
+    terminado_settings = getattr(app, "terminado_settings", {})
+
+    assert "extra_env" in terminado_settings
+    assert "PS1" in terminado_settings["extra_env"]
+    assert terminado_settings["extra_env"]["PS1"] == "jupyter> "
+
+
 def test_importing_shims():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
