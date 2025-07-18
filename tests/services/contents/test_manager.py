@@ -549,6 +549,7 @@ async def test_modified_date(jp_contents_manager):
 
 async def test_get(jp_contents_manager):
     cm = jp_contents_manager
+    cm.count_directory_items = True
     # Create a notebook
     model = await ensure_async(cm.new_untitled(type="notebook"))
     name = model["name"]

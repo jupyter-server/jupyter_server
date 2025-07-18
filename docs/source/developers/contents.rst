@@ -61,7 +61,11 @@ Models may contain the following entries:
 +--------------------+------------+-------------------------------+
 | **item_count**     | int or     | The number of items in a      |
 |                    | ``None``   | directory, or ``None`` for    |
-|                    |            | files and notebooks.          |
+|                    |            | files and notebooks. This     |
+|                    |            | field is None by default      |
+|                    |            | unless                        |
+|                    |            | ``count_directory_items`` is  |
+|                    |            | set to True.                  |
 +--------------------+------------+-------------------------------+
 | **format**         | unicode or | The format of ``content``,    |
 |                    | ``None``   | if any. (:ref:`See            |
@@ -115,6 +119,8 @@ model. There are three model types: **notebook**, **file**, and **directory**.
       models representing the entities in the directory.
     - The ``hash`` field is always ``None``.
     - The ``item_count`` field contains the number of items in the directory
+      which is False by default unless  ``count_directory_items`` is set to
+      True.
 
 .. note::
 
