@@ -1490,10 +1490,18 @@ class ServerApp(JupyterApp):
         """
         ),
     )
+
     terminado_settings = Dict(
-        Union([List(), Unicode()]),
+        per_key_traits={
+            "shell_command": Union(
+                [List(), Unicode()], help="The shell command to execute in the terminal."
+            ),
+            "extra_env": Dict(
+                Unicode(), help="Extra environment variables to set in the terminal."
+            ),
+        },
         config=True,
-        help=_i18n('Supply overrides for terminado. Currently only supports "shell_command".'),
+        help=_i18n("Supply overrides for terminado."),
     )
 
     cookie_options = Dict(
