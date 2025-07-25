@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import logging
 from itertools import starmap
 
 from tornado.gen import multi
@@ -23,6 +24,12 @@ class ExtensionPoint(HasTraits):
     _app = Any(None, allow_none=True)
 
     metadata = Dict()
+
+    log = Instance(logging.Logger)
+
+    @default("log")
+    def _default_log(self):
+        return logging.getLogger("ExtensionPoint")
 
     @validate_trait("metadata")
     def _valid_metadata(self, proposed):
@@ -227,7 +234,7 @@ class ExtensionPackage(LoggingConfigurable):
             raise ExtensionModuleNotFound(msg) from None
         # Create extension point interfaces for each extension path.
         for m in self.metadata:
-            point = ExtensionPoint(metadata=m)
+            point = ExtensionPoint(metadata=m, log=self.log)
             self.extension_points[point.name] = point
         return name
 
