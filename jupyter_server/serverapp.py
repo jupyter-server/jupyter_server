@@ -2006,6 +2006,24 @@ class ServerApp(JupyterApp):
 
         Set to False to disable recording the http_request_duration_seconds metric.
         """,
+        config=True,
+    )
+
+    extra_log_scrub_param_keys = List(
+        Unicode(),
+        default_value=[],
+        config=True,
+        help="""
+        Additional URL parameter keys to scrub from logs.
+
+        These will be added to the default list of scrubbed parameter keys.
+        Any URL parameter whose key contains one of these substrings will have
+        its value replaced with '[secret]' in the logs. This is to prevent
+        sensitive information like authentication tokens from being leaked
+        in log files.
+
+        Default scrubbed keys: ["token", "auth", "key", "code", "state", "xsrf"]
+        """,
     )
 
     static_immutable_cache = List(
