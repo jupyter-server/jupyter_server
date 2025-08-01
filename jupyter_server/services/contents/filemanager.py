@@ -295,7 +295,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model["size"] = None
         if content:
             model["content"] = contents = []
-            os_dir = self._get_os_path(path)
+            os_dir = os_path
             for name in os.listdir(os_dir):
                 try:
                     os_path = os.path.join(os_dir, name)
@@ -767,7 +767,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         model["size"] = None
         if content:
             model["content"] = contents = []
-            os_dir = self._get_os_path(path)
+            os_dir = os_path
             dir_contents = await run_sync(os.listdir, os_dir)
             for name in dir_contents:
                 try:
