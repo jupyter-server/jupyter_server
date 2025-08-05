@@ -62,9 +62,7 @@ def log_request(handler, record_prometheus_metrics=True):
     except AttributeError:
         logger = access_log
 
-    extra_param_keys = []
-    if hasattr(handler, "serverapp") and hasattr(handler.serverapp, "extra_log_scrub_param_keys"):
-        extra_param_keys = handler.serverapp.extra_log_scrub_param_keys
+    extra_param_keys = handler.settings.get("extra_log_scrub_param_keys", [])
 
     if status < 300 or status == 304:
         # Successes (or 304 FOUND) are debug-level

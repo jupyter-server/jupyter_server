@@ -442,6 +442,7 @@ class ServerWebApplication(web.Application):
             "allow_remote_access": jupyter_app.allow_remote_access,
             "local_hostnames": jupyter_app.local_hostnames,
             "authenticate_prometheus": jupyter_app.authenticate_prometheus,
+            "extra_log_scrub_param_keys": jupyter_app.extra_log_scrub_param_keys,
             # managers
             "kernel_manager": kernel_manager,
             "contents_manager": contents_manager,

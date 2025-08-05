@@ -31,7 +31,9 @@ def test_log_request_scrubs_sensitive_params_default(server_app_with_default_scr
     handler.request.remote_ip = "127.0.0.1"
     handler.request.uri = "http://example.com/path?token=secret123&normal=value"
     handler.request.request_time.return_value = 0.1
-    handler.serverapp = server_app_with_default_scrub_keys
+    handler.settings = {
+        "extra_log_scrub_param_keys": server_app_with_default_scrub_keys.extra_log_scrub_param_keys
+    }
     handler.log = Mock()
     handler.current_user = None
 
@@ -55,7 +57,9 @@ def test_log_request_scrubs_sensitive_params_extra(server_app_with_extra_scrub_k
         "http://example.com/path?password=secret123&token=default_token&normal=value"
     )
     handler.request.request_time.return_value = 0.1
-    handler.serverapp = server_app_with_extra_scrub_keys
+    handler.settings = {
+        "extra_log_scrub_param_keys": server_app_with_extra_scrub_keys.extra_log_scrub_param_keys
+    }
     handler.log = Mock()
     handler.current_user = None
 
