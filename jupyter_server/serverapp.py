@@ -2007,7 +2007,6 @@ class ServerApp(JupyterApp):
 
         Set to False to disable recording the http_request_duration_seconds metric.
         """,
-        config=True,
     )
 
     extra_log_scrub_param_keys = List(
