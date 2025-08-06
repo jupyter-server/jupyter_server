@@ -54,6 +54,28 @@ A minimal example which logs Jupyter Server output to a file:
    redirecting to log files ensure they have appropriate permissions.
 
 
+.. _configurable_logging.log_scrub:
+
+Configuring Log Scrubbing
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, Jupyter Server scrubs sensitive URL parameters from log output to prevent
+security tokens and other sensitive information from being leaked in log files. Additional
+parameters to be scrubbed can be configured using the ``extra_log_scrub_param_keys`` trait.
+
+Default scrubbed parameter keys include: ``token``, ``auth``, ``key``, ``code``, ``state``, and ``xsrf``.
+
+Example configuration to add additional parameters to scrub:
+
+.. code-block:: python
+
+   # jupyter_server_config.py
+
+   # Add additional parameter keys to scrub (these will be added to the defaults)
+   c.ServerApp.extra_log_scrub_param_keys = [
+       "password", "secret", "api_key", "jwt-token"
+   ]
+
 .. _configurable_logging.extension_applications:
 
 Jupyter Server Extension Applications (e.g. Jupyter Lab)

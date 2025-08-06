@@ -17,11 +17,14 @@ from .prometheus.log_functions import prometheus_log_method
 # url params to be scrubbed if seen
 # any url param that *contains* one of these
 # will be scrubbed from logs
-_SCRUB_PARAM_KEYS = {"token", "auth", "key", "code", "state", "xsrf"}
+_DEFAULT_SCRUB_PARAM_KEYS = {"token", "auth", "key", "code", "state", "xsrf"}
 
 
-def _scrub_uri(uri: str) -> str:
+def _scrub_uri(uri: str, extra_param_keys=None) -> str:
     """scrub auth info from uri"""
+
+    scrub_param_keys = _DEFAULT_SCRUB_PARAM_KEYS.union(set(extra_param_keys or []))
+
     parsed = urlparse(uri)
     if parsed.query:
         # check for potentially sensitive url params
@@ -31,7 +34,7 @@ def _scrub_uri(uri: str) -> str:
         changed = False
         for i, s in enumerate(parts):
             key, sep, value = s.partition("=")
-            for substring in _SCRUB_PARAM_KEYS:
+            for substring in scrub_param_keys:
                 if substring in key:
                     parts[i] = f"{key}{sep}[secret]"
                     changed = True
@@ -59,6 +62,8 @@ def log_request(handler, record_prometheus_metrics=True):
     except AttributeError:
         logger = access_log
 
+    extra_param_keys = handler.settings.get("extra_log_scrub_param_keys", [])
+
     if status < 300 or status == 304:
         # Successes (or 304 FOUND) are debug-level
         log_method = logger.debug
@@ -74,7 +79,7 @@ def log_request(handler, record_prometheus_metrics=True):
         "status": status,
         "method": request.method,
         "ip": request.remote_ip,
-        "uri": _scrub_uri(request.uri),
+        "uri": _scrub_uri(request.uri, extra_param_keys),
         "request_time": request_time,
     }
     # log username
@@ -90,7 +95,7 @@ def log_request(handler, record_prometheus_metrics=True):
     msg = "{status} {method} {uri} ({username}@{ip}) {request_time:.2f}ms"
     if status >= 400:
         # log bad referrers
-        ns["referer"] = _scrub_uri(request.headers.get("Referer", "None"))
+        ns["referer"] = _scrub_uri(request.headers.get("Referer", "None"), extra_param_keys)
         msg = msg + " referer={referer}"
     if status >= 500 and status != 502:
         # Log a subset of the headers if it caused an error.
