@@ -319,7 +319,6 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         if content:
             model["content"] = contents = []
-            os_dir = os_path
             for name in os.listdir(os_dir):
                 try:
                     os_path = os.path.join(os_dir, name)
@@ -808,7 +807,6 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
 
         if content:
             model["content"] = contents = []
-            os_dir = os_path
             dir_contents = await run_sync(os.listdir, os_dir)
             for name in dir_contents:
                 try:
