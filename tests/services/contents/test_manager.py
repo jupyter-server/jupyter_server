@@ -857,7 +857,7 @@ async def test_rename(jp_contents_manager):
 async def test_rename_nonexistent(jp_contents_manager):
     """Test renaming a non-existent file/directory returns 404 error"""
     cm = jp_contents_manager
-    
+
     # Test with non-existent file
     with pytest.raises(HTTPError) as e:
         await ensure_async(cm.rename("nonexistent_file.txt", "new_name.txt"))
