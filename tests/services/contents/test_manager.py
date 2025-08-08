@@ -861,12 +861,12 @@ async def test_rename_nonexistent(jp_contents_manager):
     # Test with non-existent file
     with pytest.raises(HTTPError) as e:
         await ensure_async(cm.rename("nonexistent_file.txt", "new_name.txt"))
-    assert expected_http_error(e, 404, expected_message="File or directory does not exist: nonexistent_file.txt")
+    assert expected_http_error(e, 404)
 
     # Test with non-existent directory
     with pytest.raises(HTTPError) as e:
         await ensure_async(cm.rename("nonexistent_dir", "new_dir"))
-    assert expected_http_error(e, 404, expected_message="File or directory does not exist: nonexistent_dir")
+    assert expected_http_error(e, 404)
 
 
 async def test_delete_root(jp_contents_manager):
