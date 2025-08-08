@@ -2377,7 +2377,8 @@ class ServerApp(JupyterApp):
         parts = self._get_urlparts(include_token=True)
         # Update with custom pieces.
         if not self.sock:
-            parts = parts._replace(netloc=f"127.0.0.1:{self.port}")
+            localhost = "[::1]" if ":" in self.ip else "127.0.0.1"
+            parts = parts._replace(netloc=f"{localhost}:{self.port}")
         return parts.geturl()
 
     @property
@@ -2385,7 +2386,9 @@ class ServerApp(JupyterApp):
         """Human readable string with URLs for interacting
         with the running Jupyter Server
         """
-        url = self.public_url + "\n    " + self.local_url
+        url = self.public_url
+        if self.public_url != self.local_url:
+            url = f"{url}\n    {self.local_url}"
         return url
 
     @property
@@ -2856,7 +2859,9 @@ class ServerApp(JupyterApp):
             info += kernel_msg % n_kernels
             info += "\n"
         # Format the info so that the URL fits on a single line in 80 char display
-        info += _i18n(f"Jupyter Server {ServerApp.version} is running at:\n{self.display_url}")
+        info += _i18n("Jupyter Server {version} is running at:\n{url}").format(
+            version=ServerApp.version, url=self.display_url
+        )
         if self.gateway_config.gateway_enabled:
             info += (
                 _i18n("\nKernels will be managed by the Gateway server running at:\n%s")
@@ -3163,6 +3168,7 @@ class ServerApp(JupyterApp):
             pc = ioloop.PeriodicCallback(lambda: None, 5000)
             pc.start()
         try:
+            self.io_loop.add_callback(self._post_start)
             self.io_loop.start()
         except KeyboardInterrupt:
             self.log.info(_i18n("Interrupted..."))
@@ -3170,6 +3176,17 @@ class ServerApp(JupyterApp):
     def init_ioloop(self) -> None:
         """init self.io_loop so that an extension can use it by io_loop.call_later() to create background tasks"""
         self.io_loop = ioloop.IOLoop.current()
+
+    async def _post_start(self):
+        """Add an async hook to start tasks after the event loop is running.
+
+        This will also attempt to start all tasks found in
+        the `start_extension` method in Extension Apps.
+        """
+        try:
+            await self.extension_manager.start_all_extensions()
+        except Exception as err:
+            self.log.error(err)
 
     def start(self) -> None:
         """Start the Jupyter server app, after initialization

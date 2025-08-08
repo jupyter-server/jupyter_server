@@ -23,13 +23,13 @@ Submodules
 
 .. automodule:: jupyter_server.services.shutdown
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: jupyter_server.services
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
