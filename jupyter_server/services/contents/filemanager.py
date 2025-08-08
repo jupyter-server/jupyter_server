@@ -603,7 +603,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         except web.HTTPError:
             raise
         except FileNotFoundError:
-            raise web.HTTPError(404, f"File or directory does not exist: {old_path}")
+            raise web.HTTPError(404, f"File or directory does not exist: {old_path}") from None
         except Exception as e:
             raise web.HTTPError(500, f"Unknown error renaming file: {old_path} {e}") from e
 
@@ -1072,7 +1072,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         except web.HTTPError:
             raise
         except FileNotFoundError:
-            raise web.HTTPError(404, f"File or directory does not exist: {old_path}")
+            raise web.HTTPError(404, f"File or directory does not exist: {old_path}") from None
         except Exception as e:
             raise web.HTTPError(500, f"Unknown error renaming file: {old_path} {e}") from e
 
