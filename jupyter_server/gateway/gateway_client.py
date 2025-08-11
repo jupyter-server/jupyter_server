@@ -193,7 +193,10 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
     @default("kernels_endpoint")
     def _kernels_endpoint_default(self):
-        return os.environ.get(self.kernels_endpoint_env, url_path_join(self.base_url, self.kernels_endpoint_default_value))
+        return os.environ.get(
+            self.kernels_endpoint_env,
+            url_path_join(self.base_url, self.kernels_endpoint_default_value),
+        )
 
     kernelspecs_endpoint_default_value = "/api/kernelspecs"
     kernelspecs_endpoint_env = "JUPYTER_GATEWAY_KERNELSPECS_ENDPOINT"
@@ -206,7 +209,8 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
     @default("kernelspecs_endpoint")
     def _kernelspecs_endpoint_default(self):
         return os.environ.get(
-            self.kernelspecs_endpoint_env, url_path_join(self.base_url, self.kernelspecs_endpoint_default_value)
+            self.kernelspecs_endpoint_env,
+            url_path_join(self.base_url, self.kernelspecs_endpoint_default_value),
         )
 
     kernelspecs_resource_endpoint_default_value = "/kernelspecs"

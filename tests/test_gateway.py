@@ -65,7 +65,9 @@ kernelspecs: dict = {
     "kernelspecs": {
         "kspec_foo": generate_kernelspec("kspec_foo", "/foo/kernelspecs"),
         "kspec_bar": generate_kernelspec("kspec_bar", "/bar/kernelspecs/"),
-        "kspec_baz": generate_kernelspec("kspec_baz", GatewayClient.kernelspecs_endpoint_default_value),
+        "kspec_baz": generate_kernelspec(
+            "kspec_baz", GatewayClient.kernelspecs_endpoint_default_value
+        ),
     },
 }
 
@@ -762,10 +764,10 @@ async def test_websocket_connection_with_session_id(init_gateway, jp_serverapp, 
         handler.connection = conn
         await conn.connect()
         assert conn.session_id != None
-        expected_ws_url = (
-            url_path_join(mock_gateway_ws_url,
-                          jp_serverapp.base_url,
-                          f"/api/kernels/{kernel_id}/channels?session_id={conn.session_id}")
+        expected_ws_url = url_path_join(
+            mock_gateway_ws_url,
+            jp_serverapp.base_url,
+            f"/api/kernels/{kernel_id}/channels?session_id={conn.session_id}",
         )
         assert (
             expected_ws_url in caplog.text
