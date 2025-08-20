@@ -442,6 +442,7 @@ class ServerWebApplication(web.Application):
             "allow_remote_access": jupyter_app.allow_remote_access,
             "local_hostnames": jupyter_app.local_hostnames,
             "authenticate_prometheus": jupyter_app.authenticate_prometheus,
+            "extra_log_scrub_param_keys": jupyter_app.extra_log_scrub_param_keys,
             # managers
             "kernel_manager": kernel_manager,
             "contents_manager": contents_manager,
@@ -2005,6 +2006,23 @@ class ServerApp(JupyterApp):
         *lot* of metrics, creating operational challenges for multitenant deployments.
 
         Set to False to disable recording the http_request_duration_seconds metric.
+        """,
+    )
+
+    extra_log_scrub_param_keys = List(
+        Unicode(),
+        default_value=[],
+        config=True,
+        help="""
+        Additional URL parameter keys to scrub from logs.
+
+        These will be added to the default list of scrubbed parameter keys.
+        Any URL parameter whose key contains one of these substrings will have
+        its value replaced with '[secret]' in the logs. This is to prevent
+        sensitive information like authentication tokens from being leaked
+        in log files.
+
+        Default scrubbed keys: ["token", "auth", "key", "code", "state", "xsrf"]
         """,
     )
 
