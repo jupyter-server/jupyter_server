@@ -602,6 +602,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 shutil.move(old_os_path, new_os_path)
         except web.HTTPError:
             raise
+        except FileNotFoundError:
+            raise web.HTTPError(404, f"File or directory does not exist: {old_path}") from None
         except Exception as e:
             raise web.HTTPError(500, f"Unknown error renaming file: {old_path} {e}") from e
 
@@ -1069,6 +1071,8 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 await run_sync(shutil.move, old_os_path, new_os_path)
         except web.HTTPError:
             raise
+        except FileNotFoundError:
+            raise web.HTTPError(404, f"File or directory does not exist: {old_path}") from None
         except Exception as e:
             raise web.HTTPError(500, f"Unknown error renaming file: {old_path} {e}") from e
 
