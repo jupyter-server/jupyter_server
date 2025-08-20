@@ -25,8 +25,16 @@ from traitlets import Int, Unicode
 from traitlets.config import Config
 
 from jupyter_server.gateway.connections import GatewayWebSocketConnection
-from jupyter_server.gateway.gateway_client import GatewayTokenRenewerBase, NoOpTokenRenewer
-from jupyter_server.gateway.managers import ChannelQueue, GatewayClient, GatewayKernelManager
+from jupyter_server.gateway.gateway_client import (
+    GatewayTokenRenewerBase,
+    NoOpTokenRenewer,
+)
+from jupyter_server.gateway.managers import (
+    ChannelQueue,
+    GatewayClient,
+    GatewayKernelClient,
+    GatewayKernelManager,
+)
 from jupyter_server.services.kernels.websocket import KernelWebsocketHandler
 
 from .utils import expected_http_error
@@ -902,3 +910,89 @@ async def delete_kernel(jp_fetch, kernel_id):
         r = await jp_fetch("api", "kernels", kernel_id, method="DELETE")
         assert r.code == 204
         assert r.reason == "No Content"
+
+
+@pytest.fixture
+def mock_channel_queue():
+    queue = ChannelQueue("shell", MagicMock(), MagicMock())
+    return queue
+
+
+@pytest.fixture
+def gateway_kernel_client(init_gateway, monkeypatch):
+    client = GatewayKernelClient("fake-kernel-id")
+    client._channel_queues = {
+        "shell": ChannelQueue("shell", MagicMock(), MagicMock()),
+        "iopub": ChannelQueue("iopub", MagicMock(), MagicMock()),
+        "stdin": ChannelQueue("stdin", MagicMock(), MagicMock()),
+        "hb": ChannelQueue("hb", MagicMock(), MagicMock()),
+        "control": ChannelQueue("control", MagicMock(), MagicMock()),
+    }
+    client._shell_channel = client._channel_queues["shell"]
+    client._iopub_channel = client._channel_queues["iopub"]
+    client._stdin_channel = client._channel_queues["stdin"]
+    client._hb_channel = client._channel_queues["hb"]
+    client._control_channel = client._channel_queues["control"]
+    return client
+
+
+def fake_create_connection(*args, **kwargs):
+    return MagicMock()
+
+
+async def test_gateway_kernel_client_start_and_stop_channels(gateway_kernel_client, monkeypatch):
+    monkeypatch.setattr("websocket.create_connection", fake_create_connection)
+    monkeypatch.setattr(gateway_kernel_client, "channel_socket", MagicMock())
+    monkeypatch.setattr(gateway_kernel_client, "response_router", MagicMock())
+    await gateway_kernel_client.start_channels()
+    gateway_kernel_client.stop_channels()
+    assert gateway_kernel_client._channels_stopped
+
+
+# @pytest.mark.asyncio
+async def test_gateway_kernel_client_execute_interactive(gateway_kernel_client, monkeypatch):
+    gateway_kernel_client.execute = MagicMock(return_value="msg-123")
+
+    async def fake_shell_get_msg(timeout=None):
+        return {"parent_header": {"msg_id": "msg-123"}, "msg_type": "execute_reply"}
+
+    gateway_kernel_client.shell_channel.get_msg = fake_shell_get_msg
+
+    async def fake_iopub_get_msg(timeout=None):
+        await asyncio.sleep(0.01)
+        return {
+            "parent_header": {"msg_id": "msg-123"},
+            "msg_type": "status",
+            "header": {"msg_type": "status"},
+            "content": {"execution_state": "idle"},
+        }
+
+    gateway_kernel_client.iopub_channel.get_msg = fake_iopub_get_msg
+
+    async def fake_stdin_get_msg(timeout=None):
+        await asyncio.sleep(0.01)
+        return {"parent_header": {"msg_id": "msg-123"}, "msg_type": "input_request"}
+
+    gateway_kernel_client.stdin_channel.get_msg = fake_stdin_get_msg
+    output_msgs = []
+
+    async def output_hook(msg):
+        output_msgs.append(msg)
+
+    stdin_msgs = []
+
+    async def stdin_hook(msg):
+        stdin_msgs.append(msg)
+
+    reply = await gateway_kernel_client.execute_interactive(
+        "print(1)", output_hook=output_hook, stdin_hook=stdin_hook
+    )
+    assert reply["msg_type"] == "execute_reply"
+
+
+async def test_gateway_channel_queue_get_msg_with_response_router_finished(
+    mock_channel_queue,
+):
+    mock_channel_queue.response_router_finished = True
+    with pytest.raises(RuntimeError):
+        await mock_channel_queue.get_msg(timeout=0.1)
