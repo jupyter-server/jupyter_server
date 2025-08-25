@@ -117,8 +117,8 @@ You can prepare a hashed password manually, using the function
 
     >>> from jupyter_server.auth import passwd
     >>> passwd()
-    Enter password:
-    Verify password:
+    Enter password:gracton2005
+    Verify password:gracton2005
     'sha1:67c9e60bb8b6:9ffede0825894254b2e042ea597d771089e11aed'
 
 .. caution::
