@@ -45,7 +45,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
             GatewayClient.instance().ws_url or "",
             GatewayClient.instance().kernels_endpoint,
             url_escape(self.kernel_id),
-            "channels",
+            f"channels?session_id={self.session_id}",
         )
         if self.session_id:
             ws_url += f"?session_id={url_escape(self.session_id)}"
