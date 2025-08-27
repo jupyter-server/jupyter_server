@@ -397,16 +397,20 @@ def test_gateway_request_with_expiring_cookies(
     GatewayClient.clear_instance()
     _ = jp_configurable_serverapp(argv=argv)
 
-    cookie: SimpleCookie = SimpleCookie()
-    cookie.load("SERVERID=1234567; Path=/")
+    headers = {}
+    # Use comma-separated Set-Cookie headers to demonstrate the issue
+    headers["Set-Cookie"] = "SERVERID=016723f5|12345678; Max-Age=172800; Path=/; HttpOnly," \
+        "username-my-server=2|1:0|10:1756250589|35:username-my-server|144:123abc789|87654321; " \
+        "Max-Age=172800; Path=/; HttpOnly"
     if expire_arg == "Expires":
         expire_param = format_datetime(
             datetime.now(tz=timezone.utc) + timedelta(seconds=expire_param)
         )
     if expire_arg:
-        cookie["SERVERID"][expire_arg] = expire_param
+        # Replace the first SERVERID cookie's Max-Age with the new expire parameter
+        headers["Cookie"] = headers["Set-Cookie"].replace("Max-Age=172800", f"{expire_arg}={expire_param}")
 
-    GatewayClient.instance().update_cookies(cookie)
+    GatewayClient.instance().update_cookies(headers)
 
     args = {}
     if existing_cookies:
