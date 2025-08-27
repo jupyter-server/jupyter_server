@@ -630,10 +630,16 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
 
         return kwargs
 
-    def update_cookies(self, cookie: SimpleCookie) -> None:
-        """Update cookies from existing requests for load balancers"""
+    def update_cookies(self, headers: dict) -> None:
+        """Update cookies from response headers for load balancers"""
         if not self.accept_cookies:
             return
+
+        # Create a SimpleCookie from the Set-Cookie header
+        cookie = SimpleCookie()
+        set_cookie = headers.get('Set-Cookie')
+        if set_cookie:
+            cookie.load(set_cookie)
 
         store_time = datetime.now(tz=timezone.utc)
         for key, item in cookie.items():
@@ -820,11 +826,7 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
         )
         raise e
 
-    if gateway_client.accept_cookies:
-        # Update cookies on GatewayClient from server if configured.
-        cookie_values = response.headers.get("Set-Cookie")
-        if cookie_values:
-            cookie: SimpleCookie = SimpleCookie()
-            cookie.load(cookie_values)
-            gateway_client.update_cookies(cookie)
+
+    gateway_client.update_cookies(response.headers)
+
     return response
