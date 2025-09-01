@@ -18,6 +18,7 @@ from socket import gaierror
 from jupyter_events import EventLogger
 from tornado import web
 from tornado.httpclient import AsyncHTTPClient, HTTPClientError, HTTPResponse
+from tornado.httputil import HTTPHeaders
 from traitlets import (
     Bool,
     Float,
@@ -33,9 +34,6 @@ from traitlets import (
 from traitlets.config import LoggingConfigurable, SingletonConfigurable
 
 from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH, JUPYTER_SERVER_EVENTS_URI
-
-if ty.TYPE_CHECKING:
-    from tornado.httputil import HTTPHeaders
 
 ERROR_STATUS = "error"
 SUCCESS_STATUS = "success"
