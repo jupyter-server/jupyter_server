@@ -18,6 +18,7 @@ from socket import gaierror
 from jupyter_events import EventLogger
 from tornado import web
 from tornado.httpclient import AsyncHTTPClient, HTTPClientError, HTTPResponse
+from tornado.httputil import HTTPHeaders
 from traitlets import (
     Bool,
     Float,
@@ -39,9 +40,6 @@ SUCCESS_STATUS = "success"
 STATUS_KEY = "status"
 STATUS_CODE_KEY = "status_code"
 MESSAGE_KEY = "msg"
-
-if ty.TYPE_CHECKING:
-    from tornado.httputil import HTTPHeaders
 
 
 class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore[misc]
