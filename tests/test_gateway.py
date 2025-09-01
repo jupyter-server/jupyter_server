@@ -16,7 +16,7 @@ import tornado
 from jupyter_core.utils import ensure_async
 from tornado.concurrent import Future
 from tornado.httpclient import HTTPRequest, HTTPResponse
-from tornado.httputil import HTTPServerRequest, HTTPHeaders
+from tornado.httputil import HTTPHeaders, HTTPServerRequest
 from tornado.queues import Queue
 from tornado.web import HTTPError
 from traitlets import Int, Unicode
@@ -372,6 +372,7 @@ def test_gateway_request_timeout_pad_option(
 
     GatewayClient.clear_instance()
 
+
 @pytest.mark.parametrize(
     "accept_cookies,expire_arg,expire_param,existing_cookies",
     [
@@ -399,8 +400,9 @@ def test_gateway_request_with_expiring_cookies(
     cookie_value = "SERVERID=1234567; Path=/; HttpOnly"
     if expire_arg == "expires":
         # Convert expire_param to a string in the format of "Expires: <date>" (RFC 7231)
-        expire_param = (datetime.now(tz=timezone.utc) + timedelta(seconds=expire_param))\
-            .strftime("%a, %d %b %Y %H:%M:%S GMT")
+        expire_param = (datetime.now(tz=timezone.utc) + timedelta(seconds=expire_param)).strftime(
+            "%a, %d %b %Y %H:%M:%S GMT"
+        )
         cookie_value = f"SERVERID=1234567; Path=/; expires={expire_param}; HttpOnly"
     elif expire_arg == "Max-Age":
         cookie_value = f"SERVERID=1234567; Path=/; Max-Age={expire_param}; HttpOnly"
@@ -421,7 +423,7 @@ def test_gateway_request_with_expiring_cookies(
     connection_args = GatewayClient.instance().load_connection_args(**args)
 
     if not accept_cookies or test_expiration:
-        # The first condition ensure the response cookie is not accepted, 
+        # The first condition ensure the response cookie is not accepted,
         # the second condition ensures that the cookie is not accepted if it is expired.
         assert "SERVERID" not in connection_args["headers"].get("Cookie")
     else:

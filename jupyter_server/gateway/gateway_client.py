@@ -18,7 +18,6 @@ from socket import gaierror
 from jupyter_events import EventLogger
 from tornado import web
 from tornado.httpclient import AsyncHTTPClient, HTTPClientError, HTTPResponse
-from tornado.httputil import HTTPHeaders
 from traitlets import (
     Bool,
     Float,
@@ -42,7 +41,7 @@ STATUS_CODE_KEY = "status_code"
 MESSAGE_KEY = "msg"
 
 if ty.TYPE_CHECKING:
-    from http.cookies import Morsel
+    from tornado.httputil import HTTPHeaders
 
 
 class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore[misc]
@@ -640,7 +639,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         # Get individual Set-Cookie headers in list form.  This handles multiple cookies
         # that are otherwise comma-separated in the header and will break the parsing logic
         # if only headers.get() is used.
-        cookie_headers = headers.get_list('Set-Cookie')
+        cookie_headers = headers.get_list("Set-Cookie")
         if not cookie_headers:
             return
 
