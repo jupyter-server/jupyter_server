@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import importlib
-import re
 import logging
+import re
 from itertools import starmap
 
 from tornado.gen import multi
