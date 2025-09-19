@@ -6,11 +6,9 @@ import logging
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
-from email.utils import format_datetime
-from http.cookies import SimpleCookie
 from io import BytesIO
 from queue import Empty
-from typing import Any, Dict, Union
+from typing import Any, Union
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -18,7 +16,7 @@ import tornado
 from jupyter_core.utils import ensure_async
 from tornado.concurrent import Future
 from tornado.httpclient import HTTPRequest, HTTPResponse
-from tornado.httputil import HTTPServerRequest
+from tornado.httputil import HTTPHeaders, HTTPServerRequest
 from tornado.queues import Queue
 from tornado.web import HTTPError
 from traitlets import Int, Unicode
@@ -74,7 +72,7 @@ running_kernels = {}
 #
 # This is used to simulate inconsistency in list results from the Gateway server
 # due to issues like race conditions, bugs, etc.
-omitted_kernels: Dict[str, bool] = {}
+omitted_kernels: dict[str, bool] = {}
 
 
 def generate_model(name):
@@ -376,12 +374,12 @@ def test_gateway_request_timeout_pad_option(
 
 
 @pytest.mark.parametrize(
-    "accept_cookies,expire_arg,expire_param,existing_cookies,cookie_exists",
+    "accept_cookies,expire_arg,expire_param,existing_cookies",
     [
-        (False, None, None, "EXISTING=1", False),
-        (True, None, None, "EXISTING=1", True),
-        (True, "Expires", 180, None, True),
-        (True, "Max-Age", "-360", "EXISTING=1", False),
+        (False, None, 0, "EXISTING=1"),
+        (True, None, 0, "EXISTING=1"),
+        (True, "expires", 180, None),
+        (True, "Max-Age", -360, "EXISTING=1"),
     ],
 )
 def test_gateway_request_with_expiring_cookies(
@@ -390,35 +388,50 @@ def test_gateway_request_with_expiring_cookies(
     expire_arg,
     expire_param,
     existing_cookies,
-    cookie_exists,
 ):
     argv = [f"--GatewayClient.accept_cookies={accept_cookies}"]
 
     GatewayClient.clear_instance()
     _ = jp_configurable_serverapp(argv=argv)
 
-    cookie: SimpleCookie = SimpleCookie()
-    cookie.load("SERVERID=1234567; Path=/")
-    if expire_arg == "Expires":
-        expire_param = format_datetime(
-            datetime.now(tz=timezone.utc) + timedelta(seconds=expire_param)
+    test_expiration = bool(expire_param < 0)
+    # Create mock headers with Set-Cookie values
+    headers = HTTPHeaders()
+    cookie_value = "SERVERID=1234567; Path=/; HttpOnly"
+    if expire_arg == "expires":
+        # Convert expire_param to a string in the format of "Expires: <date>" (RFC 7231)
+        expire_param = (datetime.now(tz=timezone.utc) + timedelta(seconds=expire_param)).strftime(
+            "%a, %d %b %Y %H:%M:%S GMT"
         )
-    if expire_arg:
-        cookie["SERVERID"][expire_arg] = expire_param
+        cookie_value = f"SERVERID=1234567; Path=/; expires={expire_param}; HttpOnly"
+    elif expire_arg == "Max-Age":
+        cookie_value = f"SERVERID=1234567; Path=/; Max-Age={expire_param}; HttpOnly"
 
-    GatewayClient.instance().update_cookies(cookie)
+    # Add a second cookie to test comma-separated cookies
+    headers.add("Set-Cookie", cookie_value)
+    headers.add("Set-Cookie", "ADDITIONAL_COOKIE=8901234; Path=/; HttpOnly")
+
+    headers_list = headers.get_list("Set-Cookie")
+    print(headers_list)
+
+    GatewayClient.instance().update_cookies(headers)
 
     args = {}
     if existing_cookies:
         args["headers"] = {"Cookie": existing_cookies}
+
     connection_args = GatewayClient.instance().load_connection_args(**args)
 
-    if not cookie_exists:
-        assert "SERVERID" not in (connection_args["headers"].get("Cookie") or "")
+    if not accept_cookies or test_expiration:
+        # The first condition ensure the response cookie is not accepted,
+        # the second condition ensures that the cookie is not accepted if it is expired.
+        assert "SERVERID" not in connection_args["headers"].get("Cookie")
     else:
-        assert "SERVERID" in connection_args["headers"].get("Cookie")
+        # The cookie is accepted if it is not expired and accept_cookies is True.
+        assert "SERVERID" in connection_args["headers"].get("Cookie", "")
+
     if existing_cookies:
-        assert "EXISTING" in connection_args["headers"].get("Cookie")
+        assert "EXISTING" in connection_args["headers"].get("Cookie", "")
 
     GatewayClient.clear_instance()
 

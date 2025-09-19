@@ -23,7 +23,7 @@ class ConfigManager(LoggingConfigurable):
 
     def get(self, section_name):
         """Get the config from all config sections."""
-        config: t.Dict[str, t.Any] = {}
+        config: dict[str, t.Any] = {}
         # step through back to front, to ensure front of the list is top priority
         for p in self.read_config_path[::-1]:
             cm = BaseJSONConfigManager(config_dir=p)

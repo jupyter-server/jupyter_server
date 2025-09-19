@@ -154,8 +154,9 @@ async def test_generate_config(tmp_path, jp_configurable_serverapp):
 
 def test_server_password(tmp_path, jp_configurable_serverapp):
     password = "secret"
-    with patch.dict("os.environ", {"JUPYTER_CONFIG_DIR": str(tmp_path)}), patch.object(
-        getpass, "getpass", return_value=password
+    with (
+        patch.dict("os.environ", {"JUPYTER_CONFIG_DIR": str(tmp_path)}),
+        patch.object(getpass, "getpass", return_value=password),
     ):
         app = JupyterPasswordApp(log_level=logging.ERROR)
         app.initialize([])
@@ -606,8 +607,9 @@ def test_running_server_info(jp_serverapp):
 
 
 @pytest.mark.parametrize("should_exist", [True, False])
-def test_browser_open_files(jp_configurable_serverapp, should_exist, caplog):
+async def test_browser_open_files(jp_configurable_serverapp, should_exist, caplog):
     app = jp_configurable_serverapp(no_browser_open_file=not should_exist)
+    await app._post_start()
     assert os.path.exists(app.browser_open_file) == should_exist
     url = urljoin("file:", pathname2url(app.browser_open_file))
     url_messages = [rec.message for rec in caplog.records if url in rec.message]

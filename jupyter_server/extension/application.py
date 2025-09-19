@@ -475,6 +475,18 @@ class ExtensionApp(JupyterApp):
         extension.initialize()
         return extension
 
+    async def _start_jupyter_server_extension(self, serverapp):
+        """
+        An async hook to start e.g. tasks from the extension after
+        the server's event loop is running.
+
+        Override this method (no need to call `super()`) to
+        start (async) tasks from an extension.
+
+        This is useful for starting e.g. background tasks from
+        an extension.
+        """
+
     @classmethod
     def load_classic_server_extension(cls, serverapp):
         """Enables extension to be loaded as classic Notebook (jupyter/notebook) extension."""

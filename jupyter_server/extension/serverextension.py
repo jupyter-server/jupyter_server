@@ -259,9 +259,23 @@ class ToggleServerExtensionApp(BaseExtensionApp):
             self.log.info(f"- Writing config: {config_dir}")
             # Validate the server extension.
             self.log.info(f"    - Validating {import_name}...")
+            config = extension_manager.config_manager
+            enabled = False
+            if config:
+                jpserver_extensions = config.get_jpserver_extensions()
+                if import_name not in jpserver_extensions:
+                    msg = (
+                        f"The module '{import_name}' could not be found. Are you "
+                        "sure the extension is installed?"
+                    )
+                    raise ValueError(msg)
+                enabled = jpserver_extensions[import_name]
+
             # Interface with the Extension Package and validate.
-            extpkg = ExtensionPackage(name=import_name)
-            extpkg.validate()
+            extpkg = ExtensionPackage(name=import_name, enabled=enabled)
+            if not extpkg.validate():
+                msg = "validation failed"
+                raise ValueError(msg)
             version = extpkg.version
             self.log.info(f"      {import_name} {version} {GREEN_OK}")
 
@@ -276,7 +290,7 @@ class ToggleServerExtensionApp(BaseExtensionApp):
             # If successful, let's log.
             self.log.info(f"    - Extension successfully {self._toggle_post_message}.")
         except Exception as err:
-            self.log.info(f"     {RED_X} Validation failed: {err}")
+            self.log.error(f"     {RED_X} Validation failed: {err}")
 
     def start(self) -> None:
         """Perform the App's actions as configured"""
@@ -336,7 +350,7 @@ class ListServerExtensionsApp(BaseExtensionApp):
 
         for option in configurations:
             config_dir = _get_config_dir(**option)
-            self.log.info(f"Config dir: {config_dir}")
+            print(f"Config dir: {config_dir}")
             write_dir = "jupyter_server_config.d"
             config_manager = ExtensionConfigManager(
                 read_config_path=[config_dir],
@@ -345,20 +359,18 @@ class ListServerExtensionsApp(BaseExtensionApp):
             jpserver_extensions = config_manager.get_jpserver_extensions()
             for name, enabled in jpserver_extensions.items():
                 # Attempt to get extension metadata
-                self.log.info(f"    {name} {GREEN_ENABLED if enabled else RED_DISABLED}")
+                print(f"    {name} {GREEN_ENABLED if enabled else RED_DISABLED}")
                 try:
-                    self.log.info(f"    - Validating {name}...")
+                    print(f"    - Validating {name}...")
                     extension = ExtensionPackage(name=name, enabled=enabled)
                     if not extension.validate():
                         msg = "validation failed"
                         raise ValueError(msg)
                     version = extension.version
-                    self.log.info(f"      {name} {version} {GREEN_OK}")
+                    print(f"      {name} {version} {GREEN_OK}")
                 except Exception as err:
-                    exc_info = False
-                    if int(self.log_level) <= logging.DEBUG:  # type:ignore[call-overload]
-                        exc_info = True
-                    self.log.warning(f"      {RED_X} {err}", exc_info=exc_info)
+                    self.log.debug("", exc_info=True)
+                    print(f"      {RED_X} {err}")
             # Add a blank line between paths.
             self.log.info("")
 

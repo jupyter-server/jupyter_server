@@ -17,11 +17,14 @@ from .prometheus.log_functions import prometheus_log_method
 # url params to be scrubbed if seen
 # any url param that *contains* one of these
 # will be scrubbed from logs
-_SCRUB_PARAM_KEYS = {"token", "auth", "key", "code", "state", "xsrf"}
+_DEFAULT_SCRUB_PARAM_KEYS = {"token", "auth", "key", "code", "state", "xsrf"}
 
 
-def _scrub_uri(uri: str) -> str:
+def _scrub_uri(uri: str, extra_param_keys=None) -> str:
     """scrub auth info from uri"""
+
+    scrub_param_keys = _DEFAULT_SCRUB_PARAM_KEYS.union(set(extra_param_keys or []))
+
     parsed = urlparse(uri)
     if parsed.query:
         # check for potentially sensitive url params
@@ -31,7 +34,7 @@ def _scrub_uri(uri: str) -> str:
         changed = False
         for i, s in enumerate(parts):
             key, sep, value = s.partition("=")
-            for substring in _SCRUB_PARAM_KEYS:
+            for substring in scrub_param_keys:
                 if substring in key:
                     parts[i] = f"{key}{sep}[secret]"
                     changed = True
@@ -41,13 +44,16 @@ def _scrub_uri(uri: str) -> str:
     return uri
 
 
-def log_request(handler):
+def log_request(handler, record_prometheus_metrics=True):
     """log a bit more information about each request than tornado's default
 
     - move static file get success to debug-level (reduces noise)
     - get proxied IP instead of proxy IP
     - log referer for redirect and failed requests
     - log user-agent for failed requests
+
+    if record_prometheus_metrics is true, will record a histogram prometheus
+    metric (http_request_duration_seconds) for each request handler
     """
     status = handler.get_status()
     request = handler.request
@@ -55,6 +61,8 @@ def log_request(handler):
         logger = handler.log
     except AttributeError:
         logger = access_log
+
+    extra_param_keys = handler.settings.get("extra_log_scrub_param_keys", [])
 
     if status < 300 or status == 304:
         # Successes (or 304 FOUND) are debug-level
@@ -71,7 +79,7 @@ def log_request(handler):
         "status": status,
         "method": request.method,
         "ip": request.remote_ip,
-        "uri": _scrub_uri(request.uri),
+        "uri": _scrub_uri(request.uri, extra_param_keys),
         "request_time": request_time,
     }
     # log username
@@ -87,7 +95,7 @@ def log_request(handler):
     msg = "{status} {method} {uri} ({username}@{ip}) {request_time:.2f}ms"
     if status >= 400:
         # log bad referrers
-        ns["referer"] = _scrub_uri(request.headers.get("Referer", "None"))
+        ns["referer"] = _scrub_uri(request.headers.get("Referer", "None"), extra_param_keys)
         msg = msg + " referer={referer}"
     if status >= 500 and status != 502:
         # Log a subset of the headers if it caused an error.
@@ -97,4 +105,5 @@ def log_request(handler):
                 headers[header] = request.headers[header]
         log_method(json.dumps(headers, indent=2))
     log_method(msg.format(**ns))
-    prometheus_log_method(handler)
+    if record_prometheus_metrics:
+        prometheus_log_method(handler)

@@ -3,7 +3,7 @@ import shutil
 import sys
 import time
 from itertools import combinations
-from typing import Dict, Optional, Tuple
+from typing import Optional
 from unittest.mock import patch
 
 import pytest
@@ -112,7 +112,7 @@ def add_invalid_cell(notebook):
 
 async def prepare_notebook(
     jp_contents_manager: FileContentsManager, make_invalid: Optional[bool] = False
-) -> Tuple[Dict, str]:
+) -> tuple[dict, str]:
     cm = jp_contents_manager
     model = await ensure_async(cm.new_untitled(type="notebook"))
     name = model["name"]
@@ -854,6 +854,21 @@ async def test_rename(jp_contents_manager):
     await ensure_async(cm.new_untitled("foo/bar_diff", ext=".ipynb"))
 
 
+async def test_rename_nonexistent(jp_contents_manager):
+    """Test renaming a non-existent file/directory returns 404 error"""
+    cm = jp_contents_manager
+
+    # Test with non-existent file
+    with pytest.raises(HTTPError) as e:
+        await ensure_async(cm.rename("nonexistent_file.txt", "new_name.txt"))
+    assert expected_http_error(e, 404)
+
+    # Test with non-existent directory
+    with pytest.raises(HTTPError) as e:
+        await ensure_async(cm.rename("nonexistent_dir", "new_dir"))
+    assert expected_http_error(e, 404)
+
+
 async def test_delete_root(jp_contents_manager):
     cm = jp_contents_manager
     with pytest.raises(HTTPError) as e:
@@ -983,9 +998,10 @@ async def test_nb_validation(jp_contents_manager):
     # successful methods and ensure that calls to the aliased "validate_nb" are
     # zero.  Note that since patching side-effects the validation error case, we'll
     # skip call-count assertions for that portion of the test.
-    with patch("nbformat.validate") as mock_validate, patch(
-        "jupyter_server.services.contents.manager.validate_nb"
-    ) as mock_validate_nb:
+    with (
+        patch("nbformat.validate") as mock_validate,
+        patch("jupyter_server.services.contents.manager.validate_nb") as mock_validate_nb,
+    ):
         # Valid notebook, save, then get
         model = await ensure_async(cm.save(model, path))
         assert "message" not in model

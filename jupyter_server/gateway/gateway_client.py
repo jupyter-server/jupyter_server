@@ -12,12 +12,13 @@ import typing as ty
 from abc import ABC, ABCMeta, abstractmethod
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from http.cookies import SimpleCookie
+from http.cookies import Morsel, SimpleCookie
 from socket import gaierror
 
 from jupyter_events import EventLogger
 from tornado import web
 from tornado.httpclient import AsyncHTTPClient, HTTPClientError, HTTPResponse
+from tornado.httputil import HTTPHeaders
 from traitlets import (
     Bool,
     Float,
@@ -39,9 +40,6 @@ SUCCESS_STATUS = "success"
 STATUS_KEY = "status"
 STATUS_CODE_KEY = "status_code"
 MESSAGE_KEY = "msg"
-
-if ty.TYPE_CHECKING:
-    from http.cookies import Morsel
 
 
 class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore[misc]
@@ -630,20 +628,41 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
 
         return kwargs
 
-    def update_cookies(self, cookie: SimpleCookie) -> None:
-        """Update cookies from existing requests for load balancers"""
+    def update_cookies(self, headers: HTTPHeaders) -> None:
+        """Update cookies from response headers"""
+
         if not self.accept_cookies:
             return
 
+        # Get individual Set-Cookie headers in list form.  This handles multiple cookies
+        # that are otherwise comma-separated in the header and will break the parsing logic
+        # if only headers.get() is used.
+        cookie_headers = headers.get_list("Set-Cookie")
+        if not cookie_headers:
+            return
+
         store_time = datetime.now(tz=timezone.utc)
-        for key, item in cookie.items():
+        for header in cookie_headers:
+            cookie = SimpleCookie()
+            try:
+                cookie.load(header)
+            except Exception as e:
+                self.log.warning("Failed to parse cookie header %s: %s", header, e)
+                continue
+
+            if not cookie:
+                self.log.warning("No cookies found in header: %s", header)
+                continue
+            name, morsel = next(iter(cookie.items()))
+
             # Convert "expires" arg into "max-age" to facilitate expiration management.
             # As "max-age" has precedence, ignore "expires" when "max-age" exists.
-            if item.get("expires") and not item.get("max-age"):
-                expire_timedelta = parsedate_to_datetime(item["expires"]) - store_time
-                item["max-age"] = str(expire_timedelta.total_seconds())
+            if morsel.get("expires") and not morsel.get("max-age"):
+                expire_time = parsedate_to_datetime(morsel["expires"])
+                expire_timedelta = expire_time - store_time
+                morsel["max-age"] = str(expire_timedelta.total_seconds())
 
-            self._cookies[key] = (item, store_time)
+            self._cookies[name] = (morsel, store_time)
 
     def _clear_expired_cookies(self) -> None:
         """Clear expired cookies."""
@@ -821,10 +840,6 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
         raise e
 
     if gateway_client.accept_cookies:
-        # Update cookies on GatewayClient from server if configured.
-        cookie_values = response.headers.get("Set-Cookie")
-        if cookie_values:
-            cookie: SimpleCookie = SimpleCookie()
-            cookie.load(cookie_values)
-            gateway_client.update_cookies(cookie)
+        gateway_client.update_cookies(response.headers)
+
     return response

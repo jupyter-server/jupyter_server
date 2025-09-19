@@ -2,7 +2,7 @@
 
 import json
 import struct
-from typing import Any, List
+from typing import Any
 
 from jupyter_client.session import Session
 from tornado.websocket import WebSocketHandler
@@ -89,7 +89,7 @@ def serialize_msg_to_ws_v1(msg_or_list, channel, pack=None):
     else:
         msg_list = msg_or_list
     channel = channel.encode("utf-8")
-    offsets: List[Any] = []
+    offsets: list[Any] = []
     offsets.append(8 * (1 + 1 + len(msg_list) + 1))
     offsets.append(len(channel) + offsets[-1])
     for msg in msg_list:
@@ -173,7 +173,7 @@ class BaseKernelWebsocketConnection(LoggingConfigurable):
         """Handle an incoming message."""
         raise NotImplementedError
 
-    def handle_outgoing_message(self, stream: str, outgoing_msg: List[Any]) -> None:
+    def handle_outgoing_message(self, stream: str, outgoing_msg: list[Any]) -> None:
         """Handle an outgoing message."""
         raise NotImplementedError
 

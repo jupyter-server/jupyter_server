@@ -3,7 +3,7 @@
 import asyncio
 import json
 import os
-from typing import Awaitable
+from collections.abc import Awaitable
 
 import pytest
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
