@@ -295,7 +295,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model["size"] = None
         if content:
             model["content"] = contents = []
-            os_dir = self._get_os_path(path)
+            os_dir = os_path
             for name in os.listdir(os_dir):
                 try:
                     os_path = os.path.join(os_dir, name)
@@ -602,6 +602,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 shutil.move(old_os_path, new_os_path)
         except web.HTTPError:
             raise
+        except FileNotFoundError:
+            raise web.HTTPError(404, f"File or directory does not exist: {old_path}") from None
         except Exception as e:
             raise web.HTTPError(500, f"Unknown error renaming file: {old_path} {e}") from e
 
@@ -767,7 +769,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         model["size"] = None
         if content:
             model["content"] = contents = []
-            os_dir = self._get_os_path(path)
+            os_dir = os_path
             dir_contents = await run_sync(os.listdir, os_dir)
             for name in dir_contents:
                 try:
@@ -1069,6 +1071,8 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 await run_sync(shutil.move, old_os_path, new_os_path)
         except web.HTTPError:
             raise
+        except FileNotFoundError:
+            raise web.HTTPError(404, f"File or directory does not exist: {old_path}") from None
         except Exception as e:
             raise web.HTTPError(500, f"Unknown error renaming file: {old_path} {e}") from e
 

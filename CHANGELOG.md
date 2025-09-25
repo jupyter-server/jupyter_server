@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.17.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.16.0...4484f122a70014c864b44fd0d8f50f660dae1538))
+
+### Enhancements made
+
+- Avoid redundant call to `_get_os_path` in `_dir_model` [#1547](https://github.com/jupyter-server/jupyter_server/pull/1547) ([@joeyutong](https://github.com/joeyutong))
+- Allow specifying extra params to scrub from logs [#1538](https://github.com/jupyter-server/jupyter_server/pull/1538) ([@jtpio](https://github.com/jtpio))
+- Add a logger to the ExtensionPoint API [#1523](https://github.com/jupyter-server/jupyter_server/pull/1523) ([@Zsailer](https://github.com/Zsailer))
+- Allow user to update identity values [#1518](https://github.com/jupyter-server/jupyter_server/pull/1518) ([@brichet](https://github.com/brichet))
+
+### Bugs fixed
+
+- Fix FileNotFoundError handling in rename_file methods [#1548](https://github.com/jupyter-server/jupyter_server/pull/1548) ([@aws-jasakshi](https://github.com/aws-jasakshi))
+- Use stdlib override when possible [#1532](https://github.com/jupyter-server/jupyter_server/pull/1532) ([@edrogers](https://github.com/edrogers))
+- CORS is not checked when browsing files. check origin now https://github.com/jupyter-server/jupyter_server/issues/1459 [#1465](https://github.com/jupyter-server/jupyter_server/pull/1465) ([@gogasca](https://github.com/gogasca))
+
+### Maintenance and upkeep improvements
+
+- Bump the actions group across 1 directory with 2 updates [#1551](https://github.com/jupyter-server/jupyter_server/pull/1551) ([@dependabot](https://github.com/dependabot))
+- Fix the failing "Test Lint" check on CI [#1540](https://github.com/jupyter-server/jupyter_server/pull/1540) ([@jtpio](https://github.com/jtpio))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2025-05-12&to=2025-08-21&type=c))
+
+[@aws-jasakshi](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aaws-jasakshi+updated%3A2025-05-12..2025-08-21&type=Issues) | [@brichet](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abrichet+updated%3A2025-05-12..2025-08-21&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2025-05-12..2025-08-21&type=Issues) | [@edrogers](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aedrogers+updated%3A2025-05-12..2025-08-21&type=Issues) | [@gogasca](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Agogasca+updated%3A2025-05-12..2025-08-21&type=Issues) | [@joeyutong](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajoeyutong+updated%3A2025-05-12..2025-08-21&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2025-05-12..2025-08-21&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2025-05-12..2025-08-21&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2025-05-12..2025-08-21&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2025-05-12..2025-08-21&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.16.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.15.0...fa41b3866a57ad51f74a15684183d833c0206f9c))
@@ -40,8 +70,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-12-20&to=2025-05-12&type=c))
 
 [@ark-1](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aark-1+updated%3A2024-12-20..2025-05-12&type=Issues) | [@bollwyvl](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abollwyvl+updated%3A2024-12-20..2025-05-12&type=Issues) | [@Darshan808](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ADarshan808+updated%3A2024-12-20..2025-05-12&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2024-12-20..2025-05-12&type=Issues) | [@kjayan](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akjayan+updated%3A2024-12-20..2025-05-12&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2024-12-20..2025-05-12&type=Issues) | [@MaicoTimmerman](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AMaicoTimmerman+updated%3A2024-12-20..2025-05-12&type=Issues) | [@manics](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amanics+updated%3A2024-12-20..2025-05-12&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2024-12-20..2025-05-12&type=Issues) | [@nokados](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Anokados+updated%3A2024-12-20..2025-05-12&type=Issues) | [@RRosio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ARRosio+updated%3A2024-12-20..2025-05-12&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2024-12-20..2025-05-12&type=Issues) | [@yuvipanda](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ayuvipanda+updated%3A2024-12-20..2025-05-12&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2024-12-20..2025-05-12&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.15.0
 

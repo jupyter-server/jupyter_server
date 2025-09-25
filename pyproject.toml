@@ -41,7 +41,7 @@ dependencies = [
     "traitlets>=5.6.0",
     "websocket-client>=1.7",
     "jupyter_events>=0.11.0",
-    "overrides>=5.0"
+    "overrides>=5.0;python_version<'3.12'"
 ]
 
 [project.urls]
@@ -156,6 +156,7 @@ unfixable = [
 [tool.ruff.lint.extend-per-file-ignores]
 "jupyter_server/*" = ["S101", "RET", "S110", "UP031", "FBT", "FA100", "SLF001", "A002",
                       "SIM105", "A001", "UP007", "PLR2004", "T201", "N818", "F403"]
+"jupyter_server/gateway/*" = ["TCH" ]
 "tests/*" = ["UP031", "PT", 'EM', "TRY", "RET", "SLF", "C408", "F841", "FBT", "A002", "FLY", "N",
             "PERF", "ASYNC", "T201", "FA100", "E711", "INP", "TCH", "SIM105", "A001", "PLW0603"]
 "examples/*_config.py" = ["F821"]

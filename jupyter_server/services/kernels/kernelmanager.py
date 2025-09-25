@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import os
 import pathlib  # noqa: TCH003
+import sys
 import typing as t
 import warnings
 from collections import defaultdict
@@ -24,7 +25,11 @@ from jupyter_core.paths import exists
 from jupyter_core.utils import ensure_async
 from jupyter_events import EventLogger
 from jupyter_events.schema_registry import SchemaRegistryException
-from overrides import overrides
+
+if sys.version_info >= (3, 12):
+    from typing import override
+else:
+    from overrides import overrides as override
 from tornado import web
 from tornado.concurrent import Future
 from tornado.ioloop import IOLoop, PeriodicCallback
@@ -894,28 +899,28 @@ class ServerKernelManager(AsyncIOLoopKernelManager):
         """Emit an event from the kernel manager."""
         self.event_logger.emit(schema_id=schema_id, data=data)
 
-    @overrides
+    @override
     @emit_kernel_action_event(
         success_msg="Kernel {kernel_id} was started.",
     )
     async def start_kernel(self, *args, **kwargs):
         return await super().start_kernel(*args, **kwargs)
 
-    @overrides
+    @override
     @emit_kernel_action_event(
         success_msg="Kernel {kernel_id} was shutdown.",
     )
     async def shutdown_kernel(self, *args, **kwargs):
         return await super().shutdown_kernel(*args, **kwargs)
 
-    @overrides
+    @override
     @emit_kernel_action_event(
         success_msg="Kernel {kernel_id} was restarted.",
     )
     async def restart_kernel(self, *args, **kwargs):
         return await super().restart_kernel(*args, **kwargs)
 
-    @overrides
+    @override
     @emit_kernel_action_event(
         success_msg="Kernel {kernel_id} was interrupted.",
     )
