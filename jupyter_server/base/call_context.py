@@ -2,7 +2,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-import copy
 from contextvars import Context, ContextVar, copy_context
 from typing import Any
 
@@ -42,7 +41,6 @@ class CallContext:
             The value associated with the named variable for this call context
         """
         name_value_map = CallContext._get_map()
-
         if name in name_value_map:
             return name_value_map[name]
         return None  # TODO: should this raise `LookupError` (or a custom error derived from said)
@@ -62,7 +60,7 @@ class CallContext:
         -------
         None
         """
-        name_value_map = copy.deepcopy(CallContext._get_map())
+        name_value_map = CallContext._get_map().copy()
         name_value_map[name] = value
         CallContext._name_value_map.set(name_value_map)
 
