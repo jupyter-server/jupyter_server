@@ -2,6 +2,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import copy
 from contextvars import Context, ContextVar, copy_context
 from typing import Any
 
@@ -61,8 +62,9 @@ class CallContext:
         -------
         None
         """
-        name_value_map = CallContext._get_map()
+        name_value_map = copy.deepcopy(CallContext._get_map())
         name_value_map[name] = value
+        CallContext._name_value_map.set(name_value_map)
 
     @classmethod
     def context_variable_names(cls) -> list[str]:
