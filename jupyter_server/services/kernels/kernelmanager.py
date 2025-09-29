@@ -18,6 +18,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import partial, wraps
 
+from jupyter_client.asynchronous.client import AsyncKernelClient
 from jupyter_client.ioloop.manager import AsyncIOLoopKernelManager
 from jupyter_client.multikernelmanager import AsyncMultiKernelManager, MultiKernelManager
 from jupyter_client.session import Session
@@ -37,11 +38,13 @@ from traitlets import (
     Any,
     Bool,
     Dict,
+    DottedObjectName,
     Float,
     Instance,
     Integer,
     List,
     TraitError,
+    Type,
     Unicode,
     default,
     validate,
@@ -844,6 +847,30 @@ def emit_kernel_action_event(success_msg: str = "") -> t.Callable[..., t.Any]:
 
 class ServerKernelManager(AsyncIOLoopKernelManager):
     """A server-specific kernel manager."""
+
+    # Override parent traits to make them configurable
+    client_class = DottedObjectName(
+        "jupyter_client.asynchronous.AsyncKernelClient",
+        config=True,
+        help="""The kernel client class to use for communicating with kernels.
+
+        This should be a subclass of KernelClient, and it should accept the
+        following arguments:
+        - kernel_manager
+        - blocking
+        - loop
+        """
+    )
+
+    client_factory = Type(
+        default_value=AsyncKernelClient,
+        klass="jupyter_client.client.KernelClient",
+        config=True,
+        help="""The kernel client factory class to use for creating client instances.
+
+        This should be a subclass of KernelClient.
+        """
+    )
 
     # Define activity-related attributes:
     execution_state = Unicode(
