@@ -1,10 +1,13 @@
 import pytest
-from traitlets.config import Config
-
 from jupyter_client.asynchronous.client import AsyncKernelClient
 from jupyter_client.blocking.client import BlockingKernelClient
 from jupyter_client.client import KernelClient
-from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager, ServerKernelManager
+from traitlets.config import Config
+
+from jupyter_server.services.kernels.kernelmanager import (
+    AsyncMappingKernelManager,
+    ServerKernelManager,
+)
 from jupyter_server.utils import import_item
 
 

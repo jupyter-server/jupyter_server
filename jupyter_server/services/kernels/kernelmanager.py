@@ -859,7 +859,7 @@ class ServerKernelManager(AsyncIOLoopKernelManager):
         - kernel_manager
         - blocking
         - loop
-        """
+        """,
     )
 
     client_factory = Type(
@@ -869,7 +869,7 @@ class ServerKernelManager(AsyncIOLoopKernelManager):
         help="""The kernel client factory class to use for creating client instances.
 
         This should be a subclass of KernelClient.
-        """
+        """,
     )
 
     # Define activity-related attributes:
