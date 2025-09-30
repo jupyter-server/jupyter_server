@@ -43,6 +43,15 @@ class LoginFormHandler(JupyterHandler):
         # \ is not valid in urls, but some browsers treat it as /
         # instead of %5C, causing `\\` to behave as `//`
         url = url.replace("\\", "%5C")
+
+        # Prevent open redirect attacks by blocking URLs that start with //
+        # These are protocol-relative URLs that can redirect to external sites
+        if url.startswith("//"):
+            self.log.warning("Not allowing login redirect to protocol-relative URL %r" % url)
+            url = default
+            self.redirect(url)
+            return
+
         # urllib and browsers interpret extra '/' in the scheme separator (`scheme:///host/path`)
         # differently.
         # urllib gives scheme=scheme, netloc='', path='/host/path', while
