@@ -55,14 +55,44 @@ def generate_kernelspec(name):
     return kernelspec_stanza
 
 
-# We'll mock up two kernelspecs - kspec_foo and kspec_bar
-kernelspecs: dict = {
-    "default": "kspec_foo",
-    "kernelspecs": {
-        "kspec_foo": generate_kernelspec("kspec_foo"),
-        "kspec_bar": generate_kernelspec("kspec_bar"),
-    },
-}
+def generate_kernelspec_with_resourcedir(name, spec_dir):
+    # create a file that simply calls the standard argv stanza
+    contents = "python -m ipykernel_launcher -f {connection_file}"
+    with open(spec_dir.joinpath("launcher.sh"), "w") as resource_dir_script:
+        resource_dir_script.write(contents)
+    argv_stanza = [os.path.join("{resource_dir}", "launcher.sh")]
+    kernelspec_stanza = generate_kernelspec(name)
+    kernelspec_stanza["spec"]["spec"]["argv"] = argv_stanza
+    kernelspec_stanza["resource_dir"] = str(spec_dir)
+    return kernelspec_stanza
+
+
+kernelspecs: dict = {}
+
+
+@pytest.fixture(autouse=True)
+def init_kernelspecs(jp_data_dir):
+    global kernelspecs
+
+    spec_dir = jp_data_dir.joinpath("kernels", "kspec_resourcedir")
+    if not spec_dir.exists():
+        spec_dir.mkdir(parents=True)
+
+    missing_rdir = generate_kernelspec_with_resourcedir("kspec_resourcedir_missing", spec_dir)
+    del missing_rdir["resource_dir"]
+
+    # mock kernelspecs
+    kernelspecs = {
+        "default": "kspec_foo",
+        "kernelspecs": {
+            "kspec_foo": generate_kernelspec("kspec_foo"),
+            "kspec_bar": generate_kernelspec("kspec_bar"),
+            "kspec_resourcedir": generate_kernelspec_with_resourcedir(
+                "kspec_resourcedir", spec_dir
+            ),
+            "kspec_resourcedir_missing": missing_rdir,
+        },
+    }
 
 
 # maintain a dictionary of expected running kernels.  Key = kernel_id, Value = model.
@@ -450,11 +480,31 @@ async def test_gateway_get_kernelspecs(init_gateway, jp_fetch, jp_serverapp):
         assert r.code == 200
         content = json.loads(r.body.decode("utf-8"))
         kspecs = content.get("kernelspecs")
-        assert len(kspecs) == 2
+        assert len(kspecs) == 4
         assert kspecs.get("kspec_bar").get("name") == "kspec_bar"
         assert (
             kspecs.get("kspec_bar").get("resources")["logo-64x64"].startswith(jp_serverapp.base_url)
         )
+
+
+async def test_gateway_get_kernelspec_filled_resource_dir(init_gateway, jp_fetch):
+    # Validate that kernelspec with resource_dir filled came from gateway.
+    with mocked_gateway:
+        r = await jp_fetch("api", "kernelspecs", "kspec_resourcedir", method="GET")
+        assert r.code == 200
+        kspec_resourcedir = json.loads(r.body.decode("utf-8"))
+        assert kspec_resourcedir.get("name") == "kspec_resourcedir"
+        assert "{resource_dir}" not in json.dumps(kspec_resourcedir.get("spec"))
+
+
+async def test_gateway_get_kernelspec_unfilled_resource_dir(init_gateway, jp_fetch):
+    # Validate that kernelspec with resource_dir unfilled came from gateway.
+    with mocked_gateway:
+        r = await jp_fetch("api", "kernelspecs", "kspec_resourcedir_missing", method="GET")
+        assert r.code == 200
+        kspec_resourcedir_missing = json.loads(r.body.decode("utf-8"))
+        assert kspec_resourcedir_missing.get("name") == "kspec_resourcedir_missing"
+        assert "{resource_dir}" in json.dumps(kspec_resourcedir_missing.get("spec"))
 
 
 async def test_gateway_get_named_kernelspec(init_gateway, jp_fetch):
@@ -593,6 +643,32 @@ async def test_gateway_kernel_lifecycle(
         assert "kernel_id" in output and kernel_id == output["kernel_id"]
         assert "status" in output and output["status"] == "success"
 
+    assert await is_kernel_running(jp_fetch, kernel_id) is False
+
+
+async def test_gateway_kernel_lifecycle_resource_dir(init_gateway, jp_fetch):
+    # Validate kernel lifecycle functions; create, interrupt, restart and delete for resource_dir template use.
+
+    # create
+    kernel_id = await create_kernel(jp_fetch, "kspec_resourcedir")
+
+    # ensure kernel still considered running
+    assert await is_kernel_running(jp_fetch, kernel_id) is True
+
+    # interrupt
+    await interrupt_kernel(jp_fetch, kernel_id)
+
+    # ensure kernel still considered running
+    assert await is_kernel_running(jp_fetch, kernel_id) is True
+
+    # restart
+    await restart_kernel(jp_fetch, kernel_id)
+
+    # ensure kernel still considered running
+    assert await is_kernel_running(jp_fetch, kernel_id) is True
+
+    # delete
+    await delete_kernel(jp_fetch, kernel_id)
     assert await is_kernel_running(jp_fetch, kernel_id) is False
 
 
