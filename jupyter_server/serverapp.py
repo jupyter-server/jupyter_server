@@ -610,11 +610,14 @@ class JupyterPasswordApp(JupyterApp):
         """Start the password app."""
         from jupyter_server.auth.security import set_password
 
+        if self.parent is None:
+            raise ValueError(
+                'Unable to change password without parent app')
         set_password(config_file=self.config_file)
         self.parent._write_cookie_secret_file(
             self.parent.cookie_secret)
         self.log.info(_i18n("Touched cookie secret file to update"
-                            " server secert time"))
+                            " server secret time"))
         self.log.info("Wrote hashed password to %s" % self.config_file)
 
 
@@ -1168,7 +1171,7 @@ class ServerApp(JupyterApp):
     # to invalidate old cookies when a password is changed by rewriting
     # the cookie secret again (without necessarily changing it).
     # See https://github.com/jupyter-server/jupyter_server/issues/1566
-    _cookie_secret_creation_time = None
+    _cookie_secret_creation_time = 0
 
     @default("cookie_secret")
     def _default_cookie_secret(self) -> bytes:
@@ -1197,7 +1200,7 @@ class ServerApp(JupyterApp):
                 e,
             )
         self._cookie_secret_creation_time = os.stat(
-            self.cookie_secret_file)
+            self.cookie_secret_file).st_mtime
 
     _token_set = False
 

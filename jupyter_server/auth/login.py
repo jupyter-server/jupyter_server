@@ -214,7 +214,6 @@ class LegacyLoginHandler(LoginFormHandler):
             # because that can erroneously log you out (see gh-3365)
             if handler.get_cookie(handler.cookie_name) is not None:
                 handler.log.warning("Clearing invalid/expired login cookie %s", handler.cookie_name)
-                handler.clear_login_cookie()
             if not handler.login_available:
                 # Completely insecure! No authentication at all.
                 # No need to warn here, though; validate_security will have already done that.
