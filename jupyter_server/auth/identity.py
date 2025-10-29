@@ -14,6 +14,7 @@ import json
 import os
 import re
 import sys
+import time
 import typing as t
 import uuid
 from dataclasses import asdict, dataclass
@@ -350,6 +351,7 @@ class IdentityProvider(LoggingConfigurable):
                 "display_name": user.display_name,
                 "initials": user.initials,
                 "color": user.color,
+                'cookie_creation_time': time.time(),
             }
         )
         return cookie
@@ -357,6 +359,19 @@ class IdentityProvider(LoggingConfigurable):
     def user_from_cookie(self, cookie_value: str) -> User | None:
         """Inverse of user_to_cookie"""
         user = json.loads(cookie_value)
+        cookie_creation_time = user.get('cookie_creation_time', None)
+
+        if cookie_creation_time is None:
+            self.clear_login_cookie()
+            raise ValueError(
+                'No cookie_creation_time in cookie; must recreate cookie')
+        secret_creation_time = self.parent._cookie_secret_creation_time
+        if cookie_creation_time < secret_creation_time:
+            self.clear_login_cookie()
+            raise ValueError(
+                f'Stale cookie created at {cookie_creation_time};'
+                f' but server secret created {secret_creation_time}')
+
         return User(
             user["username"],
             user["name"],
@@ -448,6 +463,7 @@ class IdentityProvider(LoggingConfigurable):
         )
         if not _user_cookie:
             return None
+        
         user_cookie = _user_cookie.decode()
         # TODO: try/catch in case of change in config?
         try:
@@ -722,6 +738,10 @@ class PasswordIdentityProvider(IdentityProvider):
                 config_file = os.path.join(config_dir, "jupyter_server_config.json")
                 self.hashed_password = set_password(new_password, config_file=config_file)
                 self.log.info(_i18n("Wrote hashed password to {file}").format(file=config_file))
+                self.parent._write_cookie_secret_file(
+                    self.parent.cookie_secret)
+                self.log.info(_i18n("Touched cookie secret file to update"
+                                    " server secert time"))
 
         return user
 
