@@ -366,7 +366,7 @@ class IdentityProvider(LoggingConfigurable):
             raise ValueError("No cookie_creation_time in cookie; must recreate cookie")
         secret_creation_time = self.parent._cookie_secret_creation_time
         if not secret_creation_time:
-            raise ValueError('Secret creation time not set')
+            raise ValueError("Secret creation time not set")
         if cookie_creation_time < secret_creation_time:
             raise ValueError(
                 f"Stale cookie created at {cookie_creation_time};"
@@ -741,7 +741,6 @@ class PasswordIdentityProvider(IdentityProvider):
                 self.log.info(_i18n("Wrote hashed password to {file}").format(file=config_file))
                 self.parent._write_cookie_secret_file(self.parent.cookie_secret)
                 self.log.info(_i18n("Touched cookie secret file to update server secret time"))
-
 
         return user
 

@@ -611,8 +611,7 @@ class JupyterPasswordApp(JupyterApp):
         from jupyter_server.auth.security import set_password
 
         if self.parent is None:
-            raise ValueError(
-                'Unable to change password without parent app')
+            raise ValueError("Unable to change password without parent app")
         set_password(config_file=self.config_file)
         self.parent._write_cookie_secret_file(self.parent.cookie_secret)
         self.log.info(_i18n("Touched cookie secret file to update server secret time"))
