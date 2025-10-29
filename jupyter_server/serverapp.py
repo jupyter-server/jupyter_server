@@ -611,10 +611,8 @@ class JupyterPasswordApp(JupyterApp):
         from jupyter_server.auth.security import set_password
 
         set_password(config_file=self.config_file)
-        self.parent._write_cookie_secret_file(
-            self.parent.cookie_secret)
-        self.log.info(_i18n("Touched cookie secret file to update"
-                            " server secert time"))
+        self.parent._write_cookie_secret_file(self.parent.cookie_secret)
+        self.log.info(_i18n("Touched cookie secret file to update" " server secert time"))
         self.log.info("Wrote hashed password to %s" % self.config_file)
 
 
@@ -1178,8 +1176,7 @@ class ServerApp(JupyterApp):
         else:
             key = encodebytes(os.urandom(32))
             self._write_cookie_secret_file(key)
-        self._cookie_secret_creation_time = os.stat(
-            self.cookie_secret_file).st_mtime
+        self._cookie_secret_creation_time = os.stat(self.cookie_secret_file).st_mtime
         h = hmac.new(key, digestmod=hashlib.sha256)
         h.update(self.password.encode())
         return h.digest()
@@ -1196,8 +1193,7 @@ class ServerApp(JupyterApp):
                 self.cookie_secret_file,
                 e,
             )
-        self._cookie_secret_creation_time = os.stat(
-            self.cookie_secret_file)
+        self._cookie_secret_creation_time = os.stat(self.cookie_secret_file)
 
     _token_set = False
 
