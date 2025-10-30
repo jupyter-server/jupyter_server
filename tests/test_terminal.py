@@ -7,7 +7,6 @@ import sys
 import warnings
 
 import pytest
-from flaky import flaky  # type:ignore[import-untyped]
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
 
@@ -230,7 +229,7 @@ async def test_terminal_create_with_bad_cwd(jp_fetch, jp_ws_fetch):
     assert non_existing_path not in message_stdout
 
 
-@flaky
+@pytest.mark.flaky
 def test_culling_config(jp_server_config, jp_configurable_serverapp):
     app = jp_configurable_serverapp()
     terminal_mgr_config = app.config.ServerApp.TerminalManager
@@ -242,7 +241,7 @@ def test_culling_config(jp_server_config, jp_configurable_serverapp):
     assert terminal_mgr_settings.cull_interval == CULL_INTERVAL
 
 
-@flaky
+@pytest.mark.flaky
 async def test_culling(jp_server_config, jp_fetch):
     # POST request
     resp = await jp_fetch(

@@ -9,7 +9,6 @@ import warnings
 
 import jupyter_client
 import pytest
-from flaky import flaky
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
 
@@ -18,7 +17,7 @@ POLL_INTERVAL = 1
 MINIMUM_CONSISTENT_COUNT = 4
 
 
-@flaky
+@pytest.mark.flaky
 async def test_execution_state(jp_fetch, jp_ws_fetch):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
