@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import binascii
 import datetime
-import hashlib
+import hmac
 import json
 import os
 import re
@@ -611,7 +611,7 @@ class IdentityProvider(LoggingConfigurable):
         """Whether a LogoutHandler is needed."""
         return True
 
-    def cookie_secret_hook(self, h: hashlib._Hash) -> hashlib._Hash:
+    def cookie_secret_hook(self, h: hmac.HMAC) -> hmac.HMAC:
         """Update cookie secret input
 
         Subclasses may call `h.update()` with any credentials that,
@@ -753,7 +753,7 @@ class PasswordIdentityProvider(IdentityProvider):
             self.log.critical(_i18n("\t$ python -m jupyter_server.auth password"))
             sys.exit(1)
 
-    def cookie_secret_hook(self, h: hashlib._Hash) -> hashlib._Hash:
+    def cookie_secret_hook(self, h: hmac.HMAC) -> hmac.HMAC:
         """Include password in cookie secret.
 
         This makes it so changing the password invalidates cookies.
