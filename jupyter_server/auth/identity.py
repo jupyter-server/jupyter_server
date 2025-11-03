@@ -29,6 +29,9 @@ from jupyter_server.transutils import _i18n
 from .security import passwd_check, set_password
 from .utils import get_anonymous_username
 
+if t.TYPE_CHECKING:
+    import hmac
+
 _non_alphanum = re.compile(r"[^A-Za-z0-9]")
 
 
