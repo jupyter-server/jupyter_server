@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import binascii
 import datetime
+import hmac
 import json
 import os
 import re
@@ -27,6 +28,9 @@ from jupyter_server.transutils import _i18n
 
 from .security import passwd_check, set_password
 from .utils import get_anonymous_username
+
+if t.TYPE_CHECKING:
+    import hmac
 
 _non_alphanum = re.compile(r"[^A-Za-z0-9]")
 
@@ -610,6 +614,18 @@ class IdentityProvider(LoggingConfigurable):
         """Whether a LogoutHandler is needed."""
         return True
 
+    def cookie_secret_hook(self, h: hmac.HMAC) -> hmac.HMAC:
+        """Update cookie secret input
+
+        Subclasses may call `h.update()` with any credentials that,
+        when changed, should invalidate existing cookies, such as a
+        password.
+
+        The updated hashlib object should be returned.
+
+        """
+        return h
+
 
 class PasswordIdentityProvider(IdentityProvider):
     """A password identity provider."""
@@ -739,6 +755,14 @@ class PasswordIdentityProvider(IdentityProvider):
             self.log.critical(_i18n("Hint: run the following command to set a password"))
             self.log.critical(_i18n("\t$ python -m jupyter_server.auth password"))
             sys.exit(1)
+
+    def cookie_secret_hook(self, h: hmac.HMAC) -> hmac.HMAC:
+        """Include password in cookie secret.
+
+        This makes it so changing the password invalidates cookies.
+        """
+        h.update(self.hashed_password.encode())
+        return h
 
 
 class LegacyIdentityProvider(PasswordIdentityProvider):

@@ -1169,6 +1169,7 @@ class ServerApp(JupyterApp):
             self._write_cookie_secret_file(key)
         h = hmac.new(key, digestmod=hashlib.sha256)
         h.update(self.password.encode())
+        h = self.identity_provider.cookie_secret_hook(h)
         return h.digest()
 
     def _write_cookie_secret_file(self, secret: bytes) -> None:
