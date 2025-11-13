@@ -1,11 +1,12 @@
 """Gateway kernel manager that integrates with our kernel monitoring system."""
 
 import asyncio
-from jupyter_server.gateway.managers import GatewayMappingKernelManager
-from jupyter_server.gateway.managers import GatewayKernelManager as _GatewayKernelManager
-from jupyter_server.gateway.managers import GatewayKernelClient as _GatewayKernelClient
-from traitlets import default, Instance, Type
 
+from traitlets import Instance, Type, default
+
+from jupyter_server.gateway.managers import GatewayKernelClient as _GatewayKernelClient
+from jupyter_server.gateway.managers import GatewayKernelManager as _GatewayKernelManager
+from jupyter_server.gateway.managers import GatewayMappingKernelManager
 from jupyter_server.services.kernels.v3.client import JupyterServerKernelClientMixin
 
 
@@ -38,7 +39,7 @@ class GatewayKernelClient(JupyterServerKernelClientMixin, _GatewayKernelClient):
         # Send to gateway channel
         try:
             channel = getattr(self, f"{channel_name}_channel", None)
-            if channel and hasattr(channel, 'send'):
+            if channel and hasattr(channel, "send"):
                 # Convert raw message to gateway format
                 header = self.session.unpack(msg[0])
                 parent_header = self.session.unpack(msg[1])
@@ -46,14 +47,14 @@ class GatewayKernelClient(JupyterServerKernelClientMixin, _GatewayKernelClient):
                 content = self.session.unpack(msg[3])
 
                 full_msg = {
-                    'header': header,
-                    'parent_header': parent_header,
-                    'metadata': metadata,
-                    'content': content,
-                    'buffers': msg[4:] if len(msg) > 4 else [],
-                    'channel': channel_name,
-                    'msg_id': header.get('msg_id'),
-                    'msg_type': header.get('msg_type')
+                    "header": header,
+                    "parent_header": parent_header,
+                    "metadata": metadata,
+                    "content": content,
+                    "buffers": msg[4:] if len(msg) > 4 else [],
+                    "channel": channel_name,
+                    "msg_id": header.get("msg_id"),
+                    "msg_type": header.get("msg_type"),
                 }
 
                 channel.send(full_msg)
@@ -74,7 +75,7 @@ class GatewayKernelClient(JupyterServerKernelClientMixin, _GatewayKernelClient):
                         channel_name,
                         message,
                         parent_msg_id=message.get("parent_header", {}).get("msg_id"),
-                        execution_state=message.get("content", {}).get("execution_state")
+                        execution_state=message.get("content", {}).get("execution_state"),
                     )
 
                     # Serialize message to standard format for listeners
@@ -83,10 +84,14 @@ class GatewayKernelClient(JupyterServerKernelClientMixin, _GatewayKernelClient):
                     serialized = self.session.serialize(message)
 
                     # Skip delimiter (index 0) and signature (index 1) to get [header, parent_header, metadata, content, ...]
-                    if serialized and len(serialized) >= 6:  # Need delimiter + signature + 4 message parts
+                    if (
+                        serialized and len(serialized) >= 6
+                    ):  # Need delimiter + signature + 4 message parts
                         msg_list = serialized[2:]
                     else:
-                        self.log.warning(f"Gateway message too short: {len(serialized) if serialized else 0} parts")
+                        self.log.warning(
+                            f"Gateway message too short: {len(serialized) if serialized else 0} parts"
+                        )
                         continue
 
                     # Route to listeners
@@ -124,14 +129,15 @@ class GatewayKernelManager(_GatewayKernelManager):
     When jupyter_server is configured to use a gateway, this manager ensures that
     remote kernels receive the same level of monitoring as local kernels.
     """
+
     # Configure the manager to use our enhanced gateway client
     client_class = GatewayKernelClient
     client_factory = GatewayKernelClient
 
     kernel_client = Instance(
-        'jupyter_client.client.KernelClient',
+        "jupyter_client.client.KernelClient",
         allow_none=True,
-        help="""Pre-created kernel client instance. Created on initialization."""
+        help="""Pre-created kernel client instance. Created on initialization.""",
     )
 
     def __init__(self, **kwargs):
@@ -184,7 +190,9 @@ class GatewayKernelManager(_GatewayKernelManager):
             if restart:
                 # On restart, clear client state but keep connection
                 # The connection will be refreshed in post_start_kernel after restart
-                self.log.debug(f"Clearing kernel client state for restart of kernel {self.kernel_id}")
+                self.log.debug(
+                    f"Clearing kernel client state for restart of kernel {self.kernel_id}"
+                )
                 self.kernel_client.last_shell_status_time = None
                 self.kernel_client.last_control_status_time = None
                 # Disconnect before restart - will reconnect after
@@ -208,7 +216,6 @@ class GatewayMultiKernelManager(GatewayMappingKernelManager):
 
     def start_watching_activity(self, kernel_id):
         pass
-    
+
     def stop_buffering(self, kernel_id):
         pass
-

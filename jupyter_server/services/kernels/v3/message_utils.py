@@ -12,27 +12,32 @@ Examples:
     - Legacy format (no encoding): "a1b2c3d4_12345_0"
 """
 
-from typing import Optional, Tuple, List
+from typing import List, Optional, Tuple
+
 from jupyter_client.session import Session
 
 
 class MsgIdError(Exception):
     """Base exception for message ID operations."""
+
     pass
 
 
 class InvalidMsgIdFormatError(MsgIdError):
     """Raised when a message ID has an invalid format."""
+
     pass
 
 
 class InvalidChannelError(MsgIdError):
     """Raised when a channel name contains reserved characters."""
+
     pass
 
 
 class InvalidSrcIdError(MsgIdError):
     """Raised when a source ID contains reserved characters."""
+
     pass
 
 
@@ -45,10 +50,8 @@ def validate_channel(channel: Optional[str]) -> None:
     Raises:
         InvalidChannelError: If channel contains ':' character
     """
-    if channel is not None and ':' in channel:
-        raise InvalidChannelError(
-            f"Channel name cannot contain ':' character: {channel}"
-        )
+    if channel is not None and ":" in channel:
+        raise InvalidChannelError(f"Channel name cannot contain ':' character: {channel}")
 
 
 def validate_src_id(src_id: Optional[str]) -> None:
@@ -61,20 +64,14 @@ def validate_src_id(src_id: Optional[str]) -> None:
         InvalidSrcIdError: If src_id contains ':' or '#' characters
     """
     if src_id is not None:
-        if ':' in src_id:
-            raise InvalidSrcIdError(
-                f"Source ID cannot contain ':' character: {src_id}"
-            )
-        if '#' in src_id:
-            raise InvalidSrcIdError(
-                f"Source ID cannot contain '#' character: {src_id}"
-            )
+        if ":" in src_id:
+            raise InvalidSrcIdError(f"Source ID cannot contain ':' character: {src_id}")
+        if "#" in src_id:
+            raise InvalidSrcIdError(f"Source ID cannot contain '#' character: {src_id}")
 
 
 def create_msg_id(
-    base_msg_id: str,
-    channel: Optional[str] = None,
-    src_id: Optional[str] = None
+    base_msg_id: str, channel: Optional[str] = None, src_id: Optional[str] = None
 ) -> str:
     """Create a structured message ID with optional channel and source ID encoding.
 
@@ -137,15 +134,15 @@ def parse_msg_id(msg_id: str) -> Tuple[Optional[str], Optional[str], str]:
         raise InvalidMsgIdFormatError("Message ID cannot be empty")
 
     # Split off src_id if present (after #)
-    if '#' in msg_id:
-        msg_id_part, src_id = msg_id.split('#', 1)
+    if "#" in msg_id:
+        msg_id_part, src_id = msg_id.split("#", 1)
     else:
         msg_id_part = msg_id
         src_id = None
 
     # Split channel and base msg_id (before :)
-    if ':' in msg_id_part:
-        channel, base_msg_id = msg_id_part.split(':', 1)
+    if ":" in msg_id_part:
+        channel, base_msg_id = msg_id_part.split(":", 1)
     else:
         # Legacy format - no channel specified
         channel = None
@@ -230,15 +227,15 @@ def encode_channel_in_message_dict(msg_dict: dict, channel: str) -> dict:
         Modified message dict with channel encoded in header msg_id
 
     Examples:
-        >>> msg = session.msg('kernel_info_request')
-        >>> msg = encode_channel_in_message_dict(msg, 'shell')
+        >>> msg = session.msg("kernel_info_request")
+        >>> msg = encode_channel_in_message_dict(msg, "shell")
         >>> # msg['header']['msg_id'] now has 'shell:' prefix
     """
-    if 'header' in msg_dict and 'msg_id' in msg_dict['header']:
-        msg_id = msg_dict['header']['msg_id']
+    if "header" in msg_dict and "msg_id" in msg_dict["header"]:
+        msg_id = msg_dict["header"]["msg_id"]
         # Only encode if not already encoded
         if not msg_id.startswith(f"{channel}:"):
-            msg_dict['header']['msg_id'] = f"{channel}:{msg_id}"
+            msg_dict["header"]["msg_id"] = f"{channel}:{msg_id}"
     return msg_dict
 
 
@@ -311,20 +308,19 @@ def strip_encoding_from_message(msg_list: List[bytes]) -> List[bytes]:
 
         # Strip from header msg_id
         header = session.unpack(msg_copy[0])
-        if 'msg_id' in header:
-            _, _, base_msg_id = parse_msg_id(header['msg_id'])
-            header['msg_id'] = base_msg_id
+        if "msg_id" in header:
+            _, _, base_msg_id = parse_msg_id(header["msg_id"])
+            header["msg_id"] = base_msg_id
             msg_copy[0] = session.pack(header)
 
         # Strip from parent_header msg_id
         parent_header = session.unpack(msg_copy[1])
-        if 'msg_id' in parent_header and parent_header['msg_id']:
-            _, _, base_msg_id = parse_msg_id(parent_header['msg_id'])
-            parent_header['msg_id'] = base_msg_id
+        if "msg_id" in parent_header and parent_header["msg_id"]:
+            _, _, base_msg_id = parse_msg_id(parent_header["msg_id"])
+            parent_header["msg_id"] = base_msg_id
             msg_copy[1] = session.pack(parent_header)
 
         return msg_copy
     except Exception:
         # If decoding fails, return original message
         return msg_list
-

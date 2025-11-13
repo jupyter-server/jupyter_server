@@ -1,10 +1,12 @@
 """Kernel manager for the Apple JupyterLab Kernel Monitor Extension."""
 
 from jupyter_client.multikernelmanager import AsyncMultiKernelManager
-from traitlets import Type, observe, Instance, default
+from traitlets import Instance, Type, default, observe
 
 from jupyter_server.services.kernels.kernelmanager import (
     MappingKernelManager,
+)
+from jupyter_server.services.kernels.kernelmanager import (
     ServerKernelManager as _ServerKernelManager,
 )
 
@@ -24,22 +26,22 @@ class ServerKernelManager(_ServerKernelManager):
 
     client_class = Type(
         default_value=JupyterServerKernelClient,
-        klass='jupyter_client.client.KernelClient',
+        klass="jupyter_client.client.KernelClient",
         config=True,
-        help="""The kernel client class to use for creating kernel clients."""
+        help="""The kernel client class to use for creating kernel clients.""",
     )
 
     client_factory = Type(
         default_value=JupyterServerKernelClient,
-        klass='jupyter_client.client.KernelClient',
+        klass="jupyter_client.client.KernelClient",
         config=True,
-        help="""The kernel client factory class to use."""
+        help="""The kernel client factory class to use.""",
     )
 
     kernel_client = Instance(
-        'jupyter_client.client.KernelClient',
+        "jupyter_client.client.KernelClient",
         allow_none=True,
-        help="""Pre-created kernel client instance. Created on initialization."""
+        help="""Pre-created kernel client instance. Created on initialization.""",
     )
 
     def __init__(self, **kwargs):
@@ -49,11 +51,11 @@ class ServerKernelManager(_ServerKernelManager):
         # Create a kernel client instance immediately
         self.kernel_client = self.client(session=self.session)
 
-    @observe('client_class')
+    @observe("client_class")
     def _client_class_changed(self, change):
         """Override parent's _client_class_changed to handle Type trait instead of DottedObjectName."""
         # Set client_factory to the same class
-        self.client_factory = change['new']
+        self.client_factory = change["new"]
 
     async def _async_post_start_kernel(self, **kwargs):
         """After kernel starts, connect the kernel client.
@@ -97,7 +99,9 @@ class ServerKernelManager(_ServerKernelManager):
             if restart:
                 # On restart, clear client state but keep connection
                 # The connection will be refreshed in post_start_kernel after restart
-                self.log.debug(f"Clearing kernel client state for restart of kernel {self.kernel_id}")
+                self.log.debug(
+                    f"Clearing kernel client state for restart of kernel {self.kernel_id}"
+                )
                 self.kernel_client.last_shell_status_time = None
                 self.kernel_client.last_control_status_time = None
                 # Disconnect before restart - will reconnect after
@@ -110,11 +114,11 @@ class ServerKernelManager(_ServerKernelManager):
                 self.kernel_client.stop_channels()
 
         await super().cleanup_resources(restart=restart)
-    
+
 
 class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):  # type:ignore[misc]
     """Custom kernel manager that uses enhanced monitoring kernel manager with v3 API."""
-    
+
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
         return "jupyter_server.services.kernels.v3.kernelmanager.ServerKernelManager"
