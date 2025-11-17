@@ -3,36 +3,41 @@ import time
 import typing as t
 from datetime import datetime, timezone
 
-from traitlets import HasTraits, Type
 from jupyter_client.asynchronous.client import AsyncKernelClient
 from jupyter_client.channels import AsyncZMQSocketChannel
 from jupyter_client.channelsabc import ChannelABC
+from traitlets import HasTraits, Type
+
+from .message_utils import encode_channel_in_message_dict, parse_msg_id
 from .states import ExecutionStates
-from .message_utils import parse_msg_id, encode_channel_in_message_dict
 
 
 class NamedAsyncZMQSocketChannel(AsyncZMQSocketChannel):
     """Prepends the channel name to all message IDs to this socket."""
+
     channel_name = "unknown"
-    
+
     def send(self, msg):
         """Send a message with automatic channel encoding."""
         msg = encode_channel_in_message_dict(msg, self.channel_name)
-        return super().send(msg)    
-    
-    
+        return super().send(msg)
+
+
 class ShellChannel(NamedAsyncZMQSocketChannel):
     """Shell channel that automatically encodes 'shell' in outgoing msg_ids."""
+
     channel_name = "shell"
 
 
-class ControlChannel(AsyncZMQSocketChannel):
+class ControlChannel(NamedAsyncZMQSocketChannel):
     """Control channel that automatically encodes 'control' in outgoing msg_ids."""
+
     channel_name = "control"
 
 
-class StdinChannel(AsyncZMQSocketChannel):
+class StdinChannel(NamedAsyncZMQSocketChannel):
     """Stdin channel that automatically encodes 'stdin' in outgoing msg_ids."""
+
     channel_name = "stdin"
 
 
@@ -77,7 +82,9 @@ class JupyterServerKernelClientMixin(HasTraits):
     # Connection test configuration
     connection_test_timeout: float = 120.0  # Total timeout for connection test in seconds
     connection_test_check_interval: float = 0.1  # How often to check for messages in seconds
-    connection_test_retry_interval: float = 10.0  # How often to retry kernel_info requests in seconds
+    connection_test_retry_interval: float = (
+        10.0  # How often to retry kernel_info requests in seconds
+    )
 
     # Override channel classes to use our custom ones with automatic encoding
     shell_channel_class = Type(ShellChannel)
@@ -105,8 +112,8 @@ class JupyterServerKernelClientMixin(HasTraits):
     def add_listener(
         self,
         callback: t.Callable[[str, list[bytes]], None],
-        msg_types: t.Optional[t.List[t.Tuple[str, str]]] = None,
-        exclude_msg_types: t.Optional[t.List[t.Tuple[str, str]]] = None
+        msg_types: t.Optional[list[tuple[str, str]]] = None,
+        exclude_msg_types: t.Optional[list[tuple[str, str]]] = None,
     ):
         """Add a listener to be called when messages are received.
 
@@ -128,8 +135,8 @@ class JupyterServerKernelClientMixin(HasTraits):
 
         # Store the listener with its filter configuration
         self._listeners[callback] = {
-            'msg_types': set(msg_types) if msg_types else None,
-            'exclude_msg_types': set(exclude_msg_types) if exclude_msg_types else None
+            "msg_types": set(msg_types) if msg_types else None,
+            "exclude_msg_types": set(exclude_msg_types) if exclude_msg_types else None,
         }
 
     def remove_listener(self, callback: t.Callable[[str, list[bytes]], None]):
@@ -188,7 +195,7 @@ class JupyterServerKernelClientMixin(HasTraits):
             channel = getattr(self, f"{channel_name}_channel", None)
             channel.session.send_raw(channel.socket, msg)
 
-        except Exception as e:
+        except Exception:
             self.log.warn("Error handling incoming message.")
 
     def handle_incoming_message(self, channel_name: str, msg: list[bytes]):
@@ -225,7 +232,6 @@ class JupyterServerKernelClientMixin(HasTraits):
 
         self._send_message(channel_name, msg)
 
-
     def handle_outgoing_message(self, channel_name: str, msg: list[bytes]):
         """Public API for manufacturing messages to send to kernel client listeners.
 
@@ -246,17 +252,19 @@ class JupyterServerKernelClientMixin(HasTraits):
 
         # Validate message format before routing
         if not msg or len(msg) < 4:
-            self.log.warning(f"Cannot route malformed message on {channel_name}: {len(msg) if msg else 0} parts (expected at least 4)")
+            self.log.warning(
+                f"Cannot route malformed message on {channel_name}: {len(msg) if msg else 0} parts (expected at least 4)"
+            )
             return
 
         # Extract message type for filtering
         msg_type = None
         try:
             header = self.session.unpack(msg[0]) if msg and len(msg) > 0 else {}
-            msg_type = header.get('msg_type', 'unknown')
+            msg_type = header.get("msg_type", "unknown")
         except Exception as e:
             self.log.debug(f"Error extracting message type: {e}")
-            msg_type = 'unknown'
+            msg_type = "unknown"
 
         # Create tasks for listeners that match the filter
         tasks = []
@@ -269,7 +277,9 @@ class JupyterServerKernelClientMixin(HasTraits):
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    def _should_route_to_listener(self, msg_type: str, channel_name: str, filter_config: dict) -> bool:
+    def _should_route_to_listener(
+        self, msg_type: str, channel_name: str, filter_config: dict
+    ) -> bool:
         """Determine if a message should be routed to a listener based on its filter configuration.
 
         Args:
@@ -280,8 +290,8 @@ class JupyterServerKernelClientMixin(HasTraits):
         Returns:
             bool: True if the message should be routed to the listener, False otherwise
         """
-        msg_types = filter_config.get('msg_types')
-        exclude_msg_types = filter_config.get('exclude_msg_types')
+        msg_types = filter_config.get("msg_types")
+        exclude_msg_types = filter_config.get("exclude_msg_types")
 
         # If msg_types is specified (inclusion filter)
         if msg_types is not None:
@@ -303,7 +313,13 @@ class JupyterServerKernelClientMixin(HasTraits):
         except Exception as e:
             self.log.error(f"Error in listener {listener}: {e}")
 
-    def _update_execution_state_from_status(self, channel_name: str, msg_dict: dict, parent_msg_id: str = None, execution_state: str = None):
+    def _update_execution_state_from_status(
+        self,
+        channel_name: str,
+        msg_dict: dict,
+        parent_msg_id: str = None,
+        execution_state: str = None,
+    ):
         """Update execution state from a status message if it originated from shell channel.
 
         This method checks if a status message on the iopub channel originated from a shell
@@ -366,7 +382,9 @@ class JupyterServerKernelClientMixin(HasTraits):
                         if isinstance(content, bytes):
                             content = self.session.unpack(content)
                         execution_state = content.get("execution_state")
-                    self.log.debug(f"Ignoring status message - cannot parse parent channel (state would be: {execution_state})")
+                    self.log.debug(
+                        f"Ignoring status message - cannot parse parent channel (state would be: {execution_state})"
+                    )
         except Exception as e:
             self.log.debug(f"Error updating execution state from status message: {e}")
 
@@ -391,10 +409,7 @@ class JupyterServerKernelClientMixin(HasTraits):
                 return
 
             # Create status message
-            msg_dict = self.session.msg(
-                "status",
-                content={"execution_state": self.execution_state}
-            )
+            msg_dict = self.session.msg("status", content={"execution_state": self.execution_state})
 
             # Serialize the message
             # session.serialize() returns:
@@ -404,7 +419,9 @@ class JupyterServerKernelClientMixin(HasTraits):
             # Skip delimiter (index 0) and signature (index 1) to get message parts
             # Result: [header, parent_header, metadata, content, buffers...]
             if len(serialized) < 6:  # Need delimiter + signature + 4 message parts minimum
-                self.log.warning(f"broadcast_state: serialized message too short: {len(serialized)} parts")
+                self.log.warning(
+                    f"broadcast_state: serialized message too short: {len(serialized)} parts"
+                )
                 return
 
             msg_parts = serialized[2:]  # Skip delimiter and signature
@@ -422,7 +439,7 @@ class JupyterServerKernelClientMixin(HasTraits):
         self._listening = True
 
         # Monitor each channel for incoming messages
-        for channel_name in ['iopub', 'shell', 'stdin', 'control']:
+        for channel_name in ["iopub", "shell", "stdin", "control"]:
             channel = getattr(self, f"{channel_name}_channel", None)
             if channel and channel.is_alive():
                 task = asyncio.create_task(self._monitor_channel_messages(channel_name, channel))
@@ -433,12 +450,12 @@ class JupyterServerKernelClientMixin(HasTraits):
     async def stop_listening(self):
         """Stop listening for messages."""
         # Stop monitoring tasks
-        if hasattr(self, '_monitoring_tasks'):
+        if hasattr(self, "_monitoring_tasks"):
             for task in self._monitoring_tasks:
                 task.cancel()
             self._monitoring_tasks = []
 
-        self.log.info(f"Stopped listening")
+        self.log.info("Stopped listening")
 
     async def _monitor_channel_messages(self, channel_name: str, channel: ChannelABC):
         """Monitor a channel for incoming messages and route them to listeners."""
@@ -466,7 +483,9 @@ class JupyterServerKernelClientMixin(HasTraits):
                         if msg_list and len(msg_list) >= 5:
                             await self._route_to_listeners(channel_name, msg_list[1:])
                         else:
-                            self.log.warning(f"Received malformed message on {channel_name}: {len(msg_list) if msg_list else 0} parts")
+                            self.log.warning(
+                                f"Received malformed message on {channel_name}: {len(msg_list) if msg_list else 0} parts"
+                            )
 
                 except Exception as e:
                     # Log the error instead of silently ignoring it
@@ -514,7 +533,7 @@ class JupyterServerKernelClientMixin(HasTraits):
             await asyncio.gather(
                 self._send_kernel_info_shell(),
                 self._send_kernel_info_control(),
-                return_exceptions=True
+                return_exceptions=True,
             )
         except Exception as e:
             self.log.debug(f"Error sending initial kernel_info requests: {e}")
@@ -531,25 +550,35 @@ class JupyterServerKernelClientMixin(HasTraits):
 
             # Check if we've received any status messages since connection attempt
             # This indicates the kernel is connected, even if busy executing something
-            if self.last_shell_status_time and self.last_shell_status_time > connection_attempt_time:
+            if (
+                self.last_shell_status_time
+                and self.last_shell_status_time > connection_attempt_time
+            ):
                 self.log.info("Kernel communication test succeeded: received shell status message")
                 return True
 
-            if self.last_control_status_time and self.last_control_status_time > connection_attempt_time:
-                self.log.info("Kernel communication test succeeded: received control status message")
+            if (
+                self.last_control_status_time
+                and self.last_control_status_time > connection_attempt_time
+            ):
+                self.log.info(
+                    "Kernel communication test succeeded: received control status message"
+                )
                 return True
 
             # Send kernel_info requests at regular intervals
             time_since_last_request = time.time() - last_kernel_info_time
             if time_since_last_request >= self.connection_test_retry_interval:
-                self.log.debug(f"Sending kernel_info requests to shell and control channels (elapsed: {elapsed:.1f}s)")
+                self.log.debug(
+                    f"Sending kernel_info requests to shell and control channels (elapsed: {elapsed:.1f}s)"
+                )
 
                 try:
                     # Send kernel_info to both channels in parallel (no reply expected)
                     await asyncio.gather(
                         self._send_kernel_info_shell(),
                         self._send_kernel_info_control(),
-                        return_exceptions=True
+                        return_exceptions=True,
                     )
                     last_kernel_info_time = time.time()
                 except Exception as e:
@@ -564,7 +593,7 @@ class JupyterServerKernelClientMixin(HasTraits):
     async def _send_kernel_info_shell(self):
         """Send kernel_info request on shell channel (no reply expected)."""
         try:
-            if hasattr(self, 'kernel_info'):
+            if hasattr(self, "kernel_info"):
                 # Send without waiting for reply
                 self.kernel_info()
         except Exception as e:
@@ -573,8 +602,8 @@ class JupyterServerKernelClientMixin(HasTraits):
     async def _send_kernel_info_control(self):
         """Send kernel_info request on control channel (no reply expected)."""
         try:
-            if hasattr(self.control_channel, 'send'):
-                msg = self.session.msg('kernel_info_request')
+            if hasattr(self.control_channel, "send"):
+                msg = self.session.msg("kernel_info_request")
                 # Channel wrapper will automatically encode channel in msg_id
                 self.control_channel.send(msg)
         except Exception as e:
@@ -617,7 +646,7 @@ class JupyterServerKernelClientMixin(HasTraits):
             await self.start_listening()
 
             # Unpause heartbeat channel if method exists
-            if hasattr(self.hb_channel, 'unpause'):
+            if hasattr(self.hb_channel, "unpause"):
                 self.hb_channel.unpause()
 
             # Wait for heartbeat
@@ -631,7 +660,9 @@ class JupyterServerKernelClientMixin(HasTraits):
 
             # Test kernel communication (handles retries internally)
             if not await self._test_kernel_communication():
-                self.log.error(f"Kernel communication test failed after {self.connection_test_timeout}s timeout")
+                self.log.error(
+                    f"Kernel communication test failed after {self.connection_test_timeout}s timeout"
+                )
                 return False
 
             # Mark connection as ready and process queued messages
