@@ -1,5 +1,4 @@
-from enum import Enum
-from enum import EnumMeta
+from enum import Enum, EnumMeta
 
 
 class StrContainerEnumMeta(EnumMeta):
@@ -8,12 +7,14 @@ class StrContainerEnumMeta(EnumMeta):
             if item == name or item == member.value:
                 return True
         return False
-    
+
+
 class StrContainerEnum(str, Enum, metaclass=StrContainerEnumMeta):
     """A Enum object that enables search for items
     in a normal Enum object based on key and value.
     """
-    
+
+
 class ExecutionStates(StrContainerEnum):
     BUSY = "busy"
     IDLE = "idle"

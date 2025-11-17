@@ -1652,11 +1652,15 @@ class ServerApp(JupyterApp):
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self) -> t.Union[str, type[AsyncMappingKernelManager]]:
         if self.kernels_api_version == 3:
-            gateway_enabled = getattr(self, 'gateway_config', None) and getattr(self.gateway_config, 'gateway_enabled', False)
+            gateway_enabled = getattr(self, "gateway_config", None) and getattr(
+                self.gateway_config, "gateway_enabled", False
+            )
             if gateway_enabled:
                 return "jupyter_server.gateway.v3.managers.GatewayMultiKernelManager"
             return "jupyter_server.services.kernels.v3.kernelmanager.AsyncMappingKernelManager"
-        gateway_enabled = getattr(self, 'gateway_config', None) and getattr(self.gateway_config, 'gateway_enabled', False)
+        gateway_enabled = getattr(self, "gateway_config", None) and getattr(
+            self.gateway_config, "gateway_enabled", False
+        )
         if gateway_enabled:
             return "jupyter_server.gateway.managers.GatewayMappingKernelManager"
         return AsyncMappingKernelManager
@@ -1685,7 +1689,9 @@ class ServerApp(JupyterApp):
         if self.kernels_api_version == 3:
             # V3 uses shared kernel client connection for both local and gateway
             return "jupyter_server.services.kernels.v3.connection.client_connection.KernelClientWebsocketConnection"
-        gateway_enabled = getattr(self, 'gateway_config', None) and getattr(self.gateway_config, 'gateway_enabled', False)
+        gateway_enabled = getattr(self, "gateway_config", None) and getattr(
+            self.gateway_config, "gateway_enabled", False
+        )
         if gateway_enabled:
             return "jupyter_server.gateway.connections.GatewayWebSocketConnection"
         return ZMQChannelsWebsocketConnection

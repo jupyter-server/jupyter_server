@@ -1,10 +1,14 @@
+from jupyter_client.session import Session
 from tornado.websocket import WebSocketClosedError
-from traitlets import List as TraitletsList, Tuple as TraitletsTuple
+from traitlets import List as TraitletsList
+from traitlets import Tuple as TraitletsTuple
+
 from jupyter_server.services.kernels.connection.base import (
     BaseKernelWebsocketConnection,
+    deserialize_msg_from_ws_v1,
+    serialize_msg_to_ws_v1,
 )
-from jupyter_server.services.kernels.connection.base import deserialize_msg_from_ws_v1, serialize_msg_to_ws_v1
-from jupyter_client.session import Session
+
 from ..message_utils import encode_cell_id_in_message, strip_encoding_from_message
 
 
@@ -54,7 +58,7 @@ class KernelClientWebsocketConnection(BaseKernelWebsocketConnection):
         these (msg_type, channel) pairs will be sent to the websocket.
 
         Example: [("status", "iopub"), ("execute_reply", "shell")]
-        """
+        """,
     )
 
     exclude_msg_types = TraitletsList(
@@ -71,7 +75,7 @@ class KernelClientWebsocketConnection(BaseKernelWebsocketConnection):
 
         Note: Cannot be used together with msg_types. If both are specified,
         msg_types takes precedence.
-        """
+        """,
     )
 
     def _get_kernel_client(self):
@@ -90,7 +94,7 @@ class KernelClientWebsocketConnection(BaseKernelWebsocketConnection):
                 raise RuntimeError(f"No kernel manager found for kernel {self.kernel_id}")
 
             # Get the pre-created kernel client from the kernel manager
-            if not hasattr(km, 'kernel_client') or km.kernel_client is None:
+            if not hasattr(km, "kernel_client") or km.kernel_client is None:
                 raise RuntimeError(f"Kernel manager for {self.kernel_id} has no kernel_client")
 
             return km.kernel_client
@@ -115,8 +119,12 @@ class KernelClientWebsocketConnection(BaseKernelWebsocketConnection):
             client.add_listener(self.handle_outgoing_message, msg_types=msg_types_list)
         elif self.exclude_msg_types is not None:
             # Convert list of tuples to list for the API
-            exclude_msg_types_list = [tuple(item) for item in self.exclude_msg_types] if self.exclude_msg_types else None
-            client.add_listener(self.handle_outgoing_message, exclude_msg_types=exclude_msg_types_list)
+            exclude_msg_types_list = (
+                [tuple(item) for item in self.exclude_msg_types] if self.exclude_msg_types else None
+            )
+            client.add_listener(
+                self.handle_outgoing_message, exclude_msg_types=exclude_msg_types_list
+            )
         else:
             # No filtering - listen to all messages (default)
             client.add_listener(self.handle_outgoing_message)
@@ -170,7 +178,9 @@ class KernelClientWebsocketConnection(BaseKernelWebsocketConnection):
         try:
             # Validate message has minimum required parts
             if not msg or len(msg) < 4:
-                self.log.warning(f"Message on {channel_name} has insufficient parts: {len(msg) if msg else 0}")
+                self.log.warning(
+                    f"Message on {channel_name} has insufficient parts: {len(msg) if msg else 0}"
+                )
                 return
 
             # Validate parts are bytes
@@ -192,4 +202,6 @@ class KernelClientWebsocketConnection(BaseKernelWebsocketConnection):
         except WebSocketClosedError:
             self.log.warning("A Kernel Socket message arrived on a closed websocket channel.")
         except Exception as err:
-            self.log.error(f"Error handling outgoing message on {channel_name}: {err}", exc_info=True)
+            self.log.error(
+                f"Error handling outgoing message on {channel_name}: {err}", exc_info=True
+            )
