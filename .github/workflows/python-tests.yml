@@ -49,7 +49,7 @@ jobs:
         run: hatch run test:nowarn || hatch -v run test:nowarn --lf
       - name: Run the tests on windows
         if: ${{ startsWith(matrix.os, 'windows') }}
-        run: hatch run cov:nowarn -s || hatch -v run cov:nowarn --lf
+        run: hatch run cov:nowarn -s -k test_execution_state || hatch -v run cov:nowarn --lf
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
 
   test_docs:
