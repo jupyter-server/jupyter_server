@@ -141,7 +141,7 @@ line-length = 100
 docstring-code-format = true
 
 [tool.ruff.lint]
-ignore = ["ARG", "TRY", "RUF012", "TID252", "G", "INP001", "E402", "F401", "BLE001", "UP045"]
+ignore = ["ARG", "TRY", "RUF012", "TID252", "G", "INP001", "E402", "F401", "BLE001", "UP045", "PLC0415"]
 extend-select = [
   "B",  # flake8-bugbear
   "I",  # isort
@@ -163,7 +163,7 @@ unfixable = [
 "jupyter_server/gateway/*" = ["TCH" ]
 "tests/*" = ["UP031", "PT", 'EM', "TRY", "RET", "SLF", "C408", "F841", "FBT", "A002", "FLY", "N",
             "PERF", "ASYNC", "T201", "FA100", "E711", "INP", "TCH", "SIM105", "A001", "PLW0603",
-            "PLC0415", "RUF059"]
+            "RUF059"]
 "examples/*_config.py" = ["F821"]
 "examples/*" = ["N815"]
 

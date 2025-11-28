@@ -33,7 +33,7 @@ class KernelSessionRecordConflict(Exception):
 
 
 @dataclass
-class KernelSessionRecord:
+class KernelSessionRecord:  # noqa: PLW1641 - TODO: implement __hash__
     """A record object for tracking a Jupyter Server Kernel Session.
 
     Two records that share a session_id must also share a kernel_id, while

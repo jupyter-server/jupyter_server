@@ -15,7 +15,6 @@ import types
 import warnings
 from collections.abc import Awaitable, Coroutine, Sequence
 from http.client import responses
-from logging import Logger
 from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlparse
 
@@ -44,6 +43,8 @@ from jupyter_server.utils import (
 )
 
 if TYPE_CHECKING:
+    from logging import Logger
+
     from jupyter_client.kernelspec import KernelSpecManager
     from jupyter_events import EventLogger
     from jupyter_server_terminals.terminalmanager import TerminalManager
@@ -774,7 +775,7 @@ class APIHandler(JupyterHandler):
                 # backward-compatibility: traceback field is present,
                 # but always empty
                 reply["traceback"] = ""
-        self.log.warning("wrote error: %r", reply["message"], exc_info=True)
+        self.log.warning("wrote error: %r", reply["message"])
         self.finish(json.dumps(reply))
 
     def get_login_url(self) -> str:
@@ -1055,7 +1056,7 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
             log().debug(f"Path {path} served from {abspath}")
             return abspath
 
-    def validate_absolute_path(self, root: str, absolute_path: str) -> str | None:
+    def validate_absolute_path(self, _root: str, absolute_path: str) -> str | None:
         """check if the file should be served (raises 404, 403, etc.)"""
         if not absolute_path:
             raise web.HTTPError(404)
@@ -1115,7 +1116,7 @@ class FilesRedirectHandler(JupyterHandler):
     """Handler for redirecting relative URLs to the /files/ handler"""
 
     @staticmethod
-    async def redirect_to_files(self: Any, path: str) -> None:
+    async def redirect_to_files(self: Any, path: str) -> None:  # noqa: PLW0211
         """make redirect logic a reusable static method
 
         so it can be called from other handlers.

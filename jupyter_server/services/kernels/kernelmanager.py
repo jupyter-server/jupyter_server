@@ -598,7 +598,7 @@ class MappingKernelManager(MultiKernelManager):
 
         def record_activity(msg_list):
             """Record an IOPub message arriving from a kernel"""
-            idents, fed_msg_list = session.feed_identities(msg_list)
+            _idents, fed_msg_list = session.feed_identities(msg_list)
             msg = session.deserialize(fed_msg_list, content=False)
 
             msg_type = msg["header"]["msg_type"]

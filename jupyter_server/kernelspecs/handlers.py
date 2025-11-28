@@ -29,7 +29,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
         """Get a kernelspec resource."""
         ksm = self.kernel_spec_manager
         if path.lower().endswith(".png"):
-            self.set_header("Cache-Control", f"max-age={60*60*24*30}")
+            self.set_header("Cache-Control", f"max-age={60 * 60 * 24 * 30}")
         ksm = self.kernel_spec_manager
         if hasattr(ksm, "get_kernel_spec_resource"):
             # If the kernel spec manager defines a method to get kernelspec resources,

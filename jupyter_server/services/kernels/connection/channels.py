@@ -599,7 +599,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
 
         enabling msg spec adaptation, if necessary
         """
-        idents, msg = self.session.feed_identities(msg)
+        _idents, msg = self.session.feed_identities(msg)
         try:
             msg = self.session.deserialize(msg)
         except BaseException:
