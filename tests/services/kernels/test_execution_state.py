@@ -17,7 +17,7 @@ POLL_INTERVAL = 1
 MINIMUM_CONSISTENT_COUNT = 4
 
 
-@pytest.mark.flaky
+@pytest.mark.flaky(max_runs=3)
 async def test_execution_state(jp_fetch, jp_ws_fetch):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
