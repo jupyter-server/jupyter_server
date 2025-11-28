@@ -146,8 +146,7 @@ def to_api_path(os_path: str, root: str = "") -> ApiPath:
     If given, root will be removed from the path.
     root must be a filesystem path already.
     """
-    if os_path.startswith(root):
-        os_path = os_path[len(root) :]
+    os_path = os_path.removeprefix(root)
     parts = os_path.strip(os.path.sep).split(os.path.sep)
     parts = [p for p in parts if p != ""]  # remove duplicate splits
     path = "/".join(parts)

@@ -674,7 +674,7 @@ class ChannelQueue(Queue):  # type:ignore[type-arg]
                     msgs.append(msg["msg_type"])
             if self.channel_name == "iopub" and "shutdown_reply" in msgs:
                 return
-            if len(msgs):
+            if msgs:
                 self.log.warning(
                     f"Stopping channel '{self.channel_name}' with {len(msgs)} unprocessed non-status messages: {msgs}."
                 )

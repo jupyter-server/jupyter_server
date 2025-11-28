@@ -1037,7 +1037,7 @@ class ServerApp(JupyterApp):
 
     @validate("ip")
     def _validate_ip(self, proposal: t.Any) -> str:
-        value = t.cast(str, proposal["value"])
+        value = t.cast("str", proposal["value"])
         if value == "*":
             value = ""
         return value
@@ -1539,7 +1539,7 @@ class ServerApp(JupyterApp):
 
     @validate("base_url")
     def _update_base_url(self, proposal: t.Any) -> str:
-        value = t.cast(str, proposal["value"])
+        value = t.cast("str", proposal["value"])
         if not value.startswith("/"):
             value = "/" + value
         if not value.endswith("/"):
@@ -2335,8 +2335,7 @@ class ServerApp(JupyterApp):
         soft = self.min_open_files_limit
         hard = old_hard
         if soft is not None and old_soft < soft:
-            if hard < soft:
-                hard = soft
+            hard = max(hard, soft)
             self.log.debug(
                 f"Raising open file limit: soft {old_soft}->{soft}; hard {old_hard}->{hard}"
             )
@@ -2870,7 +2869,7 @@ class ServerApp(JupyterApp):
 
     def running_server_info(self, kernel_count: bool = True) -> str:
         """Return the current working directory and the server url information"""
-        info = t.cast(str, self.contents_manager.info_string()) + "\n"
+        info = t.cast("str", self.contents_manager.info_string()) + "\n"
         if kernel_count:
             n_kernels = len(self.kernel_manager.list_kernel_ids())
             kernel_msg = trans.ngettext("%d active kernel", "%d active kernels", n_kernels)

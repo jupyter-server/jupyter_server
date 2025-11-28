@@ -288,7 +288,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.kernel_id in self.multi_kernel_manager
         ):  # only update open sessions if kernel is actively managed
             self._open_sessions[self.session_key] = t.cast(
-                KernelWebsocketHandler, self.websocket_handler
+                "KernelWebsocketHandler", self.websocket_handler
             )
 
     async def prepare(self):

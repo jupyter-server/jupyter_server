@@ -75,7 +75,7 @@ def json_sys_info():
 def log() -> Logger:
     """Get the application log."""
     if Application.initialized():
-        return cast(Logger, Application.instance().log)
+        return cast("Logger", Application.instance().log)
     else:
         return app_log
 
@@ -85,7 +85,7 @@ class AuthenticatedHandler(web.RequestHandler):
 
     @property
     def base_url(self) -> str:
-        return cast(str, self.settings.get("base_url", "/"))
+        return cast("str", self.settings.get("base_url", "/"))
 
     @property
     def content_security_policy(self) -> str:
@@ -95,7 +95,7 @@ class AuthenticatedHandler(web.RequestHandler):
         """
         if "Content-Security-Policy" in self.settings.get("headers", {}):
             # user-specified, don't override
-            return cast(str, self.settings["headers"]["Content-Security-Policy"])
+            return cast("str", self.settings["headers"]["Content-Security-Policy"])
 
         return "; ".join(
             [
@@ -173,7 +173,7 @@ class AuthenticatedHandler(web.RequestHandler):
                 DeprecationWarning,
                 stacklevel=2,
             )
-            return cast(str, self._jupyter_current_user)
+            return cast("str", self._jupyter_current_user)
         # haven't called get_user in prepare, raise
         raise RuntimeError(msg)
 
@@ -224,7 +224,7 @@ class AuthenticatedHandler(web.RequestHandler):
         whether the user is already logged in or not.
 
         """
-        return cast(bool, self.identity_provider.login_available)
+        return cast("bool", self.identity_provider.login_available)
 
     @property
     def authorizer(self) -> Authorizer:
@@ -302,26 +302,26 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def version_hash(self) -> str:
         """The version hash to use for cache hints for static files"""
-        return cast(str, self.settings.get("version_hash", ""))
+        return cast("str", self.settings.get("version_hash", ""))
 
     @property
     def mathjax_url(self) -> str:
-        url = cast(str, self.settings.get("mathjax_url", ""))
+        url = cast("str", self.settings.get("mathjax_url", ""))
         if not url or url_is_absolute(url):
             return url
         return url_path_join(self.base_url, url)
 
     @property
     def mathjax_config(self) -> str:
-        return cast(str, self.settings.get("mathjax_config", "TeX-AMS-MML_HTMLorMML-full,Safe"))
+        return cast("str", self.settings.get("mathjax_config", "TeX-AMS-MML_HTMLorMML-full,Safe"))
 
     @property
     def default_url(self) -> str:
-        return cast(str, self.settings.get("default_url", ""))
+        return cast("str", self.settings.get("default_url", ""))
 
     @property
     def ws_url(self) -> str:
-        return cast(str, self.settings.get("websocket_url", ""))
+        return cast("str", self.settings.get("websocket_url", ""))
 
     @property
     def contents_js_source(self) -> str:
@@ -329,7 +329,7 @@ class JupyterHandler(AuthenticatedHandler):
             "Using contents: %s",
             self.settings.get("contents_js_source", "services/contents"),
         )
-        return cast(str, self.settings.get("contents_js_source", "services/contents"))
+        return cast("str", self.settings.get("contents_js_source", "services/contents"))
 
     # ---------------------------------------------------------------
     # Manager objects
@@ -370,7 +370,7 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def allow_origin(self) -> str:
         """Normal Access-Control-Allow-Origin"""
-        return cast(str, self.settings.get("allow_origin", ""))
+        return cast("str", self.settings.get("allow_origin", ""))
 
     @property
     def allow_origin_pat(self) -> str | None:
@@ -380,7 +380,7 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def allow_credentials(self) -> bool:
         """Whether to set Access-Control-Allow-Credentials"""
-        return cast(bool, self.settings.get("allow_credentials", False))
+        return cast("bool", self.settings.get("allow_credentials", False))
 
     def set_default_headers(self) -> None:
         """Add CORS headers, if defined"""
