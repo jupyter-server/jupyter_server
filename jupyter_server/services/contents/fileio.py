@@ -39,8 +39,22 @@ def copy2_safe(src, dst, log=None):
 
     like shutil.copy2, but log errors in copystat instead of raising
     """
+    is_writable = os.access(src, os.W_OK)
+
+    if not is_writable:
+        # attempt to refresh the attribute cache (used by remote file systems)
+        # rather than raising a permission error before any operation that could
+        # refresh the attribute cache is allowed to take place.
+        fd = os.open(src, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+        # re-try
+        is_writable = os.access(src, os.W_OK)
+
     # if src file is not writable, avoid creating a back-up
-    if not os.access(src, os.W_OK):
+    if not is_writable:
         if log:
             log.debug("Source file, %s, is not writable", src, exc_info=True)
         raise PermissionError(errno.EACCES, f"File is not writable: {src}")
