@@ -1056,12 +1056,12 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
             log().debug(f"Path {path} served from {abspath}")
             return abspath
 
-    def validate_absolute_path(self, _root: str, absolute_path: str) -> str | None:
+    def validate_absolute_path(self, root: str, absolute_path: str) -> str | None:
         """check if the file should be served (raises 404, 403, etc.)"""
         if not absolute_path:
             raise web.HTTPError(404)
 
-        for root in self.root:
+        for root in self.root:  # noqa: PLR1704
             if (absolute_path + os.sep).startswith(root):
                 break
 
