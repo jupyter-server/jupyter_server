@@ -27,7 +27,7 @@ def expected_http_error(error, expected_code, expected_message=None):
     if isinstance(e, HTTPError):
         if expected_code != e.status_code:
             return False
-        return expected_message is not None and expected_message != str(e)
+        return not (expected_message is not None and expected_message != str(e))
     elif any(
         [
             isinstance(e, HTTPClientError),
