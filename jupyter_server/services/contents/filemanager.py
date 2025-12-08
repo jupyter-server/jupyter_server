@@ -669,7 +669,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         """
         try:
             os_from_path = self._get_os_path(from_path.strip("/"))
-            os_to_path = f'{self._get_os_path(to_path_original.strip("/"))}/{to_name}'
+            os_to_path = f"{self._get_os_path(to_path_original.strip('/'))}/{to_name}"
             shutil.copytree(os_from_path, os_to_path)
             model = self.get(to_path, content=False)
         except OSError as err:
@@ -1154,7 +1154,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         """
         try:
             os_from_path = self._get_os_path(from_path.strip("/"))
-            os_to_path = f'{self._get_os_path(to_path_original.strip("/"))}/{to_name}'
+            os_to_path = f"{self._get_os_path(to_path_original.strip('/'))}/{to_name}"
             shutil.copytree(os_from_path, os_to_path)
             model = await self.get(to_path, content=False)
         except OSError as err:

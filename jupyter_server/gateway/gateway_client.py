@@ -534,7 +534,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         return bool(self.url is not None and len(self.url) > 0)
 
     # Ensure KERNEL_LAUNCH_TIMEOUT has a default value.
-    KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", 40))
+    KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", "40"))
 
     _connection_args: dict[str, ty.Any]  # initialized on first use
 
