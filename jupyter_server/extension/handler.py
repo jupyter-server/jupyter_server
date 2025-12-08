@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from logging import Logger
 from typing import TYPE_CHECKING, Any, cast
 
-from jinja2 import Template
 from jinja2.exceptions import TemplateNotFound
 
 from jupyter_server.base.handlers import FileFindHandler
 
 if TYPE_CHECKING:
+    from logging import Logger
+
+    from jinja2 import Template
     from traitlets.config import Config
 
     from jupyter_server.extension.application import ExtensionApp
@@ -26,10 +27,10 @@ class ExtensionHandlerJinjaMixin:
         """Return the jinja template object for a given name"""
         try:
             env = f"{self.name}_jinja2_env"  # type:ignore[attr-defined]
-            template = cast(Template, self.settings[env].get_template(name))  # type:ignore[attr-defined]
+            template = cast("Template", self.settings[env].get_template(name))  # type:ignore[attr-defined]
             return template
         except TemplateNotFound:
-            return cast(Template, super().get_template(name))  # type:ignore[misc]
+            return cast("Template", super().get_template(name))  # type:ignore[misc]
 
 
 class ExtensionHandlerMixin:
@@ -64,12 +65,12 @@ class ExtensionHandlerMixin:
     @property
     def log(self) -> Logger:
         if not hasattr(self, "name"):
-            return cast(Logger, super().log)  # type:ignore[misc]
+            return cast("Logger", super().log)  # type:ignore[misc]
         # Attempt to pull the ExtensionApp's log, otherwise fall back to ServerApp.
         try:
-            return cast(Logger, self.extensionapp.log)
+            return cast("Logger", self.extensionapp.log)
         except AttributeError:
-            return cast(Logger, self.serverapp.log)
+            return cast("Logger", self.serverapp.log)
 
     @property
     def config(self) -> Config:
@@ -81,7 +82,7 @@ class ExtensionHandlerMixin:
 
     @property
     def base_url(self) -> str:
-        return cast(str, self.settings.get("base_url", "/"))
+        return cast("str", self.settings.get("base_url", "/"))
 
     def render_template(self, name: str, **ns) -> str:
         """Override render template to handle static_paths
@@ -90,12 +91,12 @@ class ExtensionHandlerMixin:
         (e.g. default error pages)
         make sure our extension-specific static_url is _not_ used.
         """
-        template = cast(Template, self.get_template(name))  # type:ignore[attr-defined]
+        template = cast("Template", self.get_template(name))  # type:ignore[attr-defined]
         ns.update(self.template_namespace)  # type:ignore[attr-defined]
         if template.environment is self.settings["jinja2_env"]:
             # default template environment, use default static_url
             ns["static_url"] = super().static_url  # type:ignore[misc]
-        return cast(str, template.render(**ns))
+        return cast("str", template.render(**ns))
 
     @property
     def static_url_prefix(self) -> str:
@@ -103,7 +104,7 @@ class ExtensionHandlerMixin:
 
     @property
     def static_path(self) -> str:
-        return cast(str, self.settings[f"{self.name}_static_paths"])
+        return cast("str", self.settings[f"{self.name}_static_paths"])
 
     def static_url(self, path: str, include_host: bool | None = None, **kwargs: Any) -> str:
         """Returns a static URL for the given relative static file path.
@@ -151,4 +152,4 @@ class ExtensionHandlerMixin:
             "static_url_prefix": self.static_url_prefix,
         }
 
-        return base + cast(str, get_url(settings, path, **kwargs))
+        return base + cast("str", get_url(settings, path, **kwargs))

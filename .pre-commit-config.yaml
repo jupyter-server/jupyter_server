@@ -61,7 +61,8 @@ repos:
           ["traitlets>=5.13", "jupyter_core>=5.5", "jupyter_client>=8.5"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.0
+    # keep the revision in sync with the ruff version in pyproject.toml
+    rev: v0.14.6
     hooks:
       - id: ruff
         types_or: [python, jupyter]

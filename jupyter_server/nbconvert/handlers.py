@@ -104,7 +104,7 @@ class NbconvertFileHandler(JupyterHandler):
         # give its path to nbconvert.
         if hasattr(self.contents_manager, "_get_os_path"):
             os_path = self.contents_manager._get_os_path(path)
-            ext_resources_dir, basename = os.path.split(os_path)
+            ext_resources_dir, _basename = os.path.split(os_path)
         else:
             ext_resources_dir = None
 

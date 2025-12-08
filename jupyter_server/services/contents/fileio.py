@@ -56,7 +56,7 @@ def copy2_safe(src, dst, log=None):
     # if src file is not writable, avoid creating a back-up
     if not is_writable:
         if log:
-            log.debug("Source file, %s, is not writable", src, exc_info=True)
+            log.debug("Source file, %s, is not writable", src)
         raise PermissionError(errno.EACCES, f"File is not writable: {src}")
 
     shutil.copyfile(src, dst)
@@ -74,7 +74,7 @@ async def async_copy2_safe(src, dst, log=None):
     """
     if not os.access(src, os.W_OK):
         if log:
-            log.debug("Source file, %s, is not writable", src, exc_info=True)
+            log.debug("Source file, %s, is not writable", src)
         raise PermissionError(errno.EACCES, f"File is not writable: {src}")
 
     await run_sync(shutil.copyfile, src, dst)
