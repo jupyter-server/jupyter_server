@@ -1,8 +1,11 @@
+import contextlib
 import json
 import logging
 import os
+import pathlib
 import stat
 import sys
+import tempfile
 
 import pytest
 from nbformat import validate
@@ -154,6 +157,47 @@ def test_atomic_writing_in_readonly_dir(tmp_path):
     # dir perms unchanged
     mode = stat.S_IMODE(os.stat(str(nonw)).st_mode)
     assert mode == 0o500
+
+
+@contextlib.contextmanager
+def tmp_dir(tmp_root: pathlib.Path):
+    """Thin wrapper around `TemporaryDirectory` adopting it to `pathlib.Path`s"""
+    # we need to append `/` if we want to get a sub-directory
+    prefix = str(tmp_root) + "/"
+    with tempfile.TemporaryDirectory(prefix=prefix) as temp_path:
+        yield pathlib.Path(temp_path)
+
+
+@pytest.mark.skipif(
+    not pathlib.Path("/tmp/nfs_mount").exists(), reason="requires a local NFS mount"
+)
+def test_atomic_writing_permission_cache():
+    remote_source = pathlib.Path("/tmp/nfs_source")
+    local_mount = pathlib.Path("/tmp/nfs_mount")
+
+    with tmp_dir(tmp_root=local_mount) as local_mount_path:
+        f = local_mount_path / "file.txt"
+
+        # write initial content
+        f.write_text("original content")
+
+        # make the file non-writable
+        f.chmod(0o500)
+
+        # attempt write, should fail due to NFS attribute cache
+        with pytest.raises(PermissionError):
+            with atomic_writing(str(f)) as ff:
+                ff.write("new content")
+
+        source_path = remote_source / local_mount_path.name / "file.txt"
+
+        # make it readable by modifying attributes at source
+        source_path.chmod(0o700)
+
+        with atomic_writing(str(f)) as ff:
+            ff.write("new content")
+
+        assert f.read_text() == "new content"
 
 
 @pytest.mark.skipif(os.name == "nt", reason="test fails on Windows")

@@ -129,6 +129,24 @@ jobs:
         run: |
           hatch run test:nowarn || hatch -v run test:nowarn --lf
 
+  test_filesystems:
+    name: Test remote file systems
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - name: Create NFS file system
+        run: |
+          sudo apt-get install -y nfs-kernel-server
+          mkdir /tmp/nfs_source /tmp/nfs_mount
+          echo "/tmp/nfs_source localhost(rw)" | sudo bash -c 'cat - > /etc/exports'
+          sudo exportfs -a
+          sudo mount -t nfs -o acregmin=60 localhost:/tmp/nfs_source /tmp/nfs_mount
+      - name: Run the tests
+        run: |
+          hatch run test:nowarn -k test_atomic_writing_permission_cache
+
   make_sdist:
     name: Make SDist
     runs-on: ubuntu-latest
