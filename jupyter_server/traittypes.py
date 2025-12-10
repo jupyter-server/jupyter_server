@@ -1,4 +1,5 @@
 """Custom trait types."""
+
 import inspect
 from ast import literal_eval
 
@@ -6,7 +7,7 @@ from traitlets import Any, ClassBasedTraitType, TraitError, Undefined
 from traitlets.utils.descriptions import describe
 
 
-class TypeFromClasses(ClassBasedTraitType):
+class TypeFromClasses(ClassBasedTraitType):  # type:ignore[type-arg]
     """A trait whose value must be a subclass of a class in a specified list of classes."""
 
     default_value: Any
@@ -69,14 +70,14 @@ class TypeFromClasses(ClassBasedTraitType):
                 value = self._resolve_string(value)
             except ImportError as e:
                 emsg = (
-                    "The '{}' trait of {} instance must be a type, but "
-                    "{!r} could not be imported".format(self.name, obj, value)
+                    f"The '{self.name}' trait of {obj} instance must be a type, but "
+                    f"{value!r} could not be imported"
                 )
                 raise TraitError(emsg) from e
         try:
             if self.subclass_from_klasses(value):
                 return value
-        except Exception:  # noqa
+        except Exception:
             pass
 
         self.error(obj, value)
@@ -86,10 +87,10 @@ class TypeFromClasses(ClassBasedTraitType):
         result = "a subclass of "
         for klass in self.klasses:
             if not isinstance(klass, str):
-                klass = klass.__module__ + "." + klass.__name__  # noqa
+                klass = klass.__module__ + "." + klass.__name__  # noqa: PLW2901
             result += f"{klass} or "
         # Strip the last "or"
-        result = result.strip(" or ")  # noqa
+        result = result.strip(" or ")  # noqa: B005
         if self.allow_none:
             return result + " or None"
         return result
@@ -106,15 +107,15 @@ class TypeFromClasses(ClassBasedTraitType):
             if isinstance(klass, str):
                 # Try importing the classes to compare. Silently, ignore if not importable.
                 try:
-                    klass = self._resolve_string(klass)  # noqa
+                    klass = self._resolve_string(klass)  # noqa: PLW2901
                     self.importable_klasses.append(klass)
-                except Exception:  # noqa
+                except Exception:
                     pass
             else:
                 self.importable_klasses.append(klass)
 
         if isinstance(self.default_value, str):
-            self.default_value = self._resolve_string(self.default_value)
+            self.default_value = self._resolve_string(self.default_value)  # type:ignore[arg-type]
 
     def default_value_repr(self):
         """The default value repr."""
@@ -125,7 +126,7 @@ class TypeFromClasses(ClassBasedTraitType):
             return repr(f"{value.__module__}.{value.__name__}")
 
 
-class InstanceFromClasses(ClassBasedTraitType):
+class InstanceFromClasses(ClassBasedTraitType):  # type:ignore[type-arg]
     """A trait whose value must be an instance of a class in a specified list of classes.
     The value can also be an instance of a subclass of the specified classes.
     Subclasses can declare default classes by overriding the klass attribute
@@ -156,15 +157,14 @@ class InstanceFromClasses(ClassBasedTraitType):
         None, the None is replaced by ``()`` or ``{}``, respectively.
         """
         # If class
-        if klasses is None:  # noqa
+        if klasses is None:  # noqa: SIM114
             self.klasses = klasses
         # Verify all elements are either classes or strings.
         elif all(inspect.isclass(k) or isinstance(k, str) for k in klasses):
             self.klasses = klasses
         else:
             raise TraitError(
-                "The klasses attribute must be a list of class names or classes"
-                " not: %r" % klasses
+                "The klasses attribute must be a list of class names or classes not: %r" % klasses
             )
 
         if (kw is not None) and not isinstance(kw, dict):
@@ -200,7 +200,7 @@ class InstanceFromClasses(ClassBasedTraitType):
             else:
                 result += describe("a", klass)
             result += " or "
-        result = result.strip(" or ")  # noqa
+        result = result.strip(" or ")  # noqa: B005
         if self.allow_none:
             result += " or None"
         return result
@@ -218,9 +218,9 @@ class InstanceFromClasses(ClassBasedTraitType):
             if isinstance(klass, str):
                 # Try importing the classes to compare. Silently, ignore if not importable.
                 try:
-                    klass = self._resolve_string(klass)  # noqa
+                    klass = self._resolve_string(klass)  # noqa: PLW2901
                     self.importable_klasses.append(klass)
-                except Exception:  # noqa
+                except Exception:
                     pass
             else:
                 self.importable_klasses.append(klass)

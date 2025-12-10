@@ -1,5 +1,5 @@
 "$id": https://events.jupyter.org/jupyter_server/kernel_actions/v1
-version: 1
+version: "1"
 title: Kernel Manager activities
 personal-data: true
 description: |
@@ -69,12 +69,12 @@ properties:
     description: |
       Description of the event specified in action.
 if:
-    not:
-      properties:
-        status:
-            const: error
-        action:
-            const: start
+  not:
+    properties:
+      status:
+        const: error
+      action:
+        const: start
 then:
   required:
     - kernel_id

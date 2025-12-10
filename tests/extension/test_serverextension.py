@@ -5,7 +5,7 @@ import pytest
 try:
     from jupyter_core.paths import prefer_environment_over_user
 except ImportError:
-    prefer_environment_over_user = None  # type:ignore
+    prefer_environment_over_user = None  # type:ignore[assignment]
 
 from traitlets.tests.utils import check_help_all_output
 
@@ -69,7 +69,7 @@ def test_merge_config(jp_env_config_path, jp_configurable_serverapp, jp_extensio
     )
 
     # Write this configuration in two places, sys-prefix and user.
-    # sys-prefix supercedes users, so the extension should be disabled
+    # sys-prefix supersedes users, so the extension should be disabled
     # when these two configs merge.
     toggle_server_extension_python(
         "tests.extension.mockextensions.mockext_both",
@@ -134,3 +134,11 @@ def test_server_extension_apps(jp_env_config_path, jp_extension_environ):
 def test_server_extension_app():
     app = ServerExtensionApp()
     app.launch_instance(["list"])
+
+
+def test_toggle_missing_server_extension(jp_env_config_path, capsys):
+    app = ToggleServerExtensionApp()
+    app.extra_args = ["missingextension"]
+    app.start()
+    captured = capsys.readouterr()
+    assert "Validation failed: The module 'missingextension' could not be found." in captured.err

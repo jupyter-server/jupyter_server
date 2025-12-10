@@ -18,19 +18,19 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.8", "3.11"]
+        python-version: ["3.9", "3.11", "3.12"]
         include:
           - os: windows-latest
             python-version: "3.9"
           - os: ubuntu-latest
-            python-version: "pypy-3.8"
+            python-version: "pypy-3.9"
           - os: macos-latest
             python-version: "3.10"
           - os: ubuntu-latest
             python-version: "3.12"
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Install nbconvert dependencies on Linux
@@ -43,20 +43,20 @@ jobs:
           wget https://github.com/jgm/pandoc/releases/download/3.1.2/pandoc-3.1.2-1-amd64.deb && sudo dpkg -i pandoc-3.1.2-1-amd64.deb
       - name: Run the tests on posix
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.os, 'windows') }}
-        run: hatch run cov:test --cov-fail-under 75 || hatch run test:test --lf
+        run: hatch run cov:test --cov-fail-under 75 || hatch -v run test:test --lf
       - name: Run the tests on pypy
         if: ${{ startsWith(matrix.python-version, 'pypy') }}
-        run: hatch run test:nowarn || hatch run test:nowarn --lf
+        run: hatch run test:nowarn || hatch -v run test:nowarn --lf
       - name: Run the tests on windows
         if: ${{ startsWith(matrix.os, 'windows') }}
-        run: hatch run cov:nowarn -s || hatch run cov:nowarn --lf
+        run: hatch run cov:nowarn -s || hatch -v run cov:nowarn --lf
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
 
   test_docs:
     name: Test Docs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Install Dependencies
         run: |
@@ -64,25 +64,25 @@ jobs:
           sudo apt-get install enchant-2  # for spell checking
       - name: Build API docs
         run: |
-          hatch run docs:api
+          hatch -v run docs:api
           # If this fails run `hatch run docs:api` locally
           # and commit.
           git status --porcelain
           git status -s | grep "A" && exit 1
           git status -s | grep "M" && exit 1
           echo "API docs done"
-      - run: hatch run docs:build
+      - run: hatch -v run docs:build
 
   test_lint:
     name: Test Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      -  name: Run Linters
-         run: |
-          hatch run typing:test
-          hatch run lint:style
+      - name: Run Linters
+        run: |
+          hatch -v run typing:test
+          hatch fmt
           pipx run interrogate -v .
           pipx run doc8 --max-line-length=200  --ignore-path=docs/source/other/full-config.rst
           npm install -g eslint
@@ -93,7 +93,7 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Install the Python dependencies for the examples
         run: |
@@ -108,33 +108,51 @@ jobs:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           dependency_type: minimum
       - name: Run the unit tests
         run: |
-          hatch -vv run test:nowarn || hatch run test:nowarn --lf
+          hatch -vv run test:nowarn || hatch -v run test:nowarn --lf
 
   test_prereleases:
     name: Test Prereleases
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           dependency_type: pre
       - name: Run the tests
         run: |
-          hatch run test:nowarn || hatch run test:nowarn --lf
+          hatch run test:nowarn || hatch -v run test:nowarn --lf
+
+  test_filesystems:
+    name: Test remote file systems
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - name: Create NFS file system
+        run: |
+          sudo apt-get install -y nfs-kernel-server
+          mkdir /tmp/nfs_source /tmp/nfs_mount
+          echo "/tmp/nfs_source localhost(rw)" | sudo bash -c 'cat - > /etc/exports'
+          sudo exportfs -a
+          sudo mount -t nfs -o acregmin=60 localhost:/tmp/nfs_source /tmp/nfs_mount
+      - name: Run the tests
+        run: |
+          hatch run test:nowarn -k test_atomic_writing_permission_cache
 
   make_sdist:
     name: Make SDist
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - uses: jupyterlab/maintainer-tools/.github/actions/make-sdist@v1
 
@@ -148,13 +166,13 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/test-sdist@v1
         with:
           package_spec: -vv .
-          test_command: hatch run test:test || hatch run test:test --lf
+          test_command: hatch run test:test || hatch -v run test:test --lf
 
   check_release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Install Dependencies
@@ -170,9 +188,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - uses: jupyterlab/maintainer-tools/.github/actions/check-links@v1
+        with:
+          ignore_links: "https://www.npmjs.com"
 
   integration_check:
     runs-on: ${{ matrix.os }}
@@ -180,23 +200,23 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Run the tests
-        run: hatch run cov:integration
+        run: hatch -v run cov:integration
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
 
   integration_check_pypy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
-          python_version: "pypy-3.8"
+          python_version: "pypy-3.9"
       - name: Run the tests
-        run: hatch run test:nowarn --integration_tests=true
+        run: hatch -v run test:nowarn --integration_tests=true
 
   coverage:
     runs-on: ubuntu-latest
@@ -204,7 +224,7 @@ jobs:
       - integration_check
       - build
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: jupyterlab/maintainer-tools/.github/actions/report-coverage@v1
         with:
           fail_under: 80

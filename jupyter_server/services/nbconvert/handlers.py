@@ -1,11 +1,12 @@
 """API Handlers for nbconvert."""
+
 import asyncio
 import json
 
 from anyio.to_thread import run_sync
 from tornado import web
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 
 from ...base.handlers import APIHandler
 

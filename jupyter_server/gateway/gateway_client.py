@@ -1,6 +1,9 @@
 """A kernel gateway client."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -9,12 +12,13 @@ import typing as ty
 from abc import ABC, ABCMeta, abstractmethod
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from http.cookies import SimpleCookie
+from http.cookies import Morsel, SimpleCookie
 from socket import gaierror
 
 from jupyter_events import EventLogger
 from tornado import web
 from tornado.httpclient import AsyncHTTPClient, HTTPClientError, HTTPResponse
+from tornado.httputil import HTTPHeaders
 from traitlets import (
     Bool,
     Float,
@@ -37,14 +41,9 @@ STATUS_KEY = "status"
 STATUS_CODE_KEY = "status_code"
 MESSAGE_KEY = "msg"
 
-if ty.TYPE_CHECKING:
-    from http.cookies import Morsel
 
-
-class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore
+class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore[misc]
     """The metaclass necessary for proper ABC behavior in a Configurable."""
-
-    pass
 
 
 class GatewayTokenRenewerBase(  # type:ignore[misc]
@@ -69,7 +68,6 @@ class GatewayTokenRenewerBase(  # type:ignore[misc]
         Given the current authorization header key, scheme, and token, this method returns
         a (potentially renewed) token for use against the Gateway server.
         """
-        pass
 
 
 class NoOpTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
@@ -156,7 +154,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
     @default("ws_url")
     def _ws_url_default(self):
         default_value = os.environ.get(self.ws_url_env)
-        if default_value is None and self.gateway_enabled:
+        if self.url is not None and default_value is None and self.gateway_enabled:
             default_value = self.url.lower().replace("http", "ws")
         return default_value
 
@@ -296,7 +294,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         help="""The password for HTTP authentication.  (JUPYTER_GATEWAY_HTTP_PWD env var)
         """,
     )
-    http_pwd_env = "JUPYTER_GATEWAY_HTTP_PWD"
+    http_pwd_env = "JUPYTER_GATEWAY_HTTP_PWD"  # noqa: S105
 
     @default("http_pwd")
     def _http_pwd_default(self):
@@ -347,7 +345,7 @@ If the authorization header key takes a single value, `auth_scheme` should be se
 
 (JUPYTER_GATEWAY_AUTH_TOKEN env var)""",
     )
-    auth_token_env = "JUPYTER_GATEWAY_AUTH_TOKEN"
+    auth_token_env = "JUPYTER_GATEWAY_AUTH_TOKEN"  # noqa: S105
 
     @default("auth_token")
     def _auth_token_default(self):
@@ -458,9 +456,9 @@ but less than JUPYTER_GATEWAY_RETRY_INTERVAL_MAX.
         return int(os.environ.get(self.gateway_retry_max_env, self.gateway_retry_max_default_value))
 
     gateway_token_renewer_class_default_value = (
-        "jupyter_server.gateway.gateway_client.NoOpTokenRenewer"
+        "jupyter_server.gateway.gateway_client.NoOpTokenRenewer"  # noqa: S105
     )
-    gateway_token_renewer_class_env = "JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS"
+    gateway_token_renewer_class_env = "JUPYTER_GATEWAY_TOKEN_RENEWER_CLASS"  # noqa: S105
     gateway_token_renewer_class = Type(
         klass=GatewayTokenRenewerBase,
         config=True,
@@ -526,15 +524,8 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
             # protects backward-compatible config from warnings
             # if they set the same value under both names
             self.log.warning(
-                (
-                    "{cls}.{old} is deprecated in jupyter_server "
-                    "{version}, use {cls}.{new} instead"
-                ).format(
-                    cls=self.__class__.__name__,
-                    old=old_attr,
-                    new=new_attr,
-                    version=version,
-                )
+                f"{self.__class__.__name__}.{old_attr} is deprecated in jupyter_server "
+                f"{version}, use {self.__class__.__name__}.{new_attr} instead"
             )
             setattr(self, new_attr, change.new)
 
@@ -543,9 +534,9 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         return bool(self.url is not None and len(self.url) > 0)
 
     # Ensure KERNEL_LAUNCH_TIMEOUT has a default value.
-    KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", 40))
+    KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", "40"))
 
-    _connection_args: dict  # initialized on first use
+    _connection_args: dict[str, ty.Any]  # initialized on first use
 
     gateway_token_renewer: GatewayTokenRenewerBase
 
@@ -553,10 +544,10 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         """Initialize a gateway client."""
         super().__init__(**kwargs)
         self._connection_args = {}  # initialized on first use
-        self.gateway_token_renewer = self.gateway_token_renewer_class(parent=self, log=self.log)
+        self.gateway_token_renewer = self.gateway_token_renewer_class(parent=self, log=self.log)  # type:ignore[abstract]
 
         # store of cookies with store time
-        self._cookies: ty.Dict[str, ty.Tuple[Morsel, datetime]] = {}
+        self._cookies: dict[str, tuple[Morsel[ty.Any], datetime]] = {}
 
     def init_connection_args(self):
         """Initialize arguments used on every request.  Since these are primarily static values,
@@ -577,11 +568,12 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         # Ensure any adjustments are reflected in env.
         os.environ["KERNEL_LAUNCH_TIMEOUT"] = str(GatewayClient.KERNEL_LAUNCH_TIMEOUT)
 
-        self._connection_args["headers"] = json.loads(self.headers)
-        if self.auth_header_key not in self._connection_args["headers"].keys():
-            self._connection_args["headers"].update(
-                {f"{self.auth_header_key}": f"{self.auth_scheme} {self.auth_token}"}
-            )
+        if self.headers:
+            self._connection_args["headers"] = json.loads(self.headers)
+            if self.auth_header_key not in self._connection_args["headers"]:
+                self._connection_args["headers"].update(
+                    {f"{self.auth_header_key}": f"{self.auth_scheme} {self.auth_token}"}
+                )
         self._connection_args["connect_timeout"] = self.connect_timeout
         self._connection_args["request_timeout"] = self.request_timeout
         self._connection_args["validate_cert"] = self.validate_cert
@@ -596,8 +588,8 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
             self._connection_args["auth_password"] = self.http_pwd
 
     def load_connection_args(self, **kwargs):
-        """Merges the static args relative to the connection, with the given keyword arguments.  If statics
-        have yet to be initialized, we'll do that here.
+        """Merges the static args relative to the connection, with the given keyword arguments.  If static
+        args have yet to be initialized, we'll do that here.
 
         """
         if len(self._connection_args) == 0:
@@ -605,18 +597,19 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
 
         # Give token renewal a shot at renewing the token
         prev_auth_token = self.auth_token
-        try:
-            self.auth_token = self.gateway_token_renewer.get_token(
-                self.auth_header_key, self.auth_scheme, self.auth_token
-            )
-        except Exception as ex:
-            self.log.error(
-                f"An exception occurred attempting to renew the "
-                f"Gateway authorization token using an instance of class "
-                f"'{self.gateway_token_renewer_class}'.  The request will "
-                f"proceed using the current token value.  Exception was: {ex}"
-            )
-            self.auth_token = prev_auth_token
+        if self.auth_token is not None:
+            try:
+                self.auth_token = self.gateway_token_renewer.get_token(
+                    self.auth_header_key, self.auth_scheme, self.auth_token
+                )
+            except Exception as ex:
+                self.log.error(
+                    f"An exception occurred attempting to renew the "
+                    f"Gateway authorization token using an instance of class "
+                    f"'{self.gateway_token_renewer_class}'.  The request will "
+                    f"proceed using the current token value.  Exception was: {ex}"
+                )
+                self.auth_token = prev_auth_token
 
         for arg, value in self._connection_args.items():
             if arg == "headers":
@@ -635,20 +628,41 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
 
         return kwargs
 
-    def update_cookies(self, cookie: SimpleCookie) -> None:
-        """Update cookies from existing requests for load balancers"""
+    def update_cookies(self, headers: HTTPHeaders) -> None:
+        """Update cookies from response headers"""
+
         if not self.accept_cookies:
             return
 
+        # Get individual Set-Cookie headers in list form.  This handles multiple cookies
+        # that are otherwise comma-separated in the header and will break the parsing logic
+        # if only headers.get() is used.
+        cookie_headers = headers.get_list("Set-Cookie")
+        if not cookie_headers:
+            return
+
         store_time = datetime.now(tz=timezone.utc)
-        for key, item in cookie.items():
+        for header in cookie_headers:
+            cookie = SimpleCookie()
+            try:
+                cookie.load(header)
+            except Exception as e:
+                self.log.warning("Failed to parse cookie header %s: %s", header, e)
+                continue
+
+            if not cookie:
+                self.log.warning("No cookies found in header: %s", header)
+                continue
+            name, morsel = next(iter(cookie.items()))
+
             # Convert "expires" arg into "max-age" to facilitate expiration management.
             # As "max-age" has precedence, ignore "expires" when "max-age" exists.
-            if item.get("expires") and not item.get("max-age"):
-                expire_timedelta = parsedate_to_datetime(item["expires"]) - store_time
-                item["max-age"] = str(expire_timedelta.total_seconds())
+            if morsel.get("expires") and not morsel.get("max-age"):
+                expire_time = parsedate_to_datetime(morsel["expires"])
+                expire_timedelta = expire_time - store_time
+                morsel["max-age"] = str(expire_timedelta.total_seconds())
 
-            self._cookies[key] = (item, store_time)
+            self._cookies[name] = (morsel, store_time)
 
     def _clear_expired_cookies(self) -> None:
         """Clear expired cookies."""
@@ -666,7 +680,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         for key in expired_keys:
             self._cookies.pop(key)
 
-    def _update_cookie_header(self, connection_args: dict) -> None:
+    def _update_cookie_header(self, connection_args: dict[str, ty.Any]) -> None:
         """Update a cookie header."""
         self._clear_expired_cookies()
 
@@ -703,9 +717,9 @@ class RetryableHTTPClient:
     MAX_RETRIES_CAP = 10  # The upper limit to max_retries value.
     max_retries: int = int(os.getenv("JUPYTER_GATEWAY_MAX_REQUEST_RETRIES", MAX_RETRIES_DEFAULT))
     max_retries = max(0, min(max_retries, MAX_RETRIES_CAP))  # Enforce boundaries
-    retried_methods: ty.Set[str] = {"GET", "DELETE"}
-    retried_errors: ty.Set[int] = {502, 503, 504, 599}
-    retried_exceptions: ty.Set[type] = {ConnectionError}
+    retried_methods: set[str] = {"GET", "DELETE"}
+    retried_errors: set[int] = {502, 503, 504, 599}
+    retried_exceptions: set[type] = {ConnectionError}
     backoff_factor: float = 0.1
 
     def __init__(self):
@@ -734,7 +748,7 @@ class RetryableHTTPClient:
                 raise e
             logging.getLogger("ServerApp").info(
                 f"Attempting retry ({self.retry_count}) against "
-                f"endpoint '{endpoint}'.  Retried error: '{repr(e)}'"
+                f"endpoint '{endpoint}'.  Retried error: '{e!r}'"
             )
             response = await self._fetch(endpoint, **kwargs)
         return response
@@ -763,11 +777,12 @@ class RetryableHTTPClient:
 
 async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
     """Make an async request to kernel gateway endpoint, returns a response"""
-    kwargs = GatewayClient.instance().load_connection_args(**kwargs)
+    gateway_client = GatewayClient.instance()
+    kwargs = gateway_client.load_connection_args(**kwargs)
     rhc = RetryableHTTPClient()
     try:
         response = await rhc.fetch(endpoint, **kwargs)
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: SUCCESS_STATUS, STATUS_CODE_KEY: 200, MESSAGE_KEY: "success"}
         )
     # Trap a set of common exceptions so that we can inform the user that their Gateway url is incorrect
@@ -775,10 +790,12 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
     # NOTE: We do this here since this handler is called during the server's startup and subsequent refreshes
     # of the tree view.
     except HTTPClientError as e:
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: e.code, MESSAGE_KEY: str(e.message)}
         )
-        error_reason = f"Exception while attempting to connect to Gateway server url '{GatewayClient.instance().url}'"
+        error_reason = (
+            f"Exception while attempting to connect to Gateway server url '{gateway_client.url}'"
+        )
         error_message = e.message
         if e.response:
             try:
@@ -794,38 +811,35 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
             "Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
     except ConnectionError as e:
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 503, MESSAGE_KEY: str(e)}
         )
         raise web.HTTPError(
             503,
-            f"ConnectionError was received from Gateway server url '{GatewayClient.instance().url}'.  "
+            f"ConnectionError was received from Gateway server url '{gateway_client.url}'.  "
             "Check to be sure the Gateway instance is running.",
         ) from e
     except gaierror as e:
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 404, MESSAGE_KEY: str(e)}
         )
         raise web.HTTPError(
             404,
-            f"The Gateway server specified in the gateway_url '{GatewayClient.instance().url}' doesn't "
+            f"The Gateway server specified in the gateway_url '{gateway_client.url}' doesn't "
             f"appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
         ) from e
     except Exception as e:
-        GatewayClient.instance().emit(
+        gateway_client.emit(
             data={STATUS_KEY: ERROR_STATUS, STATUS_CODE_KEY: 505, MESSAGE_KEY: str(e)}
         )
         logging.getLogger("ServerApp").error(
-            f"Exception while trying to launch kernel via Gateway URL {GatewayClient.instance().url} , {e}",
+            "Exception while trying to launch kernel via Gateway URL %s: %s",
+            gateway_client.url,
             e,
         )
         raise e
 
-    if GatewayClient.instance().accept_cookies:
-        # Update cookies on GatewayClient from server if configured.
-        cookie_values = response.headers.get("Set-Cookie")
-        if cookie_values:
-            cookie: SimpleCookie = SimpleCookie()
-            cookie.load(cookie_values)
-            GatewayClient.instance().update_cookies(cookie)
+    if gateway_client.accept_cookies:
+        gateway_client.update_cookies(response.headers)
+
     return response

@@ -9,16 +9,19 @@ from unittest.mock import patch
 
 import pytest
 from jupyter_core.application import NoStart
+from tornado import web
 from traitlets import TraitError
 from traitlets.config import Config
 from traitlets.tests.utils import check_help_all_output
 
+from jupyter_server.auth.decorator import allow_unauthenticated, authorized
 from jupyter_server.auth.security import passwd_check
 from jupyter_server.serverapp import (
     JupyterPasswordApp,
     JupyterServerListApp,
     ServerApp,
     ServerWebApplication,
+    _has_tornado_web_authenticated,
     list_running_servers,
     random_ports,
 )
@@ -151,8 +154,9 @@ async def test_generate_config(tmp_path, jp_configurable_serverapp):
 
 def test_server_password(tmp_path, jp_configurable_serverapp):
     password = "secret"
-    with patch.dict("os.environ", {"JUPYTER_CONFIG_DIR": str(tmp_path)}), patch.object(
-        getpass, "getpass", return_value=password
+    with (
+        patch.dict("os.environ", {"JUPYTER_CONFIG_DIR": str(tmp_path)}),
+        patch.object(getpass, "getpass", return_value=password),
     ):
         app = JupyterPasswordApp(log_level=logging.ERROR)
         app.initialize([])
@@ -161,6 +165,26 @@ def test_server_password(tmp_path, jp_configurable_serverapp):
         sv.load_config_file()
         assert sv.identity_provider.hashed_password != ""
         passwd_check(sv.identity_provider.hashed_password, password)
+
+
+@pytest.mark.parametrize(
+    "env,expected",
+    [
+        ["yes", True],
+        ["Yes", True],
+        ["True", True],
+        ["true", True],
+        ["TRUE", True],
+        ["no", False],
+        ["nooo", False],
+        ["FALSE", False],
+        ["false", False],
+    ],
+)
+def test_allow_unauthenticated_env_var(jp_configurable_serverapp, env, expected):
+    with patch.dict("os.environ", {"JUPYTER_SERVER_ALLOW_UNAUTHENTICATED_ACCESS": env}):
+        app = jp_configurable_serverapp()
+        assert app.allow_unauthenticated_access == expected
 
 
 def test_list_running_servers(jp_serverapp, jp_web_app):
@@ -436,7 +460,7 @@ def test_preferred_dir_validation(
         config_file.write_text("\n".join(config_lines))
 
     if argv:
-        kwargs["argv"] = argv  # type:ignore
+        kwargs["argv"] = argv  # type:ignore[assignment]
 
     if root_dir_loc == "default" and preferred_dir_loc != "default":  # error expected
         with pytest.raises(SystemExit):
@@ -571,7 +595,7 @@ def test_signals(jp_serverapp):
 async def test_shutdown_no_activity(jp_serverapp):
     app: ServerApp = jp_serverapp
     app.extension_manager.extensions = {}
-    app.exit = lambda _: None  # type:ignore
+    app.exit = lambda _: None  # type:ignore[assignment,misc]
     app.shutdown_no_activity()
     app.shutdown_no_activity_timeout = 1
     app.init_shutdown_no_activity()
@@ -583,8 +607,9 @@ def test_running_server_info(jp_serverapp):
 
 
 @pytest.mark.parametrize("should_exist", [True, False])
-def test_browser_open_files(jp_configurable_serverapp, should_exist, caplog):
+async def test_browser_open_files(jp_configurable_serverapp, should_exist, caplog):
     app = jp_configurable_serverapp(no_browser_open_file=not should_exist)
+    await app._post_start()
     assert os.path.exists(app.browser_open_file) == should_exist
     url = urljoin("file:", pathname2url(app.browser_open_file))
     url_messages = [rec.message for rec in caplog.records if url in rec.message]
@@ -617,3 +642,22 @@ def test_immutable_cache_trait():
     serverapp.init_configurables()
     serverapp.init_webapp()
     assert serverapp.web_app.settings["static_immutable_cache"] == ["/test/immutable"]
+
+
+def test():
+    pass
+
+
+@pytest.mark.parametrize(
+    "method, expected",
+    [
+        [test, False],
+        [allow_unauthenticated(test), False],
+        [authorized(test), False],
+        [web.authenticated(test), True],
+        [web.authenticated(authorized(test)), True],
+        [authorized(web.authenticated(test)), False],  # wrong order!
+    ],
+)
+def test_tornado_authentication_detection(method, expected):
+    assert _has_tornado_web_authenticated(method) == expected

@@ -1,4 +1,5 @@
 """Tornado handlers for nbconvert."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import io
@@ -12,7 +13,7 @@ from nbformat import from_dict
 from tornado import web
 from tornado.log import app_log
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 
 from ..base.handlers import FilesRedirectHandler, JupyterHandler, path_regex
 
@@ -73,15 +74,15 @@ def get_exporter(format, **kwargs):
         raise web.HTTPError(500, "Could not import nbconvert: %s" % e) from e
 
     try:
-        Exporter = get_exporter(format)
+        exporter = get_exporter(format)
     except KeyError as e:
         # should this be 400?
         raise web.HTTPError(404, "No exporter for format: %s" % format) from e
 
     try:
-        return Exporter(**kwargs)
+        return exporter(**kwargs)
     except Exception as e:
-        app_log.exception("Could not construct Exporter: %s", Exporter)
+        app_log.exception("Could not construct Exporter: %s", exporter)
         raise web.HTTPError(500, "Could not construct Exporter: %s" % e) from e
 
 
@@ -89,7 +90,7 @@ class NbconvertFileHandler(JupyterHandler):
     """An nbconvert file handler."""
 
     auth_resource = AUTH_RESOURCE
-    SUPPORTED_METHODS = ("GET",)  # type:ignore[assignment]
+    SUPPORTED_METHODS = ("GET",)
 
     @web.authenticated
     @authorized
@@ -103,7 +104,7 @@ class NbconvertFileHandler(JupyterHandler):
         # give its path to nbconvert.
         if hasattr(self.contents_manager, "_get_os_path"):
             os_path = self.contents_manager._get_os_path(path)
-            ext_resources_dir, basename = os.path.split(os_path)
+            ext_resources_dir, _basename = os.path.split(os_path)
         else:
             ext_resources_dir = None
 
@@ -139,7 +140,7 @@ class NbconvertFileHandler(JupyterHandler):
             raise web.HTTPError(500, "nbconvert failed: %s" % e) from e
 
         if respond_zip(self, name, output, resources):
-            return
+            return None
 
         # Force download if requested
         if self.get_argument("download", "false").lower() == "true":
@@ -157,7 +158,7 @@ class NbconvertFileHandler(JupyterHandler):
 class NbconvertPostHandler(JupyterHandler):
     """An nbconvert post handler."""
 
-    SUPPORTED_METHODS = ("POST",)  # type:ignore[assignment]
+    SUPPORTED_METHODS = ("POST",)
     auth_resource = AUTH_RESOURCE
 
     @web.authenticated
@@ -167,6 +168,7 @@ class NbconvertPostHandler(JupyterHandler):
         exporter = get_exporter(format, config=self.config)
 
         model = self.get_json_body()
+        assert model is not None
         name = model.get("name", "notebook.ipynb")
         nbnode = from_dict(model["content"])
 

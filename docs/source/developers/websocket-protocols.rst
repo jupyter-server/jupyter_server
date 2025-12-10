@@ -53,12 +53,14 @@ The Jupyter Server must support the default protocol, in which a kernel message 
    * - 0
      - 4
      - 8
+     - 12
      - ...
      - offset_0
      - offset_1
      - offset_2
      - ...
-   * - offset_0
+   * - offset_number
+     - offset_0
      - offset_1
      - offset_2
      - ...
@@ -69,6 +71,7 @@ The Jupyter Server must support the default protocol, in which a kernel message 
 
 Where:
 
+* ``offset_number`` is the number of the following offsets (is equal to the number of binary buffers plus one).
 * ``offset_0`` is the position of the kernel message (``msg``) from the beginning of this message, in bytes.
 * ``offset_1`` is the position of the first binary buffer (``buffer_0``) from the beginning of this message, in bytes (optional).
 * ``offset_2`` is the position of the second binary buffer (``buffer_1``) from the beginning of this message, in bytes (optional).
@@ -81,11 +84,11 @@ The message can be deserialized by parsing ``msg`` as a JSON object (after decod
 .. code-block:: python
 
     msg = {
-        'channel': channel,
-        'header': header,
-        'parent_header': parent_header,
-        'metadata': metadata,
-        'content': content
+        "channel": channel,
+        "header": header,
+        "parent_header": parent_header,
+        "metadata": metadata,
+        "content": content,
     }
 
 Then retrieving the channel name, and updating with the buffers, if any:
@@ -147,7 +150,8 @@ Where:
 .. code-block:: python
 
     import json
-    channel = bin_msg[offset_0:offset_1].decode('utf-8')
+
+    channel = bin_msg[offset_0:offset_1].decode("utf-8")
     header = json.loads(bin_msg[offset_1:offset_2])
     parent_header = json.loads(bin_msg[offset_2:offset_3])
     metadata = json.loads(bin_msg[offset_3:offset_4])

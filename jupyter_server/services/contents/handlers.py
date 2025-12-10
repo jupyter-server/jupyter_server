@@ -2,9 +2,12 @@
 
 Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-27%3A-Contents-Service
 """
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
+from http import HTTPStatus
+from typing import Any
 
 try:
     from jupyter_client.jsonutil import json_default
@@ -14,19 +17,42 @@ except ImportError:
 from jupyter_core.utils import ensure_async
 from tornado import web
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import allow_unauthenticated, authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler, path_regex
 from jupyter_server.utils import url_escape, url_path_join
 
 AUTH_RESOURCE = "contents"
 
 
-def validate_model(model, expect_content):
+def _validate_keys(expect_defined: bool, model: dict[str, Any], keys: list[str]):
+    """
+    Validate that the keys are defined (i.e. not None) or not (i.e. None)
+    """
+
+    if expect_defined:
+        errors = [key for key in keys if model[key] is None]
+        if errors:
+            raise web.HTTPError(
+                500,
+                f"Keys unexpectedly None: {errors}",
+            )
+    else:
+        errors = {key: model[key] for key in keys if model[key] is not None}  # type: ignore[assignment]
+        if errors:
+            raise web.HTTPError(
+                500,
+                f"Keys unexpectedly not None: {errors}",
+            )
+
+
+def validate_model(model, expect_content=False, expect_hash=False):
     """
     Validate a model returned by a ContentsManager method.
 
     If expect_content is True, then we expect non-null entries for 'content'
     and 'format'.
+
+    If expect_hash is True, then we expect non-null entries for 'hash' and 'hash_algorithm'.
     """
     required_keys = {
         "name",
@@ -39,6 +65,8 @@ def validate_model(model, expect_content):
         "content",
         "format",
     }
+    if expect_hash:
+        required_keys.update(["hash", "hash_algorithm"])
     missing = required_keys - set(model.keys())
     if missing:
         raise web.HTTPError(
@@ -46,21 +74,10 @@ def validate_model(model, expect_content):
             f"Missing Model Keys: {missing}",
         )
 
-    maybe_none_keys = ["content", "format"]
-    if expect_content:
-        errors = [key for key in maybe_none_keys if model[key] is None]
-        if errors:
-            raise web.HTTPError(
-                500,
-                f"Keys unexpectedly None: {errors}",
-            )
-    else:
-        errors = {key: model[key] for key in maybe_none_keys if model[key] is not None}  # type: ignore[assignment]
-        if errors:
-            raise web.HTTPError(
-                500,
-                f"Keys unexpectedly not None: {errors}",
-            )
+    content_keys = ["content", "format"]
+    _validate_keys(expect_content, model, content_keys)
+    if expect_hash:
+        _validate_keys(expect_hash, model, ["hash", "hash_algorithm"])
 
 
 class ContentsAPIHandler(APIHandler):
@@ -91,6 +108,12 @@ class ContentsHandler(ContentsAPIHandler):
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(model, default=json_default))
 
+    async def _finish_error(self, code, message):
+        """Finish a JSON request with an error code and descriptive message"""
+        self.set_status(code)
+        self.write(message)
+        await self.finish()
+
     @web.authenticated
     @authorized
     async def get(self, path=""):
@@ -115,19 +138,51 @@ class ContentsHandler(ContentsAPIHandler):
             raise web.HTTPError(400, "Content %r is invalid" % content_str)
         content = int(content_str or "")
 
-        if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
-            raise web.HTTPError(404, f"file or directory {path!r} does not exist")
-
-        model = await ensure_async(
-            self.contents_manager.get(
-                path=path,
-                type=type,
-                format=format,
-                content=content,
+        hash_str = self.get_query_argument("hash", default="0")
+        if hash_str not in {"0", "1"}:
+            raise web.HTTPError(
+                400, f"Hash argument {hash_str!r} is invalid. It must be '0' or '1'."
             )
-        )
-        validate_model(model, expect_content=content)
-        self._finish_model(model, location=False)
+        require_hash = int(hash_str)
+
+        if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
+            await self._finish_error(
+                HTTPStatus.NOT_FOUND, f"file or directory {path!r} does not exist"
+            )
+
+        try:
+            expect_hash = require_hash
+            try:
+                model = await ensure_async(
+                    self.contents_manager.get(
+                        path=path,
+                        type=type,
+                        format=format,
+                        content=content,
+                        require_hash=require_hash,
+                    )
+                )
+            except TypeError:
+                # Fallback for ContentsManager not handling the require_hash argument
+                # introduced in 2.11
+                expect_hash = False
+                model = await ensure_async(
+                    self.contents_manager.get(
+                        path=path,
+                        type=type,
+                        format=format,
+                        content=content,
+                    )
+                )
+            validate_model(model, expect_content=content, expect_hash=expect_hash)
+            self._finish_model(model, location=False)
+        except web.HTTPError as exc:
+            # 404 is okay in this context, catch exception and return 404 code to prevent stack trace on client
+            if exc.status_code == HTTPStatus.NOT_FOUND:
+                await self._finish_error(
+                    HTTPStatus.NOT_FOUND, f"file or directory {path!r} does not exist"
+                )
+            raise
 
     @web.authenticated
     @authorized
@@ -149,20 +204,19 @@ class ContentsHandler(ContentsAPIHandler):
             raise web.HTTPError(400, f"Cannot rename file or directory {path!r}")
 
         model = await ensure_async(cm.update(model, path))
-        validate_model(model, expect_content=False)
+        validate_model(model)
         self._finish_model(model)
 
     async def _copy(self, copy_from, copy_to=None):
         """Copy a file, optionally specifying a target directory."""
         self.log.info(
-            "Copying {copy_from} to {copy_to}".format(
-                copy_from=copy_from,
-                copy_to=copy_to or "",
-            )
+            "Copying %r to %r",
+            copy_from,
+            copy_to or "",
         )
         model = await ensure_async(self.contents_manager.copy(copy_from, copy_to))
         self.set_status(201)
-        validate_model(model, expect_content=False)
+        validate_model(model)
         self._finish_model(model)
 
     async def _upload(self, model, path):
@@ -170,7 +224,7 @@ class ContentsHandler(ContentsAPIHandler):
         self.log.info("Uploading file to %s", path)
         model = await ensure_async(self.contents_manager.new(model, path))
         self.set_status(201)
-        validate_model(model, expect_content=False)
+        validate_model(model)
         self._finish_model(model)
 
     async def _new_untitled(self, path, type="", ext=""):
@@ -180,7 +234,7 @@ class ContentsHandler(ContentsAPIHandler):
             self.contents_manager.new_untitled(path=path, type=type, ext=ext)
         )
         self.set_status(201)
-        validate_model(model, expect_content=False)
+        validate_model(model)
         self._finish_model(model)
 
     async def _save(self, model, path):
@@ -189,7 +243,7 @@ class ContentsHandler(ContentsAPIHandler):
         if not chunk or chunk == -1:  # Avoid tedious log information
             self.log.info("Saving file at %s", path)
         model = await ensure_async(self.contents_manager.save(model, path))
-        validate_model(model, expect_content=False)
+        validate_model(model)
         self._finish_model(model)
 
     @web.authenticated
@@ -340,8 +394,15 @@ class ModifyCheckpointsHandler(ContentsAPIHandler):
 class NotebooksRedirectHandler(JupyterHandler):
     """Redirect /api/notebooks to /api/contents"""
 
-    SUPPORTED_METHODS = ("GET", "PUT", "PATCH", "POST", "DELETE")  # type:ignore[assignment]
+    SUPPORTED_METHODS = (
+        "GET",
+        "PUT",
+        "PATCH",
+        "POST",
+        "DELETE",
+    )
 
+    @allow_unauthenticated
     def get(self, path):
         """Handle a notebooks redirect."""
         self.log.warning("/api/notebooks is deprecated, use /api/contents")
@@ -353,7 +414,7 @@ class NotebooksRedirectHandler(JupyterHandler):
 class TrustNotebooksHandler(JupyterHandler):
     """Handles trust/signing of notebooks"""
 
-    @web.authenticated
+    @web.authenticated  # type:ignore[misc]
     @authorized(resource=AUTH_RESOURCE)
     async def post(self, path=""):
         """Trust a notebook by path."""

@@ -1,4 +1,5 @@
 """Jupyter server example handlers."""
+
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.extension.handler import ExtensionHandlerJinjaMixin, ExtensionHandlerMixin
@@ -17,7 +18,8 @@ class DefaultHandler(ExtensionHandlerMixin, JupyterHandler):
         self.log.info(f"Extension Name in {self.name} Default Handler: {self.name}")
         # A method for getting the url to static files (prefixed with /static/<name>).
         self.log.info(
-            "Static URL for / in simple_ext1 Default Handler: {}".format(self.static_url(path="/"))
+            "Static URL for / in simple_ext1 Default Handler: %s",
+            self.static_url(path="/"),
         )
         self.write("<h1>Hello Simple 1 - I am the default...</h1>")
         self.write(f"Config in {self.name} Default Handler: {self.config}")
@@ -36,7 +38,7 @@ class ParameterHandler(ExtensionHandlerMixin, JupyterHandler):
 
     def get(self, matched_part=None, *args, **kwargs):
         """Handle a get with parameters."""
-        var1 = self.get_argument("var1", default=None)
+        var1 = self.get_argument("var1", default="")
         components = [x for x in self.request.path.split("/") if x]
         self.write("<h1>Hello Simple App 1 from Handler.</h1>")
         self.write(f"<p>matched_part: {url_escape(matched_part)}</p>")
@@ -46,8 +48,6 @@ class ParameterHandler(ExtensionHandlerMixin, JupyterHandler):
 
 class BaseTemplateHandler(ExtensionHandlerJinjaMixin, ExtensionHandlerMixin, JupyterHandler):
     """The base template handler."""
-
-    pass
 
 
 class TypescriptHandler(BaseTemplateHandler):

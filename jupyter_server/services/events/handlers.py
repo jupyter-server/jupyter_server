@@ -2,19 +2,26 @@
 
 .. versionadded:: 2.0
 """
+
+from __future__ import annotations
+
 import json
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Optional, cast
 
-from jupyter_events import EventLogger
+from jupyter_core.utils import ensure_async
 from tornado import web, websocket
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized, ws_authenticated
 from jupyter_server.base.handlers import JupyterHandler
 
 from ...base.handlers import APIHandler
 
 AUTH_RESOURCE = "events"
+
+
+if TYPE_CHECKING:
+    import jupyter_events.logger
 
 
 class SubscribeWebsocket(
@@ -25,28 +32,30 @@ class SubscribeWebsocket(
 
     auth_resource = AUTH_RESOURCE
 
-    def pre_get(self):
-        """Handles authentication/authorization when
+    async def pre_get(self):
+        """Handles authorization when
         attempting to subscribe to events emitted by
         Jupyter Server's eventbus.
         """
-        # authenticate the request before opening the websocket
         user = self.current_user
-        if user is None:
-            self.log.warning("Couldn't authenticate WebSocket connection")
-            raise web.HTTPError(403)
-
         # authorize the user.
-        if not self.authorizer.is_authorized(self, user, "execute", "events"):
+        authorized = await ensure_async(
+            self.authorizer.is_authorized(self, user, "execute", "events")
+        )
+        if not authorized:
             raise web.HTTPError(403)
 
+    @ws_authenticated
     async def get(self, *args, **kwargs):
         """Get an event socket."""
-        self.pre_get()
+        await ensure_async(self.pre_get())
         res = super().get(*args, **kwargs)
-        await res
+        if res is not None:
+            await res
 
-    async def event_listener(self, logger: EventLogger, schema_id: str, data: dict) -> None:
+    async def event_listener(
+        self, logger: jupyter_events.logger.EventLogger, schema_id: str, data: dict[str, Any]
+    ) -> None:
         """Write an event message."""
         capsule = dict(schema_id=schema_id, **data)
         self.write_message(json.dumps(capsule))
@@ -62,15 +71,28 @@ class SubscribeWebsocket(
         self.event_logger.remove_listener(listener=self.event_listener)
 
 
-def validate_model(data: Dict[str, Any]) -> None:
-    """Validates for required fields in the JSON request body"""
+def validate_model(
+    data: dict[str, Any], registry: jupyter_events.schema_registry.SchemaRegistry
+) -> None:
+    """Validates for required fields in the JSON request body and verifies that
+    a registered schema/version exists"""
     required_keys = {"schema_id", "version", "data"}
     for key in required_keys:
         if key not in data:
-            raise web.HTTPError(400, f"Missing `{key}` in the JSON request body.")
+            message = f"Missing `{key}` in the JSON request body."
+            raise Exception(message)
+    schema_id = cast("str", data.get("schema_id"))
+    # The case where a given schema_id isn't found,
+    # jupyter_events raises a useful error, so there's no need to
+    # handle that case here.
+    schema = registry.get(schema_id)
+    version = str(cast("str", data.get("version")))
+    if schema.version != version:
+        message = f"Unregistered version: {version!r}≠{schema.version!r} for `{schema_id}`"
+        raise Exception(message)
 
 
-def get_timestamp(data: Dict[str, Any]) -> Optional[datetime]:
+def get_timestamp(data: dict[str, Any]) -> Optional[datetime]:
     """Parses timestamp from the JSON request body"""
     try:
         if "timestamp" in data:
@@ -102,16 +124,18 @@ class EventHandler(APIHandler):
             raise web.HTTPError(400, "No JSON data provided")
 
         try:
-            validate_model(payload)
+            validate_model(payload, self.event_logger.schemas)
             self.event_logger.emit(
-                schema_id=payload.get("schema_id"),
-                data=payload.get("data"),
+                schema_id=cast("str", payload.get("schema_id")),
+                data=cast("dict[str, Any]", payload.get("data")),
                 timestamp_override=get_timestamp(payload),
             )
             self.set_status(204)
             self.finish()
         except Exception as e:
-            raise web.HTTPError(500, str(e)) from e
+            # All known exceptions are raised by bad requests, e.g., bad
+            # version, unregistered schema, invalid emission data payload, etc.
+            raise web.HTTPError(400, str(e)) from e
 
 
 default_handlers = [

@@ -225,5 +225,5 @@ async def test_old_files_redirect(jp_fetch, jp_serverapp, jp_root_dir):
 
     #     r = self.request('GET', 'files/test.txt?download=1')
     #     disposition = r.headers.get('Content-Disposition', '')
-    #     self.assertIn('attachment', disposition)
-    #     self.assertIn("filename*=utf-8''test.txt", disposition)
+    #     assert 'attachment' in disposition
+    #     assert "filename*=utf-8''test.txt" in disposition

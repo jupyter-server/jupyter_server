@@ -6,8 +6,12 @@ Server Extensions
 
 A Jupyter Server extension is typically a module or package that extends to Server’s REST API/endpoints—i.e. adds extra request handlers to Server’s Tornado Web Application.
 
-You can check some simple examples on the `examples folder
-<https://github.com/jupyter/jupyter_server/tree/main/examples/simple>`_ in the GitHub jupyter_server repository.
+For examples of jupyter server extensions, see the
+:ref:`homepage <examples of jupyter server extensions>`.
+
+To get started writing your own extension, see the simple examples in the `examples folder
+<https://github.com/jupyter-server/jupyter_server/tree/main/examples/simple>`_ in the GitHub jupyter_server repository.
+
 
 Authoring a basic server extension
 ==================================
@@ -36,8 +40,8 @@ The easiest way to add endpoints and handle incoming requests is to subclass the
     from jupyter_server.base.handlers import JupyterHandler
     import tornado
 
-    class MyExtensionHandler(JupyterHandler):
 
+    class MyExtensionHandler(JupyterHandler):
         @tornado.web.authenticated
         def get(self):
             ...
@@ -57,11 +61,36 @@ Then add this handler to Jupyter Server's Web Application through the ``_load_ju
         """
         This function is called when the extension is loaded.
         """
-        handlers = [
-            ('/myextension/hello', MyExtensionHandler)
-        ]
-        serverapp.web_app.add_handlers('.*$', handlers)
+        handlers = [("/myextension/hello", MyExtensionHandler)]
+        serverapp.web_app.add_handlers(".*$", handlers)
 
+
+Starting asynchronous tasks from an extension
+---------------------------------------------
+
+.. versionadded:: 2.15.0
+
+Jupyter Server offers a simple API for starting asynchronous tasks from a server extension. This is useful for calling
+async tasks after the event loop is running.
+
+The function should be named ``_start_jupyter_server_extension`` and found next to the ``_load_jupyter_server_extension`` function.
+
+Here is basic example:
+
+.. code-block:: python
+
+    import asyncio
+
+    async def _start_jupyter_server_extension(serverapp: jupyter_server.serverapp.ServerApp):
+        """
+        This function is called after the server's event loop is running.
+        """
+        await asyncio.sleep(.1)
+
+.. note:: The server startup banner (displaying server info and access URLs) is printed before starting asynchronous tasks, so those tasks might still be running even after the banner appears.
+
+..  WARNING: This note is also present in the "Starting asynchronous tasks from an ExtensionApp" section.
+   If you update it here, please update it there as well.
 
 Making an extension discoverable
 --------------------------------
@@ -79,19 +108,13 @@ Usually, this requires a ``module`` key with the import path to the extension's
         Returns a list of dictionaries with metadata describing
         where to find the `_load_jupyter_server_extension` function.
         """
-        return [
-            {
-                "module": "my_extension"
-            }
-        ]
+        return [{"module": "my_extension"}]
 
 Second, add the extension to the ServerApp's ``jpserver_extensions`` trait. This can be manually added by users in their ``jupyter_server_config.py`` file,
 
 .. code-block:: python
 
-    c.ServerApp.jpserver_extensions = {
-        "my_extension": True
-    }
+    c.ServerApp.jpserver_extensions = {"my_extension": True}
 
 or loaded from a JSON file in the ``jupyter_server_config.d`` directory under
 one of `Jupyter's paths`_. (See the `Distributing a server extension`_ section
@@ -100,13 +123,7 @@ it.)
 
 .. code-block:: python
 
-    {
-        "ServerApp": {
-            "jpserver_extensions": {
-                "my_extension": true
-            }
-        }
-    }
+    {"ServerApp": {"jpserver_extensions": {"my_extension": true}}}
 
 
 Authoring a configurable extension application
@@ -127,6 +144,7 @@ An ExtensionApp:
     - has an entrypoint, ``jupyter <name>``.
     - can serve static content from the ``/static/<name>/`` endpoint.
     - can add new endpoints to the Jupyter Server.
+    - can start asynchronous tasks after the server has started.
 
 The basic structure of an ExtensionApp is shown below:
 
@@ -136,7 +154,6 @@ The basic structure of an ExtensionApp is shown below:
 
 
     class MyExtensionApp(ExtensionApp):
-
         # -------------- Required traits --------------
         name = "myextension"
         default_url = "/myextension"
@@ -156,7 +173,7 @@ The basic structure of an ExtensionApp is shown below:
             ...
             # Update the self.settings trait to pass extra
             # settings to the underlying Tornado Web Application.
-            self.settings.update({'<trait>':...})
+            self.settings.update({"<trait>": ...})
 
         def initialize_handlers(self):
             ...
@@ -166,6 +183,11 @@ The basic structure of an ExtensionApp is shown below:
         def initialize_templates(self):
             ...
             # Change the jinja templating environment
+
+        async def _start_jupyter_server_extension(self):
+            ...
+            # Extend this method to start any (e.g. async) tasks
+            # after the main Server's Event Loop is running.
 
         async def stop_extension(self):
             ...
@@ -182,6 +204,7 @@ Methods
 * ``initialize_settings()``: adds custom settings to the Tornado Web Application.
 * ``initialize_handlers()``: appends handlers to the Tornado Web Application.
 * ``initialize_templates()``: initialize the templating engine (e.g. jinja2) for your frontend.
+* ``_start_jupyter_server_extension()``: enables the extension to start (async) tasks _after_ the server's main Event Loop has started.
 * ``stop_extension()``: called on server shut down.
 
 Properties
@@ -211,7 +234,6 @@ Jupyter Server provides a convenient mixin class for adding these properties to 
 
 
     class MyExtensionHandler(ExtensionHandlerMixin, JupyterHandler):
-
         @tornado.web.authenticated
         def get(self):
             ...
@@ -251,16 +273,14 @@ templates from the Jinja templating environment created by the ``ExtensionApp``.
     from jupyter_server.base.handlers import JupyterHandler
     from jupyter_server.extension.handler import (
         ExtensionHandlerMixin,
-        ExtensionHandlerJinjaMixin
+        ExtensionHandlerJinjaMixin,
     )
     import tornado
 
-    class MyExtensionHandler(
-        ExtensionHandlerMixin,
-        ExtensionHandlerJinjaMixin,
-        JupyterHandler
-    ):
 
+    class MyExtensionHandler(
+        ExtensionHandlerMixin, ExtensionHandlerJinjaMixin, JupyterHandler
+    ):
         @tornado.web.authenticated
         def get(self):
             ...
@@ -288,12 +308,7 @@ To make an ``ExtensionApp`` discoverable by Jupyter Server, add the ``app`` key+
         Returns a list of dictionaries with metadata describing
         where to find the `_load_jupyter_server_extension` function.
         """
-        return [
-            {
-                "module": "myextension",
-                "app": MyExtensionApp
-            }
-        ]
+        return [{"module": "myextension", "app": MyExtensionApp}]
 
 
 Launching an ``ExtensionApp``
@@ -315,13 +330,11 @@ To make your extension executable from anywhere on your system, point an entry-p
 
 
     setup(
-        name='myfrontend',
-        ...
+        name="myfrontend",
+        # ...
         entry_points={
-            'console_scripts': [
-                'jupyter-myextension = myextension:launch_instance'
-            ]
-        }
+            "console_scripts": ["jupyter-myextension = myextension:launch_instance"]
+        },
     )
 
 ``ExtensionApp`` as a classic Notebook server extension
@@ -341,6 +354,48 @@ pointing at the ``load_classic_server_extension`` method:
 If the extension is enabled, the extension will be loaded when the server starts.
 
 
+Starting asynchronous tasks from an ExtensionApp
+------------------------------------------------
+
+.. versionadded:: 2.15.0
+
+
+An ``ExtensionApp`` can start asynchronous tasks after Jupyter Server's event loop is started by overriding its
+``_start_jupyter_server_extension()`` method. This can be helpful for setting up e.g. background tasks.
+
+Here is a basic (pseudo) code example:
+
+.. code-block:: python
+
+    import asyncio
+    import time
+
+
+    async def log_time_periodically(log, dt=1):
+        """Log the current time from a periodic loop."""
+        while True:
+            current_time = time.time()
+            log.info(current_time)
+            await sleep(dt)
+
+
+    class MyExtension(ExtensionApp):
+        ...
+
+        async def _start_jupyter_server_extension(self):
+            self.my_background_task = asyncio.create_task(
+                log_time_periodically(self.log)
+            )
+
+        async def stop_extension(self):
+            self.my_background_task.cancel()
+
+.. note:: The server startup banner (displaying server info and access URLs) is printed before starting asynchronous tasks, so those tasks might still be running even after the banner appears.
+
+..  WARNING: This note is also present in the "Starting asynchronous tasks from an extension" section.
+   If you update it here, please update it there as well.
+
+
 Distributing a server extension
 ===============================
 
@@ -353,13 +408,9 @@ Putting it all together, authors can distribute their extension following this s
 
         # Found in the __init__.py of package
 
+
         def _jupyter_server_extension_points():
-            return [
-                {
-                    "module": "myextension.app",
-                    "app": MyExtensionApp
-                }
-            ]
+            return [{"module": "myextension.app", "app": MyExtensionApp}]
 
 2. Create an extension by writing a ``_load_jupyter_server_extension()`` function or subclassing ``ExtensionApp``.
     This is where the extension logic will live (i.e. custom extension handlers, config, etc). See the sections above for more information on how to create an extension.
@@ -412,15 +463,14 @@ Putting it all together, authors can distribute their extension following this s
 
         setup(
             name="myextension",
-            ...
+            # ...
             include_package_data=True,
             data_files=[
                 (
                     "etc/jupyter/jupyter_server_config.d",
-                    ["jupyter-config/jupyter_server_config.d/myextension.json"]
+                    ["jupyter-config/jupyter_server_config.d/myextension.json"],
                 ),
-            ]
-
+            ],
         )
 
 
@@ -451,6 +501,7 @@ There are a few key steps to make this happen:
 
         def load_jupyter_server_extension(nb_server_app):
             ...
+
 
         # Reference the old function name with the new function name.
 
@@ -494,19 +545,18 @@ There are a few key steps to make this happen:
 
         setup(
             name="myextension",
-            ...
+            # ...
             include_package_data=True,
             data_files=[
                 (
                     "etc/jupyter/jupyter_server_config.d",
-                    ["jupyter-config/jupyter_server_config.d/myextension.json"]
+                    ["jupyter-config/jupyter_server_config.d/myextension.json"],
                 ),
                 (
                     "etc/jupyter/jupyter_notebook_config.d",
-                    ["jupyter-config/jupyter_notebook_config.d/myextension.json"]
+                    ["jupyter-config/jupyter_notebook_config.d/myextension.json"],
                 ),
-            ]
-
+            ],
         )
 
 3. (Optional) Point extension at the new favicon location.
@@ -520,14 +570,13 @@ There are a few key steps to make this happen:
     .. code-block:: python
 
         def load_jupyter_server_extension(nb_server_app):
-
             web_app = nb_server_app.web_app
-            host_pattern = '.*$'
-            base_url = web_app.settings['base_url']
+            host_pattern = ".*$"
+            base_url = web_app.settings["base_url"]
 
             # Add custom extensions handler.
             custom_handlers = [
-                ...
+                # ...
             ]
 
             # Favicon redirects.
@@ -535,49 +584,74 @@ There are a few key steps to make this happen:
                 (
                     url_path_join(base_url, "/static/favicons/favicon.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon.ico")
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/favicons/favicon-busy-1.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-1.ico")}
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-busy-1.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/favicons/favicon-busy-2.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-2.ico")}
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-busy-2.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/favicons/favicon-busy-3.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-busy-3.ico")}
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-busy-3.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/favicons/favicon-file.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-file.ico")}
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-file.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/favicons/favicon-notebook.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-notebook.ico")}
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-notebook.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/favicons/favicon-terminal.ico"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/favicon-terminal.ico")}
+                    {
+                        "url": url_path_join(
+                            serverapp.base_url, "static/base/images/favicon-terminal.ico"
+                        )
+                    },
                 ),
                 (
                     url_path_join(base_url, "/static/logo/logo.png"),
                     RedirectHandler,
-                    {"url": url_path_join(serverapp.base_url, "static/base/images/logo.png")}
+                    {"url": url_path_join(serverapp.base_url, "static/base/images/logo.png")},
                 ),
             ]
 
-            web_app.add_handlers(
-                host_pattern,
-                custom_handlers + favicon_redirects
-            )
+            web_app.add_handlers(host_pattern, custom_handlers + favicon_redirects)
 
 
-.. _`classic Notebook Server`: https://jupyter-notebook.readthedocs.io/en/stable/extending/handlers.html
+.. _`classic Notebook Server`: https://jupyter-notebook.readthedocs.io/en/v6.5.4/extending/handlers.html

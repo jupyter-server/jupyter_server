@@ -27,18 +27,18 @@ A minimal example which logs Jupyter Server output to a file:
 .. code-block:: python
 
    c.ServerApp.logging_config = {
-       'version': 1,
-       'handlers': {
-           'logfile': {
-               'class': 'logging.FileHandler',
-               'level': 'DEBUG',
-               'filename': 'jupyter_server.log',
+       "version": 1,
+       "handlers": {
+           "logfile": {
+               "class": "logging.FileHandler",
+               "level": "DEBUG",
+               "filename": "jupyter_server.log",
            },
        },
-       'loggers': {
-           'ServerApp': {
-               'level': 'DEBUG',
-               'handlers': ['console', 'logfile'],
+       "loggers": {
+           "ServerApp": {
+               "level": "DEBUG",
+               "handlers": ["console", "logfile"],
            },
        },
    }
@@ -53,6 +53,28 @@ A minimal example which logs Jupyter Server output to a file:
    Be aware that the ``ServerApp`` log may contain security tokens. If
    redirecting to log files ensure they have appropriate permissions.
 
+
+.. _configurable_logging.log_scrub:
+
+Configuring Log Scrubbing
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, Jupyter Server scrubs sensitive URL parameters from log output to prevent
+security tokens and other sensitive information from being leaked in log files. Additional
+parameters to be scrubbed can be configured using the ``extra_log_scrub_param_keys`` trait.
+
+Default scrubbed parameter keys include: ``token``, ``auth``, ``key``, ``code``, ``state``, and ``xsrf``.
+
+Example configuration to add additional parameters to scrub:
+
+.. code-block:: python
+
+   # jupyter_server_config.py
+
+   # Add additional parameter keys to scrub (these will be added to the defaults)
+   c.ServerApp.extra_log_scrub_param_keys = [
+       "password", "secret", "api_key", "jwt-token"
+   ]
 
 .. _configurable_logging.extension_applications:
 
@@ -69,49 +91,49 @@ An example which logs both Jupyter Server and Jupyter Lab output to a file:
 .. code-block:: python
 
    c.ServerApp.logging_config = {
-       'version': 1,
-       'handlers': {
-           'logfile': {
-               'class': 'logging.FileHandler',
-               'level': 'DEBUG',
-               'filename': 'jupyter_server.log',
-               'formatter': 'my_format',
+       "version": 1,
+       "handlers": {
+           "logfile": {
+               "class": "logging.FileHandler",
+               "level": "DEBUG",
+               "filename": "jupyter_server.log",
+               "formatter": "my_format",
            },
        },
-       'formatters': {
-           'my_format': {
-               'format': '%(asctime)s %(levelname)-8s %(name)-15s %(message)s',
-               'datefmt': '%Y-%m-%d %H:%M:%S',
+       "formatters": {
+           "my_format": {
+               "format": "%(asctime)s %(levelname)-8s %(name)-15s %(message)s",
+               "datefmt": "%Y-%m-%d %H:%M:%S",
            },
        },
-       'loggers': {
-           'ServerApp': {
-               'level': 'DEBUG',
-               'handlers': ['console', 'logfile'],
+       "loggers": {
+           "ServerApp": {
+               "level": "DEBUG",
+               "handlers": ["console", "logfile"],
            },
        },
    }
 
    c.LabApp.logging_config = {
-       'version': 1,
-       'handlers': {
-           'logfile': {
-               'class': 'logging.FileHandler',
-               'level': 'DEBUG',
-               'filename': 'jupyter_server.log',
-               'formatter': 'my_format',
+       "version": 1,
+       "handlers": {
+           "logfile": {
+               "class": "logging.FileHandler",
+               "level": "DEBUG",
+               "filename": "jupyter_server.log",
+               "formatter": "my_format",
            },
        },
-       'formatters': {
-           'my_format': {
-               'format': '%(asctime)s %(levelname)-8s %(name)-15s %(message)s',
-               'datefmt': '%Y-%m-%d %H:%M:%S',
+       "formatters": {
+           "my_format": {
+               "format": "%(asctime)s %(levelname)-8s %(name)-15s %(message)s",
+               "datefmt": "%Y-%m-%d %H:%M:%S",
            },
        },
-       'loggers': {
-           'LabApp': {
-               'level': 'DEBUG',
-               'handlers': ['console', 'logfile'],
+       "loggers": {
+           "LabApp": {
+               "level": "DEBUG",
+               "handlers": ["console", "logfile"],
            },
        },
    }

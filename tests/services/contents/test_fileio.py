@@ -1,8 +1,11 @@
+import contextlib
 import json
 import logging
 import os
+import pathlib
 import stat
 import sys
+import tempfile
 
 import pytest
 from nbformat import validate
@@ -69,7 +72,7 @@ def test_atomic_writing(tmp_path):
 
 @pytest.fixture
 def handle_umask():
-    global umask  # noqa
+    global umask
     umask = os.umask(0)
     os.umask(umask)
     yield
@@ -136,12 +139,78 @@ def test_path_to_invalid(tmpdir):
     assert path_to_invalid(tmpdir) == str(tmpdir) + ".invalid"
 
 
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="requires POSIX directory perms")
+def test_atomic_writing_in_readonly_dir(tmp_path):
+    # Setup: non-writable dir but a writable file inside
+    nonw = tmp_path / "nonwritable"
+    nonw.mkdir()
+    f = nonw / "file.txt"
+    f.write_text("original content")
+    os.chmod(str(nonw), 0o500)
+    os.chmod(str(f), 0o700)
+
+    # direct write fallback succeeds
+    with atomic_writing(str(f)) as ff:
+        ff.write("new content")
+    assert f.read_text() == "new content"
+
+    # dir perms unchanged
+    mode = stat.S_IMODE(os.stat(str(nonw)).st_mode)
+    assert mode == 0o500
+
+
+@contextlib.contextmanager
+def tmp_dir(tmp_root: pathlib.Path):
+    """Thin wrapper around `TemporaryDirectory` adopting it to `pathlib.Path`s"""
+    # we need to append `/` if we want to get a sub-directory
+    prefix = str(tmp_root) + "/"
+    with tempfile.TemporaryDirectory(prefix=prefix) as temp_path:
+        yield pathlib.Path(temp_path)
+
+
+@pytest.mark.skipif(
+    not pathlib.Path("/tmp/nfs_mount").exists(), reason="requires a local NFS mount"
+)
+def test_atomic_writing_permission_cache():
+    remote_source = pathlib.Path("/tmp/nfs_source")
+    local_mount = pathlib.Path("/tmp/nfs_mount")
+
+    with tmp_dir(tmp_root=local_mount) as local_mount_path:
+        f = local_mount_path / "file.txt"
+
+        # write initial content
+        f.write_text("original content")
+
+        # make the file non-writable
+        f.chmod(0o500)
+
+        # attempt write, should fail due to NFS attribute cache
+        with pytest.raises(PermissionError):
+            with atomic_writing(str(f)) as ff:
+                ff.write("new content")
+
+        source_path = remote_source / local_mount_path.name / "file.txt"
+
+        # make it readable by modifying attributes at source
+        source_path.chmod(0o700)
+
+        with atomic_writing(str(f)) as ff:
+            ff.write("new content")
+
+        assert f.read_text() == "new content"
+
+
 @pytest.mark.skipif(os.name == "nt", reason="test fails on Windows")
-def test_file_manager_mixin(tmpdir):
+def test_file_manager_mixin(tmp_path):
     mixin = FileManagerMixin()
-    mixin.log = logging.getLogger()  # type:ignore
-    bad_content = tmpdir / "bad_content.ipynb"
+    mixin.log = logging.getLogger()
+    bad_content = tmp_path / "bad_content.ipynb"
     bad_content.write_text("{}", "utf8")
+    # Same as `echo -n {} | sha256sum`
+    assert mixin._get_hash(bad_content.read_bytes()) == {
+        "hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "hash_algorithm": "sha256",
+    }
     with pytest.raises(HTTPError):
         mixin._read_notebook(bad_content)
     other = path_to_intermediate(bad_content)
@@ -152,16 +221,16 @@ def test_file_manager_mixin(tmpdir):
     validate(nb)
 
     with pytest.raises(HTTPError):
-        mixin._read_file(tmpdir, "text")
+        mixin._read_file(tmp_path, "text")
 
     with pytest.raises(HTTPError):
-        mixin._save_file(tmpdir / "foo", "foo", "bar")
+        mixin._save_file(tmp_path / "foo", "foo", "bar")
 
 
 @pytest.mark.skipif(os.name == "nt", reason="test fails on Windows")
 async def test_async_file_manager_mixin(tmpdir):
     mixin = AsyncFileManagerMixin()
-    mixin.log = logging.getLogger()  # type:ignore
+    mixin.log = logging.getLogger()
     bad_content = tmpdir / "bad_content.ipynb"
     bad_content.write_text("{}", "utf8")
     with pytest.raises(HTTPError):
@@ -170,7 +239,12 @@ async def test_async_file_manager_mixin(tmpdir):
     with open(other, "w") as fid:
         json.dump(new_notebook(), fid)
     mixin.use_atomic_writing = True
-    nb = await mixin._read_notebook(bad_content)
+    nb, bcontent = await mixin._read_notebook(bad_content, raw=True)
+    # Same as `echo -n {} | sha256sum`
+    assert mixin._get_hash(bcontent) == {
+        "hash": "4747f9680816e352a697d0fb69d82334457cdd1e46f053e800859833d3e6003e",
+        "hash_algorithm": "sha256",
+    }
     validate(nb)
 
     with pytest.raises(HTTPError):
@@ -178,3 +252,30 @@ async def test_async_file_manager_mixin(tmpdir):
 
     with pytest.raises(HTTPError):
         await mixin._save_file(tmpdir / "foo", "foo", "bar")
+
+
+async def test_AsyncFileManagerMixin_read_notebook_no_raw(tmpdir):
+    mixin = AsyncFileManagerMixin()
+    mixin.log = logging.getLogger()
+    bad_content = tmpdir / "bad_content.ipynb"
+    bad_content.write_text("{}", "utf8")
+
+    other = path_to_intermediate(bad_content)
+    with open(other, "w") as fid:
+        json.dump(new_notebook(), fid)
+    mixin.use_atomic_writing = True
+    answer = await mixin._read_notebook(bad_content)
+
+    assert not isinstance(answer, tuple)
+
+
+async def test_AsyncFileManagerMixin_read_file_no_raw(tmpdir):
+    mixin = AsyncFileManagerMixin()
+    mixin.log = logging.getLogger()
+    file_path = tmpdir / "bad_content.text"
+    file_path.write_text("blablabla", "utf8")
+
+    mixin.use_atomic_writing = True
+    answer = await mixin._read_file(file_path, "text")
+
+    assert len(answer) == 2

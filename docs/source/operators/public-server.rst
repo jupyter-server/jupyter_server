@@ -10,8 +10,8 @@ serving HTTP requests.
 
 .. note::
    By default, Jupyter Server runs locally at 127.0.0.1:8888
-   and is accessible only from `localhost`. You may access the
-   server from the browser using `http://127.0.0.1:8888`.
+   and is accessible only from ``localhost``. You may access the
+   server from the browser using ``http://127.0.0.1:8888``.
 
 This document describes how you can
 :ref:`secure a Jupyter server <Jupyter_server_security>` and how to
@@ -111,19 +111,19 @@ Preparing a hashed password
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can prepare a hashed password manually, using the function
-:func:`notebook.auth.security.passwd`:
+:func:`jupyter_server.auth.passwd`:
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> from jupyter_server.auth import passwd
     >>> passwd()
-    ... Enter password:
-    ... Verify password:
+    Enter password:
+    Verify password:
     'sha1:67c9e60bb8b6:9ffede0825894254b2e042ea597d771089e11aed'
 
 .. caution::
 
-  :func:`~notebook.auth.security.passwd` when called with no arguments
+  :func:`~jupyter_server.auth.passwd` when called with no arguments
   will prompt you to enter and verify your password such as
   in the above code snippet. Although the function can also
   be passed a string as an argument such as ``passwd('mypassword')``, please
@@ -308,7 +308,7 @@ instructions about modifying ``jupyter_server_config.py``):
 
 .. code-block:: python
 
-    c.ServerApp.base_url = '/ipython/'
+    c.ServerApp.base_url = "/ipython/"
 
 Embedding the notebook in another website
 -----------------------------------------
@@ -316,15 +316,15 @@ Embedding the notebook in another website
 Sometimes you may want to embed the notebook somewhere on your website,
 e.g. in an IFrame. To do this, you may need to override the
 Content-Security-Policy to allow embedding. Assuming your website is at
-`https://mywebsite.example.com`, you can embed the notebook on your website
+``https://mywebsite.example.com``, you can embed the notebook on your website
 with the following configuration setting in
 :file:`jupyter_server_config.py`:
 
 .. code-block:: python
 
     c.ServerApp.tornado_settings = {
-        'headers': {
-            'Content-Security-Policy': "frame-ancestors https://mywebsite.example.com 'self' "
+        "headers": {
+            "Content-Security-Policy": "frame-ancestors https://mywebsite.example.com 'self' "
         }
     }
 
@@ -351,7 +351,7 @@ or in :file:`jupyter_notebook_config.py`:
 
    .. code-block:: python
 
-      c.GatewayClient.url = 'http://my-gateway-server:8888'
+      c.GatewayClient.url = "http://my-gateway-server:8888"
 
 When provided, all kernel specifications will be retrieved from the specified Gateway server and all
 kernels will be managed by that server.  This option enables the ability to target kernel processes
@@ -415,9 +415,9 @@ Docker CMD
 Using ``jupyter server`` as a
 `Docker CMD <https://docs.docker.com/engine/reference/builder/#cmd>`_ results in
 kernels repeatedly crashing, likely due to a lack of `PID reaping
-<https://blog.phusion.nl/2015/01/20/docker-and-the-pid-1-zombie-reaping-problem/>`_.
+<https://blog.phusion.nl/docker-and-the-pid-1-zombie-reaping-problem/>`_.
 To avoid this, use the `tini <https://github.com/krallin/tini>`_ ``init`` as your
-Dockerfile `ENTRYPOINT`::
+Dockerfile ``ENTRYPOINT``::
 
   # Add Tini. Tini operates as a process subreaper for jupyter. This prevents
   # kernel crashes.

@@ -1,15 +1,14 @@
 """Test GatewayClient"""
+
 import asyncio
 import json
 import logging
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
-from email.utils import format_datetime
-from http.cookies import SimpleCookie
 from io import BytesIO
 from queue import Empty
-from typing import Any, Dict, Union
+from typing import Any, Union
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -17,7 +16,7 @@ import tornado
 from jupyter_core.utils import ensure_async
 from tornado.concurrent import Future
 from tornado.httpclient import HTTPRequest, HTTPResponse
-from tornado.httputil import HTTPServerRequest
+from tornado.httputil import HTTPHeaders, HTTPServerRequest
 from tornado.queues import Queue
 from tornado.web import HTTPError
 from traitlets import Int, Unicode
@@ -73,12 +72,12 @@ running_kernels = {}
 #
 # This is used to simulate inconsistency in list results from the Gateway server
 # due to issues like race conditions, bugs, etc.
-omitted_kernels: Dict[str, bool] = {}
+omitted_kernels: dict[str, bool] = {}
 
 
 def generate_model(name):
     """Generate a mocked kernel model.  Caller is responsible for adding model to running_kernels dictionary."""
-    dt = datetime.utcnow().isoformat() + "Z"  # noqa
+    dt = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     kernel_id = str(uuid.uuid4())
     model = {
         "id": kernel_id,
@@ -90,7 +89,7 @@ def generate_model(name):
     return model
 
 
-async def mock_gateway_request(url, **kwargs):  # noqa
+async def mock_gateway_request(url, **kwargs):
     method = "GET"
     if kwargs["method"]:
         method = kwargs["method"]
@@ -199,6 +198,7 @@ async def mock_gateway_request(url, **kwargs):  # noqa
 
 
 mocked_gateway = patch("jupyter_server.gateway.managers.gateway_request", mock_gateway_request)
+mock_gateway_ws_url = "ws://mock-gateway-server:8889"
 mock_gateway_url = "http://mock-gateway-server:8889"
 mock_http_user = "alice"
 
@@ -217,9 +217,9 @@ class CustomTestTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
 
     # The following are configured by the config test to ensure they flow
     # configured to: 42
-    config_var_1: int = Int(config=True)  # type:ignore
+    config_var_1: int = Int(config=True)  # type:ignore[assignment]
     # configured to: "Use this token value: "
-    config_var_2: str = Unicode(config=True)  # type:ignore
+    config_var_2: str = Unicode(config=True)  # type:ignore[assignment]
 
     def get_token(
         self, auth_header_key: str, auth_scheme: Union[str, None], auth_token: str, **kwargs: Any
@@ -227,7 +227,7 @@ class CustomTestTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
         return f"{self.config_var_2}{self.config_var_1}"
 
 
-@pytest.fixture()
+@pytest.fixture
 def jp_server_config():
     return Config(
         {"CustomTestTokenRenewer": {"config_var_1": 42, "config_var_2": "Use this token value: "}}
@@ -303,13 +303,19 @@ def test_gateway_cli_options(jp_configurable_serverapp, capsys):
     GatewayClient.clear_instance()
 
 
-@pytest.mark.parametrize("renewer_type", ["default", "custom"])
-def test_token_renewer_config(jp_server_config, jp_configurable_serverapp, renewer_type):
+@pytest.mark.parametrize(
+    "renewer_type,initial_auth_token", [("default", ""), ("custom", None), ("custom", "")]
+)
+def test_token_renewer_config(
+    jp_server_config, jp_configurable_serverapp, renewer_type, initial_auth_token
+):
     argv = ["--gateway-url=" + mock_gateway_url]
     if renewer_type == "custom":
         argv.append(
             "--GatewayClient.gateway_token_renewer_class=tests.test_gateway.CustomTestTokenRenewer"
         )
+    if initial_auth_token is None:
+        argv.append("--GatewayClient.auth_token=None")
 
     GatewayClient.clear_instance()
     app = jp_configurable_serverapp(argv=argv)
@@ -322,15 +328,20 @@ def test_token_renewer_config(jp_server_config, jp_configurable_serverapp, renew
     if renewer_type == "default":
         assert isinstance(gw_client.gateway_token_renewer, NoOpTokenRenewer)
         token = gw_client.gateway_token_renewer.get_token(
-            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token
+            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token or ""
         )
         assert token == gw_client.auth_token
     else:
         assert isinstance(gw_client.gateway_token_renewer, CustomTestTokenRenewer)
         token = gw_client.gateway_token_renewer.get_token(
-            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token
+            gw_client.auth_header_key, gw_client.auth_scheme, gw_client.auth_token or ""
         )
         assert token == CustomTestTokenRenewer.TEST_EXPECTED_TOKEN_VALUE
+    gw_client.load_connection_args()
+    if renewer_type == "default" or initial_auth_token is None:
+        assert gw_client.auth_token == initial_auth_token
+    else:
+        assert gw_client.auth_token == CustomTestTokenRenewer.TEST_EXPECTED_TOKEN_VALUE
 
 
 @pytest.mark.parametrize(
@@ -362,16 +373,13 @@ def test_gateway_request_timeout_pad_option(
     GatewayClient.clear_instance()
 
 
-cookie_expire_time = format_datetime(datetime.now(tz=timezone.utc) + timedelta(seconds=180))
-
-
 @pytest.mark.parametrize(
-    "accept_cookies,expire_arg,expire_param,existing_cookies,cookie_exists",
+    "accept_cookies,expire_arg,expire_param,existing_cookies",
     [
-        (False, None, None, "EXISTING=1", False),
-        (True, None, None, "EXISTING=1", True),
-        (True, "Expires", cookie_expire_time, None, True),
-        (True, "Max-Age", "-360", "EXISTING=1", False),
+        (False, None, 0, "EXISTING=1"),
+        (True, None, 0, "EXISTING=1"),
+        (True, "expires", 180, None),
+        (True, "Max-Age", -360, "EXISTING=1"),
     ],
 )
 def test_gateway_request_with_expiring_cookies(
@@ -380,31 +388,50 @@ def test_gateway_request_with_expiring_cookies(
     expire_arg,
     expire_param,
     existing_cookies,
-    cookie_exists,
 ):
     argv = [f"--GatewayClient.accept_cookies={accept_cookies}"]
 
     GatewayClient.clear_instance()
     _ = jp_configurable_serverapp(argv=argv)
 
-    cookie: SimpleCookie = SimpleCookie()
-    cookie.load("SERVERID=1234567; Path=/")
-    if expire_arg:
-        cookie["SERVERID"][expire_arg] = expire_param
+    test_expiration = bool(expire_param < 0)
+    # Create mock headers with Set-Cookie values
+    headers = HTTPHeaders()
+    cookie_value = "SERVERID=1234567; Path=/; HttpOnly"
+    if expire_arg == "expires":
+        # Convert expire_param to a string in the format of "Expires: <date>" (RFC 7231)
+        expire_param = (datetime.now(tz=timezone.utc) + timedelta(seconds=expire_param)).strftime(
+            "%a, %d %b %Y %H:%M:%S GMT"
+        )
+        cookie_value = f"SERVERID=1234567; Path=/; expires={expire_param}; HttpOnly"
+    elif expire_arg == "Max-Age":
+        cookie_value = f"SERVERID=1234567; Path=/; Max-Age={expire_param}; HttpOnly"
 
-    GatewayClient.instance().update_cookies(cookie)
+    # Add a second cookie to test comma-separated cookies
+    headers.add("Set-Cookie", cookie_value)
+    headers.add("Set-Cookie", "ADDITIONAL_COOKIE=8901234; Path=/; HttpOnly")
+
+    headers_list = headers.get_list("Set-Cookie")
+    print(headers_list)
+
+    GatewayClient.instance().update_cookies(headers)
 
     args = {}
     if existing_cookies:
         args["headers"] = {"Cookie": existing_cookies}
+
     connection_args = GatewayClient.instance().load_connection_args(**args)
 
-    if not cookie_exists:
-        assert "SERVERID" not in (connection_args["headers"].get("Cookie") or "")
+    if not accept_cookies or test_expiration:
+        # The first condition ensure the response cookie is not accepted,
+        # the second condition ensures that the cookie is not accepted if it is expired.
+        assert "SERVERID" not in connection_args["headers"].get("Cookie")
     else:
-        assert "SERVERID" in connection_args["headers"].get("Cookie")
+        # The cookie is accepted if it is not expired and accept_cookies is True.
+        assert "SERVERID" in connection_args["headers"].get("Cookie", "")
+
     if existing_cookies:
-        assert "EXISTING" in connection_args["headers"].get("Cookie")
+        assert "EXISTING" in connection_args["headers"].get("Cookie", "")
 
     GatewayClient.clear_instance()
 
@@ -617,7 +644,7 @@ async def test_kernel_client_response_router_notifies_channel_queue_when_finishe
         kc.hb_channel,
         kc.control_channel,
     ]
-    assert all(channel.response_router_finished if True else False for channel in all_channels)
+    assert all(channel.response_router_finished for channel in all_channels)
 
     await ensure_async(kc.stop_channels())
 
@@ -703,20 +730,56 @@ async def test_websocket_connection_closed(init_gateway, jp_serverapp, jp_fetch,
     handler.ws_connection.is_closing = lambda: True
 
     # Create the GatewayWebSocketConnection and attach it to the handler...
-    conn = GatewayWebSocketConnection(parent=km, websocket_handler=handler)
-    handler.connection = conn
-    await conn.connect()
+    with mocked_gateway:
+        conn = GatewayWebSocketConnection(parent=km, websocket_handler=handler)
+        handler.connection = conn
+        await conn.connect()
 
-    # Processing websocket messages happens in separate coroutines and any
-    # errors in that process will show up in logs, but not bubble up to the
-    # caller.
-    #
-    # To check for these, we wait for the server to stop and then check the
-    # logs for errors.
-    await jp_serverapp._cleanup()
-    for _, level, message in caplog.record_tuples:
-        if level >= logging.ERROR:
-            pytest.fail(f"Logs contain an error: {message}")
+        # Processing websocket messages happens in separate coroutines and any
+        # errors in that process will show up in logs, but not bubble up to the
+        # caller.
+        #
+        # To check for these, we wait for the server to stop and then check the
+        # logs for errors.
+        await jp_serverapp._cleanup()
+        for _, level, message in caplog.record_tuples:
+            if level >= logging.ERROR:
+                pytest.fail(f"Logs contain an error: {message}")
+
+
+@patch("tornado.websocket.websocket_connect", mock_websocket_connect())
+async def test_websocket_connection_with_session_id(init_gateway, jp_serverapp, jp_fetch, caplog):
+    # Create the session and kernel and get the kernel manager...
+    kernel_id = await create_kernel(jp_fetch, "kspec_foo")
+    km: GatewayKernelManager = jp_serverapp.kernel_manager.get_kernel(kernel_id)
+
+    # Create the KernelWebsocketHandler...
+    request = HTTPServerRequest("foo", "GET")
+    request.connection = MagicMock()
+    handler = KernelWebsocketHandler(jp_serverapp.web_app, request)
+    # Create the GatewayWebSocketConnection and attach it to the handler...
+    with mocked_gateway:
+        conn = GatewayWebSocketConnection(parent=km, websocket_handler=handler)
+        handler.connection = conn
+        await conn.connect()
+        assert conn.session_id != None
+        expected_ws_url = (
+            f"{mock_gateway_ws_url}/api/kernels/{kernel_id}/channels?session_id={conn.session_id}"
+        )
+        assert expected_ws_url in caplog.text, (
+            "WebSocket URL does not contain the expected session_id."
+        )
+
+        # Processing websocket messages happens in separate coroutines and any
+        # errors in that process will show up in logs, but not bubble up to the
+        # caller.
+        #
+        # To check for these, we wait for the server to stop and then check the
+        # logs for errors.
+        await jp_serverapp._cleanup()
+        for _, level, message in caplog.record_tuples:
+            if level >= logging.ERROR:
+                pytest.fail(f"Logs contain an error: {message}")
 
 
 #
@@ -787,7 +850,7 @@ async def is_kernel_running(jp_fetch, kernel_id):
 
 
 async def create_kernel(jp_fetch, kernel_name):
-    """Issues request to retart the given kernel"""
+    """Issues request to restart the given kernel"""
     with mocked_gateway:
         body = json.dumps({"name": kernel_name})
 
@@ -825,7 +888,7 @@ async def interrupt_kernel(jp_fetch, kernel_id):
 
 
 async def restart_kernel(jp_fetch, kernel_id):
-    """Issues request to retart the given kernel"""
+    """Issues request to restart the given kernel"""
     with mocked_gateway:
         r = await jp_fetch(
             "api",

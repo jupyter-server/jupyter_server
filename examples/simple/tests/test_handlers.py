@@ -1,4 +1,5 @@
 """Tests for the simple handler."""
+
 import pytest
 
 

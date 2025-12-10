@@ -1,6 +1,7 @@
 """
 Utilities for getting information about Jupyter and the system it's running in.
 """
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import os
@@ -41,7 +42,7 @@ def pkg_commit_hash(pkg_path):
         if p.exists(p.join(cur_path, ".git")):
             try:
                 proc = subprocess.Popen(
-                    ["git", "rev-parse", "--short", "HEAD"],  # noqa
+                    ["git", "rev-parse", "--short", "HEAD"],  # noqa: S607
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     cwd=pkg_path,

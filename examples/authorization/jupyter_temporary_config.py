@@ -1,4 +1,5 @@
 """Nbclassic temporary server auth example."""
+
 from jupyter_server.auth import Authorizer
 
 
@@ -7,9 +8,7 @@ class TemporaryServerPersonality(Authorizer):
 
     def is_authorized(self, handler, user, action, resource):
         """Allow everything but write on contents"""
-        if action == "write" and resource == "contents":
-            return False
-        return True
+        return not (action == "write" and resource == "contents")
 
 
 c.ServerApp.authorizer_class = TemporaryServerPersonality  # type:ignore[name-defined]

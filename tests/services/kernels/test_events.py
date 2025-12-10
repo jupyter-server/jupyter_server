@@ -16,7 +16,6 @@ async def test_kernel_action_success_event(
 
     async def mock_method(self, *args, **kwargs):
         self.kernel_id = "x-x-x-x-x"
-        ...
 
     monkeypatch.setattr(AsyncKernelManager, f"{action}_kernel", mock_method)
 
@@ -42,7 +41,7 @@ async def test_kernel_action_failed_event(
 
     monkeypatch.setattr(AsyncKernelManager, f"{action}_kernel", mock_method)
 
-    with pytest.raises(Exception):  # noqa
+    with pytest.raises(Exception):  # noqa: B017
         await getattr(manager, f"{action}_kernel")()
 
     output = jp_read_emitted_events()[0]

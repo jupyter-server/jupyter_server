@@ -3,7 +3,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 from contextvars import Context, ContextVar, copy_context
-from typing import Any, Dict, List
+from typing import Any
 
 
 class CallContext:
@@ -22,7 +22,7 @@ class CallContext:
     # easier management over maintaining a set of ContextVar instances, since the Context is a
     # map of ContextVar instances to their values, and the "name" is no longer a lookup key.
     _NAME_VALUE_MAP = "_name_value_map"
-    _name_value_map: ContextVar[Dict[str, Any]] = ContextVar(_NAME_VALUE_MAP)
+    _name_value_map: ContextVar[dict[str, Any]] = ContextVar(_NAME_VALUE_MAP)
 
     @classmethod
     def get(cls, name: str) -> Any:
@@ -41,10 +41,9 @@ class CallContext:
             The value associated with the named variable for this call context
         """
         name_value_map = CallContext._get_map()
-
         if name in name_value_map:
             return name_value_map[name]
-        return None  # TODO - should this raise `LookupError` (or a custom error derived from said)
+        return None  # TODO: should this raise `LookupError` (or a custom error derived from said)
 
     @classmethod
     def set(cls, name: str, value: Any) -> None:
@@ -61,11 +60,12 @@ class CallContext:
         -------
         None
         """
-        name_value_map = CallContext._get_map()
+        name_value_map = CallContext._get_map().copy()
         name_value_map[name] = value
+        CallContext._name_value_map.set(name_value_map)
 
     @classmethod
-    def context_variable_names(cls) -> List[str]:
+    def context_variable_names(cls) -> list[str]:
         """Returns a list of variable names set for this call context.
 
         Returns
@@ -77,7 +77,7 @@ class CallContext:
         return list(name_value_map.keys())
 
     @classmethod
-    def _get_map(cls) -> Dict[str, Any]:
+    def _get_map(cls) -> dict[str, Any]:
         """Get the map of names to their values from the _NAME_VALUE_MAP context var.
 
         If the map does not exist in the current context, an empty map is created and returned.

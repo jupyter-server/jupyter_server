@@ -1,8 +1,8 @@
-"""HTTP handler to shut down the Jupyter server.
-"""
+"""HTTP handler to shut down the Jupyter server."""
+
 from tornado import ioloop, web
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 from jupyter_server.base.handlers import JupyterHandler
 
 AUTH_RESOURCE = "server"
@@ -19,7 +19,8 @@ class ShutdownHandler(JupyterHandler):
         """Shut down the server."""
         self.log.info("Shutting down on /api/shutdown request.")
 
-        await self.serverapp._cleanup()
+        if self.serverapp:
+            await self.serverapp._cleanup()
 
         ioloop.IOLoop.current().stop()
 

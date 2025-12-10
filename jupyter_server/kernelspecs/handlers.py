@@ -1,10 +1,11 @@
 """Kernelspecs API Handlers."""
+
 import mimetypes
 
 from jupyter_core.utils import ensure_async
 from tornado import web
 
-from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import authorized
 
 from ..base.handlers import JupyterHandler
 from ..services.kernelspecs.handlers import kernel_name_regex
@@ -15,7 +16,7 @@ AUTH_RESOURCE = "kernelspecs"
 class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
     """A Kernelspec resource handler."""
 
-    SUPPORTED_METHODS = ("GET", "HEAD")  # type:ignore[assignment]
+    SUPPORTED_METHODS = ("GET", "HEAD")
     auth_resource = AUTH_RESOURCE
 
     def initialize(self):
@@ -28,7 +29,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
         """Get a kernelspec resource."""
         ksm = self.kernel_spec_manager
         if path.lower().endswith(".png"):
-            self.set_header("Cache-Control", f"max-age={60*60*24*30}")
+            self.set_header("Cache-Control", f"max-age={60 * 60 * 24 * 30}")
         ksm = self.kernel_spec_manager
         if hasattr(ksm, "get_kernel_spec_resource"):
             # If the kernel spec manager defines a method to get kernelspec resources,
@@ -41,13 +42,11 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
                 mimetype: str = mimetypes.guess_type(path)[0] or "text/plain"
                 self.set_header("Content-Type", mimetype)
                 self.finish(kernel_spec_res)
-                return
+                return None
             else:
                 self.log.warning(
-                    "Kernelspec resource '{}' for '{}' not found.  Kernel spec manager may"
-                    " not support resource serving. Falling back to reading from disk".format(
-                        path, kernel_name
-                    )
+                    f"Kernelspec resource '{path}' for '{kernel_name}' not found.  Kernel spec manager may"
+                    " not support resource serving. Falling back to reading from disk"
                 )
         try:
             kspec = await ensure_async(ksm.get_kernel_spec(kernel_name))
@@ -60,7 +59,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
     @web.authenticated
     @authorized
     async def head(self, kernel_name, path):
-        """Get the head infor for a kernel resource."""
+        """Get the head info for a kernel resource."""
         return await ensure_async(self.get(kernel_name, path, include_body=False))
 
 

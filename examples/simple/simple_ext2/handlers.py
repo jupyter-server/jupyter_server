@@ -1,4 +1,5 @@
 """API handlers for the Jupyter Server example."""
+
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.extension.handler import ExtensionHandlerJinjaMixin, ExtensionHandlerMixin
 from jupyter_server.utils import url_escape
@@ -9,7 +10,7 @@ class ParameterHandler(ExtensionHandlerMixin, JupyterHandler):
 
     def get(self, matched_part=None, *args, **kwargs):
         """Get a parameterized response."""
-        var1 = self.get_argument("var1", default=None)
+        var1 = self.get_argument("var1", default="")
         components = [x for x in self.request.path.split("/") if x]
         self.write("<h1>Hello Simple App 2 from Handler.</h1>")
         self.write(f"<p>matched_part: {url_escape(matched_part)}</p>")
@@ -19,8 +20,6 @@ class ParameterHandler(ExtensionHandlerMixin, JupyterHandler):
 
 class BaseTemplateHandler(ExtensionHandlerJinjaMixin, ExtensionHandlerMixin, JupyterHandler):
     """A base template handler."""
-
-    pass
 
 
 class IndexHandler(BaseTemplateHandler):

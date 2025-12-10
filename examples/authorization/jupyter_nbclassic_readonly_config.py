@@ -1,4 +1,5 @@
 """Nbclassic read only auth example."""
+
 from jupyter_server.auth import Authorizer
 
 
@@ -7,9 +8,7 @@ class ReadOnly(Authorizer):
 
     def is_authorized(self, handler, user, action, resource):
         """Only allows `read` operations."""
-        if action != "read":
-            return False
-        return True
+        return action == "read"
 
 
 c.ServerApp.authorizer_class = ReadOnly  # type:ignore[name-defined]

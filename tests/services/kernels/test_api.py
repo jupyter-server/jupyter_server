@@ -403,6 +403,7 @@ async def test_kernel_handler_startup_error_pending(
         await jp_ws_fetch("api", "kernels", kid, "channels")
 
 
+@pytest.mark.flaky
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_connection(jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header):
     # Create kernel

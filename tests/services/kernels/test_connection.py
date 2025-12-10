@@ -11,9 +11,9 @@ from jupyter_server.services.kernels.connection.channels import ZMQChannelsWebso
 from jupyter_server.services.kernels.websocket import KernelWebsocketHandler
 
 
-async def test_websocket_connection(jp_serverapp):
-    app: ServerApp = jp_serverapp
-    kernel_id = await app.kernel_manager.start_kernel()
+async def test_websocket_connection(jp_serverapp: ServerApp) -> None:
+    app = jp_serverapp
+    kernel_id = await app.kernel_manager.start_kernel()  # type:ignore[has-type]
     kernel = app.kernel_manager.get_kernel(kernel_id)
     request = HTTPRequest("foo", "GET")
     request.connection = MagicMock()

@@ -2,9 +2,11 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from jupyter_core.utils import ensure_async
 from tornado import web
 from tornado.websocket import WebSocketHandler
 
+from jupyter_server.auth.decorator import ws_authenticated
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.base.websocket import WebSocketMixin
 
@@ -26,7 +28,6 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
 
         which doesn't make sense for websockets
         """
-        pass
 
     def get_compression_options(self):
         """Get the socket connection options."""
@@ -34,14 +35,13 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
 
     async def pre_get(self):
         """Handle a pre_get."""
-        # authenticate first
         user = self.current_user
-        if user is None:
-            self.log.warning("Couldn't authenticate WebSocket connection")
-            raise web.HTTPError(403)
 
         # authorize the user.
-        if not self.authorizer.is_authorized(self, user, "execute", "kernels"):
+        authorized = await ensure_async(
+            self.authorizer.is_authorized(self, user, "execute", "kernels")
+        )
+        if not authorized:
             raise web.HTTPError(403)
 
         kernel = self.kernel_manager.get_kernel(self.kernel_id)
@@ -58,6 +58,7 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
         if hasattr(self.connection, "prepare"):
             await self.connection.prepare()
 
+    @ws_authenticated
     async def get(self, kernel_id):
         """Handle a get request for a kernel."""
         self.kernel_id = kernel_id
@@ -87,7 +88,7 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
         preferred_protocol = self.connection.kernel_ws_protocol
         if preferred_protocol is None:
             preferred_protocol = "v1.kernel.websocket.jupyter.org"
-        elif preferred_protocol == "":  # noqa
+        elif preferred_protocol == "":
             preferred_protocol = None
         selected_subprotocol = preferred_protocol if preferred_protocol in subprotocols else None
         # None is the default, "legacy" protocol

@@ -4,6 +4,575 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.17.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.16.0...4484f122a70014c864b44fd0d8f50f660dae1538))
+
+### Enhancements made
+
+- Avoid redundant call to `_get_os_path` in `_dir_model` [#1547](https://github.com/jupyter-server/jupyter_server/pull/1547) ([@joeyutong](https://github.com/joeyutong))
+- Allow specifying extra params to scrub from logs [#1538](https://github.com/jupyter-server/jupyter_server/pull/1538) ([@jtpio](https://github.com/jtpio))
+- Add a logger to the ExtensionPoint API [#1523](https://github.com/jupyter-server/jupyter_server/pull/1523) ([@Zsailer](https://github.com/Zsailer))
+- Allow user to update identity values [#1518](https://github.com/jupyter-server/jupyter_server/pull/1518) ([@brichet](https://github.com/brichet))
+
+### Bugs fixed
+
+- Fix FileNotFoundError handling in rename_file methods [#1548](https://github.com/jupyter-server/jupyter_server/pull/1548) ([@aws-jasakshi](https://github.com/aws-jasakshi))
+- Use stdlib override when possible [#1532](https://github.com/jupyter-server/jupyter_server/pull/1532) ([@edrogers](https://github.com/edrogers))
+- CORS is not checked when browsing files. check origin now https://github.com/jupyter-server/jupyter_server/issues/1459 [#1465](https://github.com/jupyter-server/jupyter_server/pull/1465) ([@gogasca](https://github.com/gogasca))
+
+### Maintenance and upkeep improvements
+
+- Bump the actions group across 1 directory with 2 updates [#1551](https://github.com/jupyter-server/jupyter_server/pull/1551) ([@dependabot](https://github.com/dependabot))
+- Fix the failing "Test Lint" check on CI [#1540](https://github.com/jupyter-server/jupyter_server/pull/1540) ([@jtpio](https://github.com/jtpio))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2025-05-12&to=2025-08-21&type=c))
+
+[@aws-jasakshi](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aaws-jasakshi+updated%3A2025-05-12..2025-08-21&type=Issues) | [@brichet](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abrichet+updated%3A2025-05-12..2025-08-21&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2025-05-12..2025-08-21&type=Issues) | [@edrogers](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aedrogers+updated%3A2025-05-12..2025-08-21&type=Issues) | [@gogasca](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Agogasca+updated%3A2025-05-12..2025-08-21&type=Issues) | [@joeyutong](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajoeyutong+updated%3A2025-05-12..2025-08-21&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2025-05-12..2025-08-21&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2025-05-12..2025-08-21&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2025-05-12..2025-08-21&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2025-05-12..2025-08-21&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
+## 2.16.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.15.0...fa41b3866a57ad51f74a15684183d833c0206f9c))
+
+### Enhancements made
+
+- If ServerApp.ip is ipv6 use \[::1\] as local_url [#1495](https://github.com/jupyter-server/jupyter_server/pull/1495) ([@manics](https://github.com/manics))
+- Don't hide .so,.dylib files by default [#1457](https://github.com/jupyter-server/jupyter_server/pull/1457) ([@nokados](https://github.com/nokados))
+- Add async start hook to ExtensionApp API [#1417](https://github.com/jupyter-server/jupyter_server/pull/1417) ([@Zsailer](https://github.com/Zsailer))
+
+### Bugs fixed
+
+- Update meetings notes link and zoom link [#1517](https://github.com/jupyter-server/jupyter_server/pull/1517) ([@krassowski](https://github.com/krassowski))
+- Fallback to direct write for readonly dirs and use temp path for checkpoints [#1516](https://github.com/jupyter-server/jupyter_server/pull/1516) ([@Darshan808](https://github.com/Darshan808))
+- Check file permissions before making tmp file [#1513](https://github.com/jupyter-server/jupyter_server/pull/1513) ([@RRosio](https://github.com/RRosio))
+- Validate extension name before toggling through CLI [#1509](https://github.com/jupyter-server/jupyter_server/pull/1509) ([@Darshan808](https://github.com/Darshan808))
+- Fix for #1479 : Incorrect usage of i18n format [#1500](https://github.com/jupyter-server/jupyter_server/pull/1500) ([@kjayan](https://github.com/kjayan))
+- Fix handling of missing parent header in record activity [#1498](https://github.com/jupyter-server/jupyter_server/pull/1498) ([@davidbrochart](https://github.com/davidbrochart))
+- display_url: Don't duplicate public_url and local_url if they are the same [#1494](https://github.com/jupyter-server/jupyter_server/pull/1494) ([@manics](https://github.com/manics))
+
+### Maintenance and upkeep improvements
+
+- tests: install test-functional requirements for Jupytext downstream tests [#1510](https://github.com/jupyter-server/jupyter_server/pull/1510) ([@MaicoTimmerman](https://github.com/MaicoTimmerman))
+
+### Documentation improvements
+
+- Update websocket-protocols documentation to reflect implementation [#1508](https://github.com/jupyter-server/jupyter_server/pull/1508) ([@ark-1](https://github.com/ark-1))
+- Update Security Section in the Jupyter Server Documentation [#1505](https://github.com/jupyter-server/jupyter_server/pull/1505) ([@kjayan](https://github.com/kjayan))
+- Update Contribution Page for Jupyter Server [#1499](https://github.com/jupyter-server/jupyter_server/pull/1499) ([@kjayan](https://github.com/kjayan))
+- Fix typo in metric description [#1486](https://github.com/jupyter-server/jupyter_server/pull/1486) ([@yuvipanda](https://github.com/yuvipanda))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-12-20&to=2025-05-12&type=c))
+
+[@ark-1](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aark-1+updated%3A2024-12-20..2025-05-12&type=Issues) | [@bollwyvl](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abollwyvl+updated%3A2024-12-20..2025-05-12&type=Issues) | [@Darshan808](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ADarshan808+updated%3A2024-12-20..2025-05-12&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2024-12-20..2025-05-12&type=Issues) | [@kjayan](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akjayan+updated%3A2024-12-20..2025-05-12&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2024-12-20..2025-05-12&type=Issues) | [@MaicoTimmerman](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AMaicoTimmerman+updated%3A2024-12-20..2025-05-12&type=Issues) | [@manics](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amanics+updated%3A2024-12-20..2025-05-12&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2024-12-20..2025-05-12&type=Issues) | [@nokados](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Anokados+updated%3A2024-12-20..2025-05-12&type=Issues) | [@RRosio](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ARRosio+updated%3A2024-12-20..2025-05-12&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Avidartf+updated%3A2024-12-20..2025-05-12&type=Issues) | [@yuvipanda](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ayuvipanda+updated%3A2024-12-20..2025-05-12&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2024-12-20..2025-05-12&type=Issues)
+
+## 2.15.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.9.1...f23b3392624001c8fba6623e19f526a98b4a07ba))
+
+### Enhancements made
+
+- Better error message when starting kernel for session. [#1478](https://github.com/jupyter-server/jupyter_server/pull/1478) ([@Carreau](https://github.com/Carreau))
+- Add a traitlet to disable recording HTTP request metrics [#1472](https://github.com/jupyter-server/jupyter_server/pull/1472) ([@yuvipanda](https://github.com/yuvipanda))
+- prometheus: Expose 3 activity metrics [#1471](https://github.com/jupyter-server/jupyter_server/pull/1471) ([@yuvipanda](https://github.com/yuvipanda))
+- Add prometheus info metrics listing server extensions + versions [#1470](https://github.com/jupyter-server/jupyter_server/pull/1470) ([@yuvipanda](https://github.com/yuvipanda))
+- Add prometheus metric with version information [#1467](https://github.com/jupyter-server/jupyter_server/pull/1467) ([@yuvipanda](https://github.com/yuvipanda))
+- Better hash format error message [#1442](https://github.com/jupyter-server/jupyter_server/pull/1442) ([@fcollonval](https://github.com/fcollonval))
+- Removing excessive logging from reading local files [#1420](https://github.com/jupyter-server/jupyter_server/pull/1420) ([@lresende](https://github.com/lresende))
+- Do not include token in dashboard link, when available [#1406](https://github.com/jupyter-server/jupyter_server/pull/1406) ([@minrk](https://github.com/minrk))
+- Add an option to have authentication enabled for all endpoints by default [#1392](https://github.com/jupyter-server/jupyter_server/pull/1392) ([@krassowski](https://github.com/krassowski))
+- websockets: add configurations for ping interval and timeout [#1391](https://github.com/jupyter-server/jupyter_server/pull/1391) ([@oliver-sanders](https://github.com/oliver-sanders))
+- log extension import time at debug level unless it's actually slow [#1375](https://github.com/jupyter-server/jupyter_server/pull/1375) ([@minrk](https://github.com/minrk))
+- Add support for async Authorizers (part 2) [#1374](https://github.com/jupyter-server/jupyter_server/pull/1374) ([@Zsailer](https://github.com/Zsailer))
+- Support async Authorizers [#1373](https://github.com/jupyter-server/jupyter_server/pull/1373) ([@Zsailer](https://github.com/Zsailer))
+- Support get file(notebook) md5 [#1363](https://github.com/jupyter-server/jupyter_server/pull/1363) ([@Wh1isper](https://github.com/Wh1isper))
+- Update kernel env to reflect changes in session [#1354](https://github.com/jupyter-server/jupyter_server/pull/1354) ([@blink1073](https://github.com/blink1073))
+
+### Bugs fixed
+
+- Return HTTP 400 when attempting to post an event with an unregistered schema [#1463](https://github.com/jupyter-server/jupyter_server/pull/1463) ([@afshin](https://github.com/afshin))
+- write server extension list to stdout [#1451](https://github.com/jupyter-server/jupyter_server/pull/1451) ([@minrk](https://github.com/minrk))
+- don't let ExtensionApp jpserver_extensions be overridden by config [#1447](https://github.com/jupyter-server/jupyter_server/pull/1447) ([@minrk](https://github.com/minrk))
+- Pass session_id during Websocket connect [#1440](https://github.com/jupyter-server/jupyter_server/pull/1440) ([@gogasca](https://github.com/gogasca))
+- Do not log environment variables passed to kernels [#1437](https://github.com/jupyter-server/jupyter_server/pull/1437) ([@krassowski](https://github.com/krassowski))
+- extensions: render default templates with default static_url [#1435](https://github.com/jupyter-server/jupyter_server/pull/1435) ([@minrk](https://github.com/minrk))
+- Improve the busy/idle execution state tracking for kernels. [#1429](https://github.com/jupyter-server/jupyter_server/pull/1429) ([@ojarjur](https://github.com/ojarjur))
+- Ignore zero-length page_config.json, restore previous behavior of crashing for invalid JSON [#1405](https://github.com/jupyter-server/jupyter_server/pull/1405) ([@holzman](https://github.com/holzman))
+- Don't crash on invalid JSON in page_config (#1403) [#1404](https://github.com/jupyter-server/jupyter_server/pull/1404) ([@holzman](https://github.com/holzman))
+- Fix color in windows log console with colorama [#1397](https://github.com/jupyter-server/jupyter_server/pull/1397) ([@hansepac](https://github.com/hansepac))
+- Fix log arguments for gateway client error [#1385](https://github.com/jupyter-server/jupyter_server/pull/1385) ([@minrk](https://github.com/minrk))
+- Import User unconditionally [#1384](https://github.com/jupyter-server/jupyter_server/pull/1384) ([@yuvipanda](https://github.com/yuvipanda))
+- Fix a typo in error message [#1381](https://github.com/jupyter-server/jupyter_server/pull/1381) ([@krassowski](https://github.com/krassowski))
+- avoid unhandled error on some invalid paths [#1369](https://github.com/jupyter-server/jupyter_server/pull/1369) ([@minrk](https://github.com/minrk))
+- Change md5 to hash and hash_algorithm, fix incompatibility [#1367](https://github.com/jupyter-server/jupyter_server/pull/1367) ([@Wh1isper](https://github.com/Wh1isper))
+- ContentsHandler return 404 rather than raise exc [#1357](https://github.com/jupyter-server/jupyter_server/pull/1357) ([@bloomsa](https://github.com/bloomsa))
+- Force legacy ws subprotocol when using gateway [#1311](https://github.com/jupyter-server/jupyter_server/pull/1311) ([@epignot](https://github.com/epignot))
+
+### Maintenance and upkeep improvements
+
+- Donation link NF -> LF [#1485](https://github.com/jupyter-server/jupyter_server/pull/1485) ([@Carreau](https://github.com/Carreau))
+- Handle newer jupyter_events wants string version, drop 3.8 [#1481](https://github.com/jupyter-server/jupyter_server/pull/1481) ([@Carreau](https://github.com/Carreau))
+- Ignore unclosed sqlite connection in traits [#1477](https://github.com/jupyter-server/jupyter_server/pull/1477) ([@cjwatson](https://github.com/cjwatson))
+- chore: update pre-commit hooks [#1441](https://github.com/jupyter-server/jupyter_server/pull/1441) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- chore: update pre-commit hooks [#1427](https://github.com/jupyter-server/jupyter_server/pull/1427) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Use hatch fmt command [#1424](https://github.com/jupyter-server/jupyter_server/pull/1424) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1421](https://github.com/jupyter-server/jupyter_server/pull/1421) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Fix jupytext and lint CI failures [#1413](https://github.com/jupyter-server/jupyter_server/pull/1413) ([@blink1073](https://github.com/blink1073))
+- Set all min deps [#1411](https://github.com/jupyter-server/jupyter_server/pull/1411) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1409](https://github.com/jupyter-server/jupyter_server/pull/1409) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Update pytest requirement from \<8,>=7.0 to >=7.0,\<9 [#1402](https://github.com/jupyter-server/jupyter_server/pull/1402) ([@dependabot](https://github.com/dependabot))
+- Pin to Pytest 7 [#1401](https://github.com/jupyter-server/jupyter_server/pull/1401) ([@blink1073](https://github.com/blink1073))
+- Update release workflows [#1399](https://github.com/jupyter-server/jupyter_server/pull/1399) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1390](https://github.com/jupyter-server/jupyter_server/pull/1390) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Improve warning handling [#1386](https://github.com/jupyter-server/jupyter_server/pull/1386) ([@blink1073](https://github.com/blink1073))
+- Simplify the jupytext downstream test [#1383](https://github.com/jupyter-server/jupyter_server/pull/1383) ([@mwouts](https://github.com/mwouts))
+- Fix test param for pytest-xdist [#1382](https://github.com/jupyter-server/jupyter_server/pull/1382) ([@tornaria](https://github.com/tornaria))
+- Update pre-commit deps [#1380](https://github.com/jupyter-server/jupyter_server/pull/1380) ([@blink1073](https://github.com/blink1073))
+- Use ruff docstring-code-format [#1377](https://github.com/jupyter-server/jupyter_server/pull/1377) ([@blink1073](https://github.com/blink1073))
+- Update for tornado 6.4 [#1372](https://github.com/jupyter-server/jupyter_server/pull/1372) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1370](https://github.com/jupyter-server/jupyter_server/pull/1370) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Update ruff and typings [#1365](https://github.com/jupyter-server/jupyter_server/pull/1365) ([@blink1073](https://github.com/blink1073))
+- Clean up ruff config [#1358](https://github.com/jupyter-server/jupyter_server/pull/1358) ([@blink1073](https://github.com/blink1073))
+- Add more typings [#1356](https://github.com/jupyter-server/jupyter_server/pull/1356) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1355](https://github.com/jupyter-server/jupyter_server/pull/1355) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Clean up config and address warnings [#1353](https://github.com/jupyter-server/jupyter_server/pull/1353) ([@blink1073](https://github.com/blink1073))
+- Clean up lint and typing [#1351](https://github.com/jupyter-server/jupyter_server/pull/1351) ([@blink1073](https://github.com/blink1073))
+- Update typing for traitlets 5.13 [#1350](https://github.com/jupyter-server/jupyter_server/pull/1350) ([@blink1073](https://github.com/blink1073))
+- Update typings and fix tests [#1344](https://github.com/jupyter-server/jupyter_server/pull/1344) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- add comments to explain signal handling under jupyterhub [#1452](https://github.com/jupyter-server/jupyter_server/pull/1452) ([@oliver-sanders](https://github.com/oliver-sanders))
+- Update documentation for `cookie_secret` [#1433](https://github.com/jupyter-server/jupyter_server/pull/1433) ([@krassowski](https://github.com/krassowski))
+- Add Changelog for 2.14.1 [#1430](https://github.com/jupyter-server/jupyter_server/pull/1430) ([@blink1073](https://github.com/blink1073))
+- Update simple extension examples: \_jupyter_server_extension_points [#1426](https://github.com/jupyter-server/jupyter_server/pull/1426) ([@manics](https://github.com/manics))
+- Link to GitHub repo from the docs [#1415](https://github.com/jupyter-server/jupyter_server/pull/1415) ([@krassowski](https://github.com/krassowski))
+- docs: list server extensions [#1412](https://github.com/jupyter-server/jupyter_server/pull/1412) ([@oliver-sanders](https://github.com/oliver-sanders))
+- Update simple extension README to cd into correct subdirectory [#1410](https://github.com/jupyter-server/jupyter_server/pull/1410) ([@markypizz](https://github.com/markypizz))
+- Add deprecation note for `ServerApp.preferred_dir` [#1396](https://github.com/jupyter-server/jupyter_server/pull/1396) ([@krassowski](https://github.com/krassowski))
+- Replace \_jupyter_server_extension_paths in apidocs [#1393](https://github.com/jupyter-server/jupyter_server/pull/1393) ([@manics](https://github.com/manics))
+- fix "Shutdown" -> "Shut down" [#1389](https://github.com/jupyter-server/jupyter_server/pull/1389) ([@Timeroot](https://github.com/Timeroot))
+- Enable htmlzip and epub on readthedocs [#1379](https://github.com/jupyter-server/jupyter_server/pull/1379) ([@bollwyvl](https://github.com/bollwyvl))
+- Update api docs with md5 param [#1364](https://github.com/jupyter-server/jupyter_server/pull/1364) ([@Wh1isper](https://github.com/Wh1isper))
+- typo: ServerApp [#1361](https://github.com/jupyter-server/jupyter_server/pull/1361) ([@IITII](https://github.com/IITII))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-10-25&to=2024-12-20&type=c))
+
+[@afshin](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aafshin+updated%3A2023-10-25..2024-12-20&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-10-25..2024-12-20&type=Issues) | [@bloomsa](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abloomsa+updated%3A2023-10-25..2024-12-20&type=Issues) | [@bollwyvl](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abollwyvl+updated%3A2023-10-25..2024-12-20&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2023-10-25..2024-12-20&type=Issues) | [@cjwatson](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Acjwatson+updated%3A2023-10-25..2024-12-20&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2023-10-25..2024-12-20&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2023-10-25..2024-12-20&type=Issues) | [@epignot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aepignot+updated%3A2023-10-25..2024-12-20&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afcollonval+updated%3A2023-10-25..2024-12-20&type=Issues) | [@gogasca](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Agogasca+updated%3A2023-10-25..2024-12-20&type=Issues) | [@hansepac](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ahansepac+updated%3A2023-10-25..2024-12-20&type=Issues) | [@holzman](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aholzman+updated%3A2023-10-25..2024-12-20&type=Issues) | [@IITII](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AIITII+updated%3A2023-10-25..2024-12-20&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2023-10-25..2024-12-20&type=Issues) | [@lresende](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Alresende+updated%3A2023-10-25..2024-12-20&type=Issues) | [@manics](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amanics+updated%3A2023-10-25..2024-12-20&type=Issues) | [@markypizz](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amarkypizz+updated%3A2023-10-25..2024-12-20&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-10-25..2024-12-20&type=Issues) | [@mwouts](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amwouts+updated%3A2023-10-25..2024-12-20&type=Issues) | [@ojarjur](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aojarjur+updated%3A2023-10-25..2024-12-20&type=Issues) | [@oliver-sanders](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aoliver-sanders+updated%3A2023-10-25..2024-12-20&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-10-25..2024-12-20&type=Issues) | [@Timeroot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ATimeroot+updated%3A2023-10-25..2024-12-20&type=Issues) | [@tornaria](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Atornaria+updated%3A2023-10-25..2024-12-20&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-10-25..2024-12-20&type=Issues) | [@Wh1isper](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AWh1isper+updated%3A2023-10-25..2024-12-20&type=Issues) | [@yuvipanda](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ayuvipanda+updated%3A2023-10-25..2024-12-20&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2023-10-25..2024-12-20&type=Issues)
+
+## 2.14.2
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.14.1...b961d4eb499071c0c60e24f429c20d1e6a908a32))
+
+### Bugs fixed
+
+- Pass session_id during Websocket connect [#1440](https://github.com/jupyter-server/jupyter_server/pull/1440) ([@gogasca](https://github.com/gogasca))
+- Do not log environment variables passed to kernels [#1437](https://github.com/jupyter-server/jupyter_server/pull/1437) ([@krassowski](https://github.com/krassowski))
+
+### Maintenance and upkeep improvements
+
+- chore: update pre-commit hooks [#1441](https://github.com/jupyter-server/jupyter_server/pull/1441) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- chore: update pre-commit hooks [#1427](https://github.com/jupyter-server/jupyter_server/pull/1427) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+
+### Documentation improvements
+
+- Update documentation for `cookie_secret` [#1433](https://github.com/jupyter-server/jupyter_server/pull/1433) ([@krassowski](https://github.com/krassowski))
+- Add Changelog for 2.14.1 [#1430](https://github.com/jupyter-server/jupyter_server/pull/1430) ([@blink1073](https://github.com/blink1073))
+- Update simple extension examples: \_jupyter_server_extension_points [#1426](https://github.com/jupyter-server/jupyter_server/pull/1426) ([@manics](https://github.com/manics))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-05-31&to=2024-07-12&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2024-05-31..2024-07-12&type=Issues) | [@gogasca](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Agogasca+updated%3A2024-05-31..2024-07-12&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2024-05-31..2024-07-12&type=Issues) | [@manics](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amanics+updated%3A2024-05-31..2024-07-12&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2024-05-31..2024-07-12&type=Issues)
+
+## 2.14.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.14.0...f1379164fa209bc4bfeadf43ab0e7f473b03a0ce))
+
+### Enhancements made
+
+- Removing excessive logging from reading local files [#1420](https://github.com/jupyter-server/jupyter_server/pull/1420) ([@lresende](https://github.com/lresende))
+
+### Security Fix
+
+- [Filefind: avoid handling absolute paths](https://github.com/jupyter-server/jupyter_server/security/advisories/GHSA-hrw6-wg82-cm62)
+
+### Maintenance and upkeep improvements
+
+- Use hatch fmt command [#1424](https://github.com/jupyter-server/jupyter_server/pull/1424) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1421](https://github.com/jupyter-server/jupyter_server/pull/1421) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-04-11&to=2024-05-31&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2024-04-11..2024-05-31&type=Issues) | [@lresende](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Alresende+updated%3A2024-04-11..2024-05-31&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2024-04-11..2024-05-31&type=Issues)
+
+## 2.14.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.13.0...074628806d6b2ec3304d60ab5cfba1c326f67730))
+
+### Enhancements made
+
+- Do not include token in dashboard link, when available [#1406](https://github.com/jupyter-server/jupyter_server/pull/1406) ([@minrk](https://github.com/minrk))
+
+### Bugs fixed
+
+- Ignore zero-length page_config.json, restore previous behavior of crashing for invalid JSON [#1405](https://github.com/jupyter-server/jupyter_server/pull/1405) ([@holzman](https://github.com/holzman))
+- Don't crash on invalid JSON in page_config (#1403) [#1404](https://github.com/jupyter-server/jupyter_server/pull/1404) ([@holzman](https://github.com/holzman))
+
+### Maintenance and upkeep improvements
+
+- Fix jupytext and lint CI failures [#1413](https://github.com/jupyter-server/jupyter_server/pull/1413) ([@blink1073](https://github.com/blink1073))
+- Set all min deps [#1411](https://github.com/jupyter-server/jupyter_server/pull/1411) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1409](https://github.com/jupyter-server/jupyter_server/pull/1409) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Update pytest requirement from \<8,>=7.0 to >=7.0,\<9 [#1402](https://github.com/jupyter-server/jupyter_server/pull/1402) ([@dependabot](https://github.com/dependabot))
+- Pin to Pytest 7 [#1401](https://github.com/jupyter-server/jupyter_server/pull/1401) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Link to GitHub repo from the docs [#1415](https://github.com/jupyter-server/jupyter_server/pull/1415) ([@krassowski](https://github.com/krassowski))
+- docs: list server extensions [#1412](https://github.com/jupyter-server/jupyter_server/pull/1412) ([@oliver-sanders](https://github.com/oliver-sanders))
+- Update simple extension README to cd into correct subdirectory [#1410](https://github.com/jupyter-server/jupyter_server/pull/1410) ([@markypizz](https://github.com/markypizz))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-03-04&to=2024-04-11&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2024-03-04..2024-04-11&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2024-03-04..2024-04-11&type=Issues) | [@holzman](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aholzman+updated%3A2024-03-04..2024-04-11&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2024-03-04..2024-04-11&type=Issues) | [@markypizz](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amarkypizz+updated%3A2024-03-04..2024-04-11&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2024-03-04..2024-04-11&type=Issues) | [@oliver-sanders](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aoliver-sanders+updated%3A2024-03-04..2024-04-11&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2024-03-04..2024-04-11&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2024-03-04..2024-04-11&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2024-03-04..2024-04-11&type=Issues)
+
+## 2.13.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.12.5...1369a5364d36a977fbec5957ed21d69acbbeda5a))
+
+### Enhancements made
+
+- Add an option to have authentication enabled for all endpoints by default [#1392](https://github.com/jupyter-server/jupyter_server/pull/1392) ([@krassowski](https://github.com/krassowski))
+- websockets: add configurations for ping interval and timeout [#1391](https://github.com/jupyter-server/jupyter_server/pull/1391) ([@oliver-sanders](https://github.com/oliver-sanders))
+
+### Bugs fixed
+
+- Fix color in windows log console with colorama [#1397](https://github.com/jupyter-server/jupyter_server/pull/1397) ([@hansepac](https://github.com/hansepac))
+
+### Maintenance and upkeep improvements
+
+- Update release workflows [#1399](https://github.com/jupyter-server/jupyter_server/pull/1399) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1390](https://github.com/jupyter-server/jupyter_server/pull/1390) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+
+### Documentation improvements
+
+- Add deprecation note for `ServerApp.preferred_dir` [#1396](https://github.com/jupyter-server/jupyter_server/pull/1396) ([@krassowski](https://github.com/krassowski))
+- Replace \_jupyter_server_extension_paths in apidocs [#1393](https://github.com/jupyter-server/jupyter_server/pull/1393) ([@manics](https://github.com/manics))
+- fix "Shutdown" -> "Shut down" [#1389](https://github.com/jupyter-server/jupyter_server/pull/1389) ([@Timeroot](https://github.com/Timeroot))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-01-16&to=2024-03-04&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2024-01-16..2024-03-04&type=Issues) | [@hansepac](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ahansepac+updated%3A2024-01-16..2024-03-04&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2024-01-16..2024-03-04&type=Issues) | [@manics](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amanics+updated%3A2024-01-16..2024-03-04&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2024-01-16..2024-03-04&type=Issues) | [@oliver-sanders](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aoliver-sanders+updated%3A2024-01-16..2024-03-04&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2024-01-16..2024-03-04&type=Issues) | [@Timeroot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ATimeroot+updated%3A2024-01-16..2024-03-04&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2024-01-16..2024-03-04&type=Issues) | [@yuvipanda](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ayuvipanda+updated%3A2024-01-16..2024-03-04&type=Issues)
+
+## 2.12.5
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.12.4...a3a9d3deea7a798d13fe09a41e53f6f825caf21b))
+
+### Maintenance and upkeep improvements
+
+- Improve warning handling [#1386](https://github.com/jupyter-server/jupyter_server/pull/1386) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-01-11&to=2024-01-16&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2024-01-11..2024-01-16&type=Issues)
+
+## 2.12.4
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.12.3...7bb21b45392c889b5c87eb0d1b48662a497ba15a))
+
+### Bugs fixed
+
+- Fix log arguments for gateway client error [#1385](https://github.com/jupyter-server/jupyter_server/pull/1385) ([@minrk](https://github.com/minrk))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-01-09&to=2024-01-11&type=c))
+
+[@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2024-01-09..2024-01-11&type=Issues)
+
+## 2.12.3
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.12.2...99b9126853b69aafb700b4c92b50b83b7ca00e32))
+
+### Bugs fixed
+
+- Import User unconditionally [#1384](https://github.com/jupyter-server/jupyter_server/pull/1384) ([@yuvipanda](https://github.com/yuvipanda))
+
+### Maintenance and upkeep improvements
+
+- Simplify the jupytext downstream test [#1383](https://github.com/jupyter-server/jupyter_server/pull/1383) ([@mwouts](https://github.com/mwouts))
+- Fix test param for pytest-xdist [#1382](https://github.com/jupyter-server/jupyter_server/pull/1382) ([@tornaria](https://github.com/tornaria))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2024-01-04&to=2024-01-09&type=c))
+
+[@mwouts](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amwouts+updated%3A2024-01-04..2024-01-09&type=Issues) | [@tornaria](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Atornaria+updated%3A2024-01-04..2024-01-09&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2024-01-04..2024-01-09&type=Issues) | [@yuvipanda](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ayuvipanda+updated%3A2024-01-04..2024-01-09&type=Issues)
+
+## 2.12.2
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.12.1...49915685531ce90baae9d2a4d6baa9c533beffcc))
+
+### Bugs fixed
+
+- Fix a typo in error message [#1381](https://github.com/jupyter-server/jupyter_server/pull/1381) ([@krassowski](https://github.com/krassowski))
+- Force legacy ws subprotocol when using gateway [#1311](https://github.com/jupyter-server/jupyter_server/pull/1311) ([@epignot](https://github.com/epignot))
+
+### Maintenance and upkeep improvements
+
+- Update pre-commit deps [#1380](https://github.com/jupyter-server/jupyter_server/pull/1380) ([@blink1073](https://github.com/blink1073))
+- Use ruff docstring-code-format [#1377](https://github.com/jupyter-server/jupyter_server/pull/1377) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Enable htmlzip and epub on readthedocs [#1379](https://github.com/jupyter-server/jupyter_server/pull/1379) ([@bollwyvl](https://github.com/bollwyvl))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-12-06&to=2024-01-04&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-12-06..2024-01-04&type=Issues) | [@bollwyvl](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abollwyvl+updated%3A2023-12-06..2024-01-04&type=Issues) | [@epignot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aepignot+updated%3A2023-12-06..2024-01-04&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2023-12-06..2024-01-04&type=Issues)
+
+## 2.12.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.12.0...a59beb9b7bf3decc00af782821561435f47bbb16))
+
+### Enhancements made
+
+- log extension import time at debug level unless it's actually slow [#1375](https://github.com/jupyter-server/jupyter_server/pull/1375) ([@minrk](https://github.com/minrk))
+- Add support for async Authorizers (part 2) [#1374](https://github.com/jupyter-server/jupyter_server/pull/1374) ([@Zsailer](https://github.com/Zsailer))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-12-05&to=2023-12-06&type=c))
+
+[@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-12-05..2023-12-06&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2023-12-05..2023-12-06&type=Issues)
+
+## 2.12.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.11.2...3bd347b6f2ead5897a18c6171db1174eaaf6176d))
+
+### Enhancements made
+
+- Support async Authorizers [#1373](https://github.com/jupyter-server/jupyter_server/pull/1373) ([@Zsailer](https://github.com/Zsailer))
+
+### Maintenance and upkeep improvements
+
+- Update for tornado 6.4 [#1372](https://github.com/jupyter-server/jupyter_server/pull/1372) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1370](https://github.com/jupyter-server/jupyter_server/pull/1370) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-12-04&to=2023-12-05&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-12-04..2023-12-05&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-12-04..2023-12-05&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2023-12-04..2023-12-05&type=Issues)
+
+## 2.11.2
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.11.1))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-11-27&to=2023-12-04&type=c))
+
+## 2.11.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.11.0...40a95e5f39d3f167bebf9232da9fab64818ba97d))
+
+### Bugs fixed
+
+- avoid unhandled error on some invalid paths [#1369](https://github.com/jupyter-server/jupyter_server/pull/1369) ([@minrk](https://github.com/minrk))
+- Change md5 to hash and hash_algorithm, fix incompatibility [#1367](https://github.com/jupyter-server/jupyter_server/pull/1367) ([@Wh1isper](https://github.com/Wh1isper))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-11-21&to=2023-11-27&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-11-21..2023-11-27&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afcollonval+updated%3A2023-11-21..2023-11-27&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-11-21..2023-11-27&type=Issues) | [@Wh1isper](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AWh1isper+updated%3A2023-11-21..2023-11-27&type=Issues)
+
+## 2.11.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.10.1...e7c0f331d4cbf82eb1a9e9bc6c260faabda0255a))
+
+### Enhancements made
+
+- Support get file(notebook) md5 [#1363](https://github.com/jupyter-server/jupyter_server/pull/1363) ([@Wh1isper](https://github.com/Wh1isper))
+
+### Maintenance and upkeep improvements
+
+- Update ruff and typings [#1365](https://github.com/jupyter-server/jupyter_server/pull/1365) ([@blink1073](https://github.com/blink1073))
+
+### Documentation improvements
+
+- Update api docs with md5 param [#1364](https://github.com/jupyter-server/jupyter_server/pull/1364) ([@Wh1isper](https://github.com/Wh1isper))
+- typo: ServerApp [#1361](https://github.com/jupyter-server/jupyter_server/pull/1361) ([@IITII](https://github.com/IITII))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-11-15&to=2023-11-21&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-11-15..2023-11-21&type=Issues) | [@IITII](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AIITII+updated%3A2023-11-15..2023-11-21&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-11-15..2023-11-21&type=Issues) | [@Wh1isper](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AWh1isper+updated%3A2023-11-15..2023-11-21&type=Issues)
+
+## 2.10.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.10.0...9f8ff2886903a6744c5eb483f9e5bd7e63d5d015))
+
+### Bugs fixed
+
+- ContentsHandler return 404 rather than raise exc [#1357](https://github.com/jupyter-server/jupyter_server/pull/1357) ([@bloomsa](https://github.com/bloomsa))
+
+### Maintenance and upkeep improvements
+
+- Clean up ruff config [#1358](https://github.com/jupyter-server/jupyter_server/pull/1358) ([@blink1073](https://github.com/blink1073))
+- Add more typings [#1356](https://github.com/jupyter-server/jupyter_server/pull/1356) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1355](https://github.com/jupyter-server/jupyter_server/pull/1355) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-11-06&to=2023-11-15&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-11-06..2023-11-15&type=Issues) | [@bloomsa](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abloomsa+updated%3A2023-11-06..2023-11-15&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-11-06..2023-11-15&type=Issues)
+
+## 2.10.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.9.1...e71e95884483c7ce2d9fd5ee83059a0269741aa1))
+
+### Enhancements made
+
+- Update kernel env to reflect changes in session [#1354](https://github.com/jupyter-server/jupyter_server/pull/1354) ([@blink1073](https://github.com/blink1073))
+
+### Maintenance and upkeep improvements
+
+- Clean up config and address warnings [#1353](https://github.com/jupyter-server/jupyter_server/pull/1353) ([@blink1073](https://github.com/blink1073))
+- Clean up lint and typing [#1351](https://github.com/jupyter-server/jupyter_server/pull/1351) ([@blink1073](https://github.com/blink1073))
+- Update typing for traitlets 5.13 [#1350](https://github.com/jupyter-server/jupyter_server/pull/1350) ([@blink1073](https://github.com/blink1073))
+- Update typings and fix tests [#1344](https://github.com/jupyter-server/jupyter_server/pull/1344) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-10-25&to=2023-11-06&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-10-25..2023-11-06&type=Issues)
+
+## 2.9.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.9.0...bb293ec5cac5b277259f27e458da60fa8a926f46))
+
+### Bugs fixed
+
+- Revert "Update kernel env to reflect changes in session." [#1346](https://github.com/jupyter-server/jupyter_server/pull/1346) ([@blink1073](https://github.com/blink1073))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-10-25&to=2023-10-25&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-10-25..2023-10-25&type=Issues)
+
+## 2.9.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.8.0...3438ddb16575155e98fc4f49700fff420088c8b0))
+
+### Enhancements made
+
+- Ability to configure cull_idle_timeout with kernelSpec [#1342](https://github.com/jupyter-server/jupyter_server/pull/1342) ([@akshaychitneni](https://github.com/akshaychitneni))
+- Update kernel env to reflect changes in session. [#1341](https://github.com/jupyter-server/jupyter_server/pull/1341) ([@Carreau](https://github.com/Carreau))
+
+### Bugs fixed
+
+- Run Gateway token renewers even if the auth token is empty. [#1340](https://github.com/jupyter-server/jupyter_server/pull/1340) ([@ojarjur](https://github.com/ojarjur))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-10-16&to=2023-10-25&type=c))
+
+[@akshaychitneni](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aakshaychitneni+updated%3A2023-10-16..2023-10-25&type=Issues) | [@Carreau](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2023-10-16..2023-10-25&type=Issues) | [@ojarjur](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aojarjur+updated%3A2023-10-16..2023-10-25&type=Issues)
+
+## 2.8.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.7.3...a984e0771da5db4a14e9ac86a392ad3592b863e5))
+
+### Enhancements made
+
+- Added Logs for get_os_path closes issue [#1336](https://github.com/jupyter-server/jupyter_server/pull/1336) ([@jayeshsingh9767](https://github.com/jayeshsingh9767))
+
+### Bugs fixed
+
+- Avoid showing "No answer for 5s" when shutdown is slow [#1320](https://github.com/jupyter-server/jupyter_server/pull/1320) ([@minrk](https://github.com/minrk))
+
+### Maintenance and upkeep improvements
+
+- Update typings for mypy 1.6 [#1337](https://github.com/jupyter-server/jupyter_server/pull/1337) ([@blink1073](https://github.com/blink1073))
+- chore: update pre-commit hooks [#1334](https://github.com/jupyter-server/jupyter_server/pull/1334) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- Add typings to commonly used APIs [#1333](https://github.com/jupyter-server/jupyter_server/pull/1333) ([@blink1073](https://github.com/blink1073))
+- Update typings for traitlets 5.10 [#1330](https://github.com/jupyter-server/jupyter_server/pull/1330) ([@blink1073](https://github.com/blink1073))
+- Adopt sp-repo-review [#1324](https://github.com/jupyter-server/jupyter_server/pull/1324) ([@blink1073](https://github.com/blink1073))
+- Bump actions/checkout from 3 to 4 [#1321](https://github.com/jupyter-server/jupyter_server/pull/1321) ([@dependabot](https://github.com/dependabot))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-08-31&to=2023-10-16&type=c))
+
+[@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-08-31..2023-10-16&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adependabot+updated%3A2023-08-31..2023-10-16&type=Issues) | [@jayeshsingh9767](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajayeshsingh9767+updated%3A2023-08-31..2023-10-16&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-08-31..2023-10-16&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-08-31..2023-10-16&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-08-31..2023-10-16&type=Issues)
+
+## 2.7.3
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.7.2...e72bf7187e396605f46ba59567543ef6386e8920))
+
+### New features added
+
+- Support external kernels [#1305](https://github.com/jupyter-server/jupyter_server/pull/1305) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-08-18&to=2023-08-31&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Adavidbrochart+updated%3A2023-08-18..2023-08-31&type=Issues)
+
+## 2.7.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.7.0...d8f4856c32b895106eac58c9c5768afd0e2f6465))
+
+### Bugs fixed
+
+- accessing API version should not count as activity [#1315](https://github.com/jupyter-server/jupyter_server/pull/1315) ([@minrk](https://github.com/minrk))
+- Make kernel_id as a conditional optional field [#1300](https://github.com/jupyter-server/jupyter_server/pull/1300) ([@allstrive](https://github.com/allstrive))
+- Reference current_user to detect auth [#1294](https://github.com/jupyter-server/jupyter_server/pull/1294) ([@bhperry](https://github.com/bhperry))
+
+### Maintenance and upkeep improvements
+
+- send2trash now supports deleting from different filesystem type(#1290) [#1291](https://github.com/jupyter-server/jupyter_server/pull/1291) ([@wqj97](https://github.com/wqj97))
+
+### Documentation improvements
+
+- Add root `/api/` endpoint to REST spec [#1312](https://github.com/jupyter-server/jupyter_server/pull/1312) ([@minrk](https://github.com/minrk))
+- Fix broken link in doc [#1307](https://github.com/jupyter-server/jupyter_server/pull/1307) ([@Hind-M](https://github.com/Hind-M))
+- Rename notebook.auth.security.passwd->jupyter_server.auth.passwd in docs [#1306](https://github.com/jupyter-server/jupyter_server/pull/1306) ([@mathbunnyru](https://github.com/mathbunnyru))
+- Update notes link [#1298](https://github.com/jupyter-server/jupyter_server/pull/1298) ([@krassowski](https://github.com/krassowski))
+- docs: fix broken hyperlink to Tornado [#1297](https://github.com/jupyter-server/jupyter_server/pull/1297) ([@emmanuel-ferdman](https://github.com/emmanuel-ferdman))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-06-27&to=2023-08-15&type=c))
+
+[@allstrive](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aallstrive+updated%3A2023-06-27..2023-08-15&type=Issues) | [@bhperry](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abhperry+updated%3A2023-06-27..2023-08-15&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-06-27..2023-08-15&type=Issues) | [@emmanuel-ferdman](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aemmanuel-ferdman+updated%3A2023-06-27..2023-08-15&type=Issues) | [@Hind-M](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AHind-M+updated%3A2023-06-27..2023-08-15&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2023-06-27..2023-08-15&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2023-06-27..2023-08-15&type=Issues) | [@mathbunnyru](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amathbunnyru+updated%3A2023-06-27..2023-08-15&type=Issues) | [@matthewwiese](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Amatthewwiese+updated%3A2023-06-27..2023-08-15&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-06-27..2023-08-15&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-06-27..2023-08-15&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-06-27..2023-08-15&type=Issues) | [@wqj97](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awqj97+updated%3A2023-06-27..2023-08-15&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2023-06-27..2023-08-15&type=Issues)
+
 ## 2.7.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.6.0...b652f8d08530bd60ecf4cfffe6c32939fd94eb41))
@@ -26,8 +595,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2023-05-25&to=2023-06-27&type=c))
 
 [@allstrive](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aallstrive+updated%3A2023-05-25..2023-06-27&type=Issues) | [@blink1073](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ablink1073+updated%3A2023-05-25..2023-06-27&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Afcollonval+updated%3A2023-05-25..2023-06-27&type=Issues) | [@kevin-bates](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akevin-bates+updated%3A2023-05-25..2023-06-27&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2023-05-25..2023-06-27&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Apre-commit-ci+updated%3A2023-05-25..2023-06-27&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Awelcome+updated%3A2023-05-25..2023-06-27&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.6.0
 
@@ -229,7 +796,7 @@ All notable changes to this project will be documented in this file.
 
 ### Bugs fixed
 
-- Reapply preferred_dir fix, now with better backwards compatability [#1162](https://github.com/jupyter-server/jupyter_server/pull/1162) ([@vidartf](https://github.com/vidartf))
+- Reapply preferred_dir fix, now with better backwards compatibility [#1162](https://github.com/jupyter-server/jupyter_server/pull/1162) ([@vidartf](https://github.com/vidartf))
 
 ### Maintenance and upkeep improvements
 
@@ -725,7 +1292,7 @@ All notable changes to this project will be documented in this file.
 - switch to jupyter_events [#862](https://github.com/jupyter-server/jupyter_server/pull/862) ([@Zsailer](https://github.com/Zsailer))
 - Make it easier for extensions to customize the ServerApp [#879](https://github.com/jupyter-server/jupyter_server/pull/879) ([@minrk](https://github.com/minrk))
 - consolidate auth config on IdentityProvider [#825](https://github.com/jupyter-server/jupyter_server/pull/825) ([@minrk](https://github.com/minrk))
-- Show import error when faiing to load an extension [#878](https://github.com/jupyter-server/jupyter_server/pull/878) ([@minrk](https://github.com/minrk))
+- Show import error when failing to load an extension [#878](https://github.com/jupyter-server/jupyter_server/pull/878) ([@minrk](https://github.com/minrk))
 - Add the root_dir value to the logging message in case of non compliant preferred_dir [#804](https://github.com/jupyter-server/jupyter_server/pull/804) ([@echarles](https://github.com/echarles))
 - Hydrate a Kernel Manager when calling GatewayKernelManager.start_kernel with a kernel_id [#788](https://github.com/jupyter-server/jupyter_server/pull/788) ([@Zsailer](https://github.com/Zsailer))
 - Remove terminals in favor of jupyter_server_terminals extension [#651](https://github.com/jupyter-server/jupyter_server/pull/651) ([@Zsailer](https://github.com/Zsailer))
@@ -884,7 +1451,7 @@ All notable changes to this project will be documented in this file.
 
 ### Enhancements made
 
-- Show import error when faiing to load an extension [#878](https://github.com/jupyter-server/jupyter_server/pull/878) ([@minrk](https://github.com/minrk))
+- Show import error when failing to load an extension [#878](https://github.com/jupyter-server/jupyter_server/pull/878) ([@minrk](https://github.com/minrk))
 
 ### Bugs fixed
 
@@ -1013,7 +1580,7 @@ All notable changes to this project will be documented in this file.
 
 ### Bugs fixed
 
-- Regression in connection URL calcuation in ServerApp [#761](https://github.com/jupyter-server/jupyter_server/pull/761) ([@jhamet93](https://github.com/jhamet93))
+- Regression in connection URL calculation in ServerApp [#761](https://github.com/jupyter-server/jupyter_server/pull/761) ([@jhamet93](https://github.com/jhamet93))
 - Include explicit package data [#757](https://github.com/jupyter-server/jupyter_server/pull/757) ([@blink1073](https://github.com/blink1073))
 - Ensure terminal cwd exists [#755](https://github.com/jupyter-server/jupyter_server/pull/755) ([@fcollonval](https://github.com/fcollonval))
 - make 'cwd' param for TerminalManager absolute [#749](https://github.com/jupyter-server/jupyter_server/pull/749) ([@rccern](https://github.com/rccern))
@@ -1123,7 +1690,7 @@ All notable changes to this project will be documented in this file.
 
 ### Bugs fixed
 
-- Revert "Re-use ServerApp.config_file_paths for consistency (#715)" [#728](https://github.com/jupyter-server/jupyter_server/pull/728) ([@blink1073](https://github.com/blink1073))
+- Revert "Reuse ServerApp.config_file_paths for consistency (#715)" [#728](https://github.com/jupyter-server/jupyter_server/pull/728) ([@blink1073](https://github.com/blink1073))
 
 ### Contributors to this release
 
@@ -1148,7 +1715,7 @@ All notable changes to this project will be documented in this file.
 
 - Implement Required Methods in Async Manner [#721](https://github.com/jupyter-server/jupyter_server/pull/721) ([@jhamet93](https://github.com/jhamet93))
 - Call pre_save_hook only on first chunk of large files [#716](https://github.com/jupyter-server/jupyter_server/pull/716) ([@davidbrochart](https://github.com/davidbrochart))
-- Re-use ServerApp.config_file_paths for consistency [#715](https://github.com/jupyter-server/jupyter_server/pull/715) ([@minrk](https://github.com/minrk))
+- Reuse ServerApp.config_file_paths for consistency [#715](https://github.com/jupyter-server/jupyter_server/pull/715) ([@minrk](https://github.com/minrk))
 - serverapp: Use .absolute() instead of .resolve() for symlinks [#712](https://github.com/jupyter-server/jupyter_server/pull/712) ([@EricCousineau-TRI](https://github.com/EricCousineau-TRI))
 - Fall back to legacy protocol if selected_subprotocol raises exception [#706](https://github.com/jupyter-server/jupyter_server/pull/706) ([@davidbrochart](https://github.com/davidbrochart))
 - Fix FilesHandler not meet RFC 6713 [#701](https://github.com/jupyter-server/jupyter_server/pull/701) ([@Wh1isper](https://github.com/Wh1isper))
@@ -1905,7 +2472,7 @@ This was a broken release and was yanked from PyPI.
 
 ### Added
 
-- ([#191](https://github.com/jupyter/jupyter_server/pull/191)) Async kernel managment is now possible using the `AsyncKernelManager` from `jupyter_client`
+- ([#191](https://github.com/jupyter/jupyter_server/pull/191)) Async kernel management is now possible using the `AsyncKernelManager` from `jupyter_client`
 - ([#201](https://github.com/jupyter/jupyter_server/pull/201)) Parameters can now be passed to new terminals created by the `terminals` REST API.
 
 ### Changed

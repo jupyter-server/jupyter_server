@@ -1,6 +1,7 @@
 """Test launching Jupyter Server Applications
 through as ExtensionApp launch_instance.
 """
+
 import os
 import subprocess
 import sys
@@ -32,7 +33,7 @@ def auth_header(token):
 def wait_up(url, interval=0.1, check=None):
     while True:
         try:
-            r = requests.get(url)  # noqa
+            r = requests.get(url)
         except Exception:
             if check:
                 assert check()
@@ -66,7 +67,7 @@ def launch_instance(request, port, token):
         root = Path(HERE).parent.parent
 
         process = subprocess.Popen(
-            [  # noqa
+            [
                 sys.executable,
                 "-m",
                 "tests.extension.mockextensions.app",
@@ -90,7 +91,7 @@ def launch_instance(request, port, token):
 def fetch(port, auth_header):
     def _get(endpoint):
         url = f"http://127.0.0.1:{port}" + endpoint
-        return requests.get(url, headers=auth_header)  # noqa
+        return requests.get(url, headers=auth_header)
 
     return _get
 

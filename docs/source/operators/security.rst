@@ -30,15 +30,24 @@ a token is generated to use for authentication.
 This token is logged to the terminal, so that you can copy/paste the URL into your browser::
 
     [I 11:59:16.597 ServerApp] The Jupyter Server is running at:
+    [I 11:59:16.597 ServerApp]
     http://localhost:8888/?token=c8de56fa4deed24899803e93c227592aef6538f93025fe01
 
+    [I 11:59:16.597 ServerApp]
+    http://127.0.0.1:8888/?token=c8de56fa4deed24899803e93c227592aef6538f93025fe01
 
-If the Jupyter server is going to open your browser automatically,
-an *additional* token is generated for launching the browser.
-This additional token can be used only once,
-and is used to set a cookie for your browser once it connects.
-After your browser has made its first request with this one-time-token,
-the token is discarded and a cookie is set in your browser.
+    [I 11:59:16.597 ServerApp]
+        To access the server, open this file in a browser:
+        file:///Users/username/Library/Jupyter/runtime/jpserver-46320-open.html
+    Or copy and paste one of these URLs:
+        http://localhost:8888/?token=c8de56fa4deed24899803e93c227592aef6538f93025fe01
+        http://127.0.0.1:8888/?token=c8de56fa4deed24899803e93c227592aef6538f93025fe01
+
+Copy either of the HTTP URLs and paste it into your browser to see the server running with a
+message - "A Jupyter Server is running." If you are using the file link,
+opening it in your browser should automatically redirect you to the Jupyter server launch page,
+including the authentication token.  In case it doesn't redirect automatically, you'll
+find an HTTP link on the page; clicking this link will take you to the Jupyter server landing page.
 
 At any later time, you can see the tokens and URLs for all of your running servers with :command:`jupyter server list`::
 
@@ -69,8 +78,8 @@ but this is **NOT RECOMMENDED**, unless authentication or access restrictions ar
 
 .. sourcecode:: python
 
-    c.ServerApp.token = ''
-    c.ServerApp.password = ''
+    c.ServerApp.token = ""
+    c.ServerApp.password = ""
 
 
 Authentication and Authorization
@@ -114,11 +123,11 @@ It should return None if the request is not authenticated.
 
 The default implementation accepts token or password authentication.
 
-This User object will be available as `self.current_user` in any request handler.
-Request methods decorated with tornado's `@web.authenticated` decorator
+This User object will be available as ``self.current_user`` in any request handler.
+Request methods decorated with tornado's ``@web.authenticated`` decorator
 will only be allowed if this method returns something.
 
-The User object will be a Python :py:class:`dataclasses.dataclass` - `jupyter_server.auth.User`:
+The User object will be a Python :py:class:`dataclasses.dataclass` - ``jupyter_server.auth.User``:
 
 .. autoclass:: jupyter_server.auth.User
 
@@ -126,28 +135,28 @@ A custom IdentityProvider *may* return a custom subclass.
 
 
 The next method an identity provider has is :meth:`~jupyter_server.auth.IdentityProvider.identity_model`.
-`identity_model(user)` is responsible for transforming the user object returned from `.get_user()`
+``identity_model(user)`` is responsible for transforming the user object returned from ``.get_user()``
 into a standard identity model dictionary,
-for use in the `/api/me` endpoint.
+for use in the ``/api/me`` endpoint.
 
-If your user object is a simple username string or a dict with a `username` field,
+If your user object is a simple username string or a dict with a ``username`` field,
 you may not need to implement this method, as the default implementation will suffice.
 
 Any required fields missing from the dict returned by this method will be filled-out with defaults.
-Only `username` is strictly required, if that is all the information the identity provider has available.
+Only ``username`` is strictly required, if that is all the information the identity provider has available.
 
 Missing will be derived according to:
 
-- if `name` is missing, use `username`
-- if `display_name` is missing, use `name`
+- if ``name`` is missing, use ``username``
+- if ``display_name`` is missing, use ``name``
 
-Other required fields will be filled with `None`.
+Other required fields will be filled with ``None``.
 
 
 Identity Model
 ^^^^^^^^^^^^^^
 
-The identity model is the model accessed at `/api/me`, and describes the currently authenticated user.
+The identity model is the model accessed at ``/api/me``, and describes the currently authenticated user.
 
 It has the following fields:
 
@@ -158,25 +167,25 @@ username
 name
   (string)
   For-humans name of the user.
-  May be the same as `username` in systems where only usernames are available.
+  May be the same as ``username`` in systems where only usernames are available.
 display_name
   (string)
   Alternate rendering of name for display, such as a nickname.
-  Often the same as `name`.
+  Often the same as ``name``.
 initials
   (string or null)
   Short string of initials.
   Initials should not be derived automatically due to localization issues.
-  May be `null` if unavailable.
+  May be ``null`` if unavailable.
 avatar_url
   (string or null)
   URL of an avatar image to be used for the user.
-  May be `null` if unavailable.
+  May be ``null`` if unavailable.
 color
   (string or null)
   A CSS color string to use as a preferred color,
   such as for collaboration cursors.
-  May be `null` if unavailable.
+  May be ``null`` if unavailable.
 
 
 The default implementation of the identity provider is stateless, meaning it doesn't store user information
@@ -222,7 +231,7 @@ request handler. Each request is labeled as either a "read", "write", or "execut
   to ~all other permissions via other means.
 
 The ``resource`` being accessed refers to the resource name in the Jupyter Server's API endpoints.
-In most cases, this is the field after `/api/`.
+In most cases, this is the field after ``/api/``.
 For instance, values for ``resource`` in the endpoints provided by the base Jupyter Server package,
 and the corresponding permissions:
 
@@ -316,6 +325,7 @@ follows:
 
     from jupyter_server.auth import Authorizer
 
+
     class MyAuthorizationManager(Authorizer):
         """Class for authorizing access to resources in the Jupyter Server.
 
@@ -328,7 +338,9 @@ follows:
         is accepted; if it returns False, the server returns a 403 (Forbidden) error code.
         """
 
-        def is_authorized(self, handler: JupyterHandler, user: Any, action: str, resource: str) -> bool:
+        def is_authorized(
+            self, handler: JupyterHandler, user: Any, action: str, resource: str
+        ) -> bool:
             """A method to determine if `user` is authorized to perform `action`
             (read, write, or execute) on the `resource` type.
 

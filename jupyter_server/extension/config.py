@@ -1,4 +1,5 @@
 """Extension config."""
+
 from jupyter_server.services.config.manager import ConfigManager
 
 DEFAULT_SECTION_NAME = "jupyter_server_config"

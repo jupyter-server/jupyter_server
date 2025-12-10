@@ -1,5 +1,5 @@
-"""A module with various utility methods for authorization in Jupyter Server.
-"""
+"""A module with various utility methods for authorization in Jupyter Server."""
+
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import importlib
@@ -166,4 +166,4 @@ def get_anonymous_username() -> str:
     Get a random user-name based on the moons of Jupyter.
     This function returns names like "Anonymous Io" or "Anonymous Metis".
     """
-    return moons_of_jupyter[random.randint(0, len(moons_of_jupyter) - 1)]  # noqa
+    return moons_of_jupyter[random.randint(0, len(moons_of_jupyter) - 1)]  # noqa: S311

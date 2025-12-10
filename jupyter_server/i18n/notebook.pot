@@ -280,7 +280,7 @@ msgid "server_extensions is deprecated, use jpserver_extensions"
 msgstr ""
 
 #: jupyter_server/serverapp.py:1040
-msgid "Dict of Python modules to load as notebook server extensions. Entry values can be used to enable and disable the loading ofthe extensions. The extensions will be loaded in alphabetical order."
+msgid "Dict of Python modules to load as notebook server extensions. Entry values can be used to enable and disable the loading of the extensions. The extensions will be loaded in alphabetical order."
 msgstr ""
 
 #: jupyter_server/serverapp.py:1049

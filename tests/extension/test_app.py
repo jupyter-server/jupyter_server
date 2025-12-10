@@ -2,6 +2,7 @@ import json
 from io import StringIO
 from logging import StreamHandler
 from typing import Any
+from unittest import mock
 
 import pytest
 from traitlets.config import Config
@@ -31,6 +32,7 @@ def mock_extension(extension_manager):
     pkg = extension_manager.extensions[name]
     point = pkg.extension_points["mockextension"]
     app = point.app
+    app.initialize()
     return app
 
 
@@ -121,12 +123,14 @@ OPEN_BROWSER_COMBINATIONS: Any = (
 
 @pytest.mark.parametrize("expected_value, config", OPEN_BROWSER_COMBINATIONS)
 async def test_browser_open(monkeypatch, jp_environ, config, expected_value):
-    serverapp = MockExtensionApp.initialize_server(config=Config(config))
+    with mock.patch("jupyter_server.serverapp.ServerApp.init_httpserver"):
+        serverapp = MockExtensionApp.initialize_server(config=Config(config))
     assert serverapp.open_browser == expected_value
 
 
 async def test_load_parallel_extensions(monkeypatch, jp_environ):
-    serverapp = MockExtensionApp.initialize_server()
+    with mock.patch("jupyter_server.serverapp.ServerApp.init_httpserver"):
+        serverapp = MockExtensionApp.initialize_server()
     exts = serverapp.extension_manager.extensions
     assert "tests.extension.mockextensions.mock1" in exts
     assert "tests.extension.mockextensions" in exts
@@ -134,6 +138,15 @@ async def test_load_parallel_extensions(monkeypatch, jp_environ):
     exts = serverapp.jpserver_extensions
     assert exts["tests.extension.mockextensions.mock1"]
     assert exts["tests.extension.mockextensions"]
+
+
+async def test_start_extension(jp_serverapp, mock_extension):
+    await jp_serverapp._post_start()
+    assert mock_extension.started
+    assert hasattr(jp_serverapp, "mock1_started"), (
+        "Failed because the `_start_jupyter_server_extension` function in 'mock1.py' was never called"
+    )
+    assert jp_serverapp.mock1_started
 
 
 async def test_stop_extension(jp_serverapp, caplog):
@@ -167,12 +180,14 @@ async def test_stop_extension(jp_serverapp, caplog):
         "Shutting down 2 extensions",
         "jupyter_server_terminals | extension app 'jupyter_server_terminals' stopping",
         f"{extension_name} | extension app 'mockextension' stopping",
+        f"{extension_name} | extension app 'mockextension_notemplate' stopping",
         "jupyter_server_terminals | extension app 'jupyter_server_terminals' stopped",
         f"{extension_name} | extension app 'mockextension' stopped",
+        f"{extension_name} | extension app 'mockextension_notemplate' stopped",
     }
 
     # check the shutdown method was called twice
-    assert calls == 2
+    assert calls == 3
 
 
 async def test_events(jp_serverapp, jp_fetch):

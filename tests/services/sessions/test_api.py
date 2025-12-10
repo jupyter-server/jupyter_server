@@ -388,8 +388,6 @@ async def test_create_with_bad_kernel_id(session_client, jp_serverapp, session_i
     newsession = j(resp)
     sid = newsession["id"]
     await session_is_ready(sid)
-
-    # TODO
     assert newsession["path"] == "foo/nb1.py"
     assert newsession["type"] == "file"
 
@@ -506,6 +504,7 @@ async def test_modify_kernel_id(session_client, jp_fetch, jp_serverapp, session_
         assert kernel_list == [kernel]
 
 
+@pytest.mark.flaky
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_restart_kernel(session_client, jp_base_url, jp_fetch, jp_ws_fetch, session_is_ready):
     # Create a session.

@@ -5,7 +5,7 @@
 import os
 import pathlib
 import uuid
-from typing import Any, Dict, List, NewType, Optional, Union
+from typing import Any, NewType, Optional, Union, cast
 
 KernelName = NewType("KernelName", str)
 ModelName = NewType("ModelName", str)
@@ -14,7 +14,7 @@ try:
     import sqlite3
 except ImportError:
     # fallback on pysqlite2 if Python was build without sqlite
-    from pysqlite2 import dbapi2 as sqlite3  # type:ignore
+    from pysqlite2 import dbapi2 as sqlite3  # type:ignore[no-redef]
 
 from dataclasses import dataclass, fields
 
@@ -31,11 +31,9 @@ class KernelSessionRecordConflict(Exception):
     merge because of conflicting data.
     """
 
-    pass
-
 
 @dataclass
-class KernelSessionRecord:
+class KernelSessionRecord:  # noqa: PLW1641 - TODO: implement __hash__
     """A record object for tracking a Jupyter Server Kernel Session.
 
     Two records that share a session_id must also share a kernel_id, while
@@ -81,7 +79,7 @@ class KernelSessionRecord:
     def update(self, other: "KernelSessionRecord") -> None:
         """Updates in-place a kernel from other (only accepts positive updates"""
         if not isinstance(other, KernelSessionRecord):
-            msg = "'other' must be an instance of KernelSessionRecord."
+            msg = "'other' must be an instance of KernelSessionRecord."  # type:ignore[unreachable]
             raise TypeError(msg)
 
         if other.kernel_id and self.kernel_id and other.kernel_id != self.kernel_id:
@@ -102,7 +100,7 @@ class KernelSessionRecordList:
     it will be appended.
     """
 
-    _records: List[KernelSessionRecord]
+    _records: list[KernelSessionRecord]
 
     def __init__(self, *records: KernelSessionRecord):
         """Initialize a record list."""
@@ -135,7 +133,7 @@ class KernelSessionRecordList:
         """
         if isinstance(record, str):
             for r in self._records:
-                if record == r.kernel_id or record == r.session_id:
+                if record in (r.kernel_id, r.session_id):
                     return r
         elif isinstance(record, KernelSessionRecord):
             for r in self._records:
@@ -269,7 +267,7 @@ class SessionManager(LoggingConfigurable):
         type: Optional[str] = None,
         kernel_name: Optional[KernelName] = None,
         kernel_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Creates a session and returns its model
 
         Parameters
@@ -293,11 +291,11 @@ class SessionManager(LoggingConfigurable):
             session_id, path=path, name=name, type=type, kernel_id=kernel_id
         )
         self._pending_sessions.remove(record)
-        return result
+        return cast("dict[str, Any]", result)
 
     def get_kernel_env(
         self, path: Optional[str], name: Optional[ModelName] = None
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """Return the environment variables that need to be set in the kernel
 
         Parameters
@@ -347,7 +345,7 @@ class SessionManager(LoggingConfigurable):
             kernel_name=kernel_name,
             env=kernel_env,
         )
-        return kernel_id
+        return cast("str", kernel_id)
 
     async def save_session(self, session_id, path=None, name=None, type=None, kernel_id=None):
         """Saves the items for the session with the given session_id
@@ -410,7 +408,7 @@ class SessionManager(LoggingConfigurable):
                 raise TypeError(msg)
             conditions.append("%s=?" % column)
 
-        query = "SELECT * FROM session WHERE %s" % (" AND ".join(conditions))  # noqa
+        query = "SELECT * FROM session WHERE %s" % (" AND ".join(conditions))  # noqa: S608
 
         self.cursor.execute(query, list(kwargs.values()))
         try:
@@ -458,8 +456,15 @@ class SessionManager(LoggingConfigurable):
             if column not in self._columns:
                 raise TypeError("No such column: %r" % column)
             sets.append("%s=?" % column)
-        query = "UPDATE session SET %s WHERE session_id=?" % (", ".join(sets))  # noqa
+        query = "UPDATE session SET %s WHERE session_id=?" % (", ".join(sets))  # noqa: S608
         self.cursor.execute(query, [*list(kwargs.values()), session_id])
+
+        if hasattr(self.kernel_manager, "update_env"):
+            self.cursor.execute(
+                "SELECT path, name, kernel_id FROM session WHERE session_id=?", [session_id]
+            )
+            path, name, kernel_id = self.cursor.fetchone()
+            self.kernel_manager.update_env(kernel_id=kernel_id, env=self.get_kernel_env(path, name))
 
     async def kernel_culled(self, kernel_id: str) -> bool:
         """Checks if the kernel is still considered alive and returns true if its not found."""
@@ -485,7 +490,7 @@ class SessionManager(LoggingConfigurable):
             )
             if tolerate_culled:
                 self.log.warning(f"{msg}  Continuing...")
-                return
+                return None
             raise KeyError(msg)
 
         kernel_model = await ensure_async(self.kernel_manager.kernel_model(row["kernel_id"]))

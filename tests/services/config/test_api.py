@@ -43,7 +43,7 @@ async def test_get_unknown(jp_fetch):
     response = await jp_fetch(
         "api",
         "config",
-        "nonexistant",
+        "nonexistent",
         method="GET",
     )
     assert response.code == 200
