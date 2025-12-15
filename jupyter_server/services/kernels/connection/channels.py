@@ -11,11 +11,11 @@ from concurrent.futures import Future
 from textwrap import dedent
 
 from jupyter_client import protocol_version as client_protocol_version  # type:ignore[attr-defined]
+from packaging.version import Version
 from tornado import gen, web
 from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketClosedError
 from traitlets import Any, Bool, Dict, Float, Instance, Int, List, Unicode, default
-from packaging.version import Version
 
 try:
     from jupyter_client.jsonutil import json_default
@@ -197,7 +197,6 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         iopub_future.add_done_callback(cleanup)
 
         return _ensure_future(iopub_future)
-
 
     def nudge(self):
         """Nudge the zmq connections with kernel_info_requests
