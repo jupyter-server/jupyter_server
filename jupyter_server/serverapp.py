@@ -2685,7 +2685,8 @@ class ServerApp(JupyterApp):
         for port in random_ports(self.port, self.port_retries + 1):
             try:
                 sockets = bind_sockets(port, self.ip)
-                sockets[0].close()
+                for s in sockets:
+                    s.close()
             except OSError as e:
                 if e.errno == errno.EADDRINUSE:
                     if self.port_retries:
