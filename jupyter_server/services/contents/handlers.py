@@ -151,7 +151,6 @@ class ContentsHandler(ContentsAPIHandler):
             )
             return
 
-
         try:
             expect_hash = require_hash
             try:
