@@ -149,6 +149,8 @@ class ContentsHandler(ContentsAPIHandler):
             await self._finish_error(
                 HTTPStatus.NOT_FOUND, f"file or directory {path!r} does not exist"
             )
+            return
+
 
         try:
             expect_hash = require_hash
