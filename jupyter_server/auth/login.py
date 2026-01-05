@@ -62,6 +62,10 @@ class LoginFormHandler(JupyterHandler):
         if ":" in url:
             scheme, _, rest = url.partition(":")
             url = f"{scheme}://{rest.lstrip('/')}"
+        else:
+            # same as above when scheme is unspecified
+            if url.startswith("//"):
+                url = "//" + url.lstrip("/")
         parsed = urlparse(url)
         # full url may be `//host/path` (empty scheme == same scheme as request)
         # or `https://host/path`
