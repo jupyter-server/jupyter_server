@@ -341,7 +341,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
     def _fast_item_model(self, name, os_path, st, parent_api_path):
         """Quickly construct directory entry models to avoid repeated lstat and self.get calls"""
-        
+
         item_path = f"{parent_api_path}/{name}" if parent_api_path else name
         try:
             size = st.st_size
@@ -371,7 +371,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             item_format = None  # Set format to None for regular files if content isn't read
             item_mimetype = mimetypes.guess_type(os_path)[0]
             item_size = size
-            
+
         result = {
             "name": name,
             "path": item_path,
@@ -386,7 +386,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             "type": item_type,
             "size": item_size,
         }
-        
+
         return result
 
     def _file_model(self, path, content=True, format=None, require_hash=False):
