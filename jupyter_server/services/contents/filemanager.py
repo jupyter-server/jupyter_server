@@ -325,7 +325,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                     if self.should_list(name) and (
                         self.allow_hidden or not is_file_hidden(os_path, stat_res=st)
                     ):
-                        contents.append(self.get(path=f"{path}/{name}", content=False))
+                        contents.append(self._fast_item_model(name, os_path, st, path))
                 except OSError as e:
                     # ELOOP: recursive symlink, also don't show failure due to permissions
                     if e.errno not in [errno.ELOOP, errno.EACCES]:
@@ -338,6 +338,56 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             model["format"] = "json"
 
         return model
+
+    def _fast_item_model(self, name, os_path, st, parent_api_path):
+        """Quickly construct directory entry models to avoid repeated lstat and self.get calls"""
+        
+        item_path = f"{parent_api_path}/{name}" if parent_api_path else name
+        try:
+            size = st.st_size
+        except (ValueError, OSError):
+            size = None
+        try:
+            last_modified = tz.utcfromtimestamp(st.st_mtime)
+        except (ValueError, OSError):
+            last_modified = datetime(1970, 1, 1, 0, 0, tzinfo=tz.UTC)
+        try:
+            created = tz.utcfromtimestamp(st.st_ctime)
+        except (ValueError, OSError):
+            created = datetime(1970, 1, 1, 0, 0, tzinfo=tz.UTC)
+        # Fix type/format checks to handle symlinks with os.path.isdir
+        if os.path.isdir(os_path):
+            item_type = "directory"
+            item_format = None
+            item_mimetype = None
+            item_size = None
+        elif name.endswith(".ipynb"):
+            item_type = "notebook"
+            item_format = None  # Testing shows that format should be None when content=False, even for notebooks
+            item_mimetype = None
+            item_size = size
+        else:
+            item_type = "file"
+            item_format = None  # Set format to None for regular files if content isn't read
+            item_mimetype = mimetypes.guess_type(os_path)[0]
+            item_size = size
+            
+        result = {
+            "name": name,
+            "path": item_path,
+            "last_modified": last_modified,
+            "created": created,
+            "content": None,
+            "format": item_format,
+            "mimetype": item_mimetype,
+            "writable": self.is_writable(item_path),
+            "hash": None,
+            "hash_algorithm": None,
+            "type": item_type,
+            "size": item_size,
+        }
+        
+        return result
 
     def _file_model(self, path, content=True, format=None, require_hash=False):
         """Build a model for a file
@@ -800,7 +850,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                     if self.should_list(name) and (
                         self.allow_hidden or not is_file_hidden(os_path, stat_res=st)
                     ):
-                        contents.append(await self.get(path=f"{path}/{name}", content=False))
+                        contents.append(self._fast_item_model(name, os_path, st, path))
                 except OSError as e:
                     # ELOOP: recursive symlink, also don't show failure due to permissions
                     if e.errno not in [errno.ELOOP, errno.EACCES]:
