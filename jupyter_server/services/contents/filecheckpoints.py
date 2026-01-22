@@ -134,7 +134,7 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
     # Error Handling
     def no_such_checkpoint(self, path, checkpoint_id):
         raise HTTPError(404, f"Checkpoint does not exist: {path}@{checkpoint_id}")
-    
+
     def get_checkpoint(self, checkpoint_id, path, type=None):
         os_path = self.checkpoint_path(checkpoint_id, path)
         if not os.path.isfile(os_path):
@@ -216,7 +216,7 @@ class AsyncFileCheckpoints(FileCheckpoints, AsyncFileManagerMixin, AsyncCheckpoi
             return []
         else:
             return [await self.checkpoint_model(checkpoint_id, os_path)]
-        
+
     async def get_checkpoint(self, checkpoint_id, path, type=None):
         os_path = self.checkpoint_path(checkpoint_id, path)
         if not os.path.isfile(os_path):

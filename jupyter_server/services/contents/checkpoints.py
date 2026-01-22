@@ -53,7 +53,7 @@ class Checkpoints(LoggingConfigurable):
 
     def get_checkpoint(self, checkpoint_id, path):
         """Retrieve the content of a checkpoint without restoring it.
-        
+
         Must return a model dictionary.
         """
         raise NotImplementedError
@@ -148,7 +148,7 @@ class GenericCheckpointsMixin:
             }
         """
         raise NotImplementedError
-    
+
     def get_checkpoint(self, checkpoint_id, path):
         """Get the content of a checkpoint."""
         raise NotImplementedError("This logic depends on the specific implementation.")
@@ -268,13 +268,13 @@ class AsyncGenericCheckpointsMixin(GenericCheckpointsMixin):
             }
         """
         raise NotImplementedError
-    
+
     async def get_checkpoint(self, checkpoint_id, path, type_=None):
         """Retrieve a checkpoint asynchronously."""
         if type_ is None:
             model = await self.parent.get(path, content=False)
             type_ = model["type"]
-            
+
         if type_ == "notebook":
             return await self.get_notebook_checkpoint(checkpoint_id, path)
         elif type_ == "file":
