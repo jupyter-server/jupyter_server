@@ -188,7 +188,7 @@ def test_invalid_root_dir(jp_file_contents_manager_class, tmp_path):
 def test_get_os_path(jp_file_contents_manager_class, tmp_path):
     fm = jp_file_contents_manager_class(root_dir=str(tmp_path))
     path = fm._get_os_path("/path/to/notebook/test.ipynb")
-    rel_path_list = "/path/to/notebook/test.ipynb".split("/")
+    rel_path_list = ["", "path", "to", "notebook", "test.ipynb"]
     fs_path = os.path.join(fm.root_dir, *rel_path_list)
     assert path == fs_path
 

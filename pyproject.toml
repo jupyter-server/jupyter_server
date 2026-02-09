@@ -72,6 +72,7 @@ docs = [
     "prometheus_client",
     "pydata_sphinx_theme",
     "Send2Trash",
+    "sphinx<9.0",
     "sphinxcontrib-openapi>=0.8.0",
     "sphinxcontrib_github_alt",
     "sphinxcontrib-spelling",
@@ -130,6 +131,10 @@ skip-if-exists = ["jupyter_server/static/style/bootstrap.min.css"]
 install-pre-commit-hook = true
 optional-editable-build = true
 
+[tool.hatch.envs.hatch-static-analysis]
+# keep this version in sync with pre-commit version
+dependencies = ["ruff==0.14.6"]
+
 [tool.ruff]
 line-length = 100
 
@@ -137,7 +142,7 @@ line-length = 100
 docstring-code-format = true
 
 [tool.ruff.lint]
-ignore = ["ARG", "TRY", "RUF012", "TID252", "G", "INP001", "E402", "F401", "BLE001"]
+ignore = ["ARG", "TRY", "RUF012", "TID252", "G", "INP001", "E402", "F401", "BLE001", "UP045", "PLC0415"]
 extend-select = [
   "B",  # flake8-bugbear
   "I",  # isort
@@ -158,7 +163,8 @@ unfixable = [
                       "SIM105", "A001", "UP007", "PLR2004", "T201", "N818", "F403"]
 "jupyter_server/gateway/*" = ["TCH" ]
 "tests/*" = ["UP031", "PT", 'EM', "TRY", "RET", "SLF", "C408", "F841", "FBT", "A002", "FLY", "N",
-            "PERF", "ASYNC", "T201", "FA100", "E711", "INP", "TCH", "SIM105", "A001", "PLW0603"]
+            "PERF", "ASYNC", "T201", "FA100", "E711", "INP", "TCH", "SIM105", "A001", "PLW0603",
+            "RUF059"]
 "examples/*_config.py" = ["F821"]
 "examples/*" = ["N815"]
 

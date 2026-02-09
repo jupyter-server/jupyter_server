@@ -256,7 +256,7 @@ class IdentityProvider(LoggingConfigurable):
         """Get the user."""
         if getattr(handler, "_jupyter_current_user", None):
             # already authenticated
-            return t.cast(User, handler._jupyter_current_user)  # type:ignore[attr-defined]
+            return t.cast("User", handler._jupyter_current_user)  # type:ignore[attr-defined]
         _token_user: User | None | t.Awaitable[User | None] = self.get_user_token(handler)
         if isinstance(_token_user, t.Awaitable):
             _token_user = await _token_user
@@ -302,7 +302,7 @@ class IdentityProvider(LoggingConfigurable):
     ) -> User:
         """Update user information and persist the user model."""
         self.check_update(user_data)
-        current_user = t.cast(User, handler.current_user)
+        current_user = t.cast("User", handler.current_user)
         updated_user = self.update_user_model(current_user, user_data)
         self.persist_user_model(handler)
         return updated_user
@@ -589,7 +589,7 @@ class IdentityProvider(LoggingConfigurable):
             return self.generate_anonymous_user(handler)
 
         if self.token and self.token == typed_password:
-            return t.cast(User, self.user_for_token(typed_password))  # type:ignore[attr-defined]
+            return t.cast("User", self.user_for_token(typed_password))  # type:ignore[attr-defined]
 
         return user
 

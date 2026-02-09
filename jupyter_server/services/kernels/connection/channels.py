@@ -288,7 +288,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.kernel_id in self.multi_kernel_manager
         ):  # only update open sessions if kernel is actively managed
             self._open_sessions[self.session_key] = t.cast(
-                KernelWebsocketHandler, self.websocket_handler
+                "KernelWebsocketHandler", self.websocket_handler
             )
 
     async def prepare(self):
@@ -599,7 +599,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
 
         enabling msg spec adaptation, if necessary
         """
-        idents, msg = self.session.feed_identities(msg)
+        _idents, msg = self.session.feed_identities(msg)
         try:
             msg = self.session.deserialize(msg)
         except BaseException:

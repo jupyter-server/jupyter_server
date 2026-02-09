@@ -120,7 +120,7 @@ class IdentityHandler(APIHandler):
     @web.authenticated
     async def patch(self):
         """Update user information."""
-        user_data = cast(dict[UpdatableField, str], self.get_json_body())
+        user_data = cast("dict[UpdatableField, str]", self.get_json_body())
         if not user_data:
             raise web.HTTPError(400, "Invalid or missing JSON body")
 

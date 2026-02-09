@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-import pathlib  # noqa: TCH003
+import pathlib  # noqa: TC003
 import sys
 import typing as t
 import warnings
@@ -247,7 +247,7 @@ class MappingKernelManager(MultiKernelManager):
             self.log.debug(
                 "Kernel args (excluding env): %r", {k: v for k, v in kwargs.items() if k != "env"}
             )
-            env = kwargs.get("env", None)
+            env = kwargs.get("env")
             if env and isinstance(env, dict):  # type:ignore[unreachable]
                 self.log.debug("Kernel argument 'env' passed with: %r", list(env.keys()))  # type:ignore[unreachable]
 
@@ -598,7 +598,7 @@ class MappingKernelManager(MultiKernelManager):
 
         def record_activity(msg_list):
             """Record an IOPub message arriving from a kernel"""
-            idents, fed_msg_list = session.feed_identities(msg_list)
+            _idents, fed_msg_list = session.feed_identities(msg_list)
             msg = session.deserialize(fed_msg_list, content=False)
 
             msg_type = msg["header"]["msg_type"]
