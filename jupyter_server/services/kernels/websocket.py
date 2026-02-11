@@ -9,6 +9,7 @@ from tornado.websocket import WebSocketHandler
 from jupyter_server.auth.decorator import ws_authenticated
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.base.websocket import WebSocketMixin
+from jupyter_server.saturn.connections import SaturnGatewayWebSocketConnection
 
 AUTH_RESOURCE = "kernels"
 

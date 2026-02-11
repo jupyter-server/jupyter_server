@@ -21,7 +21,7 @@ from jupyter_client.managerabc import KernelManagerABC
 from jupyter_core.utils import ensure_async
 from tornado import web
 from tornado.escape import json_decode, json_encode, url_escape, utf8
-from traitlets import DottedObjectName, Instance, Type, default
+from traitlets import DottedObjectName, Instance, Type, Unicode, default
 
 from .._tz import UTC, utcnow
 from ..services.kernels.kernelmanager import (
@@ -622,9 +622,10 @@ class ChannelQueue(Queue):  # type:ignore[type-arg]
             except Empty:
                 if self.response_router_finished:
                     msg = "Response router had finished"
+                    # TODO throw dedicated Exception for the caller to react on it.
                     raise RuntimeError(msg) from None
                 if monotonic() > end_time:
-                    raise
+                    raise TimeoutError(f"{self.channel_name} async_get timeout") from None
                 await asyncio.sleep(0)
 
     async def get_msg(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -720,10 +721,18 @@ class GatewayKernelClient(AsyncKernelClient):
     _iopub_channel: Optional[ChannelQueue]
     _shell_channel: Optional[ChannelQueue]
 
-    def __init__(self, kernel_id, **kwargs):
+    ws_url = Unicode(
+        default_value=None,
+        allow_none=True,
+        config=True,
+        help="""The websocket url of the Kernel or Enterprise Gateway server.  If not provided, this value
+will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (JUPYTER_GATEWAY_WS_URL env var)
+        """,
+    )
+
+    def __init__(self, **kwargs):
         """Initialize a gateway kernel client."""
         super().__init__(**kwargs)
-        self.kernel_id = kernel_id
         self.channel_socket: Optional[websocket.WebSocket] = None
         self.response_router: Optional[Thread] = None
         self._channels_stopped = False
@@ -736,17 +745,15 @@ class GatewayKernelClient(AsyncKernelClient):
     async def start_channels(self, shell=True, iopub=True, stdin=True, hb=True, control=True):
         """Starts the channels for this kernel.
 
+        Please set property ws_url before calling this method.
         For this class, we establish a websocket connection to the destination
         and set up the channel-based queues on which applicable messages will
         be posted.
         """
+        if self.ws_url is None:
+            msg = "ws_url is None. set it before call start_channels"
+            raise RuntimeError(msg)
 
-        ws_url = url_path_join(
-            GatewayClient.instance().ws_url or "",
-            GatewayClient.instance().kernels_endpoint,
-            url_escape(self.kernel_id),
-            "channels",
-        )
         # Gather cert info in case where ssl is desired...
         ssl_options = {
             "ca_certs": GatewayClient.instance().ca_certs,
@@ -755,7 +762,7 @@ class GatewayKernelClient(AsyncKernelClient):
         }
 
         self.channel_socket = websocket.create_connection(
-            ws_url,
+            self.ws_url,
             timeout=GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT,
             enable_multithread=True,
             sslopt=ssl_options,
