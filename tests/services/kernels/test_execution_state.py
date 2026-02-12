@@ -42,7 +42,7 @@ async def test_execution_state(jp_fetch, jp_ws_fetch):
                 "parent_header": {},
                 "metadata": {},
                 "content": {
-                    "code": "while True:\n\tpass",
+                    "code": "import time\nwhile True:\n\ttime.sleep(1)",
                     "silent": False,
                     "allow_stdin": False,
                     "stop_on_error": True,
@@ -56,10 +56,10 @@ async def test_execution_state(jp_fetch, jp_ws_fetch):
 
     # kernels start slowly on Windows
     max_startup_time = 60
-    started = time.time()
+    started = time.perf_counter()
     while es == "starting":
         await asyncio.sleep(1)
-        elapsed = time.time() - started
+        elapsed = time.perf_counter() - started
         if elapsed > max_startup_time:
             raise ValueError(f"Kernel did not start up in {max_startup_time} seconds")
         es = await get_execution_state(kid, jp_fetch)
