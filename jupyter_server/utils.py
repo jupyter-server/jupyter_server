@@ -10,7 +10,6 @@ import os
 import socket
 import sys
 import warnings
-from _frozen_importlib_external import _NamespacePath
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NewType
@@ -338,7 +337,7 @@ def is_namespace_package(namespace: str) -> bool | None:
     if not spec:
         # e.g. module not installed
         return None
-    return isinstance(spec.submodule_search_locations, _NamespacePath)
+    return bool(spec.origin is None and spec.submodule_search_locations)
 
 
 def filefind(filename: str, path_dirs: Sequence[str]) -> str:
