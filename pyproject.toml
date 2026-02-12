@@ -168,7 +168,7 @@ unfixable = [
 [tool.pytest.ini_options]
 minversion = "6.0"
 xfail_strict = true
-log_level = "info"
+log_cli_level = "info"
 addopts = [
   "-ra", "--durations=10", "--color=yes", "--doctest-modules",
    "--showlocals", "--strict-markers", "--strict-config"
@@ -241,5 +241,6 @@ ignore = ["W002"]
 ignore = [
   "GH102", # auto-cancel
   "PC111", # blacken-docs
-  "PP006",  # dependency-group, not ready yet
+  "PP006", # dependency-group, not ready yet
+  "PP304", # pytest log_level (breaks tests)
 ]
