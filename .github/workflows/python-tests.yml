@@ -125,6 +125,8 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           dependency_type: pre
+          # pyO3 dependencies can't build on dev python
+          python_version: "3.14"
       - name: Run the tests
         run: |
           hatch run test:nowarn || hatch -v run test:nowarn --lf
