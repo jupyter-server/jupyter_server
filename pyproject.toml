@@ -84,8 +84,6 @@ docs = [
     "typing_extensions"
 ]
 
-[dependency-groups]
-dev = [".[test]"]
 
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
@@ -240,4 +238,8 @@ exclude = ["docs", "test"]
 ignore = ["W002"]
 
 [tool.repo-review]
-ignore = ["GH102", "PC111"]
+ignore = [
+  "GH102", # auto-cancel
+  "PC111", # blacken-docs
+  "PP006",  # dependency-group, not ready yet
+]
