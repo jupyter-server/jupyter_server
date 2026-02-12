@@ -134,10 +134,6 @@ skip-if-exists = ["jupyter_server/static/style/bootstrap.min.css"]
 install-pre-commit-hook = true
 optional-editable-build = true
 
-[tool.hatch.envs.hatch-static-analysis]
-# keep this version in sync with pre-commit version
-dependencies = ["ruff==0.14.6"]
-
 [tool.ruff]
 line-length = 100
 
