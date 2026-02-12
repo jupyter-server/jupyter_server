@@ -98,7 +98,7 @@ class WebSocketMixin:
                 raise web.HTTPError(403)
             method = getattr(self, self.request.method.lower())
             if not getattr(method, "__allow_unauthenticated", False):
-                # rather than re-using `web.authenticated` which also redirects
+                # rather than reusing `web.authenticated` which also redirects
                 # to login page on GET, just raise 403 if user is not known
                 user = self.current_user
                 if user is None:

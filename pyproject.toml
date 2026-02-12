@@ -84,6 +84,9 @@ docs = [
     "typing_extensions"
 ]
 
+[dependency-groups]
+dev = [".[test]"]
+
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
 
@@ -171,7 +174,7 @@ unfixable = [
 [tool.pytest.ini_options]
 minversion = "6.0"
 xfail_strict = true
-log_cli_level = "info"
+log_level = "info"
 addopts = [
   "-ra", "--durations=10", "--color=yes", "--doctest-modules",
    "--showlocals", "--strict-markers", "--strict-config"

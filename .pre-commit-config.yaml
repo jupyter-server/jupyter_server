@@ -1,6 +1,7 @@
 ci:
   autoupdate_schedule: monthly
   autoupdate_commit_msg: "chore: update pre-commit hooks"
+  autofix_commit_msg: "core: pre-commit fixes"
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -25,15 +26,15 @@ repos:
     hooks:
       - id: check-github-workflows
 
-  - repo: https://github.com/executablebooks/mdformat
+  - repo: https://github.com/hukkin/mdformat
     rev: 1.0.0
     hooks:
       - id: mdformat
         additional_dependencies:
           [mdformat-gfm, mdformat-frontmatter, mdformat-footnote]
 
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v4.0.0-alpha.8"
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.8.1
     hooks:
       - id: prettier
         types_or: [yaml, html, json]
@@ -64,7 +65,7 @@ repos:
     # keep the revision in sync with the ruff version in pyproject.toml
     rev: v0.14.14
     hooks:
-      - id: ruff
+      - id: ruff-check
         types_or: [python, jupyter]
         args: ["--fix", "--show-fixes"]
       - id: ruff-format
