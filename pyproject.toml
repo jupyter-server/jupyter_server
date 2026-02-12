@@ -72,6 +72,7 @@ docs = [
     "prometheus_client",
     "pydata_sphinx_theme",
     "Send2Trash",
+    "sphinx<9.0",
     "sphinxcontrib-openapi>=0.8.0",
     "sphinxcontrib_github_alt",
     "sphinxcontrib-spelling",
