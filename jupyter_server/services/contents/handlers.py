@@ -415,7 +415,7 @@ class NotebooksRedirectHandler(JupyterHandler):
 class TrustNotebooksHandler(JupyterHandler):
     """Handles trust/signing of notebooks"""
 
-    @web.authenticated  # type:ignore[misc]
+    @web.authenticated
     @authorized(resource=AUTH_RESOURCE)
     async def post(self, path=""):
         """Trust a notebook by path."""
