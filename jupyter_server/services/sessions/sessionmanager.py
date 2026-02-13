@@ -18,6 +18,7 @@ except ImportError:
 
 from dataclasses import dataclass, fields
 
+from jupyter_client.manager import KernelManager
 from jupyter_core.utils import ensure_async
 from tornado import web
 from traitlets import Instance, TraitError, Unicode, validate
@@ -468,7 +469,13 @@ class SessionManager(LoggingConfigurable):
 
     async def kernel_culled(self, kernel_id: str) -> bool:
         """Checks if the kernel is still considered alive and returns true if its not found."""
-        return kernel_id not in self.kernel_manager
+        km: Optional[KernelManager] = None
+        try:
+            km = self.kernel_manager.get_kernel(kernel_id)
+        except Exception:
+            # Let exceptions here reflect culled kernel
+            pass
+        return km is None
 
     async def row_to_model(self, row, tolerate_culled=False):
         """Takes sqlite database session row and turns it into a dictionary"""
