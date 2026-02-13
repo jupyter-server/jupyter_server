@@ -41,7 +41,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
     """Kernel manager that supports remote kernels hosted by Jupyter Kernel or Enterprise Gateway."""
 
     # We'll maintain our own set of kernel ids
-    _kernels: dict[str, GatewayKernelManager] = {}  # type:ignore[assignment]
+    _kernels: dict[str, GatewayKernelManager] = {}
 
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self):
@@ -380,7 +380,7 @@ class GatewaySessionManager(SessionManager):
 class GatewayKernelManager(ServerKernelManager):
     """Manages a single kernel remotely via a Gateway Server."""
 
-    kernel_id: Optional[str] = None  # type:ignore[assignment]
+    kernel_id: Optional[str] = None
     kernel = None
 
     @default("cache_ports")
@@ -714,11 +714,11 @@ class GatewayKernelClient(AsyncKernelClient):
     allow_stdin = False
     _channels_stopped: bool
     _channel_queues: Optional[dict[str, ChannelQueue]]
-    _control_channel: Optional[ChannelQueue]  # type:ignore[assignment]
-    _hb_channel: Optional[ChannelQueue]  # type:ignore[assignment]
-    _stdin_channel: Optional[ChannelQueue]  # type:ignore[assignment]
-    _iopub_channel: Optional[ChannelQueue]  # type:ignore[assignment]
-    _shell_channel: Optional[ChannelQueue]  # type:ignore[assignment]
+    _control_channel: Optional[ChannelQueue]
+    _hb_channel: Optional[ChannelQueue]
+    _stdin_channel: Optional[ChannelQueue]
+    _iopub_channel: Optional[ChannelQueue]
+    _shell_channel: Optional[ChannelQueue]
 
     def __init__(self, kernel_id, **kwargs):
         """Initialize a gateway kernel client."""

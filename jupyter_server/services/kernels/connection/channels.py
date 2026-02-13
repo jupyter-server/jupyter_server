@@ -11,7 +11,7 @@ from concurrent.futures import Future
 from textwrap import dedent
 
 from jupyter_client import protocol_version as client_protocol_version  # type:ignore[attr-defined]
-from tornado import gen, web
+from tornado import web
 from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketClosedError
 from traitlets import Any, Bool, Dict, Float, Instance, Int, List, Unicode, default
@@ -171,9 +171,9 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # establishing its zmq subscriptions before processing the next request.
         if getattr(self.kernel_manager, "execution_state", None) == "busy":
             self.log.debug("Nudge: not nudging busy kernel %s", self.kernel_id)
-            f: Future[t.Any] = Future()
+            f: asyncio.Future[t.Any] = asyncio.Future()
             f.set_result(None)
-            return _ensure_future(f)
+            return f
         # Use a transient shell channel to prevent leaking
         # shell responses to the front-end.
         shell_channel = self.kernel_manager.connect_shell()
@@ -183,17 +183,26 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # The IOPub used by the client, whose subscriptions we are verifying.
         iopub_channel = self.channels["iopub"]
 
-        info_future: Future[t.Any] = Future()
-        iopub_future: Future[t.Any] = Future()
-        both_done = gen.multi([info_future, iopub_future])
+        async def wait_for_activity():
+            execution_state = getattr(self.kernel_manager, "execution_state", None)
+            while execution_state == "starting":
+                await asyncio.sleep(0.05)
+                execution_state = getattr(self.kernel_manager, "execution_state", None)
+            self.log.debug("Nudge: %s execution_state=%s", self.kernel_id, execution_state)
+
+        info_future: asyncio.Future[t.Any] = asyncio.Future()
+        iopub_future: asyncio.Future[t.Any] = asyncio.Future()
+        futures = [info_future, iopub_future]
+        futures.append(asyncio.ensure_future(wait_for_activity()))
+        all_done = asyncio.ensure_future(asyncio.gather(*futures))
 
         def finish(_=None):
             """Ensure all futures are resolved
             which in turn triggers cleanup
             """
-            for f in (info_future, iopub_future):
+            for f in futures:
                 if not f.done():
-                    f.set_result(None)
+                    f.cancel()
 
         def cleanup(_=None):
             """Common cleanup"""
@@ -205,7 +214,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                 control_channel.close()
 
         # trigger cleanup when both message futures are resolved
-        both_done.add_done_callback(cleanup)
+        all_done.add_done_callback(cleanup)
 
         def on_shell_reply(msg):
             """Handle nudge shell replies."""
@@ -256,7 +265,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                 finish()
                 return
 
-            if not both_done.done():
+            if not all_done.done():
                 log = self.log.warning if count % 10 == 0 else self.log.debug
                 log(f"Nudge: attempt {count} on kernel {self.kernel_id}")
                 self.session.send(shell_channel, "kernel_info_request")
@@ -267,10 +276,16 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         nudge_handle = loop.call_later(0, nudge, count=0)
 
         # resolve with a timeout if we get no response
-        future = gen.with_timeout(loop.time() + self.kernel_info_timeout, both_done)
-        # ensure we have no dangling resources or unresolved Futures in case of timeout
-        future.add_done_callback(finish)
-        return _ensure_future(future)
+        async def finish_nudge():
+            try:
+                await asyncio.wait_for(all_done, timeout=self.kernel_info_timeout)
+            except asyncio.CancelledError:
+                pass
+            finally:
+                # make sure everybody gets cancelled, just in case
+                finish()
+
+        return asyncio.ensure_future(finish_nudge())
 
     async def _register_session(self):
         """Ensure we aren't creating a duplicate session.
@@ -287,9 +302,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         if (
             self.kernel_id in self.multi_kernel_manager
         ):  # only update open sessions if kernel is actively managed
-            self._open_sessions[self.session_key] = t.cast(
-                "KernelWebsocketHandler", self.websocket_handler
-            )
+            self._open_sessions[self.session_key] = self.websocket_handler
 
     async def prepare(self):
         """Prepare a kernel connection."""

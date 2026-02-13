@@ -879,8 +879,8 @@ class ServerApp(JupyterApp):
     )
     examples = _examples
 
-    flags = Dict(flags)  # type:ignore[assignment]
-    aliases = Dict(aliases)  # type:ignore[assignment]
+    flags = Dict(flags)
+    aliases = Dict(aliases)
 
     classes = [
         KernelManager,
@@ -1169,6 +1169,7 @@ class ServerApp(JupyterApp):
             self._write_cookie_secret_file(key)
         h = hmac.new(key, digestmod=hashlib.sha256)
         h.update(self.password.encode())
+        h = self.identity_provider.cookie_secret_hook(h)
         return h.digest()
 
     def _write_cookie_secret_file(self, secret: bytes) -> None:
@@ -2415,11 +2416,7 @@ class ServerApp(JupyterApp):
 
     def init_signal(self) -> None:
         """Initialize signal handlers."""
-        if (
-            not sys.platform.startswith("win")
-            and sys.stdin  # type:ignore[truthy-bool]
-            and sys.stdin.isatty()
-        ):
+        if not sys.platform.startswith("win") and sys.stdin and sys.stdin.isatty():
             signal.signal(signal.SIGINT, self._handle_sigint)
         signal.signal(signal.SIGTERM, self._signal_stop)
         if hasattr(signal, "SIGUSR1"):
@@ -2685,7 +2682,8 @@ class ServerApp(JupyterApp):
         for port in random_ports(self.port, self.port_retries + 1):
             try:
                 sockets = bind_sockets(port, self.ip)
-                sockets[0].close()
+                for s in sockets:
+                    s.close()
             except OSError as e:
                 if e.errno == errno.EADDRINUSE:
                     if self.port_retries:
