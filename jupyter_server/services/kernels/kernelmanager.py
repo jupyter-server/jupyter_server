@@ -493,6 +493,7 @@ class MappingKernelManager(MultiKernelManager):
         # Re-establish activity watching if ports have changed...
         if self._get_changed_ports(kernel_id) is not None:
             self.stop_watching_activity(kernel_id)
+            self.execution_state = "starting"
             self.start_watching_activity(kernel_id)
         return future
 
