@@ -32,6 +32,7 @@ from ..services.kernels.kernelmanager import (
 )
 from ..services.sessions.sessionmanager import SessionManager
 from ..utils import url_path_join
+from .connections import GatewayWebSocketConnection
 from .gateway_client import GatewayClient, gateway_request
 
 if TYPE_CHECKING:
@@ -398,6 +399,7 @@ class GatewayKernelManager(ServerKernelManager):
 
     client_class = DottedObjectName("jupyter_server.gateway.managers.GatewayKernelClient")
     client_factory = Type(klass="jupyter_server.gateway.managers.GatewayKernelClient")
+    websocket_connection_class = GatewayWebSocketConnection
 
     # --------------------------------------------------------------------------
     # create a Client connected to our Kernel

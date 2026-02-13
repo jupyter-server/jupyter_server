@@ -42,6 +42,7 @@ from traitlets import (
     Integer,
     List,
     TraitError,
+    Type,
     Unicode,
     default,
     validate,
@@ -50,6 +51,8 @@ from traitlets import (
 from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH
 from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
+from jupyter_server.services.kernels.connection.base import BaseKernelWebsocketConnection
+from jupyter_server.services.kernels.connection.channels import ZMQChannelsWebsocketConnection
 from jupyter_server.utils import ApiPath, import_item, to_os_path
 
 
@@ -894,6 +897,14 @@ class ServerKernelManager(AsyncIOLoopKernelManager):
             except SchemaRegistryException:
                 pass
         return logger
+
+    websocket_connection_class = Type(
+        default_value=ZMQChannelsWebsocketConnection,
+        klass=BaseKernelWebsocketConnection,
+        help="""
+        The websocket connection class to use for this manager's kernels.
+        """,
+    ).tag(config=True)
 
     def emit(self, schema_id, data):
         """Emit an event from the kernel manager."""
