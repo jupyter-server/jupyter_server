@@ -740,7 +740,7 @@ class MappingKernelManager(MultiKernelManager):
 
 # AsyncMappingKernelManager inherits as much as possible from MappingKernelManager,
 # overriding only what is different.
-class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):  # type:ignore[misc]
+class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
     """An asynchronous mapping kernel manager."""
 
     @default("kernel_manager_class")

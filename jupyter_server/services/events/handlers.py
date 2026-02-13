@@ -60,7 +60,7 @@ class SubscribeWebsocket(
         capsule = dict(schema_id=schema_id, **data)
         self.write_message(json.dumps(capsule))
 
-    def open(self):
+    def open(self) -> None:  # type: ignore[override]
         """Routes events that are emitted by Jupyter Server's
         EventBus to a WebSocket client in the browser.
         """

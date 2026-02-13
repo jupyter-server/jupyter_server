@@ -879,8 +879,8 @@ class ServerApp(JupyterApp):
     )
     examples = _examples
 
-    flags = Dict(flags)  # type:ignore[assignment]
-    aliases = Dict(aliases)  # type:ignore[assignment]
+    flags = Dict(flags)
+    aliases = Dict(aliases)
 
     classes = [
         KernelManager,
@@ -2416,11 +2416,7 @@ class ServerApp(JupyterApp):
 
     def init_signal(self) -> None:
         """Initialize signal handlers."""
-        if (
-            not sys.platform.startswith("win")
-            and sys.stdin  # type:ignore[truthy-bool]
-            and sys.stdin.isatty()
-        ):
+        if not sys.platform.startswith("win") and sys.stdin and sys.stdin.isatty():
             signal.signal(signal.SIGINT, self._handle_sigint)
         signal.signal(signal.SIGTERM, self._signal_stop)
         if hasattr(signal, "SIGUSR1"):

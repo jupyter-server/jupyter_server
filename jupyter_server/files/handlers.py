@@ -48,7 +48,7 @@ class FilesHandler(JupyterHandler, web.StaticFileHandler):
 
     @web.authenticated
     @authorized
-    async def get(self, path, include_body=True):
+    async def get(self, path, include_body=True):  # type: ignore[override]
         """Get a file by path."""
         # /files/ requests must originate from the same site
         self.check_xsrf_cookie()
