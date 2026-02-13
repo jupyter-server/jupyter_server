@@ -103,7 +103,6 @@ from jupyter_server.base.handlers import (
 from jupyter_server.extension.config import ExtensionConfigManager
 from jupyter_server.extension.manager import ExtensionManager
 from jupyter_server.extension.serverextension import ServerExtensionApp
-from jupyter_server.gateway.connections import GatewayWebSocketConnection
 from jupyter_server.gateway.gateway_client import GatewayClient
 from jupyter_server.gateway.managers import (
     GatewayKernelSpecManager,
@@ -896,7 +895,6 @@ class ServerApp(JupyterApp):
         GatewayMappingKernelManager,
         GatewayKernelSpecManager,
         GatewaySessionManager,
-        GatewayWebSocketConnection,
         GatewayClient,
         Authorizer,
         EventLogger,
@@ -1644,8 +1642,6 @@ class ServerApp(JupyterApp):
     def _default_kernel_websocket_connection_class(
         self,
     ) -> t.Union[str, type[ZMQChannelsWebsocketConnection]]:
-        if self.gateway_config.gateway_enabled:
-            return "jupyter_server.gateway.connections.GatewayWebSocketConnection"
         return ZMQChannelsWebsocketConnection
 
     websocket_ping_interval = Integer(
