@@ -1632,8 +1632,6 @@ class ServerApp(JupyterApp):
 
     @default("session_manager_class")
     def _default_session_manager_class(self) -> t.Union[str, type[SessionManager]]:
-        if self.gateway_config.gateway_enabled:
-            return "jupyter_server.gateway.managers.GatewaySessionManager"
         return SessionManager
 
     kernel_websocket_connection_class = Type(
