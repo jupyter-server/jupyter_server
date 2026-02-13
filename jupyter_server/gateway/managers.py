@@ -31,6 +31,7 @@ from ..services.kernels.kernelmanager import (
     emit_kernel_action_event,
 )
 from ..services.sessions.sessionmanager import SessionManager
+from ..transutils import _i18n
 from ..utils import url_path_join
 from .connections import GatewayWebSocketConnection
 from .gateway_client import GatewayClient, gateway_request
@@ -212,6 +213,13 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         """Override cull_kernels, so we can be sure their state is current."""
         await self.list_kernels()
         await super().cull_kernels()
+
+    @property
+    def info(self):
+        return (
+            _i18n("\nKernels will be managed by the Gateway server running at:\n%s")
+            % self.kernels_url
+        )
 
 
 class GatewayKernelSpecManager(KernelSpecManager):

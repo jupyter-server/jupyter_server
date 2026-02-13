@@ -2871,11 +2871,8 @@ class ServerApp(JupyterApp):
         info += _i18n("Jupyter Server {version} is running at:\n{url}").format(
             version=ServerApp.version, url=self.display_url
         )
-        if self.gateway_config.gateway_enabled:
-            info += (
-                _i18n("\nKernels will be managed by the Gateway server running at:\n%s")
-                % self.gateway_config.url
-            )
+        if hasattr(self.kernel_manager, "info"):
+            info += self.kernel_manager.info
         return info
 
     def server_info(self) -> dict[str, t.Any]:
