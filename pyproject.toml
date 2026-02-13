@@ -171,7 +171,7 @@ unfixable = [
 [tool.pytest.ini_options]
 minversion = "6.0"
 xfail_strict = true
-log_cli_level = "info"
+log_cli_level = "debug"
 addopts = [
   "-ra", "--durations=10", "--color=yes", "--doctest-modules",
    "--showlocals", "--strict-markers", "--strict-config"
