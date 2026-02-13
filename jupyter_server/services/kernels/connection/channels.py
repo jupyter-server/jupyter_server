@@ -171,9 +171,9 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # establishing its zmq subscriptions before processing the next request.
         if getattr(self.kernel_manager, "execution_state", None) == "busy":
             self.log.debug("Nudge: not nudging busy kernel %s", self.kernel_id)
-            f: Future[t.Any] = Future()
+            f: asyncio.Future[t.Any] = asyncio.Future()
             f.set_result(None)
-            return _ensure_future(f)
+            return f
         # Use a transient shell channel to prevent leaking
         # shell responses to the front-end.
         shell_channel = self.kernel_manager.connect_shell()
@@ -190,11 +190,10 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                 execution_state = getattr(self.kernel_manager, "execution_state", None)
             self.log.debug("Nudge: %s execution_state=%s", self.kernel_id, execution_state)
 
-        info_future = asyncio.Future()
-        iopub_future = asyncio.Future()
+        info_future: asyncio.Future[t.Any] = asyncio.Future()
+        iopub_future: asyncio.Future[t.Any] = asyncio.Future()
         futures = [info_future, iopub_future]
-        if getattr(self.kernel_manager, "execution_state", None) != "starting":
-            futures.append(asyncio.ensure_future(wait_for_activity()))
+        futures.append(asyncio.ensure_future(wait_for_activity()))
         all_done = asyncio.ensure_future(asyncio.gather(*futures))
 
         def finish(_=None):
