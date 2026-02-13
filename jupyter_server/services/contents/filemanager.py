@@ -167,7 +167,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             self.log.error("Failed to check write permissions on %s", os_path)
             return False
 
-    def file_exists(self, path):
+    def file_exists(self, path: str) -> bool | t.Awaitable[bool]:
         """Returns True if the file exists, else returns False.
 
         API-style wrapper for os.path.isfile
@@ -1082,7 +1082,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         os_path = self._get_os_path(path=path)
         return os.path.isdir(os_path)
 
-    async def file_exists(self, path):
+    async def file_exists(self, path: str) -> bool:
         """Does a file exist at the given path"""
         path = path.strip("/")
         os_path = self._get_os_path(path)

@@ -84,6 +84,7 @@ docs = [
     "typing_extensions"
 ]
 
+
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
 
@@ -130,10 +131,6 @@ ensured-targets = [
 skip-if-exists = ["jupyter_server/static/style/bootstrap.min.css"]
 install-pre-commit-hook = true
 optional-editable-build = true
-
-[tool.hatch.envs.hatch-static-analysis]
-# keep this version in sync with pre-commit version
-dependencies = ["ruff==0.14.6"]
 
 [tool.ruff]
 line-length = 100
@@ -241,4 +238,9 @@ exclude = ["docs", "test"]
 ignore = ["W002"]
 
 [tool.repo-review]
-ignore = ["GH102", "PC111"]
+ignore = [
+  "GH102", # auto-cancel
+  "PC111", # blacken-docs
+  "PP006", # dependency-group, not ready yet
+  "PP304", # pytest log_level (breaks tests)
+]

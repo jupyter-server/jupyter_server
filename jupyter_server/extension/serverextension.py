@@ -310,7 +310,7 @@ class EnableServerExtensionApp(ToggleServerExtensionApp):
     Usage
         jupyter server extension enable [--system|--sys-prefix]
     """
-    _toggle_value = True  # type:ignore[assignment]
+    _toggle_value = True
     _toggle_pre_message = "enabling"
     _toggle_post_message = "enabled"
 
@@ -325,7 +325,7 @@ class DisableServerExtensionApp(ToggleServerExtensionApp):
     Usage
         jupyter server extension disable [--system|--sys-prefix]
     """
-    _toggle_value = False  # type:ignore[assignment]
+    _toggle_value = False
     _toggle_pre_message = "disabling"
     _toggle_post_message = "disabled"
 

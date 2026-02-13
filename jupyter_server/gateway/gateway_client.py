@@ -46,7 +46,7 @@ class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: igno
     """The metaclass necessary for proper ABC behavior in a Configurable."""
 
 
-class GatewayTokenRenewerBase(  # type:ignore[misc]
+class GatewayTokenRenewerBase(  # type:ignore[metaclass]
     ABC, LoggingConfigurable, metaclass=GatewayTokenRenewerMeta
 ):
     """
@@ -70,7 +70,7 @@ class GatewayTokenRenewerBase(  # type:ignore[misc]
         """
 
 
-class NoOpTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
+class NoOpTokenRenewer(GatewayTokenRenewerBase):
     """NoOpTokenRenewer is the default value to the GatewayClient trait
     `gateway_token_renewer` and merely returns the provided token.
     """
