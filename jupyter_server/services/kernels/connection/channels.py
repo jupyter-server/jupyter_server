@@ -276,10 +276,16 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         nudge_handle = loop.call_later(0, nudge, count=0)
 
         # resolve with a timeout if we get no response
-        future = asyncio.ensure_future(asyncio.wait_for(all_done, timeout=self.kernel_info_timeout))
-        # ensure we have no dangling resources or unresolved Futures in case of timeout
-        future.add_done_callback(finish)
-        return future
+        async def finish_nudge():
+            try:
+                await asyncio.wait_for(all_done, timeout=self.kernel_info_timeout)
+            except asyncio.CancelledError:
+                pass
+            finally:
+                # make sure everybody gets cancelled, just in case
+                finish()
+
+        return asyncio.ensure_future(finish_nudge())
 
     async def _register_session(self):
         """Ensure we aren't creating a duplicate session.
