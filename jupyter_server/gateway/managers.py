@@ -217,7 +217,7 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
     @property
     def info(self):
         return (
-            _i18n("\nKernels will be managed by the Gateway server running at:\n%s")
+            _i18n("Kernels will be managed by the Gateway server running at:\n%s")
             % self.kernels_url
         )
 
