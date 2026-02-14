@@ -21,6 +21,10 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):
     @property
     def kernel_websocket_connection_class(self):
         """The kernel websocket connection class."""
+        if self.kernel_manager and self.kernel_id:
+            kernel = self.kernel_manager.get_kernel(self.kernel_id)
+            if hasattr(kernel, "websocket_connection_class"):
+                return kernel.websocket_connection_class
         return self.settings.get("kernel_websocket_connection_class")
 
     def set_default_headers(self):
