@@ -110,6 +110,9 @@ from jupyter_server.gateway.managers import (
     GatewayMappingKernelManager,
     GatewaySessionManager,
 )
+from jupyter_server.gateway.v3.managers import (
+    GatewayMultiKernelManager,
+)
 from jupyter_server.log import log_request
 from jupyter_server.prometheus.metrics import (
     ACTIVE_DURATION,
@@ -130,6 +133,12 @@ from jupyter_server.services.kernels.connection.channels import ZMQChannelsWebso
 from jupyter_server.services.kernels.kernelmanager import (
     AsyncMappingKernelManager,
     MappingKernelManager,
+)
+from jupyter_server.services.kernels.v3.connection.client_connection import (
+    KernelClientWebsocketConnection,
+)
+from jupyter_server.services.kernels.v3.kernelmanager import (
+    AsyncMappingKernelManager as V3AsyncMappingKernelManager,
 )
 from jupyter_server.services.sessions.sessionmanager import SessionManager
 from jupyter_server.utils import (
@@ -829,6 +838,13 @@ flags["autoreload"] = (
     extensions.
     """,
 )
+flags["kernels-v3"] = (
+    {"ServerApp": {"kernels_api_version": 3}},
+    _i18n(
+        "Enable the next-generation kernel API (v3) with shared kernel clients, "
+        "improved message routing, and enhanced kernel monitoring."
+    ),
+)
 
 
 # Add notebook manager flags
@@ -901,6 +917,10 @@ class ServerApp(JupyterApp):
         Authorizer,
         EventLogger,
         ZMQChannelsWebsocketConnection,
+        # V3 Kernel API classes
+        V3AsyncMappingKernelManager,
+        KernelClientWebsocketConnection,
+        GatewayMultiKernelManager,
     ]
 
     subcommands: dict[str, t.Any] = {
@@ -1613,6 +1633,17 @@ class ServerApp(JupyterApp):
         help=_i18n("The content manager class to use."),
     )
 
+    kernels_api_version = Integer(
+        2,
+        config=True,
+        help=_i18n(
+            "Kernel API version to use. "
+            "Version 2 (default): Standard kernel API with direct ZMQ connections. "
+            "Version 3: Next-generation API with shared kernel clients, "
+            "improved message routing, and enhanced kernel monitoring."
+        ),
+    )
+
     kernel_manager_class = Type(
         klass=MappingKernelManager,
         config=True,
@@ -1621,7 +1652,17 @@ class ServerApp(JupyterApp):
 
     @default("kernel_manager_class")
     def _default_kernel_manager_class(self) -> t.Union[str, type[AsyncMappingKernelManager]]:
-        if self.gateway_config.gateway_enabled:
+        if self.kernels_api_version == 3:
+            gateway_enabled = getattr(self, "gateway_config", None) and getattr(
+                self.gateway_config, "gateway_enabled", False
+            )
+            if gateway_enabled:
+                return "jupyter_server.gateway.v3.managers.GatewayMultiKernelManager"
+            return "jupyter_server.services.kernels.v3.kernelmanager.AsyncMappingKernelManager"
+        gateway_enabled = getattr(self, "gateway_config", None) and getattr(
+            self.gateway_config, "gateway_enabled", False
+        )
+        if gateway_enabled:
             return "jupyter_server.gateway.managers.GatewayMappingKernelManager"
         return AsyncMappingKernelManager
 
@@ -1646,7 +1687,13 @@ class ServerApp(JupyterApp):
     def _default_kernel_websocket_connection_class(
         self,
     ) -> t.Union[str, type[ZMQChannelsWebsocketConnection]]:
-        if self.gateway_config.gateway_enabled:
+        if self.kernels_api_version == 3:
+            # V3 uses shared kernel client connection for both local and gateway
+            return "jupyter_server.services.kernels.v3.connection.client_connection.KernelClientWebsocketConnection"
+        gateway_enabled = getattr(self, "gateway_config", None) and getattr(
+            self.gateway_config, "gateway_enabled", False
+        )
+        if gateway_enabled:
             return "jupyter_server.gateway.connections.GatewayWebSocketConnection"
         return ZMQChannelsWebsocketConnection
 
