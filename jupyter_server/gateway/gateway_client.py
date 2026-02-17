@@ -34,6 +34,7 @@ from traitlets import (
 from traitlets.config import LoggingConfigurable, SingletonConfigurable
 
 from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH, JUPYTER_SERVER_EVENTS_URI
+from jupyter_server.utils import url_path_join
 
 ERROR_STATUS = "error"
 SUCCESS_STATUS = "success"
@@ -168,6 +169,18 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
             raise TraitError(message)
         return value
 
+    base_url = Unicode(
+        default_value="/",
+        config=True,
+        help="""The gateway API base_url for fixing default kernel endpoints""",
+    )
+
+    @observe("base_url")
+    def _base_url(self, change):
+        self.kernels_endpoint = self._kernels_endpoint_default()
+        self.kernelspecs_endpoint = self._kernelspecs_endpoint_default()
+        self.kernelspecs_resource_endpoint = self._kernelspecs_resource_endpoint_default()
+
     kernels_endpoint_default_value = "/api/kernels"
     kernels_endpoint_env = "JUPYTER_GATEWAY_KERNELS_ENDPOINT"
     kernels_endpoint = Unicode(
@@ -178,7 +191,10 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
     @default("kernels_endpoint")
     def _kernels_endpoint_default(self):
-        return os.environ.get(self.kernels_endpoint_env, self.kernels_endpoint_default_value)
+        return os.environ.get(
+            self.kernels_endpoint_env,
+            url_path_join(self.base_url, self.kernels_endpoint_default_value),
+        )
 
     kernelspecs_endpoint_default_value = "/api/kernelspecs"
     kernelspecs_endpoint_env = "JUPYTER_GATEWAY_KERNELSPECS_ENDPOINT"
@@ -191,7 +207,8 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
     @default("kernelspecs_endpoint")
     def _kernelspecs_endpoint_default(self):
         return os.environ.get(
-            self.kernelspecs_endpoint_env, self.kernelspecs_endpoint_default_value
+            self.kernelspecs_endpoint_env,
+            url_path_join(self.base_url, self.kernelspecs_endpoint_default_value),
         )
 
     kernelspecs_resource_endpoint_default_value = "/kernelspecs"
@@ -207,7 +224,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
     def _kernelspecs_resource_endpoint_default(self):
         return os.environ.get(
             self.kernelspecs_resource_endpoint_env,
-            self.kernelspecs_resource_endpoint_default_value,
+            url_path_join(self.base_url, self.kernelspecs_resource_endpoint_default_value),
         )
 
     connect_timeout_default_value = 40.0
