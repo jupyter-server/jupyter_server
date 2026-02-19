@@ -551,6 +551,7 @@ async def test_modified_date(jp_contents_manager):
 
 async def test_get(jp_contents_manager):
     cm = jp_contents_manager
+    cm.count_directory_items = True
     # Create a notebook
     model = await ensure_async(cm.new_untitled(type="notebook"))
     name = model["name"]
@@ -592,6 +593,7 @@ async def test_get(jp_contents_manager):
     assert isinstance(model2, dict)
     assert "name" in model2
     assert "path" in model2
+    assert "item_count" in model2
     assert "content" in model2
     assert model2["name"] == "Untitled.ipynb"
     assert model2["path"] == "{}/{}".format(sub_dir.strip("/"), name)
@@ -633,6 +635,7 @@ async def test_get(jp_contents_manager):
     for key, value in expected_model.items():
         assert file_model[key] == value
     assert "created" in file_model
+    assert "item_count" in file_model
     assert "last_modified" in file_model
     assert file_model["hash"]
 
@@ -641,8 +644,10 @@ async def test_get(jp_contents_manager):
     _make_dir(cm, "foo/bar")
     dirmodel = await ensure_async(cm.get("foo"))
     assert dirmodel["type"] == "directory"
+    assert "item_count" in dirmodel
     assert isinstance(dirmodel["content"], list)
     assert len(dirmodel["content"]) == 3
+    assert dirmodel["item_count"] == 3
     assert dirmodel["path"] == "foo"
     assert dirmodel["name"] == "foo"
 
@@ -651,6 +656,7 @@ async def test_get(jp_contents_manager):
     model2_no_content = await ensure_async(cm.get(sub_dir + name, content=False))
     file_model_no_content = await ensure_async(cm.get("foo/untitled.txt", content=False))
     sub_sub_dir_no_content = await ensure_async(cm.get("foo/bar", content=False))
+    assert "item_count" in model2_no_content
     assert sub_sub_dir_no_content["path"] == "foo/bar"
     assert sub_sub_dir_no_content["name"] == "bar"
 
