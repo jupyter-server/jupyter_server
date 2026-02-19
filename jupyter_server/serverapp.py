@@ -2377,9 +2377,7 @@ class ServerApp(JupyterApp):
         )
         return urlparts
 
-    @property
-    def public_url(self) -> str:
-        parts = self._get_urlparts(include_token=True)
+    def _customize_url(self, parts: type[urllib.parse.ParseResult]) -> urllib.parse.ParseResult:
         # Update with custom pieces.
         if self.custom_display_url:
             # Parse custom display_url
@@ -2388,6 +2386,12 @@ class ServerApp(JupyterApp):
             custom_updates = {key: item for key, item in custom.items() if item}
             # Update public URL parts with custom pieces.
             parts = parts._replace(**custom_updates)
+        return parts
+
+    @property
+    def public_url(self) -> str:
+        parts = self._get_urlparts(include_token=True)
+        parts = self._customize_url(parts)
         return parts.geturl()
 
     @property
@@ -2412,6 +2416,7 @@ class ServerApp(JupyterApp):
     @property
     def connection_url(self) -> str:
         urlparts = self._get_urlparts(path=self.base_url)
+        urlparts = self._customize_url(urlparts)
         return urlparts.geturl()
 
     def init_signal(self) -> None:
