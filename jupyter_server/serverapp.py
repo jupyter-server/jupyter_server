@@ -1638,6 +1638,11 @@ class ServerApp(JupyterApp):
     def _default_kernel_websocket_connection_class(
         self,
     ) -> t.Union[str, type[ZMQChannelsWebsocketConnection]]:
+        if issubclass(
+            self.kernel_manager_class,
+            RoutingMappingKernelManager,
+        ):
+            return "jupyter_server.services.kernels.routing.RoutingKernelManagerWebsocketConnection"
         return ZMQChannelsWebsocketConnection
 
     websocket_ping_interval = Integer(
@@ -1687,7 +1692,12 @@ class ServerApp(JupyterApp):
 
     @default("kernel_spec_manager_class")
     def _default_kernel_spec_manager_class(self) -> t.Union[str, type[KernelSpecManager]]:
-        return RoutingKernelSpecManager
+        if issubclass(
+            self.kernel_manager_class,
+            RoutingMappingKernelManager,
+        ):
+            return RoutingKernelSpecManager
+        return KernelSpecManager
 
     login_handler_class = Type(
         default_value=LoginHandler,

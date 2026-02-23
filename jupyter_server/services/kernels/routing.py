@@ -93,30 +93,37 @@ class AsyncRoutingKernelSpecManager(KernelSpecManager):
 
     @property
     def primary_manager(self):
-        if hasattr(self.parent.kernel_manager, "routing_provider"):
-            return self.parent.kernel_manager.routing_provider.primary_manager
+        # This kernelspec manager can only be used when the corresponding kernel
+        # manager can tell us how to route requests to the nested managers.
+        assert hasattr(self.parent.kernel_manager, "routing_provider")
 
-        # This happens if the server administrator configured just the kernel_manager_class
-        # while leaving the kernel_spec_manager_class as the default.
-        # In that case we want this class to just pass through to the kernel manager's
-        # nested kernelspec manager.
-        km = self.parent.kernel_manager
+        km = self.parent.kernel_manager.routing_provider.primary_manager
 
-        # On the odd chance that an administrator explicitly configured a non
-        # RoutingKernelManager with an instance of AsyncRoutingKernelSpecManager as
-        # its nested `kernel_spec_manager`, all attempts to list or get kernelspecs
-        # will result in an infinite loop.
+        # On the odd chance that an administrator explicitly configured a routing
+        # provider with a nested routing kernelspec manager, all attempts to list
+        # or get kernelspecs will result in an infinite loop.
         #
         # Accordingly, we use an assert to catch this early.
-        assert not isinstance(km, AsyncRoutingKernelSpecManager)
+        assert not isinstance(km.kernel_spec_manager, AsyncRoutingKernelSpecManager)
 
         return km
 
     @property
     def additional_managers(self):
-        if hasattr(self.parent.kernel_manager, "routing_provider"):
-            return self.parent.kernel_manager.routing_provider.additional_managers
-        return []
+        # This kernelspec manager can only be used when the corresponding kernel
+        # manager can tell us how to route requests to the nested managers.
+        assert hasattr(self.parent.kernel_manager, "routing_provider")
+
+        kms = self.parent.kernel_manager.routing_provider.additional_managers
+
+        # Similarly to the `primary_manager` property, we want to ensure that
+        # none of the nested kernelspec managers are instances of this same class,
+        # in order to prevent infinite loops and to catch the configuration
+        # issues that could cause such loops early.
+        for km in kms:
+            assert not isinstance(km.kernel_spec_manager, AsyncRoutingKernelSpecManager)
+
+        return kms
 
     spec_to_manager_map = Dict(key_trait=Unicode(), value_trait=Instance(AsyncMappingKernelManager))
 
@@ -229,6 +236,11 @@ class RoutingKernelManager(ServerKernelManager):
         if not self.kernel_id:
             return False
         return self.wrapped_kernel_manager.has_kernel
+
+    async def is_alive(self):
+        if not self.has_kernel:
+            return False
+        return await self.wrapped_kernel_manager.is_alive()
 
     def client(self, *args, **kwargs):
         if not self.kernel_id:
