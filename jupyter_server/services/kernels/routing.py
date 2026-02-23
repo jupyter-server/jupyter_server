@@ -96,6 +96,7 @@ class AsyncRoutingKernelSpecManager(KernelSpecManager):
         # manager can tell us how to route requests to the nested managers.
         assert self.parent is not None
         assert hasattr(self.parent.kernel_manager, "routing_provider")
+        assert isinstance(self.parent.kernel_manager.routing_provider, RoutingProvider)
 
         km = self.parent.kernel_manager.routing_provider.primary_manager
 
@@ -129,7 +130,9 @@ class AsyncRoutingKernelSpecManager(KernelSpecManager):
     spec_to_manager_map = Dict(key_trait=Unicode(), value_trait=Instance(AsyncMappingKernelManager))
 
     async def get_all_specs(self):
-        ks = await ensure_async(self.primary_manager.kernel_spec_manager.get_all_specs())
+        ksm = self.primary_manager.kernel_spec_manager
+        assert ksm is not None
+        ks = await ensure_async(ksm.get_all_specs())
         for spec_name, _spec in ks.items():
             self.spec_to_manager_map[spec_name] = self.primary_manager
         for additional_manager in self.additional_managers:
@@ -143,23 +146,27 @@ class AsyncRoutingKernelSpecManager(KernelSpecManager):
         return ks
 
     def get_mapping_kernel_manager(self, kernel_name: str) -> AsyncMappingKernelManager:
-        km = self.spec_to_manager_map.get(kernel_name, None)
-        if km is None:
-            return self.primary_manager
+        km = self.spec_to_manager_map.get(kernel_name, None) or self.primary_manager
         return km
 
     async def get_kernel_spec(self, kernel_name, **kwargs):
         wrapped_manager = self.get_mapping_kernel_manager(kernel_name).kernel_spec_manager
+        assert wrapped_manager is not None
+
         return ensure_async(wrapped_manager.get_kernel_spec(kernel_name, **kwargs))
 
     async def get_kernel_spec_resource(self, kernel_name, path):
         wrapped_manager = self.get_mapping_kernel_manager(kernel_name).kernel_spec_manager
+        assert wrapped_manager is not None
+
         if hasattr(wrapped_manager, "get_kernel_spec_resource"):
             return await ensure_async(wrapped_manager.get_kernel_spec_resource(kernel_name, path))
         return None
 
     def is_remote(self, kernel_name):
         wrapped_manager = self.get_mapping_kernel_manager(kernel_name).kernel_spec_manager
+        assert wrapped_manager is not None
+
         return isinstance(wrapped_manager, GatewayKernelSpecManager)
 
 
@@ -215,10 +222,12 @@ class RoutingKernelManager(ServerKernelManager):
     def is_remote(self):
         if not self.kernel_name or not self.kernel_id:
             return False
+        assert self.parent is not None
         return self.parent.kernel_spec_manager.is_remote(self.kernel_name)
 
     @property
     def wrapped_multi_kernel_manager(self):
+        assert self.parent is not None
         return self.parent.kernel_spec_manager.get_mapping_kernel_manager(self.kernel_name)
 
     @property
