@@ -46,6 +46,12 @@ class RoutingProvider(LoggingConfigurable):
 
     info = Unicode("")
 
+    @default("info")
+    def _default_info(self):
+        if hasattr(self.primary_manager, "info"):
+            return self.primary_manager.info
+        return ""
+
 
 class RemoteOnlyRoutingProvider(RoutingProvider):
     @default("primary_manager")
@@ -56,13 +62,6 @@ class RemoteOnlyRoutingProvider(RoutingProvider):
             log=self.log,
             connection_dir=self.connection_dir,
             kernel_spec_manager=ksm,
-        )
-
-    @default("info")
-    def _default_info(self):
-        return (
-            _i18n("\nKernels will be managed by the Gateway server running at:\n%s")
-            % self.gateway_config.url
         )
 
 
@@ -92,9 +91,10 @@ class AsyncRoutingKernelSpecManager(KernelSpecManager):
     """
 
     @property
-    def primary_manager(self):
+    def primary_manager(self) -> AsyncMappingKernelManager:
         # This kernelspec manager can only be used when the corresponding kernel
         # manager can tell us how to route requests to the nested managers.
+        assert self.parent is not None
         assert hasattr(self.parent.kernel_manager, "routing_provider")
 
         km = self.parent.kernel_manager.routing_provider.primary_manager
@@ -112,6 +112,7 @@ class AsyncRoutingKernelSpecManager(KernelSpecManager):
     def additional_managers(self):
         # This kernelspec manager can only be used when the corresponding kernel
         # manager can tell us how to route requests to the nested managers.
+        assert self.parent is not None
         assert hasattr(self.parent.kernel_manager, "routing_provider")
 
         kms = self.parent.kernel_manager.routing_provider.additional_managers
@@ -198,7 +199,7 @@ class RoutingKernelManagerWebsocketConnection(BaseKernelWebsocketConnection):
         """Broker the incoming websocket message to the appropriate ZMQ channel."""
         self.wrapped.handle_incoming_message(incoming_msg)
 
-    def handle_outgoing_message(self, stream: str, outgoing_msg: list) -> None:
+    def handle_outgoing_message(self, stream: str, outgoing_msg: list[t.Any]) -> None:
         """Broker outgoing ZMQ messages to the kernel websocket."""
         self.wrapped.handle_outgoing_message(stream, outgoing_msg)
 
@@ -227,8 +228,8 @@ class RoutingKernelManager(ServerKernelManager):
         wrapped_kernel_id = RoutingKernelManager.kernel_id_map.get(self.kernel_id, self.kernel_id)
         return self.wrapped_multi_kernel_manager.get_kernel(wrapped_kernel_id)
 
-    @property
-    def websocket_connection_class(self):
+    @default("websocket_connection_class")
+    def _default_websocket_connection_class(self):
         return RoutingKernelManagerWebsocketConnection
 
     @property
