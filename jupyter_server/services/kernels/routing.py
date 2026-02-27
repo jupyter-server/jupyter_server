@@ -146,7 +146,9 @@ class AsyncRoutingKernelSpecManager(KernelSpecManager):
         return ks
 
     def get_mapping_kernel_manager(self, kernel_name: str) -> AsyncMappingKernelManager:
-        km = self.spec_to_manager_map.get(kernel_name, None) or self.primary_manager
+        km = self.spec_to_manager_map.get(kernel_name, None)
+        if km is None:
+            return self.primary_manager
         return km
 
     async def get_kernel_spec(self, kernel_name, **kwargs):
