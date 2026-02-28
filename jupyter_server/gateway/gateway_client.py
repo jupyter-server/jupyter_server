@@ -46,7 +46,7 @@ class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: igno
     """The metaclass necessary for proper ABC behavior in a Configurable."""
 
 
-class GatewayTokenRenewerBase(  # type:ignore[misc]
+class GatewayTokenRenewerBase(  # type:ignore[metaclass]
     ABC, LoggingConfigurable, metaclass=GatewayTokenRenewerMeta
 ):
     """
@@ -70,7 +70,7 @@ class GatewayTokenRenewerBase(  # type:ignore[misc]
         """
 
 
-class NoOpTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
+class NoOpTokenRenewer(GatewayTokenRenewerBase):
     """NoOpTokenRenewer is the default value to the GatewayClient trait
     `gateway_token_renewer` and merely returns the provided token.
     """
@@ -534,7 +534,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         return bool(self.url is not None and len(self.url) > 0)
 
     # Ensure KERNEL_LAUNCH_TIMEOUT has a default value.
-    KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", 40))
+    KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", "40"))
 
     _connection_args: dict[str, ty.Any]  # initialized on first use
 

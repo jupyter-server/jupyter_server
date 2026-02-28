@@ -774,9 +774,9 @@ async def test_websocket_connection_with_session_id(init_gateway, jp_serverapp, 
         expected_ws_url = (
             f"{mock_gateway_ws_url}/api/kernels/{kernel_id}/channels?session_id={conn.session_id}"
         )
-        assert (
-            expected_ws_url in caplog.text
-        ), "WebSocket URL does not contain the expected session_id."
+        assert expected_ws_url in caplog.text, (
+            "WebSocket URL does not contain the expected session_id."
+        )
 
         # Processing websocket messages happens in separate coroutines and any
         # errors in that process will show up in logs, but not bubble up to the

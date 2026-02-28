@@ -146,6 +146,11 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
     def handle_incoming_message(self, message: str) -> None:
         """Send message to gateway server."""
         if self.ws is None and self.ws_future is not None:
+            if self.ws_future.done() and self.ws_future.exception() is not None:
+                self.log.warning(
+                    "Ignoring message on failed connection to kernel %s", self.kernel_id
+                )
+                return
             loop = IOLoop.current()
             loop.add_future(self.ws_future, lambda future: self.handle_incoming_message(message))
         else:

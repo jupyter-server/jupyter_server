@@ -72,6 +72,7 @@ docs = [
     "prometheus_client",
     "pydata_sphinx_theme",
     "Send2Trash",
+    "sphinx<9.0",
     "sphinxcontrib-openapi>=0.8.0",
     "sphinxcontrib_github_alt",
     "sphinxcontrib-spelling",
@@ -82,6 +83,7 @@ docs = [
     # missing typing_extensions
     "typing_extensions"
 ]
+
 
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
@@ -137,7 +139,7 @@ line-length = 100
 docstring-code-format = true
 
 [tool.ruff.lint]
-ignore = ["ARG", "TRY", "RUF012", "TID252", "G", "INP001", "E402", "F401", "BLE001"]
+ignore = ["ARG", "TRY", "RUF012", "TID252", "G", "INP001", "E402", "F401", "BLE001", "UP045", "PLC0415"]
 extend-select = [
   "B",  # flake8-bugbear
   "I",  # isort
@@ -158,14 +160,15 @@ unfixable = [
                       "SIM105", "A001", "UP007", "PLR2004", "T201", "N818", "F403"]
 "jupyter_server/gateway/*" = ["TCH" ]
 "tests/*" = ["UP031", "PT", 'EM', "TRY", "RET", "SLF", "C408", "F841", "FBT", "A002", "FLY", "N",
-            "PERF", "ASYNC", "T201", "FA100", "E711", "INP", "TCH", "SIM105", "A001", "PLW0603"]
+            "PERF", "ASYNC", "T201", "FA100", "E711", "INP", "TCH", "SIM105", "A001", "PLW0603",
+            "RUF059"]
 "examples/*_config.py" = ["F821"]
 "examples/*" = ["N815"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
 xfail_strict = true
-log_cli_level = "info"
+log_cli_level = "debug"
 addopts = [
   "-ra", "--durations=10", "--color=yes", "--doctest-modules",
    "--showlocals", "--strict-markers", "--strict-config"
@@ -235,4 +238,9 @@ exclude = ["docs", "test"]
 ignore = ["W002"]
 
 [tool.repo-review]
-ignore = ["GH102", "PC111"]
+ignore = [
+  "GH102", # auto-cancel
+  "PC111", # blacken-docs
+  "PP006", # dependency-group, not ready yet
+  "PP304", # pytest log_level (breaks tests)
+]

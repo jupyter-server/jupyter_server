@@ -41,7 +41,6 @@ class CallContext:
             The value associated with the named variable for this call context
         """
         name_value_map = CallContext._get_map()
-
         if name in name_value_map:
             return name_value_map[name]
         return None  # TODO: should this raise `LookupError` (or a custom error derived from said)
@@ -61,8 +60,9 @@ class CallContext:
         -------
         None
         """
-        name_value_map = CallContext._get_map()
+        name_value_map = CallContext._get_map().copy()
         name_value_map[name] = value
+        CallContext._name_value_map.set(name_value_map)
 
     @classmethod
     def context_variable_names(cls) -> list[str]:

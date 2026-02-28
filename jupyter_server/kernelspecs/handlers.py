@@ -19,17 +19,17 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
     SUPPORTED_METHODS = ("GET", "HEAD")
     auth_resource = AUTH_RESOURCE
 
-    def initialize(self):
+    def initialize(self) -> None:  # type: ignore[override]
         """Initialize a kernelspec resource handler."""
         web.StaticFileHandler.initialize(self, path="")
 
     @web.authenticated
     @authorized
-    async def get(self, kernel_name, path, include_body=True):
+    async def get(self, kernel_name: str, path: str, include_body: bool = True):  # type: ignore[override]
         """Get a kernelspec resource."""
         ksm = self.kernel_spec_manager
         if path.lower().endswith(".png"):
-            self.set_header("Cache-Control", f"max-age={60*60*24*30}")
+            self.set_header("Cache-Control", f"max-age={60 * 60 * 24 * 30}")
         ksm = self.kernel_spec_manager
         if hasattr(ksm, "get_kernel_spec_resource"):
             # If the kernel spec manager defines a method to get kernelspec resources,
@@ -58,7 +58,7 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
 
     @web.authenticated
     @authorized
-    async def head(self, kernel_name, path):
+    async def head(self, kernel_name: str, path: str) -> None:  # type: ignore[override]
         """Get the head info for a kernel resource."""
         return await ensure_async(self.get(kernel_name, path, include_body=False))
 

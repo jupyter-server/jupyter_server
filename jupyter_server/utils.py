@@ -10,7 +10,6 @@ import os
 import socket
 import sys
 import warnings
-from _frozen_importlib_external import _NamespacePath
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NewType
@@ -146,8 +145,7 @@ def to_api_path(os_path: str, root: str = "") -> ApiPath:
     If given, root will be removed from the path.
     root must be a filesystem path already.
     """
-    if os_path.startswith(root):
-        os_path = os_path[len(root) :]
+    os_path = os_path.removeprefix(root)
     parts = os_path.strip(os.path.sep).split(os.path.sep)
     parts = [p for p in parts if p != ""]  # remove duplicate splits
     path = "/".join(parts)
@@ -339,7 +337,7 @@ def is_namespace_package(namespace: str) -> bool | None:
     if not spec:
         # e.g. module not installed
         return None
-    return isinstance(spec.submodule_search_locations, _NamespacePath)
+    return bool(spec.origin is None and spec.submodule_search_locations)
 
 
 def filefind(filename: str, path_dirs: Sequence[str]) -> str:

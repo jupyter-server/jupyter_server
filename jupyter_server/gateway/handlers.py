@@ -94,7 +94,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
         self.ping(b"")
 
-    def open(self, kernel_id, *args, **kwargs):
+    def open(self, kernel_id: str, *args, **kwargs) -> None:  # type: ignore[override]
         """Handle web socket connection open to notebook server and delegate to gateway web socket handler"""
         self.ping_callback = PeriodicCallback(self.send_ping, GATEWAY_WS_PING_INTERVAL_SECS * 1000)
         self.ping_callback.start()

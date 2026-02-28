@@ -202,7 +202,7 @@ def test_shutdown_server(jp_environ):
     servers = []
     while 1:
         servers = list(list_running_servers())
-        if len(servers):
+        if servers:
             break
         time.sleep(0.1)
     while 1:
@@ -227,7 +227,7 @@ def test_jupyter_server_apps(jp_environ):
     servers = []
     while 1:
         servers = list(list_running_servers())
-        if len(servers):
+        if servers:
             break
         time.sleep(0.1)
 

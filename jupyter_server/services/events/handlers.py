@@ -60,7 +60,7 @@ class SubscribeWebsocket(
         capsule = dict(schema_id=schema_id, **data)
         self.write_message(json.dumps(capsule))
 
-    def open(self):
+    def open(self) -> None:  # type: ignore[override]
         """Routes events that are emitted by Jupyter Server's
         EventBus to a WebSocket client in the browser.
         """
@@ -81,12 +81,12 @@ def validate_model(
         if key not in data:
             message = f"Missing `{key}` in the JSON request body."
             raise Exception(message)
-    schema_id = cast(str, data.get("schema_id"))
+    schema_id = cast("str", data.get("schema_id"))
     # The case where a given schema_id isn't found,
     # jupyter_events raises a useful error, so there's no need to
     # handle that case here.
     schema = registry.get(schema_id)
-    version = str(cast(str, data.get("version")))
+    version = str(cast("str", data.get("version")))
     if schema.version != version:
         message = f"Unregistered version: {version!r}≠{schema.version!r} for `{schema_id}`"
         raise Exception(message)
@@ -126,7 +126,7 @@ class EventHandler(APIHandler):
         try:
             validate_model(payload, self.event_logger.schemas)
             self.event_logger.emit(
-                schema_id=cast(str, payload.get("schema_id")),
+                schema_id=cast("str", payload.get("schema_id")),
                 data=cast("dict[str, Any]", payload.get("data")),
                 timestamp_override=get_timestamp(payload),
             )
