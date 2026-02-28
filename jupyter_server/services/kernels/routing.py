@@ -193,6 +193,10 @@ class RoutingKernelManagerWebsocketConnection(BaseKernelWebsocketConnection):
             parent=km, websocket_handler=self.websocket_handler, config=self.config
         )
 
+    @property
+    def kernel_ws_protocol(self):
+        return self.wrapped.kernel_ws_protocol
+
     async def connect(self):
         """Connect the kernel websocket to the kernel ZMQ connections"""
         return await self.wrapped.connect()
