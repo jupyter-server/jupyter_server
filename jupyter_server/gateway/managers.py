@@ -8,6 +8,7 @@ import asyncio
 import datetime
 import json
 import os
+import warnings
 from queue import Empty, Queue
 from threading import Thread
 from time import monotonic
@@ -30,7 +31,9 @@ from ..services.kernels.kernelmanager import (
     emit_kernel_action_event,
 )
 from ..services.sessions.sessionmanager import SessionManager
+from ..transutils import _i18n
 from ..utils import url_path_join
+from .connections import GatewayWebSocketConnection
 from .gateway_client import GatewayClient, gateway_request
 
 if TYPE_CHECKING:
@@ -211,6 +214,13 @@ class GatewayMappingKernelManager(AsyncMappingKernelManager):
         await self.list_kernels()
         await super().cull_kernels()
 
+    @property
+    def info(self):
+        return (
+            _i18n("\nKernels will be managed by the Gateway server running at:\n%s")
+            % self.kernels_url
+        )
+
 
 class GatewayKernelSpecManager(KernelSpecManager):
     """A gateway kernel spec manager."""
@@ -359,22 +369,13 @@ class GatewaySessionManager(SessionManager):
 
     kernel_manager = Instance("jupyter_server.gateway.managers.GatewayMappingKernelManager")
 
-    async def kernel_culled(self, kernel_id: str) -> bool:  # typing: ignore
-        """Checks if the kernel is still considered alive and returns true if it's not found."""
-        km: Optional[GatewayKernelManager] = None
-        try:
-            # Since we keep the models up-to-date via client polling, use that state to determine
-            # if this kernel no longer exists on the gateway server rather than perform a redundant
-            # fetch operation - especially since this is called at approximately the same interval.
-            # This has the effect of reducing GET /api/kernels requests against the gateway server
-            # by 50%!
-            # Note that should the redundant polling be consolidated, or replaced with an event-based
-            # notification model, this will need to be revisited.
-            km = self.kernel_manager.get_kernel(kernel_id)
-        except Exception:
-            # Let exceptions here reflect culled kernel
-            pass
-        return km is None
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        warnings.warn(
+            "The GatewaySessionManager class is deprecated and will not be supported in Jupyter Server 3.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
 
 class GatewayKernelManager(ServerKernelManager):
@@ -406,6 +407,7 @@ class GatewayKernelManager(ServerKernelManager):
 
     client_class = DottedObjectName("jupyter_server.gateway.managers.GatewayKernelClient")
     client_factory = Type(klass="jupyter_server.gateway.managers.GatewayKernelClient")
+    websocket_connection_class = GatewayWebSocketConnection
 
     # --------------------------------------------------------------------------
     # create a Client connected to our Kernel
