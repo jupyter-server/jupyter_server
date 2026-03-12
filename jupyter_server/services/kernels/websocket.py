@@ -45,9 +45,14 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):
             raise web.HTTPError(403)
 
         kernel = self.kernel_manager.get_kernel(self.kernel_id)
-        self.connection = self.kernel_websocket_connection_class(
-            parent=kernel, websocket_handler=self, config=self.config
-        )
+        if hasattr(kernel, "create_websocket_connection"):
+            self.connection = kernel.create_websocket_connection(
+                websocket_handler=self, config=self.config
+            )
+        else:
+            self.connection = self.kernel_websocket_connection_class(
+                parent=kernel, websocket_handler=self, config=self.config
+            )
 
         if self.get_argument("session_id", None):
             self.connection.session.session = self.get_argument("session_id")

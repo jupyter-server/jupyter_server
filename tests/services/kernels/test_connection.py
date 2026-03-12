@@ -20,7 +20,10 @@ async def test_websocket_connection(jp_serverapp: ServerApp) -> None:
     handler = KernelWebsocketHandler(app.web_app, request)
     handler.ws_connection = MagicMock()
     handler.ws_connection.is_closing = lambda: False
-    conn = ZMQChannelsWebsocketConnection(parent=kernel, websocket_handler=handler)
+    if hasattr(kernel, "create_websocket_connection"):
+        conn = kernel.create_websocket_connection(websocket_handler=handler, config=None)
+    else:
+        conn = ZMQChannelsWebsocketConnection(parent=kernel, websocket_handler=handler)
     handler.connection = conn
     await conn.prepare()
     conn.connect()

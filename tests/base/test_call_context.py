@@ -7,7 +7,7 @@ from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
 
 
-async def test_jupyter_handler_contextvar(jp_fetch, monkeypatch):
+async def test_jupyter_handler_contextvar(jp_serverapp, jp_fetch, monkeypatch):
     # Create some mock kernel Ids
     kernel1 = "x-x-x-x-x"
     kernel2 = "y-y-y-y-y"
@@ -45,7 +45,7 @@ async def test_jupyter_handler_contextvar(jp_fetch, monkeypatch):
         context_tracker[kernel_id]["ended"] = current.current_user
         return {"id": kernel_id, "name": "blah"}
 
-    monkeypatch.setattr(AsyncMappingKernelManager, "kernel_model", kernel_model)
+    monkeypatch.setattr(jp_serverapp.kernel_manager.__class__, "kernel_model", kernel_model)
 
     # Make two requests in parallel.
     await asyncio.gather(
