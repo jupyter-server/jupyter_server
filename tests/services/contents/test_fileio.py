@@ -279,3 +279,23 @@ async def test_AsyncFileManagerMixin_read_file_no_raw(tmpdir):
     answer = await mixin._read_file(file_path, "text")
 
     assert len(answer) == 2
+
+
+# CVE-2026-35397 : Path traversal via incorrect startswith() root directory check
+# allows access to sibling directories
+def test_path_traversal_when_sibling_dir_starts_with_root_dir(tmpdir):
+    class FileManagerMixinTest(FileManagerMixin):
+        root_dir = tmpdir / "test"
+
+    # testtest starts with test, which was what allowed access to the sibling directory
+    victim_file_path = tmpdir / "testtest/secret.txt"
+    victim_file_path.write_text("secret_file_content", "utf8", ensure=True)
+
+    mixin = FileManagerMixinTest()
+    mixin.log = logging.getLogger()
+
+    with pytest.raises(HTTPError) as err:
+        mixin._get_os_path("../testtest/secret.txt")
+
+    assert err.value.status_code == 404
+    assert "outside root contents directory" in str(err.value)
