@@ -737,13 +737,26 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         """The session id."""
         return self.session.session
 
-    def __init__(self, **kwargs):
+    def __init__(self, kernel_id=None, **kwargs):
         """Initialize a gateway kernel client."""
         super().__init__(**kwargs)
         self.channel_socket: Optional[websocket.WebSocket] = None
         self.response_router: Optional[Thread] = None
         self._channels_stopped = False
         self._channel_queues = {}
+        if kernel_id is not None:
+            self.log.warn(
+                "Passing 'kernel_id' to GatewayKernelClient is deprecated. Set 'ws_url' instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if self.ws_url is None:
+                self.ws_url = url_path_join(
+                    GatewayClient.instance().ws_url or "",
+                    GatewayClient.instance().kernels_endpoint,
+                    url_escape(kernel_id),
+                    "channels",
+                )
 
     def add_session_param(self, ws_url):
         if not self.session_id:
@@ -883,6 +896,8 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
             return False
 
         # Don't reconnect if kernel is not alive
+        # Use asyncio.run() since this is called from a non-main thread
+        # that doesn't have an event loop.
         return asyncio.run(self.is_alive())
 
     def _reconnect_socket(self) -> bool:
