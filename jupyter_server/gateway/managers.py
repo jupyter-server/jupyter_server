@@ -623,9 +623,9 @@ class ChannelQueue(Queue):  # type:ignore[type-arg]
                 return self.get(block=False)
             except Empty:
                 if self.response_router_finished:
-                    msg = "Response router had finished"
-                    # TODO throw dedicated Exception for the caller to react on it.
-                    raise RuntimeError(msg) from None
+                    raise GatewayResponseRouterFinished(
+                        f"Response router for {self.channel_name} channel has finished"
+                    ) from None
                 if monotonic() > end_time:
                     raise TimeoutError(f"{self.channel_name} async_get timeout") from None
                 await asyncio.sleep(0)
@@ -745,7 +745,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         self._channels_stopped = False
         self._channel_queues = {}
         if kernel_id is not None:
-            self.log.warn(
+            self.log.warning(
                 "Passing 'kernel_id' to GatewayKernelClient is deprecated. Set 'ws_url' instead.",
                 DeprecationWarning,
                 stacklevel=2,
@@ -1028,3 +1028,18 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
 
 KernelClientABC.register(GatewayKernelClient)
+
+
+class GatewayResponseRouterFinished(Exception):
+    """Raised when the gateway WebSocket response router has exited.
+
+    This occurs when the response router thread stops routing messages,
+    typically because:
+    - The WebSocket reconnection attempts were exhausted
+    - The kernel was terminated on the gateway
+    - The channels were intentionally stopped
+
+    Callers can catch this to distinguish a dead gateway connection
+    from other runtime errors and take appropriate action
+    (e.g. marking the kernel as dead, notifying the frontend).
+    """
