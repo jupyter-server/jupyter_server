@@ -745,7 +745,9 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         self._channels_stopped = False
         self._channel_queues = {}
         if kernel_id is not None:
-            self.log.warning(
+            import warnings
+
+            warnings.warn(
                 "Passing 'kernel_id' to GatewayKernelClient is deprecated. Set 'ws_url' instead.",
                 DeprecationWarning,
                 stacklevel=2,
