@@ -2672,8 +2672,19 @@ class ServerApp(JupyterApp):
 
     def _bind_http_server_tcp(self) -> bool:
         """Bind a tcp server."""
-        self.http_server.listen(self.port, self.ip)
-        return True
+        try:
+            self.http_server.listen(self.port, self.ip)
+        except OSError as e:
+            if e.errno == errno.EADDRINUSE:
+                self.log.warning(_i18n("The port %i is already in use.") % self.port)
+                return False
+            elif e.errno in (errno.EACCES, getattr(errno, "WSAEACCES", errno.EACCES)):
+                self.log.warning(_i18n("Permission to listen on port %i denied.") % self.port)
+                return False
+            else:
+                raise
+        else:
+            return True
 
     def _find_http_port(self) -> None:
         """Find an available http port."""
