@@ -278,19 +278,21 @@ for a more complete example.
 
 Testing
 -------
-.. currentmodule:: jupyter_server.services.contents.tests
 
-:mod:`jupyter_server.services.contents.tests` includes several test suites written
-against the abstract Contents API.  This means that an excellent way to test a
-new ContentsManager subclass is to subclass our tests to make them use your
-ContentsManager.
+Jupyter Server's ContentsManager test suites live in the
+`tests/services/contents <https://github.com/jupyter-server/jupyter_server/tree/main/tests/services/contents>`_
+directory in the source repository rather than in an importable
+``jupyter_server.services.contents.tests`` module. This means that an
+excellent way to test a new ``ContentsManager`` subclass is to copy or adapt
+the relevant tests from the repository so that they use your
+``ContentsManager`` implementation.
 
 .. note::
 
-   PGContents_ is an example of a complete implementation of a custom
-   ``ContentsManager``.  It stores notebooks and files in PostgreSQL_ and encodes
-   directories as SQL relations.  PGContents also provides an example of how to
-   reuse the notebook's tests.
+    PGContents_ is an example of a complete implementation of a custom
+    ``ContentsManager``. It stores notebooks and files in PostgreSQL_, encodes
+    directories as SQL relations, and shows how to adapt Jupyter Server's tests
+    for a custom backend.
 
 .. _NBFormat: https://nbformat.readthedocs.io/en/latest/index.html
 .. _PGContents: https://github.com/quantopian/pgcontents
