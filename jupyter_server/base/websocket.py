@@ -1,6 +1,5 @@
 """Base websocket classes."""
 
-import re
 import warnings
 from typing import Optional, no_type_check
 from urllib.parse import urlparse
@@ -72,7 +71,7 @@ class WebSocketMixin:
         if self.allow_origin:
             allow = self.allow_origin == origin
         elif self.allow_origin_pat:
-            allow = bool(re.match(self.allow_origin_pat, origin))
+            allow = self._origin_matches_pat(origin)
         else:
             # No CORS headers deny the request
             allow = False
