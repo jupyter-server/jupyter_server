@@ -438,9 +438,16 @@ def test_gateway_request_with_expiring_cookies(
 
 async def test_gateway_class_mappings(init_gateway, jp_serverapp):
     # Ensure appropriate class mappings are in place.
-    assert jp_serverapp.kernel_manager_class.__name__ == "GatewayMappingKernelManager"
-    assert jp_serverapp.session_manager_class.__name__ == "GatewaySessionManager"
-    assert jp_serverapp.kernel_spec_manager_class.__name__ == "GatewayKernelSpecManager"
+    assert jp_serverapp.kernel_manager_class.__name__ == "RoutingMappingKernelManager"
+    assert (
+        jp_serverapp.session_manager.kernel_manager.__class__.__name__
+        == "RoutingMappingKernelManager"
+    )
+    assert jp_serverapp.kernel_spec_manager_class.__name__ == "RoutingKernelSpecManager"
+
+    primary_manager = jp_serverapp.kernel_manager.routing_provider.primary_manager
+    assert primary_manager.__class__.__name__ == "GatewayMappingKernelManager"
+    assert primary_manager.kernel_spec_manager.__class__.__name__ == "GatewayKernelSpecManager"
 
 
 async def test_gateway_get_kernelspecs(init_gateway, jp_fetch, jp_serverapp):
