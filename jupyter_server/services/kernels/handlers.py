@@ -94,14 +94,11 @@ class KernelActionHandler(KernelsAPIHandler):
         if action == "interrupt":
             await ensure_async(km.interrupt_kernel(kernel_id))  # type:ignore[func-returns-value]
             self.set_status(204)
-        if action == "restart":
+        elif action == "restart":
             try:
                 await km.restart_kernel(kernel_id)
-            except Exception:
-                message = "Exception restarting kernel"
-                self.log.error(message, exc_info=True)
-                self.write(json.dumps({"message": message, "traceback": ""}))
-                self.set_status(500)
+            except Exception as e:
+                raise web.HTTPError(500, "Exception restarting kernel") from e
             else:
                 model = await ensure_async(km.kernel_model(kernel_id))
                 self.write(json.dumps(model, default=json_default))
