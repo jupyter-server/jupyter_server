@@ -53,6 +53,8 @@ class SessionRootHandler(SessionsAPIHandler):
         if model is None:
             raise web.HTTPError(400, "No JSON data provided")
 
+        self.log.debug(f"POST /api/sessions request body: {model}")
+
         if "notebook" in model:
             self.log.warning("Sessions API changed, see updated swagger docs")
             model["type"] = "notebook"
