@@ -623,9 +623,8 @@ class ChannelQueue(Queue):  # type:ignore[type-arg]
                 return self.get(block=False)
             except Empty:
                 if self.response_router_finished:
-                    raise GatewayResponseRouterFinished(
-                        f"Response router for {self.channel_name} channel has finished"
-                    ) from None
+                    msg = "Response router had finished"
+                    raise RuntimeError(msg) from None
                 if monotonic() > end_time:
                     raise TimeoutError(f"{self.channel_name} async_get timeout") from None
                 await asyncio.sleep(0)
@@ -960,7 +959,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         The router continues running until channels are stopped, handling disconnections gracefully
         and attempting to reconnect to maintain the message flow.
         """
-        max_reconnect_attempts = 5
         base_delay = 1.0  # seconds
         max_delay = 30.0  # max delay between reconnection attempts
         attempt = 0
@@ -979,7 +977,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
                     delay = min(base_delay * (2**attempt), max_delay)
                     self.log.warning(
                         f"WebSocket disconnected. Attempting reconnection "
-                        f"(attempt {attempt + 1}/{max_reconnect_attempts}) "
+                        f"(attempt {attempt + 1}) "
                         f"after {delay:.1f}s delay..."
                     )
                     time.sleep(delay)
@@ -987,12 +985,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
                     # Attempt reconnection
                     if not self._reconnect_socket():
                         attempt += 1
-                        if attempt >= max_reconnect_attempts:
-                            self.log.error(
-                                f"Max reconnection attempts ({max_reconnect_attempts}) reached. "
-                                "Giving up on WebSocket reconnection."
-                            )
-                            break
+                        self.log.info(f"Gateway WebSocket reconnect attempt failed {attempt} times")
                         continue
 
                     # Reset attempt counter on successful reconnection
@@ -1030,18 +1023,3 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
 
 
 KernelClientABC.register(GatewayKernelClient)
-
-
-class GatewayResponseRouterFinished(Exception):
-    """Raised when the gateway WebSocket response router has exited.
-
-    This occurs when the response router thread stops routing messages,
-    typically because:
-    - The WebSocket reconnection attempts were exhausted
-    - The kernel was terminated on the gateway
-    - The channels were intentionally stopped
-
-    Callers can catch this to distinguish a dead gateway connection
-    from other runtime errors and take appropriate action
-    (e.g. marking the kernel as dead, notifying the frontend).
-    """
