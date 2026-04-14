@@ -7,6 +7,7 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-25%3A-
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
+import asyncio
 import glob
 import json
 import os
@@ -71,21 +72,34 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
         model["default"] = km.default_kernel_name
         model["kernelspecs"] = specs = {}
         kspecs = await ensure_async(ksm.get_all_specs())
+        tasks = {}
         for kernel_name, kernel_info in kspecs.items():
-            try:
-                if is_kernelspec_model(kernel_info):
-                    d = kernel_info
-                else:
-                    d = kernelspec_model(
+            if is_kernelspec_model(kernel_info):
+                specs[kernel_name] = kernel_info
+            else:
+                kernel_spec = kernel_info.get("spec")
+                kernel_resource_dir = kernel_info.get("resource_dir")
+                if kernel_spec is None:
+                    self.log.error("Kernel spec is missing for %s", kernel_name)
+                    continue
+
+                if kernel_resource_dir is None:
+                    self.log.error("Kernel resource_dir is missing for %s", kernel_name)
+                    continue
+                tasks[kernel_name] = asyncio.create_task(
+                    asyncio.to_thread(
+                        kernelspec_model,
                         self,
                         kernel_name,
-                        kernel_info["spec"],
-                        kernel_info["resource_dir"],
+                        kernel_spec,
+                        kernel_resource_dir,
                     )
+                )
+        for kernel_name, task in tasks.items():
+            try:
+                specs[kernel_name] = await task
             except Exception:
                 self.log.error("Failed to load kernel spec: '%s'", kernel_name, exc_info=True)
-                continue
-            specs[kernel_name] = d
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(model))
 
@@ -106,7 +120,13 @@ class KernelSpecHandler(KernelSpecsAPIHandler):
         if is_kernelspec_model(spec):
             model = spec
         else:
-            model = kernelspec_model(self, kernel_name, spec.to_dict(), spec.resource_dir)
+            model = await asyncio.to_thread(
+                kernelspec_model,
+                self,
+                kernel_name,
+                spec.to_dict(),
+                spec.resource_dir,
+            )
         self.set_header("Content-Type", "application/json")
         self.finish(json.dumps(model))
 
