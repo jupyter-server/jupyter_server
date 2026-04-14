@@ -79,16 +79,22 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
             else:
                 kernel_spec = kernel_info.get("spec")
                 kernel_resource_dir = kernel_info.get("resource_dir")
-                if kernel_spec is not None and kernel_resource_dir is not None:
-                    tasks[kernel_name] = asyncio.create_task(
-                        asyncio.to_thread(
-                            kernelspec_model,
-                            self,
-                            kernel_name,
-                            kernel_spec,
-                            kernel_resource_dir,
-                        )
+                if kernel_spec is None:
+                     self.log.error("Kernel spec is missing for %s", kernel_name)
+                     continue
+                
+                if kernel_resource_dir is not None:
+                    self.log.error("Kernel resource_dir is missing for %s", kernel_name)
+                    continue
+                tasks[kernel_name] = asyncio.create_task(
+                    asyncio.to_thread(
+                        kernelspec_model,
+                        self,
+                        kernel_name,
+                        kernel_spec,
+                        kernel_resource_dir,
                     )
+                )
         for kernel_name, task in tasks.items():
             try:
                 specs[kernel_name] = await task
