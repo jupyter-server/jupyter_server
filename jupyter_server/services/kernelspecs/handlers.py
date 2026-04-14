@@ -80,9 +80,9 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
                 kernel_spec = kernel_info.get("spec")
                 kernel_resource_dir = kernel_info.get("resource_dir")
                 if kernel_spec is None:
-                     self.log.error("Kernel spec is missing for %s", kernel_name)
-                     continue
-                
+                    self.log.error("Kernel spec is missing for %s", kernel_name)
+                    continue
+
                 if kernel_resource_dir is not None:
                     self.log.error("Kernel resource_dir is missing for %s", kernel_name)
                     continue
