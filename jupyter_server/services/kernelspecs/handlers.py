@@ -83,7 +83,7 @@ class MainKernelSpecHandler(KernelSpecsAPIHandler):
                     self.log.error("Kernel spec is missing for %s", kernel_name)
                     continue
 
-                if kernel_resource_dir is not None:
+                if kernel_resource_dir is None:
                     self.log.error("Kernel resource_dir is missing for %s", kernel_name)
                     continue
                 tasks[kernel_name] = asyncio.create_task(
