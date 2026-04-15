@@ -35,6 +35,12 @@ def notebook(jp_root_dir):
             execution_count=1,
         )
     )
+    cc1.outputs.append(
+        new_output(
+            output_type="display_data",
+            data={"text/html": '<script>alert("xss")</script>'},
+        )
+    )
     nb.cells.append(cc1)
 
     # Write file to tmp dir.
@@ -131,6 +137,32 @@ async def test_from_post(jp_fetch, notebook):
     assert r.code == 200
     assert "text/x-python" in r.headers["Content-Type"]
     assert "print(2*6)" in r.body.decode()
+
+
+async def test_from_file_sanitize_html(jp_fetch, notebook):
+    # flag explicitly set to true
+    r = await jp_fetch(
+        "nbconvert", "html", "foo", "testnb.ipynb", method="GET",
+        params={"sanitize_html": "true"},
+    )
+    assert r.code == 200
+    assert "<script>" not in r.body.decode()
+    assert "&lt;script&gt;" in r.body.decode()
+
+    # flag explicitly set to false
+    r = await jp_fetch(
+        "nbconvert", "html", "foo", "testnb.ipynb", method="GET",
+        params={"sanitize_html": "false"},
+    )
+    assert r.code == 200
+    assert "<script>" in r.body.decode()
+
+    # flag not set
+    r = await jp_fetch(
+        "nbconvert", "html", "foo", "testnb.ipynb", method="GET",
+    )
+    assert r.code == 200
+    assert "<script>" in r.body.decode()
 
 
 async def test_from_post_zip(jp_fetch, notebook):
