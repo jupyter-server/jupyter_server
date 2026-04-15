@@ -95,9 +95,19 @@ class NbconvertFileHandler(JupyterHandler):
     @web.authenticated
     @authorized
     async def get(self, format, path):
-        """Get a notebook file in a desired format."""
+        """Get a notebook file in a desired format.
+
+        download: bool, optional
+            If true, set Content-Disposition: attachment
+        sanitize_html: bool, optional (html format only)
+            If true, sanitize HTML (sets sanitize_html flag on nbconvert)
+        """
         self.check_xsrf_cookie()
         exporter = get_exporter(format, config=self.config, log=self.log)
+        if format == "html":
+            sanitize = self.get_argument("sanitize_html", None)
+            if sanitize is not None:
+                exporter.sanitize_html = sanitize.lower() == "true"
 
         path = path.strip("/")
         # If the notebook relates to a real file (default contents manager),
