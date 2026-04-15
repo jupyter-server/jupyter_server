@@ -142,7 +142,11 @@ async def test_from_post(jp_fetch, notebook):
 async def test_from_file_sanitize_html(jp_fetch, notebook):
     # flag explicitly set to true
     r = await jp_fetch(
-        "nbconvert", "html", "foo", "testnb.ipynb", method="GET",
+        "nbconvert",
+        "html",
+        "foo",
+        "testnb.ipynb",
+        method="GET",
         params={"sanitize_html": "true"},
     )
     assert r.code == 200
@@ -151,7 +155,11 @@ async def test_from_file_sanitize_html(jp_fetch, notebook):
 
     # flag explicitly set to false
     r = await jp_fetch(
-        "nbconvert", "html", "foo", "testnb.ipynb", method="GET",
+        "nbconvert",
+        "html",
+        "foo",
+        "testnb.ipynb",
+        method="GET",
         params={"sanitize_html": "false"},
     )
     assert r.code == 200
@@ -159,7 +167,11 @@ async def test_from_file_sanitize_html(jp_fetch, notebook):
 
     # flag not set
     r = await jp_fetch(
-        "nbconvert", "html", "foo", "testnb.ipynb", method="GET",
+        "nbconvert",
+        "html",
+        "foo",
+        "testnb.ipynb",
+        method="GET",
     )
     assert r.code == 200
     assert "<script>" in r.body.decode()
