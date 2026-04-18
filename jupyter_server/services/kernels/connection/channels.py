@@ -361,7 +361,11 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.log.info("Restoring connection for %s", self.session_key)
             if self.multi_kernel_manager.ports_changed(self.kernel_id):
                 # If the kernel's ports have changed (some restarts trigger this)
-                # then reset the channels so nudge() is using the correct iopub channel
+                # then reset the channels so nudge() is using the correct iopub channel.
+                # Close the stale buffered channels first to avoid leaking FDs.
+                for stream in buffer_info["channels"].values():
+                    if not stream.closed():
+                        stream.close()
                 self.create_stream()
             else:
                 # The kernel's ports have not changed; use the channels captured in the buffer

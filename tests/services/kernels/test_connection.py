@@ -1,6 +1,9 @@
 import asyncio
+import gc
 import json
-from unittest.mock import MagicMock
+import os
+import sys
+from unittest.mock import MagicMock, patch
 
 import pytest
 from jupyter_client.jsonutil import json_clean, json_default
@@ -109,4 +112,66 @@ async def test_nudge_cleanup_closes_transient_channels_when_iopub_closed(
     assert not still_open, (
         f"nudge leaked {len(still_open)} transient ZMQStream(s) when iopub "
         f"was closed before cleanup fired"
+    )
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Requires /proc/self/fd")
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
+async def test_no_fd_leak_on_buffer_restore_with_port_change(jp_serverapp: ServerApp) -> None:
+    """Verify that stale buffered channels are closed when ports change on reconnect."""
+    app = jp_serverapp
+    km = app.kernel_manager
+    kernel_id = await km.start_kernel()
+    kernel = km.get_kernel(kernel_id)
+    await asyncio.sleep(1)
+
+    session_id = "fixed-session-for-test"
+
+    # Warm up
+    conn = _make_connection(app, kernel, session_id=session_id)
+    conn.create_stream()
+    try:
+        await conn.nudge()
+    except Exception:
+        pass
+    for s in conn.channels.values():
+        if not s.closed():
+            s.close()
+    gc.collect()
+    await asyncio.sleep(1)
+
+    baseline_fds = len(os.listdir(f"/proc/{os.getpid()}/fd"))
+
+    for _ in range(100):
+        conn1 = _make_connection(app, kernel, session_id=session_id)
+        conn1.create_stream()
+        try:
+            await conn1.nudge()
+        except Exception:
+            pass
+        km._kernel_connections.setdefault(kernel_id, 0)
+        km._kernel_connections[kernel_id] = 0
+        km.start_buffering(kernel_id, conn1.session_key, conn1.channels)
+
+        conn2 = _make_connection(app, kernel, session_id=session_id)
+        km._kernel_connections[kernel_id] = 1
+        with patch.object(km, "ports_changed", return_value=True):
+            connected = conn2.connect()
+        if connected:
+            try:
+                await connected
+            except Exception:
+                pass
+        for s in conn2.channels.values():
+            if not s.closed():
+                s.close()
+        conn2.channels = {}
+
+    gc.collect()
+    await asyncio.sleep(2)
+    gc.collect()
+    final_fds = len(os.listdir(f"/proc/{os.getpid()}/fd"))
+    assert final_fds - baseline_fds <= 5, (
+        f"FD leak detected: {final_fds - baseline_fds} FDs leaked "
+        f"after 100 buffer-restore-with-port-change cycles"
     )
