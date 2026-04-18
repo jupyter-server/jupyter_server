@@ -426,6 +426,14 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         if self._open_sessions.get(self.session_key) is self.websocket_handler:
             self._open_sessions.pop(self.session_key)
 
+        # Close any pending kernel_info_channel. If the kernel never replied to
+        # the kernel_info_request (e.g. hung/rogue), _handle_kernel_info_reply
+        # will not have fired to close it. This must run before the
+        # start_buffering early-return below, otherwise the channel leaks.
+        if self.kernel_info_channel is not None and not self.kernel_info_channel.closed():
+            self.kernel_info_channel.close()
+        self.kernel_info_channel = None
+
         if self.kernel_id in self.multi_kernel_manager:
             self.multi_kernel_manager.notify_disconnect(self.kernel_id)
             self.multi_kernel_manager.remove_restart_callback(

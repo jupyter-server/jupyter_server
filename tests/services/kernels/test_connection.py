@@ -175,3 +175,50 @@ async def test_no_fd_leak_on_buffer_restore_with_port_change(jp_serverapp: Serve
         f"FD leak detected: {final_fds - baseline_fds} FDs leaked "
         f"after 100 buffer-restore-with-port-change cycles"
     )
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Requires /proc/self/fd")
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
+async def test_no_fd_leak_on_disconnect_with_orphaned_kernel_info_channel(
+    jp_serverapp: ServerApp,
+) -> None:
+    """When a kernel does not reply to kernel_info_request (e.g. rogue/hung),
+    kernel_info_channel is left open after nudge. It must be closed on
+    disconnect, including the single-tab last-connection path that triggers
+    start_buffering."""
+    app = jp_serverapp
+    km = app.kernel_manager
+    kernel_id = await km.start_kernel()
+    kernel = km.get_kernel(kernel_id)
+    await asyncio.sleep(1)
+
+    # Warm up
+    conn = _make_connection(app, kernel)
+    conn.create_stream()
+    conn.kernel_info_channel = km.connect_shell(kernel_id)
+    ZMQChannelsWebsocketConnection._open_sockets.add(conn)
+    km._kernel_connections[kernel_id] = 1
+    conn.disconnect()
+    gc.collect()
+    await asyncio.sleep(1)
+
+    baseline_fds = len(os.listdir(f"/proc/{os.getpid()}/fd"))
+
+    for _ in range(100):
+        conn = _make_connection(app, kernel)
+        conn.create_stream()
+        # Simulate rogue kernel: kernel_info_channel opened but reply never arrives
+        conn.kernel_info_channel = km.connect_shell(kernel_id)
+        ZMQChannelsWebsocketConnection._open_sockets.add(conn)
+        # Natural single-tab flow: last connection disconnects -> start_buffering
+        km._kernel_connections[kernel_id] = 1
+        conn.disconnect()
+
+    gc.collect()
+    await asyncio.sleep(2)
+    gc.collect()
+    final_fds = len(os.listdir(f"/proc/{os.getpid()}/fd"))
+    assert final_fds - baseline_fds <= 5, (
+        f"FD leak detected: {final_fds - baseline_fds} FDs leaked after 100 "
+        f"disconnects with orphaned kernel_info_channel"
+    )
