@@ -207,11 +207,17 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         def cleanup(_=None):
             """Common cleanup"""
             loop.remove_timeout(nudge_handle)
-            iopub_channel.stop_on_recv()
+            # Close the transient shell/control sockets we own first, so they
+            # are released even if the shared iopub channel was already torn
+            # down (e.g. by a concurrent websocket disconnect). Previously
+            # iopub.stop_on_recv() raised OSError here and aborted cleanup,
+            # leaking the shell+control FDs on every such race.
             if not shell_channel.closed():
                 shell_channel.close()
             if not control_channel.closed():
                 control_channel.close()
+            if not iopub_channel.closed():
+                iopub_channel.stop_on_recv()
 
         # trigger cleanup when both message futures are resolved
         all_done.add_done_callback(cleanup)
