@@ -5,7 +5,7 @@ Read https://prometheus.io/docs/practices/naming/ for naming
 conventions for metrics & labels.
 """
 
-from prometheus_client import Gauge, Histogram, Info
+from prometheus_client import Counter, Gauge, Histogram, Info
 
 from jupyter_server._version import version_info as server_version_info
 
@@ -70,8 +70,22 @@ ACTIVE_DURATION = Gauge(
     "Number of seconds this Jupyter Server has been active",
 )
 
+KERNEL_MESSAGE_TOTAL = Counter(
+    "jupyter_kernel_message_total",
+    "Total kernel messages routed to channel queues",
+    ["kernel_id", "channel"],
+)
+
+KERNEL_WEBSOCKET_RECONNECT_TOTAL = Counter(
+    "jupyter_kernel_websocket_reconnect_total",
+    "Total kernel WebSocket reconnection attempts",
+    ["kernel_id", "success"],
+)
+
 __all__ = [
     "HTTP_REQUEST_DURATION_SECONDS",
+    "KERNEL_MESSAGE_TOTAL",
+    "KERNEL_WEBSOCKET_RECONNECT_TOTAL",
     "KERNEL_CURRENTLY_RUNNING_TOTAL",
     "SERVER_INFO",
     "TERMINAL_CURRENTLY_RUNNING_TOTAL",

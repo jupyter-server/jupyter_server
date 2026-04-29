@@ -26,6 +26,7 @@ from tornado.escape import json_decode, json_encode, url_escape, utf8
 from traitlets import DottedObjectName, Instance, Type, Unicode, default
 
 from .._tz import UTC, utcnow
+from ..prometheus.metrics import KERNEL_MESSAGE_TOTAL, KERNEL_WEBSOCKET_RECONNECT_TOTAL
 from ..services.kernels.kernelmanager import (
     AsyncMappingKernelManager,
     ServerKernelManager,
@@ -934,10 +935,16 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
                 for queue in self._channel_queues.values():
                     queue.channel_socket = self.channel_socket
 
+            KERNEL_WEBSOCKET_RECONNECT_TOTAL.labels(
+                kernel_id=getattr(self.parent, "kernel_id", "unknown"), success="true"
+            ).inc()
             return True
 
         except Exception as e:
             self.log.error(f"Failed to reconnect WebSocket: {e}")
+            KERNEL_WEBSOCKET_RECONNECT_TOTAL.labels(
+                kernel_id=getattr(self.parent, "kernel_id", "unknown"), success="false"
+            ).inc()
             return False
 
     def _mark_queues_finished(self) -> None:
@@ -1005,6 +1012,9 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
                 channel = response_message["channel"]
                 assert self._channel_queues is not None
                 self._channel_queues[channel].put_nowait(response_message)
+                KERNEL_MESSAGE_TOTAL.labels(
+                    kernel_id=getattr(self.parent, "kernel_id", "unknown"), channel=channel
+                ).inc()
 
             except websocket.WebSocketConnectionClosedException:
                 self.log.warning("WebSocket connection closed unexpectedly")
@@ -1015,8 +1025,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
                 if not self._channels_stopped:
                     self.log.exception(f"Error in response router: {e}")
                     self.channel_socket = None
-            # Brief pause before retry to avoid tight error loop
-            time.sleep(1)
 
         # Final cleanup: mark all queues as finished
         self._mark_queues_finished()
