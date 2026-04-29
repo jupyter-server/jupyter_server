@@ -38,7 +38,10 @@ def notebook(jp_root_dir):
     cc1.outputs.append(
         new_output(
             output_type="display_data",
-            data={"text/html": '<script>alert("xss")</script>'},
+            data={
+                "text/html": '<script>alert("xss")</script>',
+                "text/plain": "Fallback xss test for Non-html backend",
+            },
         )
     )
     nb.cells.append(cc1)
@@ -107,7 +110,7 @@ async def test_from_file_download(jp_fetch, notebook):
     assert "testnb.py" in content_disposition
 
 
-async def test_from_file_zip(jp_fetch, notebook):
+async def test_from_file_zip_to_latex(jp_fetch, notebook):
     r = await jp_fetch(
         "nbconvert",
         "latex",
