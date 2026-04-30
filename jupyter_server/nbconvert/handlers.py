@@ -97,6 +97,8 @@ class NbconvertFileHandler(JupyterHandler):
     async def get(self, format, path):
         """Get a notebook file in a desired format.
 
+        Parameters
+        ----------
         download: bool, optional
             If true, set Content-Disposition: attachment
         sanitize_html: bool, optional (html format only)
