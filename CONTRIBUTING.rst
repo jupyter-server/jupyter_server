@@ -19,23 +19,68 @@ Setting Up a Development Environment
 Installing the Jupyter Server
 -----------------------------
 
-The development version of the server requires `node <https://nodejs.org/en/download/>`_ and `pip <https://pip.pypa.io/en/stable/installing/>`_.
+Developing on Jupyter Server requires Python, pip, and Git to be installed on your system.
+The minimum supported Python version for Jupyter Server can be found in the ``pyproject.toml``.
 
-Once you have installed the dependencies mentioned above, use the following
-steps::
 
-    pip install --upgrade pip
-    git clone https://github.com/jupyter/jupyter_server
+First clone your fork of the repository::
+
+    git clone https://github.com/<your_org_name>/jupyter_server
     cd jupyter_server
-    pip install -e ".[test]"
 
-If you are using a system-wide Python installation and you only want to install the server for you,
-you can add ``--user`` to the install commands.
+Then choose one of the following environment setup options. Any of them will work. Picking one is a matter of
+personal preference.
 
-Once you have done this, you can launch the main branch of Jupyter server
-from any directory in your system with::
+Option 1: ``pip`` + ``venv``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the most direct setup, avoiding any additional tool installations::
+
+    python -m venv .venv
+    source .venv/bin/activate
+    python -m pip install --upgrade pip
+    python -m pip install -e ".[test]"
+
+On Windows, activate the environment with::
+
+    .venv\Scripts\activate
+
+Option 2: ``conda``
+~~~~~~~~~~~~~~~~~~~
+
+Many Jupyter projects and contributors use ``conda`` or ``mamba`` for local
+development instead::
+
+    conda create -n jupyter-server-dev python=3.12 pip
+    conda activate jupyter-server-dev
+    python -m pip install -e ".[test]"
+
+
+With your ``venv`` or ``conda`` environment activated, you can run the server with::
 
     jupyter server
+
+Option 3: ``uv``
+~~~~~~~~~~~~~~~~
+
+`uv <https://docs.astral.sh/uv/>`_ is a more recent option for Python project management.
+It can set up your environment with a single command::
+
+    uv sync --extra test
+
+This creates a local ``.venv`` automatically if needed. To activate it
+yourself, run::
+
+    source .venv/bin/activate
+
+On Windows, use::
+
+    .venv\Scripts\activate
+
+
+When using ``uv`` you can run the server with::
+
+    uv run jupyter server
 
 
 Code Styling and Quality Checks
@@ -44,8 +89,8 @@ Code Styling and Quality Checks
 need to worry too much about your code style.
 As long as your code is valid,
 the pre-commit hook should take care of how it should look.
-``pre-commit`` and its associated hooks will automatically be installed when
-you run ``pip install -e ".[test]"``
+``pre-commit`` and its associated hooks are included in the ``test`` dependency group
+and therefore, would be installed in any of the three installation options above.
 
 To install ``pre-commit`` hook manually, run the following::
 
@@ -56,7 +101,7 @@ You can invoke the pre-commit hook by hand at any time with::
 
     pre-commit run
 
-which should run any autoformatting on your code
+which will run any autoformatting on your code
 and tell you about any errors it couldn't fix automatically.
 You may also install `black integration <https://github.com/psf/black#editor-integration>`_
 into your text editor to format code automatically.
@@ -76,8 +121,8 @@ run the type checker.
 Troubleshooting the Installation
 --------------------------------
 
-If you do not see that your Jupyter Server is not running on dev mode, it's possible that you are
-running other instances of Jupyter Server. You can try the following steps:
+If you do not see that your Jupyter Server is running in dev mode, it's possible that you are
+running other instances of Jupyter Server elsewhere on your system. You can try the following steps:
 
 1. Uninstall all instances of the jupyter_server package. These include any installations you made using
    pip or conda
@@ -91,10 +136,11 @@ running other instances of Jupyter Server. You can try the following steps:
 Running Tests
 =============
 
-Install dependencies::
+If you used one of the environment setup options above, the test dependencies
+are already installed. Otherwise install them with::
 
-    pip install -e ".[test]"
-    pip install -e examples/simple  # to test the examples
+    python -m pip install -e ".[test]"
+    python -m pip install -e examples/simple  # to test the examples
 
 To run the Python tests, use::
 
@@ -117,9 +163,9 @@ You can also drop into a shell in the test environment by running::
 Building the Docs
 =================
 
-Install the docs requirements using ``pip``::
+Install the docs requirements into your active environment using ``pip``::
 
-    pip install ".[docs]"
+    python -m pip install -e ".[docs]"
 
 Once you have installed the required packages, you can build the docs with::
 
