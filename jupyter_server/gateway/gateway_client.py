@@ -807,8 +807,10 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
 
         raise web.HTTPError(
             e.code,
-            f"Error from Gateway: [{error_message}] {error_reason}. "
+            "Error from Gateway: [%s] %s. "
             "Ensure gateway url is valid and the Gateway instance is running.",
+            error_message,
+            error_reason,
         ) from e
     except ConnectionError as e:
         gateway_client.emit(
@@ -816,8 +818,9 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
         )
         raise web.HTTPError(
             503,
-            f"ConnectionError was received from Gateway server url '{gateway_client.url}'.  "
+            "ConnectionError was received from Gateway server url '%s'.  "
             "Check to be sure the Gateway instance is running.",
+            gateway_client.url,
         ) from e
     except gaierror as e:
         gateway_client.emit(
@@ -825,8 +828,9 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
         )
         raise web.HTTPError(
             404,
-            f"The Gateway server specified in the gateway_url '{gateway_client.url}' doesn't "
-            f"appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
+            "The Gateway server specified in the gateway_url '%s' doesn't "
+            "appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
+            gateway_client.url,
         ) from e
     except Exception as e:
         gateway_client.emit(
