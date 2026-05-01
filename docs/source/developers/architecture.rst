@@ -120,7 +120,7 @@ When a user starts a new kernel, the following steps occur:
 
 #. Notebook client receives the created Session data.
 
-.. _create_session: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/jupyter_server/master/jupyter_server/services/api/api.yaml#/sessions/post_api_sessions
+.. _create_session: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter-server/jupyter_server/main/jupyter_server/services/api/api.yaml#/sessions/post_api_sessions
 
 .. |create_session| replace:: the *POST /api/sessions*
 
@@ -175,6 +175,6 @@ When a user stops a kernel, the following steps occur:
 #. When shutdown is finished, **Session Manager** deletes the Session data from
    the SQLite3 database and responses 204 status code to the Notebook client.
 
-.. _delete_session: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/jupyter_server/master/jupyter_server/services/api/api.yaml#/sessions/delete_api_sessions__session_
+.. _delete_session: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter-server/jupyter_server/main/jupyter_server/services/api/api.yaml#/sessions/delete_api_sessions__session_
 
 .. |delete_session| replace:: the *DELETE /api/sessions/{session_id}*
