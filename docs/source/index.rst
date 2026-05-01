@@ -20,7 +20,7 @@ Jupyter Server is the backend that provides the core services, APIs, and
 
 .. _Tornado: https://www.tornadoweb.org/en/stable/
 .. _Jupyter Notebook: https://github.com/jupyter/notebook
-.. _REST endpoints: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/jupyter_server/main/jupyter_server/services/api/api.yaml
+.. _REST endpoints: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter-server/jupyter_server/main/jupyter_server/services/api/api.yaml
 
 
 Applications
@@ -41,7 +41,7 @@ Examples of Jupyter Server extensions include:
    Run Jupyter notebooks as jobs.
 `jupyter-collaboration <https://jupyterlab-realtime-collaboration.readthedocs.io>`_
    A Jupyter Server Extension Providing Support for Y Documents.
-`NbClassic <https://jupyterlab.readthedocs.io>`_
+`NbClassic <https://nbclassic.readthedocs.io>`_
    Jupyter notebook as a Jupyter Server extension.
 `Cylc UI Server <https://cylc.org>`_
    A Jupyter Server extension that serves the cylc-ui web application for
