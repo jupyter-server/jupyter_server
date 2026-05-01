@@ -1,3 +1,4 @@
+import errno
 import getpass
 import json
 import logging
@@ -5,7 +6,7 @@ import os
 import pathlib
 import sys
 import warnings
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from jupyter_core.application import NoStart
@@ -661,3 +662,87 @@ def test():
 )
 def test_tornado_authentication_detection(method, expected):
     assert _has_tornado_web_authenticated(method) == expected
+
+
+def test_bind_http_server_tcp_success(jp_configurable_serverapp):
+    """Normal case: listen succeeds, returns True."""
+    app = jp_configurable_serverapp()
+    mock_server = MagicMock()
+    with patch.object(
+        type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+    ):
+        assert app._bind_http_server_tcp() is True
+        mock_server.listen.assert_called_once_with(app.port, app.ip)
+
+
+def test_bind_http_server_tcp_eaddrinuse(jp_configurable_serverapp):
+    """EADDRINUSE: returns False instead of crashing with a traceback."""
+    app = jp_configurable_serverapp()
+    mock_server = MagicMock()
+    mock_server.listen.side_effect = OSError(errno.EADDRINUSE, "Address already in use")
+    with patch.object(
+        type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+    ):
+        assert app._bind_http_server_tcp() is False
+
+
+def test_bind_http_server_tcp_eacces(jp_configurable_serverapp):
+    """EACCES: returns False instead of crashing with a traceback."""
+    app = jp_configurable_serverapp()
+    mock_server = MagicMock()
+    mock_server.listen.side_effect = OSError(errno.EACCES, "Permission denied")
+    with patch.object(
+        type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+    ):
+        assert app._bind_http_server_tcp() is False
+
+
+def test_bind_http_server_tcp_unexpected_oserror(jp_configurable_serverapp):
+    """Unexpected OSError: re-raised, not silently swallowed."""
+    app = jp_configurable_serverapp()
+    mock_server = MagicMock()
+    mock_server.listen.side_effect = OSError(errno.ENOENT, "No such file or directory")
+    with patch.object(
+        type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+    ):
+        with pytest.raises(OSError, match="No such file or directory"):
+            app._bind_http_server_tcp()
+
+
+def test_bind_http_server_tcp_eaddrinuse_logs_warning(jp_configurable_serverapp, caplog):
+    """EADDRINUSE: logs a warning mentioning the port."""
+    app = jp_configurable_serverapp()
+    mock_server = MagicMock()
+    mock_server.listen.side_effect = OSError(errno.EADDRINUSE, "Address already in use")
+    with patch.object(
+        type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+    ):
+        with caplog.at_level(logging.WARNING):
+            app._bind_http_server_tcp()
+    assert any("already in use" in rec.message for rec in caplog.records)
+
+
+def test_bind_http_server_tcp_eacces_logs_warning(jp_configurable_serverapp, caplog):
+    """EACCES: logs a warning mentioning permission denied."""
+    app = jp_configurable_serverapp()
+    mock_server = MagicMock()
+    mock_server.listen.side_effect = OSError(errno.EACCES, "Permission denied")
+    with patch.object(
+        type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+    ):
+        with caplog.at_level(logging.WARNING):
+            app._bind_http_server_tcp()
+    assert any("denied" in rec.message.lower() for rec in caplog.records)
+
+
+def test_bind_http_server_eaddrinuse_exits_cleanly(jp_configurable_serverapp):
+    """Integration: _bind_http_server calls exit(1) when TCP bind returns False."""
+    app = jp_configurable_serverapp()
+    mock_server = MagicMock()
+    mock_server.listen.side_effect = OSError(errno.EADDRINUSE, "Address already in use")
+    with patch.object(
+        type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+    ):
+        with patch.object(app, "exit") as mock_exit:
+            app._bind_http_server()
+            mock_exit.assert_called_once_with(1)

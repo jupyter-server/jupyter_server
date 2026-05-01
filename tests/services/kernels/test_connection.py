@@ -23,7 +23,7 @@ async def test_websocket_connection(jp_serverapp: ServerApp) -> None:
     conn = ZMQChannelsWebsocketConnection(parent=kernel, websocket_handler=handler)
     handler.connection = conn
     await conn.prepare()
-    conn.connect()
+    await conn.connect()
     await asyncio.wrap_future(conn.nudge())
     session: Session = kernel.session
     msg = session.msg("data_pub", content={"a": "b"})

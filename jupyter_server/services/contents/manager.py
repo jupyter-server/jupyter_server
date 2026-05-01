@@ -410,7 +410,7 @@ class ContentsManager(LoggingConfigurable):
         """
         raise NotImplementedError
 
-    def file_exists(self, path=""):
+    def file_exists(self, path):
         """Does a file exist at the given path?
 
         Like os.path.isfile
@@ -818,7 +818,7 @@ class AsyncContentsManager(ContentsManager):
         """
         raise NotImplementedError
 
-    async def file_exists(self, path=""):
+    async def file_exists(self, path):
         """Does a file exist at the given path?
 
         Like os.path.isfile

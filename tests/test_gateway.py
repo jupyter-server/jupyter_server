@@ -766,9 +766,9 @@ async def test_websocket_connection_with_session_id(init_gateway, jp_serverapp, 
         expected_ws_url = (
             f"{mock_gateway_ws_url}/api/kernels/{kernel_id}/channels?session_id={conn.session_id}"
         )
-        assert (
-            expected_ws_url in caplog.text
-        ), "WebSocket URL does not contain the expected session_id."
+        assert expected_ws_url in caplog.text, (
+            "WebSocket URL does not contain the expected session_id."
+        )
 
         # Processing websocket messages happens in separate coroutines and any
         # errors in that process will show up in logs, but not bubble up to the
@@ -780,6 +780,26 @@ async def test_websocket_connection_with_session_id(init_gateway, jp_serverapp, 
         for _, level, message in caplog.record_tuples:
             if level >= logging.ERROR:
                 pytest.fail(f"Logs contain an error: {message}")
+
+
+def test_gateway_httperror_percent_not_doubled():
+    """Verify that % characters in gateway URLs are not doubled in error messages.
+
+    Tornado's HTTPError escapes '%' in log_message when called without trailing
+    args (replacing '%' with '%%'). By using '%s' placeholders with separate
+    args, gateway error messages preserve URLs that contain percent-encoded
+    characters such as 'http://host/?q=a%3Db'. Regression test for #1503.
+    """
+    url = "http://gateway-host/api?redirect=http%3A%2F%2Fexample.com"
+
+    # Without args: Tornado doubles '%' in log_message.
+    error_no_args = HTTPError(503, f"Gateway url '{url}' is unreachable.")
+    assert "%%" in error_no_args.log_message  # Tornado's escaping in effect
+
+    # With '%s' placeholder + args: log_message is kept as-is, URL goes to args.
+    error_with_args = HTTPError(503, "Gateway url '%s' is unreachable.", url)
+    assert "%%" not in error_with_args.log_message
+    assert url in error_with_args.args
 
 
 #

@@ -46,7 +46,7 @@ class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: igno
     """The metaclass necessary for proper ABC behavior in a Configurable."""
 
 
-class GatewayTokenRenewerBase(  # type:ignore[misc]
+class GatewayTokenRenewerBase(  # type:ignore[metaclass]
     ABC, LoggingConfigurable, metaclass=GatewayTokenRenewerMeta
 ):
     """
@@ -70,7 +70,7 @@ class GatewayTokenRenewerBase(  # type:ignore[misc]
         """
 
 
-class NoOpTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
+class NoOpTokenRenewer(GatewayTokenRenewerBase):
     """NoOpTokenRenewer is the default value to the GatewayClient trait
     `gateway_token_renewer` and merely returns the provided token.
     """
@@ -534,7 +534,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         return bool(self.url is not None and len(self.url) > 0)
 
     # Ensure KERNEL_LAUNCH_TIMEOUT has a default value.
-    KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", 40))
+    KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", "40"))
 
     _connection_args: dict[str, ty.Any]  # initialized on first use
 
@@ -807,8 +807,10 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
 
         raise web.HTTPError(
             e.code,
-            f"Error from Gateway: [{error_message}] {error_reason}. "
+            "Error from Gateway: [%s] %s. "
             "Ensure gateway url is valid and the Gateway instance is running.",
+            error_message,
+            error_reason,
         ) from e
     except ConnectionError as e:
         gateway_client.emit(
@@ -816,8 +818,9 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
         )
         raise web.HTTPError(
             503,
-            f"ConnectionError was received from Gateway server url '{gateway_client.url}'.  "
+            "ConnectionError was received from Gateway server url '%s'.  "
             "Check to be sure the Gateway instance is running.",
+            gateway_client.url,
         ) from e
     except gaierror as e:
         gateway_client.emit(
@@ -825,8 +828,9 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
         )
         raise web.HTTPError(
             404,
-            f"The Gateway server specified in the gateway_url '{gateway_client.url}' doesn't "
-            f"appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
+            "The Gateway server specified in the gateway_url '%s' doesn't "
+            "appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
+            gateway_client.url,
         ) from e
     except Exception as e:
         gateway_client.emit(

@@ -33,7 +33,7 @@ def _scrub_uri(uri: str, extra_param_keys=None) -> str:
         parts = parsed.query.split("&")
         changed = False
         for i, s in enumerate(parts):
-            key, sep, value = s.partition("=")
+            key, sep, _value = s.partition("=")
             for substring in scrub_param_keys:
                 if substring in key:
                     parts[i] = f"{key}{sep}[secret]"

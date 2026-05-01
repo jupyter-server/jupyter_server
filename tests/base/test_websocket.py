@@ -1,6 +1,7 @@
 """Test Base Websocket classes"""
 
 import logging
+import sysconfig
 import time
 from unittest.mock import MagicMock, patch
 
@@ -16,6 +17,8 @@ from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.base.websocket import WebSocketMixin
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.utils import JupyterServerAuthWarning, url_path_join
+
+is_freethreaded = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 
 
 class MockHandler(WebSocketMixin, WebSocketHandler):
@@ -165,6 +168,7 @@ class PermissivePlainWebsocketHandler(MockHandler):
         return super().get(*args, **kwargs)
 
 
+@pytest.mark.xfail(is_freethreaded, reason="warnings are finicky on free-threaded python")
 @pytest.mark.parametrize(
     "jp_server_config",
     [

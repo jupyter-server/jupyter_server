@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import binascii
 import datetime
+import hmac
 import json
 import os
 import re
@@ -27,6 +28,9 @@ from jupyter_server.transutils import _i18n
 
 from .security import passwd_check, set_password
 from .utils import get_anonymous_username
+
+if t.TYPE_CHECKING:
+    import hmac
 
 _non_alphanum = re.compile(r"[^A-Za-z0-9]")
 
@@ -252,7 +256,7 @@ class IdentityProvider(LoggingConfigurable):
         """Get the user."""
         if getattr(handler, "_jupyter_current_user", None):
             # already authenticated
-            return t.cast(User, handler._jupyter_current_user)  # type:ignore[attr-defined]
+            return t.cast("User", handler._jupyter_current_user)  # type:ignore[attr-defined]
         _token_user: User | None | t.Awaitable[User | None] = self.get_user_token(handler)
         if isinstance(_token_user, t.Awaitable):
             _token_user = await _token_user
@@ -298,7 +302,7 @@ class IdentityProvider(LoggingConfigurable):
     ) -> User:
         """Update user information and persist the user model."""
         self.check_update(user_data)
-        current_user = t.cast(User, handler.current_user)
+        current_user = t.cast("User", handler.current_user)
         updated_user = self.update_user_model(current_user, user_data)
         self.persist_user_model(handler)
         return updated_user
@@ -585,7 +589,7 @@ class IdentityProvider(LoggingConfigurable):
             return self.generate_anonymous_user(handler)
 
         if self.token and self.token == typed_password:
-            return t.cast(User, self.user_for_token(typed_password))  # type:ignore[attr-defined]
+            return t.cast("User", self.user_for_token(typed_password))  # type:ignore[attr-defined]
 
         return user
 
@@ -609,6 +613,18 @@ class IdentityProvider(LoggingConfigurable):
     def logout_available(self):
         """Whether a LogoutHandler is needed."""
         return True
+
+    def cookie_secret_hook(self, h: hmac.HMAC) -> hmac.HMAC:
+        """Update cookie secret input
+
+        Subclasses may call `h.update()` with any credentials that,
+        when changed, should invalidate existing cookies, such as a
+        password.
+
+        The updated hashlib object should be returned.
+
+        """
+        return h
 
 
 class PasswordIdentityProvider(IdentityProvider):
@@ -739,6 +755,14 @@ class PasswordIdentityProvider(IdentityProvider):
             self.log.critical(_i18n("Hint: run the following command to set a password"))
             self.log.critical(_i18n("\t$ python -m jupyter_server.auth password"))
             sys.exit(1)
+
+    def cookie_secret_hook(self, h: hmac.HMAC) -> hmac.HMAC:
+        """Include password in cookie secret.
+
+        This makes it so changing the password invalidates cookies.
+        """
+        h.update(self.hashed_password.encode())
+        return h
 
 
 class LegacyIdentityProvider(PasswordIdentityProvider):

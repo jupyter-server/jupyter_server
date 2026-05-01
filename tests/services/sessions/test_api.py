@@ -2,7 +2,6 @@ import asyncio
 import json
 import os
 import shutil
-import time
 import warnings
 from typing import Any
 
@@ -160,7 +159,7 @@ class SessionClient:
         sessions = j(resp)
         for session in sessions:
             await self.delete(session["id"])
-        time.sleep(0.1)
+        await asyncio.sleep(0.1)
 
 
 @pytest.fixture
@@ -504,7 +503,6 @@ async def test_modify_kernel_id(session_client, jp_fetch, jp_serverapp, session_
         assert kernel_list == [kernel]
 
 
-@pytest.mark.flaky
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_restart_kernel(session_client, jp_base_url, jp_fetch, jp_ws_fetch, session_is_ready):
     # Create a session.
@@ -548,25 +546,20 @@ async def test_restart_kernel(session_client, jp_base_url, jp_fetch, jp_ws_fetch
     for _ in range(10):
         r = await jp_fetch("api", "kernels", kid, method="GET")
         model = json.loads(r.body.decode())
-        if model["connections"] > 0:
-            time.sleep(0.1)
-        else:
+        if model["connections"] == 0:
             break
-
-    r = await jp_fetch("api", "kernels", kid, method="GET")
-    model = json.loads(r.body.decode())
+        await asyncio.sleep(0.1)
     assert model["connections"] == 0
 
     # Open a new websocket connection.
     ws2 = await jp_ws_fetch("api", "kernels", kid, "channels")
 
-    # give it some time to close on the other side:
+    # wait for the new connection to register on the server side:
     for _ in range(10):
         r = await jp_fetch("api", "kernels", kid, method="GET")
         model = json.loads(r.body.decode())
-        if model["connections"] == 0:
-            time.sleep(0.1)
-        else:
+        if model["connections"] > 0:
             break
+        await asyncio.sleep(0.1)
 
     ws2.close()

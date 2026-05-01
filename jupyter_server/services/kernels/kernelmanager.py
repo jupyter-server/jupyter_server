@@ -10,8 +10,9 @@ from __future__ import annotations
 
 import asyncio
 import os
-import pathlib  # noqa: TCH003
+import pathlib  # noqa: TC003
 import sys
+import time
 import typing as t
 import warnings
 from collections import defaultdict
@@ -247,7 +248,7 @@ class MappingKernelManager(MultiKernelManager):
             self.log.debug(
                 "Kernel args (excluding env): %r", {k: v for k, v in kwargs.items() if k != "env"}
             )
-            env = kwargs.get("env", None)
+            env = kwargs.get("env")
             if env and isinstance(env, dict):  # type:ignore[unreachable]
                 self.log.debug("Kernel argument 'env' passed with: %r", list(env.keys()))  # type:ignore[unreachable]
 
@@ -278,6 +279,7 @@ class MappingKernelManager(MultiKernelManager):
     async def _finish_kernel_start(self, kernel_id):
         """Handle a kernel that finishes starting."""
         km = self.get_kernel(kernel_id)
+        self.log.debug("Waiting for kernel %s", kernel_id)
         if hasattr(km, "ready"):
             ready = km.ready
             if not isinstance(ready, asyncio.Future):
@@ -287,6 +289,7 @@ class MappingKernelManager(MultiKernelManager):
             except Exception:
                 self.log.exception("Error waiting for kernel manager ready")
                 return
+        self.log.debug("Kernel %s ready", kernel_id)
 
         self._kernel_ports[kernel_id] = km.ports
         self.start_watching_activity(kernel_id)
@@ -490,6 +493,7 @@ class MappingKernelManager(MultiKernelManager):
         # Re-establish activity watching if ports have changed...
         if self._get_changed_ports(kernel_id) is not None:
             self.stop_watching_activity(kernel_id)
+            self.execution_state = "starting"
             self.start_watching_activity(kernel_id)
         return future
 
@@ -585,9 +589,9 @@ class MappingKernelManager(MultiKernelManager):
         - update last_activity on every message
         - record execution_state from status messages
         """
+        self.log.debug("Watching kernel activity: %s", kernel_id)
         kernel = self._kernels[kernel_id]
         # add busy/activity markers:
-        kernel.execution_state = "starting"
         kernel.reason = ""
         kernel.last_activity = utcnow()
         kernel._activity_stream = kernel.connect_iopub()
@@ -598,7 +602,7 @@ class MappingKernelManager(MultiKernelManager):
 
         def record_activity(msg_list):
             """Record an IOPub message arriving from a kernel"""
-            idents, fed_msg_list = session.feed_identities(msg_list)
+            _idents, fed_msg_list = session.feed_identities(msg_list)
             msg = session.deserialize(fed_msg_list, content=False)
 
             msg_type = msg["header"]["msg_type"]
@@ -740,7 +744,7 @@ class MappingKernelManager(MultiKernelManager):
 
 # AsyncMappingKernelManager inherits as much as possible from MappingKernelManager,
 # overriding only what is different.
-class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):  # type:ignore[misc]
+class AsyncMappingKernelManager(MappingKernelManager, AsyncMultiKernelManager):
     """An asynchronous mapping kernel manager."""
 
     @default("kernel_manager_class")

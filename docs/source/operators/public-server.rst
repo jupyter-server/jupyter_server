@@ -415,7 +415,7 @@ Docker CMD
 Using ``jupyter server`` as a
 `Docker CMD <https://docs.docker.com/engine/reference/builder/#cmd>`_ results in
 kernels repeatedly crashing, likely due to a lack of `PID reaping
-<https://blog.phusion.nl/2015/01/20/docker-and-the-pid-1-zombie-reaping-problem/>`_.
+<https://blog.phusion.nl/docker-and-the-pid-1-zombie-reaping-problem/>`_.
 To avoid this, use the `tini <https://github.com/krallin/tini>`_ ``init`` as your
 Dockerfile ``ENTRYPOINT``::
 

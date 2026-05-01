@@ -82,9 +82,9 @@ def authorized(
         method = action
         action = None
         # no-arguments `@authorized` decorator called
-        return cast(FuncT, wrapper(method))
+        return cast("FuncT", wrapper(method))
 
-    return cast(FuncT, wrapper)
+    return cast("FuncT", wrapper)
 
 
 def allow_unauthenticated(method: FuncT) -> FuncT:
@@ -111,7 +111,7 @@ def allow_unauthenticated(method: FuncT) -> FuncT:
 
     setattr(wrapper, "__allow_unauthenticated", True)
 
-    return cast(FuncT, wrapper)
+    return cast("FuncT", wrapper)
 
 
 def ws_authenticated(method: FuncT) -> FuncT:
@@ -139,4 +139,4 @@ def ws_authenticated(method: FuncT) -> FuncT:
 
     setattr(wrapper, "__allow_unauthenticated", False)
 
-    return cast(FuncT, wrapper)
+    return cast("FuncT", wrapper)

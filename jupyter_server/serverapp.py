@@ -895,8 +895,8 @@ class ServerApp(JupyterApp):
     )
     examples = _examples
 
-    flags = Dict(flags)  # type:ignore[assignment]
-    aliases = Dict(aliases)  # type:ignore[assignment]
+    flags = Dict(flags)
+    aliases = Dict(aliases)
 
     classes = [
         KernelManager,
@@ -1057,7 +1057,7 @@ class ServerApp(JupyterApp):
 
     @validate("ip")
     def _validate_ip(self, proposal: t.Any) -> str:
-        value = t.cast(str, proposal["value"])
+        value = t.cast("str", proposal["value"])
         if value == "*":
             value = ""
         return value
@@ -1189,6 +1189,7 @@ class ServerApp(JupyterApp):
             self._write_cookie_secret_file(key)
         h = hmac.new(key, digestmod=hashlib.sha256)
         h.update(self.password.encode())
+        h = self.identity_provider.cookie_secret_hook(h)
         return h.digest()
 
     def _write_cookie_secret_file(self, secret: bytes) -> None:
@@ -1559,7 +1560,7 @@ class ServerApp(JupyterApp):
 
     @validate("base_url")
     def _update_base_url(self, proposal: t.Any) -> str:
-        value = t.cast(str, proposal["value"])
+        value = t.cast("str", proposal["value"])
         if not value.startswith("/"):
             value = "/" + value
         if not value.endswith("/"):
@@ -2382,8 +2383,7 @@ class ServerApp(JupyterApp):
         soft = self.min_open_files_limit
         hard = old_hard
         if soft is not None and old_soft < soft:
-            if hard < soft:
-                hard = soft
+            hard = max(hard, soft)
             self.log.debug(
                 f"Raising open file limit: soft {old_soft}->{soft}; hard {old_hard}->{hard}"
             )
@@ -2463,11 +2463,7 @@ class ServerApp(JupyterApp):
 
     def init_signal(self) -> None:
         """Initialize signal handlers."""
-        if (
-            not sys.platform.startswith("win")
-            and sys.stdin  # type:ignore[truthy-bool]
-            and sys.stdin.isatty()
-        ):
+        if not sys.platform.startswith("win") and sys.stdin and sys.stdin.isatty():
             signal.signal(signal.SIGINT, self._handle_sigint)
         signal.signal(signal.SIGTERM, self._signal_stop)
         if hasattr(signal, "SIGUSR1"):
@@ -2520,7 +2516,7 @@ class ServerApp(JupyterApp):
         no = _i18n("n")
         sys.stdout.write(_i18n("Shut down this Jupyter server (%s/[%s])? ") % (yes, no))
         sys.stdout.flush()
-        r, w, x = select.select([sys.stdin], [], [], 5)
+        r, _w, _x = select.select([sys.stdin], [], [], 5)
         if r:
             line = sys.stdin.readline()
             if line.lower().startswith(yes) and no not in line.lower():
@@ -2723,8 +2719,19 @@ class ServerApp(JupyterApp):
 
     def _bind_http_server_tcp(self) -> bool:
         """Bind a tcp server."""
-        self.http_server.listen(self.port, self.ip)
-        return True
+        try:
+            self.http_server.listen(self.port, self.ip)
+        except OSError as e:
+            if e.errno == errno.EADDRINUSE:
+                self.log.warning(_i18n("The port %i is already in use.") % self.port)
+                return False
+            elif e.errno in (errno.EACCES, getattr(errno, "WSAEACCES", errno.EACCES)):
+                self.log.warning(_i18n("Permission to listen on port %i denied.") % self.port)
+                return False
+            else:
+                raise
+        else:
+            return True
 
     def _find_http_port(self) -> None:
         """Find an available http port."""
@@ -2733,7 +2740,8 @@ class ServerApp(JupyterApp):
         for port in random_ports(self.port, self.port_retries + 1):
             try:
                 sockets = bind_sockets(port, self.ip)
-                sockets[0].close()
+                for s in sockets:
+                    s.close()
             except OSError as e:
                 if e.errno == errno.EADDRINUSE:
                     if self.port_retries:
@@ -2917,7 +2925,7 @@ class ServerApp(JupyterApp):
 
     def running_server_info(self, kernel_count: bool = True) -> str:
         """Return the current working directory and the server url information"""
-        info = t.cast(str, self.contents_manager.info_string()) + "\n"
+        info = t.cast("str", self.contents_manager.info_string()) + "\n"
         if kernel_count:
             n_kernels = len(self.kernel_manager.list_kernel_ids())
             kernel_msg = trans.ngettext("%d active kernel", "%d active kernels", n_kernels)

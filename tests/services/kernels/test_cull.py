@@ -151,7 +151,7 @@ async def test_cull_connected(jp_fetch, jp_ws_fetch):
                 "parent_header": {},
                 "metadata": {},
                 "content": {
-                    "code": f"import time\ntime.sleep({CULL_TIMEOUT-1})",
+                    "code": f"import time\ntime.sleep({CULL_TIMEOUT - 1})",
                     "silent": False,
                     "allow_stdin": False,
                     "stop_on_error": True,

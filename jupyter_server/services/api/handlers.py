@@ -23,18 +23,18 @@ class APISpecHandler(web.StaticFileHandler, JupyterHandler):
 
     auth_resource = AUTH_RESOURCE
 
-    def initialize(self):
+    def initialize(self):  # type: ignore[override]
         """Initialize the API spec handler."""
         web.StaticFileHandler.initialize(self, path=os.path.dirname(__file__))
 
     @web.authenticated
     @authorized
-    def head(self):
+    def head(self):  # type: ignore[override]
         return self.get("api.yaml", include_body=False)
 
     @web.authenticated
     @authorized
-    def get(self):
+    def get(self):  # type: ignore[override]
         """Get the API spec."""
         self.log.warning("Serving api spec (experimental, incomplete)")
         return web.StaticFileHandler.get(self, "api.yaml")
@@ -120,7 +120,7 @@ class IdentityHandler(APIHandler):
     @web.authenticated
     async def patch(self):
         """Update user information."""
-        user_data = cast(dict[UpdatableField, str], self.get_json_body())
+        user_data = cast("dict[UpdatableField, str]", self.get_json_body())
         if not user_data:
             raise web.HTTPError(400, "Invalid or missing JSON body")
 
