@@ -207,11 +207,17 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         def cleanup(_=None):
             """Common cleanup"""
             loop.remove_timeout(nudge_handle)
-            iopub_channel.stop_on_recv()
+            # Close the transient shell/control sockets we own first, so they
+            # are released even if the shared iopub channel was already torn
+            # down (e.g. by a concurrent websocket disconnect). Previously
+            # iopub.stop_on_recv() raised OSError here and aborted cleanup,
+            # leaking the shell+control FDs on every such race.
             if not shell_channel.closed():
                 shell_channel.close()
             if not control_channel.closed():
                 control_channel.close()
+            if not iopub_channel.closed():
+                iopub_channel.stop_on_recv()
 
         # trigger cleanup when both message futures are resolved
         all_done.add_done_callback(cleanup)
@@ -355,7 +361,11 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.log.info("Restoring connection for %s", self.session_key)
             if self.multi_kernel_manager.ports_changed(self.kernel_id):
                 # If the kernel's ports have changed (some restarts trigger this)
-                # then reset the channels so nudge() is using the correct iopub channel
+                # then reset the channels so nudge() is using the correct iopub channel.
+                # Close the stale buffered channels first to avoid leaking FDs.
+                for stream in buffer_info["channels"].values():
+                    if not stream.closed():
+                        stream.close()
                 self.create_stream()
             else:
                 # The kernel's ports have not changed; use the channels captured in the buffer
@@ -415,6 +425,14 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # unregister myself as an open session (only if it's really me)
         if self._open_sessions.get(self.session_key) is self.websocket_handler:
             self._open_sessions.pop(self.session_key)
+
+        # Close any pending kernel_info_channel. If the kernel never replied to
+        # the kernel_info_request (e.g. hung/rogue), _handle_kernel_info_reply
+        # will not have fired to close it. This must run before the
+        # start_buffering early-return below, otherwise the channel leaks.
+        if self.kernel_info_channel is not None and not self.kernel_info_channel.closed():
+            self.kernel_info_channel.close()
+        self.kernel_info_channel = None
 
         if self.kernel_id in self.multi_kernel_manager:
             self.multi_kernel_manager.notify_disconnect(self.kernel_id)
