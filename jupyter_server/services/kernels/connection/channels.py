@@ -180,6 +180,12 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # Use a transient control channel to prevent leaking
         # control responses to the front-end.
         control_channel = self.kernel_manager.connect_control()
+        # Snapshot of ports the transient channels above are bound to. If a
+        # restart with newports happens mid-nudge, kernel_manager.ports will
+        # change and we must abort: the channels are now connected to dead
+        # peers, no reply will come, and open() would otherwise block until
+        # kernel_info_timeout (default 60s), preventing on_close from firing.
+        nudge_ports = list(self.kernel_manager.ports)
         # The IOPub used by the client, whose subscriptions we are verifying.
         iopub_channel = self.channels["iopub"]
 
@@ -256,6 +262,14 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             # check for stopped kernel
             if self.kernel_id not in self.multi_kernel_manager:
                 self.log.debug("Nudge: cancelling on stopped kernel: %s", self.kernel_id)
+                finish()
+                return
+
+            # If the kernel was restarted with new ports, the transient
+            # shell/control channels above are bound to dead peers and will
+            # never receive a reply. Bail so connect()/open() can return.
+            if list(self.kernel_manager.ports) != nudge_ports:
+                self.log.debug("Nudge: cancelling on port change: %s", self.kernel_id)
                 finish()
                 return
 
@@ -421,6 +435,14 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
 
     def disconnect(self):
         """Handle a disconnect."""
+        # Decrement the connection counter first, before any work that can
+        # block the event loop (zmq channel close can stall on LINGER when
+        # the peer is gone, especially on Windows). The counter conceptually
+        # drops the moment the websocket closes, not when teardown finishes.
+        # notify_disconnect is internally guarded on _kernel_connections, so
+        # it is safe to call even when the kernel was transiently removed
+        # from the mkm (port-changing restart window).
+        self.multi_kernel_manager.notify_disconnect(self.kernel_id)
         self.log.debug("Websocket closed %s", self.session_key)
         # unregister myself as an open session (only if it's really me)
         if self._open_sessions.get(self.session_key) is self.websocket_handler:
@@ -435,7 +457,6 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         self.kernel_info_channel = None
 
         if self.kernel_id in self.multi_kernel_manager:
-            self.multi_kernel_manager.notify_disconnect(self.kernel_id)
             self.multi_kernel_manager.remove_restart_callback(
                 self.kernel_id,
                 self.on_kernel_restarted,

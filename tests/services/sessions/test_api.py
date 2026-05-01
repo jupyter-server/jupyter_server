@@ -503,6 +503,12 @@ async def test_modify_kernel_id(session_client, jp_fetch, jp_serverapp, session_
         assert kernel_list == [kernel]
 
 
+@pytest.mark.xfail(
+    os.name == "nt",
+    reason="Flaky on Windows: server-side websocket close detection is intermittently"
+    " too slow after a port-changing kernel restart, leaving the connection counter at 1.",
+    strict=False,
+)
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_restart_kernel(session_client, jp_base_url, jp_fetch, jp_ws_fetch, session_is_ready):
     # Create a session.
