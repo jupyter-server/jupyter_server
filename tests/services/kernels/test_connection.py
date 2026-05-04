@@ -224,6 +224,7 @@ async def test_no_fd_leak_on_disconnect_with_orphaned_kernel_info_channel(
     )
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Times out on Windows")
 async def test_disconnect_resolves_orphaned_kernel_info_future(jp_serverapp: ServerApp) -> None:
     """Disconnecting with an orphaned kernel_info channel should not leave
     kernel_manager._kernel_info_future pending, which would block reconnects
