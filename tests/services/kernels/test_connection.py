@@ -222,3 +222,36 @@ async def test_no_fd_leak_on_disconnect_with_orphaned_kernel_info_channel(
         f"FD leak detected: {final_fds - baseline_fds} FDs leaked after 100 "
         f"disconnects with orphaned kernel_info_channel"
     )
+
+
+async def test_disconnect_resolves_orphaned_kernel_info_future(jp_serverapp: ServerApp) -> None:
+    """Disconnecting with an orphaned kernel_info channel should not leave
+    kernel_manager._kernel_info_future pending, which would block reconnects
+    waiting for a never-arriving kernel_info reply."""
+    app = jp_serverapp
+    km = app.kernel_manager
+    kernel_id = await km.start_kernel()
+    kernel = km.get_kernel(kernel_id)
+
+    conn1 = _make_connection(app, kernel, timeout=5.0)
+    conn1.create_stream()
+    conn1.session.key = kernel.session.key
+    conn1.session_key = f"{kernel_id}:{conn1.session.session}"
+
+    # Simulate an in-flight kernel_info request that never gets a reply.
+    conn1.kernel_info_channel = km.connect_shell(kernel_id)
+    km._kernel_info_future = conn1._kernel_info_future
+
+    # Force the buffering early-return path in disconnect()
+    km._kernel_connections[kernel_id] = 0
+    conn1.disconnect()
+
+    # Regression check: pending shared future must be resolved by disconnect.
+    assert conn1._kernel_info_future.done()
+
+    # A new connection should not block waiting on the stale pending future.
+    conn2 = _make_connection(app, kernel, timeout=0.2)
+    conn2.create_stream()
+    conn2.session.key = kernel.session.key
+    conn2.kernel_info_timeout = 0.2
+    await asyncio.wait_for(asyncio.wrap_future(conn2.request_kernel_info()), timeout=1.0)
