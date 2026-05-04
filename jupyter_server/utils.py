@@ -7,6 +7,7 @@ from __future__ import annotations
 import errno
 import importlib.util
 import os
+import re
 import socket
 import sys
 import warnings
@@ -40,6 +41,28 @@ ApiPath = NewType("ApiPath", str)
 urljoin = _urljoin
 pathname2url = _pathname2url
 ensure_async = _ensure_async
+
+
+def origin_matches_pat(allow_origin_pat: str, origin: str) -> bool:
+    """Check whether origin matches ``allow_origin_pat`` using full-string matching.
+
+    Uses ``re.fullmatch`` so the pattern must cover the entire origin string,
+    preventing prefix-bypass attacks (GHSA-24qx-w28j-9m6p/CVE-2026-40110).
+    Emits a warning in case a user relied on prefix-style patterns.
+    """
+    if not allow_origin_pat:
+        return False
+    if re.fullmatch(allow_origin_pat, origin):
+        return True
+    if re.match(allow_origin_pat, origin):
+        warnings.warn(
+            f"allow_origin_pat {allow_origin_pat!r} only matched the request origin as a prefix. "
+            "This has been replaced with a full string match. "
+            "Update your pattern if you need to prefix-match the origin (e.g. append '.*')",
+            UserWarning,
+            stacklevel=3,
+        )
+    return False
 
 
 def url_path_join(*pieces: str) -> str:
