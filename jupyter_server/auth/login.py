@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from tornado.escape import url_escape
 
 from ..base.handlers import JupyterHandler
+from ..utils import origin_matches_pat
 from .decorator import allow_unauthenticated
 from .security import passwd_check, set_password
 
@@ -73,7 +74,7 @@ class LoginFormHandler(JupyterHandler):
                 if self.allow_origin:
                     allow = self.allow_origin == origin
                 elif self.allow_origin_pat:
-                    allow = self._origin_matches_pat(origin)
+                    allow = origin_matches_pat(self.allow_origin_pat, origin)
             if not allow:
                 # not allowed, use default
                 self.log.warning("Not allowing login redirect to %r" % url)

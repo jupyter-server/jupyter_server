@@ -36,6 +36,7 @@ from jupyter_server.services.security import csp_report_uri
 from jupyter_server.utils import (
     ensure_async,
     filefind,
+    origin_matches_pat,
     url_escape,
     url_is_absolute,
     url_path_join,
@@ -383,27 +384,6 @@ class JupyterHandler(AuthenticatedHandler):
         """Whether to set Access-Control-Allow-Credentials"""
         return cast("bool", self.settings.get("allow_credentials", False))
 
-    def _origin_matches_pat(self, origin: str) -> bool:
-        """Check whether origin matches ``allow_origin_pat`` using full-string matching.
-
-        Uses ``re.fullmatch`` so the pattern must cover the entire origin string,
-        preventing prefix-bypass attacks (GHSA-24qx-w28j-9m6p/CVE-2026-40110).
-        Emits a warning in case a user relied on prefix-style patterns.
-        """
-        if not self.allow_origin_pat:
-            return False
-        if re.fullmatch(self.allow_origin_pat, origin):
-            return True
-        if re.match(self.allow_origin_pat, origin):
-            warnings.warn(
-                f"allow_origin_pat {self.allow_origin_pat!r} only matched the request origin as a prefix. "
-                "This has been replaced with a full string match. "
-                "Update your pattern if you need to prefix-match the origin (e.g. append '.*')",
-                UserWarning,
-                stacklevel=2,
-            )
-        return False
-
     def set_default_headers(self) -> None:
         """Add CORS headers, if defined"""
         super().set_default_headers()
@@ -418,7 +398,7 @@ class JupyterHandler(AuthenticatedHandler):
             self.set_header("Access-Control-Allow-Origin", self.allow_origin)
         elif self.allow_origin_pat:
             origin = self.get_origin()
-            if origin and self._origin_matches_pat(origin):
+            if origin and origin_matches_pat(self.allow_origin_pat, origin):
                 self.set_header("Access-Control-Allow-Origin", origin)
         elif self.token_authenticated and "Access-Control-Allow-Origin" not in self.settings.get(
             "headers", {}
@@ -488,7 +468,7 @@ class JupyterHandler(AuthenticatedHandler):
         if self.allow_origin:
             allow = bool(self.allow_origin == origin)
         elif self.allow_origin_pat:
-            allow = self._origin_matches_pat(origin)
+            allow = origin_matches_pat(self.allow_origin_pat, origin)
         else:
             # No CORS headers deny the request
             allow = False
@@ -533,7 +513,7 @@ class JupyterHandler(AuthenticatedHandler):
         if self.allow_origin:
             allow = self.allow_origin == origin
         elif self.allow_origin_pat:
-            allow = self._origin_matches_pat(origin)
+            allow = origin_matches_pat(self.allow_origin_pat, origin)
         else:
             # No CORS settings, deny the request
             allow = False

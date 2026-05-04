@@ -15,6 +15,7 @@ from jupyter_server.utils import (
     check_version,
     filefind,
     is_namespace_package,
+    origin_matches_pat,
     path2url,
     run_sync_in_loop,
     samefile_simple,
@@ -164,3 +165,88 @@ def test_filefind(tmp_path, filename, result):
     else:
         with pytest.raises(result):
             filefind(filename, [str(a), str(b)])
+
+
+TRUSTED_PAT = r"https://trusted\.example\.com"
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "https://trusted.example.com",
+        # pattern is the full origin string
+    ],
+)
+def test_origin_matches_pat_accepts_exact(origin):
+    assert origin_matches_pat(TRUSTED_PAT, origin) is True
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        # suffix-bypass: pre-CVE-2026-40110 prefix matching would have allowed these
+        "https://trusted.example.com.evil.com",
+        "https://trusted.example.comedy",
+        "https://trusted.example.com:9999",
+        "https://trusted.example.com/path",
+        # newline injection — must not be allowed via $-anchor or otherwise
+        "https://trusted.example.com\nhttps://evil.com",
+    ],
+)
+def test_origin_matches_pat_rejects_full_match_failures(origin):
+    # These all match `re.match` (prefix) but NOT `re.fullmatch`, so the helper
+    # warns and returns False.
+    with pytest.warns(UserWarning, match="only matched the request origin as a prefix"):
+        assert origin_matches_pat(TRUSTED_PAT, origin) is False
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "http://trusted.example.com",
+        "https://other.example.com",
+        "https://trusted.example.co",
+        "",
+    ],
+)
+def test_origin_matches_pat_rejects_non_match(origin):
+    # No prefix match either, so no warning.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert origin_matches_pat(TRUSTED_PAT, origin) is False
+
+
+def test_origin_matches_pat_empty_pattern_rejects_all():
+    # Empty pattern must never allow any origin (empty-string regex would otherwise
+    # fullmatch only the empty string, but the early-return guard makes this explicit).
+    assert origin_matches_pat("", "") is False
+    assert origin_matches_pat("", "https://anything") is False
+
+
+def test_origin_matches_pat_respects_user_anchors():
+    # Patterns that already include ^ and $ should still work (fullmatch is idempotent
+    # with explicit anchors).
+    assert origin_matches_pat(r"^https://trusted\.example\.com$", "https://trusted.example.com")
+    assert not origin_matches_pat(
+        r"^https://trusted\.example\.com$", "https://trusted.example.com.evil"
+    )
+
+
+def test_origin_matches_pat_alternation():
+    pat = r"https://a\.com|https://b\.com"
+    assert origin_matches_pat(pat, "https://a.com") is True
+    assert origin_matches_pat(pat, "https://b.com") is True
+    # alternation must not be exploitable as a prefix:
+    with pytest.warns(UserWarning, match="only matched the request origin as a prefix"):
+        assert origin_matches_pat(pat, "https://a.comevil") is False
+
+
+def test_origin_matches_pat_unescaped_dot_is_a_footgun():
+    # Documented footgun: an operator who forgets to escape `.` writes a regex that
+    # treats it as a wildcard. The helper has no way to detect this — it is the
+    # caller's responsibility to escape literal characters in `allow_origin_pat`.
+    # This test pins the current behavior so a future change that auto-escapes or
+    # warns about unescaped dots is a deliberate, reviewed decision.
+    bad_pattern = r"https://trusted.example.com"  # dots NOT escaped
+    assert origin_matches_pat(bad_pattern, "https://trustedxexamplexcom") is True
+    assert origin_matches_pat(bad_pattern, "https://trusted-example-com") is True
