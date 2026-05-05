@@ -299,3 +299,15 @@ def test_path_traversal_when_sibling_dir_starts_with_root_dir(tmpdir):
 
     assert err.value.status_code == 404
     assert "outside root contents directory" in str(err.value)
+
+
+def test_get_os_path_with_root_dir_slash(tmp_path):
+    """root_dir='/' should not raise when resolving any valid path (issue #1635)."""
+
+    class FileManagerMixinTest(FileManagerMixin):
+        root_dir = "/"
+
+    mixin = FileManagerMixinTest()
+    mixin.log = logging.getLogger()
+
+    assert mixin._get_os_path("home/user/notebook.ipynb") == "/home/user/notebook.ipynb"
