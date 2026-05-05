@@ -315,3 +315,32 @@ def test_get_os_path_with_root_dir_slash(tmp_path):
     assert mixin._get_os_path("work/notebook.ipynb") == os.path.join(
         fs_root, "work", "notebook.ipynb"
     )
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows UNC paths only")
+@pytest.mark.parametrize("root_dir", ["\\\\server\\share", "\\\\server\\share\\"])
+def test_get_os_path_with_unc_root(root_dir):
+    """UNC root_dir (with or without trailing backslash) should resolve paths correctly."""
+
+    class FileManagerMixinTest(FileManagerMixin):
+        pass
+
+    mixin = FileManagerMixinTest()
+    mixin.root_dir = root_dir
+    mixin.log = logging.getLogger()
+
+    assert mixin._get_os_path("work/notebook.ipynb") == "\\\\server\\share\\work\\notebook.ipynb"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows only")
+def test_get_os_path_with_non_current_drive_root():
+    """root_dir set to a non-current drive root should not raise"""
+
+    class FileManagerMixinTest(FileManagerMixin):
+        pass
+
+    mixin = FileManagerMixinTest()
+    mixin.root_dir = "W:\\"
+    mixin.log = logging.getLogger()
+
+    assert mixin._get_os_path("work/notebook.ipynb") == "W:\\work\\notebook.ipynb"
