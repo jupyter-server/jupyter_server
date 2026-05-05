@@ -461,6 +461,18 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # start_buffering early-return below, otherwise the channel leaks.
         if self.kernel_info_channel is not None and not self.kernel_info_channel.closed():
             self.kernel_info_channel.close()
+            # If this connection owned the shared kernel_info future and we
+            # are closing its channel before a reply arrives, unblock any
+            # reconnect path waiting on that pending future.
+            if not self._kernel_info_future.done():
+                self._kernel_info_future.set_result({})
+            # Allow a future connection to issue a fresh kernel_info request
+            # rather than inheriting an orphaned/empty cached future.
+            if (
+                getattr(self.kernel_manager, "_kernel_info_future", None)
+                is self._kernel_info_future
+            ):
+                del self.kernel_manager._kernel_info_future
         self.kernel_info_channel = None
 
         if self.kernel_id in self.multi_kernel_manager:
