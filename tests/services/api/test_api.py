@@ -227,6 +227,7 @@ async def test_update_user_raise(jp_fetch, identity, password_identity_provider)
                 "name": "Updated Name",
                 "display_name": "Updated Display Name",
                 "color": "#000000",
+                "avatar_url": "some/url",
             },
         )
     ],
@@ -236,11 +237,12 @@ async def test_update_user_success_custom_updatable_fields(
 ):
     """Test successful user update."""
     password_identity_provider.mock_user = MockUser(**identity)
-    identity_provider.updatable_fields = ["name", "display_name", "color"]
+    password_identity_provider.updatable_fields = ["name", "display_name", "color", "avatar_url"]
     payload = {
         "name": expected["name"],
         "display_name": expected["display_name"],
         "color": expected["color"],
+        "avatar_url": expected["avatar_url"],
     }
     r = await jp_fetch(
         "/api/me",
