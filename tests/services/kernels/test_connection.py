@@ -243,8 +243,11 @@ async def test_disconnect_resolves_orphaned_kernel_info_future(jp_serverapp: Ser
     conn1.kernel_info_channel = km.connect_shell(kernel_id)
     km._kernel_info_future = conn1._kernel_info_future
 
-    # Force the buffering early-return path in disconnect()
-    km._kernel_connections[kernel_id] = 0
+    # Force the buffering early-return path in disconnect().
+    # disconnect() first decrements the connection count via
+    # notify_disconnect(), so start at 1 to reach the == 0 branch.
+    km._kernel_connections[kernel_id] = 1
+    ZMQChannelsWebsocketConnection._open_sockets.add(conn1)
     conn1.disconnect()
 
     # Regression check: pending shared future must be resolved by disconnect.
