@@ -354,6 +354,7 @@ class IdentityProvider(LoggingConfigurable):
                 "display_name": user.display_name,
                 "initials": user.initials,
                 "color": user.color,
+                "avatar_url": user.avatar_url,
             }
         )
         return cookie
@@ -366,7 +367,7 @@ class IdentityProvider(LoggingConfigurable):
             user["name"],
             user["display_name"],
             user["initials"],
-            None,
+            user["avatar_url"],
             user["color"],
         )
 
