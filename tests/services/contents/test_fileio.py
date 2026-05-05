@@ -302,12 +302,16 @@ def test_path_traversal_when_sibling_dir_starts_with_root_dir(tmpdir):
 
 
 def test_get_os_path_with_root_dir_slash(tmp_path):
-    """root_dir='/' should not raise when resolving any valid path (issue #1635)."""
+    """root_dir set to filesystem root should not raise for any valid path (issue #1635)."""
+
+    fs_root = os.path.abspath(os.sep)
 
     class FileManagerMixinTest(FileManagerMixin):
-        root_dir = "/"
+        root_dir = fs_root
 
     mixin = FileManagerMixinTest()
     mixin.log = logging.getLogger()
 
-    assert mixin._get_os_path("home/user/notebook.ipynb") == "/home/user/notebook.ipynb"
+    assert mixin._get_os_path("work/notebook.ipynb") == os.path.join(
+        fs_root, "work", "notebook.ipynb"
+    )

@@ -322,8 +322,8 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
         except ValueError:
             raise HTTPError(404, f"{path} is not a valid path") from None
 
-        # Corner case: when root_dir is the filesystem root ("/"), root + sep becomes "//"
-        if root != os.path.sep:
+        # Corner case: when root_dir is the filesystem root, root + sep produces an invalid prefix
+        if root != os.path.abspath(os.sep):
             if not (os.path.abspath(os_path) + os.path.sep).startswith(root + os.path.sep):
                 raise HTTPError(404, "%s is outside root contents directory" % path)
         return os_path
