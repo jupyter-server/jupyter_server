@@ -178,6 +178,30 @@ def test_password_required(identity_provider_class, password_set, password_requi
         idp.validate_security(app, ssl_options=None)
 
 
+@pytest.mark.parametrize(
+    "user_fields",
+    [
+        {"username": "user"},
+        {"username": "user", "avatar_url": "https://example.com/avatar.png"},
+        {
+            "username": "user",
+            "name": "Real Name",
+            "display_name": "RN",
+            "initials": "RN",
+            "avatar_url": "img/avatar.jpg",
+            "color": "#abc",
+        },
+    ],
+)
+def test_user_cookie_roundtrip(user_fields):
+    """All user fields must survive user_to_cookie -> user_from_cookie."""
+    idp = IdentityProvider()
+    user = User(**user_fields)
+    cookie = idp.user_to_cookie(user)
+    restored = idp.user_from_cookie(cookie)
+    assert restored == user
+
+
 async def test_auth_disabled(request, jp_serverapp, jp_fetch):
     idp = PasswordIdentityProvider(
         parent=jp_serverapp,
