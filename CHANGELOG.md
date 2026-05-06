@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.18.2
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.18.1...0d829f2c35a481c3b24ecbe1e25a6f79954e88f2))
+
+### Bugs fixed
+
+- Fix saving user avatar URL [#1637](https://github.com/jupyter-server/jupyter_server/pull/1637) ([@brichet](https://github.com/brichet), [@krassowski](https://github.com/krassowski))
+- Fix path resolution if `root_dir` is a filesystem root [#1636](https://github.com/jupyter-server/jupyter_server/pull/1636) ([@Yann-P](https://github.com/Yann-P), [@krassowski](https://github.com/krassowski))
+
+### Maintenance and upkeep improvements
+
+- Add Zulip notification when a release is complete [#1634](https://github.com/jupyter-server/jupyter_server/pull/1634) ([@Yann-P](https://github.com/Yann-P), [@Carreau](https://github.com/Carreau))
+- chore: update pre-commit hooks [#1633](https://github.com/jupyter-server/jupyter_server/pull/1633) ([@Carreau](https://github.com/Carreau))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2026-05-05&to=2026-05-06&type=c))
+
+@brichet ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abrichet+updated%3A2026-05-05..2026-05-06&type=Issues)) | @Carreau ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2026-05-05..2026-05-06&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2026-05-05..2026-05-06&type=Issues)) | @Yann-P ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AYann-P+updated%3A2026-05-05..2026-05-06&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.18.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.18.0...8f0b2b31822b89046c66a9dd24cfd4cf7e0249c1))
@@ -20,8 +45,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2026-05-04&to=2026-05-05&type=c))
 
 @Copilot ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACopilot+updated%3A2026-05-04..2026-05-05&type=Issues)) | @jtpio ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2026-05-04..2026-05-05&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2026-05-04..2026-05-05&type=Issues)) | @tonyx93 ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Atonyx93+updated%3A2026-05-04..2026-05-05&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.18.0
 
