@@ -899,6 +899,10 @@ class ServerKernelManager(AsyncIOLoopKernelManager):
                 pass
         return logger
 
+    def create_websocket_connection(self, websocket_handler, config=None):
+        connection_class = websocket_handler.kernel_websocket_connection_class
+        return connection_class(parent=self, websocket_handler=websocket_handler, config=config)
+
     def emit(self, schema_id, data):
         """Emit an event from the kernel manager."""
         self.event_logger.emit(schema_id=schema_id, data=data)
