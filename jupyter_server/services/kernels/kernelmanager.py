@@ -67,6 +67,16 @@ class MappingKernelManager(MultiKernelManager):
 
     kernel_argv = List(Unicode())
 
+    enable_curve = Bool(
+        False,
+        config=True,
+        help=(
+            "Set JUPYTER_ENABLE_CURVE=1 for all managed kernels. "
+            "Kernels that honor this variable will enable "
+            "CurveZMQ transport encryption."
+        ),
+    )
+
     root_dir = Unicode(config=True)
 
     _kernel_connections = Dict()
@@ -204,6 +214,16 @@ class MappingKernelManager(MultiKernelManager):
             os_path = os.path.dirname(os_path)
         return os_path
 
+    def _kernel_start_env(self, env: dict[str, str] | None = None) -> dict[str, str]:
+        """Build the environment passed to kernel start.
+
+        Returns a copy so caller-provided dictionaries are never modified in-place.
+        """
+        launch_env: dict[str, str] = dict(env or {})
+        if self.enable_curve:
+            launch_env["JUPYTER_ENABLE_CURVE"] = "1"
+        return launch_env
+
     async def _remove_kernel_when_ready(self, kernel_id, kernel_awaitable):
         """Remove a kernel when it is ready."""
         await super()._remove_kernel_when_ready(kernel_id, kernel_awaitable)
@@ -213,7 +233,7 @@ class MappingKernelManager(MultiKernelManager):
     # TODO: DEC 2022: Revise the type-ignore once the signatures have been changed upstream
     # https://github.com/jupyter/jupyter_client/pull/905
     async def _async_start_kernel(  # type:ignore[override]
-        self, *, kernel_id: str | None = None, path: ApiPath | None = None, **kwargs: str
+        self, *, kernel_id: str | None = None, path: ApiPath | None = None, **kwargs: t.Any
     ) -> str:
         """Start a kernel for a session and return its kernel_id.
 
@@ -231,6 +251,7 @@ class MappingKernelManager(MultiKernelManager):
             an existing kernel is returned, but it may be checked in the future.
         """
         if kernel_id is None or kernel_id not in self:
+            kwargs["env"] = self._kernel_start_env(kwargs.get("env"))
             if path is not None:
                 kwargs["cwd"] = self.cwd_for_path(path, env=kwargs.get("env", {}))
             if kernel_id is not None:

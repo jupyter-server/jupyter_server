@@ -1,7 +1,10 @@
 import pytest
 from traitlets.config import Config
 
-from jupyter_server.services.kernels.kernelmanager import AsyncMappingKernelManager
+from jupyter_server.services.kernels.kernelmanager import (
+    AsyncMappingKernelManager,
+    MappingKernelManager,
+)
 
 
 @pytest.fixture
@@ -29,3 +32,14 @@ def test_not_server_kernel_manager(jp_configurable_serverapp):
     ]
     with pytest.warns(FutureWarning, match="is not a subclass of 'ServerKernelManager'"):
         jp_configurable_serverapp(argv=argv)
+
+
+def test_kernel_start_env_enable_curve_sets_variable():
+    km = MappingKernelManager(enable_curve=True)
+
+    source_env = {"EXISTING": "1"}
+    launch_env = km._kernel_start_env(source_env)
+
+    assert launch_env["EXISTING"] == "1"
+    assert launch_env["JUPYTER_ENABLE_CURVE"] == "1"
+    assert "JUPYTER_ENABLE_CURVE" not in source_env
