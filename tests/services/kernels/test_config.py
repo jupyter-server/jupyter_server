@@ -34,12 +34,10 @@ def test_not_server_kernel_manager(jp_configurable_serverapp):
         jp_configurable_serverapp(argv=argv)
 
 
-def test_kernel_start_env_enable_curve_sets_variable():
-    km = MappingKernelManager(enable_curve=True)
+def test_kernel_start_kwargs_transport_encryption_sets_flag():
+    km = MappingKernelManager(transport_encryption=True)
 
-    source_env = {"EXISTING": "1"}
-    launch_env = km._kernel_start_env(source_env)
+    launch_kwargs = km._kernel_start_kwargs(env={"EXISTING": "1"})
 
-    assert launch_env["EXISTING"] == "1"
-    assert launch_env["JUPYTER_ENABLE_CURVE"] == "1"
-    assert "JUPYTER_ENABLE_CURVE" not in source_env
+    assert launch_kwargs["transport_encryption"] is True
+    assert launch_kwargs["env"] == {"EXISTING": "1"}
