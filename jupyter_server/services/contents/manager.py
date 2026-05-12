@@ -705,7 +705,7 @@ class ContentsManager(LoggingConfigurable):
         self.notary.mark_cells(nb, True)
         self.check_and_sign(nb, path)
 
-    def check_and_sign(self, nb, path=""):
+    def check_and_sign(self, nb, path="", _retrying=False):
         """Check for trusted cells, and sign the notebook.
 
         Called as a part of saving notebooks.
@@ -717,10 +717,26 @@ class ContentsManager(LoggingConfigurable):
         path : str
             The notebook's path (for logging)
         """
-        if self.notary.check_cells(nb):
-            self.notary.sign(nb)
-        else:
-            self.log.warning("Notebook %s is not trusted", path)
+        try:
+            if self.notary.check_cells(nb):
+                self.notary.sign(nb)
+            else:
+                self.log.warning("Notebook %s is not trusted", path)
+        except Exception:
+            if _retrying:
+                raise
+            self.log.warning(
+                "Signature store for notebook %s is corrupted or unavailable; "
+                "recreating the store.",
+                path,
+                exc_info=True,
+            )
+            # The default implementation uses SQLiteSignatureStore if SQLite3 is available
+            # and falls back to MemorySignatureStore if not; SQLiteSignatureStore will
+            # attempt to recreate the database if it detects errors during initialization,
+            # and fallback to in-memory (`:memory:`) SQLite database if necessary.
+            self.notary.store = self.notary.store_factory()
+            self.check_and_sign(nb, path, _retrying=True)
 
     def mark_trusted_cells(self, nb, path=""):
         """Mark cells as trusted if the notebook signature matches.
