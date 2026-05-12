@@ -11,6 +11,7 @@ import pytest
 from jupyter_core.utils import ensure_async
 from nbformat import ValidationError
 from nbformat import v4 as nbformat
+from nbformat.sign import NotebookNotary
 from tornado.web import HTTPError
 from traitlets import TraitError
 
@@ -1150,6 +1151,47 @@ async def test_created_timestamp(jp_contents_manager):
 
     # Verify last_modified advanced (sanity check)
     assert updated_model["last_modified"] > model["last_modified"]
+
+
+@pytest.fixture(params=[FileContentsManager, AsyncFileContentsManager])
+def file_manager_with_notary(request, tmp_path):
+    """Both sync and async file managers, each with a notary using a dedicated temp directory."""
+    notary_dir = tmp_path / "notary"
+    notary_dir.mkdir()
+    root_dir = tmp_path / "root"
+    root_dir.mkdir()
+    notary = NotebookNotary(data_dir=str(notary_dir))
+    cm = request.param(root_dir=str(root_dir))
+    cm.notary = notary
+    return cm
+
+
+async def test_save_before_and_after_signature_store_corruption(file_manager_with_notary):
+    cm = file_manager_with_notary
+    db_path = cm.notary.db_file
+
+    # First save
+    model = await ensure_async(cm.new_untitled(type="notebook"))
+    path = model["path"]
+    full_model = await ensure_async(cm.get(path))
+    result = await ensure_async(cm.save(full_model, path))
+    assert isinstance(result, dict)
+    assert result["path"] == path
+    assert os.path.exists(db_path)
+
+    # Fetch the model before corrupting so that cm.get() does not itself hit the DB
+    full_model = await ensure_async(cm.get(path))
+
+    # Corrupt the signature store by truncating to the SQLite file header size (100 bytes),
+    # leaving the magic bytes intact but removing all data pages.
+    with open(db_path, "r+b") as f:
+        f.truncate(100)
+
+    # Second save with the same notary: signature store corruption should be handled
+    # gracefully and the notebook should still be saved successfully.
+    result = await ensure_async(cm.save(full_model, path))
+    assert isinstance(result, dict)
+    assert result["path"] == path
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only - st_birthtime test")
