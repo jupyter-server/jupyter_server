@@ -1166,7 +1166,7 @@ def file_manager_with_notary(request, tmp_path):
     return cm
 
 
-async def test_save_before_and_after_signature_store_corruption(file_manager_with_notary):
+async def test_save_before_and_after_signature_store_corruption(file_manager_with_notary, caplog):
     cm = file_manager_with_notary
     db_path = cm.notary.db_file
 
@@ -1189,9 +1189,39 @@ async def test_save_before_and_after_signature_store_corruption(file_manager_wit
 
     # Second save with the same notary: signature store corruption should be handled
     # gracefully and the notebook should still be saved successfully.
-    result = await ensure_async(cm.save(full_model, path))
+    with caplog.at_level("WARNING"):
+        result = await ensure_async(cm.save(full_model, path))
     assert isinstance(result, dict)
     assert result["path"] == path
+    assert "corrupted or unavailable" in caplog.text
+
+
+async def test_save_raises_when_signature_store_unrecoverable(file_manager_with_notary, caplog):
+    cm = file_manager_with_notary
+    db_path = cm.notary.db_file
+
+    # First save
+    model = await ensure_async(cm.new_untitled(type="notebook"))
+    path = model["path"]
+    full_model = await ensure_async(cm.get(path))
+    await ensure_async(cm.save(full_model, path))
+
+    # Fetch the model before corrupting so that cm.get() does not itself hit the DB
+    full_model = await ensure_async(cm.get(path))
+
+    # Corrupt the store, and also replace store_factory so that the recovery attempt
+    # returns a broken store, causing the retry to also fail.
+    with open(db_path, "r+b") as f:
+        f.truncate(100)
+    broken_store = MagicMock()
+    broken_store.store_signature.side_effect = RuntimeError("store is broken")
+    cm.notary.store_factory = lambda: broken_store
+
+    with caplog.at_level("WARNING"):
+        with pytest.raises(HTTPError) as exc_info:
+            await ensure_async(cm.save(full_model, path))
+    assert exc_info.value.status_code == 500
+    assert "corrupted or unavailable" in caplog.text
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only - st_birthtime test")
