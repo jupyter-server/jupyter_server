@@ -627,7 +627,7 @@ class ChannelQueue(Queue):  # type:ignore[type-arg]
                     msg = "Response router had finished"
                     raise RuntimeError(msg) from None
                 if monotonic() > end_time:
-                    raise TimeoutError(f"{self.channel_name} async_get timeout") from None
+                    raise Empty(f"{self.channel_name} async_get timeout: {timeout}s") from None
                 await asyncio.sleep(0)
 
     async def get_msg(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
