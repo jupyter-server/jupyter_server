@@ -902,7 +902,6 @@ attempting to reconnect.
         Returns True if the kernel manager has a provisioner with is_alive=True,
         or if the kernel manager's is_alive check passes.
         """
-
         # Don't reconnect if reconnection is disabled via configuration
         if not self.websocket_reconnect_enabled:
             return False
