@@ -154,7 +154,12 @@ class PathResolverHandler(APIHandler):
         kernel_uuid = self.get_query_argument("kernel", default=None)
         scopes: dict[str, Any] = {"server": self.contents_manager}
         if kernel_uuid:
-            scopes["kernel"] = self.kernel_manager.get_kernel(kernel_uuid)
+            try:
+                scopes["kernel"] = self.kernel_manager.get_kernel(kernel_uuid)
+            except web.HTTPError as e:
+                if e.status_code == 404:
+                    raise web.HTTPError(410, "Kernel scope unavailable for path resolution") from e
+                raise
         resolved = [
             {"scope": name, "path": await ensure_async(scope.resolve_path(path))}
             for name, scope in scopes.items()

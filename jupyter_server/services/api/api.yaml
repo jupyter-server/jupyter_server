@@ -379,7 +379,7 @@ paths:
         in: query
         description: file path
         type: string
-      - name: kernel_id
+      - name: kernel
         required: false
         in: query
         description: kernel uuid
@@ -392,6 +392,8 @@ paths:
           description: Resolved path with scope details
           schema:
             $ref: "#/definitions/ResolvedPath"
+        410:
+          description: Kernel scope unavailable for path resolution
   /api/sessions/{session}:
     parameters:
       - $ref: "#/parameters/session"
