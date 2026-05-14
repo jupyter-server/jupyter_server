@@ -23,7 +23,7 @@ from jupyter_client.managerabc import KernelManagerABC
 from jupyter_core.utils import ensure_async
 from tornado import web
 from tornado.escape import json_decode, json_encode, url_escape, utf8
-from traitlets import DottedObjectName, Instance, Type, Unicode, default
+from traitlets import Bool, DottedObjectName, Instance, Type, Unicode, default
 
 from .._tz import UTC, utcnow
 from ..prometheus.metrics import KERNEL_MESSAGE_TOTAL, KERNEL_WEBSOCKET_RECONNECT_TOTAL
@@ -821,10 +821,10 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         self._channels_stopped = True
         self.log.debug("Closing websocket connection")
 
-        assert self.channel_socket is not None
-        self.channel_socket.close()
-        assert self.response_router is not None
-        self.response_router.join()
+        if self.channel_socket is not None:
+            self.channel_socket.close()
+        if self.response_router is not None:
+            self.response_router.join()
 
         if self._channel_queues:
             self._channel_queues.clear()
@@ -887,12 +887,26 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
             self._channel_queues["control"] = self._control_channel
         return self._control_channel
 
+    websocket_reconnect_enabled = Bool(
+        default_value=False,
+        config=False,
+        help="""If True, attempt to reconnect the WebSocket when it disconnects while the
+kernel is still alive. If False, the response router exits on disconnect without
+attempting to reconnect.
+(JUPYTER_GATEWAY_WEBSOCKET_RECONNECT_ENABLED env var)""",
+    )
+
     def _should_reconnect(self) -> bool:
         """Determine if we should attempt to reconnect the WebSocket.
 
         Returns True if the kernel manager has a provisioner with is_alive=True,
         or if the kernel manager's is_alive check passes.
         """
+
+        # Don't reconnect if reconnection is disabled via configuration
+        if not self.websocket_reconnect_enabled:
+            return False
+
         # Don't reconnect if intentionally stopped
         if self._channels_stopped:
             return False
