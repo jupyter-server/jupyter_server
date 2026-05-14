@@ -345,6 +345,19 @@ async def test_resolve_path_missing(jp_fetch, jp_serverapp, jp_root_dir, pending
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
+async def test_resolve_path_missing_kernel_returns_gone(jp_fetch, jp_serverapp):
+    bad_id = "111-111-111-111-111"
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch(
+            "api",
+            "resolvePath",
+            params={"kernel": bad_id, "path": "hello.py"},
+            method="GET",
+        )
+    assert expected_http_error(e, 410, "Kernel scope unavailable for path resolution")
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_kernel_handler(jp_fetch, jp_serverapp, pending_kernel_is_ready):
     # Create a kernel
     r = await jp_fetch(
