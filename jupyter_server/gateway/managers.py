@@ -8,7 +8,6 @@ import asyncio
 import datetime
 import json
 import os
-import time
 from queue import Empty, Queue
 from threading import Thread
 from time import monotonic
@@ -23,10 +22,9 @@ from jupyter_client.managerabc import KernelManagerABC
 from jupyter_core.utils import ensure_async
 from tornado import web
 from tornado.escape import json_decode, json_encode, url_escape, utf8
-from traitlets import Bool, DottedObjectName, Instance, Type, Unicode, default
+from traitlets import DottedObjectName, Instance, Type, Unicode, default
 
 from .._tz import UTC, utcnow
-from ..prometheus.metrics import KERNEL_MESSAGE_TOTAL, KERNEL_WEBSOCKET_RECONNECT_TOTAL
 from ..services.kernels.kernelmanager import (
     AsyncMappingKernelManager,
     ServerKernelManager,
@@ -821,10 +819,10 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         self._channels_stopped = True
         self.log.debug("Closing websocket connection")
 
-        if self.channel_socket is not None:
-            self.channel_socket.close()
-        if self.response_router is not None:
-            self.response_router.join()
+        assert self.channel_socket is not None
+        self.channel_socket.close()
+        assert self.response_router is not None
+        self.response_router.join()
 
         if self._channel_queues:
             self._channel_queues.clear()
@@ -887,160 +885,38 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
             self._channel_queues["control"] = self._control_channel
         return self._control_channel
 
-    websocket_reconnect_enabled = Bool(
-        default_value=False,
-        config=False,
-        help="""If True, attempt to reconnect the WebSocket when it disconnects while the
-kernel is still alive. If False, the response router exits on disconnect without
-attempting to reconnect.
-(JUPYTER_GATEWAY_WEBSOCKET_RECONNECT_ENABLED env var)""",
-    )
-
-    def _should_reconnect(self) -> bool:
-        """Determine if we should attempt to reconnect the WebSocket.
-
-        Returns True if the kernel manager has a provisioner with is_alive=True,
-        or if the kernel manager's is_alive check passes.
-        """
-        # Don't reconnect if reconnection is disabled via configuration
-        if not self.websocket_reconnect_enabled:
-            return False
-
-        # Don't reconnect if intentionally stopped
-        if self._channels_stopped:
-            return False
-
-        # Don't reconnect if kernel is not alive
-        # Use asyncio.run() since this is called from a non-main thread
-        # that doesn't have an event loop.
-        return asyncio.run(self.is_alive())
-
-    def _reconnect_socket(self) -> bool:
-        """Attempt to reconnect the WebSocket.
-
-        Returns True on successful reconnection, False otherwise.
-        """
-        try:
-            # Close old socket if exists
-            if self.channel_socket:
-                try:
-                    self.channel_socket.close()
-                except Exception:
-                    pass
-
-            # Create new WebSocket connection
-            ssl_options = {
-                "ca_certs": GatewayClient.instance().ca_certs,
-                "certfile": GatewayClient.instance().client_cert,
-                "keyfile": GatewayClient.instance().client_key,
-            }
-
-            self.channel_socket = websocket.create_connection(
-                self.add_session_param(self.ws_url),
-                timeout=GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT,
-                enable_multithread=True,
-                sslopt=ssl_options,
-            )
-
-            # Update channel queues with new socket
-            # Each ChannelQueue holds a reference to channel_socket for sending messages
-            if self._channel_queues:
-                for queue in self._channel_queues.values():
-                    queue.channel_socket = self.channel_socket
-
-            KERNEL_WEBSOCKET_RECONNECT_TOTAL.labels(
-                kernel_id=getattr(self.parent, "kernel_id", "unknown"), success="true"
-            ).inc()
-            return True
-
-        except Exception as e:
-            self.log.error(f"Failed to reconnect WebSocket: {e}")
-            KERNEL_WEBSOCKET_RECONNECT_TOTAL.labels(
-                kernel_id=getattr(self.parent, "kernel_id", "unknown"), success="false"
-            ).inc()
-            return False
-
-    def _mark_queues_finished(self) -> None:
-        """Mark all channel queues as finished.
-
-        This notifies consumers that no more messages will be received.
-        """
-        if self._channel_queues:
-            for channel_queue in self._channel_queues.values():
-                channel_queue.response_router_finished = True
-        self.log.debug("Response router thread exiting...")
-
     def _route_responses(self):
         """
         Reads responses from the websocket and routes each to the appropriate channel queue based
-        on the message's channel. Implements automatic reconnection with exponential backoff when
-        the WebSocket disconnects but the kernel is still alive.
-
-        The router continues running until channels are stopped, handling disconnections gracefully
-        and attempting to reconnect to maintain the message flow.
+        on the message's channel.  It does this for the duration of the class's lifetime until the
+        channels are stopped, at which time the socket is closed (unblocking the router) and
+        the thread terminates.  If shutdown happens to occur while processing a response (unlikely),
+        termination takes place via the loop control boolean.
         """
-        base_delay = 1.0  # seconds
-        max_delay = 30.0  # max delay between reconnection attempts
-        attempt = 0
-
-        while not self._channels_stopped:
-            try:
-                # Check if socket needs reconnection
-                if self.channel_socket is None:
-                    if not self._should_reconnect():
-                        self.log.info(
-                            "WebSocket disconnected and Kernel is terminated. Exiting router."
-                        )
-                        break
-
-                    # Calculate exponential backoff delay
-                    delay = min(base_delay * (2**attempt), max_delay)
-                    self.log.warning(
-                        f"WebSocket disconnected. Attempting reconnection "
-                        f"(attempt {attempt + 1}) "
-                        f"after {delay:.1f}s delay..."
-                    )
-                    time.sleep(delay)
-
-                    # Attempt reconnection
-                    if not self._reconnect_socket():
-                        attempt += 1
-                        self.log.info(f"Gateway WebSocket reconnect attempt failed {attempt} times")
-                        continue
-
-                    # Reset attempt counter on successful reconnection
-                    attempt = 0
-                    self.log.info("WebSocket reconnected successfully")
-
-                # Normal message routing
+        try:
+            while not self._channels_stopped:
                 assert self.channel_socket is not None
                 raw_message = self.channel_socket.recv()
                 if not raw_message:
-                    # Empty message, socket might be closing
-                    self.log.debug("Received empty message from WebSocket")
-                    self.channel_socket = None
-                    continue
-
+                    break
                 response_message = json_decode(utf8(raw_message))
                 channel = response_message["channel"]
                 assert self._channel_queues is not None
                 self._channel_queues[channel].put_nowait(response_message)
-                KERNEL_MESSAGE_TOTAL.labels(
-                    kernel_id=getattr(self.parent, "kernel_id", "unknown"), channel=channel
-                ).inc()
 
-            except websocket.WebSocketConnectionClosedException:
-                self.log.warning("WebSocket connection closed unexpectedly")
-                self.channel_socket = None
-                # Loop will retry connection on next iteration if not stopped
+        except websocket.WebSocketConnectionClosedException:
+            pass  # websocket closure most likely due to shut down
 
-            except Exception as e:
-                if not self._channels_stopped:
-                    self.log.exception(f"Error in response router: {e}")
-                    self.channel_socket = None
+        except BaseException as be:
+            if not self._channels_stopped:
+                self.log.warning(f"Unexpected exception encountered ({be})")
 
-        # Final cleanup: mark all queues as finished
-        self._mark_queues_finished()
+        # Notify channel queues that this thread had finished and no more messages are being received
+        assert self._channel_queues is not None
+        for channel_queue in self._channel_queues.values():
+            channel_queue.response_router_finished = True
+
+        self.log.debug("Response router thread exiting...")
 
 
 KernelClientABC.register(GatewayKernelClient)
