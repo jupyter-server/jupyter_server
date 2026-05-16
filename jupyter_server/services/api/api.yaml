@@ -389,11 +389,9 @@ paths:
       summary: Resolve path to a file
       responses:
         200:
-          description: Resolved path with scope details
+          description: Resolved path with scope details and optional unresolved scopes
           schema:
             $ref: "#/definitions/ResolvedPath"
-        410:
-          description: Kernel scope unavailable for path resolution
   /api/sessions/{session}:
     parameters:
       - $ref: "#/parameters/session"
@@ -1016,3 +1014,18 @@ definitions:
             path:
               type: string
               description: fully specified path for file
+      unresolved:
+        type: array
+        description: scopes for which path resolution could not be completed
+        items:
+          type: object
+          required:
+            - scope
+            - reason
+          properties:
+            scope:
+              type: string
+              description: the scope that failed to resolve
+            reason:
+              type: string
+              description: human-readable reason for the unresolved scope
