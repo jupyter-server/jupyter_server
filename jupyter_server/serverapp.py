@@ -2351,11 +2351,10 @@ class ServerApp(JupyterApp):
             scheme = "http+unix"
             netloc = urlencode_unix_socket_path(self.sock)
         else:
+            # Empty string means "unset", fallback to localhost so the url
+            # is valid e.g. in k8s where gethostname() != localhost #743
             if not self.ip:
                 ip = "localhost"
-            # Handle nonexplicit hostname.
-            elif self.ip in ("0.0.0.0", "::"):  # noqa: S104
-                ip = "%s" % socket.gethostname()
             else:
                 ip = f"[{self.ip}]" if ":" in self.ip else self.ip
             netloc = f"{ip}:{self.port}"

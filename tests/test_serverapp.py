@@ -317,10 +317,25 @@ def test_resolve_file_to_run_and_root_dir(prefix_path, root_dir, file_to_run, ex
             "http+unix://%2Ftmp%2Fjp-test.sock/",
         ),
         (
+            # https://github.com/jupyter-server/jupyter_server/issues/743
             {"ip": ""},
             "http://localhost:8888/?token=<generated>",
             "http://127.0.0.1:8888/?token=<generated>",
             "http://localhost:8888/",
+        ),
+        (
+            # https://github.com/jupyterlab/jupyterlab/issues/15520
+            {"ip": "0.0.0.0"},
+            "http://0.0.0.0:8888/?token=<generated>",
+            "http://127.0.0.1:8888/?token=<generated>",
+            "http://0.0.0.0:8888/",
+        ),
+        (
+            # https://github.com/jupyterlab/jupyterlab/issues/15520
+            {"ip": "::"},
+            "http://[::]:8888/?token=<generated>",
+            "http://[::1]:8888/?token=<generated>",
+            "http://[::]:8888/",
         ),
     ],
 )
