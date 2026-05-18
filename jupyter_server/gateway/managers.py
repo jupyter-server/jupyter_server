@@ -763,13 +763,9 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
             return ws_url
 
         scheme, netloc, path, query_string, fragment = urlsplit(ws_url)
-        # Parse the existing query string into a dictionary
         query_params = parse_qs(query_string)
-        # Update the dictionary with new parameters
-        query_params.update({"session": self.session_id})
-        # Encode the updated dictionary back into a query string
+        query_params.update({"session_id": self.session_id})
         new_query_string = urlencode(query_params, doseq=True)
-        # Reconstruct the URL
         return urlunsplit((scheme, netloc, path, new_query_string, fragment))
 
     # --------------------------------------------------------------------------
