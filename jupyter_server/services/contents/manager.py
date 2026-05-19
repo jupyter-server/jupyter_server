@@ -705,7 +705,7 @@ class ContentsManager(LoggingConfigurable):
         self.notary.mark_cells(nb, True)
         self.check_and_sign(nb, path)
 
-    def check_and_sign(self, nb, path="", _retrying=False):
+    def check_and_sign(self, nb, path="", *, _retrying=False):
         """Check for trusted cells, and sign the notebook.
 
         Called as a part of saving notebooks.
