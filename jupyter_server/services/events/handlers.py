@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from jupyter_core.utils import ensure_async
 from tornado import web, websocket
@@ -92,7 +92,7 @@ def validate_model(
         raise Exception(message)
 
 
-def get_timestamp(data: dict[str, Any]) -> Optional[datetime]:
+def get_timestamp(data: dict[str, Any]) -> datetime | None:
     """Parses timestamp from the JSON request body"""
     try:
         if "timestamp" in data:

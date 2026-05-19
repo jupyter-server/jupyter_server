@@ -3,8 +3,9 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import asyncio
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Optional, TypeVar, Union, cast
+from typing import Any, TypeVar, cast
 
 from jupyter_core.utils import ensure_async
 from tornado.log import app_log
@@ -16,9 +17,9 @@ FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
 
 def authorized(
-    action: Optional[Union[str, FuncT]] = None,
-    resource: Optional[str] = None,
-    message: Optional[str] = None,
+    action: str | FuncT | None = None,
+    resource: str | None = None,
+    message: str | None = None,
 ) -> FuncT:
     """A decorator for tornado.web.RequestHandler methods
     that verifies whether the current user is authorized
