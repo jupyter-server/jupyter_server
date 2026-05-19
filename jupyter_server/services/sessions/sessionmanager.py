@@ -5,7 +5,7 @@
 import os
 import pathlib
 import uuid
-from typing import Any, NewType, Optional, Union, cast
+from typing import Any, NewType, cast
 
 KernelName = NewType("KernelName", str)
 ModelName = NewType("ModelName", str)
@@ -41,8 +41,8 @@ class KernelSessionRecord:  # noqa: PLW1641 - TODO: implement __hash__
     associated with them.
     """
 
-    session_id: Optional[str] = None
-    kernel_id: Optional[str] = None
+    session_id: str | None = None
+    kernel_id: str | None = None
 
     def __eq__(self, other: object) -> bool:
         """Whether a record equals another."""
@@ -112,7 +112,7 @@ class KernelSessionRecordList:
         """The string representation of a record list."""
         return str(self._records)
 
-    def __contains__(self, record: Union[KernelSessionRecord, str]) -> bool:
+    def __contains__(self, record: KernelSessionRecord | str) -> bool:
         """Search for records by kernel_id and session_id"""
         if isinstance(record, KernelSessionRecord) and record in self._records:
             return True
@@ -127,7 +127,7 @@ class KernelSessionRecordList:
         """The length of the record list."""
         return len(self._records)
 
-    def get(self, record: Union[KernelSessionRecord, str]) -> KernelSessionRecord:
+    def get(self, record: KernelSessionRecord | str) -> KernelSessionRecord:
         """Return a full KernelSessionRecord from a session_id, kernel_id, or
         incomplete KernelSessionRecord.
         """
@@ -262,11 +262,11 @@ class SessionManager(LoggingConfigurable):
 
     async def create_session(
         self,
-        path: Optional[str] = None,
-        name: Optional[ModelName] = None,
-        type: Optional[str] = None,
-        kernel_name: Optional[KernelName] = None,
-        kernel_id: Optional[str] = None,
+        path: str | None = None,
+        name: ModelName | None = None,
+        type: str | None = None,
+        kernel_name: KernelName | None = None,
+        kernel_id: str | None = None,
     ) -> dict[str, Any]:
         """Creates a session and returns its model
 
@@ -293,9 +293,7 @@ class SessionManager(LoggingConfigurable):
         self._pending_sessions.remove(record)
         return cast("dict[str, Any]", result)
 
-    def get_kernel_env(
-        self, path: Optional[str], name: Optional[ModelName] = None
-    ) -> dict[str, str]:
+    def get_kernel_env(self, path: str | None, name: ModelName | None = None) -> dict[str, str]:
         """Return the environment variables that need to be set in the kernel
 
         Parameters
@@ -315,10 +313,10 @@ class SessionManager(LoggingConfigurable):
     async def start_kernel_for_session(
         self,
         session_id: str,
-        path: Optional[str],
-        name: Optional[ModelName],
-        type: Optional[str],
-        kernel_name: Optional[KernelName],
+        path: str | None,
+        name: ModelName | None,
+        type: str | None,
+        kernel_name: KernelName | None,
     ) -> str:
         """Start a new kernel for a given session.
 

@@ -558,9 +558,7 @@ class ServerWebApplication(web.Application):
         sources.extend(self.settings["last_activity_times"].values())
         return max(sources)
 
-    def _check_handler_auth(
-        self, matcher: t.Union[str, Matcher], handler: type[web.RequestHandler]
-    ):
+    def _check_handler_auth(self, matcher: str | Matcher, handler: type[web.RequestHandler]):
         missing_authentication = []
         for method_name in handler.SUPPORTED_METHODS:
             method = getattr(handler, method_name.lower())
@@ -1216,7 +1214,7 @@ class ServerApp(JupyterApp):
     )
 
     @default("min_open_files_limit")
-    def _default_min_open_files_limit(self) -> t.Optional[int]:
+    def _default_min_open_files_limit(self) -> int | None:
         if resource is None:
             # Ignoring min_open_files_limit because the limit cannot be adjusted (for example, on Windows)
             return None  # type:ignore[unreachable]
@@ -1276,7 +1274,7 @@ class ServerApp(JupyterApp):
     )
 
     def _warn_deprecated_config(
-        self, change: t.Any, clsname: str, new_name: t.Optional[str] = None
+        self, change: t.Any, clsname: str, new_name: str | None = None
     ) -> None:
         """Warn on deprecated config."""
         if new_name is None:
@@ -1620,7 +1618,7 @@ class ServerApp(JupyterApp):
     )
 
     @default("kernel_manager_class")
-    def _default_kernel_manager_class(self) -> t.Union[str, type[AsyncMappingKernelManager]]:
+    def _default_kernel_manager_class(self) -> str | type[AsyncMappingKernelManager]:
         if self.gateway_config.gateway_enabled:
             return "jupyter_server.gateway.managers.GatewayMappingKernelManager"
         return AsyncMappingKernelManager
@@ -1631,7 +1629,7 @@ class ServerApp(JupyterApp):
     )
 
     @default("session_manager_class")
-    def _default_session_manager_class(self) -> t.Union[str, type[SessionManager]]:
+    def _default_session_manager_class(self) -> str | type[SessionManager]:
         if self.gateway_config.gateway_enabled:
             return "jupyter_server.gateway.managers.GatewaySessionManager"
         return SessionManager
@@ -1645,7 +1643,7 @@ class ServerApp(JupyterApp):
     @default("kernel_websocket_connection_class")
     def _default_kernel_websocket_connection_class(
         self,
-    ) -> t.Union[str, type[ZMQChannelsWebsocketConnection]]:
+    ) -> str | type[ZMQChannelsWebsocketConnection]:
         if self.gateway_config.gateway_enabled:
             return "jupyter_server.gateway.connections.GatewayWebSocketConnection"
         return ZMQChannelsWebsocketConnection
@@ -1696,7 +1694,7 @@ class ServerApp(JupyterApp):
     )
 
     @default("kernel_spec_manager_class")
-    def _default_kernel_spec_manager_class(self) -> t.Union[str, type[KernelSpecManager]]:
+    def _default_kernel_spec_manager_class(self) -> str | type[KernelSpecManager]:
         if self.gateway_config.gateway_enabled:
             return "jupyter_server.gateway.managers.GatewayKernelSpecManager"
         return KernelSpecManager
@@ -2049,7 +2047,7 @@ class ServerApp(JupyterApp):
         """Get the Extension that started this server."""
         return self._starter_app
 
-    def parse_command_line(self, argv: t.Optional[list[str]] = None) -> None:
+    def parse_command_line(self, argv: list[str] | None = None) -> None:
         """Parse the command line options."""
         super().parse_command_line(argv)
 
@@ -2343,7 +2341,7 @@ class ServerApp(JupyterApp):
             resource.setrlimit(resource.RLIMIT_NOFILE, (soft, hard))
 
     def _get_urlparts(
-        self, path: t.Optional[str] = None, include_token: bool = False
+        self, path: str | None = None, include_token: bool = False
     ) -> urllib.parse.ParseResult:
         """Constructs a urllib named tuple, ParseResult,
         with default values set by server config.
@@ -2782,7 +2780,7 @@ class ServerApp(JupyterApp):
     @catch_config_error
     def initialize(
         self,
-        argv: t.Optional[list[str]] = None,
+        argv: list[str] | None = None,
         find_extensions: bool = True,
         new_httpserver: bool = True,
         starter_extension: t.Any = None,
@@ -3028,7 +3026,7 @@ class ServerApp(JupyterApp):
             if e.errno != errno.ENOENT:
                 raise
 
-    def _prepare_browser_open(self) -> tuple[str, t.Optional[str]]:
+    def _prepare_browser_open(self) -> tuple[str, str | None]:
         """Prepare to open the browser."""
         if not self.use_redirect_file:
             uri = self.default_url[len(self.base_url) :]
@@ -3245,7 +3243,7 @@ class ServerApp(JupyterApp):
 
 
 def list_running_servers(
-    runtime_dir: t.Optional[str] = None, log: t.Optional[logging.Logger] = None
+    runtime_dir: str | None = None, log: logging.Logger | None = None
 ) -> t.Generator[t.Any, None, None]:
     """Iterate over the server info files of running Jupyter servers.
 
