@@ -11,7 +11,7 @@ import os
 from queue import Empty, Queue
 from threading import Thread
 from time import monotonic
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import websocket
 from jupyter_client.asynchronous.client import AsyncKernelClient
@@ -361,7 +361,7 @@ class GatewaySessionManager(SessionManager):
 
     async def kernel_culled(self, kernel_id: str) -> bool:  # typing: ignore
         """Checks if the kernel is still considered alive and returns true if it's not found."""
-        km: Optional[GatewayKernelManager] = None
+        km: GatewayKernelManager | None = None
         try:
             # Since we keep the models up-to-date via client polling, use that state to determine
             # if this kernel no longer exists on the gateway server rather than perform a redundant
@@ -380,7 +380,7 @@ class GatewaySessionManager(SessionManager):
 class GatewayKernelManager(ServerKernelManager):
     """Manages a single kernel remotely via a Gateway Server."""
 
-    kernel_id: Optional[str] = None
+    kernel_id: str | None = None
     kernel = None
 
     @default("cache_ports")
@@ -596,7 +596,7 @@ KernelManagerABC.register(GatewayKernelManager)
 class ChannelQueue(Queue):  # type:ignore[type-arg]
     """A queue for a named channel."""
 
-    channel_name: Optional[str] = None
+    channel_name: str | None = None
     response_router_finished: bool
 
     def __init__(self, channel_name: str, channel_socket: websocket.WebSocket, log: Logger):
@@ -713,19 +713,19 @@ class GatewayKernelClient(AsyncKernelClient):
     # flag for whether execute requests should be allowed to call raw_input:
     allow_stdin = False
     _channels_stopped: bool
-    _channel_queues: Optional[dict[str, ChannelQueue]]
-    _control_channel: Optional[ChannelQueue]
-    _hb_channel: Optional[ChannelQueue]
-    _stdin_channel: Optional[ChannelQueue]
-    _iopub_channel: Optional[ChannelQueue]
-    _shell_channel: Optional[ChannelQueue]
+    _channel_queues: dict[str, ChannelQueue] | None
+    _control_channel: ChannelQueue | None
+    _hb_channel: ChannelQueue | None
+    _stdin_channel: ChannelQueue | None
+    _iopub_channel: ChannelQueue | None
+    _shell_channel: ChannelQueue | None
 
     def __init__(self, kernel_id, **kwargs):
         """Initialize a gateway kernel client."""
         super().__init__(**kwargs)
         self.kernel_id = kernel_id
-        self.channel_socket: Optional[websocket.WebSocket] = None
-        self.response_router: Optional[Thread] = None
+        self.channel_socket: websocket.WebSocket | None = None
+        self.response_router: Thread | None = None
         self._channels_stopped = False
         self._channel_queues = {}
 
