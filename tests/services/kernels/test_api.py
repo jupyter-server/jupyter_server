@@ -298,7 +298,7 @@ async def test_resolve_path_server_and_kernel(
     resolution = json.loads(r.body.decode())
 
     # Should present candidates for both server and kernel
-    assert len(resolution["resolved"]) == 2
+    assert len(resolution["resolved"]) == 2, resolution["resolved"]
     assert {k["scope"] for k in resolution["resolved"]} == {"server", "kernel"}
 
 
