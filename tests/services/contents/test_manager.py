@@ -4,7 +4,6 @@ import shutil
 import sys
 import time
 from itertools import combinations
-from typing import Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -113,7 +112,7 @@ def add_invalid_cell(notebook):
 
 
 async def prepare_notebook(
-    jp_contents_manager: FileContentsManager, make_invalid: Optional[bool] = False
+    jp_contents_manager: FileContentsManager, make_invalid: bool | None = False
 ) -> tuple[dict, str]:
     cm = jp_contents_manager
     model = await ensure_async(cm.new_untitled(type="notebook"))

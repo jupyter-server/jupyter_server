@@ -186,7 +186,7 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_
 
 @pytest.mark.skipif(
     ipykernel.version_info < (7, 0),
-    reason="requires ipykernel 7, which is not compatible with Python 3.9",
+    reason="requires ipykernel 7, which is not compatible with Python 3.10",
 )
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_resolve_path_kernel(jp_fetch, jp_serverapp, jp_root_dir, pending_kernel_is_ready):
@@ -269,7 +269,7 @@ async def test_resolve_path_server(jp_fetch, jp_serverapp, jp_root_dir):
 
 @pytest.mark.skipif(
     ipykernel.version_info < (7, 0),
-    reason="requires ipykernel 7, which is not compatible with Python 3.9",
+    reason="requires ipykernel 7, which is not compatible with Python 3.10",
 )
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_resolve_path_server_and_kernel(
