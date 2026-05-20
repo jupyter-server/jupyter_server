@@ -184,6 +184,10 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_
     await pending_kernel_is_ready(kernel3["id"])
 
 
+@pytest.mark.skipif(
+    ipykernel.version_info < (7, 0),
+    reason="requires ipykernel 7, which is not compatible with Python 3.10",
+)
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_resolve_path_kernel(jp_fetch, jp_serverapp, jp_root_dir, pending_kernel_is_ready):
     query_path = "hello.py"
@@ -263,6 +267,10 @@ async def test_resolve_path_server(jp_fetch, jp_serverapp, jp_root_dir):
     assert path["path"] == server_path.name
 
 
+@pytest.mark.skipif(
+    ipykernel.version_info < (7, 0),
+    reason="requires ipykernel 7, which is not compatible with Python 3.10",
+)
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_resolve_path_server_and_kernel(
     jp_fetch, jp_serverapp, jp_root_dir, pending_kernel_is_ready
