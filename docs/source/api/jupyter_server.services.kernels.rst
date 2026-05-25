@@ -15,25 +15,25 @@ Submodules
 
 .. automodule:: jupyter_server.services.kernels.handlers
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.services.kernels.kernelmanager
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.services.kernels.websocket
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: jupyter_server.services.kernels
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

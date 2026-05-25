@@ -7,13 +7,13 @@ Submodules
 
 .. automodule:: jupyter_server.view.handlers
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: jupyter_server.view
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

@@ -50,7 +50,7 @@ You enable/disable an extension using the following commands:
 Running an extensions from its entrypoint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Extensions that are also Jupyter applications (i.e. Notebook, JupyterLab, Voila, etc.) can be launched
+Extensions that are also Jupyter applications (i.e. Notebook, JupyterLab, Voilà, etc.) can be launched
 from a CLI entrypoint. For example, launch Jupyter Notebook using:
 
 .. code-block:: console

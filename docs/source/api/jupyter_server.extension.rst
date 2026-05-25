@@ -7,43 +7,43 @@ Submodules
 
 .. automodule:: jupyter_server.extension.application
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.extension.config
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.extension.handler
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.extension.manager
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.extension.serverextension
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.extension.utils
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: jupyter_server.extension
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

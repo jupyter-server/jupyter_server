@@ -19,7 +19,7 @@ sample_kernel_json = {
 }
 
 
-@pytest.fixture  # type:ignore[misc]
+@pytest.fixture  # type: ignore[untyped-decorator]
 def jp_kernelspecs(jp_data_dir: Path) -> None:
     """Configures some sample kernelspecs in the Jupyter data directory."""
     spec_names = ["sample", "sample2", "bad"]

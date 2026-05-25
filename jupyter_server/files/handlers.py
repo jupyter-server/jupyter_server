@@ -6,13 +6,16 @@ from __future__ import annotations
 
 import mimetypes
 from base64 import decodebytes
-from typing import Awaitable
+from typing import TYPE_CHECKING
 
 from jupyter_core.utils import ensure_async
 from tornado import web
 
 from jupyter_server.auth.decorator import authorized
 from jupyter_server.base.handlers import JupyterHandler
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable
 
 AUTH_RESOURCE = "contents"
 
@@ -45,7 +48,7 @@ class FilesHandler(JupyterHandler, web.StaticFileHandler):
 
     @web.authenticated
     @authorized
-    async def get(self, path, include_body=True):
+    async def get(self, path, include_body=True):  # type: ignore[override]
         """Get a file by path."""
         # /files/ requests must originate from the same site
         self.check_xsrf_cookie()

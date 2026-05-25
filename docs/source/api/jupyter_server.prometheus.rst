@@ -7,19 +7,19 @@ Submodules
 
 .. automodule:: jupyter_server.prometheus.log_functions
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.prometheus.metrics
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: jupyter_server.prometheus
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

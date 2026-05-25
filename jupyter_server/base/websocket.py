@@ -1,15 +1,14 @@
 """Base websocket classes."""
 
-import re
 import warnings
-from typing import Optional, no_type_check
+from typing import no_type_check
 from urllib.parse import urlparse
 
 from tornado import ioloop, web
 from tornado.iostream import IOStream
 
 from jupyter_server.base.handlers import JupyterHandler
-from jupyter_server.utils import JupyterServerAuthWarning
+from jupyter_server.utils import JupyterServerAuthWarning, origin_matches_pat
 
 # ping interval for keeping websockets alive (30 seconds)
 WS_PING_INTERVAL = 30000
@@ -21,7 +20,7 @@ class WebSocketMixin:
     ping_callback = None
     last_ping = 0.0
     last_pong = 0.0
-    stream: Optional[IOStream] = None
+    stream: IOStream | None = None
 
     @property
     def ping_interval(self):
@@ -42,7 +41,7 @@ class WebSocketMixin:
         )
 
     @no_type_check
-    def check_origin(self, origin: Optional[str] = None) -> bool:
+    def check_origin(self, origin: str | None = None) -> bool:
         """Check Origin == Host or Access-Control-Allow-Origin.
 
         Tornado >= 4 calls this method automatically, raising 403 if it returns False.
@@ -72,7 +71,7 @@ class WebSocketMixin:
         if self.allow_origin:
             allow = self.allow_origin == origin
         elif self.allow_origin_pat:
-            allow = bool(re.match(self.allow_origin_pat, origin))
+            allow = origin_matches_pat(self.allow_origin_pat, origin)
         else:
             # No CORS headers deny the request
             allow = False
@@ -98,7 +97,7 @@ class WebSocketMixin:
                 raise web.HTTPError(403)
             method = getattr(self, self.request.method.lower())
             if not getattr(method, "__allow_unauthenticated", False):
-                # rather than re-using `web.authenticated` which also redirects
+                # rather than reusing `web.authenticated` which also redirects
                 # to login page on GET, just raise 403 if user is not known
                 user = self.current_user
                 if user is None:

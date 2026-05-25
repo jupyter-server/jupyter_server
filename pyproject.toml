@@ -21,7 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "anyio>=3.1.0",
     "argon2-cffi>=21.1",
@@ -40,14 +40,14 @@ dependencies = [
     "tornado>=6.2.0",
     "traitlets>=5.6.0",
     "websocket-client>=1.7",
-    "jupyter_events>=0.9.0",
-    "overrides>=5.0"
+    "jupyter_events>=0.11.0",
+    "overrides>=5.0;python_version<'3.12'"
 ]
 
 [project.urls]
 Homepage = "https://jupyter-server.readthedocs.io"
 Documentation = "https://jupyter-server.readthedocs.io"
-Funding = "https://numfocus.org/donate"
+Funding = "https://jupyter.org/about#donate"
 Source = "https://github.com/jupyter-server/jupyter_server"
 Tracker = "https://github.com/jupyter-server/jupyter_server/issues"
 
@@ -72,6 +72,7 @@ docs = [
     "prometheus_client",
     "pydata_sphinx_theme",
     "Send2Trash",
+    "sphinx<9.0",
     "sphinxcontrib-openapi>=0.8.0",
     "sphinxcontrib_github_alt",
     "sphinxcontrib-spelling",
@@ -82,6 +83,7 @@ docs = [
     # missing typing_extensions
     "typing_extensions"
 ]
+
 
 [project.scripts]
 jupyter-server = "jupyter_server.serverapp:main"
@@ -137,11 +139,12 @@ line-length = 100
 docstring-code-format = true
 
 [tool.ruff.lint]
-ignore = ["ARG", "TRY", "RUF012", "TID252", "G", "INP001", "E402", "F401", "BLE001"]
+ignore = ["ARG", "TRY", "RUF012", "TID252", "G", "INP001", "E402", "F401", "BLE001", "PLC0415"]
 extend-select = [
   "B",  # flake8-bugbear
   "I",  # isort
   "UP",  # pyupgrade
+  "G001", # no % or f formatting in logs, prevents sttructured logging
 ]
 unfixable = [
   # Don't touch print statements
@@ -154,16 +157,18 @@ unfixable = [
 
 [tool.ruff.lint.extend-per-file-ignores]
 "jupyter_server/*" = ["S101", "RET", "S110", "UP031", "FBT", "FA100", "SLF001", "A002",
-                      "SIM105", "A001", "UP007", "PLR2004", "T201", "N818", "F403"]
+                      "SIM105", "A001", "PLR2004", "T201", "N818", "F403"]
+"jupyter_server/gateway/*" = ["TCH" ]
 "tests/*" = ["UP031", "PT", 'EM', "TRY", "RET", "SLF", "C408", "F841", "FBT", "A002", "FLY", "N",
-            "PERF", "ASYNC", "T201", "FA100", "E711", "INP", "TCH", "SIM105", "A001", "PLW0603"]
+            "PERF", "ASYNC", "T201", "FA100", "E711", "INP", "TCH", "SIM105", "A001", "PLW0603",
+            "RUF059"]
 "examples/*_config.py" = ["F821"]
 "examples/*" = ["N815"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
 xfail_strict = true
-log_cli_level = "info"
+log_cli_level = "debug"
 addopts = [
   "-ra", "--durations=10", "--color=yes", "--doctest-modules",
    "--showlocals", "--strict-markers", "--strict-config"
@@ -178,7 +183,10 @@ filterwarnings = [
   "error",
   "ignore:datetime.datetime.utc:DeprecationWarning",
   "module:add_callback_from_signal is deprecated:DeprecationWarning",
-  "ignore::jupyter_server.utils.JupyterServerAuthWarning"
+  "ignore::jupyter_server.utils.JupyterServerAuthWarning",
+
+  # ignore unclosed sqlite in traits
+  "ignore:unclosed database in <sqlite3.Connection:ResourceWarning",
 ]
 
 [tool.coverage.report]
@@ -208,13 +216,17 @@ pydist_resource_paths = ["jupyter_server/static/style/bootstrap.min.css", "jupyt
 post-version-spec = "dev"
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 explicit_package_bases = true
 strict = true
 pretty = true
 warn_unreachable = true
-disable_error_code = ["no-untyped-def", "no-untyped-call"]
+disable_error_code = ["no-untyped-def", "no-untyped-call", "unused-ignore"]
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+
+[[tool.mypy.overrides]]
+module = ["notebook.*", "pysqlite2.*", "overrides"]
+ignore_missing_imports = true
 
 [tool.interrogate]
 ignore-init-module=true
@@ -230,4 +242,9 @@ exclude = ["docs", "test"]
 ignore = ["W002"]
 
 [tool.repo-review]
-ignore = ["GH102", "PC111"]
+ignore = [
+  "GH102", # auto-cancel
+  "PC111", # blacken-docs
+  "PP006", # dependency-group, not ready yet
+  "PP304", # pytest log_level (breaks tests)
+]

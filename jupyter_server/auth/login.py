@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from tornado.escape import url_escape
 
 from ..base.handlers import JupyterHandler
+from ..utils import origin_matches_pat
 from .decorator import allow_unauthenticated
 from .security import passwd_check, set_password
 
@@ -43,6 +44,7 @@ class LoginFormHandler(JupyterHandler):
         # \ is not valid in urls, but some browsers treat it as /
         # instead of %5C, causing `\\` to behave as `//`
         url = url.replace("\\", "%5C")
+
         # urllib and browsers interpret extra '/' in the scheme separator (`scheme:///host/path`)
         # differently.
         # urllib gives scheme=scheme, netloc='', path='/host/path', while
@@ -53,6 +55,10 @@ class LoginFormHandler(JupyterHandler):
         if ":" in url:
             scheme, _, rest = url.partition(":")
             url = f"{scheme}://{rest.lstrip('/')}"
+        else:
+            # same as above when scheme is unspecified
+            if url.startswith("//"):
+                url = "//" + url.lstrip("/")
         parsed = urlparse(url)
         # full url may be `//host/path` (empty scheme == same scheme as request)
         # or `https://host/path`
@@ -68,7 +74,7 @@ class LoginFormHandler(JupyterHandler):
                 if self.allow_origin:
                     allow = self.allow_origin == origin
                 elif self.allow_origin_pat:
-                    allow = bool(re.match(self.allow_origin_pat, origin))
+                    allow = origin_matches_pat(self.allow_origin_pat, origin)
             if not allow:
                 # not allowed, use default
                 self.log.warning("Not allowing login redirect to %r" % url)

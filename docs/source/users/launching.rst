@@ -4,7 +4,7 @@ Launching a bare Jupyter Server
 ===============================
 
 Most of the time, you won't need to start the Jupyter Server directly. Jupyter
-Web Applications (like Jupyter Notebook, Jupyterlab, Voila, etc.) come with
+Web Applications (like Jupyter Notebook, JupyterLab, Voilà, etc.) come with
 their own entry points that start a server automatically.
 
 Sometimes, though, it can be useful to start Jupyter Server directly when you

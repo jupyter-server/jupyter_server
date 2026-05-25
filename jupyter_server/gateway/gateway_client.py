@@ -12,12 +12,13 @@ import typing as ty
 from abc import ABC, ABCMeta, abstractmethod
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from http.cookies import SimpleCookie
+from http.cookies import Morsel, SimpleCookie
 from socket import gaierror
 
 from jupyter_events import EventLogger
 from tornado import web
 from tornado.httpclient import AsyncHTTPClient, HTTPClientError, HTTPResponse
+from tornado.httputil import HTTPHeaders
 from traitlets import (
     Bool,
     Float,
@@ -40,15 +41,12 @@ STATUS_KEY = "status"
 STATUS_CODE_KEY = "status_code"
 MESSAGE_KEY = "msg"
 
-if ty.TYPE_CHECKING:
-    from http.cookies import Morsel
-
 
 class GatewayTokenRenewerMeta(ABCMeta, type(LoggingConfigurable)):  # type: ignore[misc]
     """The metaclass necessary for proper ABC behavior in a Configurable."""
 
 
-class GatewayTokenRenewerBase(  # type:ignore[misc]
+class GatewayTokenRenewerBase(  # type:ignore[metaclass]
     ABC, LoggingConfigurable, metaclass=GatewayTokenRenewerMeta
 ):
     """
@@ -62,7 +60,7 @@ class GatewayTokenRenewerBase(  # type:ignore[misc]
     def get_token(
         self,
         auth_header_key: str,
-        auth_scheme: ty.Union[str, None],
+        auth_scheme: str | None,
         auth_token: str,
         **kwargs: ty.Any,
     ) -> str:
@@ -72,7 +70,7 @@ class GatewayTokenRenewerBase(  # type:ignore[misc]
         """
 
 
-class NoOpTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
+class NoOpTokenRenewer(GatewayTokenRenewerBase):
     """NoOpTokenRenewer is the default value to the GatewayClient trait
     `gateway_token_renewer` and merely returns the provided token.
     """
@@ -80,7 +78,7 @@ class NoOpTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
     def get_token(
         self,
         auth_header_key: str,
-        auth_scheme: ty.Union[str, None],
+        auth_scheme: str | None,
         auth_token: str,
         **kwargs: ty.Any,
     ) -> str:
@@ -536,7 +534,7 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
         return bool(self.url is not None and len(self.url) > 0)
 
     # Ensure KERNEL_LAUNCH_TIMEOUT has a default value.
-    KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", 40))
+    KERNEL_LAUNCH_TIMEOUT = int(os.environ.get("KERNEL_LAUNCH_TIMEOUT", "40"))
 
     _connection_args: dict[str, ty.Any]  # initialized on first use
 
@@ -630,20 +628,41 @@ such that request_timeout >= KERNEL_LAUNCH_TIMEOUT + launch_timeout_pad.
 
         return kwargs
 
-    def update_cookies(self, cookie: SimpleCookie) -> None:
-        """Update cookies from existing requests for load balancers"""
+    def update_cookies(self, headers: HTTPHeaders) -> None:
+        """Update cookies from response headers"""
+
         if not self.accept_cookies:
             return
 
+        # Get individual Set-Cookie headers in list form.  This handles multiple cookies
+        # that are otherwise comma-separated in the header and will break the parsing logic
+        # if only headers.get() is used.
+        cookie_headers = headers.get_list("Set-Cookie")
+        if not cookie_headers:
+            return
+
         store_time = datetime.now(tz=timezone.utc)
-        for key, item in cookie.items():
+        for header in cookie_headers:
+            cookie = SimpleCookie()
+            try:
+                cookie.load(header)
+            except Exception as e:
+                self.log.warning("Failed to parse cookie header %s: %s", header, e)
+                continue
+
+            if not cookie:
+                self.log.warning("No cookies found in header: %s", header)
+                continue
+            name, morsel = next(iter(cookie.items()))
+
             # Convert "expires" arg into "max-age" to facilitate expiration management.
             # As "max-age" has precedence, ignore "expires" when "max-age" exists.
-            if item.get("expires") and not item.get("max-age"):
-                expire_timedelta = parsedate_to_datetime(item["expires"]) - store_time
-                item["max-age"] = str(expire_timedelta.total_seconds())
+            if morsel.get("expires") and not morsel.get("max-age"):
+                expire_time = parsedate_to_datetime(morsel["expires"])
+                expire_timedelta = expire_time - store_time
+                morsel["max-age"] = str(expire_timedelta.total_seconds())
 
-            self._cookies[key] = (item, store_time)
+            self._cookies[name] = (morsel, store_time)
 
     def _clear_expired_cookies(self) -> None:
         """Clear expired cookies."""
@@ -788,8 +807,10 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
 
         raise web.HTTPError(
             e.code,
-            f"Error from Gateway: [{error_message}] {error_reason}. "
+            "Error from Gateway: [%s] %s. "
             "Ensure gateway url is valid and the Gateway instance is running.",
+            error_message,
+            error_reason,
         ) from e
     except ConnectionError as e:
         gateway_client.emit(
@@ -797,8 +818,9 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
         )
         raise web.HTTPError(
             503,
-            f"ConnectionError was received from Gateway server url '{gateway_client.url}'.  "
+            "ConnectionError was received from Gateway server url '%s'.  "
             "Check to be sure the Gateway instance is running.",
+            gateway_client.url,
         ) from e
     except gaierror as e:
         gateway_client.emit(
@@ -806,8 +828,9 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
         )
         raise web.HTTPError(
             404,
-            f"The Gateway server specified in the gateway_url '{gateway_client.url}' doesn't "
-            f"appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
+            "The Gateway server specified in the gateway_url '%s' doesn't "
+            "appear to be valid.  Ensure gateway url is valid and the Gateway instance is running.",
+            gateway_client.url,
         ) from e
     except Exception as e:
         gateway_client.emit(
@@ -821,10 +844,6 @@ async def gateway_request(endpoint: str, **kwargs: ty.Any) -> HTTPResponse:
         raise e
 
     if gateway_client.accept_cookies:
-        # Update cookies on GatewayClient from server if configured.
-        cookie_values = response.headers.get("Set-Cookie")
-        if cookie_values:
-            cookie: SimpleCookie = SimpleCookie()
-            cookie.load(cookie_values)
-            gateway_client.update_cookies(cookie)
+        gateway_client.update_cookies(response.headers)
+
     return response

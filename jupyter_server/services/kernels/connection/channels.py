@@ -11,7 +11,7 @@ from concurrent.futures import Future
 from textwrap import dedent
 
 from jupyter_client import protocol_version as client_protocol_version  # type:ignore[attr-defined]
-from tornado import gen, web
+from tornado import web
 from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketClosedError
 from traitlets import Any, Bool, Dict, Float, Instance, Int, List, Unicode, default
@@ -155,7 +155,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.channels[channel] = stream = meth(identity=identity)
             stream.channel = channel
 
-    def nudge(self):
+    def nudge(self) -> asyncio.Future[None]:
         """Nudge the zmq connections with kernel_info_requests
         Returns a Future that will resolve when we have received
         a shell or control reply and at least one iopub message,
@@ -171,41 +171,62 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # establishing its zmq subscriptions before processing the next request.
         if getattr(self.kernel_manager, "execution_state", None) == "busy":
             self.log.debug("Nudge: not nudging busy kernel %s", self.kernel_id)
-            f: Future[t.Any] = Future()
+            f: asyncio.Future[None] = asyncio.Future()
             f.set_result(None)
-            return _ensure_future(f)
+            return f
         # Use a transient shell channel to prevent leaking
         # shell responses to the front-end.
         shell_channel = self.kernel_manager.connect_shell()
         # Use a transient control channel to prevent leaking
         # control responses to the front-end.
         control_channel = self.kernel_manager.connect_control()
+        # Snapshot of ports the transient channels above are bound to. If a
+        # restart with newports happens mid-nudge, kernel_manager.ports will
+        # change and we must abort: the channels are now connected to dead
+        # peers, no reply will come, and open() would otherwise block until
+        # kernel_info_timeout (default 60s), preventing on_close from firing.
+        nudge_ports = list(self.kernel_manager.ports)
         # The IOPub used by the client, whose subscriptions we are verifying.
         iopub_channel = self.channels["iopub"]
 
-        info_future: Future[t.Any] = Future()
-        iopub_future: Future[t.Any] = Future()
-        both_done = gen.multi([info_future, iopub_future])
+        async def wait_for_activity():
+            execution_state = getattr(self.kernel_manager, "execution_state", None)
+            while execution_state == "starting":
+                await asyncio.sleep(0.05)
+                execution_state = getattr(self.kernel_manager, "execution_state", None)
+            self.log.debug("Nudge: %s execution_state=%s", self.kernel_id, execution_state)
+
+        info_future: asyncio.Future[t.Any] = asyncio.Future()
+        iopub_future: asyncio.Future[t.Any] = asyncio.Future()
+        futures = [info_future, iopub_future]
+        futures.append(asyncio.ensure_future(wait_for_activity()))
+        all_done = asyncio.ensure_future(asyncio.gather(*futures))
 
         def finish(_=None):
             """Ensure all futures are resolved
             which in turn triggers cleanup
             """
-            for f in (info_future, iopub_future):
+            for f in futures:
                 if not f.done():
-                    f.set_result(None)
+                    f.cancel()
 
         def cleanup(_=None):
             """Common cleanup"""
             loop.remove_timeout(nudge_handle)
-            iopub_channel.stop_on_recv()
+            # Close the transient shell/control sockets we own first, so they
+            # are released even if the shared iopub channel was already torn
+            # down (e.g. by a concurrent websocket disconnect). Previously
+            # iopub.stop_on_recv() raised OSError here and aborted cleanup,
+            # leaking the shell+control FDs on every such race.
             if not shell_channel.closed():
                 shell_channel.close()
             if not control_channel.closed():
                 control_channel.close()
+            if not iopub_channel.closed():
+                iopub_channel.stop_on_recv()
 
         # trigger cleanup when both message futures are resolved
-        both_done.add_done_callback(cleanup)
+        all_done.add_done_callback(cleanup)
 
         def on_shell_reply(msg):
             """Handle nudge shell replies."""
@@ -244,6 +265,14 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                 finish()
                 return
 
+            # If the kernel was restarted with new ports, the transient
+            # shell/control channels above are bound to dead peers and will
+            # never receive a reply. Bail so connect()/open() can return.
+            if list(self.kernel_manager.ports) != nudge_ports:
+                self.log.debug("Nudge: cancelling on port change: %s", self.kernel_id)
+                finish()
+                return
+
             # check for closed zmq socket
             if shell_channel.closed():
                 self.log.debug("Nudge: cancelling on closed zmq socket: %s", self.kernel_id)
@@ -256,7 +285,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                 finish()
                 return
 
-            if not both_done.done():
+            if not all_done.done():
                 log = self.log.warning if count % 10 == 0 else self.log.debug
                 log(f"Nudge: attempt {count} on kernel {self.kernel_id}")
                 self.session.send(shell_channel, "kernel_info_request")
@@ -267,10 +296,16 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         nudge_handle = loop.call_later(0, nudge, count=0)
 
         # resolve with a timeout if we get no response
-        future = gen.with_timeout(loop.time() + self.kernel_info_timeout, both_done)
-        # ensure we have no dangling resources or unresolved Futures in case of timeout
-        future.add_done_callback(finish)
-        return _ensure_future(future)
+        async def finish_nudge():
+            try:
+                await asyncio.wait_for(all_done, timeout=self.kernel_info_timeout)
+            except asyncio.CancelledError:
+                pass
+            finally:
+                # make sure everybody gets cancelled, just in case
+                finish()
+
+        return asyncio.ensure_future(finish_nudge())
 
     async def _register_session(self):
         """Ensure we aren't creating a duplicate session.
@@ -287,9 +322,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         if (
             self.kernel_id in self.multi_kernel_manager
         ):  # only update open sessions if kernel is actively managed
-            self._open_sessions[self.session_key] = t.cast(
-                KernelWebsocketHandler, self.websocket_handler
-            )
+            self._open_sessions[self.session_key] = self.websocket_handler
 
     async def prepare(self):
         """Prepare a kernel connection."""
@@ -332,8 +365,15 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         # actually wait for it
         await asyncio.wrap_future(future)
 
-    def connect(self):
-        """Handle a connection."""
+    def connect(self) -> asyncio.Future[None] | None:
+        """Handle a connection.
+
+        Returns the Future from :meth:`nudge` (which resolves once the
+        kernel is responsive and stream subscriptions/replay callbacks
+        have been wired up), or ``None`` if the connection failed and
+        was disconnected. Callers should ``await`` the returned Future
+        before relying on the connection being live.
+        """
         self.multi_kernel_manager.notify_connect(self.kernel_id)
 
         # on new connections, flush the message buffer
@@ -342,7 +382,11 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             self.log.info("Restoring connection for %s", self.session_key)
             if self.multi_kernel_manager.ports_changed(self.kernel_id):
                 # If the kernel's ports have changed (some restarts trigger this)
-                # then reset the channels so nudge() is using the correct iopub channel
+                # then reset the channels so nudge() is using the correct iopub channel.
+                # Close the stale buffered channels first to avoid leaking FDs.
+                for stream in buffer_info["channels"].values():
+                    if not stream.closed():
+                        stream.close()
                 self.create_stream()
             else:
                 # The kernel's ports have not changed; use the channels captured in the buffer
@@ -398,13 +442,40 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
 
     def disconnect(self):
         """Handle a disconnect."""
+        # Decrement the connection counter first, before any work that can
+        # block the event loop (zmq channel close can stall on LINGER when
+        # the peer is gone, especially on Windows). The counter conceptually
+        # drops the moment the websocket closes, not when teardown finishes.
+        # notify_disconnect is internally guarded on _kernel_connections, so
+        # it is safe to call even when the kernel was transiently removed
+        # from the mkm (port-changing restart window).
+        self.multi_kernel_manager.notify_disconnect(self.kernel_id)
         self.log.debug("Websocket closed %s", self.session_key)
         # unregister myself as an open session (only if it's really me)
         if self._open_sessions.get(self.session_key) is self.websocket_handler:
             self._open_sessions.pop(self.session_key)
 
+        # Close any pending kernel_info_channel. If the kernel never replied to
+        # the kernel_info_request (e.g. hung/rogue), _handle_kernel_info_reply
+        # will not have fired to close it. This must run before the
+        # start_buffering early-return below, otherwise the channel leaks.
+        if self.kernel_info_channel is not None and not self.kernel_info_channel.closed():
+            self.kernel_info_channel.close()
+            # If this connection owned the shared kernel_info future and we
+            # are closing its channel before a reply arrives, unblock any
+            # reconnect path waiting on that pending future.
+            if not self._kernel_info_future.done():
+                self._kernel_info_future.set_result({})
+            # Allow a future connection to issue a fresh kernel_info request
+            # rather than inheriting an orphaned/empty cached future.
+            if (
+                getattr(self.kernel_manager, "_kernel_info_future", None)
+                is self._kernel_info_future
+            ):
+                del self.kernel_manager._kernel_info_future
+        self.kernel_info_channel = None
+
         if self.kernel_id in self.multi_kernel_manager:
-            self.multi_kernel_manager.notify_disconnect(self.kernel_id)
             self.multi_kernel_manager.remove_restart_callback(
                 self.kernel_id,
                 self.on_kernel_restarted,
@@ -599,7 +670,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
 
         enabling msg spec adaptation, if necessary
         """
-        idents, msg = self.session.feed_identities(msg)
+        _idents, msg = self.session.feed_identities(msg)
         try:
             msg = self.session.deserialize(msg)
         except BaseException:

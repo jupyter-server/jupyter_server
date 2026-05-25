@@ -90,21 +90,33 @@ class NbconvertFileHandler(JupyterHandler):
     """An nbconvert file handler."""
 
     auth_resource = AUTH_RESOURCE
-    SUPPORTED_METHODS = ("GET",)  # type:ignore[assignment]
+    SUPPORTED_METHODS = ("GET",)
 
     @web.authenticated
     @authorized
     async def get(self, format, path):
-        """Get a notebook file in a desired format."""
+        """Get a notebook file in a desired format.
+
+        Parameters
+        ----------
+        download: bool, optional
+            If true, set Content-Disposition: attachment
+        sanitize_html: bool, optional (html format only)
+            If true, sanitize HTML (sets sanitize_html flag on nbconvert)
+        """
         self.check_xsrf_cookie()
         exporter = get_exporter(format, config=self.config, log=self.log)
+        if format == "html":
+            sanitize = self.get_argument("sanitize_html", None)
+            if sanitize is not None:
+                exporter.sanitize_html = sanitize.lower() == "true"
 
         path = path.strip("/")
         # If the notebook relates to a real file (default contents manager),
         # give its path to nbconvert.
         if hasattr(self.contents_manager, "_get_os_path"):
             os_path = self.contents_manager._get_os_path(path)
-            ext_resources_dir, basename = os.path.split(os_path)
+            ext_resources_dir, _basename = os.path.split(os_path)
         else:
             ext_resources_dir = None
 
@@ -158,7 +170,7 @@ class NbconvertFileHandler(JupyterHandler):
 class NbconvertPostHandler(JupyterHandler):
     """An nbconvert post handler."""
 
-    SUPPORTED_METHODS = ("POST",)  # type:ignore[assignment]
+    SUPPORTED_METHODS = ("POST",)
     auth_resource = AUTH_RESOURCE
 
     @web.authenticated

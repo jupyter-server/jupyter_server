@@ -6,5 +6,5 @@ Module contents
 
 .. automodule:: jupyter_server.i18n
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

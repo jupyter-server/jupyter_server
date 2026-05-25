@@ -1,5 +1,5 @@
 "$id": https://events.jupyter.org/jupyter_server/gateway_client/v1
-version: 1
+version: "1"
 title: Gateway Client activities.
 personal-data: true
 description: |

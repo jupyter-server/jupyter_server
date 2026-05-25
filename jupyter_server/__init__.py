@@ -17,12 +17,12 @@ from ._version import __version__, version_info
 from .base.call_context import CallContext
 
 __all__ = [
+    "DEFAULT_EVENTS_SCHEMA_PATH",
+    "DEFAULT_JUPYTER_SERVER_PORT",
     "DEFAULT_STATIC_FILES_PATH",
     "DEFAULT_TEMPLATE_PATH_LIST",
-    "DEFAULT_JUPYTER_SERVER_PORT",
     "JUPYTER_SERVER_EVENTS_URI",
-    "DEFAULT_EVENTS_SCHEMA_PATH",
+    "CallContext",
     "__version__",
     "version_info",
-    "CallContext",
 ]

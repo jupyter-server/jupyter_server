@@ -39,6 +39,26 @@ def copy2_safe(src, dst, log=None):
 
     like shutil.copy2, but log errors in copystat instead of raising
     """
+    is_writable = os.access(src, os.W_OK)
+
+    if not is_writable:
+        # attempt to refresh the attribute cache (used by remote file systems)
+        # rather than raising a permission error before any operation that could
+        # refresh the attribute cache is allowed to take place.
+        fd = os.open(src, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+        # re-try
+        is_writable = os.access(src, os.W_OK)
+
+    # if src file is not writable, avoid creating a back-up
+    if not is_writable:
+        if log:
+            log.debug("Source file, %s, is not writable", src)
+        raise PermissionError(errno.EACCES, f"File is not writable: {src}")
+
     shutil.copyfile(src, dst)
     try:
         shutil.copystat(src, dst)
@@ -52,6 +72,11 @@ async def async_copy2_safe(src, dst, log=None):
 
     like shutil.copy2, but log errors in copystat instead of raising
     """
+    if not os.access(src, os.W_OK):
+        if log:
+            log.debug("Source file, %s, is not writable", src)
+        raise PermissionError(errno.EACCES, f"File is not writable: {src}")
+
     await run_sync(shutil.copyfile, src, dst)
     try:
         await run_sync(shutil.copystat, src, dst)
@@ -100,6 +125,21 @@ def atomic_writing(path, text=True, encoding="utf-8", log=None, **kwargs):
     # any of its directories, so this will suffice:
     if os.path.islink(path):
         path = os.path.join(os.path.dirname(path), os.readlink(path))
+
+    # Fall back to direct write for existing file in a non-writable dir
+    dirpath = os.path.dirname(path) or os.getcwd()
+    if os.path.isfile(path) and not os.access(dirpath, os.W_OK) and os.access(path, os.W_OK):
+        mode = "w" if text else "wb"
+        # direct open on the target file
+        if text:
+            fileobj = open(path, mode, encoding=encoding, **kwargs)  # noqa: SIM115
+        else:
+            fileobj = open(path, mode, **kwargs)  # noqa: SIM115
+        try:
+            yield fileobj
+        finally:
+            fileobj.close()
+        return
 
     tmp_path = path_to_intermediate(path)
 
@@ -282,8 +322,10 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
         except ValueError:
             raise HTTPError(404, f"{path} is not a valid path") from None
 
-        if not (os.path.abspath(os_path) + os.path.sep).startswith(root):
-            raise HTTPError(404, "%s is outside root contents directory" % path)
+        # Corner case: when root_dir is the filesystem root, root + sep produces an invalid prefix
+        if os.path.dirname(root) != root:
+            if not (os.path.abspath(os_path) + os.path.sep).startswith(root + os.path.sep):
+                raise HTTPError(404, "%s is outside root contents directory" % path)
         return os_path
 
     def _read_notebook(

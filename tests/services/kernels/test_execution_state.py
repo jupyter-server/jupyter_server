@@ -9,7 +9,6 @@ import warnings
 
 import jupyter_client
 import pytest
-from flaky import flaky
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
 
@@ -18,7 +17,7 @@ POLL_INTERVAL = 1
 MINIMUM_CONSISTENT_COUNT = 4
 
 
-@flaky
+@pytest.mark.flaky
 async def test_execution_state(jp_fetch, jp_ws_fetch):
     r = await jp_fetch("api", "kernels", method="POST", allow_nonstandard_methods=True)
     kernel = json.loads(r.body.decode())
@@ -43,7 +42,7 @@ async def test_execution_state(jp_fetch, jp_ws_fetch):
                 "parent_header": {},
                 "metadata": {},
                 "content": {
-                    "code": "while True:\n\tpass",
+                    "code": "import time\nwhile True:\n\ttime.sleep(1)",
                     "silent": False,
                     "allow_stdin": False,
                     "stop_on_error": True,
@@ -54,6 +53,17 @@ async def test_execution_state(jp_fetch, jp_ws_fetch):
     )
     await poll_for_parent_message_status(kid, message_id, "busy", ws)
     es = await get_execution_state(kid, jp_fetch)
+
+    # kernels start slowly on Windows
+    max_startup_time = 60
+    started = time.perf_counter()
+    while es == "starting":
+        await asyncio.sleep(1)
+        elapsed = time.perf_counter() - started
+        if elapsed > max_startup_time:
+            raise ValueError(f"Kernel did not start up in {max_startup_time} seconds")
+        es = await get_execution_state(kid, jp_fetch)
+
     assert es == "busy"
 
     message_id_2 = uuid.uuid1().hex

@@ -7,19 +7,19 @@ Submodules
 
 .. automodule:: jupyter_server.services.sessions.handlers
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 
 .. automodule:: jupyter_server.services.sessions.sessionmanager
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: jupyter_server.services.sessions
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

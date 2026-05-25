@@ -7,13 +7,13 @@ from __future__ import annotations
 import errno
 import importlib.util
 import os
+import re
 import socket
 import sys
 import warnings
-from _frozen_importlib_external import _NamespacePath
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator, NewType, Sequence
+from typing import TYPE_CHECKING, Any, NewType
 from urllib.parse import (
     SplitResult,
     quote,
@@ -32,12 +32,37 @@ from packaging.version import Version
 from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest, HTTPResponse
 from tornado.netutil import Resolver
 
+if TYPE_CHECKING:
+    from collections.abc import Generator, Sequence
+
 ApiPath = NewType("ApiPath", str)
 
 # Re-export
 urljoin = _urljoin
 pathname2url = _pathname2url
 ensure_async = _ensure_async
+
+
+def origin_matches_pat(allow_origin_pat: str, origin: str) -> bool:
+    """Check whether origin matches ``allow_origin_pat`` using full-string matching.
+
+    Uses ``re.fullmatch`` so the pattern must cover the entire origin string,
+    preventing prefix-bypass attacks (GHSA-24qx-w28j-9m6p/CVE-2026-40110).
+    Emits a warning in case a user relied on prefix-style patterns.
+    """
+    if not allow_origin_pat:
+        return False
+    if re.fullmatch(allow_origin_pat, origin):
+        return True
+    if re.match(allow_origin_pat, origin):
+        warnings.warn(
+            f"allow_origin_pat {allow_origin_pat!r} only matched the request origin as a prefix. "
+            "This has been replaced with a full string match. "
+            "Update your pattern if you need to prefix-match the origin (e.g. append '.*')",
+            UserWarning,
+            stacklevel=3,
+        )
+    return False
 
 
 def url_path_join(*pieces: str) -> str:
@@ -143,8 +168,7 @@ def to_api_path(os_path: str, root: str = "") -> ApiPath:
     If given, root will be removed from the path.
     root must be a filesystem path already.
     """
-    if os_path.startswith(root):
-        os_path = os_path[len(root) :]
+    os_path = os_path.removeprefix(root)
     parts = os_path.strip(os.path.sep).split(os.path.sep)
     parts = [p for p in parts if p != ""]  # remove duplicate splits
     path = "/".join(parts)
@@ -336,7 +360,7 @@ def is_namespace_package(namespace: str) -> bool | None:
     if not spec:
         # e.g. module not installed
         return None
-    return isinstance(spec.submodule_search_locations, _NamespacePath)
+    return bool(spec.origin is None and spec.submodule_search_locations)
 
 
 def filefind(filename: str, path_dirs: Sequence[str]) -> str:
@@ -378,17 +402,9 @@ def filefind(filename: str, path_dirs: Sequence[str]) -> str:
         # os.path.abspath resolves '..', but Path.absolute() doesn't
         # Path.resolve() does, but traverses symlinks, which we don't want
         test_path = Path(os.path.abspath(test_path))
-        if sys.version_info >= (3, 9):
-            if not test_path.is_relative_to(path):
-                # points outside root, e.g. via `filename='../foo'`
-                continue
-        else:
-            # is_relative_to is new in 3.9
-            try:
-                test_path.relative_to(path)
-            except ValueError:
-                # points outside root, e.g. via `filename='../foo'`
-                continue
+        if not test_path.is_relative_to(path):
+            # points outside root, e.g. via `filename='../foo'`
+            continue
         # make sure we don't call is_file before we know it's a file within a prefix
         # GHSA-hrw6-wg82-cm62 - can leak password hash on windows.
         if test_path.is_file():

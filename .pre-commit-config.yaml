@@ -1,10 +1,11 @@
 ci:
   autoupdate_schedule: monthly
   autoupdate_commit_msg: "chore: update pre-commit hooks"
+  autofix_commit_msg: "core: pre-commit fixes"
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: check-case-conflict
       - id: check-ast
@@ -21,25 +22,25 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.6
+    rev: 0.37.2
     hooks:
       - id: check-github-workflows
 
-  - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.17
+  - repo: https://github.com/hukkin/mdformat
+    rev: 1.0.0
     hooks:
       - id: mdformat
         additional_dependencies:
           [mdformat-gfm, mdformat-frontmatter, mdformat-footnote]
 
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v4.0.0-alpha.8"
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.8.3
     hooks:
       - id: prettier
         types_or: [yaml, html, json]
 
   - repo: https://github.com/codespell-project/codespell
-    rev: "v2.3.0"
+    rev: "v2.4.2"
     hooks:
       - id: codespell
         args: ["-L", "sur,nd"]
@@ -52,25 +53,44 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.10.1"
+    rev: "v1.20.2"
     hooks:
       - id: mypy
         files: jupyter_server
         stages: [manual]
         additional_dependencies:
-          ["traitlets>=5.13", "jupyter_core>=5.5", "jupyter_client>=8.5"]
+          [
+            "anyio>=3.1.0",
+            "jinja2>=3.0.3",
+            "jupyter_client>=8.5",
+            "jupyter_core>=5.5",
+            "jupyter_events>=0.11.0",
+            "jupyter_server_terminals>=0.4.4",
+            "nbconvert>=6.4.4",
+            "nbformat>=5.3.0",
+            "overrides>=5.0",
+            "packaging>=22.0",
+            "prometheus_client>=0.9",
+            "pyzmq>=24",
+            "Send2Trash>=1.8.2",
+            "terminado>=0.8.3",
+            "tornado>=6.2.0",
+            "traitlets>=5.13",
+            "websocket-client>=1.7",
+          ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.0
+    # keep the revision in sync with the ruff version in pyproject.toml
+    rev: v0.15.12
     hooks:
-      - id: ruff
+      - id: ruff-check
         types_or: [python, jupyter]
         args: ["--fix", "--show-fixes"]
       - id: ruff-format
         types_or: [python, jupyter]
 
   - repo: https://github.com/scientific-python/cookie
-    rev: "2024.04.23"
+    rev: "2026.04.04"
     hooks:
       - id: sp-repo-review
         additional_dependencies: ["repo-review[cli]"]

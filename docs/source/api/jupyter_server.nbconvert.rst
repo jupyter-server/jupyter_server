@@ -7,13 +7,13 @@ Submodules
 
 .. automodule:: jupyter_server.nbconvert.handlers
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: jupyter_server.nbconvert
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

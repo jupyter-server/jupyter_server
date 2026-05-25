@@ -1,21 +1,23 @@
+import math
 import os
 import shutil
 import sys
 import time
 from itertools import combinations
-from typing import Dict, Optional, Tuple
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from jupyter_core.utils import ensure_async
 from nbformat import ValidationError
 from nbformat import v4 as nbformat
+from nbformat.sign import NotebookNotary
 from tornado.web import HTTPError
 from traitlets import TraitError
 
 from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
     FileContentsManager,
+    _get_created_timestamp,
 )
 
 from ...utils import expected_http_error
@@ -111,8 +113,8 @@ def add_invalid_cell(notebook):
 
 
 async def prepare_notebook(
-    jp_contents_manager: FileContentsManager, make_invalid: Optional[bool] = False
-) -> Tuple[Dict, str]:
+    jp_contents_manager: FileContentsManager, make_invalid: bool | None = False
+) -> tuple[dict, str]:
     cm = jp_contents_manager
     model = await ensure_async(cm.new_untitled(type="notebook"))
     name = model["name"]
@@ -188,7 +190,7 @@ def test_invalid_root_dir(jp_file_contents_manager_class, tmp_path):
 def test_get_os_path(jp_file_contents_manager_class, tmp_path):
     fm = jp_file_contents_manager_class(root_dir=str(tmp_path))
     path = fm._get_os_path("/path/to/notebook/test.ipynb")
-    rel_path_list = "/path/to/notebook/test.ipynb".split("/")
+    rel_path_list = ["", "path", "to", "notebook", "test.ipynb"]
     fs_path = os.path.join(fm.root_dir, *rel_path_list)
     assert path == fs_path
 
@@ -854,6 +856,21 @@ async def test_rename(jp_contents_manager):
     await ensure_async(cm.new_untitled("foo/bar_diff", ext=".ipynb"))
 
 
+async def test_rename_nonexistent(jp_contents_manager):
+    """Test renaming a non-existent file/directory returns 404 error"""
+    cm = jp_contents_manager
+
+    # Test with non-existent file
+    with pytest.raises(HTTPError) as e:
+        await ensure_async(cm.rename("nonexistent_file.txt", "new_name.txt"))
+    assert expected_http_error(e, 404)
+
+    # Test with non-existent directory
+    with pytest.raises(HTTPError) as e:
+        await ensure_async(cm.rename("nonexistent_dir", "new_dir"))
+    assert expected_http_error(e, 404)
+
+
 async def test_delete_root(jp_contents_manager):
     cm = jp_contents_manager
     with pytest.raises(HTTPError) as e:
@@ -983,9 +1000,10 @@ async def test_nb_validation(jp_contents_manager):
     # successful methods and ensure that calls to the aliased "validate_nb" are
     # zero.  Note that since patching side-effects the validation error case, we'll
     # skip call-count assertions for that portion of the test.
-    with patch("nbformat.validate") as mock_validate, patch(
-        "jupyter_server.services.contents.manager.validate_nb"
-    ) as mock_validate_nb:
+    with (
+        patch("nbformat.validate") as mock_validate,
+        patch("jupyter_server.services.contents.manager.validate_nb") as mock_validate_nb,
+    ):
         # Valid notebook, save, then get
         model = await ensure_async(cm.save(model, path))
         assert "message" not in model
@@ -1091,3 +1109,346 @@ async def test_regression_is_hidden(m1, m2, jp_contents_manager):
     cm.allow_hidden = False
     with pytest.raises(AssertionError):
         await ensure_async(cm.get(dirname))
+
+
+async def test_created_timestamp(jp_contents_manager):
+    """Test basic created timestamp behavior.
+
+    Verifies that created <= last_modified for a newly created file.
+    Note: On Linux, 'created' is best-effort (uses st_ctime which is inode
+    change time, not true creation time). This test verifies the basic
+    invariant holds for the common case of file creation and modification.
+    """
+    cm = jp_contents_manager
+
+    # Create a new file
+    model = await ensure_async(cm.new_untitled(type="file", ext=".txt"))
+    path = model["path"]
+    os_path = cm._get_os_path(path)
+
+    # Get the model with timestamps
+    model = await ensure_async(cm.get(path))
+
+    # created should be <= last_modified for a newly created file.
+    # Note: On Linux, 'created' uses st_ctime (inode change time) which could
+    # theoretically be slightly newer than st_mtime in edge cases, but for
+    # normal file creation this invariant should hold.
+    assert model["created"] <= model["last_modified"]
+
+    # Backdate the file's mtime to ensure save produces a distinct newer timestamp
+    # This avoids slow asyncio.sleep() and is more reliable than timing-based tests
+    info = os.stat(os_path)
+    old_mtime = info.st_mtime - 10  # 10 seconds in the past
+    os.utime(os_path, (info.st_atime, old_mtime))
+
+    model["content"] = "modified content"
+    model["format"] = "text"
+    await ensure_async(cm.save(model, path))
+
+    # Get the updated model
+    updated_model = await ensure_async(cm.get(path))
+
+    # Verify last_modified advanced (sanity check)
+    assert updated_model["last_modified"] > model["last_modified"]
+
+
+@pytest.fixture(params=[FileContentsManager, AsyncFileContentsManager])
+def file_manager_with_notary(request, tmp_path):
+    """Both sync and async file managers, each with a notary using a dedicated temp directory."""
+    notary_dir = tmp_path / "notary"
+    notary_dir.mkdir()
+    root_dir = tmp_path / "root"
+    root_dir.mkdir()
+    notary = NotebookNotary(data_dir=str(notary_dir))
+    cm = request.param(root_dir=str(root_dir))
+    cm.notary = notary
+    return cm
+
+
+async def test_save_before_and_after_signature_store_corruption(file_manager_with_notary, caplog):
+    cm = file_manager_with_notary
+    db_path = cm.notary.db_file
+
+    # First save
+    model = await ensure_async(cm.new_untitled(type="notebook"))
+    path = model["path"]
+    full_model = await ensure_async(cm.get(path))
+    result = await ensure_async(cm.save(full_model, path))
+    assert isinstance(result, dict)
+    assert result["path"] == path
+    assert os.path.exists(db_path)
+
+    # Fetch the model before corrupting so that cm.get() does not itself hit the DB
+    full_model = await ensure_async(cm.get(path))
+
+    # Corrupt the signature store by truncating to the SQLite file header size (100 bytes),
+    # leaving the magic bytes intact but removing all data pages.
+    with open(db_path, "r+b") as f:
+        f.truncate(100)
+
+    # Second save with the same notary: signature store corruption should be handled
+    # gracefully and the notebook should still be saved successfully.
+    with caplog.at_level("WARNING"):
+        result = await ensure_async(cm.save(full_model, path))
+    assert isinstance(result, dict)
+    assert result["path"] == path
+    assert "corrupted or unavailable" in caplog.text
+
+
+async def test_save_raises_when_signature_store_unrecoverable(file_manager_with_notary, caplog):
+    cm = file_manager_with_notary
+    db_path = cm.notary.db_file
+
+    # First save
+    model = await ensure_async(cm.new_untitled(type="notebook"))
+    path = model["path"]
+    full_model = await ensure_async(cm.get(path))
+    await ensure_async(cm.save(full_model, path))
+
+    # Fetch the model before corrupting so that cm.get() does not itself hit the DB
+    full_model = await ensure_async(cm.get(path))
+
+    # Corrupt the store, and also replace store_factory so that the recovery attempt
+    # returns a broken store, causing the retry to also fail.
+    with open(db_path, "r+b") as f:
+        f.truncate(100)
+    broken_store = MagicMock()
+    broken_store.store_signature.side_effect = RuntimeError("store is broken")
+    cm.notary.store_factory = lambda: broken_store
+
+    with caplog.at_level("WARNING"):
+        with pytest.raises(HTTPError) as exc_info:
+            await ensure_async(cm.save(full_model, path))
+    assert exc_info.value.status_code == 500
+    assert "corrupted or unavailable" in caplog.text
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only - st_birthtime test")
+async def test_created_uses_birthtime_on_macos(jp_contents_manager):
+    """Test that on macOS, created timestamp uses st_birthtime (actual creation time)."""
+    cm = jp_contents_manager
+
+    # Create a new file
+    model = await ensure_async(cm.new_untitled(type="file", ext=".txt"))
+    path = model["path"]
+    os_path = cm._get_os_path(path)
+
+    # Get stat info to verify st_birthtime is available and being used
+    # Use lstat for consistency with _base_model() which doesn't follow symlinks
+    info = os.lstat(os_path)
+    assert hasattr(info, "st_birthtime"), "st_birthtime should be available on macOS"
+
+    # Skip on FUSE/network filesystems where st_birthtime may be invalid
+    if info.st_birthtime < 0 or not math.isfinite(info.st_birthtime):
+        pytest.skip("st_birthtime is invalid (possibly FUSE/network filesystem)")
+
+    # Get the model and verify created matches st_birthtime directly
+    model = await ensure_async(cm.get(path))
+    created_ts = model["created"].timestamp()
+    # Allow tolerance for datetime conversion round-trip and filesystem precision differences
+    assert abs(created_ts - info.st_birthtime) < 1.0, (
+        f"created ({created_ts}) should match st_birthtime ({info.st_birthtime})"
+    )
+
+    # On macOS, created should be <= last_modified (birthtime <= mtime)
+    assert model["created"] <= model["last_modified"], (
+        "created should be <= last_modified for a newly created file"
+    )
+
+
+def test_get_created_timestamp_uses_birthtime():
+    """Test that _get_created_timestamp uses st_birthtime when available and valid."""
+    mock_info = MagicMock()
+    mock_info.st_birthtime = 1234567890.0
+    mock_info.st_ctime = 9999999999.0
+
+    result = _get_created_timestamp(mock_info)
+    assert result == mock_info.st_birthtime
+
+
+def test_get_created_timestamp_fallback_no_birthtime():
+    """Test fallback to st_ctime when st_birthtime is unavailable."""
+    mock_info = MagicMock(spec=["st_ctime"])  # No st_birthtime attribute
+    mock_info.st_ctime = 1234567890.0
+
+    result = _get_created_timestamp(mock_info)
+    assert result == mock_info.st_ctime
+
+
+def test_get_created_timestamp_accepts_zero_birthtime():
+    """Test that st_birthtime == 0 (Unix epoch) is accepted as valid."""
+    mock_info = MagicMock()
+    mock_info.st_birthtime = 0
+    mock_info.st_ctime = 1234567890.0
+
+    result = _get_created_timestamp(mock_info)
+    assert result == 0  # Unix epoch is valid
+
+
+def test_get_created_timestamp_fallback_negative_birthtime():
+    """Test fallback to st_ctime when st_birthtime is negative (invalid)."""
+    mock_info = MagicMock()
+    mock_info.st_birthtime = -1
+    mock_info.st_ctime = 1234567890.0
+
+    result = _get_created_timestamp(mock_info)
+    assert result == mock_info.st_ctime
+
+
+def test_get_created_timestamp_fallback_infinite_birthtime():
+    """Test fallback to st_ctime when st_birthtime is infinite (invalid)."""
+    mock_info = MagicMock()
+    mock_info.st_birthtime = math.inf
+    mock_info.st_ctime = 1234567890.0
+
+    result = _get_created_timestamp(mock_info)
+    assert result == mock_info.st_ctime
+
+
+def test_get_created_timestamp_fallback_nan_birthtime():
+    """Test fallback to st_ctime when st_birthtime is NaN (invalid)."""
+    mock_info = MagicMock()
+    mock_info.st_birthtime = math.nan
+    mock_info.st_ctime = 1234567890.0
+
+    result = _get_created_timestamp(mock_info)
+    assert result == mock_info.st_ctime
+
+
+def test_get_created_timestamp_fallback_none_birthtime():
+    """Test fallback to st_ctime when st_birthtime is None (some FUSE filesystems)."""
+    mock_info = MagicMock()
+    mock_info.st_birthtime = None
+    mock_info.st_ctime = 1234567890.0
+
+    result = _get_created_timestamp(mock_info)
+    assert result == mock_info.st_ctime
+
+
+def test_get_created_timestamp_fallback_string_birthtime():
+    """Test fallback to st_ctime when st_birthtime is non-numeric (malformed)."""
+    mock_info = MagicMock()
+    mock_info.st_birthtime = "invalid"
+    mock_info.st_ctime = 1234567890.0
+
+    result = _get_created_timestamp(mock_info)
+    assert result == mock_info.st_ctime
+
+
+async def test_created_timestamp_fallback_to_epoch(jp_contents_manager, caplog):
+    """Test end-to-end fallback to Unix epoch when timestamps are invalid.
+
+    Verifies that _base_model() correctly handles invalid timestamps from
+    _get_created_timestamp() by falling back to Unix epoch and logging a warning.
+    """
+    from datetime import datetime
+
+    from jupyter_server import _tz as tz
+
+    cm = jp_contents_manager
+
+    # Create a file first
+    model = await ensure_async(cm.new_untitled(type="file", ext=".txt"))
+    path = model["path"]
+    os_path = cm._get_os_path(path)
+
+    # Mock os.lstat to return an invalid timestamp (overflow-inducing value)
+    original_lstat = os.lstat
+
+    def mock_lstat(p):
+        result = original_lstat(p)
+        if p == os_path:
+            # Create a mock that returns invalid timestamps
+            mock_result = MagicMock(wraps=result)
+            mock_result.st_mtime = 1e20  # Will cause OverflowError
+            mock_result.st_ctime = 1e20
+            mock_result.st_birthtime = 1e20
+            mock_result.st_size = result.st_size
+            mock_result.st_mode = result.st_mode
+            return mock_result
+        return result
+
+    with patch("os.lstat", side_effect=mock_lstat):
+        import logging
+
+        with caplog.at_level(logging.WARNING):
+            model = await ensure_async(cm.get(path))
+
+    # Should fall back to Unix epoch for both timestamps
+    unix_epoch = datetime(1970, 1, 1, 0, 0, tzinfo=tz.UTC)
+    assert model["created"] == unix_epoch
+    assert model["last_modified"] == unix_epoch
+
+    # Should have logged warnings about invalid timestamps
+    assert "Invalid" in caplog.text or "invalid" in caplog.text.lower()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only - st_ctime is creation time")
+async def test_created_uses_ctime_on_windows(jp_contents_manager):
+    """Test that on Windows, created timestamp uses st_ctime (which is creation time).
+
+    On Windows, st_ctime represents the actual file creation time, unlike Unix
+    where it represents inode change time. This test verifies that the created
+    timestamp correctly reflects st_ctime on Windows.
+    """
+    cm = jp_contents_manager
+
+    # Create a new file
+    model = await ensure_async(cm.new_untitled(type="file", ext=".txt"))
+    path = model["path"]
+    os_path = cm._get_os_path(path)
+
+    # Get stat info
+    info = os.lstat(os_path)
+
+    # Get the model and verify created matches st_ctime
+    model = await ensure_async(cm.get(path))
+    created_ts = model["created"].timestamp()
+
+    # On Windows, created should match st_ctime (creation time)
+    # Allow tolerance for datetime conversion round-trip
+    assert abs(created_ts - info.st_ctime) < 1.0, (
+        f"created ({created_ts}) should match st_ctime ({info.st_ctime}) on Windows"
+    )
+
+    # created should be <= last_modified
+    assert model["created"] <= model["last_modified"], (
+        "created should be <= last_modified for a newly created file"
+    )
+
+
+async def test_base_model_invalid_timestamp_fallback(jp_contents_manager):
+    """Test that _base_model falls back to Unix epoch when timestamps are invalid."""
+    from datetime import datetime
+
+    from jupyter_server import _tz as tz
+
+    cm = jp_contents_manager
+
+    # Create a real file first
+    model = await ensure_async(cm.new_untitled(type="file", ext=".txt"))
+    path = model["path"]
+    os_path = cm._get_os_path(path)
+
+    # Mock os.lstat to return invalid timestamps
+    real_lstat = os.lstat
+
+    def mock_lstat(p):
+        if p == os_path:
+            mock_info = MagicMock()
+            mock_info.st_size = 0
+            mock_info.st_mode = real_lstat(p).st_mode
+            # Invalid timestamps that will cause OverflowError
+            mock_info.st_mtime = math.inf
+            mock_info.st_ctime = math.inf
+            mock_info.st_birthtime = math.inf
+            return mock_info
+        return real_lstat(p)
+
+    with patch("os.lstat", side_effect=mock_lstat):
+        result = await ensure_async(cm.get(path))
+
+    # Should fall back to Unix epoch for both timestamps
+    unix_epoch = datetime(1970, 1, 1, 0, 0, tzinfo=tz.UTC)
+    assert result["created"] == unix_epoch
+    assert result["last_modified"] == unix_epoch

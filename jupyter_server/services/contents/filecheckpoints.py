@@ -4,6 +4,7 @@ File-based Checkpoints implementations.
 
 import os
 import shutil
+import tempfile
 
 from anyio.to_thread import run_sync
 from jupyter_core.utils import ensure_dir_exists
@@ -111,6 +112,10 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
         filename = f"{basename}-{checkpoint_id}{ext}"
         os_path = self._get_os_path(path=parent)
         cp_dir = os.path.join(os_path, self.checkpoint_dir)
+        # If parent directory isn't writable, use system temp
+        if not os.access(os.path.dirname(cp_dir), os.W_OK):
+            rel = os.path.relpath(os_path, start=self.root_dir)
+            cp_dir = os.path.join(tempfile.gettempdir(), "jupyter_checkpoints", rel)
         with self.perm_to_403():
             ensure_dir_exists(cp_dir)
         cp_path = os.path.join(cp_dir, filename)

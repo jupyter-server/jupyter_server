@@ -13,7 +13,7 @@ from jupyter_server.base.websocket import WebSocketMixin
 AUTH_RESOURCE = "kernels"
 
 
-class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):  # type:ignore[misc]
+class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):
     """The kernels websocket should connect"""
 
     auth_resource = AUTH_RESOURCE
@@ -65,7 +65,7 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler): 
         await self.pre_get()
         await super().get(kernel_id=kernel_id)
 
-    async def open(self, kernel_id):
+    async def open(self, kernel_id):  # type: ignore[override]
         """Open a kernel websocket."""
         # Need to call super here to make sure we
         # begin a ping-pong loop with the client.

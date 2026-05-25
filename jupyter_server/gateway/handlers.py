@@ -10,7 +10,7 @@ import mimetypes
 import os
 import random
 import warnings
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from jupyter_client.session import Session
 from tornado import web
@@ -94,7 +94,7 @@ class WebSocketChannelsHandler(WebSocketHandler, JupyterHandler):
 
         self.ping(b"")
 
-    def open(self, kernel_id, *args, **kwargs):
+    def open(self, kernel_id: str, *args, **kwargs) -> None:  # type: ignore[override]
         """Handle web socket connection open to notebook server and delegate to gateway web socket handler"""
         self.ping_callback = PeriodicCallback(self.send_ping, GATEWAY_WS_PING_INTERVAL_SECS * 1000)
         self.ping_callback.start()
@@ -290,7 +290,7 @@ class GatewayResourceHandler(APIHandler):
     @web.authenticated
     async def get(self, kernel_name, path, include_body=True):
         """Get a gateway resource by name and path."""
-        mimetype: Optional[str] = None
+        mimetype: str | None = None
         ksm = self.kernel_spec_manager
         kernel_spec_res = await ksm.get_kernel_spec_resource(  # type:ignore[attr-defined]
             kernel_name, path

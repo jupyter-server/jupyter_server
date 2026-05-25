@@ -1,4 +1,7 @@
+from html.parser import HTMLParser
+
 import pytest
+from tornado.httpclient import HTTPClientError
 
 
 @pytest.fixture
@@ -118,3 +121,69 @@ async def test_base_url(jp_fetch, jp_server_config, jp_base_url):
     assert r.code == 200
     body = r.body.decode()
     assert "mock static content" in body
+
+
+class StylesheetFinder(HTMLParser):
+    """Minimal HTML parser to find iframe.src attr"""
+
+    def __init__(self):
+        super().__init__()
+        self.stylesheets = []
+        self.body_chunks = []
+        self.in_head = False
+        self.in_body = False
+        self.in_script = False
+
+    def handle_starttag(self, tag, attrs):
+        tag = tag.lower()
+        if tag == "head":
+            self.in_head = True
+        elif tag == "body":
+            self.in_body = True
+        elif tag == "script":
+            self.in_script = True
+        elif self.in_head and tag.lower() == "link":
+            attr_dict = dict(attrs)
+            if attr_dict.get("rel", "").lower() == "stylesheet":
+                self.stylesheets.append(attr_dict["href"])
+
+    def handle_endtag(self, tag):
+        if tag == "head":
+            self.in_head = False
+        if tag == "body":
+            self.in_body = False
+        if tag == "script":
+            self.in_script = False
+
+    def handle_data(self, data):
+        if self.in_body and not self.in_script:
+            data = data.strip()
+            if data:
+                self.body_chunks.append(data)
+
+
+def find_stylesheets_body(html):
+    """Find the href= attr of stylesheets
+
+    and body text of an HTML document
+
+    stylesheets are used to test static_url prefix
+    """
+    finder = StylesheetFinder()
+    finder.feed(html)
+    return (finder.stylesheets, "\n".join(finder.body_chunks))
+
+
+@pytest.mark.parametrize("error_url", ["mock_error_template", "mock_error_notemplate"])
+async def test_error_render(jp_fetch, jp_serverapp, jp_base_url, error_url):
+    with pytest.raises(HTTPClientError) as e:
+        await jp_fetch(error_url, method="GET")
+    r = e.value.response
+    assert r.code == 418
+    assert r.headers["Content-Type"] == "text/html"
+    html = r.body.decode("utf8")
+    stylesheets, body = find_stylesheets_body(html)
+    static_prefix = f"{jp_base_url}static/"
+    assert stylesheets
+    assert all(stylesheet.startswith(static_prefix) for stylesheet in stylesheets)
+    assert str(r.code) in body

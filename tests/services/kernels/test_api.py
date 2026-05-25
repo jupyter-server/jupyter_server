@@ -4,10 +4,10 @@ import os
 import time
 import warnings
 
+import ipykernel
 import jupyter_client
 import pytest
 import tornado
-from flaky import flaky
 from jupyter_client.kernelspec import NATIVE_KERNEL_NAME
 from tornado.httpclient import HTTPClientError
 
@@ -184,6 +184,183 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_
     await pending_kernel_is_ready(kernel3["id"])
 
 
+@pytest.mark.skipif(
+    ipykernel.version_info < (7, 0),
+    reason="requires ipykernel 7, which is not compatible with Python 3.10",
+)
+@pytest.mark.timeout(TEST_TIMEOUT)
+async def test_resolve_path_kernel(jp_fetch, jp_serverapp, jp_root_dir, pending_kernel_is_ready):
+    query_path = "hello.py"
+    contents = "(irrelevant)"
+
+    # Put the file in a kernel subdirectory
+    kernel_root = jp_root_dir / "more" / "path" / "segments"
+    kernel_root.mkdir(parents=True)
+    kernel_path = kernel_root / query_path
+    kernel_path.write_text(contents)
+
+    # Create a kernel in temp path
+    r = await jp_fetch(
+        "api",
+        "kernels",
+        method="POST",
+        body=json.dumps(
+            {"name": NATIVE_KERNEL_NAME, "path": str(kernel_root.relative_to(jp_root_dir))}
+        ),
+    )
+    kernel_id = json.loads(r.body.decode())["id"]
+    await pending_kernel_is_ready(kernel_id)
+
+    # Resolve the path
+    r = await jp_fetch(
+        "api", "resolvePath", params={"kernel": kernel_id, "path": query_path}, method="GET"
+    )
+
+    assert r.code == 200
+    resolution = json.loads(r.body.decode())
+    assert len(resolution["resolved"]) == 1
+    path = resolution["resolved"][0]
+    assert path["scope"] == "kernel"
+
+    # Should reveal the kernel path (kernel returns posix-style separators)
+    assert path["path"] == kernel_path.as_posix()
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
+async def test_resolve_path_server_traversal(jp_fetch, jp_serverapp, jp_root_dir):
+    query_path = "hello.py"
+    contents = "(irrelevant)"
+
+    # Put the file above the root dir
+    server_path = jp_root_dir / ".." / query_path
+    server_path.write_text(contents)
+
+    # Resolve the path
+    r = await jp_fetch("api", "resolvePath", params={"path": query_path}, method="GET")
+
+    assert r.code == 200
+    resolution = json.loads(r.body.decode())
+
+    # Should NOT disclose file existence on path traversal
+    assert len(resolution["resolved"]) == 0
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
+async def test_resolve_path_server(jp_fetch, jp_serverapp, jp_root_dir):
+    query_path = "hello.py"
+    contents = "(irrelevant)"
+
+    # Put the file in the root dir
+    server_path = jp_root_dir / query_path
+    server_path.write_text(contents)
+
+    # Resolve the path
+    r = await jp_fetch("api", "resolvePath", params={"path": query_path}, method="GET")
+
+    assert r.code == 200
+    resolution = json.loads(r.body.decode())
+    assert len(resolution["resolved"]) == 1
+    path = resolution["resolved"][0]
+    assert path["scope"] == "server"
+
+    # Should NOT reveal server path, just acknowledge the name
+    assert path["path"] == server_path.name
+
+
+@pytest.mark.skipif(
+    ipykernel.version_info < (7, 0),
+    reason="requires ipykernel 7, which is not compatible with Python 3.10",
+)
+@pytest.mark.timeout(TEST_TIMEOUT)
+async def test_resolve_path_server_and_kernel(
+    jp_fetch, jp_serverapp, jp_root_dir, pending_kernel_is_ready
+):
+    query_path = "hello.py"
+    contents = "(irrelevant)"
+
+    # Put a file for server in the root and for kernel space in a subdirectory
+    kernel_root = jp_root_dir / "more" / "path" / "segments"
+    kernel_root.mkdir(parents=True)
+    kernel_path = kernel_root / query_path
+    kernel_path.write_text(contents)
+    server_path = jp_root_dir / query_path
+    server_path.write_text(contents)
+
+    # Create a kernel in temp path
+    r = await jp_fetch(
+        "api",
+        "kernels",
+        method="POST",
+        body=json.dumps(
+            {"name": NATIVE_KERNEL_NAME, "path": str(kernel_root.relative_to(jp_root_dir))}
+        ),
+    )
+    kernel_id = json.loads(r.body.decode())["id"]
+    await pending_kernel_is_ready(kernel_id)
+
+    # Resolve the path
+    r = await jp_fetch(
+        "api", "resolvePath", params={"kernel": kernel_id, "path": query_path}, method="GET"
+    )
+    assert r.code == 200
+    resolution = json.loads(r.body.decode())
+
+    # Should present candidates for both server and kernel
+    assert len(resolution["resolved"]) == 2, resolution["resolved"]
+    assert {k["scope"] for k in resolution["resolved"]} == {"server", "kernel"}
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
+async def test_resolve_path_missing(jp_fetch, jp_serverapp, jp_root_dir, pending_kernel_is_ready):
+    query_path = "hello.py"
+    contents = "(irrelevant)"
+
+    # Put a file for server in the root and for kernel space in a subdirectory
+    kernel_root = jp_root_dir / "more" / "path" / "segments"
+    kernel_root.mkdir(parents=True)
+    kernel_path = kernel_root / query_path
+    kernel_path.write_text(contents)
+    server_path = jp_root_dir / query_path
+    server_path.write_text(contents)
+
+    # Create a kernel in temp path
+    r = await jp_fetch(
+        "api",
+        "kernels",
+        method="POST",
+        body=json.dumps(
+            {"name": NATIVE_KERNEL_NAME, "path": str(kernel_root.relative_to(jp_root_dir))}
+        ),
+    )
+    kernel_id = json.loads(r.body.decode())["id"]
+    await pending_kernel_is_ready(kernel_id)
+
+    # Resolve the path
+    r = await jp_fetch(
+        "api", "resolvePath", params={"kernel": kernel_id, "path": "not_hello"}, method="GET"
+    )
+    assert r.code == 200
+    resolution = json.loads(r.body.decode())
+    assert len(resolution["resolved"]) == 0
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
+async def test_resolve_path_missing_kernel_reports_unresolved(jp_fetch, jp_serverapp):
+    bad_id = "111-111-111-111-111"
+    r = await jp_fetch(
+        "api",
+        "resolvePath",
+        params={"kernel": bad_id, "path": "hello.py"},
+        method="GET",
+    )
+    assert r.code == 200
+    resolution = json.loads(r.body.decode())
+    assert resolution["resolved"] == []
+    assert resolution["unresolved"] == [
+        {"scope": "kernel", "reason": f"Kernel {bad_id} could not be found"}
+    ]
+
+
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_kernel_handler(jp_fetch, jp_serverapp, pending_kernel_is_ready):
     # Create a kernel
@@ -257,7 +434,7 @@ async def test_kernel_handler_startup_error_pending(
         await jp_ws_fetch("api", "kernels", kid, "channels")
 
 
-@flaky
+@pytest.mark.flaky
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_connection(jp_fetch, jp_ws_fetch, jp_http_port, jp_auth_header):
     # Create kernel

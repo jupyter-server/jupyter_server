@@ -13,9 +13,9 @@ import os
 import re
 import types
 import warnings
+from collections.abc import Awaitable, Coroutine, Sequence
 from http.client import responses
-from logging import Logger
-from typing import TYPE_CHECKING, Any, Awaitable, Coroutine, Sequence, cast
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlparse
 
 import prometheus_client
@@ -36,6 +36,7 @@ from jupyter_server.services.security import csp_report_uri
 from jupyter_server.utils import (
     ensure_async,
     filefind,
+    origin_matches_pat,
     url_escape,
     url_is_absolute,
     url_path_join,
@@ -43,6 +44,8 @@ from jupyter_server.utils import (
 )
 
 if TYPE_CHECKING:
+    from logging import Logger
+
     from jupyter_client.kernelspec import KernelSpecManager
     from jupyter_events import EventLogger
     from jupyter_server_terminals.terminalmanager import TerminalManager
@@ -74,7 +77,7 @@ def json_sys_info():
 def log() -> Logger:
     """Get the application log."""
     if Application.initialized():
-        return cast(Logger, Application.instance().log)
+        return cast("Logger", Application.instance().log)
     else:
         return app_log
 
@@ -84,7 +87,7 @@ class AuthenticatedHandler(web.RequestHandler):
 
     @property
     def base_url(self) -> str:
-        return cast(str, self.settings.get("base_url", "/"))
+        return cast("str", self.settings.get("base_url", "/"))
 
     @property
     def content_security_policy(self) -> str:
@@ -94,7 +97,7 @@ class AuthenticatedHandler(web.RequestHandler):
         """
         if "Content-Security-Policy" in self.settings.get("headers", {}):
             # user-specified, don't override
-            return cast(str, self.settings["headers"]["Content-Security-Policy"])
+            return cast("str", self.settings["headers"]["Content-Security-Policy"])
 
         return "; ".join(
             [
@@ -172,7 +175,7 @@ class AuthenticatedHandler(web.RequestHandler):
                 DeprecationWarning,
                 stacklevel=2,
             )
-            return cast(str, self._jupyter_current_user)
+            return cast("str", self._jupyter_current_user)
         # haven't called get_user in prepare, raise
         raise RuntimeError(msg)
 
@@ -223,7 +226,7 @@ class AuthenticatedHandler(web.RequestHandler):
         whether the user is already logged in or not.
 
         """
-        return cast(bool, self.identity_provider.login_available)
+        return cast("bool", self.identity_provider.login_available)
 
     @property
     def authorizer(self) -> Authorizer:
@@ -301,26 +304,26 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def version_hash(self) -> str:
         """The version hash to use for cache hints for static files"""
-        return cast(str, self.settings.get("version_hash", ""))
+        return cast("str", self.settings.get("version_hash", ""))
 
     @property
     def mathjax_url(self) -> str:
-        url = cast(str, self.settings.get("mathjax_url", ""))
+        url = cast("str", self.settings.get("mathjax_url", ""))
         if not url or url_is_absolute(url):
             return url
         return url_path_join(self.base_url, url)
 
     @property
     def mathjax_config(self) -> str:
-        return cast(str, self.settings.get("mathjax_config", "TeX-AMS-MML_HTMLorMML-full,Safe"))
+        return cast("str", self.settings.get("mathjax_config", "TeX-AMS-MML_HTMLorMML-full,Safe"))
 
     @property
     def default_url(self) -> str:
-        return cast(str, self.settings.get("default_url", ""))
+        return cast("str", self.settings.get("default_url", ""))
 
     @property
     def ws_url(self) -> str:
-        return cast(str, self.settings.get("websocket_url", ""))
+        return cast("str", self.settings.get("websocket_url", ""))
 
     @property
     def contents_js_source(self) -> str:
@@ -328,7 +331,7 @@ class JupyterHandler(AuthenticatedHandler):
             "Using contents: %s",
             self.settings.get("contents_js_source", "services/contents"),
         )
-        return cast(str, self.settings.get("contents_js_source", "services/contents"))
+        return cast("str", self.settings.get("contents_js_source", "services/contents"))
 
     # ---------------------------------------------------------------
     # Manager objects
@@ -369,7 +372,7 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def allow_origin(self) -> str:
         """Normal Access-Control-Allow-Origin"""
-        return cast(str, self.settings.get("allow_origin", ""))
+        return cast("str", self.settings.get("allow_origin", ""))
 
     @property
     def allow_origin_pat(self) -> str | None:
@@ -379,7 +382,7 @@ class JupyterHandler(AuthenticatedHandler):
     @property
     def allow_credentials(self) -> bool:
         """Whether to set Access-Control-Allow-Credentials"""
-        return cast(bool, self.settings.get("allow_credentials", False))
+        return cast("bool", self.settings.get("allow_credentials", False))
 
     def set_default_headers(self) -> None:
         """Add CORS headers, if defined"""
@@ -395,7 +398,7 @@ class JupyterHandler(AuthenticatedHandler):
             self.set_header("Access-Control-Allow-Origin", self.allow_origin)
         elif self.allow_origin_pat:
             origin = self.get_origin()
-            if origin and re.match(self.allow_origin_pat, origin):
+            if origin and origin_matches_pat(self.allow_origin_pat, origin):
                 self.set_header("Access-Control-Allow-Origin", origin)
         elif self.token_authenticated and "Access-Control-Allow-Origin" not in self.settings.get(
             "headers", {}
@@ -465,7 +468,7 @@ class JupyterHandler(AuthenticatedHandler):
         if self.allow_origin:
             allow = bool(self.allow_origin == origin)
         elif self.allow_origin_pat:
-            allow = bool(re.match(self.allow_origin_pat, origin))
+            allow = origin_matches_pat(self.allow_origin_pat, origin)
         else:
             # No CORS headers deny the request
             allow = False
@@ -510,7 +513,7 @@ class JupyterHandler(AuthenticatedHandler):
         if self.allow_origin:
             allow = self.allow_origin == origin
         elif self.allow_origin_pat:
-            allow = bool(re.match(self.allow_origin_pat, origin))
+            allow = origin_matches_pat(self.allow_origin_pat, origin)
         else:
             # No CORS settings, deny the request
             allow = False
@@ -534,6 +537,8 @@ class JupyterHandler(AuthenticatedHandler):
             # Servers without authentication are vulnerable to XSRF
             return None
         try:
+            if not self.check_origin():
+                raise web.HTTPError(404)
             return super().check_xsrf_cookie()
         except web.HTTPError as e:
             if self.request.method in {"GET", "HEAD"}:
@@ -771,7 +776,7 @@ class APIHandler(JupyterHandler):
                 # backward-compatibility: traceback field is present,
                 # but always empty
                 reply["traceback"] = ""
-        self.log.warning("wrote error: %r", reply["message"], exc_info=True)
+        self.log.warning("wrote error: %r", reply["message"])
         self.finish(json.dumps(reply))
 
     def get_login_url(self) -> str:
@@ -1057,7 +1062,7 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
         if not absolute_path:
             raise web.HTTPError(404)
 
-        for root in self.root:
+        for root in self.root:  # noqa: PLR1704
             if (absolute_path + os.sep).startswith(root):
                 break
 
@@ -1112,7 +1117,7 @@ class FilesRedirectHandler(JupyterHandler):
     """Handler for redirecting relative URLs to the /files/ handler"""
 
     @staticmethod
-    async def redirect_to_files(self: Any, path: str) -> None:
+    async def redirect_to_files(self: Any, path: str) -> None:  # noqa: PLW0211
         """make redirect logic a reusable static method
 
         so it can be called from other handlers.

@@ -119,7 +119,7 @@ You can prepare a hashed password manually, using the function
     >>> passwd()
     Enter password:
     Verify password:
-    'sha1:67c9e60bb8b6:9ffede0825894254b2e042ea597d771089e11aed'
+    'argon2:$argon2id$v=19$m=10240,t=10,p=8$...'
 
 .. caution::
 
@@ -137,7 +137,7 @@ You can then add the hashed password to your
 :file:`jupyter_server_config.py` is in your Jupyter folder in your home
 directory, ``~/.jupyter``, e.g.::
 
-    c.ServerApp.password = u'sha1:67c9e60bb8b6:9ffede0825894254b2e042ea597d771089e11aed'
+    c.ServerApp.password = u'argon2:$argon2id$v=19$m=10240,t=10,p=8$...'
 
 Automatic password setup will store the hash in ``jupyter_server_config.json``
 while this method stores the hash in ``jupyter_server_config.py``. The ``.json``
@@ -347,7 +347,7 @@ the environment:
 
         JUPYTER_GATEWAY_URL=http://my-gateway-server:8888
 
-or in :file:`jupyter_notebook_config.py`:
+or in :file:`jupyter_server_config.py`:
 
    .. code-block:: python
 
@@ -415,7 +415,7 @@ Docker CMD
 Using ``jupyter server`` as a
 `Docker CMD <https://docs.docker.com/engine/reference/builder/#cmd>`_ results in
 kernels repeatedly crashing, likely due to a lack of `PID reaping
-<https://blog.phusion.nl/2015/01/20/docker-and-the-pid-1-zombie-reaping-problem/>`_.
+<https://blog.phusion.nl/docker-and-the-pid-1-zombie-reaping-problem/>`_.
 To avoid this, use the `tini <https://github.com/krallin/tini>`_ ``init`` as your
 Dockerfile ``ENTRYPOINT``::
 

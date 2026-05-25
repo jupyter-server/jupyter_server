@@ -175,7 +175,7 @@ class ExtensionApp(JupyterApp):
     # file, jupyter_{name}_config.
     # This should also match the jupyter subcommand used to launch
     # this extension from the CLI, e.g. `jupyter {name}`.
-    name: str | Unicode[str, str] = "ExtensionApp"  # type:ignore[assignment]
+    name: str | Unicode[str, str] = "ExtensionApp"
 
     @classmethod
     def get_extension_package(cls):
@@ -413,7 +413,7 @@ class ExtensionApp(JupyterApp):
         # Acknowledge that this extension has been linked.
         self._linked = True
 
-    def initialize(self):
+    def initialize(self):  # type: ignore[override]
         """Initialize the extension app. The
         corresponding server app and webapp should already
         be initialized by this step.
@@ -474,6 +474,18 @@ class ExtensionApp(JupyterApp):
             extension._link_jupyter_server_extension(serverapp)
         extension.initialize()
         return extension
+
+    async def _start_jupyter_server_extension(self, serverapp):
+        """
+        An async hook to start e.g. tasks from the extension after
+        the server's event loop is running.
+
+        Override this method (no need to call `super()`) to
+        start (async) tasks from an extension.
+
+        This is useful for starting e.g. background tasks from
+        an extension.
+        """
 
     @classmethod
     def load_classic_server_extension(cls, serverapp):
@@ -582,7 +594,7 @@ class ExtensionApp(JupyterApp):
             cls.serverapp_config["jpserver_extensions"] = jpserver_extensions
             find_extensions = False
         serverapp = cls.make_serverapp(jpserver_extensions=jpserver_extensions, **kwargs)
-        serverapp.aliases.update(cls.aliases)  # type:ignore[has-type]
+        serverapp.aliases.update(cls.aliases)
         serverapp.initialize(
             argv=argv or [],
             starter_extension=cls.name,

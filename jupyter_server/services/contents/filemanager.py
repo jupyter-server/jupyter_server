@@ -44,6 +44,31 @@ except ImportError:
 _script_exporter = None
 
 
+def _get_created_timestamp(info: os.stat_result) -> float:
+    """Get best-effort file creation timestamp from stat result.
+
+    Uses st_birthtime (actual creation time) when available (macOS, BSD,
+    and Linux with kernel 4.11+ via statx on supported filesystems).
+    On Windows, st_ctime is the creation time.
+    On Linux/other, falls back to st_ctime (note: this is inode change time,
+    not creation time, so operations like chmod may update 'created').
+
+    Falls back to st_ctime if st_birthtime is unavailable, non-numeric,
+    negative, or non-finite. Returns st_ctime as final fallback, which
+    is validated in _base_model() during datetime conversion.
+    """
+    birthtime = getattr(info, "st_birthtime", None)
+    # Validate: must be numeric, non-negative, and finite.
+    # Some FUSE/network filesystems may return None or non-numeric values.
+    # Note: birthtime >= 0 rejects pre-1970 dates as these typically indicate
+    # invalid or uninitialized values rather than legitimate historical dates.
+    if isinstance(birthtime, (int, float)) and birthtime >= 0 and math.isfinite(birthtime):
+        return birthtime
+    # Fallback to st_ctime; validation happens in _base_model() during datetime conversion
+    # where OverflowError and other conversion errors are caught and handled
+    return info.st_ctime
+
+
 class FileContentsManager(FileManagerMixin, ContentsManager):
     """A file contents manager."""
 
@@ -167,7 +192,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             self.log.error("Failed to check write permissions on %s", os_path)
             return False
 
-    def file_exists(self, path):
+    def file_exists(self, path: str) -> bool | t.Awaitable[bool]:
         """Returns True if the file exists, else returns False.
 
         API-style wrapper for os.path.isfile
@@ -225,6 +250,19 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path=path)
         return exists(os_path)
 
+    def resolve_path(self, path: str) -> str | None:
+        """Resolve path relative to root resource."""
+        # transform OS path to API path
+        relative_path = to_api_path(path, self.root_dir)
+        # check if the API path is within contents directory
+        try:
+            os_path = self._get_os_path(path=relative_path)
+        except web.HTTPError:
+            return None
+        if exists(os_path):
+            return relative_path
+        return None
+
     def _base_model(self, path):
         """Build the common base of a contents model"""
         os_path = self._get_os_path(path)
@@ -245,7 +283,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         try:
             last_modified = tz.utcfromtimestamp(info.st_mtime)
-        except (ValueError, OSError):
+        except (ValueError, OverflowError, OSError):
             # Files can rarely have an invalid timestamp
             # https://github.com/jupyter/notebook/issues/2539
             # https://github.com/jupyter/notebook/issues/2757
@@ -253,10 +291,11 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             self.log.warning("Invalid mtime %s for %s", info.st_mtime, os_path)
             last_modified = datetime(1970, 1, 1, 0, 0, tzinfo=tz.UTC)
 
+        raw_created = _get_created_timestamp(info)
         try:
-            created = tz.utcfromtimestamp(info.st_ctime)
-        except (ValueError, OSError):  # See above
-            self.log.warning("Invalid ctime %s for %s", info.st_ctime, os_path)
+            created = tz.utcfromtimestamp(raw_created)
+        except (ValueError, OverflowError, OSError):  # See above
+            self.log.warning("Invalid creation time %s for %s", raw_created, os_path)
             created = datetime(1970, 1, 1, 0, 0, tzinfo=tz.UTC)
 
         # Create the base model.
@@ -295,7 +334,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         model["size"] = None
         if content:
             model["content"] = contents = []
-            os_dir = self._get_os_path(path)
+            os_dir = os_path
             for name in os.listdir(os_dir):
                 try:
                     os_path = os.path.join(os_dir, name)
@@ -602,6 +641,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
                 shutil.move(old_os_path, new_os_path)
         except web.HTTPError:
             raise
+        except FileNotFoundError:
+            raise web.HTTPError(404, f"File or directory does not exist: {old_path}") from None
         except Exception as e:
             raise web.HTTPError(500, f"Unknown error renaming file: {old_path} {e}") from e
 
@@ -667,7 +708,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         """
         try:
             os_from_path = self._get_os_path(from_path.strip("/"))
-            os_to_path = f'{self._get_os_path(to_path_original.strip("/"))}/{to_name}'
+            os_to_path = f"{self._get_os_path(to_path_original.strip('/'))}/{to_name}"
             shutil.copytree(os_from_path, os_to_path)
             model = self.get(to_path, content=False)
         except OSError as err:
@@ -740,7 +781,9 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         return f"{size / (1 << (order * 10)):.4g} {units[order]}"
 
 
-class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, AsyncContentsManager):
+class AsyncFileContentsManager(  # type: ignore[misc]
+    FileContentsManager, AsyncFileManagerMixin, AsyncContentsManager
+):
     """An async file contents manager."""
 
     @default("checkpoints_class")
@@ -767,7 +810,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         model["size"] = None
         if content:
             model["content"] = contents = []
-            os_dir = self._get_os_path(path)
+            os_dir = os_path
             dir_contents = await run_sync(os.listdir, os_dir)
             for name in dir_contents:
                 try:
@@ -1069,6 +1112,8 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
                 await run_sync(shutil.move, old_os_path, new_os_path)
         except web.HTTPError:
             raise
+        except FileNotFoundError:
+            raise web.HTTPError(404, f"File or directory does not exist: {old_path}") from None
         except Exception as e:
             raise web.HTTPError(500, f"Unknown error renaming file: {old_path} {e}") from e
 
@@ -1078,7 +1123,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         os_path = self._get_os_path(path=path)
         return os.path.isdir(os_path)
 
-    async def file_exists(self, path):
+    async def file_exists(self, path: str) -> bool:
         """Does a file exist at the given path"""
         path = path.strip("/")
         os_path = self._get_os_path(path)
@@ -1150,7 +1195,7 @@ class AsyncFileContentsManager(FileContentsManager, AsyncFileManagerMixin, Async
         """
         try:
             os_from_path = self._get_os_path(from_path.strip("/"))
-            os_to_path = f'{self._get_os_path(to_path_original.strip("/"))}/{to_name}'
+            os_to_path = f"{self._get_os_path(to_path_original.strip('/'))}/{to_name}"
             shutil.copytree(os_from_path, os_to_path)
             model = await self.get(to_path, content=False)
         except OSError as err:
