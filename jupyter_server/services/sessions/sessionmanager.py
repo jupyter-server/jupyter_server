@@ -267,7 +267,7 @@ class SessionManager(LoggingConfigurable):
         type: str | None = None,
         kernel_name: KernelName | None = None,
         kernel_id: str | None = None,
-        custom_kernel_specs: Optional[Dict[str, Any]] = None,
+        custom_kernel_specs: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Creates a session and returns its model
 
@@ -318,7 +318,7 @@ class SessionManager(LoggingConfigurable):
         name: ModelName | None,
         type: str | None,
         kernel_name: KernelName | None,
-        custom_kernel_specs: Optional[Dict[str, Any]] = None,
+        custom_kernel_specs: dict[str, Any] | None = None,
     ) -> str:
         """Start a new kernel for a given session.
 
