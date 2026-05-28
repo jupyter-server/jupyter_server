@@ -514,8 +514,14 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         else:
             self.log.debug("Directory %r already exists", os_path)
 
-    def save(self, model, path=""):
-        """Save the file model and return the model with no content."""
+    def save(self, model, path="", require_hash=False):
+        """Save the file model and return the model with no content.
+
+        Parameters
+        ----------
+        require_hash: bool, optional
+            Whether to include the hash of the file contents.
+        """
         path = path.strip("/")
 
         self.run_pre_save_hooks(model=model, path=path)
@@ -558,7 +564,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             self.validate_notebook_model(model, validation_error=validation_error)
             validation_message = model.get("message", None)
 
-        model = self.get(path, content=False)
+        model = self.get(path, content=False, require_hash=require_hash)
         if validation_message:
             model["message"] = validation_message
 
@@ -984,8 +990,14 @@ class AsyncFileContentsManager(  # type: ignore[misc]
         else:
             self.log.debug("Directory %r already exists", os_path)
 
-    async def save(self, model, path=""):
-        """Save the file model and return the model with no content."""
+    async def save(self, model, path="", require_hash=False):
+        """Save the file model and return the model with no content.
+
+        Parameters
+        ----------
+        require_hash: bool, optional
+            Whether to include the hash of the file contents.
+        """
         path = path.strip("/")
 
         self.run_pre_save_hooks(model=model, path=path)
@@ -1025,7 +1037,7 @@ class AsyncFileContentsManager(  # type: ignore[misc]
             self.validate_notebook_model(model, validation_error=validation_error)
             validation_message = model.get("message", None)
 
-        model = await self.get(path, content=False)
+        model = await self.get(path, content=False, require_hash=require_hash)
         if validation_message:
             model["message"] = validation_message
 
