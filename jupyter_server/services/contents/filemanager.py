@@ -690,7 +690,11 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if not is_destination_specified:
             to_path = from_dir
         if self.dir_exists(to_path):
-            name = copy_pat.sub(".", from_name)
+            if to_path.strip("/") == from_dir:
+                name = copy_pat.sub(".", from_name)
+            else:
+                # Different directory copy, keep original name
+                name = from_name
             to_name = super().increment_filename(name, to_path, insert="-Copy")
         to_path = f"{to_path}/{to_name}"
 
@@ -1175,7 +1179,11 @@ class AsyncFileContentsManager(  # type: ignore[misc]
         if not is_destination_specified:
             to_path = from_dir
         if await self.dir_exists(to_path):
-            name = copy_pat.sub(".", from_name)
+            if to_path.strip("/") == from_dir:
+                name = copy_pat.sub(".", from_name)
+            else:
+                # Different directory copy, keep original name
+                name = from_name
             to_name = await super().increment_filename(name, to_path, insert="-Copy")
         to_path = f"{to_path}/{to_name}"
 
