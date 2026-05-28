@@ -35,9 +35,18 @@ def test_not_server_kernel_manager(jp_configurable_serverapp):
 
 
 def test_kernel_start_kwargs_transport_encryption_sets_flag():
-    km = MappingKernelManager(transport_encryption=True)
+    km = MappingKernelManager(transport_encryption="enabled")
 
     launch_kwargs = km._kernel_start_kwargs(env={"EXISTING": "1"})
 
-    assert launch_kwargs["transport_encryption"] is True
+    assert launch_kwargs["transport_encryption"] == "enabled"
+    assert launch_kwargs["env"] == {"EXISTING": "1"}
+
+
+def test_kernel_start_kwargs_transport_encryption_required_sets_policy():
+    km = MappingKernelManager(transport_encryption="required")
+
+    launch_kwargs = km._kernel_start_kwargs(env={"EXISTING": "1"})
+
+    assert launch_kwargs["transport_encryption"] == "required"
     assert launch_kwargs["env"] == {"EXISTING": "1"}

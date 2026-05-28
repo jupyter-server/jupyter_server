@@ -37,6 +37,7 @@ from tornado.ioloop import IOLoop, PeriodicCallback
 from traitlets import (
     Any,
     Bool,
+    CaselessStrEnum,
     Dict,
     Float,
     Instance,
@@ -67,13 +68,14 @@ class MappingKernelManager(MultiKernelManager):
 
     kernel_argv = List(Unicode())
 
-    transport_encryption = Bool(
-        False,
+    transport_encryption = CaselessStrEnum(
+        ["disabled", "enabled", "required"],
+        default_value="disabled",
         config=True,
         help=(
-            "Enable transport encryption using manager-provisioned CurveZMQ keys for all managed kernels. "
-            "When True, the kernel manager/provisioner launch path is instructed "
-            "to provision per-kernel Curve credentials."
+            "Transport encryption policy for manager-provisioned CurveZMQ keys for all managed kernels. "
+            "'disabled' (default) does not provision Curve credentials, 'enabled' provisions when available, "
+            "and 'required' enforces provisioning and fails kernel startup if encryption cannot be applied."
         ),
     )
 
@@ -217,8 +219,8 @@ class MappingKernelManager(MultiKernelManager):
     def _kernel_start_kwargs(self, **kwargs: t.Any) -> dict[str, t.Any]:
         """Build kernel launch kwargs with server-level policy applied."""
         launch_kwargs = dict(kwargs)
-        if self.transport_encryption:
-            launch_kwargs["transport_encryption"] = True
+        if self.transport_encryption != "disabled":
+            launch_kwargs["transport_encryption"] = self.transport_encryption
         return launch_kwargs
 
     async def _remove_kernel_when_ready(self, kernel_id, kernel_awaitable):
