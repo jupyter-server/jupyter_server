@@ -37,6 +37,7 @@ from tornado.ioloop import IOLoop, PeriodicCallback
 from traitlets import (
     Any,
     Bool,
+    CaselessStrEnum,
     Dict,
     Float,
     Instance,
@@ -66,6 +67,17 @@ class MappingKernelManager(MultiKernelManager):
         return "jupyter_client.ioloop.IOLoopKernelManager"
 
     kernel_argv = List(Unicode())
+
+    transport_encryption = CaselessStrEnum(
+        ["disabled", "enabled", "required"],
+        default_value="disabled",
+        config=True,
+        help=(
+            "Transport encryption policy for manager-provisioned CurveZMQ keys for all managed kernels. "
+            "'disabled' (default) does not provision Curve credentials, 'enabled' provisions when available, "
+            "and 'required' enforces provisioning and fails kernel startup if encryption cannot be applied."
+        ),
+    )
 
     root_dir = Unicode(config=True)
 
@@ -204,6 +216,13 @@ class MappingKernelManager(MultiKernelManager):
             os_path = os.path.dirname(os_path)
         return os_path
 
+    def _kernel_start_kwargs(self, **kwargs: t.Any) -> dict[str, t.Any]:
+        """Build kernel launch kwargs with server-level policy applied."""
+        launch_kwargs = dict(kwargs)
+        if self.transport_encryption != "disabled":
+            launch_kwargs["transport_encryption"] = self.transport_encryption
+        return launch_kwargs
+
     async def _remove_kernel_when_ready(self, kernel_id, kernel_awaitable):
         """Remove a kernel when it is ready."""
         await super()._remove_kernel_when_ready(kernel_id, kernel_awaitable)
@@ -213,7 +232,7 @@ class MappingKernelManager(MultiKernelManager):
     # TODO: DEC 2022: Revise the type-ignore once the signatures have been changed upstream
     # https://github.com/jupyter/jupyter_client/pull/905
     async def _async_start_kernel(  # type:ignore[override]
-        self, *, kernel_id: str | None = None, path: ApiPath | None = None, **kwargs: str
+        self, *, kernel_id: str | None = None, path: ApiPath | None = None, **kwargs: t.Any
     ) -> str:
         """Start a kernel for a session and return its kernel_id.
 
@@ -231,6 +250,7 @@ class MappingKernelManager(MultiKernelManager):
             an existing kernel is returned, but it may be checked in the future.
         """
         if kernel_id is None or kernel_id not in self:
+            kwargs = self._kernel_start_kwargs(**kwargs)
             if path is not None:
                 kwargs["cwd"] = self.cwd_for_path(path, env=kwargs.get("env", {}))
             if kernel_id is not None:
