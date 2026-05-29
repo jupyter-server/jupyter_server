@@ -734,6 +734,14 @@ def test_tornado_authentication_detection(method, expected):
     assert _has_tornado_web_authenticated(method) == expected
 
 
+def test_find_http_port_zero_resolves_real_port(jp_configurable_serverapp):
+    """port=0 should resolve to the real OS-assigned port, not stay 0 (#1650)."""
+    app = jp_configurable_serverapp()
+    app.port = 0
+    app._find_http_port()
+    assert app.port != 0
+
+
 def test_bind_http_server_tcp_success(jp_configurable_serverapp):
     """Normal case: listen succeeds, returns True."""
     app = jp_configurable_serverapp()
