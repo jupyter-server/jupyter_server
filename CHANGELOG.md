@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.19.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.18.2...664e2255c71efe963f397b9f803dbcf503b5a920))
+
+### Enhancements made
+
+- Return `unresolved` stanza when kernel scope is unavailable for `resolvePath` (instead of failing with 404) [#1641](https://github.com/jupyter-server/jupyter_server/pull/1641) ([@MUFFANUJ](https://github.com/MUFFANUJ), [@Carreau](https://github.com/Carreau), [@krassowski](https://github.com/krassowski))
+
+### Bugs fixed
+
+- Recreate notary store on failure to prevent save deadlock and data loss [#1640](https://github.com/jupyter-server/jupyter_server/pull/1640) ([@krassowski](https://github.com/krassowski), [@Carreau](https://github.com/Carreau))
+
+### Maintenance and upkeep improvements
+
+- Restore the test skip marks with updated compatibility reason [#1646](https://github.com/jupyter-server/jupyter_server/pull/1646) ([@krassowski](https://github.com/krassowski), [@Carreau](https://github.com/Carreau))
+- Drop Python 3.9 [#1644](https://github.com/jupyter-server/jupyter_server/pull/1644) ([@krassowski](https://github.com/krassowski), [@Zsailer](https://github.com/Zsailer))
+- Bump minimatch from 3.1.2 to 3.1.5 [#1606](https://github.com/jupyter-server/jupyter_server/pull/1606) ([@Carreau](https://github.com/Carreau), [@minrk](https://github.com/minrk))
+
+### Other merged PRs
+
+- Update pytest requirement from \<9,>=7.0 to >=7.0,\<10 [#1647](https://github.com/jupyter-server/jupyter_server/pull/1647) ([@Carreau](https://github.com/Carreau))
+- fix: use percent-placeholder args in HTTPError to prevent Tornado from doubling percent signs in gateway URLs [#1642](https://github.com/jupyter-server/jupyter_server/pull/1642) ([@terminalchai](https://github.com/terminalchai), [@Carreau](https://github.com/Carreau))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2026-05-06&to=2026-05-29&type=c))
+
+@Carreau ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2026-05-06..2026-05-29&type=Issues)) | @ianthomas23 ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aianthomas23+updated%3A2026-05-06..2026-05-29&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2026-05-06..2026-05-29&type=Issues)) | @minrk ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2026-05-06..2026-05-29&type=Issues)) | @MUFFANUJ ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AMUFFANUJ+updated%3A2026-05-06..2026-05-29&type=Issues)) | @terminalchai ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aterminalchai+updated%3A2026-05-06..2026-05-29&type=Issues)) | @Zsailer ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2026-05-06..2026-05-29&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.18.2
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.18.1...0d829f2c35a481c3b24ecbe1e25a6f79954e88f2))
@@ -26,8 +60,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2026-05-05&to=2026-05-06&type=c))
 
 @brichet ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Abrichet+updated%3A2026-05-05..2026-05-06&type=Issues)) | @Carreau ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2026-05-05..2026-05-06&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2026-05-05..2026-05-06&type=Issues)) | @Yann-P ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AYann-P+updated%3A2026-05-05..2026-05-06&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.18.1
 
