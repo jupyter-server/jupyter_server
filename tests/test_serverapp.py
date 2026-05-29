@@ -358,6 +358,61 @@ def test_urls(config, public_url, local_url, connection_url):
     ServerApp.clear_instance()
 
 
+@pytest.mark.parametrize(
+    "config,connect_url",
+    [
+        # Non-wildcard addresses: mirrors display_url.
+        (
+            {"ip": ""},
+            "http://localhost:8888/?token=<generated>\n    http://127.0.0.1:8888/?token=<generated>",
+        ),
+        (
+            {"ip": "127.0.0.1"},
+            "http://127.0.0.1:8888/?token=<generated>",
+        ),
+        # Sockets: mirrors display_url.
+        (
+            {"sock": "/tmp/jp-test.sock"},
+            "http+unix://%2Ftmp%2Fjp-test.sock/?token=<generated>",
+        ),
+        # Wildcard addresses are not connectable: use the machine's
+        # hostname instead, with a trailing note that any address works.
+        (
+            {"ip": "0.0.0.0"},
+            "http://myhost:8888/?token=<generated>\n"
+            "    http://127.0.0.1:8888/?token=<generated>\n"
+            "The server is listening on all interfaces, "
+            "so any hostname or IP of this machine will work.",
+        ),
+        # Wildcard but ipv6
+        (
+            {"ip": "::"},
+            "http://myhost:8888/?token=<generated>\n"
+            "    http://[::1]:8888/?token=<generated>\n"
+            "The server is listening on all interfaces, "
+            "so any hostname or IP of this machine will work.",
+        ),
+    ],
+)
+def test_connect_url(config, connect_url):
+    # Verify we're working with a clean instance.
+    ServerApp.clear_instance()
+    serverapp = ServerApp.instance(**config)
+    serverapp.init_configurables()
+    token = serverapp.identity_provider.token
+    if serverapp.identity_provider.token_generated:
+        connect_url = connect_url.replace("<generated>", token)
+
+    with patch("socket.gethostname", return_value="myhost"):
+        assert serverapp.connect_url == connect_url
+
+    # The wildcard address is never advertised as connectable.
+    assert "0.0.0.0" not in serverapp.connect_url
+    assert "[::]" not in serverapp.connect_url
+    # Cleanup singleton after test.
+    ServerApp.clear_instance()
+
+
 # Preferred dir tests
 # ----------------------------------------------------------------------------
 @pytest.mark.filterwarnings("ignore::FutureWarning")
