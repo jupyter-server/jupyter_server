@@ -2712,6 +2712,9 @@ class ServerApp(JupyterApp):
         for port in random_ports(self.port, self.port_retries + 1):
             try:
                 sockets = bind_sockets(port, self.ip)
+                # When port=0 the OS assigns a free port, so we read it back here.
+                if port == 0:
+                    port = sockets[0].getsockname()[1]
                 for s in sockets:
                     s.close()
             except OSError as e:
