@@ -1755,7 +1755,11 @@ class ServerApp(JupyterApp):
         return os.path.join(self.runtime_dir, info_file)
 
     no_browser_open_file = Bool(
-        False, help="If True, do not write redirect HTML file disk, or show in messages."
+        False,
+        config=True,
+        help=_i18n(
+            "If True, do not write redirect HTML file disk, or show in startup output messages."
+        ),
     )
 
     browser_open_file = Unicode()
