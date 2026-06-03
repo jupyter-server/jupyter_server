@@ -11,7 +11,6 @@ import os
 from queue import Empty, Queue
 from threading import Thread
 from time import monotonic
-
 from typing import TYPE_CHECKING, Any, Optional, cast
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
@@ -739,8 +738,8 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
     def __init__(self, kernel_id=None, **kwargs):
         """Initialize a gateway kernel client."""
         super().__init__(**kwargs)
-        self.channel_socket: Optional[websocket.WebSocket] = None
-        self.response_router: Optional[Thread] = None
+        self.channel_socket: websocket.WebSocket | None = None
+        self.response_router: Thread | None = None
         self._channels_stopped = False
         self._channel_queues = {}
         if kernel_id is not None:
