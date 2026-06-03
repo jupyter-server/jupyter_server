@@ -235,7 +235,7 @@ class IdentityProvider(LoggingConfigurable):
             raise TraitError(msg)
         return proposal["value"]
 
-    need_token: bool | Bool[bool, t.Union[bool, int]] = Bool(True)
+    need_token: bool | Bool[bool, bool | int] = Bool(True)
 
     def get_user(self, handler: web.RequestHandler) -> User | None | t.Awaitable[User | None]:
         """Get the authenticated user for a request

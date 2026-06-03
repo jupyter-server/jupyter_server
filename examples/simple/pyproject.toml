@@ -7,7 +7,7 @@ name = "jupyter-server-example"
 description = "Jupyter Server Example"
 readme = "README.md"
 license = "BSD-3-Clause"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "jinja2",
     "jupyter_server",

@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from queue import Empty
-from typing import Any, Union
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -222,7 +222,7 @@ class CustomTestTokenRenewer(GatewayTokenRenewerBase):  # type:ignore[misc]
     config_var_2: str = Unicode(config=True)  # type:ignore[assignment]
 
     def get_token(
-        self, auth_header_key: str, auth_scheme: Union[str, None], auth_token: str, **kwargs: Any
+        self, auth_header_key: str, auth_scheme: str | None, auth_token: str, **kwargs: Any
     ) -> str:
         return f"{self.config_var_2}{self.config_var_1}"
 

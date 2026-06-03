@@ -60,7 +60,7 @@ class GatewayTokenRenewerBase(  # type:ignore[metaclass]
     def get_token(
         self,
         auth_header_key: str,
-        auth_scheme: ty.Union[str, None],
+        auth_scheme: str | None,
         auth_token: str,
         **kwargs: ty.Any,
     ) -> str:
@@ -78,7 +78,7 @@ class NoOpTokenRenewer(GatewayTokenRenewerBase):
     def get_token(
         self,
         auth_header_key: str,
-        auth_scheme: ty.Union[str, None],
+        auth_scheme: str | None,
         auth_token: str,
         **kwargs: ty.Any,
     ) -> str:

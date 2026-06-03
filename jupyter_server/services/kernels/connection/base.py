@@ -68,7 +68,7 @@ def deserialize_binary_message(bmsg):
     offsets = list(struct.unpack("!" + "I" * nbufs, bmsg[4 : 4 * (nbufs + 1)]))
     offsets.append(None)
     bufs = []
-    for start, stop in zip(offsets[:-1], offsets[1:]):
+    for start, stop in zip(offsets[:-1], offsets[1:], strict=False):
         bufs.append(bmsg[start:stop])
     msg = json.loads(bufs[0].decode("utf8"))
     msg["header"] = extract_dates(msg["header"])
