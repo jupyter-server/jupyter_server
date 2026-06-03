@@ -369,6 +369,8 @@ The ``is_authorized()`` method will automatically be called whenever a handler i
 Kernel transport encryption
 ---------------------------
 
+.. versionadded:: 2.20
+
 By default, ZMQ sockets used to communicate with kernels (shell, IOPub, stdin,
 control, heartbeat) are bound to TCP ports with no transport-level encryption.
 Any process on the same host that can reach those ports can connect and read
