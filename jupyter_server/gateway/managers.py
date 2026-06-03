@@ -725,7 +725,7 @@ class GatewayKernelClient(AsyncKernelClient):
         default_value=None,
         allow_none=True,
         config=True,
-        help="""The websocket url of the Kernel or Kernel Gateway server.  If not provided, this value
+        help="""The websocket url of the Kernel or Kernel Gateway server. If not provided, this value
 will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (JUPYTER_GATEWAY_WS_URL env var)
         """,
     )
@@ -758,7 +758,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
                     "channels",
                 )
 
-    def add_session_param(self, ws_url):
+    def _add_session_param(self, ws_url):
         if not self.session_id:
             return ws_url
 
@@ -781,7 +781,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         be posted.
         """
         if self.ws_url is None:
-            msg = "ws_url is None. set it before call start_channels"
+            msg = "ws_url is None. Please set it before calling start_channels"
             raise RuntimeError(msg)
 
         # Gather cert info in case where ssl is desired...
@@ -792,7 +792,7 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         }
 
         self.channel_socket = websocket.create_connection(
-            self.add_session_param(self.ws_url),
+            self._add_session_param(self.ws_url),
             timeout=GatewayClient.instance().KERNEL_LAUNCH_TIMEOUT,
             enable_multithread=True,
             sslopt=ssl_options,
