@@ -280,10 +280,15 @@ class SessionManager(LoggingConfigurable):
         record = KernelSessionRecord(session_id=session_id)
         self._pending_sessions.update(record)
         if kernel_id is not None and kernel_id in self.kernel_manager:
-            pass  # already-running kernel: attach
+            pass
         else:
             kernel_id = await self.start_kernel_for_session(
-                session_id, path, name, type, kernel_name, kernel_id=kernel_id
+                session_id=session_id,
+                path=path,
+                name=name,
+                type=type,
+                kernel_name=kernel_name,
+                kernel_id=kernel_id,
             )
         record.kernel_id = kernel_id
         self._pending_sessions.update(record)
