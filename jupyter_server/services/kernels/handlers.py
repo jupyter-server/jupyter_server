@@ -6,12 +6,14 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
+import uuid as _uuid
 
 try:
     from jupyter_client.jsonutil import json_default
 except ImportError:
     from jupyter_client.jsonutil import date_default as json_default
 
+from jupyter_client.multikernelmanager import DuplicateKernelError
 from jupyter_core.utils import ensure_async
 from tornado import web
 
@@ -52,13 +54,23 @@ class MainKernelHandler(KernelsAPIHandler):
         else:
             model.setdefault("name", km.default_kernel_name)
 
-        kernel_id: str = await ensure_async(
-            km.start_kernel(
-                kernel_name=model["name"],
-                path=model.get("path"),
-                kernel_id=model.get("kernel_id"),
+        supplied_kernel_id = model.get("kernel_id")
+        if supplied_kernel_id is not None:
+            try:
+                _uuid.UUID(supplied_kernel_id)
+            except ValueError as e:
+                raise web.HTTPError(400, f"Invalid kernel_id: {supplied_kernel_id!r}") from e
+
+        try:
+            kernel_id: str = await ensure_async(
+                km.start_kernel(
+                    kernel_name=model["name"],
+                    path=model.get("path"),
+                    kernel_id=supplied_kernel_id,
+                )
             )
-        )
+        except DuplicateKernelError as e:
+            raise web.HTTPError(409, str(e)) from e
         model = await ensure_async(km.kernel_model(kernel_id))
         location = url_path_join(self.base_url, "api", "kernels", url_escape(kernel_id))
         self.set_header("Location", location)

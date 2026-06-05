@@ -125,6 +125,25 @@ async def test_post_kernel_with_client_supplied_id(
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
+async def test_post_kernel_duplicate_id_returns_409(
+    jp_fetch, jp_serverapp, pending_kernel_is_ready
+):
+    """``POST /api/kernels { "kernel_id": <uuid> }`` with a duplicate id
+    should return 409, not 500.
+    """
+    supplied_kernel_id = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    body = json.dumps({"name": NATIVE_KERNEL_NAME, "kernel_id": supplied_kernel_id})
+
+    r = await jp_fetch("api", "kernels", method="POST", body=body)
+    assert r.code == 201
+    await pending_kernel_is_ready(supplied_kernel_id)
+
+    with pytest.raises(HTTPClientError) as exc_info:
+        await jp_fetch("api", "kernels", method="POST", body=body)
+    assert expected_http_error(exc_info, 409)
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_kernel_is_ready):
     # Start the first kernel
     r = await jp_fetch(
