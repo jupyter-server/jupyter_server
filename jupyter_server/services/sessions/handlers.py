@@ -14,6 +14,7 @@ except ImportError:
     from jupyter_client.jsonutil import date_default as json_default
 
 from jupyter_client.kernelspec import NoSuchKernel
+from jupyter_client.multikernelmanager import DuplicateKernelError
 from jupyter_core.utils import ensure_async
 from tornado import web
 
@@ -104,6 +105,8 @@ class SessionRootHandler(SessionsAPIHandler):
                 self.set_status(501)
                 self.finish(json.dumps({"message": msg, "short_message": status_msg}))
                 return
+            except DuplicateKernelError as e:
+                raise web.HTTPError(409, str(e)) from e
             except Exception as e:
                 raise web.HTTPError(500, str(e)) from e
 
