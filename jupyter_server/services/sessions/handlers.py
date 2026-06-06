@@ -83,8 +83,9 @@ class SessionRootHandler(SessionsAPIHandler):
         if kernel_id is not None:
             try:
                 _uuid.UUID(kernel_id)
-            except ValueError as e:
-                raise web.HTTPError(400, f"Invalid kernel id: {kernel_id!r}") from e
+            except ValueError:
+                self.log.warning("Ignoring non-UUID kernel id %r", kernel_id)
+                kernel_id = None
 
         if not kernel_id and not kernel_name:
             self.log.debug("No kernel specified, using default kernel")
