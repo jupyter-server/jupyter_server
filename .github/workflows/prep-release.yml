@@ -16,6 +16,10 @@ on:
         description: "Set a placeholder in the changelog and don't publish the release."
         required: false
         type: boolean
+      security_reminder:
+        description: "I have asked a security maintainer to check that no security fixes are waiting to be merged and released in (GHSA)[https://github.com/jupyter-server/jupyter_server/security/advisories?state=draft]"
+        required: false
+        type: boolean
       since:
         description: "Use PRs with activity since this date or git reference"
         required: false
