@@ -7,6 +7,8 @@ The recommended way to make a release is to use [`jupyter_releaser`](https://jup
 Note that we must use manual versions since Jupyter Releaser does not
 yet support "next" or "patch" when dev versions are used.
 
+Note about Security Advisories: some patches are developed in private hidden forks that only the [security team](https://github.com/jupyter/security) can access; please check with them that no patch is waiting be be merged before releasing.
+
 ## Manual Release
 
 To create a manual release, perform the following steps:
