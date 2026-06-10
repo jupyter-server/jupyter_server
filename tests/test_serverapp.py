@@ -317,10 +317,25 @@ def test_resolve_file_to_run_and_root_dir(prefix_path, root_dir, file_to_run, ex
             "http+unix://%2Ftmp%2Fjp-test.sock/",
         ),
         (
+            # https://github.com/jupyter-server/jupyter_server/issues/743
             {"ip": ""},
             "http://localhost:8888/?token=<generated>",
             "http://127.0.0.1:8888/?token=<generated>",
             "http://localhost:8888/",
+        ),
+        (
+            # https://github.com/jupyterlab/jupyterlab/issues/15520
+            {"ip": "0.0.0.0"},
+            "http://0.0.0.0:8888/?token=<generated>",
+            "http://127.0.0.1:8888/?token=<generated>",
+            "http://0.0.0.0:8888/",
+        ),
+        (
+            # https://github.com/jupyterlab/jupyterlab/issues/15520
+            {"ip": "::"},
+            "http://[::]:8888/?token=<generated>",
+            "http://[::1]:8888/?token=<generated>",
+            "http://[::]:8888/",
         ),
     ],
 )
@@ -339,6 +354,61 @@ def test_urls(config, public_url, local_url, connection_url):
     assert serverapp.public_url == public_url
     assert serverapp.local_url == local_url
     assert serverapp.connection_url == connection_url
+    # Cleanup singleton after test.
+    ServerApp.clear_instance()
+
+
+@pytest.mark.parametrize(
+    "config,connect_url",
+    [
+        # Non-wildcard addresses: mirrors display_url.
+        (
+            {"ip": ""},
+            "http://localhost:8888/?token=<generated>\n    http://127.0.0.1:8888/?token=<generated>",
+        ),
+        (
+            {"ip": "127.0.0.1"},
+            "http://127.0.0.1:8888/?token=<generated>",
+        ),
+        # Sockets: mirrors display_url.
+        (
+            {"sock": "/tmp/jp-test.sock"},
+            "http+unix://%2Ftmp%2Fjp-test.sock/?token=<generated>",
+        ),
+        # Wildcard addresses are not connectable: use the machine's
+        # hostname instead, with a trailing note that any address works.
+        (
+            {"ip": "0.0.0.0"},
+            "http://myhost:8888/?token=<generated>\n"
+            "    http://127.0.0.1:8888/?token=<generated>\n"
+            "The server is listening on all interfaces, "
+            "so any hostname or IP of this machine will work.",
+        ),
+        # Wildcard but ipv6
+        (
+            {"ip": "::"},
+            "http://myhost:8888/?token=<generated>\n"
+            "    http://[::1]:8888/?token=<generated>\n"
+            "The server is listening on all interfaces, "
+            "so any hostname or IP of this machine will work.",
+        ),
+    ],
+)
+def test_connect_url(config, connect_url):
+    # Verify we're working with a clean instance.
+    ServerApp.clear_instance()
+    serverapp = ServerApp.instance(**config)
+    serverapp.init_configurables()
+    token = serverapp.identity_provider.token
+    if serverapp.identity_provider.token_generated:
+        connect_url = connect_url.replace("<generated>", token)
+
+    with patch("socket.gethostname", return_value="myhost"):
+        assert serverapp.connect_url == connect_url
+
+    # The wildcard address is never advertised as connectable.
+    assert "0.0.0.0" not in serverapp.connect_url
+    assert "[::]" not in serverapp.connect_url
     # Cleanup singleton after test.
     ServerApp.clear_instance()
 
@@ -662,6 +732,14 @@ def test():
 )
 def test_tornado_authentication_detection(method, expected):
     assert _has_tornado_web_authenticated(method) == expected
+
+
+def test_find_http_port_zero_resolves_real_port(jp_configurable_serverapp):
+    """port=0 should resolve to the real OS-assigned port, not stay 0 (#1650)."""
+    app = jp_configurable_serverapp()
+    app.port = 0
+    app._find_http_port()
+    assert app.port != 0
 
 
 def test_bind_http_server_tcp_success(jp_configurable_serverapp):

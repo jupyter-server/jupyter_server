@@ -153,14 +153,25 @@ class PathResolverHandler(APIHandler):
         path = self.get_query_argument("path")
         kernel_uuid = self.get_query_argument("kernel", default=None)
         scopes: dict[str, Any] = {"server": self.contents_manager}
+        unresolved: list[dict[str, str]] = []
         if kernel_uuid:
-            scopes["kernel"] = self.kernel_manager.get_kernel(kernel_uuid)
+            try:
+                scopes["kernel"] = self.kernel_manager.get_kernel(kernel_uuid)
+            except web.HTTPError as e:
+                if e.status_code == 404:
+                    unresolved.append(
+                        {"scope": "kernel", "reason": f"Kernel {kernel_uuid} could not be found"}
+                    )
+                else:
+                    raise
         resolved = [
             {"scope": name, "path": await ensure_async(scope.resolve_path(path))}
             for name, scope in scopes.items()
             if hasattr(scope, "resolve_path")
         ]
         response = {"resolved": [entry for entry in resolved if entry["path"] is not None]}
+        if unresolved:
+            response["unresolved"] = unresolved
         self.finish(json.dumps(response))
 
 

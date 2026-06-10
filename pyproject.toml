@@ -21,7 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "anyio>=3.1.0",
     "argon2-cffi>=21.1",
@@ -57,7 +57,7 @@ test = [
     "pytest-console-scripts",
     "pytest-timeout",
     "pytest-jupyter[server]>=0.7",
-    "pytest>=7.0,<9",
+    "pytest>=7.0,<10",
     "requests",
     "pre-commit",
     'flaky'
@@ -139,7 +139,7 @@ line-length = 100
 docstring-code-format = true
 
 [tool.ruff.lint]
-ignore = ["ARG", "TRY", "RUF012", "TID252", "G", "INP001", "E402", "F401", "BLE001", "UP045", "PLC0415"]
+ignore = ["ARG", "TRY", "RUF012", "TID252", "G", "INP001", "E402", "F401", "BLE001", "PLC0415"]
 extend-select = [
   "B",  # flake8-bugbear
   "I",  # isort
@@ -157,7 +157,7 @@ unfixable = [
 
 [tool.ruff.lint.extend-per-file-ignores]
 "jupyter_server/*" = ["S101", "RET", "S110", "UP031", "FBT", "FA100", "SLF001", "A002",
-                      "SIM105", "A001", "UP007", "PLR2004", "T201", "N818", "F403"]
+                      "SIM105", "A001", "PLR2004", "T201", "N818", "F403"]
 "jupyter_server/gateway/*" = ["TCH" ]
 "tests/*" = ["UP031", "PT", 'EM', "TRY", "RET", "SLF", "C408", "F841", "FBT", "A002", "FLY", "N",
             "PERF", "ASYNC", "T201", "FA100", "E711", "INP", "TCH", "SIM105", "A001", "PLW0603",
@@ -216,7 +216,7 @@ pydist_resource_paths = ["jupyter_server/static/style/bootstrap.min.css", "jupyt
 post-version-spec = "dev"
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 explicit_package_bases = true
 strict = true
 pretty = true

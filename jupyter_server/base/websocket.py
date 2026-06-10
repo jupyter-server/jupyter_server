@@ -1,7 +1,7 @@
 """Base websocket classes."""
 
 import warnings
-from typing import Optional, no_type_check
+from typing import no_type_check
 from urllib.parse import urlparse
 
 from tornado import ioloop, web
@@ -20,7 +20,7 @@ class WebSocketMixin:
     ping_callback = None
     last_ping = 0.0
     last_pong = 0.0
-    stream: Optional[IOStream] = None
+    stream: IOStream | None = None
 
     @property
     def ping_interval(self):
@@ -41,7 +41,7 @@ class WebSocketMixin:
         )
 
     @no_type_check
-    def check_origin(self, origin: Optional[str] = None) -> bool:
+    def check_origin(self, origin: str | None = None) -> bool:
         """Check Origin == Host or Access-Control-Allow-Origin.
 
         Tornado >= 4 calls this method automatically, raising 403 if it returns False.

@@ -561,9 +561,6 @@ If you find a security vulnerability in Jupyter, either a failure of the
 code to properly implement the model described here, or a failure of the
 model itself, please report it to security@ipython.org.
 
-If you prefer to encrypt your security reports,
-you can use :download:`this PGP public key <ipython_security.asc>`.
-
 Affected use cases
 ------------------
 
