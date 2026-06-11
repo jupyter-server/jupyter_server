@@ -405,21 +405,21 @@ traitlet, which accepts three values:
 
 ``'auto'``
     Keys are generated **only when the kernelspec declares support** via
-    ``metadata.supported_encryption: 'curve'``. Kernelspecs that do not
+    ``metadata.supported_encryption: ['curve']``. Kernelspecs that do not
     declare this field are started without encryption, so the setting is safe
     to enable globally without breaking existing kernels.
 
 ``'required'``
     Keys are always generated. Startup fails with a ``RuntimeError`` if the
-    kernelspec does not declare ``metadata.supported_encryption: 'curve'``,
+    kernelspec does not declare ``metadata.supported_encryption: ['curve']``,
     so kernels that have not been updated to handle the connection-file keys
     are never started unencrypted.
 
 .. note::
 
-    ``transport_encryption`` applies to TCP transport only. IPC sockets
-    already rely on filesystem permissions for access control and do not
-    support CurveZMQ.
+    ``transport_encryption`` applies to both the ``tcp`` and ``ipc``
+    transports. IPC sockets also rely on filesystem permissions for access
+    control, but CurveZMQ can be layered on top for defense in depth.
 
 To enable encryption globally for all kernels that support it, add the
 following to your :file:`jupyter_server_config.py`:
@@ -447,7 +447,7 @@ A kernel must declare CurveZMQ support in its :file:`kernel.json` before the
         "display_name": "Python 3",
         "language": "python",
         "metadata": {
-            "supported_encryption": "curve"
+            "supported_encryption": ["curve"]
         }
     }
 
