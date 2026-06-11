@@ -366,6 +366,107 @@ The ``is_authorized()`` method will automatically be called whenever a handler i
 ``@authenticated`` decorator for authentication (from ``tornado.web``).
 
 
+Kernel transport encryption
+---------------------------
+
+.. versionadded:: 2.20
+
+By default, ZMQ sockets used to communicate with kernels (shell, IOPub, stdin,
+control, heartbeat) are bound to TCP ports with no transport-level encryption.
+Any process on the same host that can reach those ports can connect and read
+messages, including all IOPub output.
+
+`CurveZMQ <https://rfc.zeromq.org/spec/26/>`__ adds elliptic-curve
+encryption and authentication directly at the ZMQ transport layer.
+When enabled, the ``KernelManager`` generates a keypair, writes the keys into
+the kernel's connection file, and configures all sockets as a CurveZMQ server.
+Clients must present the correct server public key to connect; unauthenticated
+connections are silently dropped before any data is delivered.
+
+.. note::
+
+    CurveZMQ is only available when pyzmq was compiled against a libzmq that
+    includes libsodium. You can verify this with::
+
+        python -c "import zmq; print(zmq.has('curve'))"
+
+    If this prints ``False``, the ``transport_encryption`` setting has no
+    effect and attempts to set it to ``'auto'`` or ``'required'`` will raise
+    a configuration error.
+
+The ``transport_encryption`` setting
+*************************************
+
+Transport encryption is controlled by the ``KernelManager.transport_encryption``
+traitlet, which accepts three values:
+
+``'disabled'`` (default)
+    No CurveZMQ keys are generated. All kernel sockets are unencrypted.
+
+``'auto'``
+    Keys are generated **only when the kernelspec declares support** via
+    ``metadata.supported_encryption: 'curve'``. Kernelspecs that do not
+    declare this field are started without encryption, so the setting is safe
+    to enable globally without breaking existing kernels.
+
+``'required'``
+    Keys are always generated. Startup fails with a ``RuntimeError`` if the
+    kernelspec does not declare ``metadata.supported_encryption: 'curve'``,
+    so kernels that have not been updated to handle the connection-file keys
+    are never started unencrypted.
+
+.. note::
+
+    ``transport_encryption`` applies to TCP transport only. IPC sockets
+    already rely on filesystem permissions for access control and do not
+    support CurveZMQ.
+
+To enable encryption globally for all kernels that support it, add the
+following to your :file:`jupyter_server_config.py`:
+
+.. sourcecode:: python
+
+    c.KernelManager.transport_encryption = "auto"
+
+To enforce encryption and prevent unencrypted kernels from starting:
+
+.. sourcecode:: python
+
+    c.KernelManager.transport_encryption = "required"
+
+Kernelspec requirements
+***********************
+
+A kernel must declare CurveZMQ support in its :file:`kernel.json` before the
+``KernelManager`` will provision keys for it:
+
+.. sourcecode:: json
+
+    {
+        "argv": ["python", "-m", "ipykernel_launcher", "-f", "{connection_file}"],
+        "display_name": "Python 3",
+        "language": "python",
+        "metadata": {
+            "supported_encryption": "curve"
+        }
+    }
+
+When ``transport_encryption`` is ``'auto'``, kernelspecs without this field are
+started normally without encryption. When it is ``'required'``, their startup
+is refused.
+
+The kernel itself must read ``curve_publickey`` and ``curve_secretkey`` from
+the connection file and apply them to its ZMQ sockets. Kernels based on
+ipykernel 7.3 do this automatically when the fields are present.
+
+.. note::
+
+    When updating a previously installed kernel to a version that supports encryption
+    you may need to re-install the kernelspec or manually add the ``supported_encryption``
+    metadata field. If you subsequently decide to downgrade, you will need to
+    remove this field as otherwise the kernel will silently fail to connect.
+
+
 Security in notebook documents
 ==============================
 
