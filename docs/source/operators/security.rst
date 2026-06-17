@@ -554,6 +554,22 @@ long time. Users can explicitly trust a notebook in two ways:
 These two methods simply load the notebook, compute a new signature, and add
 that signature to the user's database.
 
+Content-Security-Policy for nbconvert
+--------------------------------------
+
+When notebooks are rendered via nbconvert (``/nbconvert/`` endpoints),
+the server adds a ``sandbox allow-scripts`` directive to the
+``Content-Security-Policy`` header by default. This confines any
+JavaScript in the rendered output to a unique origin, preventing it
+from interacting with the Jupyter server.
+
+This behavior is controlled by :attr:`~jupyter_server.serverapp.ServerApp.nbconvert_csp_sandbox`:
+
+.. sourcecode:: python
+
+    # jupyter_server_config.py
+    c.ServerApp.nbconvert_csp_sandbox = True  # default
+
 Reporting security issues
 -------------------------
 

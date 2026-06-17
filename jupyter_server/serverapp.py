@@ -457,6 +457,7 @@ class ServerWebApplication(web.Application):
             "websocket_ping_timeout": websocket_ping_timeout,
             # handlers
             "extra_services": extra_services,
+            "nbconvert_csp_sandbox": jupyter_app.nbconvert_csp_sandbox,
             # Jupyter stuff
             "started": now,
             # place for extensions to register activity
@@ -1602,6 +1603,15 @@ class ServerApp(JupyterApp):
         True,
         config=True,
         help="""If True, display controls to shut down the Jupyter server, such as menu items or buttons.""",
+    )
+
+    nbconvert_csp_sandbox = Bool(
+        True,
+        config=True,
+        help=_i18n(
+            "If True, add a 'sandbox' directive to the Content-Security-Policy header for nbconvert-served pages, "
+            "confining any JavaScript to a unique origin so it cannot interact with the Jupyter server."
+        ),
     )
 
     contents_manager_class = Type(

@@ -190,3 +190,38 @@ async def test_from_post_zip(jp_fetch, notebook):
     r = await jp_fetch("nbconvert", "latex", method="POST", body=json.dumps(nbmodel))
     assert "application/zip" in r.headers["Content-Type"]
     assert ".zip" in r.headers["Content-Disposition"]
+
+
+@pytest.mark.parametrize(
+    "jp_server_config,expected",
+    [
+        ({"ServerApp": {"nbconvert_csp_sandbox": True}}, "sandbox allow-scripts"),
+        ({"ServerApp": {"nbconvert_csp_sandbox": False}}, None),
+    ],
+)
+async def test_csp_file_handler(jp_fetch, jp_server_config, notebook, expected):
+    r = await jp_fetch("nbconvert", "html", "foo", "testnb.ipynb", method="GET")
+    csp = r.headers["Content-Security-Policy"]
+    if expected:
+        assert expected in csp
+    else:
+        assert "sandbox" not in csp
+
+
+@pytest.mark.parametrize(
+    "jp_server_config,expected",
+    [
+        ({"ServerApp": {"nbconvert_csp_sandbox": True}}, "sandbox allow-scripts"),
+        ({"ServerApp": {"nbconvert_csp_sandbox": False}}, None),
+    ],
+)
+async def test_csp_post_handler(jp_fetch, jp_server_config, notebook, expected):
+    r = await jp_fetch("api/contents/foo/testnb.ipynb", method="GET")
+    nbmodel = json.loads(r.body.decode())
+
+    r = await jp_fetch("nbconvert", "html", method="POST", body=json.dumps(nbmodel))
+    csp = r.headers["Content-Security-Policy"]
+    if expected:
+        assert expected in csp
+    else:
+        assert "sandbox" not in csp
