@@ -422,7 +422,13 @@ class GatewayKernelManager(ServerKernelManager):
                 "parent": self,
             }
         )
-        kw["kernel_id"] = self.kernel_id
+        if self.kernel_id is not None:
+            kw["ws_url"] = url_path_join(
+                GatewayClient.instance().ws_url or "",
+                GatewayClient.instance().kernels_endpoint,
+                url_escape(str(self.kernel_id)),
+                "channels",
+            )
 
         # add kwargs last, for manual overrides
         kw.update(kwargs)
