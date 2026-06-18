@@ -131,8 +131,7 @@ jobs:
         with:
           dependency_type: pre
           python_package_manager: pip
-          # pyO3 dependencies can't build on dev python
-          python_version: "3.14"
+          python_version: "3.15"
       - name: Run the tests
         run: |
           hatch run test:nowarn || hatch -v run test:nowarn --lf
