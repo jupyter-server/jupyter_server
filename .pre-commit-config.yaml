@@ -53,7 +53,7 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.20.2"
+    rev: "v2.1.0"
     hooks:
       - id: mypy
         files: jupyter_server
@@ -81,7 +81,7 @@ repos:
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # keep the revision in sync with the ruff version in pyproject.toml
-    rev: v0.15.12
+    rev: v0.15.15
     hooks:
       - id: ruff-check
         types_or: [python, jupyter]
