@@ -8,6 +8,7 @@ import asyncio
 import datetime
 import json
 import os
+import warnings
 from queue import Empty, Queue
 from threading import Thread
 from time import monotonic
@@ -749,8 +750,6 @@ will correspond to the value of the Gateway url with 'ws' in place of 'http'.  (
         self._channels_stopped = False
         self._channel_queues = {}
         if kernel_id is not None:
-            import warnings
-
             warnings.warn(
                 "Passing 'kernel_id' to GatewayKernelClient is deprecated. Set 'ws_url' instead.",
                 DeprecationWarning,
