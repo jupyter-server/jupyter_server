@@ -7,7 +7,6 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 # Distributed under the terms of the Modified BSD License.
 import asyncio
 import json
-import uuid as _uuid
 
 try:
     from jupyter_client.jsonutil import json_default
@@ -79,12 +78,6 @@ class SessionRootHandler(SessionsAPIHandler):
         kernel = model.get("kernel", {})
         kernel_name = kernel.get("name", None)
         kernel_id = kernel.get("id", None)
-
-        if kernel_id is not None:
-            try:
-                _uuid.UUID(kernel_id)
-            except ValueError:
-                raise web.HTTPError(400, f"Invalid kernel_id: {kernel_id!r}") from None
 
         if not kernel_id and not kernel_name:
             self.log.debug("No kernel specified, using default kernel")

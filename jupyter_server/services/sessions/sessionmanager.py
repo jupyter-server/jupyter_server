@@ -275,10 +275,6 @@ class SessionManager(LoggingConfigurable):
         name: ModelName(str)
             Usually the model name, like the filename associated with current
             kernel.
-        kernel_id : str, optional
-            Client-supplied UUID to register the new kernel under.  If the id
-            already exists in the kernel manager the session attaches to it;
-            otherwise it is forwarded to ``start_kernel_for_session``.
         """
         session_id = self.new_session_id()
         record = KernelSessionRecord(session_id=session_id)
@@ -353,13 +349,13 @@ class SessionManager(LoggingConfigurable):
         kernel_path = await ensure_async(self.contents_manager.get_kernel_path(path=path))
 
         kernel_env = self.get_kernel_env(path, name)
-        started_kernel_id = await self.kernel_manager.start_kernel(
+        kernel_id = await self.kernel_manager.start_kernel(
             path=kernel_path,
             kernel_name=kernel_name,
             env=kernel_env,
             kernel_id=kernel_id,
         )
-        return cast("str", started_kernel_id)
+        return cast("str", kernel_id)
 
     async def save_session(self, session_id, path=None, name=None, type=None, kernel_id=None):
         """Saves the items for the session with the given session_id

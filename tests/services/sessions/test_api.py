@@ -127,7 +127,7 @@ class SessionClient:
         return await self._req(method="POST", body=body)
 
     def create_deprecated(self, path):
-        body = {"notebook": {"path": path}, "kernel": {"name": "python"}}
+        body = {"notebook": {"path": path}, "kernel": {"name": "python", "id": "foo"}}
         return self._req(method="POST", body=body)
 
     def modify_path(self, id, path):
@@ -382,9 +382,13 @@ async def test_create_with_kernel_id(session_client, jp_fetch, jp_base_url, jp_s
 
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_create_with_bad_kernel_id(session_client, jp_serverapp, session_is_ready):
-    with pytest.raises(tornado.httpclient.HTTPClientError) as exc_info:
-        await session_client.create("foo/nb1.py", type="file", kernel_id="not-a-uuid")
-    assert expected_http_error(exc_info, 400)
+    resp = await session_client.create("foo/nb1.py", type="file")
+    assert resp.code == 201
+    newsession = j(resp)
+    sid = newsession["id"]
+    await session_is_ready(sid)
+    assert newsession["path"] == "foo/nb1.py"
+    assert newsession["type"] == "file"
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)

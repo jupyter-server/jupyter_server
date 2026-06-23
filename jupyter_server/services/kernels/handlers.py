@@ -6,7 +6,6 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
-import uuid as _uuid
 
 try:
     from jupyter_client.jsonutil import json_default
@@ -53,20 +52,11 @@ class MainKernelHandler(KernelsAPIHandler):
         else:
             model.setdefault("name", km.default_kernel_name)
 
-        supplied_kernel_id = model.get("kernel_id")
-        if supplied_kernel_id is not None:
-            try:
-                _uuid.UUID(supplied_kernel_id)
-            except ValueError as e:
-                raise web.HTTPError(400, f"Invalid kernel_id: {supplied_kernel_id!r}") from e
-            if supplied_kernel_id in km:
-                raise web.HTTPError(409, f"Kernel already exists: {supplied_kernel_id}")
-
         kernel_id: str = await ensure_async(
             km.start_kernel(
                 kernel_name=model["name"],
                 path=model.get("path"),
-                kernel_id=supplied_kernel_id,
+                kernel_id=model.get("kernel_id"),
             )
         )
         model = await ensure_async(km.kernel_model(kernel_id))
