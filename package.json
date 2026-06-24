@@ -4,11 +4,14 @@
   "version": "1.0.0",
   "license": "BSD",
   "scripts": {
-    "build": "copyfiles -f node_modules/bootstrap/dist/css/*.min.* jupyter_server/static/style"
+    "build": "npm run build:bootstrap && npm run build:swagger-ui",
+    "build:bootstrap": "copyfiles -f node_modules/bootstrap/dist/css/*.min.* jupyter_server/static/style",
+    "build:swagger-ui": "copyfiles -f \"node_modules/swagger-ui-dist/{NOTICE,LICENSE,swagger-ui.css,swagger-ui-bundle.js}\" jupyter_server/static/vendor/swagger-ui-dist"
   },
   "dependencies": {
     "bootstrap": "^3.4.0",
-    "copyfiles": "^2.4.1"
+    "copyfiles": "^2.4.1",
+    "swagger-ui-dist": "^5.17.2"
   },
   "eslintIgnore": [
     "*.min.js",
