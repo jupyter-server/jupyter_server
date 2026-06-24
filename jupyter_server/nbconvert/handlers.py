@@ -92,6 +92,14 @@ class NbconvertFileHandler(JupyterHandler):
     auth_resource = AUTH_RESOURCE
     SUPPORTED_METHODS = ("GET",)
 
+    @property
+    def content_security_policy(self):
+        # In case we're serving HTML, confine any Javascript to a unique
+        # origin so it can't interact with the Jupyter server.
+        if self.settings.get("nbconvert_csp_sandbox", True):
+            return super().content_security_policy + "; sandbox allow-scripts"
+        return super().content_security_policy
+
     @web.authenticated
     @authorized
     async def get(self, format, path):
@@ -172,6 +180,14 @@ class NbconvertPostHandler(JupyterHandler):
 
     SUPPORTED_METHODS = ("POST",)
     auth_resource = AUTH_RESOURCE
+
+    @property
+    def content_security_policy(self):
+        # In case we're serving HTML, confine any Javascript to a unique
+        # origin so it can't interact with the Jupyter server.
+        if self.settings.get("nbconvert_csp_sandbox", True):
+            return super().content_security_policy + "; sandbox allow-scripts"
+        return super().content_security_policy
 
     @web.authenticated
     @authorized
