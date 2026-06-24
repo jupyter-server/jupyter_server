@@ -392,6 +392,101 @@ async def test_create_with_bad_kernel_id(session_client, jp_serverapp, session_i
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
+async def test_create_with_client_supplied_kernel_id(
+    session_client, jp_fetch, jp_ws_fetch, jp_base_url, jp_serverapp, session_is_ready
+):
+    """A client-supplied ``kernel.id`` for a kernel that doesn't exist yet
+    should cause the server to register the new kernel at that exact id.
+    """
+    supplied_kernel_id = "12345678-1234-5678-1234-567812345678"
+
+    resp = await session_client.create("foo/nb1.ipynb", kernel_id=supplied_kernel_id)
+    assert resp.code == 201
+    new_session = j(resp)
+    assert new_session["kernel"]["id"] == supplied_kernel_id
+    sid = new_session["id"]
+    await session_is_ready(sid)
+
+    # The kernel is registered at the supplied id and reachable via the
+    # kernels API.
+    resp = await jp_fetch("api", "kernels", supplied_kernel_id, method="GET")
+    assert resp.code == 200
+    kernel = j(resp)
+    assert kernel["id"] == supplied_kernel_id
+
+    # The kernel websocket also opens against the supplied id.
+    ws = await jp_ws_fetch("api", "kernels", supplied_kernel_id, "channels")
+    ws.close()
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
+async def test_create_session_duplicate_kernel_id_returns_409(session_client, jp_serverapp):
+    """``DuplicateKernelError`` raised from ``create_session`` should be
+    translated to HTTP 409 by the sessions handler (rather than the
+    catch-all 500 path).
+
+    Reproducing this end-to-end is awkward because ``create_session``'s
+    ``kernel_id in self.kernel_manager`` short-circuit attaches to the
+    existing kernel before ``start_kernel`` could raise.  In practice
+    the duplicate path fires on concurrent creates that race the
+    short-circuit.  We simulate that by patching ``create_session`` to
+    raise ``DuplicateKernelError`` directly and asserting the handler
+    maps it to 409.
+    """
+    from jupyter_client.multikernelmanager import DuplicateKernelError
+
+    sm = jp_serverapp.session_manager
+    original_create_session = sm.create_session
+    expected_message = "Kernel already exists: collision-test"
+
+    async def raising_create_session(*args, **kwargs):
+        raise DuplicateKernelError(expected_message)
+
+    sm.create_session = raising_create_session  # type: ignore[method-assign]
+    try:
+        with pytest.raises(tornado.httpclient.HTTPClientError) as exc_info:
+            await session_client.create("foo/nb1.ipynb", kernel_name="python3")
+        assert expected_http_error(exc_info, 409)
+        # The DuplicateKernelError message should make it to the response body.
+        body = json.loads(exc_info.value.response.body.decode())
+        assert expected_message in body["message"]
+    finally:
+        sm.create_session = original_create_session  # type: ignore[method-assign]
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
+async def test_create_attach_to_existing_kernel_via_kernel_id(
+    session_client, jp_fetch, jp_serverapp, session_is_ready
+):
+    """Existing behavior: ``kernel.id`` referencing a kernel already in
+    ``MultiKernelManager`` attaches the session to that kernel."""
+    # Create a kernel via the kernels API; let the server mint the id.
+    resp = await jp_fetch("api/kernels", method="POST", allow_nonstandard_methods=True)
+    existing_kernel = j(resp)
+
+    # Now create a session that attaches to it.
+    resp = await session_client.create("foo/nb1.ipynb", kernel_id=existing_kernel["id"])
+    assert resp.code == 201
+    new_session = j(resp)
+    assert new_session["kernel"]["id"] == existing_kernel["id"]
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
+async def test_create_session_without_kernel_id_mints_uuid(
+    session_client, jp_serverapp, session_is_ready
+):
+    """Backwards compat: omitting ``kernel.id`` lets the server mint one."""
+    resp = await session_client.create("foo/nb1.ipynb")
+    assert resp.code == 201
+    new_session = j(resp)
+    minted = new_session["kernel"]["id"]
+    # Server-minted: present and looks like a UUID.
+    assert minted
+    assert len(minted) == 36
+    assert minted.count("-") == 4
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_delete(session_client, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.ipynb")
 

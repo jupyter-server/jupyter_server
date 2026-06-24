@@ -103,6 +103,28 @@ async def test_default_kernels(jp_fetch, jp_base_url):
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
+async def test_post_kernel_with_client_supplied_id(
+    jp_fetch, jp_base_url, jp_serverapp, pending_kernel_is_ready
+):
+    """``POST /api/kernels { "kernel_id": <uuid>, "name": <kernel_name> }``
+    should register a kernel at the supplied id.
+    """
+    supplied_kernel_id = "11111111-2222-3333-4444-555555555555"
+    body = json.dumps({"name": NATIVE_KERNEL_NAME, "kernel_id": supplied_kernel_id})
+    r = await jp_fetch("api", "kernels", method="POST", body=body)
+    assert r.code == 201
+    kernel = json.loads(r.body.decode())
+    assert kernel["id"] == supplied_kernel_id
+    assert r.headers["location"] == url_path_join(jp_base_url, "/api/kernels/", supplied_kernel_id)
+    await pending_kernel_is_ready(supplied_kernel_id)
+
+    # Confirm that ``GET /api/kernels/<id>`` resolves to the same id.
+    r = await jp_fetch("api", "kernels", supplied_kernel_id, method="GET")
+    assert r.code == 200
+    assert json.loads(r.body.decode())["id"] == supplied_kernel_id
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_kernel_is_ready):
     # Start the first kernel
     r = await jp_fetch(
