@@ -253,7 +253,16 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
     def resolve_path(self, path: str) -> str | None:
         """Resolve path relative to root resource."""
         # transform OS path to API path
-        relative_path = to_api_path(path, self.root_dir)
+        expanded_path = os.path.expanduser(path)
+        if expanded_path != path and os.path.isabs(expanded_path):
+            root = Path(os.path.abspath(self.root_dir))
+            try:
+                relative_path_obj = Path(os.path.abspath(expanded_path)).relative_to(root)
+            except ValueError:
+                return None
+            relative_path = "" if str(relative_path_obj) == "." else relative_path_obj.as_posix()
+        else:
+            relative_path = to_api_path(expanded_path, self.root_dir)
         # check if the API path is within contents directory
         try:
             os_path = self._get_os_path(path=relative_path)

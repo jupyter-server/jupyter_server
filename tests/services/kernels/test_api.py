@@ -267,6 +267,32 @@ async def test_resolve_path_server(jp_fetch, jp_serverapp, jp_root_dir):
     assert path["path"] == server_path.name
 
 
+@pytest.mark.timeout(TEST_TIMEOUT)
+async def test_resolve_path_server_expands_user(jp_fetch, jp_serverapp, jp_root_dir, monkeypatch):
+    query_path = "~/my-preferred-dir/foo.py"
+    contents = "(irrelevant)"
+
+    monkeypatch.setenv("HOME", str(jp_root_dir))
+    monkeypatch.setenv("USERPROFILE", str(jp_root_dir))
+
+    # Put the file under the user's home, which is also the server root.
+    server_path = jp_root_dir / "my-preferred-dir" / "foo.py"
+    server_path.parent.mkdir()
+    server_path.write_text(contents)
+
+    # Resolve the path
+    r = await jp_fetch("api", "resolvePath", params={"path": query_path}, method="GET")
+
+    assert r.code == 200
+    resolution = json.loads(r.body.decode())
+    assert len(resolution["resolved"]) == 1
+    path = resolution["resolved"][0]
+    assert path["scope"] == "server"
+
+    # Should resolve home-relative paths to API paths within the server root.
+    assert path["path"] == "my-preferred-dir/foo.py"
+
+
 @pytest.mark.skipif(
     ipykernel.version_info < (7, 0),
     reason="requires ipykernel 7, which is not compatible with Python 3.9",
