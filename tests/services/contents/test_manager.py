@@ -4,13 +4,13 @@ import shutil
 import sys
 import time
 from itertools import combinations
-from typing import Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
 from jupyter_core.utils import ensure_async
 from nbformat import ValidationError
 from nbformat import v4 as nbformat
+from nbformat.sign import NotebookNotary
 from tornado.web import HTTPError
 from traitlets import TraitError
 
@@ -113,7 +113,7 @@ def add_invalid_cell(notebook):
 
 
 async def prepare_notebook(
-    jp_contents_manager: FileContentsManager, make_invalid: Optional[bool] = False
+    jp_contents_manager: FileContentsManager, make_invalid: bool | None = False
 ) -> tuple[dict, str]:
     cm = jp_contents_manager
     model = await ensure_async(cm.new_untitled(type="notebook"))
@@ -1150,6 +1150,77 @@ async def test_created_timestamp(jp_contents_manager):
 
     # Verify last_modified advanced (sanity check)
     assert updated_model["last_modified"] > model["last_modified"]
+
+
+@pytest.fixture(params=[FileContentsManager, AsyncFileContentsManager])
+def file_manager_with_notary(request, tmp_path):
+    """Both sync and async file managers, each with a notary using a dedicated temp directory."""
+    notary_dir = tmp_path / "notary"
+    notary_dir.mkdir()
+    root_dir = tmp_path / "root"
+    root_dir.mkdir()
+    notary = NotebookNotary(data_dir=str(notary_dir))
+    cm = request.param(root_dir=str(root_dir))
+    cm.notary = notary
+    return cm
+
+
+async def test_save_before_and_after_signature_store_corruption(file_manager_with_notary, caplog):
+    cm = file_manager_with_notary
+    db_path = cm.notary.db_file
+
+    # First save
+    model = await ensure_async(cm.new_untitled(type="notebook"))
+    path = model["path"]
+    full_model = await ensure_async(cm.get(path))
+    result = await ensure_async(cm.save(full_model, path))
+    assert isinstance(result, dict)
+    assert result["path"] == path
+    assert os.path.exists(db_path)
+
+    # Fetch the model before corrupting so that cm.get() does not itself hit the DB
+    full_model = await ensure_async(cm.get(path))
+
+    # Corrupt the signature store by truncating to the SQLite file header size (100 bytes),
+    # leaving the magic bytes intact but removing all data pages.
+    with open(db_path, "r+b") as f:
+        f.truncate(100)
+
+    # Second save with the same notary: signature store corruption should be handled
+    # gracefully and the notebook should still be saved successfully.
+    with caplog.at_level("WARNING"):
+        result = await ensure_async(cm.save(full_model, path))
+    assert isinstance(result, dict)
+    assert result["path"] == path
+    assert "corrupted or unavailable" in caplog.text
+
+
+async def test_save_raises_when_signature_store_unrecoverable(file_manager_with_notary, caplog):
+    cm = file_manager_with_notary
+    db_path = cm.notary.db_file
+
+    # First save
+    model = await ensure_async(cm.new_untitled(type="notebook"))
+    path = model["path"]
+    full_model = await ensure_async(cm.get(path))
+    await ensure_async(cm.save(full_model, path))
+
+    # Fetch the model before corrupting so that cm.get() does not itself hit the DB
+    full_model = await ensure_async(cm.get(path))
+
+    # Corrupt the store, and also replace store_factory so that the recovery attempt
+    # returns a broken store, causing the retry to also fail.
+    with open(db_path, "r+b") as f:
+        f.truncate(100)
+    broken_store = MagicMock()
+    broken_store.store_signature.side_effect = RuntimeError("store is broken")
+    cm.notary.store_factory = lambda: broken_store
+
+    with caplog.at_level("WARNING"):
+        with pytest.raises(HTTPError) as exc_info:
+            await ensure_async(cm.save(full_model, path))
+    assert exc_info.value.status_code == 500
+    assert "corrupted or unavailable" in caplog.text
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only - st_birthtime test")

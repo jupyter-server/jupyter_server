@@ -246,7 +246,7 @@ class AsyncAuthorizerTest(Authorizer):
 
 
 @pytest.mark.parametrize(
-    "jp_server_config,",
+    "jp_server_config",
     [
         {
             "ServerApp": {"authorizer_class": AsyncAuthorizerTest},

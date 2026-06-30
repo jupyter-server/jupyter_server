@@ -6,7 +6,6 @@ import platform
 import uuid
 import warnings
 
-import jupyter_client
 import pytest
 from tornado.httpclient import HTTPClientError
 from traitlets.config import Config
@@ -191,12 +190,11 @@ async def test_cull_idle_disable(jp_fetch, jp_ws_fetch, jp_kernelspec_with_metad
     assert not culled
 
 
-# Pending kernels was released in Jupyter Client 7.1
 # It is currently broken on Windows (Jan 2022). When fixed, we can remove the Windows check.
 # See https://github.com/jupyter-server/jupyter_server/issues/672
 @pytest.mark.skipif(
-    os.name == "nt" or jupyter_client._version.version_info < (7, 1),
-    reason="Pending kernels require jupyter_client >= 7.1 on non-Windows",
+    os.name == "nt",
+    reason="Pending kernels fail on Windows",
 )
 @pytest.mark.parametrize(
     "jp_server_config",

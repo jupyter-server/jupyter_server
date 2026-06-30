@@ -10,7 +10,7 @@ import mimetypes
 import os
 import random
 import warnings
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from jupyter_client.session import Session
 from tornado import web
@@ -290,7 +290,7 @@ class GatewayResourceHandler(APIHandler):
     @web.authenticated
     async def get(self, kernel_name, path, include_body=True):
         """Get a gateway resource by name and path."""
-        mimetype: Optional[str] = None
+        mimetype: str | None = None
         ksm = self.kernel_spec_manager
         kernel_spec_res = await ksm.get_kernel_spec_resource(  # type:ignore[attr-defined]
             kernel_name, path

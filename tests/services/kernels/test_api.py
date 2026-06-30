@@ -186,7 +186,7 @@ async def test_main_kernel_handler(jp_fetch, jp_base_url, jp_serverapp, pending_
 
 @pytest.mark.skipif(
     ipykernel.version_info < (7, 0),
-    reason="requires ipykernel 7, which is not compatible with Python 3.9",
+    reason="requires ipykernel 7, which is not compatible with Python 3.10",
 )
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_resolve_path_kernel(jp_fetch, jp_serverapp, jp_root_dir, pending_kernel_is_ready):
@@ -295,7 +295,7 @@ async def test_resolve_path_server_expands_user(jp_fetch, jp_serverapp, jp_root_
 
 @pytest.mark.skipif(
     ipykernel.version_info < (7, 0),
-    reason="requires ipykernel 7, which is not compatible with Python 3.9",
+    reason="requires ipykernel 7, which is not compatible with Python 3.10",
 )
 @pytest.mark.timeout(TEST_TIMEOUT)
 async def test_resolve_path_server_and_kernel(
@@ -332,7 +332,7 @@ async def test_resolve_path_server_and_kernel(
     resolution = json.loads(r.body.decode())
 
     # Should present candidates for both server and kernel
-    assert len(resolution["resolved"]) == 2
+    assert len(resolution["resolved"]) == 2, resolution["resolved"]
     assert {k["scope"] for k in resolution["resolved"]} == {"server", "kernel"}
 
 
@@ -368,6 +368,23 @@ async def test_resolve_path_missing(jp_fetch, jp_serverapp, jp_root_dir, pending
     assert r.code == 200
     resolution = json.loads(r.body.decode())
     assert len(resolution["resolved"]) == 0
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
+async def test_resolve_path_missing_kernel_reports_unresolved(jp_fetch, jp_serverapp):
+    bad_id = "111-111-111-111-111"
+    r = await jp_fetch(
+        "api",
+        "resolvePath",
+        params={"kernel": bad_id, "path": "hello.py"},
+        method="GET",
+    )
+    assert r.code == 200
+    resolution = json.loads(r.body.decode())
+    assert resolution["resolved"] == []
+    assert resolution["unresolved"] == [
+        {"scope": "kernel", "reason": f"Kernel {bad_id} could not be found"}
+    ]
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
