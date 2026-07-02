@@ -283,7 +283,12 @@ class SessionManager(LoggingConfigurable):
             pass
         else:
             kernel_id = await self.start_kernel_for_session(
-                session_id, path, name, type, kernel_name
+                session_id=session_id,
+                path=path,
+                name=name,
+                type=type,
+                kernel_name=kernel_name,
+                kernel_id=kernel_id,
             )
         record.kernel_id = kernel_id
         self._pending_sessions.update(record)
@@ -317,6 +322,7 @@ class SessionManager(LoggingConfigurable):
         name: ModelName | None,
         type: str | None,
         kernel_name: KernelName | None,
+        kernel_id: str | None = None,
     ) -> str:
         """Start a new kernel for a given session.
 
@@ -333,6 +339,11 @@ class SessionManager(LoggingConfigurable):
             the type of the session
         kernel_name : str
             the name of the kernel specification to use.  The default kernel name will be used if not provided.
+        kernel_id : str, optional
+            client-supplied UUID to register the new kernel under.  When
+            provided, forwarded to ``kernel_manager.start_kernel`` so the
+            kernel is created at that exact id.  If omitted, the kernel
+            manager mints a fresh id.
         """
         # allow contents manager to specify kernels cwd
         kernel_path = await ensure_async(self.contents_manager.get_kernel_path(path=path))
@@ -342,6 +353,7 @@ class SessionManager(LoggingConfigurable):
             path=kernel_path,
             kernel_name=kernel_name,
             env=kernel_env,
+            kernel_id=kernel_id,
         )
         return cast("str", kernel_id)
 

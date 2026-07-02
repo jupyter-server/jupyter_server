@@ -53,7 +53,11 @@ class MainKernelHandler(KernelsAPIHandler):
             model.setdefault("name", km.default_kernel_name)
 
         kernel_id: str = await ensure_async(
-            km.start_kernel(kernel_name=model["name"], path=model.get("path"))
+            km.start_kernel(
+                kernel_name=model["name"],
+                path=model.get("path"),
+                kernel_id=model.get("kernel_id"),
+            )
         )
         model = await ensure_async(km.kernel_model(kernel_id))
         location = url_path_join(self.base_url, "api", "kernels", url_escape(kernel_id))
