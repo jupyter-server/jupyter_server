@@ -123,7 +123,6 @@ from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
     FileContentsManager,
 )
-from jupyter_server.services.contents.largefilemanager import AsyncLargeFileManager
 from jupyter_server.services.contents.manager import AsyncContentsManager, ContentsManager
 from jupyter_server.services.kernels.connection.base import BaseKernelWebsocketConnection
 from jupyter_server.services.kernels.connection.channels import ZMQChannelsWebsocketConnection
@@ -1615,7 +1614,7 @@ class ServerApp(JupyterApp):
     )
 
     contents_manager_class = Type(
-        default_value=AsyncLargeFileManager,
+        default_value=AsyncFileContentsManager,
         klass=ContentsManager,
         config=True,
         help=_i18n("The content manager class to use."),
