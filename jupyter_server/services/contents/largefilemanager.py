@@ -12,8 +12,11 @@ from jupyter_server.services.contents.filemanager import (
 
 class LargeFileManager(FileContentsManager):
     """Handle large file upload."""
+
     pass
+
 
 class AsyncLargeFileManager(AsyncFileContentsManager):
     """Handle large file upload asynchronously"""
+
     pass

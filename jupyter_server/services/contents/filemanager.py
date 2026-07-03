@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import errno
 import math
 import mimetypes
@@ -15,7 +16,6 @@ import stat
 import subprocess
 import sys
 import typing as t
-import base64
 import warnings
 from datetime import datetime
 from pathlib import Path
@@ -1096,7 +1096,9 @@ class AsyncFileContentsManager(  # type: ignore[misc]
                 if model["type"] == "notebook":
                     nb = nbformat.from_dict(model["content"])
                     self.check_and_sign(nb, path)
-                    await self._save_notebook(os_path, nb, capture_validation_error=validation_error)
+                    await self._save_notebook(
+                        os_path, nb, capture_validation_error=validation_error
+                    )
                     # One checkpoint should always exist for notebooks.
                     if not (await self.checkpoints.list_checkpoints(path)):
                         await self.create_checkpoint(path)
@@ -1147,7 +1149,6 @@ class AsyncFileContentsManager(  # type: ignore[misc]
                 os_path = os.path.join(os.path.dirname(os_path), os.readlink(os_path))
             with open(os_path, "ab") as f:  # noqa: ASYNC230
                 await run_sync(f.write, bcontent)
-
 
     async def delete_file(self, path):
         """Delete file at path."""
