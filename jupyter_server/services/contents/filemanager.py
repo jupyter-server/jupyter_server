@@ -259,12 +259,13 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         except RuntimeError:
             expanded_path = original_path
         if expanded_path != original_path and expanded_path.is_absolute():
-            root = Path(self.root_dir).absolute()
+            root = Path(os.path.abspath(self.root_dir))
+            expanded_abs = Path(os.path.abspath(expanded_path))
             try:
-                expanded_path.absolute().relative_to(root)
+                expanded_abs.relative_to(root)
             except ValueError:
                 return None
-            path = str(expanded_path)
+            path = str(expanded_abs)
         relative_path = to_api_path(path, self.root_dir)
         # check if the API path is within contents directory
         try:
