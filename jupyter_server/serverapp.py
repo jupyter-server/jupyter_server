@@ -207,6 +207,7 @@ JUPYTER_SERVICE_HANDLERS = {
 
 # Added for backwards compatibility from classic notebook server.
 DEFAULT_SERVER_PORT = DEFAULT_JUPYTER_SERVER_PORT
+WILDCARD_IPS = ("0.0.0.0", "::")  # noqa: S104
 
 # -----------------------------------------------------------------------------
 # Helper functions
@@ -2423,7 +2424,9 @@ class ServerApp(JupyterApp):
 
     @property
     def connection_url(self) -> str:
-        urlparts = self._get_urlparts(path=self.base_url)
+        """Return a connectable URL, replacing wildcard addresses with the hostname."""
+        ip = socket.gethostname() if self.ip in WILDCARD_IPS else None
+        urlparts = self._get_urlparts(path=self.base_url, ip=ip)
         return urlparts.geturl()
 
     @property
@@ -2434,7 +2437,7 @@ class ServerApp(JupyterApp):
         If `ip` is the wildcard address, add a text hint but keep
         the machine hostname in the link as 0.0.0.0 is not connectable.
         """
-        if self.ip not in ("0.0.0.0", "::"):  # noqa: S104
+        if self.ip not in WILDCARD_IPS:
             return self.display_url
         public = self._get_urlparts(include_token=True, ip=socket.gethostname()).geturl()
         hint = _i18n(
@@ -2998,12 +3001,7 @@ class ServerApp(JupyterApp):
         """Write the browser open file."""
         if self.identity_provider.token:
             url = url_concat(url, {"token": self.identity_provider.token})
-        connection_url = self.connection_url
-        if self.ip in ("0.0.0.0", "::"):  # noqa: S104
-            connection_url = self._get_urlparts(
-                path=self.base_url, ip=socket.gethostname()
-            ).geturl()
-        url = url_path_join(connection_url, url)
+        url = url_path_join(self.connection_url, url)
 
         jinja2_env = self.web_app.settings["jinja2_env"]
         template = jinja2_env.get_template("browser-open.html")
