@@ -687,6 +687,17 @@ async def test_browser_open_files(jp_configurable_serverapp, should_exist, caplo
     assert url_messages if should_exist else not url_messages
 
 
+def test_browser_open_file_uses_hostname_for_wildcard(jp_configurable_serverapp):
+    app = jp_configurable_serverapp(ip="0.0.0.0")
+
+    with patch("socket.gethostname", return_value="myhost"):
+        app.write_browser_open_file()
+
+    browser_open_file = pathlib.Path(app.browser_open_file).read_text(encoding="utf-8")
+    assert "http://myhost:" in browser_open_file
+    assert "http://0.0.0.0:" not in browser_open_file
+
+
 def test_deprecated_notebook_dir_priority(jp_configurable_serverapp, tmp_path):
     notebook_dir = tmp_path / "notebook"
     notebook_dir.mkdir()

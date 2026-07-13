@@ -2998,7 +2998,12 @@ class ServerApp(JupyterApp):
         """Write the browser open file."""
         if self.identity_provider.token:
             url = url_concat(url, {"token": self.identity_provider.token})
-        url = url_path_join(self.connection_url, url)
+        connection_url = self.connection_url
+        if self.ip in ("0.0.0.0", "::"):  # noqa: S104
+            connection_url = self._get_urlparts(
+                path=self.base_url, ip=socket.gethostname()
+            ).geturl()
+        url = url_path_join(connection_url, url)
 
         jinja2_env = self.web_app.settings["jinja2_env"]
         template = jinja2_env.get_template("browser-open.html")
