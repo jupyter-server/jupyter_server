@@ -140,12 +140,17 @@ class ContentsManager(LoggingConfigurable):
         config=True,
         help="""
         Glob patterns to always show in file and directory listings, taking
-        precedence over ``hide_globs``. A name matching any of these patterns is
-        listed even if it also matches ``hide_globs``.
+        precedence over both ``hide_globs`` and hidden-file filtering.
 
-        This only affects the name-glob listing filter (``should_list``); it does
-        NOT affect hidden-file (dotfile) filtering, which is controlled separately
-        by ``allow_hidden``.
+        Each pattern is matched against individual path components (the same way
+        ``hide_globs`` is). A path is shown when any of its components matches a
+        ``show_globs`` pattern, so listing ``[".jupyter"]`` surfaces the
+        ``.jupyter`` directory and makes everything inside it listable and
+        accessible, even when ``allow_hidden`` is ``False``.
+
+        This is the escape hatch for the all-or-nothing nature of
+        ``allow_hidden``: a deployment can keep hidden files hidden by default
+        while always exposing a specific curated set of paths.
     """,
     )
 

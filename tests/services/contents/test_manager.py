@@ -188,19 +188,46 @@ def test_should_list_show_globs_precedence(jp_file_contents_manager_class, tmp_p
     assert cm.should_list("notebook.ipynb") is True
 
 
-async def test_show_globs_does_not_surface_dotfile(jp_file_contents_manager_class, tmp_path):
-    # show_globs is a listing-only filter (should_list) and is orthogonal to
-    # hidden-file gating (allow_hidden). With allow_hidden=False, a dotfile is
-    # not surfaced even when it matches show_globs.
+async def test_show_globs_surfaces_hidden_dir(jp_file_contents_manager_class, tmp_path):
+    # show_globs takes precedence over hidden-file filtering: a matching hidden
+    # directory is listed and accessible even with allow_hidden=False, while a
+    # non-matching dotfile stays hidden.
+    (tmp_path / ".jupyter").mkdir()
+    (tmp_path / ".jupyter" / "persona.py").write_text("")
     (tmp_path / ".secret").write_text("")
     cm = jp_file_contents_manager_class(
         root_dir=str(tmp_path),
         allow_hidden=False,
-        show_globs=[".secret"],
+        show_globs=[".jupyter"],
     )
-    model = await ensure_async(cm.get(""))
-    names = {entry["name"] for entry in model["content"]}
+
+    root_model = await ensure_async(cm.get(""))
+    names = {entry["name"] for entry in root_model["content"]}
+    assert ".jupyter" in names
     assert ".secret" not in names
+
+    # The shown directory can be opened, and a match on the ancestor directory
+    # surfaces the files inside it too.
+    dir_model = await ensure_async(cm.get(".jupyter"))
+    inner = {entry["name"] for entry in dir_model["content"]}
+    assert "persona.py" in inner
+    # A file inside the shown directory is itself accessible.
+    file_model = await ensure_async(cm.get(".jupyter/persona.py", content=False))
+    assert file_model["path"] == ".jupyter/persona.py"
+
+
+async def test_show_globs_leaves_other_hidden_files_gated(jp_file_contents_manager_class, tmp_path):
+    # A dotfile not matched by show_globs remains inaccessible (404) with
+    # allow_hidden=False, i.e. show_globs only exempts what it names.
+    (tmp_path / ".secret").write_text("")
+    cm = jp_file_contents_manager_class(
+        root_dir=str(tmp_path),
+        allow_hidden=False,
+        show_globs=[".jupyter"],
+    )
+    with pytest.raises(HTTPError) as exc:
+        await ensure_async(cm.get(".secret"))
+    assert exc.value.status_code == 404
 
 
 def test_missing_root_dir(jp_file_contents_manager_class, tmp_path):

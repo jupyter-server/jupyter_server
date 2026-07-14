@@ -17,6 +17,7 @@ import sys
 import typing as t
 import warnings
 from datetime import datetime
+from fnmatch import fnmatch
 from pathlib import Path
 
 import nbformat
@@ -170,6 +171,25 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path=path)
         return is_hidden(os_path, self.root_dir)
 
+    def _is_shown(self, os_path):
+        """Does an OS path match ``show_globs`` and therefore bypass hiding?
+
+        ``show_globs`` patterns are matched against individual path components,
+        the same way ``hide_globs`` is. A path is shown when any of its
+        components (relative to ``root_dir``) matches a pattern, so a match on an
+        ancestor directory also shows everything beneath it. This takes
+        precedence over both ``hide_globs`` and hidden-file filtering.
+        """
+        if not self.show_globs:
+            return False
+        try:
+            rel = Path(os.path.normpath(os_path)).relative_to(os.path.normpath(self.root_dir))
+        except ValueError:
+            return False
+        return any(
+            fnmatch(part, glob) for part in rel.parts for glob in self.show_globs
+        )
+
     def is_writable(self, path):
         """Does the API style path correspond to a writable directory or file?
 
@@ -283,7 +303,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         four_o_four = "file or directory does not exist: %r" % path
 
-        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir) and not self._is_shown(os_path):
             self.log.info("Refusing to serve hidden file or directory %r, via 404 Error", os_path)
             raise web.HTTPError(404, four_o_four)
 
@@ -338,7 +358,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
         if not os.path.isdir(os_path):
             raise web.HTTPError(404, four_o_four)
-        elif not self.allow_hidden and is_hidden(os_path, self.root_dir):
+        elif not self.allow_hidden and is_hidden(os_path, self.root_dir) and not self._is_shown(os_path):
             self.log.info("Refusing to serve hidden directory %r, via 404 Error", os_path)
             raise web.HTTPError(404, four_o_four)
 
@@ -375,7 +395,9 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
                 try:
                     if self.should_list(name) and (
-                        self.allow_hidden or not is_file_hidden(os_path, stat_res=st)
+                        self.allow_hidden
+                        or not is_file_hidden(os_path, stat_res=st)
+                        or self._is_shown(os_path)
                     ):
                         contents.append(self.get(path=f"{path}/{name}", content=False))
                 except OSError as e:
@@ -492,7 +514,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if not self.exists(path):
             raise web.HTTPError(404, four_o_four)
 
-        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir) and not self._is_shown(os_path):
             self.log.info("Refusing to serve hidden file or directory %r, via 404 Error", os_path)
             raise web.HTTPError(404, four_o_four)
 
@@ -517,7 +539,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
 
     def _save_directory(self, os_path, model, path=""):
         """create a directory"""
-        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir) and not self._is_shown(os_path):
             raise web.HTTPError(400, "Cannot create directory %r" % os_path)
         if not os.path.exists(os_path):
             with self.perm_to_403():
@@ -539,7 +561,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             raise web.HTTPError(400, "No file content provided")
         os_path = self._get_os_path(path)
 
-        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir) and not self._is_shown(os_path):
             raise web.HTTPError(400, f"Cannot create file or directory {os_path!r}")
 
         self.log.debug("Saving %s", os_path)
@@ -585,7 +607,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         os_path = self._get_os_path(path)
         rm = os.unlink
 
-        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir) and not self._is_shown(os_path):
             raise web.HTTPError(400, f"Cannot delete file or directory {os_path!r}")
 
         four_o_four = "file or directory does not exist: %r" % path
@@ -640,7 +662,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         old_os_path = self._get_os_path(old_path)
 
         if not self.allow_hidden and (
-            is_hidden(old_os_path, self.root_dir) or is_hidden(new_os_path, self.root_dir)
+            (is_hidden(old_os_path, self.root_dir) and not self._is_shown(old_os_path))
+            or (is_hidden(new_os_path, self.root_dir) and not self._is_shown(new_os_path))
         ):
             raise web.HTTPError(400, f"Cannot rename file or directory {old_os_path!r}")
 
@@ -814,7 +837,7 @@ class AsyncFileContentsManager(  # type: ignore[misc]
 
         if not os.path.isdir(os_path):
             raise web.HTTPError(404, four_o_four)
-        elif not self.allow_hidden and is_hidden(os_path, self.root_dir):
+        elif not self.allow_hidden and is_hidden(os_path, self.root_dir) and not self._is_shown(os_path):
             self.log.info("Refusing to serve hidden directory %r, via 404 Error", os_path)
             raise web.HTTPError(404, four_o_four)
 
@@ -852,7 +875,9 @@ class AsyncFileContentsManager(  # type: ignore[misc]
 
                 try:
                     if self.should_list(name) and (
-                        self.allow_hidden or not is_file_hidden(os_path, stat_res=st)
+                        self.allow_hidden
+                        or not is_file_hidden(os_path, stat_res=st)
+                        or self._is_shown(os_path)
                     ):
                         contents.append(await self.get(path=f"{path}/{name}", content=False))
                 except OSError as e:
@@ -987,7 +1012,7 @@ class AsyncFileContentsManager(  # type: ignore[misc]
 
     async def _save_directory(self, os_path, model, path=""):
         """create a directory"""
-        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir) and not self._is_shown(os_path):
             raise web.HTTPError(400, "Cannot create hidden directory %r" % os_path)
         if not os.path.exists(os_path):
             with self.perm_to_403():
@@ -1052,7 +1077,7 @@ class AsyncFileContentsManager(  # type: ignore[misc]
         os_path = self._get_os_path(path)
         rm = os.unlink
 
-        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
+        if not self.allow_hidden and is_hidden(os_path, self.root_dir) and not self._is_shown(os_path):
             raise web.HTTPError(400, f"Cannot delete file or directory {os_path!r}")
 
         if not os.path.exists(os_path):
@@ -1111,7 +1136,8 @@ class AsyncFileContentsManager(  # type: ignore[misc]
         old_os_path = self._get_os_path(old_path)
 
         if not self.allow_hidden and (
-            is_hidden(old_os_path, self.root_dir) or is_hidden(new_os_path, self.root_dir)
+            (is_hidden(old_os_path, self.root_dir) and not self._is_shown(old_os_path))
+            or (is_hidden(new_os_path, self.root_dir) and not self._is_shown(new_os_path))
         ):
             raise web.HTTPError(400, f"Cannot rename file or directory {old_os_path!r}")
 
