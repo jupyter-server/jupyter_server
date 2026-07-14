@@ -134,6 +134,21 @@ class ContentsManager(LoggingConfigurable):
     """,
     )
 
+    show_globs = List(
+        Unicode(),
+        [],
+        config=True,
+        help="""
+        Glob patterns to always show in file and directory listings, taking
+        precedence over ``hide_globs``. A name matching any of these patterns is
+        listed even if it also matches ``hide_globs``.
+
+        This only affects the name-glob listing filter (``should_list``); it does
+        NOT affect hidden-file (dotfile) filtering, which is controlled separately
+        by ``allow_hidden``.
+    """,
+    )
+
     untitled_notebook = Unicode(
         _i18n("Untitled"),
         config=True,
@@ -757,6 +772,8 @@ class ContentsManager(LoggingConfigurable):
 
     def should_list(self, name):
         """Should this file/directory name be displayed in a listing?"""
+        if any(fnmatch(name, glob) for glob in self.show_globs):
+            return True
         return not any(fnmatch(name, glob) for glob in self.hide_globs)
 
     # Part 3: Checkpoints API

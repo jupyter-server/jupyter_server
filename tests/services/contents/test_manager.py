@@ -174,6 +174,35 @@ def test_root_dir(jp_file_contents_manager_class, tmp_path):
     assert fm.root_dir == str(tmp_path)
 
 
+def test_should_list_show_globs_precedence(jp_file_contents_manager_class, tmp_path):
+    # A name matching both hide_globs and show_globs is listed: show wins.
+    cm = jp_file_contents_manager_class(
+        root_dir=str(tmp_path),
+        hide_globs=["node_modules", "*.pyc"],
+        show_globs=["node_modules"],
+    )
+    assert cm.should_list("node_modules") is True
+    # Still-hidden names (matched only by hide_globs) are not listed.
+    assert cm.should_list("foo.pyc") is False
+    # Names matched by neither list are listed as usual.
+    assert cm.should_list("notebook.ipynb") is True
+
+
+async def test_show_globs_does_not_surface_dotfile(jp_file_contents_manager_class, tmp_path):
+    # show_globs is a listing-only filter (should_list) and is orthogonal to
+    # hidden-file gating (allow_hidden). With allow_hidden=False, a dotfile is
+    # not surfaced even when it matches show_globs.
+    (tmp_path / ".secret").write_text("")
+    cm = jp_file_contents_manager_class(
+        root_dir=str(tmp_path),
+        allow_hidden=False,
+        show_globs=[".secret"],
+    )
+    model = await ensure_async(cm.get(""))
+    names = {entry["name"] for entry in model["content"]}
+    assert ".secret" not in names
+
+
 def test_missing_root_dir(jp_file_contents_manager_class, tmp_path):
     root = tmp_path / "notebook" / "dir" / "is" / "missing"
     with pytest.raises(TraitError):
