@@ -740,6 +740,34 @@ def test_find_http_port_zero_resolves_real_port(jp_configurable_serverapp):
     app.port = 0
     app._find_http_port()
     assert app.port != 0
+    reserved_sockets = app._http_server_sockets
+    assert reserved_sockets is not None
+    for sock in reserved_sockets:
+        sock.close()
+
+
+def test_find_http_port_reserves_port_until_bind(jp_configurable_serverapp):
+    """Keep the selected port reserved until HTTPServer takes ownership (#1609)."""
+    app = jp_configurable_serverapp()
+    app.ip = "127.0.0.1"
+    app.port = 0
+    app._find_http_port()
+    reserved_sockets = app._http_server_sockets
+    assert reserved_sockets is not None
+    assert reserved_sockets
+    assert all(sock.fileno() != -1 for sock in reserved_sockets)
+
+    mock_server = MagicMock()
+    try:
+        with patch.object(
+            type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+        ):
+            assert app._bind_http_server_tcp() is True
+        mock_server.add_sockets.assert_called_once_with(reserved_sockets)
+        assert app._http_server_sockets is None
+    finally:
+        for sock in reserved_sockets:
+            sock.close()
 
 
 def test_bind_http_server_tcp_success(jp_configurable_serverapp):
