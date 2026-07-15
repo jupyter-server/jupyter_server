@@ -45,6 +45,41 @@ except ImportError:
 _script_exporter = None
 
 
+def _show_glob_matches(pattern: str, parts: tuple[str, ...]) -> bool:
+    """Match a ``show_globs`` pattern against a path, glob style.
+
+    ``parts`` is the path split into components. Within a single component
+    ``fnmatch`` wildcards apply (``*`` ``?`` ``[seq]``) but do not cross a ``/``;
+    the ``**`` component is the only way to span directory boundaries and matches
+    zero or more components. The pattern is anchored: it must match the whole
+    path, not a suffix.
+
+    As in the shell and gitignore, a wildcard does not match a leading dot: a
+    component whose name starts with ``.`` matches only a pattern component that
+    also starts with a literal ``.`` (e.g. ``.*`` or the literal name). ``**``
+    likewise does not descend into hidden components, so hidden files stay
+    hidden unless a pattern names them explicitly.
+    """
+    pat = pattern.strip("/").split("/")
+
+    def seg_match(seg: str, pat_seg: str) -> bool:
+        if seg.startswith(".") and not pat_seg.startswith("."):
+            return False
+        return fnmatch(seg, pat_seg)
+
+    def match(pi: int, si: int) -> bool:
+        if pi == len(pat):
+            return si == len(parts)
+        if pat[pi] == "**":
+            if match(pi + 1, si):  # ** consumes zero components
+                return True
+            # ...or one more non-hidden component, then retry ** (dots stay explicit)
+            return si < len(parts) and not parts[si].startswith(".") and match(pi, si + 1)
+        return si < len(parts) and seg_match(parts[si], pat[pi]) and match(pi + 1, si + 1)
+
+    return match(0, 0)
+
+
 def _get_created_timestamp(info: os.stat_result) -> float:
     """Get best-effort file creation timestamp from stat result.
 
@@ -174,11 +209,21 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
     def _is_shown(self, os_path):
         """Does an OS path match ``show_globs`` and therefore bypass hiding?
 
-        ``show_globs`` patterns are matched against individual path components,
-        the same way ``hide_globs`` is. A path is shown when any of its
-        components (relative to ``root_dir``) matches a pattern, so a match on an
-        ancestor directory also shows everything beneath it. This takes
-        precedence over both ``hide_globs`` and hidden-file filtering.
+        A path is hidden when any of its components (relative to ``root_dir``)
+        starts with a dot. ``show_globs`` exempts such components: a hidden
+        component is exempt when a pattern matches its path from the root (see
+        ``_show_glob_matches`` for the matching rules). The path as a whole is
+        shown only when it has at least one hidden component and every hidden
+        component is exempt; a single unexempted hidden component keeps it hidden.
+
+        So ``[".jupyter"]`` exempts the ``.jupyter`` component, and because a
+        pattern matches the path prefix ending at each hidden component,
+        ``.jupyter`` and its non-hidden descendants (e.g. ``.jupyter/foo.py``)
+        are shown. A nested dotfile like ``.jupyter/.secret`` stays hidden
+        because the prefix ``.jupyter/.secret`` matches no pattern; exempt it by
+        adding ``".jupyter/.secret"``, or the whole subtree with ``".jupyter/**"``.
+
+        Takes precedence over both ``hide_globs`` and hidden-file filtering.
         """
         if not self.show_globs:
             return False
@@ -186,7 +231,17 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
             rel = Path(os.path.normpath(os_path)).relative_to(os.path.normpath(self.root_dir))
         except ValueError:
             return False
-        return any(fnmatch(part, glob) for part in rel.parts for glob in self.show_globs)
+        # Bail on the first hidden component whose path prefix matches no pattern;
+        # the path is shown only if it had a hidden component and all were exempt.
+        parts = rel.parts
+        saw_hidden = False
+        for i, part in enumerate(parts):
+            if part.startswith("."):
+                saw_hidden = True
+                prefix = parts[: i + 1]
+                if not any(_show_glob_matches(g, prefix) for g in self.show_globs):
+                    return False
+        return saw_hidden
 
     def is_writable(self, path):
         """Does the API style path correspond to a writable directory or file?

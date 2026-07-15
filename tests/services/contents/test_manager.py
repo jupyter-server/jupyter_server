@@ -190,10 +190,11 @@ def test_should_list_show_globs_precedence(jp_file_contents_manager_class, tmp_p
 
 async def test_show_globs_surfaces_hidden_dir(jp_file_contents_manager_class, tmp_path):
     # show_globs takes precedence over hidden-file filtering: a matching hidden
-    # directory is listed and accessible even with allow_hidden=False, while a
-    # non-matching dotfile stays hidden.
+    # directory and its non-hidden contents are listed and accessible even with
+    # allow_hidden=False, while a non-matching dotfile stays hidden.
     (tmp_path / ".jupyter").mkdir()
     (tmp_path / ".jupyter" / "persona.py").write_text("")
+    (tmp_path / ".jupyter" / ".secret").write_text("")
     (tmp_path / ".secret").write_text("")
     cm = jp_file_contents_manager_class(
         root_dir=str(tmp_path),
@@ -207,13 +208,80 @@ async def test_show_globs_surfaces_hidden_dir(jp_file_contents_manager_class, tm
     assert ".secret" not in names
 
     # The shown directory can be opened, and a match on the ancestor directory
-    # surfaces the files inside it too.
+    # surfaces the non-hidden files inside it too...
     dir_model = await ensure_async(cm.get(".jupyter"))
     inner = {entry["name"] for entry in dir_model["content"]}
     assert "persona.py" in inner
-    # A file inside the shown directory is itself accessible.
+    # ...but a nested dotfile is NOT surfaced: exempting the parent does not
+    # exempt hidden components beneath it.
+    assert ".secret" not in inner
+    # A non-hidden file inside the shown directory is itself accessible.
     file_model = await ensure_async(cm.get(".jupyter/persona.py", content=False))
     assert file_model["path"] == ".jupyter/persona.py"
+    # The nested dotfile remains gated (404) despite its parent being shown.
+    with pytest.raises(HTTPError) as exc:
+        await ensure_async(cm.get(".jupyter/.secret"))
+    assert exc.value.status_code == 404
+
+
+async def test_show_globs_can_opt_in_nested_dotfile(jp_file_contents_manager_class, tmp_path):
+    # A nested dotfile is surfaced only when a pattern exempts its own path too.
+    (tmp_path / ".jupyter").mkdir()
+    (tmp_path / ".jupyter" / ".secret").write_text("")
+    cm = jp_file_contents_manager_class(
+        root_dir=str(tmp_path),
+        allow_hidden=False,
+        show_globs=[".jupyter", ".jupyter/.*"],
+    )
+    dir_model = await ensure_async(cm.get(".jupyter"))
+    inner = {entry["name"] for entry in dir_model["content"]}
+    assert ".secret" in inner
+    file_model = await ensure_async(cm.get(".jupyter/.secret", content=False))
+    assert file_model["path"] == ".jupyter/.secret"
+
+
+async def test_show_globs_double_star_exposes_nonhidden_subtree(
+    jp_file_contents_manager_class, tmp_path
+):
+    # `**` spans (non-hidden) components, so `.jupyter/**` exposes the non-hidden
+    # subtree at any depth, but still not a nested dotfile (dots stay explicit).
+    (tmp_path / ".jupyter" / "sub").mkdir(parents=True)
+    (tmp_path / ".jupyter" / "sub" / "deep.py").write_text("")
+    (tmp_path / ".jupyter" / "sub" / ".deep").write_text("")
+    cm = jp_file_contents_manager_class(
+        root_dir=str(tmp_path),
+        allow_hidden=False,
+        show_globs=[".jupyter/**"],
+    )
+    model = await ensure_async(cm.get(".jupyter/sub/deep.py", content=False))
+    assert model["path"] == ".jupyter/sub/deep.py"
+    # A nested dotfile is not swept in by `**`.
+    with pytest.raises(HTTPError) as exc:
+        await ensure_async(cm.get(".jupyter/sub/.deep"))
+    assert exc.value.status_code == 404
+
+
+def test_show_glob_matches_glob_semantics():
+    # `*` stays within one component; `**` spans components; patterns are anchored.
+    from jupyter_server.services.contents.filemanager import _show_glob_matches
+
+    assert _show_glob_matches(".jupyter", (".jupyter",)) is True
+    assert _show_glob_matches("*/.checkpoints", ("a", ".checkpoints")) is True
+    # `*` does not cross a `/`, so a two-segment path is not matched by `*/...`.
+    assert _show_glob_matches("*/.checkpoints", ("a", "b", ".checkpoints")) is False
+    # `**` matches a name at any depth, including zero intervening components.
+    assert _show_glob_matches("**/.checkpoints", ("a", "b", ".checkpoints")) is True
+    assert _show_glob_matches("**/.checkpoints", (".checkpoints",)) is True
+    # Anchored: must match the whole path, not a suffix.
+    assert _show_glob_matches(".jupyter", ("other", ".jupyter")) is False
+    # A wildcard does not match a leading dot; a hidden name needs an explicit dot.
+    assert _show_glob_matches("*", (".secret",)) is False
+    assert _show_glob_matches(".*", (".secret",)) is True
+    assert _show_glob_matches(".jupyter/*", (".jupyter", ".secret")) is False
+    assert _show_glob_matches(".jupyter/.*", (".jupyter", ".secret")) is True
+    # `**` spans non-hidden components only; it does not descend into a dotfile.
+    assert _show_glob_matches(".jupyter/**", (".jupyter", "sub", "plain.py")) is True
+    assert _show_glob_matches(".jupyter/**", (".jupyter", "sub", ".deep")) is False
 
 
 async def test_show_globs_leaves_other_hidden_files_gated(jp_file_contents_manager_class, tmp_path):
