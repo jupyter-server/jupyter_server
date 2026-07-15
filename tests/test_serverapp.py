@@ -328,14 +328,14 @@ def test_resolve_file_to_run_and_root_dir(prefix_path, root_dir, file_to_run, ex
             {"ip": "0.0.0.0"},
             "http://0.0.0.0:8888/?token=<generated>",
             "http://127.0.0.1:8888/?token=<generated>",
-            "http://0.0.0.0:8888/",
+            "http://myhost:8888/",
         ),
         (
             # https://github.com/jupyterlab/jupyterlab/issues/15520
             {"ip": "::"},
             "http://[::]:8888/?token=<generated>",
             "http://[::1]:8888/?token=<generated>",
-            "http://[::]:8888/",
+            "http://myhost:8888/",
         ),
     ],
 )
@@ -353,7 +353,8 @@ def test_urls(config, public_url, local_url, connection_url):
         connection_url = connection_url.replace("<generated>", token)
     assert serverapp.public_url == public_url
     assert serverapp.local_url == local_url
-    assert serverapp.connection_url == connection_url
+    with patch("socket.gethostname", return_value="myhost"):
+        assert serverapp.connection_url == connection_url
     # Cleanup singleton after test.
     ServerApp.clear_instance()
 
@@ -685,6 +686,17 @@ async def test_browser_open_files(jp_configurable_serverapp, should_exist, caplo
     url = urljoin("file:", pathname2url(app.browser_open_file))
     url_messages = [rec.message for rec in caplog.records if url in rec.message]
     assert url_messages if should_exist else not url_messages
+
+
+def test_browser_open_file_uses_hostname_for_wildcard(jp_configurable_serverapp):
+    app = jp_configurable_serverapp(ip="0.0.0.0")
+
+    with patch("socket.gethostname", return_value="myhost"):
+        app.write_browser_open_file()
+
+    browser_open_file = pathlib.Path(app.browser_open_file).read_text(encoding="utf-8")
+    assert "http://myhost:" in browser_open_file
+    assert "http://0.0.0.0:" not in browser_open_file
 
 
 def test_deprecated_notebook_dir_priority(jp_configurable_serverapp, tmp_path):
