@@ -414,6 +414,30 @@ def test_connect_url(config, connect_url):
     ServerApp.clear_instance()
 
 
+def test_password_auth_logs_connect_url_for_wildcard():
+    config = Config()
+    config.PasswordIdentityProvider.hashed_password = "configured-password-hash"
+    app = ServerApp(
+        ip="0.0.0.0",
+        port=8889,
+        allow_root=True,
+        open_browser=False,
+        no_browser_open_file=True,
+        config=config,
+    )
+    app.init_configurables()
+    assert not app.identity_provider.token
+
+    with (
+        patch("socket.gethostname", return_value="myhost"),
+        patch.object(app, "write_server_info_file"),
+        patch.object(app.log, "critical") as log_critical,
+    ):
+        app.start_app()
+
+    assert any(f"http://myhost:{app.port}/" in call.args[0] for call in log_critical.call_args_list)
+
+
 # Preferred dir tests
 # ----------------------------------------------------------------------------
 @pytest.mark.filterwarnings("ignore::FutureWarning")
