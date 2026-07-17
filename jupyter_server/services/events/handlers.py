@@ -64,8 +64,7 @@ class SubscribeWebsocket(
         :class:`~tornado.websocket.WebSocketClosedError` from
         ``write_message``; in that case ``event_listener`` will remove itself from the logger
         so subsequent events don't fan out one failing task per stale
-        subscriber (an accumulation that can produce error-log storms
-        proportional to event volume).
+        subscriber.
         """
         capsule = dict(schema_id=schema_id, **data)
         try:
