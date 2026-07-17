@@ -42,9 +42,7 @@ async def test_subscribe_websocket(event_logger, jp_ws_fetch):
     assert event_data.get("event_message") == "Hello, world!"
 
 
-async def test_subscribe_websocket_self_removes_on_closed_socket(
-    event_logger, jp_ws_fetch
-):
+async def test_subscribe_websocket_self_removes_on_closed_socket(event_logger, jp_ws_fetch):
     """When the subscriber's socket has died without a clean close
     handshake (so ``on_close`` never fired), the listener should remove
     itself from the event logger the next time an event fires, instead
