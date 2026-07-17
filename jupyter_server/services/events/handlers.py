@@ -62,7 +62,7 @@ class SubscribeWebsocket(
         because the peer disappeared without a clean close handshake, so
         ``on_close`` never fired — Tornado raises
         :class:`~tornado.websocket.WebSocketClosedError` from
-        ``write_message``; in that case ``event_listener`` will remove ourselves from the logger
+        ``write_message``; in that case ``event_listener`` will remove itself from the logger
         so subsequent events don't fan out one failing task per stale
         subscriber (an accumulation that can produce error-log storms
         proportional to event volume).
