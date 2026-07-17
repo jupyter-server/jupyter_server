@@ -56,9 +56,26 @@ class SubscribeWebsocket(
     async def event_listener(
         self, logger: jupyter_events.logger.EventLogger, schema_id: str, data: dict[str, Any]
     ) -> None:
-        """Write an event message."""
+        """Write an event message to the subscribed WebSocket.
+
+        If the underlying socket has already been closed — typically
+        because the peer disappeared without a clean close handshake, so
+        ``on_close`` never fired — Tornado raises
+        :class:`~tornado.websocket.WebSocketClosedError` from
+        ``write_message``. Remove ourselves from the logger in that case
+        so subsequent events don't fan out one failing task per stale
+        subscriber (an accumulation that can produce error-log storms
+        proportional to event volume).
+        """
         capsule = dict(schema_id=schema_id, **data)
-        self.write_message(json.dumps(capsule))
+        try:
+            self.write_message(json.dumps(capsule))
+        except websocket.WebSocketClosedError:
+            self.log.debug(
+                "Event WebSocket for %s is closed; removing stale listener",
+                schema_id,
+            )
+            self.event_logger.remove_listener(listener=self.event_listener)
 
     def open(self) -> None:  # type: ignore[override]
         """Routes events that are emitted by Jupyter Server's

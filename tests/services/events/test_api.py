@@ -42,6 +42,46 @@ async def test_subscribe_websocket(event_logger, jp_ws_fetch):
     assert event_data.get("event_message") == "Hello, world!"
 
 
+async def test_subscribe_websocket_self_removes_on_closed_socket(
+    event_logger, jp_ws_fetch
+):
+    """When the subscriber's socket has died without a clean close
+    handshake (so ``on_close`` never fired), the listener should remove
+    itself from the event logger the next time an event fires, instead
+    of remaining pinned in ``_modified_listeners`` and pinning its
+    handler instance with it.
+    """
+    schema_id = "http://event.mock.jupyter.org/message"
+
+    ws = await jp_ws_fetch("/api/events/subscribe")
+
+    # The ``open()`` hook adds our bound ``event_listener`` to the
+    # logger. Grab it back so we can reach the underlying handler
+    # instance and assert removal later.
+    listeners = event_logger._modified_listeners.get(schema_id, set())
+    assert len(listeners) == 1, "expected exactly one subscriber listener"
+    (listener,) = listeners
+    handler = listener.__self__
+
+    # Simulate an abrupt server-side teardown: clear ``ws_connection``
+    # without calling ``on_close``. Tornado's own ``write_message`` will
+    # then raise ``WebSocketClosedError`` on the next emit, exercising
+    # the self-removal path.
+    handler.ws_connection = None
+
+    event_logger.emit(schema_id=schema_id, data={"event_message": "hi"})
+    await event_logger.gather_listeners()
+
+    remaining = event_logger._modified_listeners.get(schema_id, set())
+    assert listener not in remaining, "listener should have removed itself"
+
+    # A second emit must be a no-op (no accumulated failing tasks).
+    event_logger.emit(schema_id=schema_id, data={"event_message": "hi again"})
+    await event_logger.gather_listeners()
+
+    ws.close()
+
+
 payload_1 = """\
 {
     "schema_id": "http://event.mock.jupyter.org/message",
