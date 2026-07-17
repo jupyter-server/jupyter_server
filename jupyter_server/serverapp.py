@@ -3152,7 +3152,7 @@ class ServerApp(JupyterApp):
         if self.open_browser and not self.sock:
             self.launch_browser()
 
-        if self.identity_provider.token and self.identity_provider.token_generated:
+        if self.identity_provider.token_generated or not self.identity_provider.token:
             # log full URL with generated token, so there's a copy/pasteable link
             # with auth info.
             if self.sock:
