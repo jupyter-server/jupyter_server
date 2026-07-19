@@ -102,7 +102,11 @@ def log_request(handler, record_prometheus_metrics=True):
         headers = {}
         for header in ["Host", "Accept", "Referer", "User-Agent"]:
             if header in request.headers:
-                headers[header] = request.headers[header]
+                value = request.headers[header]
+                if header == "Referer":
+                    # GHSA-c3mw-737p-c7g2, prevent leaking the Referer token.
+                    value = _scrub_uri(value, extra_param_keys)
+                headers[header] = value
         log_method(json.dumps(headers, indent=2))
     log_method(msg.format(**ns))
     if record_prometheus_metrics:
