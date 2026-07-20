@@ -720,7 +720,7 @@ async def test_websocket_connection_closed(init_gateway, jp_serverapp, jp_fetch,
     km: GatewayKernelManager = jp_serverapp.kernel_manager.get_kernel(kernel_id)
 
     # Create the KernelWebsocketHandler...
-    request = HTTPServerRequest("foo", "GET")
+    request = HTTPServerRequest(uri="foo", method="GET")
     request.connection = MagicMock()
     handler = KernelWebsocketHandler(jp_serverapp.web_app, request)
 
@@ -754,7 +754,7 @@ async def test_websocket_connection_with_session_id(init_gateway, jp_serverapp, 
     km: GatewayKernelManager = jp_serverapp.kernel_manager.get_kernel(kernel_id)
 
     # Create the KernelWebsocketHandler...
-    request = HTTPServerRequest("foo", "GET")
+    request = HTTPServerRequest(uri="foo", method="GET")
     request.connection = MagicMock()
     handler = KernelWebsocketHandler(jp_serverapp.web_app, request)
     # Create the GatewayWebSocketConnection and attach it to the handler...
