@@ -3080,7 +3080,7 @@ class ServerApp(JupyterApp):
             open_file = self.browser_open_file
 
         if self.use_redirect_file:
-            assembled_url = urljoin("file:", pathname2url(open_file))
+            assembled_url = pathlib.Path(open_file).as_uri()
         else:
             assembled_url = url_path_join(self.connection_url, uri)
 
@@ -3183,7 +3183,7 @@ class ServerApp(JupyterApp):
                         _i18n(
                             "To access the server, open this file in a browser:",
                         ),
-                        "    %s" % urljoin("file:", pathname2url(self.browser_open_file)),
+                        "    %s" % pathlib.Path(self.browser_open_file).as_uri(),
                         _i18n(
                             "Or copy and paste one of these URLs:",
                         ),
