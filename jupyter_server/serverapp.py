@@ -3152,9 +3152,16 @@ class ServerApp(JupyterApp):
         if self.open_browser and not self.sock:
             self.launch_browser()
 
-        if self.identity_provider.token and self.identity_provider.token_generated:
-            # log full URL with generated token, so there's a copy/pasteable link
-            # with auth info.
+        generated_token = bool(
+            self.identity_provider.token and self.identity_provider.token_generated
+        )
+        non_token_auth_on_wildcard = (
+            not self.identity_provider.token
+            and self.identity_provider.auth_enabled
+            and self.ip in WILDCARD_IPS
+        )
+        if generated_token or non_token_auth_on_wildcard:
+            # Log the generated token or a connectable hostname for non-token authentication.
             if self.sock:
                 self.log.critical(
                     "\n".join(
