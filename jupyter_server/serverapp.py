@@ -2630,6 +2630,8 @@ class ServerApp(JupyterApp):
             pc = ioloop.PeriodicCallback(self.shutdown_no_activity, 60000)
             pc.start()
 
+    _http_server_sockets: list[socket.socket] | None = None
+
     @property
     def http_server(self) -> httpserver.HTTPServer:
         """An instance of Tornado's HTTPServer class for the Server Web Application."""
@@ -2704,9 +2706,17 @@ class ServerApp(JupyterApp):
 
     def _bind_http_server_tcp(self) -> bool:
         """Bind a tcp server."""
+        sockets = self._http_server_sockets
         try:
-            self.http_server.listen(self.port, self.ip)
+            if sockets is None:
+                self.http_server.listen(self.port, self.ip)
+            else:
+                self.http_server.add_sockets(sockets)
         except OSError as e:
+            if sockets is not None:
+                for sock in sockets:
+                    sock.close()
+                self._http_server_sockets = None
             if e.errno == errno.EADDRINUSE:
                 self.log.warning(_i18n("The port %i is already in use.") % self.port)
                 return False
@@ -2716,6 +2726,8 @@ class ServerApp(JupyterApp):
             else:
                 raise
         else:
+            if sockets is not None:
+                self._http_server_sockets = None
             return True
 
     def _find_http_port(self) -> None:
@@ -2728,8 +2740,6 @@ class ServerApp(JupyterApp):
                 # When port=0 the OS assigns a free port, so we read it back here.
                 if port == 0:
                     port = sockets[0].getsockname()[1]
-                for s in sockets:
-                    s.close()
             except OSError as e:
                 if e.errno == errno.EADDRINUSE:
                     if self.port_retries:
@@ -2749,6 +2759,7 @@ class ServerApp(JupyterApp):
             else:
                 success = True
                 self.port = port
+                self._http_server_sockets = sockets
                 break
         if not success:
             if self.port_retries:
