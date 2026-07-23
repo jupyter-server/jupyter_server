@@ -134,6 +134,38 @@ class ContentsManager(LoggingConfigurable):
     """,
     )
 
+    show_globs = List(
+        Unicode(),
+        [],
+        config=True,
+        help="""
+        Glob patterns to always show in file and directory listings, taking
+        precedence over both ``hide_globs`` and hidden-file filtering. This is
+        the escape hatch for the all-or-nothing nature of ``allow_hidden``: a
+        deployment can keep hidden files hidden by default while always exposing
+        a specific curated set of paths.
+
+        A path is hidden when any of its components (relative to the root)
+        starts with a dot. A ``show_globs`` pattern exempts such a component when
+        it matches that component's path from the root. Patterns are matched
+        glob style: ``*``, ``?`` and ``[seq]`` apply within a single path
+        component (``*`` does not cross ``/``), and ``**`` matches across
+        components. As in the shell, a wildcard does not match a leading dot, so
+        a hidden name must be matched by a pattern that also starts with a
+        literal dot. A path is shown only when all of its hidden components are
+        exempt; a single unexempted hidden component keeps it hidden.
+
+        So ``[".jupyter"]`` surfaces the ``.jupyter`` directory and its
+        non-hidden contents (e.g. ``.jupyter/personas/foo.py``) even when
+        ``allow_hidden`` is ``False``, but a nested dotfile such as
+        ``.jupyter/.secret`` stays hidden — and ``".jupyter/*"`` will not expose
+        it either, since ``*`` does not match a leading dot. Use
+        ``".jupyter/.secret"`` (or ``".jupyter/.*"``) to expose that dotfile, or
+        ``".jupyter/**"`` to expose the non-hidden ``.jupyter`` subtree. ``**``
+        matches a name at any depth, e.g. ``"**/.ipynb_checkpoints"``.
+    """,
+    )
+
     untitled_notebook = Unicode(
         _i18n("Untitled"),
         config=True,
@@ -757,6 +789,8 @@ class ContentsManager(LoggingConfigurable):
 
     def should_list(self, name):
         """Should this file/directory name be displayed in a listing?"""
+        if any(fnmatch(name, glob) for glob in self.show_globs):
+            return True
         return not any(fnmatch(name, glob) for glob in self.hide_globs)
 
     # Part 3: Checkpoints API
