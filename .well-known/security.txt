@@ -1,0 +1,3 @@
+Contact: mailto:security@ipython.org
+Policy: https://jupyter.org/security
+Preferred-Languages: en
