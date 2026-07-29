@@ -2768,31 +2768,6 @@ class ServerApp(JupyterApp):
                 )
             self.exit(1)
 
-    @staticmethod
-    def _init_asyncio_patch() -> None:
-        """set default asyncio policy to be compatible with tornado
-
-        Tornado 6.0 is not compatible with default asyncio
-        ProactorEventLoop, which lacks basic *_reader methods.
-        Tornado 6.1 adds a workaround to add these methods in a thread,
-        but SelectorEventLoop should still be preferred
-        to avoid the extra thread for ~all of our events,
-        at least until asyncio adds *_reader methods
-        to proactor.
-        """
-        if sys.platform.startswith("win"):
-            import asyncio
-
-            try:
-                from asyncio import WindowsProactorEventLoopPolicy, WindowsSelectorEventLoopPolicy
-            except ImportError:
-                pass
-                # not affected
-            else:
-                if type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy:
-                    # prefer Selector to Proactor for tornado + pyzmq
-                    asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
-
     def init_metrics(self) -> None:
         """
         Initialize any prometheus metrics that need to be set up on server startup
@@ -2839,7 +2814,6 @@ class ServerApp(JupyterApp):
             If given, it references the name of an extension point that started the Server.
             We will try to load configuration from extension point
         """
-        self._init_asyncio_patch()
         # Parse command line, load ServerApp config files,
         # and update ServerApp config.
         # preserve jpserver_extensions, which may have been set by starter_extension
