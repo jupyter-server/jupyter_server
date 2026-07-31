@@ -2627,7 +2627,24 @@ class ServerApp(JupyterApp):
             pc = ioloop.PeriodicCallback(self.shutdown_no_activity, 60000)
             pc.start()
 
+    #: Sockets bound by :meth:`_find_http_port` and kept open so nothing else can
+    #: claim the chosen port before :meth:`_bind_http_server_tcp` hands them to
+    #: ``HTTPServer.add_sockets``. Reset to ``None`` once handed off, and closed by
+    #: :meth:`_close_reserved_sockets` if the server never gets that far.
     _http_server_sockets: list[socket.socket] | None = None
+
+    def _close_reserved_sockets(self) -> None:
+        """Close any sockets reserved by ``_find_http_port`` but never handed off."""
+        sockets = self._http_server_sockets
+        if not sockets:
+            self._http_server_sockets = None
+            return
+        self._http_server_sockets = None
+        for sock in sockets:
+            try:
+                sock.close()
+            except OSError:  # pragma: no cover - best effort cleanup
+                self.log.debug("Error closing reserved socket", exc_info=True)
 
     @property
     def http_server(self) -> httpserver.HTTPServer:
@@ -2711,9 +2728,7 @@ class ServerApp(JupyterApp):
                 self.http_server.add_sockets(sockets)
         except OSError as e:
             if sockets is not None:
-                for sock in sockets:
-                    sock.close()
-                self._http_server_sockets = None
+                self._close_reserved_sockets()
             if e.errno == errno.EADDRINUSE:
                 self.log.warning(_i18n("The port %i is already in use.") % self.port)
                 return False
@@ -2729,6 +2744,9 @@ class ServerApp(JupyterApp):
 
     def _find_http_port(self) -> None:
         """Find an available http port."""
+        # A previous reservation may still be pending if this is called twice
+        # without an intervening bind; don't leak those sockets.
+        self._close_reserved_sockets()
         success = False
         port = self.port
         for port in random_ports(self.port, self.port_retries + 1):
@@ -3206,6 +3224,7 @@ class ServerApp(JupyterApp):
         """
         self.remove_server_info_file()
         self.remove_browser_open_files()
+        self._close_reserved_sockets()
         await self.cleanup_extensions()
         await self.cleanup_kernels()
         try:
@@ -3275,6 +3294,7 @@ class ServerApp(JupyterApp):
         """Cleanup resources and stop the server."""
         # signal that stopping has begun
         self._stopping = True
+        self._close_reserved_sockets()
         if hasattr(self, "http_server"):
             # Stop a server if its set.
             self.http_server.stop()

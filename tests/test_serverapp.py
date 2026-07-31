@@ -770,6 +770,42 @@ def test_find_http_port_reserves_port_until_bind(jp_configurable_serverapp):
             sock.close()
 
 
+def test_stop_closes_reserved_sockets(jp_configurable_serverapp):
+    """Stopping before the bind callback runs must not leak reserved sockets."""
+    app = jp_configurable_serverapp()
+    app.ip = "127.0.0.1"
+    app.port = 0
+    app._find_http_port()
+    reserved_sockets = app._http_server_sockets
+    assert reserved_sockets
+
+    app.stop()
+
+    assert app._http_server_sockets is None
+    assert all(sock.fileno() == -1 for sock in reserved_sockets)
+
+
+def test_find_http_port_twice_closes_previous_sockets(jp_configurable_serverapp):
+    """A second port search must release the sockets reserved by the first."""
+    app = jp_configurable_serverapp()
+    app.ip = "127.0.0.1"
+    app.port = 0
+    app._find_http_port()
+    first = app._http_server_sockets
+    assert first
+
+    app.port = 0
+    app._find_http_port()
+    second = app._http_server_sockets
+    assert second
+    assert second is not first
+    assert all(sock.fileno() == -1 for sock in first)
+    try:
+        assert all(sock.fileno() != -1 for sock in second)
+    finally:
+        app._close_reserved_sockets()
+
+
 def test_bind_http_server_tcp_success(jp_configurable_serverapp):
     """Normal case: listen succeeds, returns True."""
     app = jp_configurable_serverapp()
