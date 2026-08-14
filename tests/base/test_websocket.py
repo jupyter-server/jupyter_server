@@ -52,6 +52,14 @@ def test_web_socket_mixin_ping(mixin):
     mixin.send_ping()
 
 
+def test_web_socket_mixin_uses_serverapp_ping_settings(mixin):
+    mixin.settings["websocket_ping_interval"] = 12
+    mixin.settings["websocket_ping_timeout"] = 34
+
+    assert mixin.ping_interval == 12000
+    assert mixin.ping_timeout == 34000
+
+
 def test_ping_client_terminated(mixin):
     mixin.ws_connection = MagicMock()
     mixin.ws_connection.client_terminated = True
