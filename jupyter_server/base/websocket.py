@@ -24,21 +24,41 @@ class WebSocketMixin:
 
     @property
     def ping_interval(self):
-        """The interval for websocket keep-alive pings.
+        """The interval for websocket keep-alive pings, in milliseconds.
 
-        Set ws_ping_interval = 0 to disable pings.
+        ``ws_ping_interval`` is an existing internal setting expressed in
+        milliseconds. ``websocket_ping_interval`` is the public ServerApp
+        setting and is expressed in seconds.
+
+        Set either setting to 0 to disable pings.
         """
-        return self.settings.get("ws_ping_interval", WS_PING_INTERVAL)  # type:ignore[attr-defined]
+        legacy_interval = self.settings.get("ws_ping_interval")  # type:ignore[attr-defined]
+        if legacy_interval is not None:
+            return legacy_interval
+
+        interval = self.settings.get("websocket_ping_interval")  # type:ignore[attr-defined]
+        if interval is not None:
+            return interval * 1000
+
+        return WS_PING_INTERVAL
 
     @property
     def ping_timeout(self):
-        """If no ping is received in this many milliseconds,
-        close the websocket connection (VPNs, etc. can fail to cleanly close ws connections).
-        Default is max of 3 pings or 30 seconds.
+        """The timeout for websocket keep-alive pings, in milliseconds.
+
+        ``ws_ping_timeout`` is an existing internal setting expressed in
+        milliseconds. ``websocket_ping_timeout`` is the public ServerApp
+        setting and is expressed in seconds.
         """
-        return self.settings.get(  # type:ignore[attr-defined]
-            "ws_ping_timeout", max(3 * self.ping_interval, WS_PING_INTERVAL)
-        )
+        legacy_timeout = self.settings.get("ws_ping_timeout")  # type:ignore[attr-defined]
+        if legacy_timeout is not None:
+            return legacy_timeout
+
+        timeout = self.settings.get("websocket_ping_timeout")  # type:ignore[attr-defined]
+        if timeout is not None:
+            return timeout * 1000
+
+        return max(3 * self.ping_interval, WS_PING_INTERVAL)
 
     @no_type_check
     def check_origin(self, origin: str | None = None) -> bool:
