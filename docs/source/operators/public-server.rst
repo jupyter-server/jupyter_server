@@ -37,7 +37,7 @@ This document describes how you can
 
 .. _ZeroMQ: https://zeromq.org/
 
-.. _Tornado: http://www.tornadoweb.org/en/stable/
+.. _Tornado: https://www.tornadoweb.org/en/stable/
 
 .. _JupyterHub: https://jupyterhub.readthedocs.io/en/latest/
 
