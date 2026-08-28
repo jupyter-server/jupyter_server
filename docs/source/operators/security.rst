@@ -573,9 +573,17 @@ This behavior is controlled by :attr:`~jupyter_server.serverapp.ServerApp.nbconv
 Reporting security issues
 -------------------------
 
-If you find a security vulnerability in Jupyter, either a failure of the
-code to properly implement the model described here, or a failure of the
-model itself, please report it to security@ipython.org.
+Do not report security vulnerabilities in a public GitHub issue. To report a
+security vulnerability in Jupyter Server, open a private GitHub Security
+Advisory in the repository. If opening an advisory is not possible, or you
+are unsure where the report belongs, email `security@jupyter.org
+<mailto:security@jupyter.org>`_. See the `Jupyter security policy
+<https://jupyter.org/security>`_ for the current reporting process and
+guidelines.
+
+Include enough information to reproduce the issue and, when possible, a
+proof of concept and a suggested fix. Do not include credentials, access
+tokens, or other sensitive information in a public issue.
 
 Affected use cases
 ------------------
