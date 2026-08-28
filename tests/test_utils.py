@@ -24,6 +24,8 @@ from jupyter_server.utils import (
     url2path,
     url_escape,
     url_unescape,
+    urldecode_unix_socket_path,
+    urlencode_unix_socket_path,
 )
 
 
@@ -127,6 +129,20 @@ def test_unix_socket_in_use(tmp_path):
     sock.listen(0)
     assert unix_socket_in_use(server_address)
     sock.close()
+
+
+@pytest.mark.parametrize(
+    "socket_path, encoded_socket_path",
+    [
+        ("/tmp/jupyter server.sock", "%2Ftmp%2Fjupyter%20server.sock"),
+        ("/tmp/socket%2Fname.sock", "%2Ftmp%2Fsocket%252Fname.sock"),
+    ],
+)
+def test_unix_socket_path_url_encoding(socket_path, encoded_socket_path):
+    encoded = urlencode_unix_socket_path(socket_path)
+
+    assert encoded == encoded_socket_path
+    assert urldecode_unix_socket_path(encoded) == socket_path
 
 
 @pytest.mark.parametrize(
