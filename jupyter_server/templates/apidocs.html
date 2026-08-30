@@ -1,0 +1,27 @@
+{% extends "page.html" %}
+
+{% block stylesheet %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ static_url('vendor/swagger-ui-dist/swagger-ui.css') }}" />
+    <style>
+        .swagger-ui .info .title small pre {
+            background-color: transparent;
+            border: 0;
+        }
+    </style>
+{% endblock stylesheet %}
+
+{% block site %}
+    <div id="swagger-ui"></div>
+{% endblock site %}
+
+{% block script %}
+    {{ super() }}
+    <script src="{{ static_url('vendor/swagger-ui-dist/swagger-ui-bundle.js') }}"></script>
+
+    <script>
+        ;(function(){
+            SwaggerUIBundle({ url: "./spec.yaml", dom_id: "#swagger-ui" });
+        }).call(this);
+    </script>
+{% endblock script %}
