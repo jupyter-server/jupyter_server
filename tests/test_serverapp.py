@@ -875,12 +875,9 @@ def test_init_asyncio_patch_keeps_default_policy(monkeypatch):
     if not sys.platform.startswith("win"):
         pytest.skip("Windows-only behavior")
     import asyncio
-
     from asyncio import WindowsProactorEventLoopPolicy, WindowsSelectorEventLoopPolicy
 
-    monkeypatch.setattr(
-        asyncio, "get_event_loop_policy", lambda: WindowsProactorEventLoopPolicy()
-    )
+    monkeypatch.setattr(asyncio, "get_event_loop_policy", lambda: WindowsProactorEventLoopPolicy())
     set_calls: list[object] = []
     monkeypatch.setattr(asyncio, "set_event_loop_policy", set_calls.append)
 
@@ -895,12 +892,9 @@ def test_init_asyncio_patch_downgrades_for_old_tornado(monkeypatch):
     if not sys.platform.startswith("win"):
         pytest.skip("Windows-only behavior")
     import asyncio
-
     from asyncio import WindowsProactorEventLoopPolicy, WindowsSelectorEventLoopPolicy
 
-    monkeypatch.setattr(
-        asyncio, "get_event_loop_policy", lambda: WindowsProactorEventLoopPolicy()
-    )
+    monkeypatch.setattr(asyncio, "get_event_loop_policy", lambda: WindowsProactorEventLoopPolicy())
     set_calls: list[object] = []
     monkeypatch.setattr(asyncio, "set_event_loop_policy", set_calls.append)
     monkeypatch.setattr("jupyter_server.serverapp.tornado.version_info", (6, 0, 0))

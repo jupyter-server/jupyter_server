@@ -2796,10 +2796,9 @@ class ServerApp(JupyterApp):
             else:
                 # Only needed for tornado < 6.1, which predates
                 # AddThreadSelectorEventLoop support for ProactorEventLoop.
-                if (
-                    type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy
-                    and tornado.version_info < (6, 1, 0)
-                ):
+                if type(
+                    asyncio.get_event_loop_policy()
+                ) is WindowsProactorEventLoopPolicy and tornado.version_info < (6, 1, 0):
                     # prefer Selector to Proactor for tornado + pyzmq
                     asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
