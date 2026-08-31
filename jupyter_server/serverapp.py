@@ -2770,15 +2770,20 @@ class ServerApp(JupyterApp):
 
     @staticmethod
     def _init_asyncio_patch() -> None:
-        """set default asyncio policy to be compatible with tornado
+        """keep the default asyncio event loop policy on Windows
 
-        Tornado 6.0 is not compatible with default asyncio
-        ProactorEventLoop, which lacks basic *_reader methods.
-        Tornado 6.1 adds a workaround to add these methods in a thread,
-        but SelectorEventLoop should still be preferred
-        to avoid the extra thread for ~all of our events,
-        at least until asyncio adds *_reader methods
-        to proactor.
+        Tornado 6.0 was not compatible with the default asyncio
+        ``ProactorEventLoop``, which lacks the basic ``*_reader`` methods, so
+        this historically downgraded to ``WindowsSelectorEventLoopPolicy`` on
+        Windows. Tornado 6.1 adds a workaround to add those methods in a thread
+        (``AddThreadSelectorEventLoop``), and Jupyter Server now requires
+        tornado >= 6.1 (see ``MIN_TORNADO``), so the downgrade is no longer
+        necessary.
+
+        Downgrading to ``SelectorEventLoop`` is actively harmful: it has no
+        subprocess support, so server extensions that spawn subprocesses (e.g.
+        the Jupyter AI ACP client) fail with ``NotImplementedError`` from
+        ``asyncio.create_subprocess_exec``.
         """
         if sys.platform.startswith("win"):
             import asyncio
@@ -2789,7 +2794,12 @@ class ServerApp(JupyterApp):
                 pass
                 # not affected
             else:
-                if type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy:
+                # Only needed for tornado < 6.1, which predates
+                # AddThreadSelectorEventLoop support for ProactorEventLoop.
+                if (
+                    type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy
+                    and tornado.version_info < (6, 1, 0)
+                ):
                     # prefer Selector to Proactor for tornado + pyzmq
                     asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 

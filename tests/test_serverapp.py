@@ -860,3 +860,52 @@ def test_bind_http_server_eaddrinuse_exits_cleanly(jp_configurable_serverapp):
         with patch.object(app, "exit") as mock_exit:
             app._bind_http_server()
             mock_exit.assert_called_once_with(1)
+
+
+def test_init_asyncio_patch_keeps_default_policy(monkeypatch):
+    """On Windows with tornado >= 6.1, ``_init_asyncio_patch`` must NOT downgrade
+    the event loop policy to ``WindowsSelectorEventLoopPolicy``.
+
+    ``SelectorEventLoop`` has no subprocess support (``asyncio.create_subprocess_exec``
+    raises ``NotImplementedError``), which breaks server extensions that spawn
+    subprocesses (e.g. the Jupyter AI ACP client). tornado >= 6.1 (the required
+    minimum) supports ``ProactorEventLoop`` via ``AddThreadSelectorEventLoop``,
+    so the downgrade is no longer needed.
+    """
+    if not sys.platform.startswith("win"):
+        pytest.skip("Windows-only behavior")
+    import asyncio
+
+    from asyncio import WindowsProactorEventLoopPolicy, WindowsSelectorEventLoopPolicy
+
+    monkeypatch.setattr(
+        asyncio, "get_event_loop_policy", lambda: WindowsProactorEventLoopPolicy()
+    )
+    set_calls: list[object] = []
+    monkeypatch.setattr(asyncio, "set_event_loop_policy", set_calls.append)
+
+    ServerApp._init_asyncio_patch()
+
+    assert set_calls == [], "policy should not be downgraded with tornado >= 6.1"
+
+
+def test_init_asyncio_patch_downgrades_for_old_tornado(monkeypatch):
+    """The Selector downgrade is preserved as a fallback for tornado < 6.1, which
+    predates ``AddThreadSelectorEventLoop`` support for ``ProactorEventLoop``."""
+    if not sys.platform.startswith("win"):
+        pytest.skip("Windows-only behavior")
+    import asyncio
+
+    from asyncio import WindowsProactorEventLoopPolicy, WindowsSelectorEventLoopPolicy
+
+    monkeypatch.setattr(
+        asyncio, "get_event_loop_policy", lambda: WindowsProactorEventLoopPolicy()
+    )
+    set_calls: list[object] = []
+    monkeypatch.setattr(asyncio, "set_event_loop_policy", set_calls.append)
+    monkeypatch.setattr("jupyter_server.serverapp.tornado.version_info", (6, 0, 0))
+
+    ServerApp._init_asyncio_patch()
+
+    assert len(set_calls) == 1
+    assert isinstance(set_calls[0], WindowsSelectorEventLoopPolicy)
