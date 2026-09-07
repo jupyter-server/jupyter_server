@@ -46,6 +46,24 @@ def test_web_socket_mixin(mixin):
     assert mixin.get_status() == 200
 
 
+def test_ping_settings_from_server_app_are_converted_to_milliseconds(mixin):
+    mixin.settings["websocket_ping_interval"] = 2
+    mixin.settings["websocket_ping_timeout"] = 7
+
+    assert mixin.ping_interval == 2000
+    assert mixin.ping_timeout == 7000
+
+
+def test_extension_ping_settings_override_server_app(mixin):
+    mixin.settings["websocket_ping_interval"] = 2
+    mixin.settings["websocket_ping_timeout"] = 7
+    mixin.settings["ws_ping_interval"] = 1500
+    mixin.settings["ws_ping_timeout"] = 3500
+
+    assert mixin.ping_interval == 1500
+    assert mixin.ping_timeout == 3500
+
+
 def test_web_socket_mixin_ping(mixin):
     mixin.ws_connection = MagicMock()
     mixin.ws_connection.is_closing = lambda: False

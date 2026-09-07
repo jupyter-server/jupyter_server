@@ -26,9 +26,17 @@ class WebSocketMixin:
     def ping_interval(self):
         """The interval for websocket keep-alive pings.
 
-        Set ws_ping_interval = 0 to disable pings.
+        ``ws_ping_interval`` is retained for extensions that provide the
+        value in milliseconds. The ``ServerApp.websocket_ping_interval``
+        setting is expressed in seconds and is converted here.
         """
-        return self.settings.get("ws_ping_interval", WS_PING_INTERVAL)  # type:ignore[attr-defined]
+        interval = self.settings.get("ws_ping_interval")  # type:ignore[attr-defined]
+        if interval is not None:
+            return interval
+        interval = self.settings.get("websocket_ping_interval")  # type:ignore[attr-defined]
+        if interval is not None:
+            return interval * 1000
+        return WS_PING_INTERVAL
 
     @property
     def ping_timeout(self):
@@ -36,9 +44,13 @@ class WebSocketMixin:
         close the websocket connection (VPNs, etc. can fail to cleanly close ws connections).
         Default is max of 3 pings or 30 seconds.
         """
-        return self.settings.get(  # type:ignore[attr-defined]
-            "ws_ping_timeout", max(3 * self.ping_interval, WS_PING_INTERVAL)
-        )
+        timeout = self.settings.get("ws_ping_timeout")  # type:ignore[attr-defined]
+        if timeout is not None:
+            return timeout
+        timeout = self.settings.get("websocket_ping_timeout")  # type:ignore[attr-defined]
+        if timeout is not None:
+            return timeout * 1000
+        return max(3 * self.ping_interval, WS_PING_INTERVAL)
 
     @no_type_check
     def check_origin(self, origin: str | None = None) -> bool:
