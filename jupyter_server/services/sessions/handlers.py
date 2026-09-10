@@ -140,6 +140,7 @@ class SessionHandler(SessionsAPIHandler):
         model = self.get_json_body()
         if model is None:
             raise web.HTTPError(400, "No JSON data provided")
+        force_kernel_shutdown = self._force_kernel_shutdown()
 
         # get the previous session model
         before = await sm.get_session(session_id=session_id)
@@ -194,11 +195,13 @@ class SessionHandler(SessionsAPIHandler):
 
         if s_model["kernel"]["id"] != before["kernel"]["id"]:
             # kernel_id changed because we got a new kernel
-            # shutdown the old one
-            fut = asyncio.ensure_future(ensure_async(km.shutdown_kernel(before["kernel"]["id"])))
-            # If we are not using pending kernels, wait for the kernel to shut down
-            if not getattr(km, "use_pending_kernels", None):
-                await fut
+            old_kernel_id = before["kernel"]["id"]
+            if force_kernel_shutdown or not sm.kernel_has_other_sessions(old_kernel_id, session_id):
+                # shutdown the old one
+                fut = asyncio.ensure_future(ensure_async(km.shutdown_kernel(old_kernel_id)))
+                # If we are not using pending kernels, wait for the kernel to shut down
+                if not getattr(km, "use_pending_kernels", None):
+                    await fut
         self.finish(json.dumps(s_model, default=json_default))
 
     @web.authenticated
@@ -207,12 +210,21 @@ class SessionHandler(SessionsAPIHandler):
         """Delete the session with given session_id."""
         sm = self.session_manager
         try:
-            await sm.delete_session(session_id)
+            await sm.delete_session(session_id, force_kernel_shutdown=self._force_kernel_shutdown())
         except KeyError as e:
             # the kernel was deleted but the session wasn't!
             raise web.HTTPError(410, "Kernel deleted before session") from e
         self.set_status(204)
         self.finish()
+
+    def _force_kernel_shutdown(self):
+        """Read the opt-in shared-kernel behavior from the query string."""
+        value = self.get_query_argument("force_kernel_shutdown", default="true").lower()
+        if value in {"true", "1"}:
+            return True
+        if value in {"false", "0"}:
+            return False
+        raise web.HTTPError(400, "force_kernel_shutdown must be true or false")
 
 
 # -----------------------------------------------------------------------------

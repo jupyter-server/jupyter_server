@@ -98,7 +98,7 @@ class SessionClient:
     def __init__(self, fetch_callable):
         self.jp_fetch = fetch_callable
 
-    async def _req(self, *args, method, body=None):
+    async def _req(self, *args, method, body=None, params=None):
         if body is not None:
             body = json.dumps(body)
 
@@ -108,6 +108,7 @@ class SessionClient:
             *args,
             method=method,
             body=body,
+            params=params,
             allow_nonstandard_methods=True,
         )
         return r
@@ -146,13 +147,23 @@ class SessionClient:
         body = {"kernel": {"name": kernel_name}}
         return self._req(id, method="PATCH", body=body)
 
-    def modify_kernel_id(self, id, kernel_id):
+    def modify_kernel_id(self, id, kernel_id, force_kernel_shutdown=None):
         # Also send a dummy name to show that id takes precedence.
         body = {"kernel": {"id": kernel_id, "name": "foo"}}
-        return self._req(id, method="PATCH", body=body)
+        params = (
+            {"force_kernel_shutdown": force_kernel_shutdown}
+            if force_kernel_shutdown is not None
+            else None
+        )
+        return self._req(id, method="PATCH", body=body, params=params)
 
-    async def delete(self, id):
-        return await self._req(id, method="DELETE")
+    async def delete(self, id, force_kernel_shutdown=None):
+        params = (
+            {"force_kernel_shutdown": force_kernel_shutdown}
+            if force_kernel_shutdown is not None
+            else None
+        )
+        return await self._req(id, method="DELETE", params=params)
 
     async def cleanup(self):
         resp = await self.list()
@@ -507,6 +518,28 @@ async def test_delete(session_client, jp_serverapp, session_is_ready):
 
 
 @pytest.mark.timeout(TEST_TIMEOUT)
+async def test_delete_preserves_shared_kernel_when_not_forced(
+    session_client, jp_fetch, jp_serverapp, session_is_ready
+):
+    first = j(await session_client.create("foo/nb1.ipynb"))
+    await session_is_ready(first["id"])
+    second = j(
+        await session_client.create("foo/console", type="console", kernel_id=first["kernel"]["id"])
+    )
+
+    resp = await session_client.delete(first["id"], force_kernel_shutdown=False)
+    assert resp.code == 204
+    assert j(await session_client.get(second["id"]))["kernel"]["id"] == first["kernel"]["id"]
+
+    resp = await session_client.delete(second["id"], force_kernel_shutdown=False)
+    assert resp.code == 204
+    if not getattr(jp_serverapp.kernel_manager, "use_pending_kernels", False):
+        with pytest.raises(tornado.httpclient.HTTPClientError) as error:
+            await jp_fetch("api", "kernels", first["kernel"]["id"], method="GET")
+        assert expected_http_error(error, 404)
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
 async def test_modify_path(session_client, jp_serverapp, session_is_ready):
     resp = await session_client.create("foo/nb1.ipynb")
     newsession = j(resp)
@@ -596,6 +629,27 @@ async def test_modify_kernel_id(session_client, jp_fetch, jp_serverapp, session_
     [k.pop("last_activity") for k in kernel_list]
     if not getattr(jp_serverapp.kernel_manager, "use_pending_kernels", False):
         assert kernel_list == [kernel]
+
+
+@pytest.mark.timeout(TEST_TIMEOUT)
+async def test_modify_kernel_preserves_shared_old_kernel_when_not_forced(
+    session_client, jp_fetch, jp_serverapp, session_is_ready
+):
+    first = j(await session_client.create("foo/nb1.ipynb"))
+    await session_is_ready(first["id"])
+    second = j(
+        await session_client.create("foo/console", type="console", kernel_id=first["kernel"]["id"])
+    )
+    replacement = j(await jp_fetch("api/kernels", method="POST", allow_nonstandard_methods=True))
+
+    changed = j(
+        await session_client.modify_kernel_id(
+            first["id"], replacement["id"], force_kernel_shutdown=False
+        )
+    )
+
+    assert changed["kernel"]["id"] == replacement["id"]
+    assert j(await session_client.get(second["id"]))["kernel"]["id"] == first["kernel"]["id"]
 
 
 @pytest.mark.xfail(

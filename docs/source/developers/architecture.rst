@@ -136,6 +136,11 @@ The delete Session workflow can be seen in the figure below:
 
 When a user stops a kernel, the following steps occur:
 
+By default, deleting a session also shuts down its kernel. Clients sharing a
+kernel can pass ``force_kernel_shutdown=false`` to keep it alive while another
+session still references it. The kernel is still shut down when the last such
+session is deleted.
+
 #. The Notebook client sends |delete_session|_ request to Jupyter Server. This
    request has the Session ID that kernel is currently using.
 
