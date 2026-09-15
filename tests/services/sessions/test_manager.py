@@ -372,6 +372,26 @@ async def test_delete_session(session_manager):
     assert new_sessions == expected
 
 
+async def test_delete_session_preserves_shared_kernel_when_not_forced(session_manager):
+    first = await session_manager.create_session(
+        path="/path/to/1.ipynb", kernel_name="python", type="notebook"
+    )
+    second = await session_manager.create_session(
+        path="/path/to/2.ipynb",
+        kernel_id=first["kernel"]["id"],
+        type="notebook",
+    )
+
+    await session_manager.delete_session(first["id"], force_kernel_shutdown=False)
+    assert first["kernel"]["id"] in session_manager.kernel_manager
+    assert (await session_manager.get_session(session_id=second["id"]))["kernel"]["id"] == first[
+        "kernel"
+    ]["id"]
+
+    await session_manager.delete_session(second["id"], force_kernel_shutdown=False)
+    assert first["kernel"]["id"] not in session_manager.kernel_manager
+
+
 async def test_bad_delete_session(session_manager):
     # try to delete a session that doesn't exist ~ raise error
     await session_manager.create_session(

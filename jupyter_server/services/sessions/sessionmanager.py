@@ -531,11 +531,21 @@ class SessionManager(LoggingConfigurable):
                 pass
         return result
 
-    async def delete_session(self, session_id):
-        """Deletes the row in the session database with given session_id"""
+    def kernel_has_other_sessions(self, kernel_id, session_id):
+        """Return whether another session is attached to a kernel."""
+        row = self.cursor.execute(
+            "SELECT 1 FROM session WHERE kernel_id=? AND session_id!=? LIMIT 1",
+            (kernel_id, session_id),
+        ).fetchone()
+        return row is not None
+
+    async def delete_session(self, session_id, force_kernel_shutdown=True):
+        """Delete a session and, unless shared and not forced, its kernel."""
         record = KernelSessionRecord(session_id=session_id)
         self._pending_sessions.update(record)
         session = await self.get_session(session_id=session_id)
-        await ensure_async(self.kernel_manager.shutdown_kernel(session["kernel"]["id"]))
+        kernel_id = session["kernel"]["id"]
+        if force_kernel_shutdown or not self.kernel_has_other_sessions(kernel_id, session_id):
+            await ensure_async(self.kernel_manager.shutdown_kernel(kernel_id))
         self.cursor.execute("DELETE FROM session WHERE session_id=?", (session_id,))
         self._pending_sessions.remove(record)

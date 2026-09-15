@@ -409,6 +409,11 @@ paths:
       tags:
         - sessions
       parameters:
+        - name: force_kernel_shutdown
+          in: query
+          type: boolean
+          default: true
+          description: Shut down the previous kernel even when another session uses it
         - name: model
           in: body
           required: true
@@ -425,9 +430,15 @@ paths:
       summary: Delete a session
       tags:
         - sessions
+      parameters:
+        - name: force_kernel_shutdown
+          in: query
+          type: boolean
+          default: true
+          description: Shut down the kernel even when another session uses it
       responses:
         204:
-          description: Session (and kernel) were deleted
+          description: Session was deleted; the kernel may remain when shared and force_kernel_shutdown is false
         410:
           description: "Kernel was deleted before the session, and the session was *not* deleted (TODO - check to make sure session wasn't deleted)"
   /api/sessions:
