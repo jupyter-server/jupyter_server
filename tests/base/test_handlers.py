@@ -5,6 +5,7 @@ import warnings
 from unittest.mock import MagicMock, patch
 
 import pytest
+import tornado
 from tornado.httpclient import HTTPClientError
 from tornado.httpserver import HTTPRequest
 from tornado.httputil import HTTPHeaders
@@ -391,3 +392,46 @@ async def test_static_handler(jp_serverapp, tmpdir):
     handler.settings["static_immutable_cache"] = [str(tmpdir)]
     await handler.get("foo")
     assert handler._headers["Cache-Control"] == "public, max-age=31536000, immutable"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="symlinks need extra permissions on Windows")
+@pytest.mark.skipif(
+    tornado.version_info < (6, 5, 9),
+    reason="tornado only validates symlink targets from 6.5.9",
+)
+async def test_static_handler_follow_dir_symlinks(jp_serverapp, tmp_path):
+    """A linked directory is served only when the handler opts in."""
+
+    async def async_magic():
+        pass
+
+    MagicMock.__await__ = lambda x: async_magic().__await__()
+
+    root = tmp_path / "root"
+    outside = tmp_path / "outside"
+    root.mkdir()
+    (outside / "ext").mkdir(parents=True)
+    (outside / "ext" / "index.js").write_text("hello")
+    (outside / "secret.txt").write_text("secret")
+    (root / "ext").symlink_to(outside / "ext")
+    (outside / "ext" / "escape.txt").symlink_to(outside / "secret.txt")
+
+    app: ServerApp = jp_serverapp
+
+    def handler(**kwargs):
+        request = HTTPRequest("GET", "/")
+        request.connection = MagicMock()
+        found = FileFindHandler(app.web_app, request, path=str(root), **kwargs)
+        found._transforms = []
+        return found
+
+    with pytest.raises(HTTPError) as excinfo:
+        await handler().get("ext/index.js")
+    assert excinfo.value.status_code == 403
+
+    await handler(follow_dir_symlinks=True).get("ext/index.js")
+
+    # a link below the linked directory still cannot leave it
+    with pytest.raises(HTTPError) as excinfo:
+        await handler(follow_dir_symlinks=True).get("ext/escape.txt")
+    assert excinfo.value.status_code == 403
