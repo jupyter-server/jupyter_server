@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import errno
 import math
 import mimetypes
@@ -531,53 +532,111 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         """Save the file model and return the model with no content."""
         path = path.strip("/")
 
-        self.run_pre_save_hooks(model=model, path=path)
-
         if "type" not in model:
             raise web.HTTPError(400, "No file type provided")
+
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, "No file content provided")
-        os_path = self._get_os_path(path)
 
-        if not self.allow_hidden and is_hidden(os_path, self.root_dir):
-            raise web.HTTPError(400, f"Cannot create file or directory {os_path!r}")
+        chunk = model.get("chunk", None)
+        if chunk is not None:
+            if chunk == 1:
+                self.run_pre_save_hooks(model=model, path=path)
 
-        self.log.debug("Saving %s", os_path)
+            if model["type"] != "file":
+                raise web.HTTPError(
+                    400,
+                    'File type "{}" is not supported for large file transfer'.format(model["type"]),
+                )
 
-        validation_error: dict[str, t.Any] = {}
-        try:
-            if model["type"] == "notebook":
-                nb = nbformat.from_dict(model["content"])
-                self.check_and_sign(nb, path)
-                self._save_notebook(os_path, nb, capture_validation_error=validation_error)
-                # One checkpoint should always exist for notebooks.
-                if not self.checkpoints.list_checkpoints(path):
-                    self.create_checkpoint(path)
-            elif model["type"] == "file":
-                # Missing format will be handled internally by _save_file.
-                self._save_file(os_path, model["content"], model.get("format"))
-            elif model["type"] == "directory":
-                self._save_directory(os_path, model, path)
+            os_path = self._get_os_path(path)
+            if chunk == -1:
+                self.log.debug(f"Saving last chunk of file {os_path}")
             else:
-                raise web.HTTPError(400, "Unhandled contents type: %s" % model["type"])
-        except web.HTTPError:
-            raise
-        except Exception as e:
-            self.log.error("Error while saving file: %s %s", path, e, exc_info=True)
-            raise web.HTTPError(500, f"Unexpected error while saving file: {path} {e}") from e
+                self.log.debug(f"Saving chunk {chunk} of file {os_path}")
 
-        validation_message = None
-        if model["type"] == "notebook":
-            self.validate_notebook_model(model, validation_error=validation_error)
-            validation_message = model.get("message", None)
+            try:
+                if chunk == 1:
+                    super()._save_file(os_path, model["content"], model.get("format"))
+                else:
+                    self._save_large_file(os_path, model["content"], model.get("format"))
+            except web.HTTPError:
+                raise
+            except Exception as e:
+                self.log.error("Error while saving file: %s %s", path, e, exc_info=True)
+                raise web.HTTPError(500, f"Unexpected error while saving file: {path} {e}") from e
 
-        model = self.get(path, content=False)
-        if validation_message:
-            model["message"] = validation_message
+            model = self.get(path, content=False)
 
-        self.run_post_save_hooks(model=model, os_path=os_path)
+            # Last chunk
+            if chunk == -1:
+                self.run_post_save_hooks(model=model, os_path=os_path)
+        else:
+            self.run_pre_save_hooks(model=model, path=path)
+
+            os_path = self._get_os_path(path)
+
+            if not self.allow_hidden and is_hidden(os_path, self.root_dir):
+                raise web.HTTPError(400, f"Cannot create file or directory {os_path!r}")
+
+            self.log.debug("Saving %s", os_path)
+
+            validation_error: dict[str, t.Any] = {}
+            try:
+                if model["type"] == "notebook":
+                    nb = nbformat.from_dict(model["content"])
+                    self.check_and_sign(nb, path)
+                    self._save_notebook(os_path, nb, capture_validation_error=validation_error)
+                    # One checkpoint should always exist for notebooks.
+                    if not self.checkpoints.list_checkpoints(path):
+                        self.create_checkpoint(path)
+                elif model["type"] == "file":
+                    # Missing format will be handled internally by _save_file.
+                    self._save_file(os_path, model["content"], model.get("format"))
+                elif model["type"] == "directory":
+                    self._save_directory(os_path, model, path)
+                else:
+                    raise web.HTTPError(400, "Unhandled contents type: %s" % model["type"])
+            except web.HTTPError:
+                raise
+            except Exception as e:
+                self.log.error("Error while saving file: %s %s", path, e, exc_info=True)
+                raise web.HTTPError(500, f"Unexpected error while saving file: {path} {e}") from e
+
+            validation_message = None
+            if model["type"] == "notebook":
+                self.validate_notebook_model(model, validation_error=validation_error)
+                validation_message = model.get("message", None)
+
+            model = self.get(path, content=False)
+            if validation_message:
+                model["message"] = validation_message
+
+            self.run_post_save_hooks(model=model, os_path=os_path)
         self.emit(data={"action": "save", "path": path})
         return model
+
+    def _save_large_file(self, os_path, content, format):
+        """Save content of a generic file."""
+        if format not in {"text", "base64"}:
+            raise web.HTTPError(
+                400,
+                "Must specify format of file contents as 'text' or 'base64'",
+            )
+        try:
+            if format == "text":
+                bcontent = content.encode("utf8")
+            else:
+                b64_bytes = content.encode("ascii")
+                bcontent = base64.b64decode(b64_bytes)
+        except Exception as e:
+            raise web.HTTPError(400, f"Encoding error saving {os_path}: {e}") from e
+
+        with self.perm_to_403(os_path):
+            if os.path.islink(os_path):
+                os_path = os.path.join(os.path.dirname(os_path), os.readlink(os_path))
+            with open(os_path, "ab") as f:
+                f.write(bcontent)
 
     def delete_file(self, path):
         """Delete file at path."""
@@ -1001,50 +1060,108 @@ class AsyncFileContentsManager(  # type: ignore[misc]
         """Save the file model and return the model with no content."""
         path = path.strip("/")
 
-        self.run_pre_save_hooks(model=model, path=path)
-
         if "type" not in model:
             raise web.HTTPError(400, "No file type provided")
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, "No file content provided")
 
-        os_path = self._get_os_path(path)
-        self.log.debug("Saving %s", os_path)
+        chunk = model.get("chunk", None)
+        if chunk is not None:
+            if chunk == 1:
+                self.run_pre_save_hooks(model=model, path=path)
 
-        validation_error: dict[str, t.Any] = {}
-        try:
-            if model["type"] == "notebook":
-                nb = nbformat.from_dict(model["content"])
-                self.check_and_sign(nb, path)
-                await self._save_notebook(os_path, nb, capture_validation_error=validation_error)
-                # One checkpoint should always exist for notebooks.
-                if not (await self.checkpoints.list_checkpoints(path)):
-                    await self.create_checkpoint(path)
-            elif model["type"] == "file":
-                # Missing format will be handled internally by _save_file.
-                await self._save_file(os_path, model["content"], model.get("format"))
-            elif model["type"] == "directory":
-                await self._save_directory(os_path, model, path)
+            if model["type"] != "file":
+                raise web.HTTPError(
+                    400,
+                    'File type "{}" is not supported for large file transfer'.format(model["type"]),
+                )
+
+            os_path = self._get_os_path(path)
+            if chunk == -1:
+                self.log.debug(f"Saving last chunk of file {os_path}")
             else:
-                raise web.HTTPError(400, "Unhandled contents type: %s" % model["type"])
-        except web.HTTPError:
-            raise
-        except Exception as e:
-            self.log.error("Error while saving file: %s %s", path, e, exc_info=True)
-            raise web.HTTPError(500, f"Unexpected error while saving file: {path} {e}") from e
+                self.log.debug(f"Saving chunk {chunk} of file {os_path}")
 
-        validation_message = None
-        if model["type"] == "notebook":
-            self.validate_notebook_model(model, validation_error=validation_error)
-            validation_message = model.get("message", None)
+            try:
+                if chunk == 1:
+                    await super()._save_file(os_path, model["content"], model.get("format"))
+                else:
+                    await self._save_large_file(os_path, model["content"], model.get("format"))
+            except web.HTTPError:
+                raise
+            except Exception as e:
+                self.log.error("Error while saving file: %s %s", path, e, exc_info=True)
+                raise web.HTTPError(500, f"Unexpected error while saving file: {path} {e}") from e
 
-        model = await self.get(path, content=False)
-        if validation_message:
-            model["message"] = validation_message
+            model = await self.get(path, content=False)
 
-        self.run_post_save_hooks(model=model, os_path=os_path)
+            # Last chunk
+            if chunk == -1:
+                self.run_post_save_hooks(model=model, os_path=os_path)
+        else:
+            self.run_pre_save_hooks(model=model, path=path)
+
+            os_path = self._get_os_path(path)
+            self.log.debug("Saving %s", os_path)
+
+            validation_error: dict[str, t.Any] = {}
+            try:
+                if model["type"] == "notebook":
+                    nb = nbformat.from_dict(model["content"])
+                    self.check_and_sign(nb, path)
+                    await self._save_notebook(
+                        os_path, nb, capture_validation_error=validation_error
+                    )
+                    # One checkpoint should always exist for notebooks.
+                    if not (await self.checkpoints.list_checkpoints(path)):
+                        await self.create_checkpoint(path)
+                elif model["type"] == "file":
+                    # Missing format will be handled internally by _save_file.
+                    await self._save_file(os_path, model["content"], model.get("format"))
+                elif model["type"] == "directory":
+                    await self._save_directory(os_path, model, path)
+                else:
+                    raise web.HTTPError(400, "Unhandled contents type: %s" % model["type"])
+            except web.HTTPError:
+                raise
+            except Exception as e:
+                self.log.error("Error while saving file: %s %s", path, e, exc_info=True)
+                raise web.HTTPError(500, f"Unexpected error while saving file: {path} {e}") from e
+
+            validation_message = None
+            if model["type"] == "notebook":
+                self.validate_notebook_model(model, validation_error=validation_error)
+                validation_message = model.get("message", None)
+
+            model = await self.get(path, content=False)
+            if validation_message:
+                model["message"] = validation_message
+
+            self.run_post_save_hooks(model=model, os_path=os_path)
         self.emit(data={"action": "save", "path": path})
         return model
+
+    async def _save_large_file(self, os_path, content, format):
+        """Save content of a generic file."""
+        if format not in {"text", "base64"}:
+            raise web.HTTPError(
+                400,
+                "Must specify format of file contents as 'text' or 'base64'",
+            )
+        try:
+            if format == "text":
+                bcontent = content.encode("utf8")
+            else:
+                b64_bytes = content.encode("ascii")
+                bcontent = base64.b64decode(b64_bytes)
+        except Exception as e:
+            raise web.HTTPError(400, f"Encoding error saving {os_path}: {e}") from e
+
+        with self.perm_to_403(os_path):
+            if os.path.islink(os_path):
+                os_path = os.path.join(os.path.dirname(os_path), os.readlink(os_path))
+            with open(os_path, "ab") as f:  # noqa: ASYNC230
+                await run_sync(f.write, bcontent)
 
     async def delete_file(self, path):
         """Delete file at path."""
