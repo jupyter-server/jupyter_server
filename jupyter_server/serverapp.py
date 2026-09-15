@@ -1660,6 +1660,8 @@ class ServerApp(JupyterApp):
         return ZMQChannelsWebsocketConnection
 
     websocket_ping_interval = Integer(
+        default_value=None,
+        allow_none=True,
         config=True,
         help="""
             Configure the websocket ping interval in seconds.
@@ -1677,6 +1679,8 @@ class ServerApp(JupyterApp):
         """,
     )
     websocket_ping_timeout = Integer(
+        default_value=None,
+        allow_none=True,
         config=True,
         help="""
             Configure the websocket ping timeout in seconds.
