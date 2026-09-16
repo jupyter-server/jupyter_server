@@ -69,6 +69,16 @@ def _get_created_timestamp(info: os.stat_result) -> float:
     return info.st_ctime
 
 
+def _safe_move(src: str, dst: str) -> None:
+    """Move a path without copying after a non-cross-device rename error."""
+    try:
+        os.rename(src, dst)
+    except OSError as error:
+        if error.errno != errno.EXDEV:
+            raise
+        shutil.move(src, dst)
+
+
 class FileContentsManager(FileManagerMixin, ContentsManager):
     """A file contents manager."""
 
@@ -651,7 +661,7 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         # Move the file
         try:
             with self.perm_to_403():
-                shutil.move(old_os_path, new_os_path)
+                _safe_move(old_os_path, new_os_path)
         except web.HTTPError:
             raise
         except FileNotFoundError:
@@ -1122,7 +1132,7 @@ class AsyncFileContentsManager(  # type: ignore[misc]
         # Move the file
         try:
             with self.perm_to_403():
-                await run_sync(shutil.move, old_os_path, new_os_path)
+                await run_sync(_safe_move, old_os_path, new_os_path)
         except web.HTTPError:
             raise
         except FileNotFoundError:

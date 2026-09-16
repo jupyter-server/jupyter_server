@@ -1,3 +1,4 @@
+import errno
 import math
 import os
 import shutil
@@ -854,6 +855,20 @@ async def test_rename(jp_contents_manager):
 
     # Created a notebook in the renamed directory should work
     await ensure_async(cm.new_untitled("foo/bar_diff", ext=".ipynb"))
+
+
+async def test_rename_busy_directory_does_not_move_contents(jp_contents_manager):
+    cm = jp_contents_manager
+    await make_populated_dir(cm, "busy")
+
+    error = OSError(errno.EBUSY, "Device or resource busy")
+    with patch("jupyter_server.services.contents.filemanager.os.rename", side_effect=error):
+        with pytest.raises(HTTPError) as excinfo:
+            await ensure_async(cm.rename_file("busy", "renamed"))
+
+    assert excinfo.value.status_code == 500
+    await check_populated_dir_files(cm, "busy")
+    assert await ensure_async(cm.dir_exists("renamed")) is False
 
 
 async def test_rename_nonexistent(jp_contents_manager):
