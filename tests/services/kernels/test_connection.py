@@ -50,6 +50,13 @@ async def test_websocket_connection(jp_serverapp: ServerApp) -> None:
     conn._on_error("shell", msg, session.serialize(msg))
 
 
+def test_select_subprotocol_after_early_close() -> None:
+    handler = object.__new__(KernelWebsocketHandler)
+    handler.connection = None
+
+    assert handler.select_subprotocol(["v1.kernel.websocket.jupyter.org"]) is None
+
+
 def _make_connection(app, kernel, session_id=None, timeout=0.01):
     """Build a ZMQChannelsWebsocketConnection with a mocked handler."""
     request = HTTPRequest("foo", "GET")
