@@ -26,13 +26,14 @@ from jupyter_server.gateway.connections import GatewayWebSocketConnection
 from jupyter_server.gateway.gateway_client import GatewayTokenRenewerBase, NoOpTokenRenewer
 from jupyter_server.gateway.managers import ChannelQueue, GatewayClient, GatewayKernelManager
 from jupyter_server.services.kernels.websocket import KernelWebsocketHandler
+from jupyter_server.utils import url_path_join
 
 from .utils import expected_http_error
 
 pytest_plugins = ["jupyter_events.pytest_plugin"]
 
 
-def generate_kernelspec(name):
+def generate_kernelspec(name, kernelspecs_endpoint):
     argv_stanza = ["python", "-m", "ipykernel_launcher", "-f", "{connection_file}"]
     spec_stanza = {
         "spec": {
@@ -50,6 +51,7 @@ def generate_kernelspec(name):
         "resources": {
             "logo-64x64": f"f/kernelspecs/{name}/logo-64x64.png",
             "url": "https://example.com/example-url",
+            "kernelspec": kernelspecs_endpoint,
         },
     }
     return kernelspec_stanza
@@ -59,8 +61,11 @@ def generate_kernelspec(name):
 kernelspecs: dict = {
     "default": "kspec_foo",
     "kernelspecs": {
-        "kspec_foo": generate_kernelspec("kspec_foo"),
-        "kspec_bar": generate_kernelspec("kspec_bar"),
+        "kspec_foo": generate_kernelspec("kspec_foo", "/foo/kernelspecs"),
+        "kspec_bar": generate_kernelspec("kspec_bar", "/bar/kernelspecs/"),
+        "kspec_baz": generate_kernelspec(
+            "kspec_baz", GatewayClient.kernelspecs_endpoint_default_value
+        ),
     },
 }
 
@@ -450,10 +455,19 @@ async def test_gateway_get_kernelspecs(init_gateway, jp_fetch, jp_serverapp):
         assert r.code == 200
         content = json.loads(r.body.decode("utf-8"))
         kspecs = content.get("kernelspecs")
-        assert len(kspecs) == 2
+        assert len(kspecs) == 3
         assert kspecs.get("kspec_bar").get("name") == "kspec_bar"
         assert (
             kspecs.get("kspec_bar").get("resources")["logo-64x64"].startswith(jp_serverapp.base_url)
+        )
+        assert (
+            kspecs.get("kspec_bar").get("resources")["kernelspec"].startswith(jp_serverapp.base_url)
+        )
+        assert (
+            kspecs.get("kspec_foo").get("resources")["kernelspec"].startswith(jp_serverapp.base_url)
+        )
+        assert (
+            kspecs.get("kspec_baz").get("resources")["kernelspec"].startswith(jp_serverapp.base_url)
         )
 
 
@@ -763,8 +777,10 @@ async def test_websocket_connection_with_session_id(init_gateway, jp_serverapp, 
         handler.connection = conn
         await conn.connect()
         assert conn.session_id != None
-        expected_ws_url = (
-            f"{mock_gateway_ws_url}/api/kernels/{kernel_id}/channels?session_id={conn.session_id}"
+        expected_ws_url = url_path_join(
+            mock_gateway_ws_url,
+            jp_serverapp.base_url,
+            f"/api/kernels/{kernel_id}/channels?session_id={conn.session_id}",
         )
         assert expected_ws_url in caplog.text, (
             "WebSocket URL does not contain the expected session_id."
