@@ -361,6 +361,10 @@ class ContentsManager(LoggingConfigurable):
         """,
     )
 
+    @default("files_handler_params")
+    def _files_handler_params_default(self):
+        return {"path": self.root_dir}
+
     def get_extra_handlers(self):
         """Return additional handlers
 
