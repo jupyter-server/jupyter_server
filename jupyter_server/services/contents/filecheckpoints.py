@@ -118,6 +118,11 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
             cp_dir = os.path.join(tempfile.gettempdir(), "jupyter_checkpoints", rel)
         with self.perm_to_403():
             ensure_dir_exists(cp_dir)
+            try:
+                with open(os.path.join(cp_dir, ".gitignore"), "x") as f:
+                    f.write("*\n")
+            except FileExistsError:
+                pass
         cp_path = os.path.join(cp_dir, filename)
         return cp_path
 
