@@ -167,3 +167,28 @@ def test_disable_no_import(jp_serverapp, has_app):
     assert ext_pkg.extension_points == {}
     assert ext_pkg.version == ""
     assert ext_pkg.metadata == []
+
+
+def test_extension_point_tools_default_schema():
+    ep = ExtensionPoint(metadata={"module": "tests.extension.mockextensions.mockext_tool"})
+    assert "mock_tool" in ep.tools
+
+
+def test_extension_point_tools_custom_schema():
+    ep = ExtensionPoint(metadata={"module": "tests.extension.mockextensions.mockext_customschema"})
+    assert "openai_style_tool" in ep.tools
+    metadata = ep.tools["openai_style_tool"]["metadata"]
+    assert "parameters" in metadata
+
+
+def test_extension_manager_duplicate_tool_name_raises(jp_serverapp):
+    from jupyter_server.extension.manager import ExtensionManager
+
+    manager = ExtensionManager(serverapp=jp_serverapp)
+    manager.add_extension("tests.extension.mockextensions.mockext_tool", enabled=True)
+    manager.add_extension("tests.extension.mockextensions.mockext_dupes", enabled=True)
+    manager.link_all_extensions()
+
+    with pytest.raises(ValueError, match="Duplicate tool name detected: 'mock_tool'"):
+        manager.get_tools()
+
