@@ -1216,9 +1216,8 @@ async def test_save_raises_when_signature_store_unrecoverable(file_manager_with_
     broken_store.store_signature.side_effect = RuntimeError("store is broken")
     cm.notary.store_factory = lambda: broken_store
 
-    with caplog.at_level("WARNING"):
-        with pytest.raises(HTTPError) as exc_info:
-            await ensure_async(cm.save(full_model, path))
+    with caplog.at_level("WARNING"), pytest.raises(HTTPError) as exc_info:
+        await ensure_async(cm.save(full_model, path))
     assert exc_info.value.status_code == 500
     assert "corrupted or unavailable" in caplog.text
 
