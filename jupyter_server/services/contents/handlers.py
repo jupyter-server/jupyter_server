@@ -238,12 +238,14 @@ class ContentsHandler(ContentsAPIHandler):
         validate_model(model)
         self._finish_model(model)
 
-    async def _save(self, model, path):
+    async def _save(self, model, path, require_hash):
         """Save an existing file."""
         chunk = model.get("chunk", None)
         if not chunk or chunk == -1:  # Avoid tedious log information
             self.log.info("Saving file at %s", path)
-        model = await ensure_async(self.contents_manager.save(model, path))
+        model = await ensure_async(
+            self.contents_manager.save(model, path, require_hash=require_hash)
+        )
         validate_model(model)
         self._finish_model(model)
 
@@ -304,6 +306,13 @@ class ContentsHandler(ContentsAPIHandler):
         model = self.get_json_body()
         cm = self.contents_manager
 
+        hash_str = self.get_query_argument("hash", default="0")
+        if hash_str not in {"0", "1"}:
+            raise web.HTTPError(
+                400, f"Hash argument {hash_str!r} is invalid. It must be '0' or '1'."
+            )
+        require_hash = int(hash_str)
+
         if model:
             if model.get("copy_from"):
                 raise web.HTTPError(400, "Cannot copy with PUT, only POST")
@@ -318,7 +327,7 @@ class ContentsHandler(ContentsAPIHandler):
                 # fall back to file if unknown type
                 model["type"] = "file"
             if exists:
-                await self._save(model, path)
+                await self._save(model, path, require_hash=require_hash)
             else:
                 await self._upload(model, path)
         else:
