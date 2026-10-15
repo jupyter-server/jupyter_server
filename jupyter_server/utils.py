@@ -234,12 +234,12 @@ async def run_sync_in_loop(maybe_async):
 
 def urlencode_unix_socket_path(socket_path: str) -> str:
     """Encodes a UNIX socket path string from a socket path for the `http+unix` URI form."""
-    return socket_path.replace("/", "%2F")
+    return quote(socket_path, safe="")
 
 
 def urldecode_unix_socket_path(socket_path: str) -> str:
     """Decodes a UNIX sock path string from an encoded sock path for the `http+unix` URI form."""
-    return socket_path.replace("%2F", "/")
+    return unquote(socket_path)
 
 
 def urlencode_unix_socket(socket_path: str) -> str:
