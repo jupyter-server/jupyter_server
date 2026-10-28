@@ -96,7 +96,14 @@ def symlink(jp_contents_manager, src, dst):
     src_os_path = jp_contents_manager._get_os_path(src)
     dst_os_path = jp_contents_manager._get_os_path(dst)
     print(src_os_path, dst_os_path, os.path.isfile(src_os_path))
-    os.symlink(src_os_path, dst_os_path)
+    try:
+        os.symlink(src_os_path, dst_os_path)
+    except OSError as e:
+        # Windows refuses symlink creation without elevation or Developer Mode
+        # (WinError 1314). Skip the requesting test rather than erroring in setup;
+        # it still runs wherever symlinks can be created (Linux, macOS, elevated
+        # or Developer-Mode Windows).
+        pytest.skip(f"Cannot create symlink: {e}")
 
 
 def add_code_cell(notebook):
