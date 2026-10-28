@@ -6,13 +6,16 @@ Utilities for file-based Contents/Checkpoints managers.
 
 from __future__ import annotations
 
+import asyncio
 import errno
 import hashlib
 import os
 import shutil
 from base64 import decodebytes, encodebytes
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
+from contextvars import ContextVar
 from functools import partial
+from typing import Any
 
 import nbformat
 from anyio.to_thread import run_sync
@@ -22,6 +25,11 @@ from traitlets.config import Configurable
 from traitlets.config.configurable import LoggingConfigurable
 
 from jupyter_server.utils import ApiPath, to_api_path, to_os_path
+
+# (manager id, path) of the file locks held by the current task; see `AsyncFileManagerMixin._path_lock`.
+_held_path_locks: ContextVar[frozenset[tuple[int, str]]] = ContextVar(
+    "_held_path_locks", default=frozenset()
+)
 
 
 def replace_file(src, dst):
@@ -359,7 +367,12 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
         # Move the bad file aside, restore the intermediate, and try again.
         invalid_file = path_to_invalid(os_path)
         replace_file(os_path, invalid_file)
-        replace_file(tmp_path, os_path)
+        try:
+            replace_file(tmp_path, os_path)
+        except OSError:
+            # Don't leave the notebook missing; put the file back where it was.
+            replace_file(invalid_file, os_path)
+            raise
         return self._read_notebook(
             os_path, as_version, capture_validation_error=capture_validation_error, raw=raw
         )
@@ -478,6 +491,42 @@ class AsyncFileManagerMixin(FileManagerMixin):
     Mixin for ContentsAPI classes that interact with the filesystem asynchronously.
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Locks for files being read or saved, by (manager id, path). Entries only
+        # exist while someone holds or waits for the lock; see `_path_lock`.
+        self._path_locks: dict[tuple[int, str], list[Any]] = {}
+
+    @asynccontextmanager
+    async def _path_lock(self, os_path):
+        """Serialize reads and writes of one file within this server.
+
+        Saving rewrites the file in place across several awaits, so a read that
+        starts in the middle of a save sees a partial file. Holding this lock
+        around both keeps readers out until the save has finished.
+
+        The lock is reentrant for the task that holds it, so a method that
+        holds it can call another that takes it.
+        """
+        key = (id(self), str(os_path))
+        held = _held_path_locks.get()
+        if key in held:
+            yield
+            return
+
+        locks = self._path_locks
+        entry = locks.setdefault(key, [asyncio.Lock(), 0])
+        entry[1] += 1
+        token = _held_path_locks.set(held | {key})
+        try:
+            async with entry[0]:
+                yield
+        finally:
+            _held_path_locks.reset(token)
+            entry[1] -= 1
+            if entry[1] == 0:
+                del locks[key]
+
     async def _copy(self, src, dest):
         """copy src to dest
 
@@ -489,56 +538,73 @@ class AsyncFileManagerMixin(FileManagerMixin):
         self, os_path, as_version=4, capture_validation_error=None, raw: bool = False
     ):
         """Read a notebook from an os path."""
-        answer = await self._read_file(os_path, "text", raw)
+        async with self._path_lock(os_path):
+            answer = await self._read_file(os_path, "text", raw)
 
-        try:
-            nb = await run_sync(
-                partial(
-                    nbformat.reads,
-                    as_version=as_version,
-                    capture_validation_error=capture_validation_error,
-                ),
-                answer[0],
+            try:
+                nb = await run_sync(
+                    partial(
+                        nbformat.reads,
+                        as_version=as_version,
+                        capture_validation_error=capture_validation_error,
+                    ),
+                    answer[0],
+                )
+                return (nb, answer[2]) if raw else nb  # type:ignore[misc]
+            except Exception as e:
+                e_orig = e
+
+            # If use_atomic_writing is enabled, we'll guess that it was also
+            # enabled when this notebook was written and look for a valid
+            # atomic intermediate.
+            tmp_path = path_to_intermediate(os_path)
+
+            if not self.use_atomic_writing or not os.path.exists(tmp_path):
+                raise HTTPError(
+                    400,
+                    f"Unreadable Notebook: {os_path} {e_orig!r}",
+                )
+
+            # Move the bad file aside, restore the intermediate, and try again.
+            invalid_file = path_to_invalid(os_path)
+            await async_replace_file(os_path, invalid_file)
+            try:
+                await async_replace_file(tmp_path, os_path)
+            except OSError:
+                # Don't leave the notebook missing; put the file back where it was.
+                await async_replace_file(invalid_file, os_path)
+                raise
+            answer = await self._read_notebook(
+                os_path, as_version, capture_validation_error=capture_validation_error, raw=raw
             )
-            return (nb, answer[2]) if raw else nb  # type:ignore[misc]
-        except Exception as e:
-            e_orig = e
 
-        # If use_atomic_writing is enabled, we'll guess that it was also
-        # enabled when this notebook was written and look for a valid
-        # atomic intermediate.
-        tmp_path = path_to_intermediate(os_path)
-
-        if not self.use_atomic_writing or not os.path.exists(tmp_path):
-            raise HTTPError(
-                400,
-                f"Unreadable Notebook: {os_path} {e_orig!r}",
-            )
-
-        # Move the bad file aside, restore the intermediate, and try again.
-        invalid_file = path_to_invalid(os_path)
-        await async_replace_file(os_path, invalid_file)
-        await async_replace_file(tmp_path, os_path)
-        answer = await self._read_notebook(
-            os_path, as_version, capture_validation_error=capture_validation_error, raw=raw
-        )
-
-        return answer
+            return answer
 
     async def _save_notebook(self, os_path, nb, capture_validation_error=None):
         """Save a notebook to an os_path."""
-        with self.atomic_writing(os_path, encoding="utf-8") as f:
-            await run_sync(
-                partial(
-                    nbformat.write,
-                    version=nbformat.NO_CONVERT,
-                    capture_validation_error=capture_validation_error,
-                ),
-                nb,
-                f,
-            )
+        async with self._path_lock(os_path):
+            with self.atomic_writing(os_path, encoding="utf-8") as f:
+                await run_sync(
+                    partial(
+                        nbformat.write,
+                        version=nbformat.NO_CONVERT,
+                        capture_validation_error=capture_validation_error,
+                    ),
+                    nb,
+                    f,
+                )
 
     async def _read_file(  # type: ignore[override]
+        self, os_path: str, format: str | None, raw: bool = False
+    ) -> tuple[str | bytes, str] | tuple[str | bytes, str, bytes]:
+        """Read a non-notebook file.
+
+        See `_read_file_contents` for the parameters and return value.
+        """
+        async with self._path_lock(os_path):
+            return await self._read_file_contents(os_path, format, raw)
+
+    async def _read_file_contents(
         self, os_path: str, format: str | None, raw: bool = False
     ) -> tuple[str | bytes, str] | tuple[str | bytes, str, bytes]:
         """Read a non-notebook file.
@@ -611,5 +677,6 @@ class AsyncFileManagerMixin(FileManagerMixin):
         except Exception as e:
             raise HTTPError(400, f"Encoding error saving {os_path}: {e}") from e
 
-        with self.atomic_writing(os_path, text=False) as f:
-            await run_sync(f.write, bcontent)
+        async with self._path_lock(os_path):
+            with self.atomic_writing(os_path, text=False) as f:
+                await run_sync(f.write, bcontent)

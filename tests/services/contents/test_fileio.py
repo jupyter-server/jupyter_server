@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import json
 import logging
@@ -6,12 +7,15 @@ import pathlib
 import stat
 import sys
 import tempfile
+import time
 
+import nbformat
 import pytest
 from nbformat import validate
-from nbformat.v4 import new_notebook
+from nbformat.v4 import new_code_cell, new_notebook
 from tornado.web import HTTPError
 
+from jupyter_server.services.contents import fileio
 from jupyter_server.services.contents.fileio import (
     AsyncFileManagerMixin,
     FileManagerMixin,
@@ -19,6 +23,7 @@ from jupyter_server.services.contents.fileio import (
     path_to_intermediate,
     path_to_invalid,
 )
+from jupyter_server.services.contents.filemanager import AsyncFileContentsManager
 
 umask = 0
 
@@ -344,3 +349,112 @@ def test_get_os_path_with_non_current_drive_root():
     mixin.log = logging.getLogger()
 
     assert mixin._get_os_path("work/notebook.ipynb") == "W:\\work\\notebook.ipynb"
+
+
+async def test_read_waits_for_a_save_in_progress(tmp_path, monkeypatch):
+    """A read that starts mid-save must wait, not see the half-written notebook."""
+    cm = AsyncFileContentsManager(root_dir=str(tmp_path))
+    nb = new_notebook(cells=[new_code_cell("x = 1")])
+    model = {"type": "notebook", "format": "json", "content": nb}
+    await cm.save(dict(model), "nb.ipynb")
+
+    real_write = nbformat.write
+    writing = asyncio.Event()
+    loop = asyncio.get_running_loop()
+
+    def slow_write(nb, fp, **kwargs):
+        loop.call_soon_threadsafe(writing.set)
+        time.sleep(0.3)
+        real_write(nb, fp, **kwargs)
+
+    monkeypatch.setattr(nbformat, "write", slow_write)
+
+    async def read_once_saving():
+        await writing.wait()
+        return await cm.get("nb.ipynb", content=True)
+
+    _, got = await asyncio.gather(cm.save(dict(model), "nb.ipynb"), read_once_saving())
+
+    assert got["content"]["cells"][0]["source"] == "x = 1"
+    assert not (tmp_path / "nb.ipynb.invalid").exists()
+
+
+async def test_concurrent_save_and_get_does_not_orphan_notebook(tmp_path):
+    cm = AsyncFileContentsManager(root_dir=str(tmp_path))
+    nb = new_notebook(cells=[new_code_cell(f"x = {i}  # " + "pad" * 200) for i in range(300)])
+    model = {"type": "notebook", "format": "json", "content": nb}
+    await cm.save(dict(model), "nb.ipynb")
+
+    async def saver():
+        for _ in range(100):
+            await cm.save(dict(model), "nb.ipynb")
+
+    async def reader():
+        for _ in range(1000):
+            await cm.get("nb.ipynb", content=True)
+            await asyncio.sleep(0)
+
+    await asyncio.gather(saver(), reader())
+
+    assert sorted(p.name for p in tmp_path.iterdir() if p.name != ".ipynb_checkpoints") == [
+        "nb.ipynb"
+    ]
+    # No lock entries are kept once nothing is reading or saving.
+    assert not cm._path_locks
+
+
+async def test_failed_restore_puts_the_notebook_back(tmp_path, monkeypatch):
+    """If restoring the intermediate fails, the file must not be left missing."""
+    mixin = AsyncFileManagerMixin()
+    mixin.log = logging.getLogger()
+    mixin.use_atomic_writing = True
+    bad = tmp_path / "bad.ipynb"
+    bad.write_text("{", "utf8")
+    pathlib.Path(path_to_intermediate(str(bad))).write_text(json.dumps(new_notebook()), "utf8")
+
+    real_replace = fileio.async_replace_file
+
+    async def failing_replace(src, dst):
+        if str(src) == path_to_intermediate(str(bad)):
+            raise FileNotFoundError(2, "No such file or directory")
+        await real_replace(src, dst)
+
+    monkeypatch.setattr(fileio, "async_replace_file", failing_replace)
+
+    with pytest.raises(FileNotFoundError):
+        await mixin._read_notebook(str(bad))
+
+    assert bad.read_text("utf8") == "{"
+    assert not (tmp_path / "bad.ipynb.invalid").exists()
+
+
+async def test_path_lock_is_reentrant(tmp_path):
+    mixin = AsyncFileManagerMixin()
+    path = str(tmp_path / "nb.ipynb")
+
+    async def nested():
+        async with mixin._path_lock(path), mixin._path_lock(path):
+            pass
+
+    await asyncio.wait_for(nested(), timeout=5)
+    assert not mixin._path_locks
+
+
+async def test_read_notebook_still_goes_through_read_file(tmp_path):
+    """Subclasses that override _read_file keep working while the path lock is held."""
+    calls = []
+
+    class Manager(AsyncFileManagerMixin):
+        async def _read_file(self, os_path, format, raw=False):
+            calls.append(os_path)
+            return await super()._read_file(os_path, format, raw)
+
+    mixin = Manager()
+    mixin.log = logging.getLogger()
+    nb_path = tmp_path / "nb.ipynb"
+    nb_path.write_text(json.dumps(new_notebook()), "utf8")
+
+    nb = await asyncio.wait_for(mixin._read_notebook(str(nb_path)), timeout=5)
+
+    validate(nb)
+    assert calls == [str(nb_path)]
