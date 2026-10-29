@@ -508,7 +508,8 @@ class AsyncFileManagerMixin(FileManagerMixin):
         The lock is reentrant for the task that holds it, so a method that
         holds it can call another that takes it.
         """
-        key = (id(self), str(os_path))
+        # Saving through a symlink writes its target, so key on the resolved path.
+        key = (id(self), os.path.realpath(str(os_path)))
         held = _held_path_locks.get()
         if key in held:
             yield

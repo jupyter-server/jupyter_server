@@ -975,13 +975,17 @@ class AsyncFileContentsManager(  # type: ignore[misc]
                 )
             model = await self._dir_model(path, content=content)
         elif type == "notebook" or (type is None and path.endswith(".ipynb")):
-            model = await self._notebook_model(path, content=content, require_hash=require_hash)
+            # Hold the lock for the whole model, so that the file's last_modified and
+            # size match its content even if it is being saved.
+            async with self._path_lock(os_path):
+                model = await self._notebook_model(path, content=content, require_hash=require_hash)
         else:
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
-            model = await self._file_model(
-                path, content=content, format=format, require_hash=require_hash
-            )
+            async with self._path_lock(os_path):
+                model = await self._file_model(
+                    path, content=content, format=format, require_hash=require_hash
+                )
         self.emit(data={"action": "get", "path": path})
         return model
 

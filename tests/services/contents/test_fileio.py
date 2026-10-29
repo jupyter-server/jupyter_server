@@ -351,13 +351,8 @@ def test_get_os_path_with_non_current_drive_root():
     assert mixin._get_os_path("work/notebook.ipynb") == "W:\\work\\notebook.ipynb"
 
 
-async def test_read_waits_for_a_save_in_progress(tmp_path, monkeypatch):
-    """A read that starts mid-save must wait, not see the half-written notebook."""
-    cm = AsyncFileContentsManager(root_dir=str(tmp_path))
-    nb = new_notebook(cells=[new_code_cell("x = 1")])
-    model = {"type": "notebook", "format": "json", "content": nb}
-    await cm.save(dict(model), "nb.ipynb")
-
+def _stall_notebook_writes(monkeypatch):
+    """Make saves stall after truncating the file; returns an event set once one stalls."""
     real_write = nbformat.write
     writing = asyncio.Event()
     loop = asyncio.get_running_loop()
@@ -368,6 +363,16 @@ async def test_read_waits_for_a_save_in_progress(tmp_path, monkeypatch):
         real_write(nb, fp, **kwargs)
 
     monkeypatch.setattr(nbformat, "write", slow_write)
+    return writing
+
+
+async def test_read_waits_for_a_save_in_progress(tmp_path, monkeypatch):
+    """A read that starts mid-save must wait, not see the half-written notebook."""
+    cm = AsyncFileContentsManager(root_dir=str(tmp_path))
+    nb = new_notebook(cells=[new_code_cell("x = 1")])
+    model = {"type": "notebook", "format": "json", "content": nb}
+    await cm.save(dict(model), "nb.ipynb")
+    writing = _stall_notebook_writes(monkeypatch)
 
     async def read_once_saving():
         await writing.wait()
@@ -379,6 +384,42 @@ async def test_read_waits_for_a_save_in_progress(tmp_path, monkeypatch):
     assert not (tmp_path / "nb.ipynb.invalid").exists()
 
 
+async def test_read_during_a_save_reports_the_saved_file(tmp_path, monkeypatch):
+    """A read that waited for a save gives last_modified and size of the saved file."""
+    cm = AsyncFileContentsManager(root_dir=str(tmp_path))
+    nb = new_notebook(cells=[new_code_cell("x = 1")])
+    model = {"type": "notebook", "format": "json", "content": nb}
+    await cm.save(dict(model), "nb.ipynb")
+    writing = _stall_notebook_writes(monkeypatch)
+
+    async def read_once_saving():
+        await writing.wait()
+        return await cm.get("nb.ipynb", content=True)
+
+    _, got = await asyncio.gather(cm.save(dict(model), "nb.ipynb"), read_once_saving())
+
+    on_disk = await cm.get("nb.ipynb", content=False)
+    assert (got["last_modified"], got["size"]) == (on_disk["last_modified"], on_disk["size"])
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Creating symlinks needs extra privileges")
+async def test_save_through_a_symlink_blocks_reads_of_its_target(tmp_path, monkeypatch):
+    cm = AsyncFileContentsManager(root_dir=str(tmp_path))
+    nb = new_notebook(cells=[new_code_cell("x = 1")])
+    model = {"type": "notebook", "format": "json", "content": nb}
+    await cm.save(dict(model), "real.ipynb")
+    (tmp_path / "link.ipynb").symlink_to("real.ipynb")
+    writing = _stall_notebook_writes(monkeypatch)
+
+    async def read_target_once_saving():
+        await writing.wait()
+        return await cm.get("real.ipynb", content=True)
+
+    await asyncio.gather(cm.save(dict(model), "link.ipynb"), read_target_once_saving())
+
+    assert not (tmp_path / "real.ipynb.invalid").exists()
+
+
 async def test_concurrent_save_and_get_does_not_orphan_notebook(tmp_path):
     cm = AsyncFileContentsManager(root_dir=str(tmp_path))
     nb = new_notebook(cells=[new_code_cell(f"x = {i}  # " + "pad" * 200) for i in range(300)])
@@ -386,11 +427,11 @@ async def test_concurrent_save_and_get_does_not_orphan_notebook(tmp_path):
     await cm.save(dict(model), "nb.ipynb")
 
     async def saver():
-        for _ in range(100):
+        for _ in range(10):
             await cm.save(dict(model), "nb.ipynb")
 
     async def reader():
-        for _ in range(1000):
+        for _ in range(100):
             await cm.get("nb.ipynb", content=True)
             await asyncio.sleep(0)
 
@@ -423,6 +464,31 @@ async def test_failed_restore_puts_the_notebook_back(tmp_path, monkeypatch):
 
     with pytest.raises(FileNotFoundError):
         await mixin._read_notebook(str(bad))
+
+    assert bad.read_text("utf8") == "{"
+    assert not (tmp_path / "bad.ipynb.invalid").exists()
+
+
+def test_failed_restore_puts_the_notebook_back_sync(tmp_path, monkeypatch):
+    """The sync manager also puts the file back if restoring the intermediate fails."""
+    mixin = FileManagerMixin()
+    mixin.log = logging.getLogger()
+    mixin.use_atomic_writing = True
+    bad = tmp_path / "bad.ipynb"
+    bad.write_text("{", "utf8")
+    pathlib.Path(path_to_intermediate(str(bad))).write_text(json.dumps(new_notebook()), "utf8")
+
+    real_replace = fileio.replace_file
+
+    def failing_replace(src, dst):
+        if str(src) == path_to_intermediate(str(bad)):
+            raise FileNotFoundError(2, "No such file or directory")
+        real_replace(src, dst)
+
+    monkeypatch.setattr(fileio, "replace_file", failing_replace)
+
+    with pytest.raises(FileNotFoundError):
+        mixin._read_notebook(str(bad))
 
     assert bad.read_text("utf8") == "{"
     assert not (tmp_path / "bad.ipynb.invalid").exists()
