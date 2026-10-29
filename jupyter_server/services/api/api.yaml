@@ -79,6 +79,54 @@ paths:
                 type: string
                 description: The Jupyter Server version number as a string.
 
+  /api/events:
+    post:
+      summary: Emit an event
+      tags:
+        - events
+      parameters:
+        - name: event
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - schema_id
+              - version
+              - data
+            properties:
+              schema_id:
+                type: string
+                description: URI identifying a registered event schema.
+              version:
+                type: string
+                description: Registered schema version.
+              data:
+                type: object
+                description: Data conforming to the registered schema.
+              timestamp:
+                type: string
+                format: date-time
+      responses:
+        204:
+          description: Event emitted.
+        400:
+          description: Invalid event payload.
+
+  /api/events/subscribe:
+    get:
+      summary: Subscribe to events over a WebSocket connection
+      tags:
+        - events
+      schemes:
+        - ws
+        - wss
+      responses:
+        101:
+          description: WebSocket connection established.
+        403:
+          description: User is not authorized.
+
   /api/contents/{path}:
     parameters:
       - $ref: "#/parameters/path"
