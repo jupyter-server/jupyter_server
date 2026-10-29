@@ -3025,7 +3025,7 @@ class ServerApp(JupyterApp):
                 url_path_join(self.file_url_prefix, *file_to_run_relpath.split(os.sep))
             )
 
-            with open(self.browser_open_file_to_run, "w", encoding="utf-8") as f:
+            with secure_write(self.browser_open_file_to_run) as f:
                 self._write_browser_open_file(file_open_url, f)
 
     def write_browser_open_file(self) -> None:
@@ -3036,7 +3036,7 @@ class ServerApp(JupyterApp):
         # default_url contains base_url, but so does connection_url
         open_url = self.default_url[len(self.base_url) :]
 
-        with open(self.browser_open_file, "w", encoding="utf-8") as f:
+        with secure_write(self.browser_open_file) as f:
             self._write_browser_open_file(open_url, f)
 
     def remove_browser_open_files(self) -> None:

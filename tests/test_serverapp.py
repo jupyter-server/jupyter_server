@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import pathlib
+import stat
 import sys
 import warnings
 from unittest.mock import MagicMock, patch
@@ -721,6 +722,20 @@ def test_browser_open_file_uses_hostname_for_wildcard(jp_configurable_serverapp)
     browser_open_file = pathlib.Path(app.browser_open_file).read_text(encoding="utf-8")
     assert "http://myhost:" in browser_open_file
     assert "http://0.0.0.0:" not in browser_open_file
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX file modes")
+def test_browser_open_files_are_private(jp_configurable_serverapp, jp_root_dir):
+    file_to_run = jp_root_dir / "notebook.ipynb"
+    file_to_run.write_text("{}", encoding="utf-8")
+    app = jp_configurable_serverapp(file_to_run=str(file_to_run))
+
+    app.write_browser_open_files()
+
+    # both files embed the token, so they get the same mode as the server info file
+    for path in (app.browser_open_file, app.browser_open_file_to_run):
+        assert app.identity_provider.token in pathlib.Path(path).read_text(encoding="utf-8")
+        assert stat.S_IMODE(os.stat(path).st_mode) == 0o600
 
 
 def test_deprecated_notebook_dir_priority(jp_configurable_serverapp, tmp_path):
