@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 import tornado
 from tornado.httpclient import HTTPClientError
-from tornado.httpserver import HTTPRequest
 from tornado.httputil import HTTPHeaders
 from tornado.web import HTTPError
 
@@ -25,11 +24,12 @@ from jupyter_server.base.handlers import (
 )
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.utils import url_path_join
+from tests.utils import http_request
 
 
 def test_authenticated_handler(jp_serverapp):
     app: ServerApp = jp_serverapp
-    request = HTTPRequest("OPTIONS")
+    request = http_request("OPTIONS")
     request.connection = MagicMock()
     handler = AuthenticatedHandler(app.web_app, request)
     for key in list(handler.settings):
@@ -48,7 +48,7 @@ def test_authenticated_handler(jp_serverapp):
 def test_jupyter_handler(jp_serverapp):
     app: ServerApp = jp_serverapp
     headers = HTTPHeaders({"Origin": "foo"})
-    request = HTTPRequest("OPTIONS", headers=headers)
+    request = http_request("OPTIONS", headers=headers)
     request.connection = MagicMock()
     handler = JupyterHandler(app.web_app, request)
     for key in list(handler.settings):
@@ -226,7 +226,7 @@ async def test_check_xsrf_cookie(
             return None
 
     # Set up the request
-    request = HTTPRequest(method)
+    request = http_request(method)
     request.connection = MagicMock()
     request.headers = {}
 
@@ -305,7 +305,7 @@ async def test_jupyter_handler_auth_respsects_identity_provider(jp_serverapp, jp
 def test_api_handler(jp_serverapp):
     app: ServerApp = jp_serverapp
     headers = HTTPHeaders({"Origin": "foo"})
-    request = HTTPRequest("OPTIONS", headers=headers)
+    request = http_request("OPTIONS", headers=headers)
     request.connection = MagicMock()
     handler = APIHandler(app.web_app, request)
     for key in list(handler.settings):
@@ -316,7 +316,7 @@ def test_api_handler(jp_serverapp):
 async def test_authenticated_file_handler(jp_serverapp, tmpdir):
     app: ServerApp = jp_serverapp
     headers = HTTPHeaders({"Origin": "foo"})
-    request = HTTPRequest("HEAD", headers=headers)
+    request = http_request("HEAD", headers=headers)
     request.connection = MagicMock()
     test_file = tmpdir / "foo"
     with open(test_file, "w") as fid:
@@ -338,7 +338,7 @@ async def test_authenticated_file_handler(jp_serverapp, tmpdir):
 
 async def test_api_version_handler(jp_serverapp):
     app: ServerApp = jp_serverapp
-    request = HTTPRequest("GET")
+    request = http_request("GET")
     request.connection = MagicMock()
     handler = APIVersionHandler(app.web_app, request)
     handler._transforms = []
@@ -348,7 +348,7 @@ async def test_api_version_handler(jp_serverapp):
 
 async def test_files_redirect_handler(jp_serverapp):
     app: ServerApp = jp_serverapp
-    request = HTTPRequest("GET")
+    request = http_request("GET")
     request.connection = MagicMock()
     test_file = os.path.join(app.contents_manager.root_dir, "foo")
     with open(test_file, "w") as fid:
@@ -361,7 +361,7 @@ async def test_files_redirect_handler(jp_serverapp):
 
 def test_redirect_with_params(jp_serverapp):
     app: ServerApp = jp_serverapp
-    request = HTTPRequest("GET")
+    request = http_request("GET")
     request.connection = MagicMock()
     request.query = "foo"
     handler = RedirectWithParams(app.web_app, request, url="foo")
@@ -381,7 +381,7 @@ async def test_static_handler(jp_serverapp, tmpdir):
         fid.write("hello")
 
     app: ServerApp = jp_serverapp
-    request = HTTPRequest("GET", str(test_file))
+    request = http_request("GET", str(test_file))
     request.connection = MagicMock()
 
     handler = FileFindHandler(app.web_app, request, path=str(tmpdir))
@@ -419,7 +419,7 @@ async def test_static_handler_follow_dir_symlinks(jp_serverapp, tmp_path):
     app: ServerApp = jp_serverapp
 
     def handler(**kwargs):
-        request = HTTPRequest("GET", "/")
+        request = http_request("GET", "/")
         request.connection = MagicMock()
         found = FileFindHandler(app.web_app, request, path=str(root), **kwargs)
         found._transforms = []
