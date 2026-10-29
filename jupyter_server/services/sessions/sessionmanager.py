@@ -353,12 +353,13 @@ class SessionManager(LoggingConfigurable):
         # allow contents manager to specify kernels cwd
         kernel_path = await ensure_async(self.contents_manager.get_kernel_path(path=path))
 
+        custom_kernel_specs_params = {} if custom_kernel_specs is None else custom_kernel_specs
         kernel_env = self.get_kernel_env(path, name)
         kernel_id = await self.kernel_manager.start_kernel(
             path=kernel_path,
             kernel_name=kernel_name,
             env=kernel_env,
-            custom_kernel_specs=custom_kernel_specs,
+            custom_kernel_specs=custom_kernel_specs_params,
             kernel_id=kernel_id,
         )
         return cast("str", kernel_id)

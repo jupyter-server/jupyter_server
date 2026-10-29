@@ -3157,7 +3157,11 @@ class ServerApp(JupyterApp):
         # Handle the browser opening.
         if self.open_browser and not self.sock:
             self.launch_browser()
-        if self.kernel_spec_manager is not None and self.allow_insecure_kernelspec_params:
+        if (
+            self.kernel_spec_manager is not None
+            and self.allow_insecure_kernelspec_params
+            and hasattr(self.kernel_spec_manager, "allow_insecure_kernelspec_params")
+        ):
             self.kernel_spec_manager.allow_insecure_kernelspec_params(
                 self.allow_insecure_kernelspec_params
             )

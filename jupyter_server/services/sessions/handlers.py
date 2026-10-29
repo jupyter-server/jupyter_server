@@ -78,7 +78,7 @@ class SessionRootHandler(SessionsAPIHandler):
         kernel = model.get("kernel", {})
         kernel_name = kernel.get("name", None)
         kernel_id = kernel.get("id", None)
-        custom_kernel_specs = kernel.get("custom_kernel_specs", {})
+        custom_kernel_specs = kernel.get("custom_kernel_specs", None)
 
         if not kernel_id and not kernel_name:
             self.log.debug("No kernel specified, using default kernel")
