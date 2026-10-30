@@ -4,6 +4,7 @@
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
+import copy
 import functools
 import inspect
 import ipaddress
@@ -32,6 +33,7 @@ from jupyter_server._tz import utcnow
 from jupyter_server.auth.decorator import allow_unauthenticated, authorized
 from jupyter_server.auth.identity import User
 from jupyter_server.i18n import combine_translations
+from jupyter_server.log import _scrub_uri
 from jupyter_server.services.security import csp_report_uri
 from jupyter_server.utils import (
     ensure_async,
@@ -127,6 +129,27 @@ class AuthenticatedHandler(web.RequestHandler):
                 self.log.exception(  # type:ignore[attr-defined]
                     "Could not set default headers: %s", e
                 )
+
+    def _scrub_log_uri(self, uri: str) -> str:
+        """Scrub sensitive url params from a uri that is going to be logged."""
+        return _scrub_uri(uri, self.settings.get("extra_log_scrub_param_keys", []))
+
+    def log_exception(
+        self,
+        typ: type[BaseException] | None,
+        value: BaseException | None,
+        tb: types.TracebackType | None,
+    ) -> None:
+        """Log an exception, scrubbing the request uri that tornado logs verbatim."""
+        # tornado also passes the request object itself to the logger,
+        # so hand it a scrubbed copy instead of reformatting its messages
+        request = self.request
+        self.request = copy.copy(request)
+        self.request.uri = self._scrub_log_uri(request.uri or "")
+        try:
+            super().log_exception(typ, value, tb)
+        finally:
+            self.request = request
 
     @property
     def cookie_name(self) -> str:
@@ -546,7 +569,7 @@ class JupyterHandler(AuthenticatedHandler):
                 if not self.check_referer():
                     referer = self.request.headers.get("Referer")
                     if referer:
-                        msg = f"Blocking Cross Origin request from {referer}."
+                        msg = f"Blocking Cross Origin request from {self._scrub_log_uri(referer)}."
                     else:
                         msg = "Blocking request from unknown origin"
                     raise web.HTTPError(403, msg) from e
