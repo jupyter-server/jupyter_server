@@ -816,11 +816,13 @@ def test_bind_http_server_tcp_unexpected_oserror(jp_configurable_serverapp):
     app = jp_configurable_serverapp()
     mock_server = MagicMock()
     mock_server.listen.side_effect = OSError(errno.ENOENT, "No such file or directory")
-    with patch.object(
-        type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+    with (
+        patch.object(
+            type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+        ),
+        pytest.raises(OSError, match="No such file or directory"),
     ):
-        with pytest.raises(OSError, match="No such file or directory"):
-            app._bind_http_server_tcp()
+        app._bind_http_server_tcp()
 
 
 def test_bind_http_server_tcp_eaddrinuse_logs_warning(jp_configurable_serverapp, caplog):
@@ -828,11 +830,13 @@ def test_bind_http_server_tcp_eaddrinuse_logs_warning(jp_configurable_serverapp,
     app = jp_configurable_serverapp()
     mock_server = MagicMock()
     mock_server.listen.side_effect = OSError(errno.EADDRINUSE, "Address already in use")
-    with patch.object(
-        type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+    with (
+        patch.object(
+            type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+        ),
+        caplog.at_level(logging.WARNING),
     ):
-        with caplog.at_level(logging.WARNING):
-            app._bind_http_server_tcp()
+        app._bind_http_server_tcp()
     assert any("already in use" in rec.message for rec in caplog.records)
 
 
@@ -841,11 +845,13 @@ def test_bind_http_server_tcp_eacces_logs_warning(jp_configurable_serverapp, cap
     app = jp_configurable_serverapp()
     mock_server = MagicMock()
     mock_server.listen.side_effect = OSError(errno.EACCES, "Permission denied")
-    with patch.object(
-        type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+    with (
+        patch.object(
+            type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+        ),
+        caplog.at_level(logging.WARNING),
     ):
-        with caplog.at_level(logging.WARNING):
-            app._bind_http_server_tcp()
+        app._bind_http_server_tcp()
     assert any("denied" in rec.message.lower() for rec in caplog.records)
 
 
@@ -854,9 +860,11 @@ def test_bind_http_server_eaddrinuse_exits_cleanly(jp_configurable_serverapp):
     app = jp_configurable_serverapp()
     mock_server = MagicMock()
     mock_server.listen.side_effect = OSError(errno.EADDRINUSE, "Address already in use")
-    with patch.object(
-        type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+    with (
+        patch.object(
+            type(app), "http_server", new_callable=lambda: property(lambda self: mock_server)
+        ),
+        patch.object(app, "exit") as mock_exit,
     ):
-        with patch.object(app, "exit") as mock_exit:
-            app._bind_http_server()
-            mock_exit.assert_called_once_with(1)
+        app._bind_http_server()
+        mock_exit.assert_called_once_with(1)
