@@ -245,6 +245,56 @@ async def test_check_xsrf_cookie(
             handler.check_xsrf_cookie()
 
 
+def test_check_xsrf_cookie_scrubs_referer(jp_serverapp):
+    """The blocked Referer ends up in the HTTPError message, which tornado logs."""
+    request = http_request(
+        "GET",
+        "/files/foo.txt",
+        headers=HTTPHeaders(
+            {
+                "Host": "localhost:8888",
+                "Referer": "https://jupyter.example.org/lab?token=SECRETTOKEN",
+            }
+        ),
+    )
+    request.connection = MagicMock()
+    handler = JupyterHandler(jp_serverapp.web_app, request)
+    handler.current_user = handler._jupyter_current_user = User("test")
+
+    with pytest.raises(HTTPError) as error:
+        handler.check_xsrf_cookie()
+
+    assert error.value.status_code == 403
+    assert "SECRETTOKEN" not in error.value.log_message
+    assert "https://jupyter.example.org/lab?token=[secret]" in error.value.log_message
+
+
+@pytest.mark.parametrize(
+    "error, logger",
+    [
+        (HTTPError(404, "Kernel does not exist"), "gen_log"),
+        (ValueError("boom"), "app_log"),
+    ],
+)
+def test_log_exception_scrubs_uri(jp_serverapp, error, logger):
+    """Tornado logs the request URI verbatim when a handler fails."""
+    uri = "/api/kernels/abc/channels?session_id=1&token=SECRETTOKEN&extra=SECRETVALUE"
+    request = http_request("GET", uri)
+    request.connection = MagicMock()
+    handler = JupyterHandler(jp_serverapp.web_app, request)
+    handler.settings["extra_log_scrub_param_keys"] = ["extra"]
+
+    with patch(f"tornado.web.{logger}") as log:
+        handler.log_exception(type(error), error, None)
+
+    logged = repr(log.method_calls)
+    assert "SECRETTOKEN" not in logged
+    assert "SECRETVALUE" not in logged
+    assert "session_id=1&token=[secret]&extra=[secret]" in logged
+    # only what gets logged is scrubbed
+    assert handler.request.uri == uri
+
+
 @pytest.mark.parametrize(
     "jp_server_config", [{"ServerApp": {"allow_unauthenticated_access": False}}]
 )
