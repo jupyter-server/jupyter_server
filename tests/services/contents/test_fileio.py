@@ -185,9 +185,8 @@ def test_atomic_writing_permission_cache():
         f.chmod(0o500)
 
         # attempt write, should fail due to NFS attribute cache
-        with pytest.raises(PermissionError):
-            with atomic_writing(str(f)) as ff:
-                ff.write("new content")
+        with pytest.raises(PermissionError), atomic_writing(str(f)) as ff:
+            ff.write("new content")
 
         source_path = remote_source / local_mount_path.name / "file.txt"
 
