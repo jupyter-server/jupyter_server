@@ -26,9 +26,9 @@ class WebSocketMixin:
     def ping_interval(self):
         """The interval for websocket keep-alive pings.
 
-        Set ws_ping_interval = 0 to disable pings.
+        Set websocket_ping_interval = 0 to disable pings.
         """
-        return self.settings.get("ws_ping_interval", WS_PING_INTERVAL)  # type:ignore[attr-defined]
+        return self.settings.get("websocket_ping_interval", WS_PING_INTERVAL)  # type:ignore[attr-defined]
 
     @property
     def ping_timeout(self):
@@ -37,7 +37,7 @@ class WebSocketMixin:
         Default is max of 3 pings or 30 seconds.
         """
         return self.settings.get(  # type:ignore[attr-defined]
-            "ws_ping_timeout", max(3 * self.ping_interval, WS_PING_INTERVAL)
+            "websocket_ping_timeout", max(3 * self.ping_interval, WS_PING_INTERVAL)
         )
 
     @no_type_check

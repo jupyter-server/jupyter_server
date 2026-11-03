@@ -62,7 +62,7 @@ def test_ping_client_terminated(mixin):
 
 async def test_ping_client_timeout(mixin):
     mixin.on_pong("foo")
-    mixin.settings["ws_ping_timeout"] = 0.1
+    mixin.settings["websocket_ping_timeout"] = 0.1
     time.sleep(0.3)
     mixin.ws_connection = MagicMock()
     mixin.ws_connection.is_closing = lambda: False
