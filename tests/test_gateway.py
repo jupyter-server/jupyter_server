@@ -782,6 +782,40 @@ async def test_websocket_connection_with_session_id(init_gateway, jp_serverapp, 
                 pytest.fail(f"Logs contain an error: {message}")
 
 
+@patch("tornado.websocket.websocket_connect", mock_websocket_connect())
+async def test_websocket_connection_relays_binary_messages(init_gateway, jp_serverapp, jp_fetch):
+    kernel_id = await create_kernel(jp_fetch, "kspec_foo")
+    km: GatewayKernelManager = jp_serverapp.kernel_manager.get_kernel(kernel_id)
+
+    request = http_request("foo", "GET")
+    request.connection = MagicMock()
+    handler = KernelWebsocketHandler(jp_serverapp.web_app, request)
+    handler.write_message = MagicMock()
+
+    with mocked_gateway:
+        conn = GatewayWebSocketConnection(parent=km, websocket_handler=handler)
+        handler.connection = conn
+        await conn.connect()
+        await conn.ws_future
+        # let the reader relay the initial status message
+        await asyncio.sleep(0.1)
+        conn.ws.write_message = MagicMock(wraps=conn.ws.write_message)
+
+        # Not valid UTF-8, like most widget buffers.
+        payload = b"\x00\xcc\xff binary buffer"
+        conn.handle_incoming_message(payload)
+        conn.ws.write_message.assert_called_once_with(payload, binary=True)
+
+        # The mock gateway echoes the message back, it must reach the client as binary.
+        for _ in range(50):
+            if handler.write_message.call_count >= 2:
+                break
+            await asyncio.sleep(0.02)
+        handler.write_message.assert_called_with(payload, binary=True)
+
+        await jp_serverapp._cleanup()
+
+
 def test_gateway_httperror_percent_not_doubled():
     """Verify that % characters in gateway URLs are not doubled in error messages.
 
