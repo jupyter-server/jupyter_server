@@ -26,7 +26,7 @@ jobs:
             python-version: "3.12"
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
@@ -51,7 +51,7 @@ jobs:
     name: Test Docs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           python_package_manager: pip
@@ -75,7 +75,7 @@ jobs:
     name: Test Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           python_package_manager: pip
@@ -94,7 +94,7 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           python_package_manager: pip
@@ -112,7 +112,7 @@ jobs:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           dependency_type: minimum
@@ -126,7 +126,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           dependency_type: pre
@@ -141,7 +141,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           python_package_manager: pip
@@ -162,7 +162,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           python_package_manager: pip
@@ -188,7 +188,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
@@ -207,7 +207,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           python_package_manager: pip
@@ -224,7 +224,7 @@ jobs:
         os: [ubuntu-latest]
         python-version: ["3.10", "3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           python_package_manager: pip
@@ -240,7 +240,7 @@ jobs:
       - integration_check
       - build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: jupyterlab/maintainer-tools/.github/actions/report-coverage@v1
         with:
           fail_under: 80
