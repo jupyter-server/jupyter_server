@@ -67,6 +67,9 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):
 
     async def open(self, kernel_id):  # type: ignore[override]
         """Open a kernel websocket."""
+        # The kernel sends several small messages per request; without
+        # TCP_NODELAY, Nagle's algorithm delays them by a full round trip.
+        self.set_nodelay(True)
         # Need to call super here to make sure we
         # begin a ping-pong loop with the client.
         super().open()

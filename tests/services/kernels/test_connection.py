@@ -3,7 +3,7 @@ import gc
 import json
 import os
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from jupyter_client.jsonutil import json_clean, json_default
@@ -259,3 +259,18 @@ async def test_disconnect_resolves_orphaned_kernel_info_future(jp_serverapp: Ser
     conn2.session.key = kernel.session.key
     conn2.kernel_info_timeout = 0.2
     await asyncio.wait_for(asyncio.wrap_future(conn2.request_kernel_info()), timeout=1.0)
+
+
+async def test_kernel_websocket_enables_tcp_nodelay(jp_serverapp: ServerApp) -> None:
+    app = jp_serverapp
+    request = http_request("foo", "GET")
+    request.connection = MagicMock()
+    handler = KernelWebsocketHandler(app.web_app, request)
+    handler.kernel_id = "test-kernel"
+    handler.ws_connection = MagicMock()
+    handler.connection = MagicMock()
+    handler.connection.connect = AsyncMock()
+
+    await handler.open("test-kernel")
+
+    handler.ws_connection.set_nodelay.assert_called_once_with(True)
