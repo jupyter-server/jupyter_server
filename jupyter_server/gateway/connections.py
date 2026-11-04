@@ -100,8 +100,6 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
                     if not self.disconnected:
                         self.log.warning(f"Lost connection to Gateway: {self.kernel_id}")
                     break
-                if isinstance(message, bytes):
-                    message = message.decode("utf8")
                 self.handle_outgoing_message(
                     message
                 )  # pass back to notebook client (see self.on_open and WebSocketChannelsHandler.open)
@@ -130,20 +128,25 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
             loop = IOLoop.current()
             loop.spawn_callback(self.connect)
 
-    def handle_outgoing_message(self, incoming_msg: str, *args: Any) -> None:
+    def handle_outgoing_message(self, incoming_msg: str | bytes, *args: Any) -> None:
         """Send message to the notebook client."""
         try:
-            self.websocket_handler.write_message(incoming_msg)
+            self.websocket_handler.write_message(
+                incoming_msg, binary=isinstance(incoming_msg, bytes)
+            )
         except tornado_websocket.WebSocketClosedError:
             if self.log.isEnabledFor(logging.DEBUG):
-                msg_summary = GatewayWebSocketConnection._get_message_summary(
-                    json_decode(utf8(incoming_msg))
-                )
+                if isinstance(incoming_msg, bytes):
+                    msg_summary = "binary message"
+                else:
+                    msg_summary = GatewayWebSocketConnection._get_message_summary(
+                        json_decode(utf8(incoming_msg))
+                    )
                 self.log.debug(
                     f"Notebook client closed websocket connection - message dropped: {msg_summary}"
                 )
 
-    def handle_incoming_message(self, message: str) -> None:
+    def handle_incoming_message(self, message: str | bytes) -> None:
         """Send message to gateway server."""
         if self.ws is None and self.ws_future is not None:
             if self.ws_future.done() and self.ws_future.exception() is not None:
@@ -160,7 +163,7 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
         """Send message to gateway server."""
         try:
             if not self.disconnected and self.ws is not None:
-                self.ws.write_message(message)
+                self.ws.write_message(message, binary=isinstance(message, bytes))
         except Exception as e:
             self.log.error(f"Exception writing message to websocket: {e}")  # , exc_info=True)
 

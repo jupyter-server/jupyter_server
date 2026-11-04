@@ -703,6 +703,61 @@ class MockWebSocketClientConnection(tornado.websocket.WebSocketClientConnection)
         return self._msgs.get()
 
 
+async def test_gateway_relays_binary_frames_to_browser(init_gateway, jp_serverapp, jp_fetch):
+    kernel_id = await create_kernel(jp_fetch, "kspec_foo")
+    km = jp_serverapp.kernel_manager.get_kernel(kernel_id)
+    request = http_request("foo", "GET")
+    request.connection = MagicMock()
+    handler = KernelWebsocketHandler(jp_serverapp.web_app, request)
+    handler.ws_connection = MagicMock()
+    handler.ws_connection.is_closing.return_value = False
+    conn = GatewayWebSocketConnection(parent=km, websocket_handler=handler)
+    ws = MockWebSocketClientConnection()
+    binary_frame = b"\xff\x00widget"
+    messages = iter((binary_frame, None))
+
+    async def read_message():
+        message = next(messages)
+        if message is None:
+            conn.disconnected = True
+        return message
+
+    ws.read_message = read_message
+    conn.ws = ws
+    await conn._read_messages()
+    handler.ws_connection.write_message.assert_called_once_with(binary_frame, binary=True)
+
+
+async def test_gateway_relays_binary_frames_to_gateway(init_gateway, jp_serverapp, jp_fetch):
+    kernel_id = await create_kernel(jp_fetch, "kspec_foo")
+    km = jp_serverapp.kernel_manager.get_kernel(kernel_id)
+    request = http_request("foo", "GET")
+    request.connection = MagicMock()
+    handler = KernelWebsocketHandler(jp_serverapp.web_app, request)
+    conn = GatewayWebSocketConnection(parent=km, websocket_handler=handler)
+    ws = MockWebSocketClientConnection()
+    ws.write_message = MagicMock()
+    conn.ws = ws
+    binary_frame = b"\xff\x00upload"
+    conn.handle_incoming_message(binary_frame)
+    ws.write_message.assert_called_once_with(binary_frame, binary=True)
+
+
+async def test_gateway_drops_binary_frame_after_browser_closes(
+    init_gateway, jp_serverapp, jp_fetch, caplog
+):
+    kernel_id = await create_kernel(jp_fetch, "kspec_foo")
+    km = jp_serverapp.kernel_manager.get_kernel(kernel_id)
+    request = http_request("foo", "GET")
+    request.connection = MagicMock()
+    handler = KernelWebsocketHandler(jp_serverapp.web_app, request)
+    handler.ws_connection = MagicMock()
+    handler.ws_connection.is_closing.return_value = True
+    conn = GatewayWebSocketConnection(parent=km, websocket_handler=handler)
+    conn.handle_outgoing_message(b"\xff\x00widget")
+    assert "binary message" in caplog.text
+
+
 def mock_websocket_connect():
     def helper(request):
         fut: Future = Future()
