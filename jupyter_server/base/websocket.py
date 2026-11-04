@@ -1,5 +1,6 @@
 """Base websocket classes."""
 
+import math
 import warnings
 from typing import no_type_check
 from urllib.parse import urlparse
@@ -48,8 +49,15 @@ class WebSocketMixin:
         if timeout is not None:
             return timeout
         timeout = self.settings.get("websocket_ping_timeout")  # type:ignore[attr-defined]
+        if timeout == 0:
+            # 0 disables the timeout, as it does in Tornado 6.5 and later.
+            return math.inf
         if timeout is not None:
-            return timeout * 1000
+            # ``ServerApp.websocket_ping_timeout`` is the time the client has to
+            # answer a ping, but ``send_ping`` looks for the pong only when it
+            # sends the next ping, so a client that answers every ping can go a
+            # whole interval without one.
+            return self.ping_interval + timeout * 1000
         return max(3 * self.ping_interval, WS_PING_INTERVAL)
 
     @no_type_check

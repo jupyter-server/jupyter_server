@@ -1666,12 +1666,13 @@ class ServerApp(JupyterApp):
         help="""
             Configure the websocket ping interval in seconds.
 
-            Websockets are long-lived connections that are used by some Jupyter
-            Server extensions.
+            Websockets are long-lived connections that are used by kernels,
+            terminals and some Jupyter Server extensions.
 
             Periodic pings help to detect disconnected clients and keep the
-            connection active. If this is set to None, then no pings will be
-            performed.
+            connection active. Set this to 0 to disable pings. If this is None,
+            kernel and terminal websockets send a ping every 30 seconds and
+            other websockets do not send pings.
 
             When a ping is sent, the client has ``websocket_ping_timeout``
             seconds to respond. If no response is received within this period,
