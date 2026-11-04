@@ -16,7 +16,7 @@ import tornado
 from jupyter_core.utils import ensure_async
 from tornado.concurrent import Future
 from tornado.httpclient import HTTPRequest, HTTPResponse
-from tornado.httputil import HTTPHeaders, HTTPServerRequest
+from tornado.httputil import HTTPHeaders
 from tornado.queues import Queue
 from tornado.web import HTTPError
 from traitlets import Int, Unicode
@@ -27,7 +27,7 @@ from jupyter_server.gateway.gateway_client import GatewayTokenRenewerBase, NoOpT
 from jupyter_server.gateway.managers import ChannelQueue, GatewayClient, GatewayKernelManager
 from jupyter_server.services.kernels.websocket import KernelWebsocketHandler
 
-from .utils import expected_http_error
+from .utils import expected_http_error, http_request
 
 pytest_plugins = ["jupyter_events.pytest_plugin"]
 
@@ -720,7 +720,7 @@ async def test_websocket_connection_closed(init_gateway, jp_serverapp, jp_fetch,
     km: GatewayKernelManager = jp_serverapp.kernel_manager.get_kernel(kernel_id)
 
     # Create the KernelWebsocketHandler...
-    request = HTTPServerRequest("foo", "GET")
+    request = http_request("foo", "GET")
     request.connection = MagicMock()
     handler = KernelWebsocketHandler(jp_serverapp.web_app, request)
 
@@ -754,7 +754,7 @@ async def test_websocket_connection_with_session_id(init_gateway, jp_serverapp, 
     km: GatewayKernelManager = jp_serverapp.kernel_manager.get_kernel(kernel_id)
 
     # Create the KernelWebsocketHandler...
-    request = HTTPServerRequest("foo", "GET")
+    request = http_request("foo", "GET")
     request.connection = MagicMock()
     handler = KernelWebsocketHandler(jp_serverapp.web_app, request)
     # Create the GatewayWebSocketConnection and attach it to the handler...

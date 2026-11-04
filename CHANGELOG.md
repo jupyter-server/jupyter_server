@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.21.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.21.0...00d45c80eeb0f50f191b236ee47cc1d82a7db9ca))
+
+### Bugs fixed
+
+- Fix compatibility with Tornado v6.5.9+ Jupyter [#1703](https://github.com/jupyter-server/jupyter_server/pull/1703) ([@krassowski](https://github.com/krassowski), [@andrii-i](https://github.com/andrii-i))
+
+### Documentation improvements
+
+- Fix broken link, link to actually useful resources on OWASP [#1704](https://github.com/jupyter-server/jupyter_server/pull/1704) ([@krassowski](https://github.com/krassowski), [@jtpio](https://github.com/jtpio))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2026-08-27&to=2026-09-15&type=c))
+
+@andrii-i ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aandrii-i+updated%3A2026-08-27..2026-09-15&type=Issues)) | @jtpio ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Ajtpio+updated%3A2026-08-27..2026-09-15&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2026-08-27..2026-09-15&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.21.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server/compare/v2.20.0...14b40e6717b4093628a748fd46ca86570405bc70))
@@ -35,8 +58,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server/graphs/contributors?from=2026-06-17&to=2026-08-27&type=c))
 
 @Carreau ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ACarreau+updated%3A2026-06-17..2026-08-27&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Akrassowski+updated%3A2026-06-17..2026-08-27&type=Issues)) | @minrk ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Aminrk+updated%3A2026-06-17..2026-08-27&type=Issues)) | @MUFFANUJ ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AMUFFANUJ+updated%3A2026-06-17..2026-08-27&type=Issues)) | @Sanjays2402 ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3ASanjays2402+updated%3A2026-06-17..2026-08-27&type=Issues)) | @sfc-gh-sbirmiwal ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Asfc-gh-sbirmiwal+updated%3A2026-06-17..2026-08-27&type=Issues)) | @sjh9714 ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3Asjh9714+updated%3A2026-06-17..2026-08-27&type=Issues)) | @Yann-P ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AYann-P+updated%3A2026-06-17..2026-08-27&type=Issues)) | @Zsailer ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server+involves%3AZsailer+updated%3A2026-06-17..2026-08-27&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.20.0
 

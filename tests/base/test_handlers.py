@@ -5,8 +5,8 @@ import warnings
 from unittest.mock import MagicMock, patch
 
 import pytest
+import tornado
 from tornado.httpclient import HTTPClientError
-from tornado.httpserver import HTTPRequest
 from tornado.httputil import HTTPHeaders
 from tornado.web import HTTPError
 
@@ -24,11 +24,12 @@ from jupyter_server.base.handlers import (
 )
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.utils import url_path_join
+from tests.utils import http_request
 
 
 def test_authenticated_handler(jp_serverapp):
     app: ServerApp = jp_serverapp
-    request = HTTPRequest("OPTIONS")
+    request = http_request("OPTIONS")
     request.connection = MagicMock()
     handler = AuthenticatedHandler(app.web_app, request)
     for key in list(handler.settings):
@@ -47,7 +48,7 @@ def test_authenticated_handler(jp_serverapp):
 def test_jupyter_handler(jp_serverapp):
     app: ServerApp = jp_serverapp
     headers = HTTPHeaders({"Origin": "foo"})
-    request = HTTPRequest("OPTIONS", headers=headers)
+    request = http_request("OPTIONS", headers=headers)
     request.connection = MagicMock()
     handler = JupyterHandler(app.web_app, request)
     for key in list(handler.settings):
@@ -225,7 +226,7 @@ async def test_check_xsrf_cookie(
             return None
 
     # Set up the request
-    request = HTTPRequest(method)
+    request = http_request(method)
     request.connection = MagicMock()
     request.headers = {}
 
@@ -304,7 +305,7 @@ async def test_jupyter_handler_auth_respsects_identity_provider(jp_serverapp, jp
 def test_api_handler(jp_serverapp):
     app: ServerApp = jp_serverapp
     headers = HTTPHeaders({"Origin": "foo"})
-    request = HTTPRequest("OPTIONS", headers=headers)
+    request = http_request("OPTIONS", headers=headers)
     request.connection = MagicMock()
     handler = APIHandler(app.web_app, request)
     for key in list(handler.settings):
@@ -315,7 +316,7 @@ def test_api_handler(jp_serverapp):
 async def test_authenticated_file_handler(jp_serverapp, tmpdir):
     app: ServerApp = jp_serverapp
     headers = HTTPHeaders({"Origin": "foo"})
-    request = HTTPRequest("HEAD", headers=headers)
+    request = http_request("HEAD", headers=headers)
     request.connection = MagicMock()
     test_file = tmpdir / "foo"
     with open(test_file, "w") as fid:
@@ -337,7 +338,7 @@ async def test_authenticated_file_handler(jp_serverapp, tmpdir):
 
 async def test_api_version_handler(jp_serverapp):
     app: ServerApp = jp_serverapp
-    request = HTTPRequest("GET")
+    request = http_request("GET")
     request.connection = MagicMock()
     handler = APIVersionHandler(app.web_app, request)
     handler._transforms = []
@@ -347,7 +348,7 @@ async def test_api_version_handler(jp_serverapp):
 
 async def test_files_redirect_handler(jp_serverapp):
     app: ServerApp = jp_serverapp
-    request = HTTPRequest("GET")
+    request = http_request("GET")
     request.connection = MagicMock()
     test_file = os.path.join(app.contents_manager.root_dir, "foo")
     with open(test_file, "w") as fid:
@@ -360,7 +361,7 @@ async def test_files_redirect_handler(jp_serverapp):
 
 def test_redirect_with_params(jp_serverapp):
     app: ServerApp = jp_serverapp
-    request = HTTPRequest("GET")
+    request = http_request("GET")
     request.connection = MagicMock()
     request.query = "foo"
     handler = RedirectWithParams(app.web_app, request, url="foo")
@@ -380,7 +381,7 @@ async def test_static_handler(jp_serverapp, tmpdir):
         fid.write("hello")
 
     app: ServerApp = jp_serverapp
-    request = HTTPRequest("GET", str(test_file))
+    request = http_request("GET", str(test_file))
     request.connection = MagicMock()
 
     handler = FileFindHandler(app.web_app, request, path=str(tmpdir))
@@ -391,3 +392,46 @@ async def test_static_handler(jp_serverapp, tmpdir):
     handler.settings["static_immutable_cache"] = [str(tmpdir)]
     await handler.get("foo")
     assert handler._headers["Cache-Control"] == "public, max-age=31536000, immutable"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="symlinks need extra permissions on Windows")
+@pytest.mark.skipif(
+    tornado.version_info < (6, 5, 9),
+    reason="tornado only validates symlink targets from 6.5.9",
+)
+async def test_static_handler_follow_dir_symlinks(jp_serverapp, tmp_path):
+    """A linked directory is served only when the handler opts in."""
+
+    async def async_magic():
+        pass
+
+    MagicMock.__await__ = lambda x: async_magic().__await__()
+
+    root = tmp_path / "root"
+    outside = tmp_path / "outside"
+    root.mkdir()
+    (outside / "ext").mkdir(parents=True)
+    (outside / "ext" / "index.js").write_text("hello")
+    (outside / "secret.txt").write_text("secret")
+    (root / "ext").symlink_to(outside / "ext")
+    (outside / "ext" / "escape.txt").symlink_to(outside / "secret.txt")
+
+    app: ServerApp = jp_serverapp
+
+    def handler(**kwargs):
+        request = http_request("GET", "/")
+        request.connection = MagicMock()
+        found = FileFindHandler(app.web_app, request, path=str(root), **kwargs)
+        found._transforms = []
+        return found
+
+    with pytest.raises(HTTPError) as excinfo:
+        await handler().get("ext/index.js")
+    assert excinfo.value.status_code == 403
+
+    await handler(follow_dir_symlinks=True).get("ext/index.js")
+
+    # a link below the linked directory still cannot leave it
+    with pytest.raises(HTTPError) as excinfo:
+        await handler(follow_dir_symlinks=True).get("ext/escape.txt")
+    assert excinfo.value.status_code == 403

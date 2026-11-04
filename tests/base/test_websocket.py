@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from tornado.httpclient import HTTPClientError
-from tornado.httpserver import HTTPRequest
 from tornado.httputil import HTTPHeaders
 from tornado.websocket import WebSocketClosedError, WebSocketHandler
 
@@ -17,6 +16,7 @@ from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.base.websocket import WebSocketMixin
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.utils import JupyterServerAuthWarning, url_path_join
+from tests.utils import http_request
 
 is_freethreaded = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 
@@ -31,7 +31,7 @@ class MockHandler(WebSocketMixin, WebSocketHandler):
 def mixin(jp_serverapp):
     app: ServerApp = jp_serverapp
     headers = HTTPHeaders({"Host": "foo"})
-    request = HTTPRequest("GET", headers=headers)
+    request = http_request("GET", headers=headers)
     request.connection = MagicMock()
     return MockHandler(app.web_app, request)
 

@@ -51,6 +51,9 @@ class KernelSpecResourceHandler(web.StaticFileHandler, JupyterHandler):
         try:
             kspec = await ensure_async(ksm.get_kernel_spec(kernel_name))
             self.root = kspec.resource_dir
+            # initialize() ran with an empty path, so tornado >= 6.5.9 would check
+            # symlink targets against the working directory. Older tornado ignores it.
+            self.allowed_symlink_directory = self.root
         except KeyError as e:
             raise web.HTTPError(404, "Kernel spec %s not found" % kernel_name) from e
         self.log.debug("Serving kernel resource from: %s", self.root)
