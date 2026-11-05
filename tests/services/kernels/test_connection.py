@@ -286,7 +286,37 @@ async def _recv_ws_until(ws, want_msg_type, channel, timeout=15.0):
     return None
 
 
-async def test_replaced_stale_connection_does_not_steal_replies(jp_fetch, jp_ws_fetch, monkeypatch):
+async def _ws_connect_v1(jp_http_port, jp_base_url, jp_auth_header, *parts, params=None):
+    """Open a kernel websocket with the v1 subprotocol.
+
+    pytest-jupyter 0.7 (the minimum supported version) drops the
+    ``subprotocols`` kwarg instead of forwarding it, so call
+    ``tornado.websocket.websocket_connect`` directly; this works with
+    every supported tornado/pytest-jupyter combination.
+    """
+    import urllib.parse
+
+    import tornado.httpclient
+    import tornado.websocket
+    from tornado.escape import url_escape
+
+    from jupyter_server.utils import url_path_join
+
+    path_url = url_escape(url_path_join(*parts), plus=False)
+    base_path_url = url_path_join(jp_base_url, path_url)
+    urlparts = urllib.parse.urlparse(f"ws://localhost:{jp_http_port}")
+    urlparts = urlparts._replace(path=base_path_url, query=urllib.parse.urlencode(params or {}))
+    req = tornado.httpclient.HTTPRequest(
+        urlparts.geturl(), headers=dict(jp_auth_header), connect_timeout=120
+    )
+    return await tornado.websocket.websocket_connect(
+        req, subprotocols=["v1.kernel.websocket.jupyter.org"]
+    )
+
+
+async def test_replaced_stale_connection_does_not_steal_replies(
+    jp_fetch, jp_http_port, jp_base_url, jp_auth_header, monkeypatch
+):
     """Regression test for
     https://github.com/jupyter-server/jupyter_server/issues/1719
 
@@ -337,13 +367,15 @@ async def test_replaced_stale_connection_does_not_steal_replies(jp_fetch, jp_ws_
 
     ws_b = None
     task_a = asyncio.ensure_future(
-        jp_ws_fetch(
+        _ws_connect_v1(
+            jp_http_port,
+            jp_base_url,
+            jp_auth_header,
             "api",
             "kernels",
             kid,
             "channels",
             params={"session_id": session_id},
-            subprotocols=["v1.kernel.websocket.jupyter.org"],
         )
     )
     try:
@@ -352,13 +384,15 @@ async def test_replaced_stale_connection_does_not_steal_replies(jp_fetch, jp_ws_
         await asyncio.wait_for(a_connect_entered.wait(), timeout=5)
 
         # Client reloads: ws B with the SAME session_id replaces A.
-        ws_b = await jp_ws_fetch(
+        ws_b = await _ws_connect_v1(
+            jp_http_port,
+            jp_base_url,
+            jp_auth_header,
             "api",
             "kernels",
             kid,
             "channels",
             params={"session_id": session_id},
-            subprotocols=["v1.kernel.websocket.jupyter.org"],
         )
         # Wait until B's connection finished nudging (its open() completed).
         deadline = asyncio.get_event_loop().time() + 15
