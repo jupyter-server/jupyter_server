@@ -259,6 +259,12 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         def nudge(count):
             """Nudge the kernel."""
             count += 1
+            # check for a websocket that was closed while open() was pending
+            if getattr(self, "_closed", False):
+                self.log.debug("Nudge: cancelling on closed connection: %s", self.kernel_id)
+                finish()
+                return
+
             # check for stopped kernel
             if self.kernel_id not in self.multi_kernel_manager:
                 self.log.debug("Nudge: cancelling on stopped kernel: %s", self.kernel_id)
@@ -319,6 +325,15 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         if stale_handler:
             self.log.warning("Replacing stale connection: %s", self.session_key)
             stale_handler.close()
+            # Closing the websocket only schedules its teardown: if the stale
+            # handler is still inside open(), its connection can otherwise
+            # keep (or later create) ZMQ sockets with the same identity as
+            # this new connection and steal kernel replies. Disconnect it
+            # now; disconnect() is idempotent, so the later on_close() call
+            # is a no-op.
+            stale_connection = getattr(stale_handler, "connection", None)
+            if stale_connection is not None:
+                stale_connection.disconnect()
         if (
             self.kernel_id in self.multi_kernel_manager
         ):  # only update open sessions if kernel is actively managed
@@ -374,6 +389,21 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
         was disconnected. Callers should ``await`` the returned Future
         before relying on the connection being live.
         """
+        if getattr(self, "_closed", False):
+            # The websocket was already closed (e.g. this connection was
+            # replaced as a stale session) before connect() ran. Connecting
+            # anyway would create ZMQ sockets sharing the replacement
+            # connection's identity and steal the kernel's ROUTER entry,
+            # starving the replacement of shell replies.
+            self.log.warning("Not connecting an already-closed connection: %s", self.session_key)
+            resolved: asyncio.Future[None] = asyncio.Future()
+            resolved.set_result(None)
+            return resolved
+
+        # Record that notify_connect ran so disconnect() can keep the
+        # connection counter balanced even when it is called before or
+        # after this method (stale-session replacement, double on_close).
+        self._connected = True
         self.multi_kernel_manager.notify_connect(self.kernel_id)
 
         # on new connections, flush the message buffer
@@ -442,14 +472,30 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
 
     def disconnect(self):
         """Handle a disconnect."""
+        # Mark the connection as closed so that a stalled connect()/nudge()
+        # (e.g. one whose open() was still pending when this connection was
+        # replaced as a stale session) aborts instead of wiring up ZMQ
+        # sockets with the same identity as its replacement.
+        self._closed = True
+        if getattr(self, "_disconnected", False):
+            # Disconnect is idempotent: it can be triggered by the stale
+            # session replacement, kernel_died and the websocket close event,
+            # and must not decrement the connection counter or re-run
+            # teardown more than once.
+            return
+        self._disconnected = True
         # Decrement the connection counter first, before any work that can
         # block the event loop (zmq channel close can stall on LINGER when
         # the peer is gone, especially on Windows). The counter conceptually
         # drops the moment the websocket closes, not when teardown finishes.
         # notify_disconnect is internally guarded on _kernel_connections, so
         # it is safe to call even when the kernel was transiently removed
-        # from the mkm (port-changing restart window).
-        self.multi_kernel_manager.notify_disconnect(self.kernel_id)
+        # from the mkm (port-changing restart window). Only balance the
+        # counter for connections whose connect() actually incremented it:
+        # a connection disconnected before its connect() ran must not
+        # decrement another connection's count.
+        if getattr(self, "_connected", False):
+            self.multi_kernel_manager.notify_disconnect(self.kernel_id)
         self.log.debug("Websocket closed %s", self.session_key)
         # unregister myself as an open session (only if it's really me)
         if self._open_sessions.get(self.session_key) is self.websocket_handler:
@@ -487,8 +533,11 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
             )
 
             # start buffering instead of closing if this was the last connection
+            # (only a connection whose connect() ran has channels worth
+            # buffering, and only it decremented the counter above)
             if (
-                self.kernel_id in self.multi_kernel_manager._kernel_connections
+                getattr(self, "_connected", False)
+                and self.kernel_id in self.multi_kernel_manager._kernel_connections
                 and self.multi_kernel_manager._kernel_connections[self.kernel_id] == 0
             ):
                 self.multi_kernel_manager.start_buffering(
@@ -508,8 +557,9 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
 
         self.channels = {}
         try:
-            ZMQChannelsWebsocketConnection._open_sockets.remove(self)
-            self._close_future.set_result(None)
+            ZMQChannelsWebsocketConnection._open_sockets.discard(self)
+            if not self._close_future.done():
+                self._close_future.set_result(None)
         except Exception:
             pass
 
