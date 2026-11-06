@@ -1,7 +1,13 @@
+import os
+import stat
+import sys
+import tempfile
+
 import pytest
 from jupyter_core.utils import ensure_async
 from nbformat import from_dict
 from nbformat.v4 import new_markdown_cell
+from tornado.web import HTTPError
 
 from jupyter_server.services.contents.filecheckpoints import (
     AsyncFileCheckpoints,
@@ -128,3 +134,56 @@ async def test_file_checkpoints(contents_manager):
 
     cps = await ensure_async(cm.list_checkpoints(path))
     assert cps == []
+
+
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="requires POSIX directory perms")
+async def test_checkpoints_in_readonly_dir_use_private_temp_dir(
+    contents_manager, tmp_path, monkeypatch
+):
+    cm: LargeFileManager = contents_manager
+    shared_tmp = tmp_path / "shared_tmp"
+    shared_tmp.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(shared_tmp))
+
+    # another local user staged the old fixed location with a symlink
+    staged = shared_tmp / "jupyter_checkpoints" / "foo"
+    staged.mkdir(parents=True)
+    target = tmp_path / "target"
+    target.write_text("untouched")
+    (staged / "a-checkpoint.ipynb").symlink_to(target)
+
+    readonly = cm._get_os_path("foo")
+    os.chmod(readonly, 0o500)
+    try:
+        cp = await ensure_async(cm.create_checkpoint("foo/a.ipynb"))
+        assert await ensure_async(cm.list_checkpoints("foo/a.ipynb")) == [cp]
+    finally:
+        os.chmod(readonly, 0o700)
+
+    assert target.read_text() == "untouched"
+    cp_root = shared_tmp / f"jupyter_checkpoints-{os.getuid()}"
+    assert stat.S_IMODE(cp_root.stat().st_mode) == 0o700
+    assert (cp_root / "foo" / "a-checkpoint.ipynb").is_file()
+
+
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="requires POSIX directory perms")
+async def test_checkpoints_refuse_non_private_temp_dir(contents_manager, tmp_path, monkeypatch):
+    cm: LargeFileManager = contents_manager
+    shared_tmp = tmp_path / "shared_tmp"
+    shared_tmp.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(shared_tmp))
+
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    os.chmod(elsewhere, 0o777)
+    (shared_tmp / f"jupyter_checkpoints-{os.getuid()}").symlink_to(elsewhere)
+
+    readonly = cm._get_os_path("foo")
+    os.chmod(readonly, 0o500)
+    try:
+        with pytest.raises(HTTPError) as e:
+            await ensure_async(cm.create_checkpoint("foo/a.ipynb"))
+    finally:
+        os.chmod(readonly, 0o700)
+    assert e.value.status_code == 403
+    assert list(elsewhere.iterdir()) == []
