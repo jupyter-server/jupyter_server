@@ -2,6 +2,7 @@ import json
 from typing import NewType
 
 from tornado.httpclient import HTTPClientError
+from tornado.httputil import HTTPServerRequest, RequestStartLine
 from tornado.web import HTTPError
 
 some_resource = "The very model of a modern major general"
@@ -41,3 +42,12 @@ def expected_http_error(error, expected_code, expected_message=None):
             if expected_message != message:
                 return False
         return True
+
+
+def http_request(method="GET", uri="/", **kwargs):
+    """Make a server request with an explicit start line.
+
+    Tornado 6.6 deprecates building ``HTTPServerRequest`` from ``method``/``uri``
+    and 6.7 will require ``start_line``.
+    """
+    return HTTPServerRequest(start_line=RequestStartLine(method, uri, "HTTP/1.0"), **kwargs)

@@ -11,12 +11,12 @@ import warnings
 from unittest.mock import MagicMock
 
 import pytest
-from tornado.httpserver import HTTPRequest
 from tornado.httputil import HTTPHeaders
 
 from jupyter_server.auth.login import LoginHandler
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.base.websocket import WebSocketMixin
+from tests.utils import http_request
 
 TRUSTED_PAT = r"https://trusted\.example\.com"
 TRUSTED_ORIGIN = "https://trusted.example.com"
@@ -34,7 +34,7 @@ def _make_handler(jp_serverapp, origin=None, host="localhost:8888", referer=None
         headers["Origin"] = origin
     if referer:
         headers["Referer"] = referer
-    request = HTTPRequest("GET", headers=HTTPHeaders(headers))
+    request = http_request("GET", headers=HTTPHeaders(headers))
     request.connection = MagicMock()
     handler = JupyterHandler(jp_serverapp.web_app, request)
     handler.settings["allow_origin"] = ""
@@ -71,7 +71,7 @@ def test_set_cors_headers_rejects_bypass(jp_serverapp, origin):
 
 @pytest.mark.parametrize("attacker_origin", BYPASS_ORIGINS)
 def test_login_redirect_safe_rejects_bypass(jp_serverapp, attacker_origin):
-    request = HTTPRequest("GET", headers=HTTPHeaders({"Host": "localhost:8888"}))
+    request = http_request("GET", headers=HTTPHeaders({"Host": "localhost:8888"}))
     request.connection = MagicMock()
     with pytest.warns(UserWarning, match="allow_origin_pat.*"):
         handler = LoginHandler(jp_serverapp.web_app, request)
@@ -87,7 +87,7 @@ def test_login_redirect_safe_rejects_bypass(jp_serverapp, attacker_origin):
 
 @pytest.mark.parametrize("attacker_origin", BYPASS_ORIGINS)
 def test_websocket_check_origin_rejects_bypass(jp_serverapp, attacker_origin):
-    request = HTTPRequest(
+    request = http_request(
         "GET",
         headers=HTTPHeaders({"Origin": attacker_origin, "Host": "other.host:8888"}),
     )

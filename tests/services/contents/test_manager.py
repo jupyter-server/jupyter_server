@@ -785,13 +785,9 @@ async def test_delete_non_empty_folder(delete_to_trash, always_delete, error, jp
     await check_populated_dir_files(cm, dir)
 
     if error is None:
-        error = False
-        if sys.platform == "win32":
-            error = True
-        elif sys.platform == "linux":
-            file_dev = os.stat(cm.root_dir).st_dev
-            home_dev = os.stat(os.path.expanduser("~")).st_dev
-            error = file_dev != home_dev
+        # send2trash can trash from other filesystems, so only Windows refuses
+        # to send a non-empty folder to the trash.
+        error = sys.platform == "win32"
 
     if error:
         with pytest.raises(

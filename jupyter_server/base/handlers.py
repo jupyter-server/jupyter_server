@@ -992,6 +992,8 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
     # cache search results, don't search for files more than once
     _static_paths: dict[str, str] = {}
     root: tuple[str]  # type:ignore[assignment]
+    # default on the class, so a subclass with its own initialize() still has it
+    follow_dir_symlinks: bool = False
 
     def set_headers(self) -> None:
         """Set the headers."""
@@ -1009,14 +1011,23 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
         ):
             self.set_header("Cache-Control", "no-cache")
 
-    def initialize(
+    # tornado 6.5.9 took argument 3 of StaticFileHandler.initialize for
+    # allowed_symlink_directory; this handler has had no_cache_paths there since the
+    # notebook days. Harmless in practice: tornado binds these by name from the route
+    # kwargs (self.initialize(**kwargs)), so neither is ever passed positionally, and
+    # validate_absolute_path below sets allowed_symlink_directory itself, per request,
+    # to the root that matched.
+    def initialize(  # type: ignore[override]
         self,
         path: str | list[str],
         default_filename: str | None = None,
         no_cache_paths: list[str] | None = None,
+        *,
+        follow_dir_symlinks: bool = False,
     ) -> None:
         """Initialize the file find handler."""
         self.no_cache_paths = no_cache_paths or []
+        self.follow_dir_symlinks = follow_dir_symlinks
 
         if isinstance(path, str):
             path = [path]
@@ -1066,7 +1077,29 @@ class FileFindHandler(JupyterHandler, web.StaticFileHandler):
             if (absolute_path + os.sep).startswith(root):
                 break
 
+        # tornado >= 6.5.9 checks symlink targets against this attribute, which its
+        # own initialize() sets. The search path means the root that matched is only
+        # known here. Older tornado never reads it.
+        self.allowed_symlink_directory = self._symlink_directory(root, absolute_path)
+
         return super().validate_absolute_path(root, absolute_path)
+
+    def _symlink_directory(self, root: str, absolute_path: str) -> str:
+        """Directory that symlink targets are validated against.
+
+        The root the file was found under, unless ``follow_dir_symlinks`` is set and
+        a directory below it is a link, in which case that link's target is used and
+        anything below stays confined to it. The file name is never considered, so a
+        linked file cannot widen the check.
+        """
+        if not self.follow_dir_symlinks:
+            return root
+        current = root.rstrip(os.sep)
+        for part in absolute_path[len(root) :].split(os.sep)[:-1]:
+            current = os.path.join(current, part)
+            if os.path.islink(current):
+                return os.path.realpath(current) + os.sep
+        return root
 
 
 class APIVersionHandler(APIHandler):

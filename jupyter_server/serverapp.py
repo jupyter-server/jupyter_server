@@ -207,6 +207,7 @@ JUPYTER_SERVICE_HANDLERS = {
 
 # Added for backwards compatibility from classic notebook server.
 DEFAULT_SERVER_PORT = DEFAULT_JUPYTER_SERVER_PORT
+WILDCARD_IPS = ("0.0.0.0", "::")  # noqa: S104
 
 # -----------------------------------------------------------------------------
 # Helper functions
@@ -2423,7 +2424,9 @@ class ServerApp(JupyterApp):
 
     @property
     def connection_url(self) -> str:
-        urlparts = self._get_urlparts(path=self.base_url)
+        """Return a connectable URL, replacing wildcard addresses with the hostname."""
+        ip = socket.gethostname() if self.ip in WILDCARD_IPS else None
+        urlparts = self._get_urlparts(path=self.base_url, ip=ip)
         return urlparts.geturl()
 
     @property
@@ -2434,7 +2437,7 @@ class ServerApp(JupyterApp):
         If `ip` is the wildcard address, add a text hint but keep
         the machine hostname in the link as 0.0.0.0 is not connectable.
         """
-        if self.ip not in ("0.0.0.0", "::"):  # noqa: S104
+        if self.ip not in WILDCARD_IPS:
             return self.display_url
         public = self._get_urlparts(include_token=True, ip=socket.gethostname()).geturl()
         hint = _i18n(
@@ -3178,9 +3181,16 @@ class ServerApp(JupyterApp):
         if self.open_browser and not self.sock:
             self.launch_browser()
 
-        if self.identity_provider.token and self.identity_provider.token_generated:
-            # log full URL with generated token, so there's a copy/pasteable link
-            # with auth info.
+        generated_token = bool(
+            self.identity_provider.token and self.identity_provider.token_generated
+        )
+        non_token_auth_on_wildcard = (
+            not self.identity_provider.token
+            and self.identity_provider.auth_enabled
+            and self.ip in WILDCARD_IPS
+        )
+        if generated_token or non_token_auth_on_wildcard:
+            # Log the generated token or a connectable hostname for non-token authentication.
             if self.sock:
                 self.log.critical(
                     "\n".join(

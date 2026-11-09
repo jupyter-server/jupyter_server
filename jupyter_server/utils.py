@@ -28,7 +28,7 @@ from urllib.parse import (
 from urllib.request import pathname2url as _pathname2url
 
 from jupyter_core.utils import ensure_async as _ensure_async
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 from tornado.httpclient import AsyncHTTPClient, HTTPClient, HTTPRequest, HTTPResponse
 from tornado.netutil import Resolver
 
@@ -178,13 +178,15 @@ def to_api_path(os_path: str, root: str = "") -> ApiPath:
 def check_version(v: str, check: str) -> bool:
     """check version string v >= check
 
-    If dev/prerelease tags result in TypeError for string-number comparison,
+    If a version cannot be parsed (dev/prerelease tags, or a non-string),
     it is assumed that the dependency is satisfied.
     Users on dev branches are responsible for keeping their own packages up to date.
     """
     try:
         return bool(Version(v) >= Version(check))
-    except TypeError:
+    except (TypeError, InvalidVersion):
+        # packaging >= 26.3 raises InvalidVersion where it used to raise
+        # TypeError for non-string inputs.
         return True
 
 

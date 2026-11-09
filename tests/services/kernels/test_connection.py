@@ -8,19 +8,19 @@ from unittest.mock import MagicMock, patch
 import pytest
 from jupyter_client.jsonutil import json_clean, json_default
 from jupyter_client.session import Session
-from tornado.httpserver import HTTPRequest
 from zmq.eventloop.zmqstream import ZMQStream
 
 from jupyter_server.serverapp import ServerApp
 from jupyter_server.services.kernels.connection.channels import ZMQChannelsWebsocketConnection
 from jupyter_server.services.kernels.websocket import KernelWebsocketHandler
+from tests.utils import http_request
 
 
 async def test_websocket_connection(jp_serverapp: ServerApp) -> None:
     app = jp_serverapp
     kernel_id = await app.kernel_manager.start_kernel()  # type:ignore[has-type]
     kernel = app.kernel_manager.get_kernel(kernel_id)
-    request = HTTPRequest("foo", "GET")
+    request = http_request("foo", "GET")
     request.connection = MagicMock()
     handler = KernelWebsocketHandler(app.web_app, request)
     handler.ws_connection = MagicMock()
@@ -52,7 +52,7 @@ async def test_websocket_connection(jp_serverapp: ServerApp) -> None:
 
 def _make_connection(app, kernel, session_id=None, timeout=0.01):
     """Build a ZMQChannelsWebsocketConnection with a mocked handler."""
-    request = HTTPRequest("foo", "GET")
+    request = http_request("foo", "GET")
     request.connection = MagicMock()
     handler = KernelWebsocketHandler(app.web_app, request)
     handler.ws_connection = MagicMock()

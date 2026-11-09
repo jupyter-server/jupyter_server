@@ -72,3 +72,26 @@ def test_log_request_scrubs_sensitive_params_extra(server_app_with_extra_scrub_k
     assert "default_token" not in call_args
     assert "[secret]" in call_args
     assert "normal=value" in call_args
+
+
+def test_log_request_scrubs_referer_in_5xx_header_dump(server_app_with_default_scrub_keys, caplog):
+    """Test that the 5xx JSON header dump scrubs sensitive params from the Referer header. GHSA-c3mw-737p-c7g2"""
+    handler = Mock()
+    handler.get_status.return_value = 500
+    handler.request.method = "POST"
+    handler.request.remote_ip = "127.0.0.1"
+    handler.request.uri = "http://example.com/api/kernels"
+    handler.request.request_time.return_value = 0.1
+    handler.request.headers = {"Referer": "http://example.com/tree?token=REFERTOKEN"}
+    handler.settings = {
+        "extra_log_scrub_param_keys": server_app_with_default_scrub_keys.extra_log_scrub_param_keys
+    }
+    handler.log = Mock()
+    handler.current_user = None
+
+    log_request(handler, record_prometheus_metrics=False)
+
+    call_args = handler.log.error.call_args_list[0][0][0]
+
+    assert "REFERTOKEN" not in call_args
+    assert "[secret]" in call_args
