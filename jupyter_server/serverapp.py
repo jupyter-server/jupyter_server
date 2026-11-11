@@ -1671,8 +1671,9 @@ class ServerApp(JupyterApp):
 
             Periodic pings help to detect disconnected clients and keep the
             connection active. Set this to 0 to disable pings. If this is None,
-            kernel and terminal websockets send a ping every 30 seconds and
-            other websockets do not send pings.
+            kernel and terminal websockets, and extension websockets that use
+            ``WebSocketMixin``, send a ping every 30 seconds. Other websockets
+            do not send pings.
 
             When a ping is sent, the client has ``websocket_ping_timeout``
             seconds to respond. If no response is received within this period,
@@ -1685,6 +1686,12 @@ class ServerApp(JupyterApp):
         config=True,
         help="""
             Configure the websocket ping timeout in seconds.
+
+            Set this to 0 to keep a connection open when the client stops
+            answering pings (with Tornado older than 6.5, this holds only for
+            kernel and terminal websockets). If this is None, kernel and
+            terminal websockets close the connection when the client has not
+            answered for three ping intervals, and for at least 30 seconds.
 
             See ``websocket_ping_interval`` for details.
         """,
