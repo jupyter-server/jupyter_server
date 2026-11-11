@@ -1690,6 +1690,14 @@ class ServerApp(JupyterApp):
         """,
     )
 
+    @observe("websocket_ping_interval", "websocket_ping_timeout")
+    def _warn_websocket_ping_in_milliseconds(self, change: t.Any) -> None:
+        if change.new is not None and change.new >= 1000:
+            self.log.warning(
+                f"ServerApp.{change.name} is in seconds, so {change.new} means"
+                f" {change.new / 3600:.1f} hours. Divide a value in milliseconds by 1000."
+            )
+
     config_manager_class = Type(
         default_value=ConfigManager,
         config=True,
