@@ -1660,16 +1660,20 @@ class ServerApp(JupyterApp):
         return ZMQChannelsWebsocketConnection
 
     websocket_ping_interval = Integer(
+        default_value=None,
+        allow_none=True,
         config=True,
         help="""
             Configure the websocket ping interval in seconds.
 
-            Websockets are long-lived connections that are used by some Jupyter
-            Server extensions.
+            Websockets are long-lived connections that are used by kernels,
+            terminals and some Jupyter Server extensions.
 
             Periodic pings help to detect disconnected clients and keep the
-            connection active. If this is set to None, then no pings will be
-            performed.
+            connection active. Set this to 0 to disable pings. If this is None,
+            kernel and terminal websockets, and extension websockets that use
+            ``WebSocketMixin``, send a ping every 30 seconds. Other websockets
+            do not send pings.
 
             When a ping is sent, the client has ``websocket_ping_timeout``
             seconds to respond. If no response is received within this period,
@@ -1677,13 +1681,29 @@ class ServerApp(JupyterApp):
         """,
     )
     websocket_ping_timeout = Integer(
+        default_value=None,
+        allow_none=True,
         config=True,
         help="""
             Configure the websocket ping timeout in seconds.
 
+            Set this to 0 to keep a connection open when the client stops
+            answering pings (with Tornado older than 6.5, this holds only for
+            kernel and terminal websockets). If this is None, kernel and
+            terminal websockets close the connection when the client has not
+            answered for three ping intervals, and for at least 30 seconds.
+
             See ``websocket_ping_interval`` for details.
         """,
     )
+
+    @observe("websocket_ping_interval", "websocket_ping_timeout")
+    def _warn_websocket_ping_in_milliseconds(self, change: t.Any) -> None:
+        if change.new is not None and change.new >= 1000:
+            self.log.warning(
+                f"ServerApp.{change.name} is in seconds, so {change.new} means"
+                f" {change.new / 3600:.1f} hours. Divide a value in milliseconds by 1000."
+            )
 
     config_manager_class = Type(
         default_value=ConfigManager,
