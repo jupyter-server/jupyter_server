@@ -25,6 +25,7 @@ from traitlets.config import Config
 from jupyter_server.gateway.connections import GatewayWebSocketConnection
 from jupyter_server.gateway.gateway_client import GatewayTokenRenewerBase, NoOpTokenRenewer
 from jupyter_server.gateway.managers import ChannelQueue, GatewayClient, GatewayKernelManager
+from jupyter_server.services.kernels.connection.base import serialize_binary_message
 from jupyter_server.services.kernels.websocket import KernelWebsocketHandler
 
 from .utils import expected_http_error, http_request
@@ -780,6 +781,37 @@ async def test_websocket_connection_with_session_id(init_gateway, jp_serverapp, 
         for _, level, message in caplog.record_tuples:
             if level >= logging.ERROR:
                 pytest.fail(f"Logs contain an error: {message}")
+
+
+@pytest.mark.parametrize("binary", [False, True])
+async def test_websocket_connection_allowed_message_types(
+    init_gateway, jp_serverapp, jp_fetch, binary
+):
+    kernel_id = await create_kernel(jp_fetch, "kspec_foo")
+    km: GatewayKernelManager = jp_serverapp.kernel_manager.get_kernel(kernel_id)
+    jp_serverapp.kernel_manager.allowed_message_types = ["kernel_info_request"]
+
+    request = http_request("foo", "GET")
+    request.connection = MagicMock()
+    handler = KernelWebsocketHandler(jp_serverapp.web_app, request)
+    conn = GatewayWebSocketConnection(parent=km, websocket_handler=handler)
+    conn.ws = MagicMock(spec=tornado.websocket.WebSocketClientConnection)
+
+    def ws_message(msg_type):
+        msg = {
+            "channel": "shell",
+            "header": {"msg_type": msg_type},
+            "parent_header": {},
+            "metadata": {},
+            "content": {},
+        }
+        if binary:
+            return serialize_binary_message({**msg, "buffers": [b"data"]})
+        return json.dumps(msg)
+
+    conn.handle_incoming_message(ws_message("execute_request"))
+    conn.handle_incoming_message(ws_message("kernel_info_request"))
+    conn.ws.write_message.assert_called_once_with(ws_message("kernel_info_request"))
 
 
 def test_gateway_httperror_percent_not_doubled():
