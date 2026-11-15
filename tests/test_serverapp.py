@@ -110,6 +110,61 @@ def test_root_dir(tmp_path, jp_configurable_serverapp):
     assert app.root_dir == str(tmp_path)
 
 
+def test_root_dir_env_server_root_dir(tmp_path, jp_configurable_serverapp, monkeypatch):
+    custom_dir = tmp_path / "server_root"
+    custom_dir.mkdir()
+    monkeypatch.setenv("JUPYTER_SERVER_ROOT_DIR", str(custom_dir))
+    app = jp_configurable_serverapp(root_dir=None)
+    assert app.root_dir == str(custom_dir)
+    assert app.preferred_dir == str(custom_dir)
+
+
+def test_root_dir_env_notebook_dir(tmp_path, jp_configurable_serverapp, monkeypatch):
+    custom_dir = tmp_path / "notebook_root"
+    custom_dir.mkdir()
+    monkeypatch.setenv("JUPYTER_NOTEBOOK_DIR", str(custom_dir))
+    app = jp_configurable_serverapp(root_dir=None)
+    assert app.root_dir == str(custom_dir)
+    assert app.preferred_dir == str(custom_dir)
+
+
+def test_root_dir_env_precedence(tmp_path, jp_configurable_serverapp, monkeypatch):
+    server_root = tmp_path / "server_root"
+    server_root.mkdir()
+    notebook_root = tmp_path / "notebook_root"
+    notebook_root.mkdir()
+    monkeypatch.setenv("JUPYTER_SERVER_ROOT_DIR", str(server_root))
+    monkeypatch.setenv("JUPYTER_NOTEBOOK_DIR", str(notebook_root))
+    app = jp_configurable_serverapp(root_dir=None)
+    assert app.root_dir == str(server_root)
+
+
+def test_root_dir_cli_precedence_over_env(tmp_path, jp_configurable_serverapp, monkeypatch):
+    env_dir = tmp_path / "env_root"
+    env_dir.mkdir()
+    cli_dir = tmp_path / "cli_root"
+    cli_dir.mkdir()
+    monkeypatch.setenv("JUPYTER_SERVER_ROOT_DIR", str(env_dir))
+    app = jp_configurable_serverapp(argv=[f"--root-dir={cli_dir}"], root_dir=None)
+    assert app.root_dir == str(cli_dir)
+
+
+def test_root_dir_alias_cli(tmp_path, jp_configurable_serverapp):
+    cli_dir = tmp_path / "cli_alias_root"
+    cli_dir.mkdir()
+    app = jp_configurable_serverapp(argv=[f"--root-dir={cli_dir}"], root_dir=None)
+    assert app.root_dir == str(cli_dir)
+
+
+def test_root_dir_env_user_expansion(tmp_path, jp_configurable_serverapp, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    user_dir = tmp_path / "my_notebooks"
+    user_dir.mkdir()
+    monkeypatch.setenv("JUPYTER_SERVER_ROOT_DIR", "~/my_notebooks")
+    app = jp_configurable_serverapp(root_dir=None)
+    assert app.root_dir == str(user_dir)
+
+
 # Build a list of invalid paths
 @pytest.fixture(params=[("notebooks",), ("root", "dir", "is", "missing"), ("test.txt",)])
 def invalid_root_dir(tmp_path, request):

@@ -65,6 +65,19 @@ Alternatively, you can configure Jupyter Server when launching from the command 
     $ jupyter server --ServerApp.port=9999
 
 
+Using environment variables
+---------------------------
+
+Jupyter Server also supports configuring select options using environment variables, which is convenient in containerized or dynamically provisioned environments:
+
+* ``JUPYTER_SERVER_ROOT_DIR``: The directory to use for notebooks and kernels (maps to ``ServerApp.root_dir``).
+* ``JUPYTER_NOTEBOOK_DIR``: Backward-compatible alias for ``JUPYTER_SERVER_ROOT_DIR``. If both are set, ``JUPYTER_SERVER_ROOT_DIR`` takes precedence.
+* ``JUPYTER_NO_BROWSER``: When set to a truthy value (such as ``1``, ``true``, or ``yes``), prevents opening the application in a web browser on startup (equivalent to ``--no-browser``).
+* ``JUPYTER_PORT``: The port the server will listen on (maps to ``ServerApp.port``).
+* ``JUPYTER_PORT_RETRIES``: The number of additional ports to try if the specified port is not available (maps to ``ServerApp.port_retries``).
+* ``JUPYTER_SERVER_ALLOW_UNAUTHENTICATED_ACCESS``: When set to a value other than ``true`` or ``yes``, disables unauthenticated access to endpoints without an authentication rule.
+
+
 Full configuration list
 -----------------------
 

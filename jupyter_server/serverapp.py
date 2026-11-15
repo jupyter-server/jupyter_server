@@ -855,6 +855,7 @@ aliases.update(
         "certfile": "ServerApp.certfile",
         "client-ca": "ServerApp.client_ca",
         "notebook-dir": "ServerApp.root_dir",
+        "root-dir": "ServerApp.root_dir",
         "preferred-dir": "ServerApp.preferred_dir",
         "browser": "ServerApp.browser",
         "pylab": "ServerApp.pylab",
@@ -1428,15 +1429,18 @@ class ServerApp(JupyterApp):
        """,
     )
 
+    _open_browser_env = "JUPYTER_NO_BROWSER"
+
     open_browser = Bool(
         False,
         config=True,
-        help="""Whether to open in a browser after starting.
-                        The specific browser used is platform dependent and
-                        determined by the python standard library `webbrowser`
-                        module, unless it is overridden using the --browser
-                        (ServerApp.browser) configuration option.
-                        """,
+        help=_i18n(
+            "Whether to open in a browser after starting. "
+            "The specific browser used is platform dependent and "
+            "determined by the python standard library `webbrowser` "
+            "module, unless it is overridden using the --browser "
+            "(ServerApp.browser) configuration option (env: JUPYTER_NO_BROWSER)."
+        ),
     )
 
     browser = Unicode(
@@ -1857,7 +1861,16 @@ class ServerApp(JupyterApp):
         ),
     )
 
-    root_dir = Unicode(config=True, help=_i18n("The directory to use for notebooks and kernels."))
+    _root_dir_env = "JUPYTER_SERVER_ROOT_DIR"
+    _notebook_dir_env = "JUPYTER_NOTEBOOK_DIR"
+
+    root_dir = Unicode(
+        config=True,
+        help=_i18n(
+            "The directory to use for notebooks and kernels "
+            "(env: JUPYTER_SERVER_ROOT_DIR or JUPYTER_NOTEBOOK_DIR)."
+        ),
+    )
     _root_dir_set = False
 
     @default("root_dir")
@@ -1865,8 +1878,13 @@ class ServerApp(JupyterApp):
         if self.file_to_run:
             self._root_dir_set = True
             return os.path.dirname(os.path.abspath(self.file_to_run))
-        else:
-            return os.getcwd()
+        if os.getenv(self._root_dir_env, "").strip():
+            self._root_dir_set = True
+            return os.path.expanduser(os.environ[self._root_dir_env].strip())
+        if os.getenv(self._notebook_dir_env, "").strip():
+            self._root_dir_set = True
+            return os.path.expanduser(os.environ[self._notebook_dir_env].strip())
+        return os.getcwd()
 
     def _normalize_dir(self, value: str) -> str:
         """Normalize a directory."""

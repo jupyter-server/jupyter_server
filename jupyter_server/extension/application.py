@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 import sys
 import typing as t
@@ -147,6 +148,8 @@ class ExtensionApp(JupyterApp):
     # is launched directly (using its `launch_instance` method).
     serverapp_config: dict[str, t.Any] = {}
 
+    _open_browser_env = "JUPYTER_NO_BROWSER"
+
     # Some subclasses will likely override this trait to flip
     # the default value to False if they don't offer a browser
     # based frontend.
@@ -155,13 +158,15 @@ class ExtensionApp(JupyterApp):
         The specific browser used is platform dependent and
         determined by the python standard library `webbrowser`
         module, unless it is overridden using the --browser
-        (ServerApp.browser) configuration option.
+        (ServerApp.browser) configuration option (env: JUPYTER_NO_BROWSER).
         """
     ).tag(config=True)
 
     @default("open_browser")
     def _default_open_browser(self):
         assert self.serverapp is not None
+        if os.getenv(self._open_browser_env, "").strip().lower() in ["true", "yes", "1"]:
+            return False
         return self.serverapp.config["ServerApp"].get("open_browser", True)
 
     @property
