@@ -156,11 +156,13 @@ def test_root_dir_alias_cli(tmp_path, jp_configurable_serverapp):
     assert app.root_dir == str(cli_dir)
 
 
-def test_root_dir_env_user_expansion(tmp_path, jp_configurable_serverapp, monkeypatch):
+@pytest.mark.parametrize("env_var", ["JUPYTER_SERVER_ROOT_DIR", "JUPYTER_NOTEBOOK_DIR"])
+def test_root_dir_env_user_expansion(tmp_path, jp_configurable_serverapp, monkeypatch, env_var):
     monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
     user_dir = tmp_path / "my_notebooks"
     user_dir.mkdir()
-    monkeypatch.setenv("JUPYTER_SERVER_ROOT_DIR", "~/my_notebooks")
+    monkeypatch.setenv(env_var, "~/my_notebooks")
     app = jp_configurable_serverapp(root_dir=None)
     assert app.root_dir == str(user_dir)
 

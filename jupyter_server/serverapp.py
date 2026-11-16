@@ -1880,10 +1880,10 @@ class ServerApp(JupyterApp):
             return os.path.dirname(os.path.abspath(self.file_to_run))
         if os.getenv(self._root_dir_env, "").strip():
             self._root_dir_set = True
-            return os.path.expanduser(os.environ[self._root_dir_env].strip())
+            return os.path.abspath(os.path.expanduser(os.environ[self._root_dir_env].strip()))
         if os.getenv(self._notebook_dir_env, "").strip():
             self._root_dir_set = True
-            return os.path.expanduser(os.environ[self._notebook_dir_env].strip())
+            return os.path.abspath(os.path.expanduser(os.environ[self._notebook_dir_env].strip()))
         return os.getcwd()
 
     def _normalize_dir(self, value: str) -> str:
