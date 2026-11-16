@@ -2,6 +2,7 @@
 
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+import hmac
 import os
 import re
 import uuid
@@ -129,7 +130,7 @@ class LegacyLoginHandler(LoginFormHandler):
         if self.get_login_available(self.settings):
             if self.passwd_check(self.hashed_password, typed_password) and not new_password:
                 self.set_login_cookie(self, uuid.uuid4().hex)
-            elif self.token and self.token == typed_password:
+            elif self.token and hmac.compare_digest(self.token.encode(), typed_password.encode()):
                 self.set_login_cookie(self, uuid.uuid4().hex)
                 if new_password and getattr(self.identity_provider, "allow_password_change", False):
                     config_dir = self.settings.get("config_dir", "")
@@ -248,7 +249,7 @@ class LegacyLoginHandler(LoginFormHandler):
         # check login token from URL argument or Authorization header
         user_token = cls.get_token(handler)
         authenticated = False
-        if user_token == token:
+        if hmac.compare_digest(user_token.encode(), token.encode()):
             # token-authenticated, set the login cookie
             handler.log.debug(
                 "Accepting token-authenticated connection from %s",

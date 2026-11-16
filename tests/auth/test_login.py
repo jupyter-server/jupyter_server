@@ -189,3 +189,18 @@ async def test_token_cookie_user_id(jp_serverapp, jp_fetch):
     resp = await jp_fetch("/api/me")
     user_id3 = json.loads(resp.body.decode("utf8"))
     assert user_id["identity"] != user_id3["identity"]
+
+
+@pytest.mark.parametrize("bad_token", ["wrong", "töken"])
+async def test_bad_token_rejected(login, http_server_client, jp_base_url, bad_token):
+    # token in the URL
+    with pytest.raises(HTTPClientError) as exc:
+        await http_server_client.fetch(
+            url_concat(url_path_join(jp_base_url, "api/me"), {"token": bad_token})
+        )
+    assert exc.value.code == 403
+
+    # token in the login form
+    with pytest.raises(HTTPClientError) as exc:
+        await login(password=bad_token)
+    assert exc.value.code == 401

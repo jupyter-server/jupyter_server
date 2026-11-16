@@ -26,3 +26,7 @@ def test_passwd_check_unicode():
     assert passwd_check(phash, "łe¶ŧ←↓→")
     phash = "argon2:$argon2id$v=19$m=10240,t=10,p=8$qjjDiZUofUVVnrVYxacnbA$l5pQq1bJ8zglGT2uXP6iOg"
     assert passwd_check(phash, "łe¶ŧ←↓→")
+
+
+def test_passwd_check_non_ascii_digest():
+    assert not passwd_check("sha1:23862bc21dd3:7a415a95ae4580582e314072143d9c3é", "x")

@@ -494,7 +494,7 @@ class IdentityProvider(LoggingConfigurable):
         # check login token from URL argument or Authorization header
         user_token = self.get_token(handler)
         authenticated = False
-        if user_token == token:
+        if hmac.compare_digest(user_token.encode(), token.encode()):
             # token-authenticated, set the login cookie
             self.log.debug(
                 "Accepting token-authenticated request from %s",
@@ -589,7 +589,7 @@ class IdentityProvider(LoggingConfigurable):
             self.log.warning("Accepting anonymous login because auth fully disabled!")
             return self.generate_anonymous_user(handler)
 
-        if self.token and self.token == typed_password:
+        if self.token and hmac.compare_digest(self.token.encode(), typed_password.encode()):
             return t.cast("User", self.user_for_token(typed_password))  # type:ignore[attr-defined]
 
         return user
@@ -732,7 +732,7 @@ class PasswordIdentityProvider(IdentityProvider):
 
         if self.passwd_check(typed_password) and not new_password:
             return self.generate_anonymous_user(handler)
-        elif self.token and self.token == typed_password:
+        elif self.token and hmac.compare_digest(self.token.encode(), typed_password.encode()):
             user = self.generate_anonymous_user(handler)
             if new_password and self.allow_password_change:
                 config_dir = handler.settings.get("config_dir", "")
