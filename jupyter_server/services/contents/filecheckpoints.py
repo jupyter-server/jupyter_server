@@ -2,8 +2,10 @@
 File-based Checkpoints implementations.
 """
 
+import errno
 import os
 import shutil
+import stat
 import tempfile
 
 from anyio.to_thread import run_sync
@@ -112,14 +114,41 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
         filename = f"{basename}-{checkpoint_id}{ext}"
         os_path = self._get_os_path(path=parent)
         cp_dir = os.path.join(os_path, self.checkpoint_dir)
-        # If parent directory isn't writable, use system temp
+        # If parent directory isn't writable, use a private dir under system temp
         if not os.access(os.path.dirname(cp_dir), os.W_OK):
             rel = os.path.relpath(os_path, start=self.root_dir)
-            cp_dir = os.path.join(tempfile.gettempdir(), "jupyter_checkpoints", rel)
+            cp_dir = os.path.join(self._temp_checkpoint_dir(), rel)
         with self.perm_to_403():
             ensure_dir_exists(cp_dir)
         cp_path = os.path.join(cp_dir, filename)
         return cp_path
+
+    def _temp_checkpoint_dir(self):
+        """Per-user directory under system temp for checkpoints of read-only dirs.
+
+        On POSIX the system temp dir is usually shared by all local users,
+        so the directory is created 0700 and only used if it is a real
+        directory owned by us that nobody else can access.
+        """
+        if not hasattr(os, "getuid"):
+            # Windows: the temp dir is already per-user
+            return os.path.join(tempfile.gettempdir(), "jupyter_checkpoints")
+        uid = os.getuid()
+        cp_root = os.path.join(tempfile.gettempdir(), f"jupyter_checkpoints-{uid}")
+        with self.perm_to_403():
+            try:
+                os.mkdir(cp_root, 0o700)
+            except FileExistsError:
+                pass
+            st = os.lstat(cp_root)
+            if not stat.S_ISDIR(st.st_mode) or st.st_uid != uid or st.st_mode & 0o077:
+                self.log.warning(
+                    "Not using %s for checkpoints: not a private directory owned by uid %s",
+                    cp_root,
+                    uid,
+                )
+                raise PermissionError(errno.EACCES, "Permission denied", cp_root)
+        return cp_root
 
     def checkpoint_model(self, checkpoint_id, os_path):
         """construct the info dict for a given checkpoint"""
