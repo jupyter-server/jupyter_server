@@ -6,6 +6,7 @@ import importlib
 import logging
 from itertools import starmap
 
+import jsonschema
 from tornado.gen import multi
 from traitlets import Any, Bool, Dict, HasTraits, Instance, List, Unicode, default, observe
 from traitlets import validate as validate_trait
@@ -13,6 +14,37 @@ from traitlets.config import LoggingConfigurable
 
 from .config import ExtensionConfigManager
 from .utils import ExtensionMetadataError, ExtensionModuleNotFound, get_loader, get_metadata
+
+# probably this should go in it's own file? Not sure where though
+MCP_TOOL_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "name": {"type": "string"},
+        "description": {"type": "string"},
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "type": {"type": "string", "enum": ["object"]},
+                "properties": {"type": "object"},
+                "required": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["type", "properties"],
+        },
+        "annotations": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"},
+                "readOnlyHint": {"type": "boolean"},
+                "destructiveHint": {"type": "boolean"},
+                "idempotentHint": {"type": "boolean"},
+                "openWorldHint": {"type": "boolean"},
+            },
+            "additionalProperties": True,
+        },
+    },
+    "required": ["name", "inputSchema"],
+    "additionalProperties": False,
+}
 
 
 class ExtensionPoint(HasTraits):
@@ -103,6 +135,38 @@ class ExtensionPoint(HasTraits):
     def module(self):
         """The imported module (using importlib.import_module)"""
         return self._module
+
+    @property
+    def tools(self): 
+        """Structured tools exposed by this extension point, if any.
+
+        Searches for a `jupyter_server_extension_tools` function on the extension module or app.
+        """
+        loc = self.app or self.module
+        if not loc:
+            return {}
+
+        tools_func = getattr(loc, "jupyter_server_extension_tools", None)
+        if not callable(tools_func):
+            return {}
+
+        tools = {}
+        try:
+            result = tools_func()
+            # Support (tools_dict, schema) or just tools_dict
+            if isinstance(result, tuple) and len(result) == 2:
+                tools_dict, schema = result
+            else:
+                tools_dict = result
+                schema = MCP_TOOL_SCHEMA
+                
+            for name, tool in tools_dict.items():
+                jsonschema.validate(instance=tool["metadata"], schema=schema)
+                tools[name] = tool
+        except Exception as e:
+            # not sure if this should fail quietly, raise an error, or log it?
+            print(f"[tool-discovery] Failed to load tools from {self.module_name}: {e}")
+        return tools
 
     def _get_linker(self):
         """Get a linker."""
@@ -449,6 +513,22 @@ class ExtensionManager(LoggingConfigurable):
         # order.
         for name in self.sorted_extensions:
             self.load_extension(name)
+
+    def get_tools(self) -> Dict[str, Any]:
+        """Aggregate and return structured tools (with metadata) from all enabled extensions."""
+        all_tools = {}
+
+        for ext_name, ext_pkg in self.extensions.items():
+            if not ext_pkg.enabled:
+                continue
+
+            for point in ext_pkg.extension_points.values():
+                for name, tool in point.tools.items(): 
+                    if name in all_tools:
+                        raise ValueError(f"Duplicate tool name detected: '{name}'")
+                    all_tools[name] = tool
+
+        return all_tools
 
     async def start_all_extensions(self):
         """Start all enabled extensions."""
