@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from jupyter_core.utils import ensure_async
 from nbformat import from_dict
@@ -39,6 +41,9 @@ async def test_checkpoints_follow_file(contents_manager):
 
     # Create a checkpoint of initial state
     cp1 = await ensure_async(cm.create_checkpoint(path))
+    assert (
+        Path(contents_manager.root_dir) / "foo/.ipynb_checkpoints/.gitignore"
+    ).read_text() == "*\n"
 
     # Modify file and save.
     nbcontent = model["content"]
