@@ -109,9 +109,14 @@ class ContentsHandler(ContentsAPIHandler):
         self.finish(json.dumps(model, default=json_default))
 
     async def _finish_error(self, code, message):
-        """Finish a JSON request with an error code and descriptive message"""
+        """Finish a JSON request with an error code and descriptive message
+
+        The body has the same shape as the one ``APIHandler.write_error`` writes
+        for a ``web.HTTPError``. The response is finished here instead of raising,
+        so 404s that clients trigger on purpose are not logged again (see #1357).
+        """
         self.set_status(code)
-        self.write(message)
+        self.write(json.dumps({"message": message, "reason": None}))
         await self.finish()
 
     @web.authenticated

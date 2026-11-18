@@ -36,6 +36,15 @@ def dirs_only(dir_model):
     return [x for x in dir_model["content"] if x["type"] == "directory"]
 
 
+def assert_json_404(error, path):
+    """Check that a contents 404 has a JSON body, as its Content-Type says."""
+    message = f"file or directory '/{path}' does not exist"
+    assert expected_http_error(error, 404, message)
+    response = error.value.response
+    assert response.headers["Content-Type"].startswith("application/json")
+    assert json.loads(response.body.decode()) == {"message": message, "reason": None}
+
+
 @pytest.fixture(params=["FileContentsManager", "AsyncFileContentsManager"])
 def jp_argv(request):
     return [
@@ -78,13 +87,14 @@ async def test_get_dir_no_contents(jp_fetch, contents, path, name):
 
 
 async def test_list_nonexistant_dir(jp_fetch, contents):
-    with pytest.raises(tornado.httpclient.HTTPClientError):
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch(
             "api",
             "contents",
             "nonexistent",
             method="GET",
         )
+    assert_json_404(e, "nonexistent")
 
 
 @pytest.mark.parametrize("path,name", dirs)
@@ -170,7 +180,7 @@ async def test_get_contents_no_such_file(jp_fetch):
             "foo/q.ipynb",
             method="GET",
         )
-    assert e.value.code == 404
+    assert_json_404(e, "foo/q.ipynb")
 
 
 @pytest.mark.parametrize("path,name", dirs)
@@ -243,7 +253,7 @@ async def test_get_404_hidden(jp_fetch, contents, contents_dir):
             ".hidden/visible.txt",
             method="GET",
         )
-    assert expected_http_error(e, 404)
+    assert_json_404(e, ".hidden/visible.txt")
 
     with pytest.raises(tornado.httpclient.HTTPClientError) as e:
         await jp_fetch(
@@ -252,7 +262,7 @@ async def test_get_404_hidden(jp_fetch, contents, contents_dir):
             ".hidden.txt",
             method="GET",
         )
-    assert expected_http_error(e, 404)
+    assert_json_404(e, ".hidden.txt")
 
 
 @pytest.mark.parametrize("path,name", dirs)
