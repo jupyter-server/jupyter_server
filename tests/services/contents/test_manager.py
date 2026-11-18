@@ -1455,7 +1455,8 @@ def test_run_post_save_hook_error_message():
         msg = "boom"
         raise ValueError(msg)
 
-    cm = FileContentsManager(post_save_hook=failing_hook)
+    cm = FileContentsManager()
+    cm.post_save_hook = failing_hook
     with pytest.warns(DeprecationWarning), pytest.raises(HTTPError) as excinfo:
         cm.run_post_save_hook(model={}, os_path="notebook.ipynb")
     assert excinfo.value.log_message == "Unexpected error while running post hook save: boom"
