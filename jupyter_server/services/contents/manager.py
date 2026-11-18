@@ -255,9 +255,9 @@ class ContentsManager(LoggingConfigurable):
             try:
                 self.log.debug("Running post-save hook on %s", os_path)
                 self.post_save_hook(os_path=os_path, model=model, contents_manager=self)
-            except Exception:
+            except Exception as e:
                 self.log.error("Post-save hook failed o-n %s", os_path, exc_info=True)
-                msg = "fUnexpected error while running post hook save: {e}"
+                msg = f"Unexpected error while running post hook save: {e}"
                 raise HTTPError(500, msg) from None
 
     _pre_save_hooks: List[t.Any] = List()

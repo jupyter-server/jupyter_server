@@ -2188,7 +2188,7 @@ class ServerApp(JupyterApp):
             # non-default login handler ignored because also explicitly set identity provider
             self.log.warning(
                 f"Ignoring deprecated config ServerApp.login_handler_class={self.login_handler_class}."
-                " Superseded by ServerApp.identity_provider_class={self.identity_provider_class}."
+                f" Superseded by ServerApp.identity_provider_class={self.identity_provider_class}."
             )
         self.identity_provider = self.identity_provider_class(**identity_provider_kwargs)
 

@@ -1448,3 +1448,15 @@ async def test_base_model_invalid_timestamp_fallback(jp_contents_manager):
     unix_epoch = datetime(1970, 1, 1, 0, 0, tzinfo=tz.UTC)
     assert result["created"] == unix_epoch
     assert result["last_modified"] == unix_epoch
+
+
+def test_run_post_save_hook_error_message():
+    def failing_hook(os_path, model, contents_manager):
+        msg = "boom"
+        raise ValueError(msg)
+
+    cm = FileContentsManager()
+    cm.post_save_hook = failing_hook
+    with pytest.warns(DeprecationWarning), pytest.raises(HTTPError) as excinfo:
+        cm.run_post_save_hook(model={}, os_path="notebook.ipynb")
+    assert excinfo.value.log_message == "Unexpected error while running post hook save: boom"
