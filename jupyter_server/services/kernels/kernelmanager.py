@@ -52,6 +52,7 @@ from traitlets import (
 from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH
 from jupyter_server._tz import isoformat, utcnow
 from jupyter_server.prometheus.metrics import KERNEL_CURRENTLY_RUNNING_TOTAL
+from jupyter_server.services.kernels.connection.base import _copy_transport_encrypted
 from jupyter_server.utils import ApiPath, import_item, to_os_path
 
 
@@ -620,6 +621,7 @@ class MappingKernelManager(MultiKernelManager):
             config=kernel.session.config,
             key=kernel.session.key,
         )
+        _copy_transport_encrypted(kernel.session, session)
 
         def record_activity(msg_list):
             """Record an IOPub message arriving from a kernel"""

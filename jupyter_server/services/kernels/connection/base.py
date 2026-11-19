@@ -21,6 +21,18 @@ from jupyter_server.transutils import _i18n
 from .abc import KernelWebsocketConnectionABC
 
 
+def _copy_transport_encrypted(source: Session, target: Session) -> None:
+    """Copy ``transport_encrypted`` from the kernel manager's session to ``target``.
+
+    The kernel manager sets this trait when the kernel uses CurveZMQ. It is
+    not a config option, so a Session built from the kernel's config and key
+    does not get it, and rejects the unsigned messages such a kernel can send.
+    jupyter_client versions without the trait are left unchanged.
+    """
+    if target.has_trait("transport_encrypted"):
+        target.set_trait("transport_encrypted", getattr(source, "transport_encrypted", False))
+
+
 def serialize_binary_message(msg):
     """serialize a message as a binary blob
 

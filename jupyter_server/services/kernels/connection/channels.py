@@ -29,6 +29,7 @@ from ..websocket import KernelWebsocketHandler
 from .abc import KernelWebsocketConnectionABC
 from .base import (
     BaseKernelWebsocketConnection,
+    _copy_transport_encrypted,
     deserialize_binary_message,
     deserialize_msg_from_ws_v1,
     serialize_binary_message,
@@ -351,6 +352,7 @@ class ZMQChannelsWebsocketConnection(BaseKernelWebsocketConnection):
                 raise TimeoutError(msg)
 
         self.session.key = self.kernel_manager.session.key
+        _copy_transport_encrypted(self.kernel_manager.session, self.session)
         future = self.request_kernel_info()
 
         def give_up():
