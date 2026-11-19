@@ -51,6 +51,13 @@ class Checkpoints(LoggingConfigurable):
         for checkpoint in self.list_checkpoints(path):
             self.delete_checkpoint(checkpoint["id"], path)
 
+    def get_checkpoint(self, checkpoint_id, path):
+        """Retrieve the content of a checkpoint without restoring it.
+
+        Must return a model dictionary.
+        """
+        raise NotImplementedError
+
 
 class GenericCheckpointsMixin:
     """
@@ -142,6 +149,10 @@ class GenericCheckpointsMixin:
         """
         raise NotImplementedError
 
+    def get_checkpoint(self, checkpoint_id, path):
+        """Get the content of a checkpoint."""
+        raise NotImplementedError("This logic depends on the specific implementation.")
+
 
 class AsyncCheckpoints(Checkpoints):
     """
@@ -177,6 +188,10 @@ class AsyncCheckpoints(Checkpoints):
         """Delete all checkpoints for the given path."""
         for checkpoint in await self.list_checkpoints(path):
             await self.delete_checkpoint(checkpoint["id"], path)
+
+    async def get_checkpoint(self, checkpoint_id, path):
+        """Retrieve the content of a checkpoint without restoring it asynchronously."""
+        raise NotImplementedError
 
 
 class AsyncGenericCheckpointsMixin(GenericCheckpointsMixin):
@@ -253,3 +268,16 @@ class AsyncGenericCheckpointsMixin(GenericCheckpointsMixin):
             }
         """
         raise NotImplementedError
+
+    async def get_checkpoint(self, checkpoint_id, path, type_=None):
+        """Retrieve a checkpoint asynchronously."""
+        if type_ is None:
+            model = await self.parent.get(path, content=False)
+            type_ = model["type"]
+
+        if type_ == "notebook":
+            return await self.get_notebook_checkpoint(checkpoint_id, path)
+        elif type_ == "file":
+            return await self.get_file_checkpoint(checkpoint_id, path)
+        else:
+            raise HTTPError(500, "Unexpected type %s" % type_)
