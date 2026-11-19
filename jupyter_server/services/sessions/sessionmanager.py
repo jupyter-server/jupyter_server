@@ -267,6 +267,7 @@ class SessionManager(LoggingConfigurable):
         type: str | None = None,
         kernel_name: KernelName | None = None,
         kernel_id: str | None = None,
+        custom_kernel_specs: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Creates a session and returns its model
 
@@ -289,6 +290,7 @@ class SessionManager(LoggingConfigurable):
                 type=type,
                 kernel_name=kernel_name,
                 kernel_id=kernel_id,
+                custom_kernel_specs=custom_kernel_specs,
             )
         record.kernel_id = kernel_id
         self._pending_sessions.update(record)
@@ -322,6 +324,7 @@ class SessionManager(LoggingConfigurable):
         name: ModelName | None,
         type: str | None,
         kernel_name: KernelName | None,
+        custom_kernel_specs: dict[str, Any] | None = None,
         kernel_id: str | None = None,
     ) -> str:
         """Start a new kernel for a given session.
@@ -339,6 +342,8 @@ class SessionManager(LoggingConfigurable):
             the type of the session
         kernel_name : str
             the name of the kernel specification to use.  The default kernel name will be used if not provided.
+        custom_kernel_specs: dict
+            dictionary of kernel custom specifications
         kernel_id : str, optional
             client-supplied UUID to register the new kernel under.  When
             provided, forwarded to ``kernel_manager.start_kernel`` so the
@@ -348,11 +353,13 @@ class SessionManager(LoggingConfigurable):
         # allow contents manager to specify kernels cwd
         kernel_path = await ensure_async(self.contents_manager.get_kernel_path(path=path))
 
+        custom_kernel_specs_params = {} if custom_kernel_specs is None else custom_kernel_specs
         kernel_env = self.get_kernel_env(path, name)
         kernel_id = await self.kernel_manager.start_kernel(
             path=kernel_path,
             kernel_name=kernel_name,
             env=kernel_env,
+            custom_kernel_specs=custom_kernel_specs_params,
             kernel_id=kernel_id,
         )
         return cast("str", kernel_id)
