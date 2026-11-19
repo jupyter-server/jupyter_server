@@ -44,6 +44,12 @@ except ImportError:
 _script_exporter = None
 
 
+def _validate_windows_save_path(path: str) -> None:
+    for part in path.replace("\\", "/").split("/"):
+        if part not in (".", "..") and (":" in part or part.endswith((".", " "))):
+            raise web.HTTPError(400, f"Invalid Windows filename: {part!r}")
+
+
 def _get_created_timestamp(info: os.stat_result) -> float:
     """Get best-effort file creation timestamp from stat result.
 
@@ -538,6 +544,8 @@ class FileContentsManager(FileManagerMixin, ContentsManager):
         if "content" not in model and model["type"] != "directory":
             raise web.HTTPError(400, "No file content provided")
         os_path = self._get_os_path(path)
+        if sys.platform == "win32":
+            _validate_windows_save_path(path)
 
         if not self.allow_hidden and is_hidden(os_path, self.root_dir):
             raise web.HTTPError(400, f"Cannot create file or directory {os_path!r}")
@@ -1009,6 +1017,8 @@ class AsyncFileContentsManager(  # type: ignore[misc]
             raise web.HTTPError(400, "No file content provided")
 
         os_path = self._get_os_path(path)
+        if sys.platform == "win32":
+            _validate_windows_save_path(path)
         self.log.debug("Saving %s", os_path)
 
         validation_error: dict[str, t.Any] = {}

@@ -44,6 +44,19 @@ def jp_argv(request):
     ]
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows filename rules")
+@pytest.mark.parametrize("name", ["invalid:stream.txt", "invalid.", "invalid "])
+async def test_reject_windows_filenames_on_save(jp_fetch, contents_dir, name):
+    before = set(contents_dir.iterdir())
+    model = {"type": "file", "format": "text", "content": "not saved"}
+
+    with pytest.raises(tornado.httpclient.HTTPClientError) as error:
+        await jp_fetch("api", "contents", name, method="PUT", body=json.dumps(model))
+
+    assert expected_http_error(error, 400)
+    assert set(contents_dir.iterdir()) == before
+
+
 @pytest.mark.parametrize("path,name", dirs)
 async def test_list_notebooks(jp_fetch, contents, path, name):
     response = await jp_fetch(
