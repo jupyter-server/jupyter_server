@@ -4,6 +4,7 @@ Password generation for the Jupyter Server.
 
 import getpass
 import hashlib
+import hmac
 import json
 import os
 import random
@@ -130,7 +131,7 @@ def passwd_check(hashed_passphrase, passphrase):
 
     h.update(passphrase.encode("utf-8") + salt.encode("ascii"))
 
-    return h.hexdigest() == pw_digest
+    return hmac.compare_digest(h.hexdigest().encode(), pw_digest.encode())
 
 
 @contextmanager
