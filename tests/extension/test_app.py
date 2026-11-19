@@ -128,6 +128,50 @@ async def test_browser_open(monkeypatch, jp_environ, config, expected_value):
     assert serverapp.open_browser == expected_value
 
 
+@pytest.mark.parametrize(
+    "env_val,expected_value",
+    [
+        ("1", False),
+        ("true", False),
+        ("True", False),
+        ("TRUE", False),
+        ("yes", False),
+        ("Yes", False),
+        ("YES", False),
+        ("0", True),
+        ("false", True),
+        ("False", True),
+        ("FALSE", True),
+        ("no", True),
+        ("No", True),
+        ("", True),
+    ],
+)
+async def test_browser_open_env(monkeypatch, jp_environ, env_val, expected_value):
+    monkeypatch.setenv("JUPYTER_NO_BROWSER", env_val)
+    with mock.patch("jupyter_server.serverapp.ServerApp.init_httpserver"):
+        serverapp = MockExtensionApp.initialize_server()
+    assert serverapp.open_browser == expected_value
+
+
+async def test_browser_open_env_cli_override_enable(monkeypatch, jp_environ):
+    # JUPYTER_NO_BROWSER=1, but CLI specifies open_browser=True
+    monkeypatch.setenv("JUPYTER_NO_BROWSER", "1")
+    with mock.patch("jupyter_server.serverapp.ServerApp.init_httpserver"):
+        serverapp = MockExtensionApp.initialize_server(
+            argv=["--MockExtensionApp.open_browser=True"]
+        )
+    assert serverapp.open_browser is True
+
+
+async def test_browser_open_env_cli_override_disable(monkeypatch, jp_environ):
+    # JUPYTER_NO_BROWSER=0, but CLI specifies --no-browser
+    monkeypatch.setenv("JUPYTER_NO_BROWSER", "0")
+    with mock.patch("jupyter_server.serverapp.ServerApp.init_httpserver"):
+        serverapp = MockExtensionApp.initialize_server(argv=["--no-browser"])
+    assert serverapp.open_browser is False
+
+
 async def test_load_parallel_extensions(monkeypatch, jp_environ):
     with mock.patch("jupyter_server.serverapp.ServerApp.init_httpserver"):
         serverapp = MockExtensionApp.initialize_server()
