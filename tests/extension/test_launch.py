@@ -74,6 +74,7 @@ def launch_instance(request, port, token):
                 f"--port={port}",
                 "--ip=127.0.0.1",
                 "--no-browser",
+                "--allow-root",
                 *argv,
             ],
             cwd=str(root),
