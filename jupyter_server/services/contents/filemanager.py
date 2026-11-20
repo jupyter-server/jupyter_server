@@ -16,6 +16,7 @@ import subprocess
 import sys
 import typing as t
 import warnings
+from contextlib import nullcontext
 from datetime import datetime
 from pathlib import Path
 
@@ -975,13 +976,18 @@ class AsyncFileContentsManager(  # type: ignore[misc]
                 )
             model = await self._dir_model(path, content=content)
         elif type == "notebook" or (type is None and path.endswith(".ipynb")):
-            model = await self._notebook_model(path, content=content, require_hash=require_hash)
+            # When the file is read, hold the lock for the whole model, so that its
+            # last_modified and size match its content even if it is being saved.
+            # A listing only stats the file, so it does not wait for reads and saves.
+            async with self._path_lock(os_path) if content or require_hash else nullcontext():
+                model = await self._notebook_model(path, content=content, require_hash=require_hash)
         else:
             if type == "directory":
                 raise web.HTTPError(400, "%s is not a directory" % path, reason="bad type")
-            model = await self._file_model(
-                path, content=content, format=format, require_hash=require_hash
-            )
+            async with self._path_lock(os_path) if content or require_hash else nullcontext():
+                model = await self._file_model(
+                    path, content=content, format=format, require_hash=require_hash
+                )
         self.emit(data={"action": "get", "path": path})
         return model
 
