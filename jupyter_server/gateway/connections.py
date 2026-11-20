@@ -16,7 +16,10 @@ from tornado.httpclient import HTTPRequest
 from tornado.ioloop import IOLoop
 from traitlets import Bool, Instance, Int, Unicode
 
-from ..services.kernels.connection.base import BaseKernelWebsocketConnection
+from ..services.kernels.connection.base import (
+    BaseKernelWebsocketConnection,
+    deserialize_binary_message,
+)
 from ..utils import url_path_join
 from .gateway_client import GatewayClient
 
@@ -143,8 +146,21 @@ class GatewayWebSocketConnection(BaseKernelWebsocketConnection):
                     f"Notebook client closed websocket connection - message dropped: {msg_summary}"
                 )
 
-    def handle_incoming_message(self, message: str) -> None:
+    def handle_incoming_message(self, message: str | bytes) -> None:
         """Send message to gateway server."""
+        allowed_message_types = self.multi_kernel_manager.allowed_message_types
+        if allowed_message_types:
+            # the client is held to the legacy protocol, see kernel_ws_protocol above
+            if isinstance(message, bytes):
+                msg = deserialize_binary_message(message)
+            else:
+                msg = json_decode(message)
+            msg_type = msg["header"]["msg_type"]
+            if msg_type not in allowed_message_types:
+                self.log.warning(
+                    'Received message of type "%s", which is not allowed. Ignoring.', msg_type
+                )
+                return
         if self.ws is None and self.ws_future is not None:
             if self.ws_future.done() and self.ws_future.exception() is not None:
                 self.log.warning(
