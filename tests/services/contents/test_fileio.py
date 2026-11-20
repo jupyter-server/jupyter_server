@@ -7,6 +7,7 @@ import pathlib
 import stat
 import sys
 import tempfile
+import threading
 import time
 
 import nbformat
@@ -400,6 +401,35 @@ async def test_read_during_a_save_reports_the_saved_file(tmp_path, monkeypatch):
 
     on_disk = await cm.get("nb.ipynb", content=False)
     assert (got["last_modified"], got["size"]) == (on_disk["last_modified"], on_disk["size"])
+
+
+async def test_listing_does_not_wait_for_a_save(tmp_path, monkeypatch):
+    """A listing only stats the files in it, so it does not wait for a save in progress."""
+    cm = AsyncFileContentsManager(root_dir=str(tmp_path))
+    nb = new_notebook(cells=[new_code_cell("x = 1")])
+    model = {"type": "notebook", "format": "json", "content": nb}
+    await cm.save(dict(model), "nb.ipynb")
+
+    real_write = nbformat.write
+    writing = asyncio.Event()
+    release = threading.Event()
+    loop = asyncio.get_running_loop()
+
+    def held_write(nb, fp, **kwargs):
+        loop.call_soon_threadsafe(writing.set)
+        release.wait(10)
+        real_write(nb, fp, **kwargs)
+
+    monkeypatch.setattr(nbformat, "write", held_write)
+    save = asyncio.create_task(cm.save(dict(model), "nb.ipynb"))
+    await writing.wait()
+    listing = asyncio.create_task(cm.get("", content=True))
+    done, _ = await asyncio.wait({listing}, timeout=5)
+    release.set()
+    await save
+    await listing
+
+    assert listing in done
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Creating symlinks needs extra privileges")
