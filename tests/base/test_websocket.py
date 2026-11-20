@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from tornado.httpclient import HTTPClientError
 from tornado.httputil import HTTPHeaders
+from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketClosedError, WebSocketHandler
 
 from jupyter_server.auth import IdentityProvider, User
@@ -44,6 +45,55 @@ def test_web_socket_mixin(mixin):
     assert mixin.check_origin("foo") is True
     mixin.clear_cookie()
     assert mixin.get_status() == 200
+
+
+def test_ping_settings_from_server_app_are_converted_to_milliseconds(mixin):
+    mixin.settings["websocket_ping_interval"] = 2
+    mixin.settings["websocket_ping_timeout"] = 7
+
+    assert mixin.ping_interval == 2000
+    assert mixin.ping_timeout == 2000 + 7000
+
+
+def test_extension_ping_settings_override_server_app(mixin):
+    mixin.settings["websocket_ping_interval"] = 2
+    mixin.settings["websocket_ping_timeout"] = 7
+    mixin.settings["ws_ping_interval"] = 1500
+    mixin.settings["ws_ping_timeout"] = 3500
+
+    assert mixin.ping_interval == 1500
+    assert mixin.ping_timeout == 3500
+
+
+def _ping_after(mixin, *, interval, timeout, since_last_ping, since_last_pong):
+    mixin.settings["websocket_ping_interval"] = interval
+    mixin.settings["websocket_ping_timeout"] = timeout
+    ws_connection = MagicMock()
+    ws_connection.client_terminated = False
+    ws_connection.is_closing = lambda: False
+    mixin.ws_connection = ws_connection
+    now = IOLoop.current().time()
+    mixin.last_ping = now - since_last_ping
+    mixin.last_pong = now - since_last_pong
+    mixin.send_ping()
+    return ws_connection
+
+
+def test_server_app_ping_timeout_does_not_close_before_first_ping(mixin):
+    # First tick after open: no ping was sent yet, so no pong is missing.
+    ws_connection = _ping_after(
+        mixin, interval=5, timeout=5, since_last_ping=5.01, since_last_pong=5.01
+    )
+    ws_connection.close.assert_not_called()
+    ws_connection.write_ping.assert_called_once()
+
+
+def test_server_app_ping_timeout_zero_never_closes(mixin):
+    ws_connection = _ping_after(
+        mixin, interval=5, timeout=0, since_last_ping=5.01, since_last_pong=100
+    )
+    ws_connection.close.assert_not_called()
+    ws_connection.write_ping.assert_called_once()
 
 
 def test_web_socket_mixin_ping(mixin):

@@ -849,6 +849,17 @@ def test_bind_http_server_tcp_eacces_logs_warning(jp_configurable_serverapp, cap
     assert any("denied" in rec.message.lower() for rec in caplog.records)
 
 
+@pytest.mark.parametrize("trait", ["websocket_ping_interval", "websocket_ping_timeout"])
+@pytest.mark.parametrize("value, warns", [(30, False), (30000, True)])
+def test_websocket_ping_in_milliseconds_logs_warning(
+    jp_configurable_serverapp, caplog, trait, value, warns
+):
+    app = jp_configurable_serverapp()
+    with caplog.at_level(logging.WARNING):
+        setattr(app, trait, value)
+    assert any(f"ServerApp.{trait} is in seconds" in rec.message for rec in caplog.records) == warns
+
+
 def test_bind_http_server_eaddrinuse_exits_cleanly(jp_configurable_serverapp):
     """Integration: _bind_http_server calls exit(1) when TCP bind returns False."""
     app = jp_configurable_serverapp()
