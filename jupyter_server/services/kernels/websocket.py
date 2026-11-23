@@ -85,7 +85,10 @@ class KernelWebsocketHandler(WebSocketMixin, WebSocketHandler, JupyterHandler):
 
     def select_subprotocol(self, subprotocols):
         """Select the sub protocol for the socket."""
-        preferred_protocol = self.connection.kernel_ws_protocol
+        connection = self.connection
+        if connection is None:
+            return None
+        preferred_protocol = connection.kernel_ws_protocol
         if preferred_protocol is None:
             preferred_protocol = "v1.kernel.websocket.jupyter.org"
         elif preferred_protocol == "":
