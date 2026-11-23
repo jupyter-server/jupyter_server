@@ -640,17 +640,26 @@ def shutdown_server(server_info, timeout=5, log=None):
             headers={"Authorization": "token " + server_info["token"]},
         )
     except Exception as ex:
-        if not str(ex) == "Unknown URL scheme.":
-            raise ex
-        if log:
-            log.debug("Was not a HTTP scheme. Treating as socket instead.")
-            log.debug("POST request to %s", url)
-        fetch(
-            url,
-            method="POST",
-            body=b"",
-            headers={"Authorization": "token " + server_info["token"]},
-        )
+        if str(ex) == "Unknown URL scheme.":
+            if log:
+                log.debug("Was not a HTTP scheme. Treating as socket instead.")
+                log.debug("POST request to %s", url)
+            try:
+                fetch(
+                    url,
+                    method="POST",
+                    body=b"",
+                    headers={"Authorization": "token " + server_info["token"]},
+                )
+            except Exception as sock_ex:
+                if log:
+                    log.debug("Failed to send shutdown request over socket: %s", sock_ex)
+        elif log:
+            # e.g. a connection error, or a 403 from a password-protected
+            # server that doesn't authenticate the (empty) token used here.
+            # Don't let this abort the whole shutdown attempt - fall through
+            # to the PID-based fallback below instead.
+            log.debug("Failed to send HTTP shutdown request to %s: %s", shutdown_url, ex)
 
     # Poll to see if it shut down.
     for _ in range(timeout * 10):

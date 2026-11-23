@@ -15,6 +15,7 @@ from traitlets import TraitError
 from traitlets.config import Config
 from traitlets.tests.utils import check_help_all_output
 
+from jupyter_server import serverapp as serverapp_module
 from jupyter_server.auth.decorator import allow_unauthenticated, authorized
 from jupyter_server.auth.security import passwd_check
 from jupyter_server.serverapp import (
@@ -25,6 +26,7 @@ from jupyter_server.serverapp import (
     _has_tornado_web_authenticated,
     list_running_servers,
     random_ports,
+    shutdown_server,
 )
 from jupyter_server.services.contents.filemanager import (
     AsyncFileContentsManager,
@@ -700,6 +702,52 @@ async def test_shutdown_no_activity(jp_serverapp):
 def test_running_server_info(jp_serverapp):
     app: ServerApp = jp_serverapp
     app.running_server_info(True)
+
+
+def test_shutdown_server_falls_back_on_http_error(monkeypatch):
+    """shutdown_server() must not propagate an HTTP error from the
+    /api/shutdown request (e.g. a 403 from a password-protected server
+    that doesn't accept the empty token used here) - it should log it and
+    fall through to the PID-based fallback instead, like it already does
+    for connections that turn out not to be HTTP at all.
+    """
+    calls = []
+
+    def fake_fetch(*args, **kwargs):
+        calls.append(args)
+        raise Exception("HTTP 403: Forbidden")
+
+    monkeypatch.setattr(serverapp_module, "fetch", fake_fetch)
+    monkeypatch.setattr(serverapp_module, "check_pid", lambda pid: False)
+
+    server_info = {"url": "http://127.0.0.1:12345/", "pid": 12345, "token": ""}
+
+    assert shutdown_server(server_info, timeout=1) is True
+    assert len(calls) == 1
+
+
+def test_shutdown_server_unix_socket_fallback_still_works(monkeypatch):
+    """The pre-existing "Unknown URL scheme." -> unix socket retry path
+    should be unaffected by the broader error handling above.
+    """
+    calls = []
+
+    def fake_fetch(url, **kwargs):
+        calls.append(url)
+        if len(calls) == 1:
+            raise Exception("Unknown URL scheme.")
+        return None
+
+    monkeypatch.setattr(serverapp_module, "fetch", fake_fetch)
+    monkeypatch.setattr(serverapp_module, "check_pid", lambda pid: False)
+
+    server_info = {"url": "http+unix://%2Ftmp%2Fsock.sock/", "pid": 12345, "token": ""}
+
+    assert shutdown_server(server_info, timeout=1) is True
+    # First call is the (failing) attempt at the joined shutdown URL, second
+    # is the retry directly against the raw socket URL.
+    assert len(calls) == 2
+    assert calls[1] == server_info["url"]
 
 
 @pytest.mark.parametrize("should_exist", [True, False])
