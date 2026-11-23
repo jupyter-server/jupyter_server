@@ -13,8 +13,14 @@ from jupyter_server.services.contents.filemanager import (
 class LargeFileManager(FileContentsManager):
     """Handle large file upload."""
 
-    def save(self, model, path=""):
-        """Save the file model and return the model with no content."""
+    def save(self, model, path="", require_hash=False):
+        """Save the file model and return the model with no content.
+
+        Parameters
+        ----------
+        require_hash: bool, optional
+            Whether to include the hash of the file contents.
+        """
         chunk = model.get("chunk", None)
         if chunk is not None:
             path = path.strip("/")
@@ -49,7 +55,7 @@ class LargeFileManager(FileContentsManager):
                 self.log.error("Error while saving file: %s %s", path, e, exc_info=True)
                 raise web.HTTPError(500, f"Unexpected error while saving file: {path} {e}") from e
 
-            model = self.get(path, content=False)
+            model = self.get(path, content=False, require_hash=require_hash)
 
             # Last chunk
             if chunk == -1:
@@ -57,7 +63,7 @@ class LargeFileManager(FileContentsManager):
             self.emit(data={"action": "save", "path": path})
             return model
         else:
-            return super().save(model, path)
+            return super().save(model, path, require_hash=require_hash)
 
     def _save_large_file(self, os_path, content, format):
         """Save content of a generic file."""
@@ -85,8 +91,14 @@ class LargeFileManager(FileContentsManager):
 class AsyncLargeFileManager(AsyncFileContentsManager):
     """Handle large file upload asynchronously"""
 
-    async def save(self, model, path=""):
-        """Save the file model and return the model with no content."""
+    async def save(self, model, path="", require_hash=False):
+        """Save the file model and return the model with no content.
+
+        Parameters
+        ----------
+        require_hash: bool, optional
+            Whether to include the hash of the file contents.
+        """
         chunk = model.get("chunk", None)
         if chunk is not None:
             path = path.strip("/")
@@ -121,7 +133,7 @@ class AsyncLargeFileManager(AsyncFileContentsManager):
                 self.log.error("Error while saving file: %s %s", path, e, exc_info=True)
                 raise web.HTTPError(500, f"Unexpected error while saving file: {path} {e}") from e
 
-            model = await self.get(path, content=False)
+            model = await self.get(path, content=False, require_hash=require_hash)
 
             # Last chunk
             if chunk == -1:
@@ -130,7 +142,7 @@ class AsyncLargeFileManager(AsyncFileContentsManager):
             self.emit(data={"action": "save", "path": path})
             return model
         else:
-            return await super().save(model, path)
+            return await super().save(model, path, require_hash=require_hash)
 
     async def _save_large_file(self, os_path, content, format):
         """Save content of a generic file."""
