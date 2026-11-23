@@ -85,8 +85,17 @@ Next time you need to log in you'll be able to use the new password instead of
 the login token, otherwise follow the procedure to set a password from the
 command line.
 
-The ability to change the password at first login time may be disabled by
-integrations by setting the ``--ServerApp.allow_password_change=False``
+To disable password setup on the token login form in Jupyter Server 2,
+add the following to :file:`jupyter_server_config.py`:
+
+.. code-block:: python
+
+    c.PasswordIdentityProvider.allow_password_change = False
+
+For a single launch, pass
+``--PasswordIdentityProvider.allow_password_change=False`` to
+:command:`jupyter server`. This replaces the deprecated
+``ServerApp.allow_password_change`` setting.
 
 
 Starting at notebook version 5.0, you can enter and store a password for your
