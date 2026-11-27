@@ -347,6 +347,10 @@ class CheckpointsHandler(ContentsAPIHandler):
     async def get(self, path=""):
         """get lists checkpoints for a file"""
         cm = self.contents_manager
+        if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
+            raise web.HTTPError(
+                HTTPStatus.NOT_FOUND, f"file or directory {path!r} does not exist"
+            )
         checkpoints = await ensure_async(cm.list_checkpoints(path))
         data = json.dumps(checkpoints, default=json_default)
         self.finish(data)
@@ -356,6 +360,8 @@ class CheckpointsHandler(ContentsAPIHandler):
     async def post(self, path=""):
         """post creates a new checkpoint"""
         cm = self.contents_manager
+        if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
+            raise web.HTTPError(400, f"Cannot create checkpoint for file or directory {path!r}")
         checkpoint = await ensure_async(cm.create_checkpoint(path))
         data = json.dumps(checkpoint, default=json_default)
         location = url_path_join(
@@ -378,6 +384,8 @@ class ModifyCheckpointsHandler(ContentsAPIHandler):
     async def post(self, path, checkpoint_id):
         """post restores a file from a checkpoint"""
         cm = self.contents_manager
+        if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
+            raise web.HTTPError(400, f"Cannot restore checkpoint for file or directory {path!r}")
         await ensure_async(cm.restore_checkpoint(checkpoint_id, path))
         self.set_status(204)
         self.finish()
@@ -387,6 +395,8 @@ class ModifyCheckpointsHandler(ContentsAPIHandler):
     async def delete(self, path, checkpoint_id):
         """delete clears a checkpoint for a given file"""
         cm = self.contents_manager
+        if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
+            raise web.HTTPError(400, f"Cannot delete checkpoint for file or directory {path!r}")
         await ensure_async(cm.delete_checkpoint(checkpoint_id, path))
         self.set_status(204)
         self.finish()
