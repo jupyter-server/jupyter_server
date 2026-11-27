@@ -752,6 +752,110 @@ async def test_delete_hidden_file(jp_fetch, contents):
     assert expected_http_error(e, 400)
 
 
+async def test_checkpoints_hidden_file_refused(jp_fetch, contents, contents_dir):
+    # Create a hidden file and a file in a hidden directory
+    txtname = contents_dir.joinpath(".hidden.txt")
+    txtname.write_text("hidden text file", encoding="utf-8")
+    hidden_dir = contents_dir / ".hidden"
+    hidden_dir.mkdir(parents=True, exist_ok=True)
+    innername = hidden_dir.joinpath("test.txt")
+    innername.write_text("visible text file in hidden dir", encoding="utf-8")
+
+    for path in (".hidden.txt", ".hidden/test.txt"):
+        # Listing checkpoints for a hidden file is refused like the file itself
+        with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+            await jp_fetch("api", "contents", path, "checkpoints", method="GET")
+        assert expected_http_error(e, 404)
+
+        # Creating a checkpoint for a hidden file is refused
+        with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+            await jp_fetch(
+                "api",
+                "contents",
+                path,
+                "checkpoints",
+                method="POST",
+                allow_nonstandard_methods=True,
+            )
+        assert expected_http_error(e, 400)
+
+
+async def test_checkpoints_hidden_restore_delete_refused(
+    jp_fetch, jp_serverapp, contents, contents_dir
+):
+    txtname = contents_dir.joinpath(".hidden.txt")
+    txtname.write_text("hidden text file", encoding="utf-8")
+
+    # Create a checkpoint while hidden files are allowed
+    jp_serverapp.contents_manager.allow_hidden = True
+    r = await jp_fetch(
+        "api",
+        "contents",
+        ".hidden.txt",
+        "checkpoints",
+        method="POST",
+        allow_nonstandard_methods=True,
+    )
+    assert r.code == 201
+    cp_id = json.loads(r.body.decode())["id"]
+    jp_serverapp.contents_manager.allow_hidden = False
+
+    # Restoring a checkpoint for a hidden file is refused
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch(
+            "api",
+            "contents",
+            ".hidden.txt",
+            "checkpoints",
+            cp_id,
+            method="POST",
+            allow_nonstandard_methods=True,
+        )
+    assert expected_http_error(e, 400)
+
+    # Deleting a checkpoint for a hidden file is refused
+    with pytest.raises(tornado.httpclient.HTTPClientError) as e:
+        await jp_fetch("api", "contents", ".hidden.txt", "checkpoints", cp_id, method="DELETE")
+    assert expected_http_error(e, 400)
+
+
+async def test_checkpoints_hidden_allowed(jp_fetch, jp_serverapp, contents, contents_dir):
+    # With allow_hidden enabled, checkpoints for hidden files
+    # work exactly as for visible files
+    txtname = contents_dir.joinpath(".hidden.txt")
+    txtname.write_text("hidden text file", encoding="utf-8")
+
+    jp_serverapp.contents_manager.allow_hidden = True
+    r = await jp_fetch(
+        "api",
+        "contents",
+        ".hidden.txt",
+        "checkpoints",
+        method="POST",
+        allow_nonstandard_methods=True,
+    )
+    assert r.code == 201
+    cp_id = json.loads(r.body.decode())["id"]
+
+    r = await jp_fetch("api", "contents", ".hidden.txt", "checkpoints", method="GET")
+    assert r.code == 200
+    assert len(json.loads(r.body.decode())) == 1
+
+    r = await jp_fetch(
+        "api",
+        "contents",
+        ".hidden.txt",
+        "checkpoints",
+        cp_id,
+        method="POST",
+        allow_nonstandard_methods=True,
+    )
+    assert r.code == 204
+
+    r = await jp_fetch("api", "contents", ".hidden.txt", "checkpoints", cp_id, method="DELETE")
+    assert r.code == 204
+
+
 async def test_rename(jp_fetch, jp_base_url, contents, contents_dir):
     path = "foo"
     name = "a.ipynb"
