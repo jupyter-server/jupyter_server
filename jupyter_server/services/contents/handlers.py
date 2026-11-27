@@ -348,9 +348,7 @@ class CheckpointsHandler(ContentsAPIHandler):
         """get lists checkpoints for a file"""
         cm = self.contents_manager
         if not cm.allow_hidden and await ensure_async(cm.is_hidden(path)):
-            raise web.HTTPError(
-                HTTPStatus.NOT_FOUND, f"file or directory {path!r} does not exist"
-            )
+            raise web.HTTPError(HTTPStatus.NOT_FOUND, f"file or directory {path!r} does not exist")
         checkpoints = await ensure_async(cm.list_checkpoints(path))
         data = json.dumps(checkpoints, default=json_default)
         self.finish(data)

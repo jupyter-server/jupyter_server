@@ -751,6 +751,7 @@ async def test_delete_hidden_file(jp_fetch, contents):
         await jp_fetch("api", "contents", ".hidden.txt", method="DELETE")
     assert expected_http_error(e, 400)
 
+
 async def test_checkpoints_hidden_file_refused(jp_fetch, contents, contents_dir):
     # Create a hidden file and a file in a hidden directory
     txtname = contents_dir.joinpath(".hidden.txt")
